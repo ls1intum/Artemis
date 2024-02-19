@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisHestiaSessionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.iris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -32,7 +32,7 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
 
     private static final Logger log = LoggerFactory.getLogger(IrisHestiaSessionService.class);
 
-    private final IrisConnectorService irisConnectorService;
+    private final PyrisConnectorService pyrisConnectorService;
 
     private final IrisMessageService irisMessageService;
 
@@ -44,9 +44,9 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
 
     private final IrisHestiaSessionRepository irisHestiaSessionRepository;
 
-    public IrisHestiaSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
+    public IrisHestiaSessionService(PyrisConnectorService pyrisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisHestiaSessionRepository irisHestiaSessionRepository) {
-        this.irisConnectorService = irisConnectorService;
+        this.pyrisConnectorService = pyrisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.authCheckService = authCheckService;
@@ -92,7 +92,7 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
         Map<String, Object> parameters = Map.of("codeHint", irisSession.getCodeHint(), "session", irisSession, "exercise", codeHint.getExercise());
         var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(irisSession.getCodeHint().getExercise(), false);
         try {
-            var response = irisConnectorService
+            var response = pyrisConnectorService
                     .sendRequestV2(irisSettings.irisHestiaSettings().getTemplate().getContent(), irisSettings.irisHestiaSettings().getPreferredModel(), parameters).get();
             var shortDescription = response.content().get("shortDescription").asText();
             var longDescription = response.content().get("longDescription").asText();

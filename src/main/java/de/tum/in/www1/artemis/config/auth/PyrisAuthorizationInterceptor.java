@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Profile("iris")
-public class IrisAuthorizationInterceptor implements ClientHttpRequestInterceptor {
+public class PyrisAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.iris.secret-token}")
     private String secret;

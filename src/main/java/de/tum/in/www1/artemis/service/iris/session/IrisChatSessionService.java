@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.iris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
@@ -48,7 +48,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
 
     private static final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
 
-    private final IrisConnectorService irisConnectorService;
+    private final PyrisConnectorService pyrisConnectorService;
 
     private final IrisMessageService irisMessageService;
 
@@ -72,12 +72,12 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
 
     private final IrisRateLimitService rateLimitService;
 
-    public IrisChatSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
+    public IrisChatSessionService(PyrisConnectorService pyrisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, GitService gitService,
             RepositoryService repositoryService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService) {
-        this.irisConnectorService = irisConnectorService;
+        this.pyrisConnectorService = pyrisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -182,7 +182,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
         addDiffAndTemplatesForStudentAndExerciseIfPossible(exercise, participations, parameters);
 
         var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false);
-        irisConnectorService.sendRequest(irisSettings.irisChatSettings().getTemplate(), irisSettings.irisChatSettings().getPreferredModel(), parameters)
+        pyrisConnectorService.sendRequest(irisSettings.irisChatSettings().getTemplate(), irisSettings.irisChatSettings().getPreferredModel(), parameters)
                 .handleAsync((irisMessage, throwable) -> {
                     if (throwable != null) {
                         log.error("Error while getting response from Iris model", throwable);

@@ -33,18 +33,18 @@ import de.tum.in.www1.artemis.service.iris.exception.*;
  */
 @Service
 @Profile("iris")
-public class IrisConnectorService {
+public class PyrisConnectorService {
 
-    private static final Logger log = LoggerFactory.getLogger(IrisConnectorService.class);
+    private static final Logger log = LoggerFactory.getLogger(PyrisConnectorService.class);
 
     private final RestTemplate restTemplate;
 
     private final ObjectMapper objectMapper;
 
     @Value("${artemis.iris.url}")
-    private String irisUrl;
+    private String pyrisUrl;
 
-    public IrisConnectorService(@Qualifier("irisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.restTemplate = restTemplate;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
     }
@@ -54,18 +54,17 @@ public class IrisConnectorService {
      *
      * @return A list of available Models as IrisModelDTO
      */
-    public List<IrisModelDTO> getOfferedModels() throws IrisConnectorException {
+    public List<IrisModelDTO> getOfferedModels() throws PyrisConnectorException {
         try {
-            var response = restTemplate.getForEntity(irisUrl + "/api/v1/models", JsonNode.class);
+            var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/models", IrisModelDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
-                throw new IrisConnectorException("Could not fetch offered models");
+                throw new PyrisConnectorException("Could not fetch offered models");
             }
-            IrisModelDTO[] models = objectMapper.treeToValue(response.getBody(), IrisModelDTO[].class);
-            return Arrays.asList(models);
+            return Arrays.asList(response.getBody());
         }
-        catch (HttpStatusCodeException | JsonProcessingException e) {
+        catch (HttpStatusCodeException e) {
             log.error("Failed to fetch offered models from Pyris", e);
-            throw new IrisConnectorException("Could not fetch offered models");
+            throw new PyrisConnectorException("Could not fetch offered models");
         }
     }
 
@@ -82,26 +81,9 @@ public class IrisConnectorService {
      */
     @Async
     public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, String preferredModel, Map<String, Object> parameters) {
-        var endpoint = "/api/v1/messages";
+        var endpoint = "/api/v1/pipelines/{feature}/{variant}/run";
         var request = new IrisRequestDTO(template, preferredModel, parameters);
         return tryGetResponse(endpoint, request, preferredModel, IrisMessageResponseDTO.class);
-    }
-
-    /**
-     * Requests a response from Pyris using the V2 Messages API
-     *
-     * @param template       The guidance program to execute
-     * @param preferredModel The LLM model to be used (e.g., GPT3.5-turbo). Note: The used model might not be the
-     *                           preferred model (e.g., if an error occurs or the preferredModel is not reachable)
-     * @param parameters     A map of argument variables required for the guidance template (if they are specified in
-     *                           the template)
-     * @return The response of the type {@link IrisMessageResponseV2DTO}
-     */
-    @Async
-    public CompletableFuture<IrisMessageResponseV2DTO> sendRequestV2(String template, String preferredModel, Map<String, Object> parameters) {
-        var endpoint = "/api/v2/messages";
-        var request = new IrisRequestV2DTO(template, preferredModel, parameters);
-        return tryGetResponse(endpoint, request, preferredModel, IrisMessageResponseV2DTO.class);
     }
 
     private <T> CompletableFuture<T> tryGetResponse(String endpoint, Object request, String preferredModel, Class<T> responseType) {
@@ -117,12 +99,12 @@ public class IrisConnectorService {
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send request to Pyris", e);
-            return failedFuture(new IrisConnectorException("Could not fetch response from Iris"));
+            return failedFuture(new PyrisConnectorException("Could not fetch response from Iris"));
         }
     }
 
     private <Response> CompletableFuture<Response> sendRequestAndParseResponse(String urlExtension, Object request, Class<Response> responseType) throws JsonProcessingException {
-        var response = restTemplate.postForEntity(irisUrl + urlExtension, objectMapper.valueToTree(request), JsonNode.class);
+        var response = restTemplate.postForEntity(pyrisUrl + urlExtension, objectMapper.valueToTree(request), JsonNode.class);
         JsonNode body = response.getBody();
         if (body == null) {
             return failedFuture(new IrisNoResponseException());

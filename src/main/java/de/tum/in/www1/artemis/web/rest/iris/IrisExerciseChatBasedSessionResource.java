@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisHealthIndicator;
+import de.tum.in.www1.artemis.service.connectors.iris.PyrisHealthIndicator;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisStatusDTO;
 import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
 import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSubSettingsInterface;
@@ -39,19 +39,19 @@ public abstract class IrisExerciseChatBasedSessionResource<E extends Exercise, S
 
     protected final IrisSettingsService irisSettingsService;
 
-    protected final IrisHealthIndicator irisHealthIndicator;
+    protected final PyrisHealthIndicator pyrisHealthIndicator;
 
     protected final IrisRateLimitService irisRateLimitService;
 
     protected final Function<Long, E> exerciseByIdFunction;
 
     protected IrisExerciseChatBasedSessionResource(AuthorizationCheckService authCheckService, UserRepository userRepository, IrisSessionService irisSessionService,
-            IrisSettingsService irisSettingsService, IrisHealthIndicator irisHealthIndicator, IrisRateLimitService irisRateLimitService, Function<Long, E> exerciseByIdFunction) {
+            IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService, Function<Long, E> exerciseByIdFunction) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
-        this.irisHealthIndicator = irisHealthIndicator;
+        this.pyrisHealthIndicator = pyrisHealthIndicator;
         this.irisRateLimitService = irisRateLimitService;
         this.exerciseByIdFunction = exerciseByIdFunction;
     }
@@ -99,7 +99,7 @@ public abstract class IrisExerciseChatBasedSessionResource<E extends Exercise, S
         irisSessionService.checkHasAccessToIrisSession(session, user);
         irisSessionService.checkIsIrisActivated(session);
         var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false);
-        var health = irisHealthIndicator.health();
+        var health = pyrisHealthIndicator.health();
         IrisStatusDTO[] modelStatuses = (IrisStatusDTO[]) health.getDetails().get("modelStatuses");
         var specificModelStatus = false;
         if (modelStatuses != null) {

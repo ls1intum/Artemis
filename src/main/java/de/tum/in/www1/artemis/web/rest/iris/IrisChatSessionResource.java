@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisHealthIndicator;
+import de.tum.in.www1.artemis.service.connectors.iris.PyrisHealthIndicator;
 import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
@@ -35,8 +35,8 @@ public class IrisChatSessionResource extends IrisExerciseChatBasedSessionResourc
 
     protected IrisChatSessionResource(AuthorizationCheckService authCheckService, IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            IrisHealthIndicator irisHealthIndicator, IrisRateLimitService irisRateLimitService) {
-        super(authCheckService, userRepository, irisSessionService, irisSettingsService, irisHealthIndicator, irisRateLimitService,
+            PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService) {
+        super(authCheckService, userRepository, irisSessionService, irisSettingsService, pyrisHealthIndicator, irisRateLimitService,
                 programmingExerciseRepository::findByIdElseThrow);
         this.irisChatSessionRepository = irisChatSessionRepository;
     }

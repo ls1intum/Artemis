@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.iris.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.iris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
@@ -36,7 +36,7 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
 
     private static final Logger log = LoggerFactory.getLogger(IrisCompetencyGenerationSessionService.class);
 
-    private final IrisConnectorService irisConnectorService;
+    private final PyrisConnectorService pyrisConnectorService;
 
     private final IrisSettingsService irisSettingsService;
 
@@ -50,10 +50,10 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
 
     private final IrisMessageRepository irisMessageRepository;
 
-    public IrisCompetencyGenerationSessionService(IrisConnectorService irisConnectorService, IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository,
+    public IrisCompetencyGenerationSessionService(PyrisConnectorService pyrisConnectorService, IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository,
             AuthorizationCheckService authCheckService, IrisCompetencyGenerationSessionRepository irisCompetencyGenerationSessionRepository, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository) {
-        this.irisConnectorService = irisConnectorService;
+        this.pyrisConnectorService = pyrisConnectorService;
         this.irisSettingsService = irisSettingsService;
         this.irisSessionRepository = irisSessionRepository;
         this.authCheckService = authCheckService;
@@ -112,7 +112,7 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
         Map<String, Object> parameters = Map.of("courseDescription", courseDescription, "taxonomyOptions", CompetencyTaxonomy.values());
         var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false);
         try {
-            var response = irisConnectorService.sendRequestV2(irisSettings.irisCompetencyGenerationSettings().getTemplate().getContent(),
+            var response = pyrisConnectorService.sendRequestV2(irisSettings.irisCompetencyGenerationSettings().getTemplate().getContent(),
                     irisSettings.irisCompetencyGenerationSettings().getPreferredModel(), parameters).get();
 
             var llmMessage = new IrisMessage();

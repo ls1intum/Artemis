@@ -57,7 +57,7 @@ public class IrisRequestMockProvider {
 
     private AutoCloseable closeable;
 
-    public IrisRequestMockProvider(@Qualifier("irisRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutIrisRestTemplate") RestTemplate shortTimeoutRestTemplate) {
+    public IrisRequestMockProvider(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }

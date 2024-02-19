@@ -17,14 +17,14 @@ import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisStatusDTO;
 
 @Component
 @Profile("iris")
-public class IrisHealthIndicator implements HealthIndicator {
+public class PyrisHealthIndicator implements HealthIndicator {
 
     private final RestTemplate restTemplate;
 
     @Value("${artemis.iris.url}")
     private URI irisUrl;
 
-    public IrisHealthIndicator(@Qualifier("shortTimeoutIrisRestTemplate") RestTemplate restTemplate) {
+    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 

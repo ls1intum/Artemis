@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisHealthIndicator;
+import de.tum.in.www1.artemis.service.connectors.iris.PyrisHealthIndicator;
 import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
@@ -34,9 +34,9 @@ public class IrisCodeEditorSessionResource extends IrisExerciseChatBasedSessionR
     private final IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
 
     protected IrisCodeEditorSessionResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, IrisHealthIndicator irisHealthIndicator, IrisRateLimitService irisRateLimitService,
+            IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService,
             IrisCodeEditorSessionRepository irisCodeEditorSessionRepository) {
-        super(authCheckService, userRepository, irisSessionService, irisSettingsService, irisHealthIndicator, irisRateLimitService,
+        super(authCheckService, userRepository, irisSessionService, irisSettingsService, pyrisHealthIndicator, irisRateLimitService,
                 programmingExerciseRepository::findByIdElseThrow);
         this.irisCodeEditorSessionRepository = irisCodeEditorSessionRepository;
     }
