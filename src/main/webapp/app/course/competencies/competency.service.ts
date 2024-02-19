@@ -25,18 +25,8 @@ export class CompetencyService {
         private lectureUnitService: LectureUnitService,
         private accountService: AccountService,
     ) {}
-
-    //TODO: solve this differently.
     getForImport(pageable: CompetencyPageableSearch) {
-        const params = new HttpParams()
-            .set('pageSize', String(pageable.pageSize))
-            .set('page', String(pageable.page))
-            .set('sortingOrder', pageable.sortingOrder)
-            .set('sortedColumn', pageable.sortedColumn)
-            .set('title', pageable.title)
-            .set('description', pageable.description)
-            .set('courseTitle', pageable.courseTitle)
-            .set('semester', pageable.semester);
+        const params = this.createCompetencySearchHttpParams(pageable);
         return this.httpClient
             .get(`${this.resourceURL}/competencies/for-import`, { params, observe: 'response' })
             .pipe(map((resp: HttpResponse<SearchResult<Competency>>) => resp && resp.body!));
@@ -158,6 +148,24 @@ export class CompetencyService {
     }
 
     //helper methods
+
+    /**
+     * Creates HttpParams for each field of the given pageable element.
+     *
+     * @param pageable the CompetencyPageableSearch to create HttpParams for
+     * @return the HttpParams
+     */
+    createCompetencySearchHttpParams(pageable: CompetencyPageableSearch) {
+        return new HttpParams()
+            .set('pageSize', String(pageable.pageSize))
+            .set('page', String(pageable.page))
+            .set('sortingOrder', pageable.sortingOrder)
+            .set('sortedColumn', pageable.sortedColumn)
+            .set('title', pageable.title)
+            .set('description', pageable.description)
+            .set('courseTitle', pageable.courseTitle)
+            .set('semester', pageable.semester);
+    }
 
     convertCompetencyResponseFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body?.softDueDate) {
