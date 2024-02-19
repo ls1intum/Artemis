@@ -13,8 +13,8 @@ describe('CompetencySearchComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
-            declarations: [CompetencySearchComponent, MockPipe(ArtemisTranslatePipe), NgbCollapseMocksModule, ButtonComponent],
+            imports: [ArtemisTestModule, FormsModule, NgbCollapseMocksModule],
+            declarations: [CompetencySearchComponent, MockPipe(ArtemisTranslatePipe), ButtonComponent],
             providers: [],
         })
             .compileComponents()

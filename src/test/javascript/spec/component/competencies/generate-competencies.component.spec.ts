@@ -100,7 +100,7 @@ describe('GenerateCompetenciesComponent', () => {
         expect(getSpy).toHaveBeenCalledOnce();
     });
 
-    it('should opem modal to remove competency recommendations', () => {
+    it('should open modal to remove competency recommendations', () => {
         const modalService: NgbModal = TestBed.inject(NgbModal);
         const openSpy = jest.spyOn(modalService, 'open');
         generateCompetenciesComponent.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
