@@ -422,7 +422,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
             localVCService.get().createProjectForExercise(exercise);
             log.debug("Cloning repository {} from Bitbucket and moving it to local VCS", repositoryUri);
-            copyRepoToLocalVC(projectKey, repositoryName, repositoryUri);
+            copyRepoToLocalVC(projectKey, repositoryName, repositoryUri, exercise.getBranch());
             log.debug("Successfully cloned repository {} from Bitbucket and moved it to local VCS", repositoryUri);
             var uri = new LocalVCRepositoryUri(projectKey, repositoryName, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
             return uri.toString();
@@ -445,7 +445,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
      * @param repositorySlug the repository slug
      * @param oldOrigin      the old origin of the repository
      */
-    private void copyRepoToLocalVC(String projectKey, String repositorySlug, String oldOrigin) {
+    private void copyRepoToLocalVC(String projectKey, String repositorySlug, String oldOrigin, String branch) {
         if (bitbucketLocalVCMigrationService.isEmpty()) {
             log.error("Failed to clone repository from Bitbucket: {}", repositorySlug);
             return;
@@ -459,7 +459,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             log.debug("Created local git repository folder {}", repositoryPath);
 
             // Create a bare local repository with JGit.
-            Git git = Git.cloneRepository().setDirectory(repositoryPath.toFile()).setBare(true).setURI(oldOrigin).call();
+            Git git = Git.cloneRepository().setBranch(branch).setDirectory(repositoryPath.toFile()).setBare(true).setURI(oldOrigin).call();
 
             if (!git.getRepository().getBranch().equals(bitbucketLocalVCMigrationService.get().getDefaultBranch())) {
                 // Rename the default branch to the configured default branch.
