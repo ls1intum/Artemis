@@ -97,7 +97,7 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
         log.info("Found {} solution participations to migrate.", solutionCount);
         for (int currentPageStart = 0; currentPageStart < solutionCount; currentPageStart += BATCH_SIZE) {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
-            var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
+            var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAllWithBuildPlanIdNotNull(pageable);
             log.info("Will migrate {} solution participations in batch.", solutionParticipationPage.getNumberOfElements());
             var solutionParticipationsPartitions = Lists.partition(solutionParticipationPage.toList(), threadCount);
             for (var solutionParticipations : solutionParticipationsPartitions) {

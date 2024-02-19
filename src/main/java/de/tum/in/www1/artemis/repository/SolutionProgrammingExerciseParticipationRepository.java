@@ -4,6 +4,8 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -43,6 +45,13 @@ public interface SolutionProgrammingExerciseParticipationRepository extends JpaR
     Optional<SolutionProgrammingExerciseParticipation> findWithEagerSubmissionsByProgrammingExerciseId(long exerciseId);
 
     Optional<SolutionProgrammingExerciseParticipation> findByProgrammingExerciseId(long programmingExerciseId);
+
+    @Query("""
+            SELECT p
+            FROM SolutionProgrammingExerciseParticipation p
+            WHERE p.buildPlanId IS NOT NULL
+            """)
+    Page<SolutionProgrammingExerciseParticipation> findAllWithBuildPlanIdNotNull(Pageable pageable);
 
     default SolutionProgrammingExerciseParticipation findByProgrammingExerciseIdElseThrow(long programmingExerciseId) {
         var optional = findByProgrammingExerciseId(programmingExerciseId);
