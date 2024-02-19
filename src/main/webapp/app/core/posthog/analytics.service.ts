@@ -13,7 +13,7 @@ export class AnalyticsService {
             return;
         }
 
-        posthog.init(profileInfo.postHog?.token, {
+        posthog.init(profileInfo.postHog.token, {
             api_host: profileInfo.postHog.host,
         });
     }
