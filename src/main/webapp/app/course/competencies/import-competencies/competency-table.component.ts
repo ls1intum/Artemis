@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { BasePageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { Competency } from 'app/entities/competency.model';
@@ -9,10 +9,12 @@ import { Competency } from 'app/entities/competency.model';
 })
 export class CompetencyTableComponent implements OnInit {
     @Input() content: SearchResult<Competency>;
-    @Input() disabledIds: number[] = [];
     @Input() search: BasePageableSearch;
+    @Input() displayPagination = true;
 
     @Output() searchChange = new EventEmitter<BasePageableSearch>();
+
+    @ContentChild(TemplateRef) buttonsTemplate: TemplateRef<any>;
 
     ascending: boolean;
 
@@ -24,20 +26,18 @@ export class CompetencyTableComponent implements OnInit {
     }
 
     /**
-     * Callback function when the user navigates through the page results
+     * Callback function for when the user navigates through the page results
      *
      * @param pageNumber The current page number
      */
     onPageChange(pageNumber: number) {
-        console.log(this.content);
-        console.log(pageNumber);
         this.search.page = pageNumber;
         this.searchChange.emit(this.search);
     }
 
     /**
-     * Callback function when the user changes the sort
-     *
+     * Callback function for when the user changes the sort
+     * @param change an object containing the column to sort by and boolean if the sort is ascending
      */
     onSortChange(change: { predicate: string; ascending: boolean }) {
         this.search.sortedColumn = change.predicate;

@@ -263,7 +263,8 @@
             "notUndoable": "This action cannot be undone!",
             "discardChanges": "Discard changes",
             "goBack": "Go back",
-            "search": "Search"
+            "search": "Search",
+            "select": "Select"
         },
         "detail": {
             "field": "Field",

@@ -51,18 +51,16 @@
             "import": {
                 "title": "Import Competencies",
                 "searchTableHeader": "Search Competencies",
+                "searchTableEmpty": "Found no competencies matching your search",
                 "selectedTableHeader": "Selected Competencies",
+                "selectedTableEmpty": "No competencies selected",
                 "importRelations": "Import Relations?",
                 "search": {
                     "title": "Competency Search",
                     "labelCompetencyTitle": "Competency Title",
-                    "fieldCompetencyTitle": "Competency Title",
                     "labelCompetencyDescription": "Competency Description",
-                    "fieldCompetencyDescription": "Competency Description",
                     "labelCourseTitle": "Course title",
-                    "fieldCourseTitle": "Course title",
                     "labelCourseSemester": "Semester",
-                    "fieldCourseSemester": "Semester",
                     "showAdvancedSearch": "Show advanced search",
                     "hideAdvancedSearch": "Hide advanced search"
                 },
@@ -71,7 +69,8 @@
                     "DESCRIPTION": "Description",
                     "COURSE_TITLE": "Course Title",
                     "SEMESTER": "Semester"
-                }
+                },
+                "success": "Imported {{ noOfCompetencies }} competencies."
             },
             "generate": {
                 "title": "Generate Competency Recommendations",

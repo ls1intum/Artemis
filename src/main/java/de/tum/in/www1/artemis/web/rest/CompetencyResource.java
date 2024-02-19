@@ -287,7 +287,7 @@ public class CompetencyResource {
     @EnforceAtLeastEditor
     public ResponseEntity<List<CompetencyWithTailRelationDTO>> importCompetencies(@PathVariable long courseId, @RequestBody List<Competency> competenciesToImport,
             @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
-        log.info("REST request to import a competency: {}", competenciesToImport);
+        log.info("REST request to import competencies: {}", competenciesToImport);
 
         var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);

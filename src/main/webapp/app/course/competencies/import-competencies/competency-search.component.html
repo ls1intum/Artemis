@@ -7,40 +7,21 @@
             <label for="competency-title-input">
                 {{ 'artemisApp.competency.import.search.labelCompetencyTitle' | artemisTranslate }}
             </label>
-            <input
-                id="competency-title-input"
-                class="form-control"
-                [placeholder]="'artemisApp.competency.import.search.fieldCompetencyTitle' | artemisTranslate"
-                [(ngModel)]="search.title"
-                (keydown.enter)="performSearch()"
-            />
+            <input id="competency-title-input" class="form-control" [(ngModel)]="search.title" (keydown.enter)="performSearch()" />
         </div>
         <div [ngbCollapse]="!advancedSearchEnabled">
             <div class="form-group">
                 <label for="competency-description-input">
                     {{ 'artemisApp.competency.import.search.labelCompetencyDescription' | artemisTranslate }}
                 </label>
-                <textarea
-                    id="competency-description-input"
-                    rows="3"
-                    class="form-control"
-                    [placeholder]="'artemisApp.competency.import.search.fieldCompetencyDescription' | artemisTranslate"
-                    [(ngModel)]="search.description"
-                    (keydown.enter)="performSearch()"
-                ></textarea>
+                <textarea id="competency-description-input" rows="3" class="form-control" [(ngModel)]="search.description" (keydown.enter)="performSearch()"></textarea>
             </div>
             <div class="row">
                 <div class="form-group col">
                     <label for="course-title-input">
                         {{ 'artemisApp.competency.import.search.labelCourseTitle' | artemisTranslate }}
                     </label>
-                    <input
-                        id="course-title-input"
-                        class="form-control"
-                        [placeholder]="'artemisApp.competency.import.search.fieldCourseTitle' | artemisTranslate"
-                        [(ngModel)]="search.courseTitle"
-                        (keydown.enter)="performSearch()"
-                    />
+                    <input id="course-title-input" class="form-control" [(ngModel)]="search.courseTitle" (keydown.enter)="performSearch()" />
                 </div>
                 <div class="form-group col">
                     <label for="course-semester-select">
