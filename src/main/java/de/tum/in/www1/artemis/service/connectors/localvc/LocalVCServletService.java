@@ -204,12 +204,12 @@ public class LocalVCServletService {
     private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
 
         String basicAuthCredentials = checkAuthorizationHeader(authorizationHeader);
+        int separatorIndex = basicAuthCredentials.indexOf(":");
 
-        if (basicAuthCredentials.split(":").length < 2) {
+        if (separatorIndex == -1) {
             throw new LocalVCAuthException();
         }
 
-        int separatorIndex = basicAuthCredentials.indexOf(":");
         String username = basicAuthCredentials.substring(0, separatorIndex);
         String password = basicAuthCredentials.substring(separatorIndex + 1);
 
