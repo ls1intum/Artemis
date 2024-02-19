@@ -22,18 +22,21 @@ export class OnlineEditorPage {
         return getExercise(this.page, exerciseID).locator('#cardFiles');
     }
 
-    // TODO: Not complete, needs correct conversion
     async typeSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission) {
         for (const newFile of submission.files) {
+            const filenameComponents = newFile.name.split('.');
+            const filename = filenameComponents[0];
+            const fileExtension = filenameComponents[1];
             if (submission.createFilesInRootFolder) {
-                await this.createFileInRootFolder(exerciseID, newFile.name);
+                await this.createFileInRootFolder(exerciseID, filename);
             } else {
-                await this.createFileInRootPackage(exerciseID, newFile.name, submission.packageName!);
+                await this.createFileInRootPackage(exerciseID, filename, submission.packageName!);
             }
-            console.log('File path to use for fixture: ', newFile.path);
             const fileContent = await Fixtures.get(newFile.path);
             const editorElement = getExercise(this.page, exerciseID).locator('#ace-code-editor');
+            await editorElement.focus();
             await editorElement.pressSequentially(fileContent!);
+            await this.renameFile(exerciseID, filename, `.${fileExtension}`, false);
         }
         await this.page.waitForTimeout(500);
     }
@@ -75,7 +78,7 @@ export class OnlineEditorPage {
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');
         const response = await responsePromise;
         expect(response.status()).toBe(200);
-        await expect(this.findFileBrowser(exerciseID, fileName)).toBeVisible();
+        await expect(this.findFileBrowser(exerciseID).filter({ hasText: fileName })).toBeVisible();
         await this.page.waitForTimeout(500);
     }
 
@@ -90,7 +93,20 @@ export class OnlineEditorPage {
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');
         const response = await responsePromise;
         expect(response.status()).toBe(200);
-        await expect(this.findFileBrowser(exerciseID, fileName)).toBeVisible();
+        await expect(this.findFileBrowser(exerciseID).filter({ hasText: fileName })).toBeVisible();
+        await this.page.waitForTimeout(500);
+    }
+
+    async renameFile(exerciseID: number, name: string, newName: string, clear: boolean = true) {
+        const fileElement = this.findFile(exerciseID, name);
+        await fileElement.locator('#file-browser-file-edit').click();
+        if (clear) {
+            for (let i = 0; i < name.length; i++) {
+                await this.page.keyboard.press('Backspace');
+            }
+        }
+        await this.page.keyboard.type(newName, { delay: 50 });
+        await this.page.keyboard.press('Enter');
         await this.page.waitForTimeout(500);
     }
 

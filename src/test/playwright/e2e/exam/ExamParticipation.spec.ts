@@ -72,13 +72,13 @@ test.describe('Exam participation', () => {
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 await examNavigation.openExerciseAtIndex(j);
-                await examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
+                await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
             }
             await examParticipation.handInEarly();
             await examStartEnd.pressShowSummary();
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.exerciseGroup!.title!);
+                await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id!, exercise.exerciseGroup!.title!);
                 if (exercise.type === ExerciseType.TEXT) {
                     await examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
                 }
@@ -99,7 +99,7 @@ test.describe('Exam participation', () => {
                 if (exercise.type == ExerciseType.PROGRAMMING) {
                     await examNavigation.openExerciseAtIndex(j + 1);
                 } else {
-                    await examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
+                    await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
                     await examParticipation.clickSaveAndContinue();
                 }
             }
@@ -118,7 +118,7 @@ test.describe('Exam participation', () => {
                 if (exercise.type != ExerciseType.PROGRAMMING) {
                     await examNavigation.openExerciseOverview();
                     await examParticipation.selectExerciseOnOverview(j + 1);
-                    await examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
+                    await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
                 }
             }
             await examParticipation.handInEarly();
@@ -170,14 +170,14 @@ test.describe('Exam participation', () => {
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
             await examNavigation.openExerciseAtIndex(textExerciseIndex);
-            await examParticipation.makeTextExerciseSubmission(textExercise.id, textExercise.additionalData!.textFixture!);
+            await examParticipation.makeTextExerciseSubmission(textExercise.id!, textExercise.additionalData!.textFixture!);
             await examParticipation.clickSaveAndContinue();
             await examNavigation.handInEarly();
 
             await examStartEnd.clickContinue();
             await examNavigation.openExerciseAtIndex(textExerciseIndex);
-            await textExerciseEditor.clearSubmission(textExercise.id);
-            await examParticipation.makeTextExerciseSubmission(textExercise.id, textFixtureShort);
+            await textExerciseEditor.clearSubmission(textExercise.id!);
+            await examParticipation.makeTextExerciseSubmission(textExercise.id!, textFixtureShort);
             await examParticipation.clickSaveAndContinue();
 
             await examParticipation.handInEarly();
@@ -202,13 +202,13 @@ test.describe('Exam participation', () => {
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
             await examNavigation.openExerciseAtIndex(textExerciseIndex);
-            await examParticipation.makeTextExerciseSubmission(textExercise.id, textExercise.additionalData!.textFixture!);
+            await examParticipation.makeTextExerciseSubmission(textExercise.id!, textExercise.additionalData!.textFixture!);
             await examParticipation.clickSaveAndContinue();
 
             await page.reload();
             await examParticipation.startParticipation(studentThree, course, exam);
             await examNavigation.openExerciseAtIndex(textExerciseIndex);
-            await textExerciseEditor.checkCurrentContent(textExercise.id, textExercise.additionalData!.textFixture!);
+            await textExerciseEditor.checkCurrentContent(textExercise.id!, textExercise.additionalData!.textFixture!);
             await examParticipation.clickSaveAndContinue();
             await examParticipation.handInEarly();
             await examStartEnd.pressShowSummary();
@@ -224,7 +224,7 @@ test.describe('Exam participation', () => {
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
             await examNavigation.openExerciseAtIndex(textExerciseIndex);
-            await examParticipation.makeTextExerciseSubmission(textExercise.id, textExercise.additionalData!.textFixture!);
+            await examParticipation.makeTextExerciseSubmission(textExercise.id!, textExercise.additionalData!.textFixture!);
             await examParticipation.clickSaveAndContinue();
             await examParticipation.handInEarly();
             await examStartEnd.pressShowSummary();
@@ -273,7 +273,7 @@ test.describe('Exam participation', () => {
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
             await examNavigation.openExerciseAtIndex(textExerciseIndex);
-            await examParticipation.makeSubmission(textExercise.id, textExercise.type, textExercise.additionalData);
+            await examParticipation.makeSubmission(textExercise.id!, textExercise.type!, textExercise.additionalData);
             await examParticipation.clickSaveAndContinue();
             await examParticipation.checkExamFullnameInputExists();
             await examParticipation.checkYourFullname(studentFourName);

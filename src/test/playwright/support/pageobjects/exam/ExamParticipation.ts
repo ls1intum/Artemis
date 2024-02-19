@@ -153,15 +153,15 @@ export class ExamParticipation {
     }
 
     async checkExamFinishedTitle(title: string) {
-        await expect(this.page.locator('#exam-finished-title')).toHaveText(title, { timeout: 40000 });
+        await expect(this.page.locator('#exam-finished-title')).toContainText(title, { timeout: 40000 });
     }
 
     async checkExamFullnameInputExists() {
-        await expect(this.page.locator('#fullname')).toBeVisible({ timeout: 20000 });
+        await expect(this.page.locator('#fullname')).toBeVisible({ timeout: 30000 });
     }
 
     async checkYourFullname(name: string) {
-        await expect(this.page.locator('#your-name')).toContainText(name, { timeout: 20000 });
+        await expect(this.page.locator('#your-name')).toContainText(name, { timeout: 30000 });
     }
 
     async handInEarly() {

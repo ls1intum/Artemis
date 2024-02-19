@@ -73,20 +73,20 @@ test.describe('Test Exam - student exams', () => {
 
             await expect(studentExamManagement.getStudentExamRows()).toHaveCount(3);
 
-            await studentExamManagement.checkExamProperty(studentOne.username, 'Started', 'Yes');
-            await studentExamManagement.checkExamProperty(studentTwo.username, 'Started', 'Yes');
-            await studentExamManagement.checkExamProperty(studentThree.username, 'Started', 'No');
+            await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Started', 'Yes');
+            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Started', 'Yes');
+            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Started', 'No');
 
-            await studentExamManagement.checkExamProperty(studentOne.username, 'Submitted', 'Yes');
-            await studentExamManagement.checkExamProperty(studentTwo.username, 'Submitted', 'No');
-            await studentExamManagement.checkExamProperty(studentThree.username, 'Submitted', 'No');
+            await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Submitted', 'Yes');
+            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Submitted', 'No');
+            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Submitted', 'No');
 
-            await studentExamManagement.checkExamProperty(studentTwo.username, 'Used working time', '0s');
-            await studentExamManagement.checkExamProperty(studentThree.username, 'Used working time', '0s');
+            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Used working time', '0s');
+            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Used working time', '0s');
 
-            await studentExamManagement.checkExamProperty(studentOne.username, 'Student', studentNames.get(studentOne)!.trim());
-            await studentExamManagement.checkExamProperty(studentTwo.username, 'Student', studentNames.get(studentTwo)!.trim());
-            await studentExamManagement.checkExamProperty(studentThree.username, 'Student', studentNames.get(studentThree)!.trim());
+            await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Student', studentNames.get(studentOne)!.trim());
+            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Student', studentNames.get(studentTwo)!.trim());
+            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Student', studentNames.get(studentThree)!.trim());
         });
 
         test('Search for a student in exams', async ({ page, navigationBar, courseManagement, examManagement, studentExamManagement }) => {
@@ -127,7 +127,7 @@ test.describe('Test Exam - student exams', () => {
         } else {
             await examParticipation.startParticipation(student, course, exam);
             await examNavigation.openExerciseAtIndex(0);
-            await examParticipation.makeSubmission(examExercise.id, examExercise.type, examExercise.additionalData);
+            await examParticipation.makeSubmission(examExercise.id!, examExercise.type!, examExercise.additionalData);
         }
 
         if (toSubmit) {

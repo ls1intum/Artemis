@@ -92,7 +92,7 @@ export function convertBooleanToYesNo(boolean: boolean) {
 }
 
 export async function clearTextField(textField: Locator) {
-    await textField.selectText();
+    await textField.click({ clickCount: 4, force: true });
     await textField.press('Backspace');
 }
 
