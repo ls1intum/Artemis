@@ -136,7 +136,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         }
 
         var programmingExerciseCount = programmingExerciseRepository.count();
-        var studentCount = programmingExerciseStudentParticipationRepository.findAllWithBuildPlanId(Pageable.unpaged()).getTotalElements();
+        var studentCount = programmingExerciseStudentParticipationRepository.findAll(Pageable.unpaged()).getTotalElements();
 
         if (programmingExerciseCount == 0) {
             // no exercises to change, migration complete
@@ -174,7 +174,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             }
             solutionCounter.addAndGet(solutionParticipationPage.getNumberOfElements());
             log.info("Migrated {}/{} solution participations", solutionCounter.get(), solutionCount);
-            log.info("Estimated time remaining: {} hours for solution repositories",
+            log.info("Estimated time remaining: {} for solution repositories",
                     TimeLogUtil.formatDuration(getRestDurationInSeconds(solutionCounter.get(), solutionCount, 2, threadCount)));
         }
 
