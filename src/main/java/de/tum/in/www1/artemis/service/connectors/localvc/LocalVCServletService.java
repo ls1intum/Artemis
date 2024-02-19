@@ -205,12 +205,13 @@ public class LocalVCServletService {
 
         String basicAuthCredentials = checkAuthorizationHeader(authorizationHeader);
 
-        if (basicAuthCredentials.split(":").length != 2) {
+        if (basicAuthCredentials.split(":").length < 2) {
             throw new LocalVCAuthException();
         }
 
-        String username = basicAuthCredentials.split(":")[0];
-        String password = basicAuthCredentials.split(":")[1];
+        int separatorIndex = basicAuthCredentials.indexOf(":");
+        String username = basicAuthCredentials.substring(0, separatorIndex);
+        String password = basicAuthCredentials.substring(separatorIndex + 1);
 
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, password);
