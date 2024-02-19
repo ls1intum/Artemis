@@ -207,7 +207,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         log.info("Found {} student programming exercise participations with build plans to migrate.", studentCount);
         for (int currentPageStart = 0; currentPageStart < studentCount; currentPageStart += BATCH_SIZE) {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
-            Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = programmingExerciseStudentParticipationRepository.findAllWithBuildPlanId(pageable);
+            Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = programmingExerciseStudentParticipationRepository.findAllWithRepositoryUri(pageable);
             log.info("Will migrate {} student programming exercise participations in batch.", studentParticipationPage.getNumberOfElements());
             var studentPartitionsPartitions = Lists.partition(studentParticipationPage.toList(), threadCount);
             for (var studentParticipations : studentPartitionsPartitions) {
@@ -263,6 +263,10 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
     private void migrateAuxiliaryRepositories(ProgrammingExercise programmingExercise) {
         for (var repo : getAuxiliaryRepositories(programmingExercise.getId())) {
             try {
+                if (repo.getRepositoryUri() == null) {
+                    log.error("Repository URI is null for auxiliary repository with id {}, cant migrate", repo.getId());
+                    continue;
+                }
                 var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, repo.getRepositoryUri());
                 if (url == null) {
                     log.error("Failed to migrate auxiliary repository for programming exercise with id {}, keeping the url in the database", programmingExercise.getId());
@@ -302,6 +306,11 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         }
         for (var solutionParticipation : solutionParticipations) {
             try {
+                if (solutionParticipation.getRepositoryUri() == null) {
+                    log.error("Repository URI is null for solution participation with id {}, cant migrate", solutionParticipation.getId());
+                    errorList.add(solutionParticipation);
+                    continue;
+                }
                 var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(solutionParticipation.getProgrammingExercise(), solutionParticipation.getRepositoryUri());
                 if (url == null) {
                     log.error("Failed to migrate solution repository for solution participation with id {}, keeping the url in the database", solutionParticipation.getId());
@@ -344,6 +353,11 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
     private void migrateTemplates(List<TemplateProgrammingExerciseParticipation> templateParticipations) {
         for (var templateParticipation : templateParticipations) {
             try {
+                if (templateParticipation.getRepositoryUri() == null) {
+                    log.error("Repository URI is null for template participation with id {}, cant migrate", templateParticipation.getId());
+                    errorList.add(templateParticipation);
+                    continue;
+                }
                 var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(templateParticipation.getProgrammingExercise(), templateParticipation.getRepositoryUri());
                 if (url == null) {
                     log.error("Failed to migrate template repository for template participation with id {}, keeping the url in the database", templateParticipation.getId());
@@ -375,6 +389,11 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         }
         for (var participation : participations)
             try {
+                if (participation.getRepositoryUri() == null) {
+                    log.error("Repository URI is null for student participation with id {}, cant migrate", participation.getId());
+                    errorList.add(participation);
+                    continue;
+                }
                 var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(participation.getProgrammingExercise(), participation.getRepositoryUri());
                 if (url == null) {
                     log.error("Failed to migrate student repository for student participation with id {}, keeping the url in the database", participation.getId());
