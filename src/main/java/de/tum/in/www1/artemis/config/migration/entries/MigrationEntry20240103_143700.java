@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipation
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.UriService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
@@ -82,6 +83,8 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private final Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService;
 
+    private final GitService gitService;
+
     private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
     public MigrationEntry20240103_143700(ProgrammingExerciseRepository programmingExerciseRepository, Environment environment,
@@ -89,7 +92,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<BitbucketService> bitbucketService, UriService uriService,
-            Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService) {
+            Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService, GitService gitService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.environment = environment;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -100,6 +103,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         this.bitbucketService = bitbucketService;
         this.uriService = uriService;
         this.bitbucketLocalVCMigrationService = bitbucketLocalVCMigrationService;
+        this.gitService = gitService;
     }
 
     @Override
@@ -463,6 +467,18 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
                 log.debug("Renamed default branch of local git repository {} to {}", repositorySlug, bitbucketLocalVCMigrationService.get().getDefaultBranch());
             }
             git.close();
+            try {
+                // We need to clone the repo here to the local checkout directory
+                if (gitService.getOrCheckoutRepository(new VcsRepositoryUri(oldOrigin), true) != null) {
+                    log.debug("Cloned local git repository {} to {}", repositorySlug, repositoryPath);
+                }
+                else {
+                    log.error("Failed to clone local git repository {} to {}", repositorySlug, repositoryPath);
+                }
+            }
+            catch (Exception e) {
+                log.error("Failed to clone local git repository {} to {}", repositorySlug, repositoryPath, e);
+            }
             log.debug("Created local git repository {} in folder {}", repositorySlug, repositoryPath);
         }
         catch (GitAPIException | IOException e) {
