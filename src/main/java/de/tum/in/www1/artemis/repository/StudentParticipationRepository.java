@@ -491,7 +491,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                         de.tum.in.www1.artemis.domain.enumeration.AssessmentType.MANUAL,
                         de.tum.in.www1.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
                     )
-                ) AND submission.submitted IS TRUE
+                ) AND submission.submitted = TRUE
                 AND submission.id = (SELECT MAX(s.id) FROM p.submissions s)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") long exerciseId,
