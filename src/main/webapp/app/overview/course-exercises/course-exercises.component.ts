@@ -125,7 +125,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        console.log(this.courseId);
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.onCourseLoad();
 

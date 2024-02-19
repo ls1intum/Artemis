@@ -16,7 +16,7 @@
                         <a routerLink="overview" class="d-flex p-3 align-items-center text-decoration-none">
                             @if (course && course.courseIcon) {
                                 <div class="me-3">
-                                    <jhi-secured-image [src]="course.courseIcon" class="rounded-circle"></jhi-secured-image>
+                                    <jhi-secured-image [src]="course.courseIcon" class="rounded-circle" />
                                 </div>
                             } @else {
                                 <div class="me-2">
@@ -24,8 +24,7 @@
                                 </div>
                             }
                             @if (!isCollapsed) {
-                                <!-- <div class="h6 mb-0 fw-bold text-body">{{ course?.title }}</div> -->
-                                <div class="h6 mb-0 fw-bold text-body">Fundamentals of Programming (INHN0002) - Heilbronn - WS 23/24</div>
+                                <div class="h6 mb-0 fw-bold text-body">{{ course?.title }}</div>
                             }
                         </a>
                         <hr class="mt-0" />
@@ -52,7 +51,7 @@
                                             routerLinkActive="active"
                                             [jhiFeatureToggleHide]="sidebarItem.featureToggle"
                                         >
-                                            <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: sidebarItem }"></ng-template>
+                                            <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: sidebarItem }" />
                                         </a>
                                     </li>
                                 } @else {
@@ -64,7 +63,7 @@
                                             routerLinkActive="active"
                                             [jhiFeatureToggleHide]="sidebarItem.featureToggle"
                                         >
-                                            <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: sidebarItem }"></ng-template>
+                                            <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: sidebarItem }" />
                                         </a>
                                     </li>
                                 }
@@ -79,8 +78,8 @@
                         (click)="isCollapsed = !isCollapsed"
                     >
                         <div [attr.aria-expanded]="!isCollapsed" aria-controls="collapseBasic">
-                            <fa-icon class="me-negative fa-xs" [icon]="faChevronRight"></fa-icon>
-                            <fa-icon class="fa-xs" [icon]="faChevronRight"></fa-icon>
+                            <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
+                            <fa-icon class="fa-xs" [icon]="faChevronRight" />
                         </div>
                     </div>
                 </div>
@@ -99,16 +98,16 @@
                                 </div>
                             }
                             <button class="btn btn-primary btn-md" (click)="loadCourse(true)" [disabled]="refreshingCourse">
-                                <fa-icon [icon]="faSync" [spin]="refreshingCourse"></fa-icon>
+                                <fa-icon [icon]="faSync" [spin]="refreshingCourse" />
                                 <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
                             </button>
                         </div>
                     </div>
                     <div class="course-body-container bg-white mx-3 p-3 rounded rounded-3">
-                        <ng-container class="d-flex ms-auto" #controlsViewContainer></ng-container>
-                        <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()"></router-outlet>
+                        <ng-container class="d-flex ms-auto" #controlsViewContainer />
+                        <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
                         <div class="refresh-overlay" [class.active]="refreshingCourse">
-                            <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                            <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true" />
                         </div>
                     </div>
                 }
@@ -119,7 +118,7 @@
 
 <ng-template #navIconAndText let-sidebarItem>
     @if (sidebarItem.icon) {
-        <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3"> </fa-icon>
+        <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" />
     }
     @if (!isCollapsed) {
         <span [jhiTranslate]="sidebarItem.translation">{{ sidebarItem.name }}</span>

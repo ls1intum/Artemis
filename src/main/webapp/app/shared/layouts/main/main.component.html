@@ -7,13 +7,11 @@
         </div>
     }
     @if (showSkeleton) {
-        <!-- <div class="d-flex w-100"> -->
         <div class="card" style="border-style: none">
             <div class="card-body">
                 <router-outlet />
             </div>
         </div>
-        <!-- </div> -->
     }
     @if (!showSkeleton) {
         <router-outlet />

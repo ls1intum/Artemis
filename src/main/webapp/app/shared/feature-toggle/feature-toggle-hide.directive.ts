@@ -16,7 +16,6 @@ export class FeatureToggleHideDirective implements OnInit, OnDestroy {
 
     ngOnInit() {
         if (this.feature) {
-            console.log(this.feature);
             this.featureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(this.feature).subscribe((active) => {
                 this.featureActive = active;
             });

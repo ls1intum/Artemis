@@ -292,7 +292,7 @@
                                         </ng-template>
                                     </ngx-charts-bar-horizontal-stacked>
                                 </div>
-                                @if (exerciseGroup.value && exerciseGroup.value.length > 0) {
+                                @if (exerciseGroup.value && exerciseGroup.value.length) {
                                     <div class="col-12 col-md-3 align-self-top mt-2">
                                         <h5 class="fw-bolder" id="absolute-score">
                                             {{ 'artemisApp.courseOverview.statistics.yourPoints' | artemisTranslate: { number: exerciseGroup.value[0].absoluteScore } }}

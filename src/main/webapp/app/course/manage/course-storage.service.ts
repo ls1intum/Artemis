@@ -21,7 +21,6 @@ export class CourseStorageService {
     }
 
     getCourse(courseId: number) {
-        console.log(this.storedCourses);
         return this.storedCourses.find((course) => course.id === courseId);
     }
 

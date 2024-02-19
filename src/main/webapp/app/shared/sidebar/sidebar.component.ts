@@ -171,7 +171,6 @@ export class SidebarComponent implements OnInit, OnDestroy, AfterViewInit {
     getSidebarItems(): SidebarItem[] {
         //TOdo: Order of Items & Overview & Put in Service
         const sidebarItems = this.getDefaultItems();
-        console.log(this.course);
         if (this.course?.lectures) {
             const lecturesItem: SidebarItem = this.getLecturesItems();
             sidebarItems.push(lecturesItem);
