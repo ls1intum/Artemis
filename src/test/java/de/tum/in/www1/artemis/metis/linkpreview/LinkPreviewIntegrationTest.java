@@ -24,7 +24,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     // this link will return null for all fields because it does not include OG tags
     private static final String GOOGLE_URL = "https://google.com";
 
-    private static final String[] URLS = { "https://github.com/ls1intum/Artemis/pull/6615", "https://github.com/ls1intum/Artemis/pull/6618", "https://github.com/", GOOGLE_URL };
+    private static final String[] URLS = { "https://ase.cit.tum.de", "https://artemis.cit.tum.de", "https://docs.artemis.cit.tum.de/index.html", GOOGLE_URL };
 
     @Autowired
     private UserUtilService userUtilService;
