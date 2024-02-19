@@ -25,6 +25,7 @@ import com.google.common.collect.Lists;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -451,6 +452,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
         try {
             Files.createDirectories(repositoryPath);
             log.debug("Created local git repository folder {}", repositoryPath);
+            var renamedBranch = false;
 
             // Create a bare local repository with JGit.
             Git git = Git.cloneRepository().setBranch(branch).setDirectory(repositoryPath.toFile()).setBare(true).setURI(oldOrigin).call();
@@ -459,11 +461,18 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                 // Rename the default branch to the configured default branch.
                 git.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
                 log.debug("Renamed default branch of local git repository {} to {}", repositorySlug, bitbucketLocalVCMigrationService.get().getDefaultBranch());
+                renamedBranch = true;
             }
             git.close();
             try {
                 // We need to clone the repo here to the local checkout directory
-                if (gitService.getOrCheckoutRepository(new VcsRepositoryUri(oldOrigin), true) != null) {
+                Repository repository = gitService.getOrCheckoutRepository(localVCRepositoryUri, true);
+                if (repository != null) {
+                    if (renamedBranch) {
+                        Git localGit = Git.open(repository.getLocalPath().toFile());
+                        localGit.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
+                        localGit.close();
+                    }
                     log.debug("Cloned local git repository {} to {}", repositorySlug, repositoryPath);
                 }
                 else {
