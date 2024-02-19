@@ -5,7 +5,7 @@ import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lec
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
-import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
+import { CourseOverviewComponent } from './course-overview.component';
 
 const routes: Routes = [
     {
@@ -31,7 +31,7 @@ const routes: Routes = [
     // General course subpages for course-registered users
     {
         path: 'courses/:courseId',
-        component: SidebarComponent,
+        component: CourseOverviewComponent,
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.course',

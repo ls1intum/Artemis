@@ -15,7 +15,7 @@ import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
-    styleUrls: ['../course-overview.scss'],
+    styleUrls: ['./course-competencies-details.component.scss'],
 })
 export class CourseCompetenciesDetailsComponent implements OnInit {
     competencyId?: number;
