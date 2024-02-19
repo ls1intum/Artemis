@@ -213,6 +213,13 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUriOrBuildPlanId(Pageable pageable);
 
+    @Query("""
+            SELECT DISTINCT p
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.repositoryUri IS NOT NULL
+            """)
+    Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUri(Pageable pageable);
+
     /**
      * Remove the build plan id from all participations of the given exercise.
      * This is used when the build plan is changed for an exercise and we want to remove the old build plan id from all participations.
