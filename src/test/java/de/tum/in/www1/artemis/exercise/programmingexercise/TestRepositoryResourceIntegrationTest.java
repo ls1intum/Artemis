@@ -110,17 +110,10 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetFilesAsStudent() throws Exception {
-
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testGetFilesAsStudent_accessForbidden() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        var files = request.getMap(testRepoBaseUrl + programmingExercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
-        assertThat(files).isNotEmpty();
-
-        // Check if all files exist
-        for (String key : files.keySet()) {
-            assertThat((Path.of(testRepo.localRepoFile + "/" + key))).exists();
-        }
+        request.getMap(testRepoBaseUrl + programmingExercise.getId() + "/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
     }
 
     @Test

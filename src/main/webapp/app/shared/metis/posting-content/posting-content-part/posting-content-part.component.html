@@ -3,26 +3,24 @@
 }
 @if (postingContentPart.linkToReference) {
     <a class="reference" [routerLink]="postingContentPart.linkToReference" [queryParams]="postingContentPart.queryParams">
-        <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)"></fa-icon>{{ postingContentPart.referenceStr }}
+        <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)" />{{ postingContentPart.referenceStr }}
     </a>
 }
 @if (postingContentPart.referenceType === ReferenceType.POST && !postingContentPart.linkToReference) {
-    <a class="reference"> <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)"></fa-icon>{{ postingContentPart.referenceStr }} </a>
+    <a class="reference"> <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)" />{{ postingContentPart.referenceStr }} </a>
 }
 @if (postingContentPart.referenceType === ReferenceType.USER) {
     <a class="reference" (click)="onClickUserReference(postingContentPart.queryParams?.referenceUserLogin)">
-        <fa-icon class="px-1" [icon]="faAt"></fa-icon>{{ postingContentPart.referenceStr }}
+        <fa-icon class="px-1" [icon]="faAt" />{{ postingContentPart.referenceStr }}
     </a>
 }
 @if (postingContentPart.referenceType === ReferenceType.CHANNEL) {
     <a class="reference" (click)="onClickChannelReference(postingContentPart.queryParams?.channelId)">
-        <fa-icon class="px-1" [icon]="faHashtag"></fa-icon>{{ postingContentPart.referenceStr }}
+        <fa-icon class="px-1" [icon]="faHashtag" />{{ postingContentPart.referenceStr }}
     </a>
 }
 @if (postingContentPart.attachmentToReference) {
-    <a class="reference" (click)="openAttachment(postingContentPart.attachmentToReference)">
-        <fa-icon class="px-1" [icon]="faFile"></fa-icon>{{ postingContentPart.referenceStr }}
-    </a>
+    <a class="reference" (click)="openAttachment(postingContentPart.attachmentToReference)"> <fa-icon class="px-1" [icon]="faFile" />{{ postingContentPart.referenceStr }} </a>
 }
 @if (postingContentPart.slideToReference) {
     <div style="max-width: 400px">
@@ -42,7 +40,7 @@
         @if (imageNotFound) {
             <div class="card">
                 <h5 class="card-body">
-                    <fa-icon class="px-1" [icon]="faBan"></fa-icon><span>{{ 'artemisApp.markdownEditor.preview.slideNotFound' | artemisTranslate }}</span>
+                    <fa-icon class="px-1" [icon]="faBan" /><span>{{ 'artemisApp.markdownEditor.preview.slideNotFound' | artemisTranslate }}</span>
                 </h5>
             </div>
         }

@@ -7,9 +7,9 @@
     [overwriteDisabled]="disabled || isLoading"
 >
     @if (isLoading) {
-        <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" [spin]="true" size="sm"></fa-icon>
+        <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" [spin]="true" size="sm" />
     } @else {
-        <jhi-iris-logo [size]="SMALL"></jhi-iris-logo>
+        <jhi-iris-logo [size]="SMALL" />
     }
     @if (title) {
         <span class="jhi-btn__title" [class.ms-1]="true || isLoading" [jhiTranslate]="title"></span>

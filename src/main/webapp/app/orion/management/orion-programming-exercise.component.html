@@ -5,9 +5,7 @@
     [exerciseFilter]="exerciseFilter"
     (filteredExerciseCount)="filteredExerciseCount.emit($event)"
 >
-    <ng-template #overrideRepositoryAndBuildPlan>
-        <!-- No replacement, just not visible in Orion -->
-    </ng-template>
+    <ng-template #overrideRepositoryAndBuildPlan />
     <ng-template #overrideButtons let-exercise="exercise">
         <td class="align-middle">
             @if (orionState.view === ExerciseView.INSTRUCTOR && orionState.opened === exercise.id && exercise.isAtLeastEditor && exercise.templateParticipation) {
@@ -15,8 +13,7 @@
                     buttonLabel="{{ 'artemisApp.programmingExercise.intellij.openEditor' | artemisTranslate }}"
                     [smallButton]="false"
                     (clickHandler)="openOrionEditor(exercise)"
-                >
-                </jhi-ide-button>
+                />
             } @else {
                 @if (exercise.isAtLeastEditor && exercise.templateParticipation) {
                     <jhi-ide-button
@@ -24,8 +21,7 @@
                         [buttonLoading]="orionState.cloning"
                         [smallButton]="false"
                         (clickHandler)="editInIDE(exercise)"
-                    >
-                    </jhi-ide-button>
+                    />
                 }
             }
         </td>
