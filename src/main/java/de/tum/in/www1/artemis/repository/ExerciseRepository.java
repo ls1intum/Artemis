@@ -563,7 +563,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 LEFT JOIN c.exercises e
                 LEFT JOIN FETCH e.studentParticipations p
                 LEFT JOIN FETCH p.team t
-                 LEFT JOIN FETCH t.students students
+                LEFT JOIN FETCH t.students students
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f
