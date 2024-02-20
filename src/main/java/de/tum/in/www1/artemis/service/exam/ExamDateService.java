@@ -97,6 +97,13 @@ public class ExamDateService {
             StudentExam studentExam = optionalStudentExam.get();
             return Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.isEnded();
         }
+        else {
+            // for test runs
+            var optionalTestRun = studentExamRepository.findTestRunByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
+            if (optionalTestRun.isPresent()) {
+                return false;
+            }
+        }
         throw new IllegalStateException("No student exam found for student participation " + studentParticipation.getId());
     }
 

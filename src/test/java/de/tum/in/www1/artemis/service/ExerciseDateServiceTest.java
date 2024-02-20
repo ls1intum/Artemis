@@ -300,6 +300,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         void testTestExamExerciseDueDate_duringOwnWorkingTime() {
             Participation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+            examUtilService.addStudentExamWithUser(testExam, TEST_PREFIX + "student1");
 
             boolean result = exerciseDateService.isAfterDueDate(participation);
             assertThat(result).isFalse();
