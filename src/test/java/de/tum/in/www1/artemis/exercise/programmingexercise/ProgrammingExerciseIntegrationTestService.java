@@ -279,6 +279,10 @@ class ProgrammingExerciseIntegrationTestService {
         if (remoteRepo2File != null && remoteRepo2File.exists()) {
             FileUtils.deleteDirectory(remoteRepo2File);
         }
+        var repoDownloadCloneDir = new File(repoDownloadClonePath);
+        if (repoDownloadCloneDir.exists()) {
+            FileUtils.deleteDirectory(repoDownloadCloneDir);
+        }
     }
 
     void testProgrammingExerciseIsReleased_IsReleasedAndHasResults() throws Exception {
