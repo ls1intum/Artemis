@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipation
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.UriService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
@@ -80,14 +79,12 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
 
     private final Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService;
 
-    private final GitService gitService;
-
     public MigrationEntry20240103_143700(ProgrammingExerciseRepository programmingExerciseRepository, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<BitbucketService> bitbucketService, UriService uriService,
-            Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService, GitService gitService) {
+            Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.environment = environment;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -98,7 +95,6 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
         this.bitbucketService = bitbucketService;
         this.uriService = uriService;
         this.bitbucketLocalVCMigrationService = bitbucketLocalVCMigrationService;
-        this.gitService = gitService;
     }
 
     @Override
@@ -148,7 +144,6 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
         final long estimatedTime = (estimatedTimeExercise + estimatedTimeStudents);
         log.info("Using {} threads for migration, and assuming 2s per repository, the migration should take around {}", MAX_THREAD_COUNT,
                 TimeLogUtil.formatDuration(estimatedTime));
-        // Number of full batches. The last batch might be smaller
 
         // Use fixed thread pool to prevent loading too many exercises into memory at once
         ExecutorService executorService = Executors.newFixedThreadPool((int) threadCount);
@@ -213,6 +208,8 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                 });
             }
         }
+
+        log.info("Submitted all student participations to thread pool for migration.");
 
         shutdown(executorService, TIMEOUT_IN_HOURS, ERROR_MESSAGE);
         log.info("Finished migrating programming exercises and student participations");
@@ -390,12 +387,9 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                     participation.setRepositoryUri(url);
                     if (participation.getBranch() != null) {
                         participation.setBranch(bitbucketLocalVCMigrationService.get().getDefaultBranch());
+                        log.debug("Changed branch of student participation with id {} to {}", participation.getId(), participation.getBranch());
                     }
                     programmingExerciseStudentParticipationRepository.save(participation);
-                }
-                if (url != null && !bitbucketLocalVCMigrationService.get().getDefaultBranch().equals(participation.getBranch())) {
-                    participation.setBranch(bitbucketLocalVCMigrationService.get().getDefaultBranch());
-                    log.debug("Changed branch of student participation with id {} to {}", participation.getId(), participation.getBranch());
                 }
             }
             catch (Exception e) {
