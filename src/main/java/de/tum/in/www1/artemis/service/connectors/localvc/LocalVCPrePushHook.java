@@ -12,6 +12,8 @@ import org.eclipse.jgit.transport.PreReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 
+import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
+
 /**
  * Contains an onPreReceive method that is called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was
  * successful).
@@ -50,7 +52,14 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
         Repository repository = receivePack.getRepository();
 
-        String mainBranchName = localVCServletService.getMainBranchOfRepository(repository);
+        String mainBranchName;
+        try {
+            mainBranchName = localVCServletService.getMainBranchOfRepository(repository);
+        }
+        catch (LocalVCInternalException e) {
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
+            return;
+        }
 
         // Reject pushes to anything other than the default branch.
         if (!command.getRefName().equals("refs/heads/" + mainBranchName)) {
