@@ -102,7 +102,7 @@ public class CompetencyResource {
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
-    // TODO (followup): this is only used for prerequisite import -> the prerequisite improt to also use the new competency import.
+    // TODO (followup): this is only used for prerequisite import -> the prerequisite import to also use the new competency import.
     /**
      * Search for all competencies by title and course title. The result is pageable.
      *
@@ -301,8 +301,7 @@ public class CompetencyResource {
             importedCompetencies = competencyService.importCompetenciesAndRelations(course, competencies, relations);
         }
         else {
-            importedCompetencies = competencyService.importCompetencies(course, competencies).stream()
-                    .map(competency -> new CompetencyWithTailRelationDTO(competency, new ArrayList<>())).toList();
+            importedCompetencies = competencyService.competenciesToCompetencyWithTailRelationDTOs(competencyService.importCompetencies(course, competencies));
         }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
@@ -339,8 +338,7 @@ public class CompetencyResource {
             importedCompetencies = competencyService.importCompetenciesAndRelations(targetCourse, competencies, relations);
         }
         else {
-            importedCompetencies = competencyService.importCompetencies(targetCourse, competencies).stream()
-                    .map(competency -> new CompetencyWithTailRelationDTO(competency, new ArrayList<>())).toList();
+            importedCompetencies = competencyService.competenciesToCompetencyWithTailRelationDTOs(competencyService.importCompetencies(targetCourse, competencies));
         }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
