@@ -30,9 +30,6 @@ import de.tum.in.www1.artemis.service.FileService;
 public class ExamUser extends AbstractAuditingEntity {
 
     @Transient
-    private final transient FilePathService filePathService = new FilePathService();
-
-    @Transient
     private final transient FileService fileService = new FileService();
 
     @Transient

@@ -1,8 +1,8 @@
 <div class="card form-group" [formGroup]="form">
     <div class="card-header">
-        <div class="d-flex align-items-center mw-100">
+        <div class="d-flex align-items-center mw-100 clickable" (click)="toggle()">
             <div class="icon-container me-3">
-                <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="isCollapsed" (click)="toggle()"></fa-icon>
+                <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="isCollapsed" />
             </div>
             <h6 class="mb-0 text-nowrap text-truncate overflow-hidden">{{ titleControl.value ?? '' }}</h6>
         </div>
@@ -89,16 +89,7 @@
         </div>
         <div class="form-group">
             <label for="taxonomy-{{ index }}">{{ 'artemisApp.competency.taxonomy' | artemisTranslate }}</label>
-            <select formControlName="taxonomy" class="form-select" id="taxonomy-{{ index }}">
-                <option [ngValue]="undefined" selected></option>
-                @for (taxonomy of competencyTaxonomy | keyvalue: keepOrder; track taxonomy; let i = $index) {
-                    <option [ngValue]="taxonomy.key">
-                        {{ '&ThinSpace;'.repeat(i) }}&boxur;
-                        {{ 'artemisApp.competency.taxonomies.' + taxonomy.value.toLowerCase() | artemisTranslate }}
-                        ({{ 'artemisApp.competency.keywords.' + taxonomy.value.toLowerCase() | artemisTranslate }})
-                    </option>
-                }
-            </select>
+            <jhi-taxonomy-select selectId="taxonomy-{{ index }}" [form]="taxonomyControl" />
         </div>
     </div>
 </div>

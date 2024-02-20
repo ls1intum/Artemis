@@ -4,14 +4,10 @@
             <div class="col-auto">
                 <div>
                     <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.presentationType.title">Presentation Mode</label>
-                    <jhi-help-icon text="artemisApp.gradingSystem.presentationType.description"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.gradingSystem.presentationType.description" />
                 </div>
                 <div>
-                    <jhi-mode-picker
-                        [options]="modePickerOptions"
-                        [value]="presentationsConfig.presentationType"
-                        (valueChange)="onPresentationTypeChange($event!)"
-                    ></jhi-mode-picker>
+                    <jhi-mode-picker [options]="modePickerOptions" [value]="presentationsConfig.presentationType" (valueChange)="onPresentationTypeChange($event!)" />
                 </div>
             </div>
             @if (presentationsConfig.presentationType === BASIC && gradingScale.course !== undefined) {

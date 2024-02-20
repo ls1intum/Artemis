@@ -12,7 +12,7 @@
                     formControlName="selectedUsers"
                     [courseId]="course.id!"
                     [label]="'artemisApp.dialogs.createGroupChat.userSelectorLabel' | artemisTranslate"
-                ></jhi-course-users-selector>
+                />
                 @if (selectedUsersControl?.invalid && (selectedUsersControl?.dirty || selectedUsersControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (selectedUsersControl?.errors?.required) {

@@ -63,6 +63,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Output() participationChange = new EventEmitter<Participation>();
     @Output() hasUnsavedChanges = new EventEmitter<boolean>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
+    @Output() instructionChange = new EventEmitter<string>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
     set participation(participation: Participation) {
@@ -166,6 +167,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.exercise = { ...this.exercise, problemStatement };
             this.unsavedChanges = true;
         }
+        this.instructionChange.emit(problemStatement);
     }
 
     /**

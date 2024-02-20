@@ -21,7 +21,7 @@
                         [readOnly]="readOnly"
                         [highlightDifferences]="highlightDifferences"
                         [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText"
-                    ></jhi-unreferenced-feedback-detail>
+                    />
                 </div>
             }
             @for (suggestion of feedbackSuggestions; track suggestion) {
@@ -33,7 +33,7 @@
                         (onAcceptSuggestion)="acceptSuggestion($event)"
                         (onDiscardSuggestion)="discardSuggestion($event)"
                         [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText"
-                    ></jhi-unreferenced-feedback-detail>
+                    />
                 </div>
             }
         </div>
