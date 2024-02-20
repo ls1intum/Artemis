@@ -7,12 +7,9 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -26,12 +23,9 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
 
-import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
-import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
@@ -49,13 +43,15 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @Component
-public class MigrationEntry20240103_143700 extends MigrationEntry {
+public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationEntry {
 
     private static final int BATCH_SIZE = 100;
 
     private static final int MAX_THREAD_COUNT = 32;
 
     private static final int TIMEOUT_IN_HOURS = 48;
+
+    private static final long ESTIMATED_TIME_PER_REPOSITORY = 2; // 2s per repository
 
     private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within " + TIMEOUT_IN_HOURS + " hours. Aborting migration.";
 
@@ -84,8 +80,6 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
     private final Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService;
 
     private final GitService gitService;
-
-    private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
     public MigrationEntry20240103_143700(ProgrammingExerciseRepository programmingExerciseRepository, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
@@ -146,7 +140,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         log.info("Will migrate {} programming exercises and {} student repositories now. This might take a while", programmingExerciseCount, studentCount);
 
         final long totalFullBatchCount = programmingExerciseCount / BATCH_SIZE;
-        final int threadCount = (int) Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
+        final long threadCount = Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
         final long estimatedTimeExercise = getRestDurationInSeconds(0, programmingExerciseCount, 3, threadCount);
         final long estimatedTimeStudents = getRestDurationInSeconds(0, studentCount, 1, threadCount);
 
@@ -156,7 +150,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         // Number of full batches. The last batch might be smaller
 
         // Use fixed thread pool to prevent loading too many exercises into memory at once
-        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        ExecutorService executorService = Executors.newFixedThreadPool((int) threadCount);
 
         /*
          * migrate the solution participations first, then the template participations, then the student participations
@@ -168,14 +162,12 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Will migrate {} solution participations in batch.", solutionParticipationPage.getNumberOfElements());
-            var solutionParticipationsPartitions = Lists.partition(solutionParticipationPage.toList(), threadCount);
+            var solutionParticipationsPartitions = Lists.partition(solutionParticipationPage.toList(), (int) threadCount);
             for (var solutionParticipations : solutionParticipationsPartitions) {
                 executorService.submit(() -> migrateSolutions(solutionParticipations));
             }
             solutionCounter.addAndGet(solutionParticipationPage.getNumberOfElements());
-            log.info("Migrated {}/{} solution participations", solutionCounter.get(), solutionCount);
-            log.info("Estimated time remaining: {} for solution repositories",
-                    TimeLogUtil.formatDuration(getRestDurationInSeconds(solutionCounter.get(), solutionCount, 2, threadCount)));
+            logProgress(solutionCounter, solutionCount, threadCount, 2, "solution");
         }
 
         log.info("Submitted all solution participations to thread pool for migration.");
@@ -189,14 +181,12 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Will migrate {} template programming exercises in batch.", templateParticipationPage.getNumberOfElements());
-            var templateParticipationsPartitions = Lists.partition(templateParticipationPage.toList(), threadCount);
+            var templateParticipationsPartitions = Lists.partition(templateParticipationPage.toList(), (int) threadCount);
             for (var templateParticipations : templateParticipationsPartitions) {
                 executorService.submit(() -> migrateTemplates(templateParticipations));
             }
             templateCounter.addAndGet(templateParticipationPage.getNumberOfElements());
-            log.info("Migrated {}/{} template participations", templateCounter.get(), templateCount);
-            log.info("Estimated time remaining: {} hours for template repositories",
-                    TimeLogUtil.formatDuration(getRestDurationInSeconds(templateCounter.get(), templateCount, 1, threadCount)));
+            logProgress(templateCounter, templateCount, threadCount, 1, "template");
         }
 
         log.info("Submitted all template participations to thread pool for migration.");
@@ -209,45 +199,29 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = programmingExerciseStudentParticipationRepository.findAllWithRepositoryUri(pageable);
             log.info("Will migrate {} student programming exercise participations in batch.", studentParticipationPage.getNumberOfElements());
-            var studentPartitionsPartitions = Lists.partition(studentParticipationPage.toList(), threadCount);
+            var studentPartitionsPartitions = Lists.partition(studentParticipationPage.toList(), (int) threadCount);
             for (var studentParticipations : studentPartitionsPartitions) {
                 executorService.submit(() -> migrateStudents(studentParticipations));
             }
             studentCounter.addAndGet(studentParticipationPage.getNumberOfElements());
-            log.info("Migrated {}/{} student participations", studentCounter.get(), studentCount);
-            log.info("Estimated time remaining: {} hours for student repositories",
-                    TimeLogUtil.formatDuration(getRestDurationInSeconds(studentCounter.get(), studentCount, 1, threadCount)));
+            logProgress(templateCounter, templateCount, threadCount, 1, "student");
         }
 
-        // Wait for all threads to finish
-        executorService.shutdown();
-
-        try {
-            boolean finished = executorService.awaitTermination(TIMEOUT_IN_HOURS, TimeUnit.HOURS);
-            if (!finished) {
-                log.error(ERROR_MESSAGE);
-                if (executorService.awaitTermination(1, TimeUnit.MINUTES)) {
-                    log.error("Failed to cancel all migration threads. Some threads are still running.");
-                }
-                throw new RuntimeException(ERROR_MESSAGE);
-            }
-        }
-        catch (InterruptedException e) {
-            log.error(ERROR_MESSAGE);
-            executorService.shutdownNow();
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-        }
-
+        shutdown(executorService, TIMEOUT_IN_HOURS, ERROR_MESSAGE);
         log.info("Finished migrating programming exercises and student participations");
         evaluateErrorList();
     }
 
-    private long getRestDurationInSeconds(final int done, final long total, final int reposPerEntry, final int threads) {
-        final long ESTIMATED_TIME_PER_REPOSITORY = 2; // 2s per repository
+    private void logProgress(AtomicInteger finishedCounter, long totalCount, long threadCount, long reposPerEntry, String migrationType) {
+        double percentage = ((double) finishedCounter.get() / totalCount) * 100;
+        log.info("Migrated {}/{} {} participations ({}%)", finishedCounter.get(), totalCount, migrationType, String.format("%.2f", percentage));
+        log.info("Estimated time remaining: {} for {} repositories",
+                TimeLogUtil.formatDuration(getRestDurationInSeconds(finishedCounter.get(), totalCount, reposPerEntry, threadCount)), migrationType);
+    }
+
+    private long getRestDurationInSeconds(final long done, final long total, final long reposPerEntry, final long threads) {
         final long stillTodo = total - done;
         final long timePerEntry = ESTIMATED_TIME_PER_REPOSITORY * reposPerEntry;
-
         return (stillTodo * timePerEntry) / threads;
     }
 
@@ -413,33 +387,6 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
                 log.error("Failed to migrate student participation with id {}", participation.getId(), e);
                 errorList.add(participation);
             }
-    }
-
-    /**
-     * Evaluates the error map and prints the errors to the log.
-     */
-    private void evaluateErrorList() {
-        if (errorList.isEmpty()) {
-            log.info("Successfully migrated all programming exercises");
-            return;
-        }
-
-        List<Long> failedTemplateExercises = errorList.stream().filter(participation -> participation instanceof TemplateProgrammingExerciseParticipation)
-                .map(participation -> participation.getProgrammingExercise().getId()).toList();
-        List<Long> failedSolutionExercises = errorList.stream().filter(participation -> participation instanceof SolutionProgrammingExerciseParticipation)
-                .map(participation -> participation.getProgrammingExercise().getId()).toList();
-        List<Long> failedStudentParticipations = errorList.stream().filter(participation -> participation instanceof ProgrammingExerciseStudentParticipation)
-                .map(ParticipationInterface::getId).toList();
-
-        log.error("{} failures during migration", errorList.size());
-        // print each participation in a single line in the long to simplify reviewing the issues
-        log.error("Errors occurred for the following participations: \n{}", errorList.stream().map(Object::toString).collect(Collectors.joining("\n")));
-        log.error("Failed to migrate template build plan for exercises: {}", failedTemplateExercises);
-        log.error("Failed to migrate solution build plan for exercises: {}", failedSolutionExercises);
-        log.error("Failed to migrate students participations: {}", failedStudentParticipations);
-        log.warn("Please check the logs for more information. If the issues are related to the external VCS/CI system, fix the issues and rerun the migration. or "
-                + "fix the build plans yourself and mark the migration as run. The migration can be rerun by deleting the migration entry in the database table containing "
-                + "the migration with author: {} and date_string: {} and then restarting Artemis.", author(), date());
     }
 
     /**
