@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
+    // TODO: try to remove inner query due to performance reasons
     @Query("""
             SELECT p
             FROM ProgrammingExerciseStudentParticipation p
@@ -57,7 +58,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             WHERE p.id = :participationId AND ((pr.assessmentType = 'AUTOMATIC'
                         OR (pr.completionDate IS NOT NULL
                             AND (p.exercise.assessmentDueDate IS NULL
-                                OR p.exercise.assessmentDueDate < :#{#dateTime}))) OR pr.id IS NULL)
+                                OR p.exercise.assessmentDueDate < :dateTime))) OR pr.id IS NULL)
              """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
@@ -217,6 +218,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
             WHERE p.repositoryUri IS NOT NULL
+            ORDER BY p.id DESC
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUri(Pageable pageable);
 
@@ -233,7 +235,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @Query("""
             UPDATE ProgrammingExerciseStudentParticipation p
             SET p.buildPlanId = NULL
-            WHERE p.exercise.id = :#{#exerciseId}
+            WHERE p.exercise.id = :exerciseId
             """)
     void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
 }
