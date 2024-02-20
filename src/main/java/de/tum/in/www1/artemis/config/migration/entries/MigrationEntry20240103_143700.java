@@ -378,11 +378,6 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                     errorList.add(participation);
                 }
                 else {
-                    var user = getUserFromRepositoryUri(participation.getRepositoryUri());
-                    if (user != null) {
-                        // localvc expects the user to be part of the url, which is not in the normal repository uri, so we add it here
-                        url = url.replace("://", "://" + user + "@");
-                    }
                     log.debug("Migrated student participation with id {} to {}", participation.getId(), url);
                     participation.setRepositoryUri(url);
                     if (participation.getBranch() != null) {
@@ -396,15 +391,6 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                 log.error("Failed to migrate student participation with id {}", participation.getId(), e);
                 errorList.add(participation);
             }
-    }
-
-    private String getUserFromRepositoryUri(String repositoryUri) {
-        try {
-            return repositoryUri.split("@")[0].split("//")[1];
-        }
-        catch (Exception e) {
-            return null;
-        }
     }
 
     /**
