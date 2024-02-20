@@ -46,9 +46,9 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 @Component
 public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationEntry {
 
-    private static final int BATCH_SIZE = 1;
+    private static final int BATCH_SIZE = 100;
 
-    private static final int MAX_THREAD_COUNT = 1;
+    private static final int MAX_THREAD_COUNT = 32;
 
     private static final int TIMEOUT_IN_HOURS = 48;
 
