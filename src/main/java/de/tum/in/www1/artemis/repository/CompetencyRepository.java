@@ -40,6 +40,9 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             """)
     Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "exercises", "lectureUnits", "lectureUnits.completedUsers", "lectureUnits.lecture" })
+    Optional<Competency> findCompetencyWithUserProgressAndExercisesAndCompletedUsersAndLecturesById(Long id);
+
     /**
      * Fetches a competency with all linked exercises, lecture units, the associated progress, and completion of the specified user.
      * <p>
@@ -49,20 +52,14 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
      * @param userId       the id of the user whose progress should be fetched
      * @return the competency
      */
-    @Query("""
-            SELECT competency
-            FROM Competency competency
-                LEFT JOIN competency.userProgress progress
-                    ON competency.id = progress.competency.id AND progress.user.id = :userId
-                LEFT JOIN FETCH competency.exercises
-                LEFT JOIN FETCH competency.lectureUnits lectureUnits
-                LEFT JOIN lectureUnits.completedUsers completedUsers
-                    ON lectureUnits.id = completedUsers.lectureUnit.id AND completedUsers.user.id = :userId
-                LEFT JOIN FETCH lectureUnits.lecture
-            WHERE competency.id = :competencyId
-            """)
-    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "lectureUnits.completedUsers" })
-    Optional<Competency> findByIdWithExercisesAndLectureUnitsAndProgressForUser(@Param("competencyId") long competencyId, @Param("userId") long userId);
+    default Optional<Competency> findByIdWithExercisesAndLectureUnitsAndProgressForUser(Long competencyId, Long userId) {
+        Optional<Competency> competency = findCompetencyWithUserProgressAndExercisesAndCompletedUsersAndLecturesById(competencyId);
+        return competency.map(c -> {
+            c.getUserProgress().removeIf(p -> !p.getUser().getId().equals(userId));
+            c.getLectureUnits().forEach(unit -> unit.getCompletedUsers().removeIf(u -> !u.getUser().getId().equals(userId)));
+            return c;
+        });
+    }
 
     @Query("""
             SELECT c
@@ -194,8 +191,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
      * @param userId   the id of the user
      * @return the competencies with the progress of the user
      */
-    @EntityGraph(type = LOAD, attributePaths = { "userProgress" })
-    default List<Competency> findWithUserSpecificProgressByCourseId(@Param("courseId") long courseId, @Param("userId") long userId) {
+    default List<Competency> findWithUserSpecificProgressByCourseId(long courseId, long userId) {
         List<Competency> competencies = findWithUserProgressByCourseId(courseId);
         competencies.forEach(competency -> competency.getUserProgress().removeIf(progress -> progress.getUser().getId() != userId));
         return competencies;
