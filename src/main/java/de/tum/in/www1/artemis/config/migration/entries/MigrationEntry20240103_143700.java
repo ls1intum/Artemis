@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -25,7 +26,6 @@ import com.google.common.collect.Lists;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -46,9 +46,9 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 @Component
 public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationEntry {
 
-    private static final int BATCH_SIZE = 100;
+    private static final int BATCH_SIZE = 1;
 
-    private static final int MAX_THREAD_COUNT = 32;
+    private static final int MAX_THREAD_COUNT = 1;
 
     private static final int TIMEOUT_IN_HOURS = 48;
 
@@ -165,10 +165,12 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
             log.info("Will migrate {} solution participations in batch.", solutionParticipationPage.getNumberOfElements());
             var solutionParticipationsPartitions = Lists.partition(solutionParticipationPage.toList(), (int) threadCount);
             for (var solutionParticipations : solutionParticipationsPartitions) {
-                executorService.submit(() -> migrateSolutions(solutionParticipations));
+                executorService.submit(() -> {
+                    migrateSolutions(solutionParticipations);
+                    solutionCounter.addAndGet(solutionParticipationPage.getNumberOfElements());
+                    logProgress(solutionCounter, solutionCount, threadCount, 2, "solution");
+                });
             }
-            solutionCounter.addAndGet(solutionParticipationPage.getNumberOfElements());
-            logProgress(solutionCounter, solutionCount, threadCount, 2, "solution");
         }
 
         log.info("Submitted all solution participations to thread pool for migration.");
@@ -184,10 +186,12 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
             log.info("Will migrate {} template programming exercises in batch.", templateParticipationPage.getNumberOfElements());
             var templateParticipationsPartitions = Lists.partition(templateParticipationPage.toList(), (int) threadCount);
             for (var templateParticipations : templateParticipationsPartitions) {
-                executorService.submit(() -> migrateTemplates(templateParticipations));
+                executorService.submit(() -> {
+                    migrateTemplates(templateParticipations);
+                    templateCounter.addAndGet(templateParticipationPage.getNumberOfElements());
+                    logProgress(templateCounter, templateCount, threadCount, 1, "template");
+                });
             }
-            templateCounter.addAndGet(templateParticipationPage.getNumberOfElements());
-            logProgress(templateCounter, templateCount, threadCount, 1, "template");
         }
 
         log.info("Submitted all template participations to thread pool for migration.");
@@ -202,10 +206,12 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
             log.info("Will migrate {} student programming exercise participations in batch.", studentParticipationPage.getNumberOfElements());
             var studentPartitionsPartitions = Lists.partition(studentParticipationPage.toList(), (int) threadCount);
             for (var studentParticipations : studentPartitionsPartitions) {
-                executorService.submit(() -> migrateStudents(studentParticipations));
+                executorService.submit(() -> {
+                    migrateStudents(studentParticipations);
+                    studentCounter.addAndGet(studentParticipationPage.getNumberOfElements());
+                    logProgress(templateCounter, templateCount, threadCount, 1, "student");
+                });
             }
-            studentCounter.addAndGet(studentParticipationPage.getNumberOfElements());
-            logProgress(templateCounter, templateCount, threadCount, 1, "student");
         }
 
         shutdown(executorService, TIMEOUT_IN_HOURS, ERROR_MESSAGE);
@@ -375,8 +381,16 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                     errorList.add(participation);
                 }
                 else {
+                    var user = getUserFromRepositoryUri(participation.getRepositoryUri());
+                    if (user != null) {
+                        // localvc expects the user to be part of the url, which is not in the normal repository uri, so we add it here
+                        url = url.replace("://", "://" + user + "@");
+                    }
                     log.debug("Migrated student participation with id {} to {}", participation.getId(), url);
                     participation.setRepositoryUri(url);
+                    if (participation.getBranch() != null) {
+                        participation.setBranch(bitbucketLocalVCMigrationService.get().getDefaultBranch());
+                    }
                     programmingExerciseStudentParticipationRepository.save(participation);
                 }
                 if (url != null && !bitbucketLocalVCMigrationService.get().getDefaultBranch().equals(participation.getBranch())) {
@@ -388,6 +402,15 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                 log.error("Failed to migrate student participation with id {}", participation.getId(), e);
                 errorList.add(participation);
             }
+    }
+
+    private String getUserFromRepositoryUri(String repositoryUri) {
+        try {
+            return repositoryUri.split("@")[0].split("//")[1];
+        }
+        catch (Exception e) {
+            return null;
+        }
     }
 
     /**
@@ -448,6 +471,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
 
         Path repositoryPath = localVCRepositoryUri.getLocalRepositoryPath(bitbucketLocalVCMigrationService.get().getLocalVCBasePath());
+        Path cachedPath = Paths.get(bitbucketLocalVCMigrationService.get().getRepoClonePath(), projectKey, repositorySlug);
 
         try {
             Files.createDirectories(repositoryPath);
@@ -464,27 +488,20 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                 renamedBranch = true;
             }
             git.close();
-            try {
-                // We need to clone the repo here to the local checkout directory
-                Repository repository = gitService.getOrCheckoutRepository(localVCRepositoryUri, true);
-                if (repository != null) {
-                    if (renamedBranch) {
-                        Git localGit = Git.open(repository.getLocalPath().toFile());
-                        localGit.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
-                        localGit.close();
-                    }
-                    log.debug("Cloned local git repository {} to {}", repositorySlug, repositoryPath);
+            // We need to clone the repo here to the local checkout directory
+            try (Git localGit = Git.open(cachedPath.toFile())) {
+                if (renamedBranch) {
+                    localGit.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
+                    localGit.close();
                 }
-                else {
-                    log.error("Failed to clone local git repository {} to {}", repositorySlug, repositoryPath);
-                }
+                log.debug("Cloned local git repository {} to {}", repositorySlug, repositoryPath);
             }
             catch (Exception e) {
                 log.error("Failed to clone local git repository {} to {}", repositorySlug, repositoryPath, e);
             }
             log.debug("Created local git repository {} in folder {}", repositorySlug, repositoryPath);
         }
-        catch (GitAPIException | IOException e) {
+        catch (IOException | GitAPIException e) {
             log.error("Could not create local git repo {} at location {}", repositorySlug, repositoryPath, e);
             throw new LocalVCInternalException("Error while creating local git project.", e);
         }
