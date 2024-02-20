@@ -70,7 +70,13 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
      */
     loadAeolusTemplate() {
         if (this.programmingExercise?.id) {
-            return; // do not load template for existing exercises
+            if (!this.programmingExerciseCreationConfig.buildPlanLoaded && !this.programmingExercise.windFile) {
+                if (this.programmingExercise.buildPlanConfiguration) {
+                    this.programmingExercise.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
+                }
+                this.programmingExerciseCreationConfig.buildPlanLoaded = true;
+            }
+            return;
         }
         this.resetCustomBuildPlan();
         if (!this.programmingExercise.programmingLanguage) {

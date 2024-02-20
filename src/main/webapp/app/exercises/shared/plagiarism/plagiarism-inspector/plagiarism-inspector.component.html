@@ -3,11 +3,11 @@
         <div class="plagiarism-header-top">
             <div class="plagiarism-header-top-left">
                 <h4 class="plagiarism-page-title fw-medium" (click)="showOptions = !showOptions" [class.active]="showOptions">
-                    <fa-icon class="plagiarism-options-toggle" [icon]="faChevronRight"></fa-icon>
+                    <fa-icon class="plagiarism-options-toggle" [icon]="faChevronRight" />
                     <span>{{ 'artemisApp.plagiarism.plagiarismDetection' | artemisTranslate }}</span>
                 </h4>
                 <div class="plagiarism-warning">
-                    <fa-icon [icon]="faExclamationTriangle" id="plagiarismCaution"></fa-icon>
+                    <fa-icon [icon]="faExclamationTriangle" id="plagiarismCaution" />
                     <span>{{ 'artemisApp.plagiarism.caution' | artemisTranslate }}</span>
                 </div>
             </div>
@@ -82,7 +82,7 @@
         <div class="plagiarism-header-options" [hidden]="!showOptions">
             <div class="plagiarism-option">
                 <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.similarityThreshold">Similarity Threshold</div>
-                <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate"></fa-icon>
+                <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate" />
                 <input type="number" required class="form-control" min="0" max="100" step="5" id="plagiarism-similarity-threshold" [(ngModel)]="similarityThreshold" />
             </div>
             <div class="plagiarism-option" [class.disabled]="!enableMinimumScore">
@@ -90,7 +90,7 @@
                     <input type="checkbox" id="enableMinimumScore" class="plagiarism-option-checkbox form-check-input" [(ngModel)]="enableMinimumScore" checked />
                     <div class="plagiarism-option-label form-check-label" jhiTranslate="artemisApp.plagiarism.minimumScore">Minimum Score</div>
                 </div>
-                <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate"></fa-icon>
+                <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate" />
                 <input required type="number" [disabled]="!enableMinimumScore" class="form-control" min="0" max="100" id="plagiarism-minimum-score" [(ngModel)]="minimumScore" />
             </div>
             <div class="plagiarism-option" [class.disabled]="!enableMinimumSize">
@@ -98,7 +98,7 @@
                     <input type="checkbox" id="enableMinimumSize" class="plagiarism-option-checkbox form-check-input" [(ngModel)]="enableMinimumSize" checked />
                     <label for="enableMinimumSize" class="plagiarism-option-label form-check-label" jhiTranslate="artemisApp.plagiarism.minimumSize">Minimum Size</label>
                 </div>
-                <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate"></fa-icon>
+                <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate" />
                 <input required type="number" [disabled]="!enableMinimumSize" class="form-control" min="0" max="100" id="plagiarism-minimum-size" [(ngModel)]="minimumSize" />
             </div>
             @if (isProgrammingExercise()) {
@@ -119,18 +119,14 @@
                 (selectIndex)="selectComparisonWithID($event)"
                 [activeID]="selectedComparisonId"
                 [casesFiltered]="chartFilterApplied"
-            ></jhi-plagiarism-sidebar>
-            <jhi-plagiarism-details
-                [hidden]="showRunDetails"
-                [comparison]="plagiarismResult.comparisons ? getSelectedComparison() : undefined"
-                [exercise]="exercise"
-            ></jhi-plagiarism-details>
+            />
+            <jhi-plagiarism-details [hidden]="showRunDetails" [comparison]="plagiarismResult.comparisons ? getSelectedComparison() : undefined" [exercise]="exercise" />
             <jhi-plagiarism-run-details
                 [hidden]="!showRunDetails"
                 [plagiarismResult]="plagiarismResult"
                 [plagiarismResultStats]="plagiarismResultStats"
                 (similaritySelected)="filterByChart($event)"
-            ></jhi-plagiarism-run-details>
+            />
         </div>
     }
     @if (!plagiarismResult || detectionInProgress) {

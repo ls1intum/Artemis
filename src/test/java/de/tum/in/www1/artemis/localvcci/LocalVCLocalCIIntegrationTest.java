@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -62,8 +63,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     private LocalRepository solutionRepository;
 
     private LocalRepository assignmentRepository;
-
-    private LocalRepository auxiliaryRepository;
 
     private String teamShortName;
 
@@ -161,6 +160,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
             return buildJobOptional.isPresent() && buildJobOptional.get().getTriggeredByPushTo().equals(RepositoryType.TESTS);
         });
 
+        // Assert that the build job for the solution was completed before the build job for the template participation has started
+        var solutionBuildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(solutionParticipation.getId()).get();
+        var templateBuildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(templateParticipation.getId()).get();
+        assertThat(solutionBuildJob.getBuildCompletionDate()).isBefore(templateBuildJob.getBuildStartDate());
+
     }
 
     @Test
@@ -243,7 +247,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         programmingExercise.setAuxiliaryRepositories(auxiliaryRepositories);
         programmingExerciseRepository.save(programmingExercise);
 
-        auxiliaryRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, auxiliaryRepositorySlug);
+        LocalRepository auxiliaryRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, auxiliaryRepositorySlug);
 
         // Students should not be able to fetch and push.
         localVCLocalCITestService.testFetchReturnsError(auxiliaryRepository.localGit, student1Login, projectKey1, auxiliaryRepositorySlug, NOT_AUTHORIZED);

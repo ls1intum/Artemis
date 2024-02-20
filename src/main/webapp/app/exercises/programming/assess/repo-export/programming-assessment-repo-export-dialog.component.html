@@ -56,20 +56,20 @@
                     <label class="control-label">
                         <input class="form-check-input" type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.repositoryExportOptions.filterLateSubmissions" />
                         <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissions.title">Filter late submissions</strong>
-                        <jhi-help-icon text="artemisApp.programmingExercise.export.filterLateSubmissions.tooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.export.filterLateSubmissions.tooltip" />
                     </label>
                 </div>
                 <div class="form-group">
                     <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissionsDate.title"
                         >Date for filter late submissions (defaults to exercise due date if not set)</strong
                     >
-                    <jhi-help-icon text="artemisApp.programmingExercise.export.filterLateSubmissionsDate.tooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.programmingExercise.export.filterLateSubmissionsDate.tooltip" />
                     <jhi-date-time-picker
                         [(ngModel)]="this.repositoryExportOptions.filterLateSubmissionsDate"
                         [disabled]="!this.repositoryExportOptions.filterLateSubmissions"
                         [shouldDisplayTimeZoneWarning]="false"
                         name="filterLateSubmissionsDate"
-                    ></jhi-date-time-picker>
+                    />
                 </div>
             }
             @if (!singleParticipantMode) {
@@ -77,7 +77,7 @@
                     <label class="control-label">
                         <input class="form-check-input" type="checkbox" name="excludePracticeSubmissions" [(ngModel)]="this.repositoryExportOptions.excludePracticeSubmissions" />
                         <strong jhiTranslate="artemisApp.programmingExercise.export.excludePracticeSubmissions.title">Exclude practice submissions</strong>
-                        <jhi-help-icon text="artemisApp.programmingExercise.export.excludePracticeSubmissions.tooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.export.excludePracticeSubmissions.tooltip" />
                     </label>
                 </div>
             }
@@ -98,7 +98,7 @@
                         @if (isRepoExportForMultipleExercises) {
                             <strong [jhiTranslate]="'artemisApp.programmingExercise.export.addToProject.title.teamOrStudent'"> Add team/student name to project </strong>
                         }
-                        <jhi-help-icon text="artemisApp.programmingExercise.export.addToProject.tooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.export.addToProject.tooltip" />
                     </label>
                 </div>
             }
@@ -106,7 +106,7 @@
                 <label class="control-label">
                     <input class="form-check-input" type="checkbox" name="combineStudentCommits" [(ngModel)]="this.repositoryExportOptions.combineStudentCommits" />
                     <strong jhiTranslate="artemisApp.programmingExercise.export.combineStudentCommits.title">Combine all changes after instructor into one commit</strong>
-                    <jhi-help-icon text="artemisApp.programmingExercise.export.combineStudentCommits.tooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.programmingExercise.export.combineStudentCommits.tooltip" />
                 </label>
             </div>
             @if (isAtLeastInstructor) {
@@ -120,7 +120,7 @@
                             [disabled]="!isAtLeastInstructor"
                         />
                         <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeRepository.title">Anonymize repository</strong>
-                        <jhi-help-icon text="artemisApp.programmingExercise.export.anonymizeRepository.tooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.export.anonymizeRepository.tooltip" />
                     </label>
                 </div>
             }
@@ -128,7 +128,7 @@
                 <label class="control-label">
                     <input class="form-check-input" type="checkbox" name="normalizeCodeStyle" [(ngModel)]="this.repositoryExportOptions.normalizeCodeStyle" />
                     <strong jhiTranslate="artemisApp.programmingExercise.export.normalizeCodeStyle.title">Normalize code style (line endings, encoding)</strong>
-                    <jhi-help-icon text="artemisApp.programmingExercise.export.normalizeCodeStyle.tooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.programmingExercise.export.normalizeCodeStyle.tooltip" />
                 </label>
             </div>
             @if (!singleParticipantMode) {
@@ -150,7 +150,7 @@
                 class="btn btn-default"
             >
                 @if (this.exportInProgress) {
-                    <span class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
+                    <span class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true" /></span>
                 }
                 <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
             </button>
@@ -158,6 +158,6 @@
     </form>
 } @else {
     <div class="d-flex justify-content-center mt-4 mb-4">
-        <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
+        <fa-icon [icon]="faCircleNotch" [spin]="true" />
     </div>
 }

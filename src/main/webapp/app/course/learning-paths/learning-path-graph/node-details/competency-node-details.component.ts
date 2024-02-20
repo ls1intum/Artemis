@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency, CompetencyProgress, getConfidence, getIcon, getIconTooltip, getMastery, getProgress } from 'app/entities/competency.model';
+import { Competency, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
@@ -19,7 +19,6 @@ export class CompetencyNodeDetailsComponent implements OnInit {
     isLoading = false;
 
     protected readonly getIcon = getIcon;
-    protected readonly getIconTooltip = getIconTooltip;
 
     constructor(
         private competencyService: CompetencyService,

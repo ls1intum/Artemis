@@ -5,7 +5,7 @@
     <h3 class="section-headline" [id]="headlinesRecord[section.headline]">{{ section.headline | artemisTranslate }}</h3>
     <dl>
         @for (detail of section.details; track detail) {
-            @if (detail !== false && detail !== undefined) {
+            @if (!!detail) {
                 @if (detail.title) {
                     <dt id="detail-title-{{ detail.title }}">
                         <span>{{ detail.title | artemisTranslate: detail.titleTranslationProps }}</span>
@@ -67,6 +67,12 @@
                                         <a [href]="detail.data.participation?.repositoryUri!" target="”_blank”" class="btn btn-sm btn-info ms-2">
                                             <fa-icon [icon]="faArrowUpRightFromSquare" />
                                             <span jhiTranslate="artemisApp.programmingExercise.openRepository">Open Repository</span>
+                                        </a>
+                                    }
+                                    @if (isLocalVC) {
+                                        <a [href]="routerLink + '/repository/' + detail.data.type" class="btn btn-sm btn-primary ms-2">
+                                            <fa-icon [icon]="faCodeBranch" />
+                                            <span jhiTranslate="artemisApp.exerciseActions.openRepository">Open Repository</span>
                                         </a>
                                     }
                                 </div>
