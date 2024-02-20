@@ -104,8 +104,7 @@ public class ExamDateService {
                 return false;
             }
         }
-        return false;
-        //throw new IllegalStateException("No student exam found for student participation " + studentParticipation.getId());
+        throw new IllegalStateException("No student exam found for student participation " + studentParticipation.getId());
     }
 
     /**
