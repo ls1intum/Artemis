@@ -387,12 +387,9 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                     participation.setRepositoryUri(url);
                     if (participation.getBranch() != null) {
                         participation.setBranch(bitbucketLocalVCMigrationService.get().getDefaultBranch());
+                        log.debug("Changed branch of student participation with id {} to {}", participation.getId(), participation.getBranch());
                     }
                     programmingExerciseStudentParticipationRepository.save(participation);
-                }
-                if (url != null && !bitbucketLocalVCMigrationService.get().getDefaultBranch().equals(participation.getBranch())) {
-                    participation.setBranch(bitbucketLocalVCMigrationService.get().getDefaultBranch());
-                    log.debug("Changed branch of student participation with id {} to {}", participation.getId(), participation.getBranch());
                 }
             }
             catch (Exception e) {
