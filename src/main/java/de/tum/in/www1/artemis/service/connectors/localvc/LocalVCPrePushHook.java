@@ -18,6 +18,12 @@ import org.eclipse.jgit.transport.ReceivePack;
  */
 public class LocalVCPrePushHook implements PreReceiveHook {
 
+    private final LocalVCServletService localVCServletService;
+
+    public LocalVCPrePushHook(LocalVCServletService localVCServletService) {
+        this.localVCServletService = localVCServletService;
+    }
+
     /**
      * Called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was successful).
      *
@@ -42,13 +48,17 @@ public class LocalVCPrePushHook implements PreReceiveHook {
             return;
         }
 
+        Repository repository = receivePack.getRepository();
+
+        String mainBranchName = localVCServletService.getMainBranchOfRepository(repository);
+
+        System.out.println("mainBranchName: " + mainBranchName);
+
         // Reject pushes to anything other than the default branch.
-        if (!command.getRefName().equals("refs/heads/main")) {
+        if (!command.getRefName().equals("refs/heads/" + mainBranchName)) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push to a branch other than the default branch.");
             return;
         }
-
-        Repository repository = receivePack.getRepository();
 
         try {
             Git git = new Git(repository);

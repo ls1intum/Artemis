@@ -152,6 +152,10 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUri) {
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString(), localVCBaseUrl);
+        return getDefaultBranchOfRepository(localVCRepositoryUri);
+    }
+
+    public String getDefaultBranchOfRepository(LocalVCRepositoryUri localVCRepositoryUri) {
         String localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toString();
         Map<String, Ref> remoteRepositoryRefs;
         try {
