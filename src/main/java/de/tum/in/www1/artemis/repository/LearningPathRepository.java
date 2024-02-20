@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -88,12 +89,12 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
     default LearningPath findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(long learningPathId) {
         LearningPath learningPath = findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersWithoutJoinConditionById(learningPathId)
                 .orElseThrow(() -> new EntityNotFoundException("LearningPath", learningPathId));
-        long userId = learningPath.getUser().getId();
+        User user = learningPath.getUser();
         learningPath.getCompetencies().forEach(competency -> {
-            competency.getUserProgress().removeIf(progress -> progress.getUser().getId() != userId);
-            competency.getLectureUnits().forEach(lectureUnit -> lectureUnit.getCompletedUsers().removeIf(user -> user.getUser().getId() != userId));
+            competency.getUserProgress().removeIf(progress -> !progress.getUser().equals(user));
+            competency.getLectureUnits().forEach(lectureUnit -> lectureUnit.getCompletedUsers().removeIf(compUser -> !compUser.getUser().equals(user)));
             competency.getExercises().forEach(exercise -> exercise.getStudentParticipations()
-                    .removeIf(participation -> participation.getStudent().isEmpty() || participation.getStudent().get().getId() != userId));
+                    .removeIf(participation -> participation.getStudent().isEmpty() || !participation.getStudent().get().equals(user)));
         });
 
         return learningPath;
