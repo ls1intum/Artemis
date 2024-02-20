@@ -6,8 +6,6 @@ import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,12 +17,8 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 
-import de.tum.in.www1.artemis.config.migration.MigrationEntry;
-import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Action;
@@ -33,7 +27,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 
 @Component
-public class MigrationEntry20240104_195600 extends MigrationEntry {
+public class MigrationEntry20240104_195600 extends ProgrammingExerciseMigrationEntry {
 
     private static final int BATCH_SIZE = 100;
 
@@ -107,27 +101,8 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
 
         log.info("Submitted all solution participations to thread pool for migration.");
 
-        // Wait for all threads to finish
-        executorService.shutdown();
-
-        try {
-            boolean finished = executorService.awaitTermination(TIMEOUT_IN_HOURS, TimeUnit.HOURS);
-            if (!finished) {
-                log.error(ERROR_MESSAGE);
-                if (executorService.awaitTermination(1, TimeUnit.MINUTES)) {
-                    log.error("Failed to cancel all migration threads. Some threads are still running.");
-                }
-                throw new RuntimeException(ERROR_MESSAGE);
-            }
-        }
-        catch (InterruptedException e) {
-            log.error(ERROR_MESSAGE);
-            executorService.shutdownNow();
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-        }
-
-        log.info("Finished migrating programming exercises");
+        shutdown(executorService, TIMEOUT_IN_HOURS, ERROR_MESSAGE);
+        log.info("Finished migrating programming exercises and student participations");
         evaluateErrorList();
     }
 
@@ -199,33 +174,6 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
                 }
             }
         }
-    }
-
-    /**
-     * Evaluates the error map and prints the errors to the log.
-     */
-    private void evaluateErrorList() {
-        if (errorList.isEmpty()) {
-            log.info("Successfully migrated all programming exercises");
-            return;
-        }
-
-        List<Long> failedTemplateExercises = errorList.stream().filter(participation -> participation instanceof TemplateProgrammingExerciseParticipation)
-                .map(participation -> participation.getProgrammingExercise().getId()).toList();
-        List<Long> failedSolutionExercises = errorList.stream().filter(participation -> participation instanceof SolutionProgrammingExerciseParticipation)
-                .map(participation -> participation.getProgrammingExercise().getId()).toList();
-        List<Long> failedStudentParticipations = errorList.stream().filter(participation -> participation instanceof ProgrammingExerciseStudentParticipation)
-                .map(ParticipationInterface::getId).toList();
-
-        log.error("{} failures during migration", errorList.size());
-        // print each participation in a single line in the long to simplify reviewing the issues
-        log.error("Errors occurred for the following participations: \n{}", errorList.stream().map(Object::toString).collect(Collectors.joining("\n")));
-        log.error("Failed to migrate template build plan for exercises: {}", failedTemplateExercises);
-        log.error("Failed to migrate solution build plan for exercises: {}", failedSolutionExercises);
-        log.error("Failed to migrate students participations: {}", failedStudentParticipations);
-        log.warn("Please check the logs for more information. If the issues are related to the external VCS/CI system, fix the issues and rerun the migration. or "
-                + "fix the build plans yourself and mark the migration as run. The migration can be rerun by deleting the migration entry in the database table containing "
-                + "the migration with author: {} and date_string: {} and then restarting Artemis.", author(), date());
     }
 
     @Override
