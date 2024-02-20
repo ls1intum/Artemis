@@ -99,8 +99,8 @@ public class ExamDateService {
         }
         else {
             // for test runs
-            var optionalTestRun = studentExamRepository.findTestRunByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
-            if (optionalTestRun.isPresent()) {
+            var testRuns = studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(exam.getId(), studentParticipation.getParticipant().getId());
+            if (!testRuns.isEmpty()) {
                 return false;
             }
         }
