@@ -6,7 +6,6 @@ import java.util.*;
 
 import javax.ws.rs.BadRequestException;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
@@ -147,7 +146,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
     record IrisChatRequestDTO(
             ProgrammingExercise exercise,
             Course course,
-            ProgrammingSubmission latestSubmission,
+            Optional<ProgrammingSubmission> latestSubmission,
             boolean buildFailed,
             List<BuildLogEntry> buildLog,
             IrisChatSession session,
@@ -200,9 +199,9 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
     private IrisChatRequestDTO createRequestArgumentsDTO(IrisChatSession session) {
         final ProgrammingExercise exercise = session.getExercise();
         final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        final ProgrammingSubmission latestSubmission = getLatestSubmissionIfExists(exercise, session.getUser());
-        final boolean buildFailed = latestSubmission != null && latestSubmission.isBuildFailed();
-        final List<BuildLogEntry> buildLog = latestSubmission != null ? latestSubmission.getBuildLogEntries() : List.of();
+        final Optional<ProgrammingSubmission> latestSubmission = getLatestSubmissionIfExists(exercise, session.getUser());
+        final boolean buildFailed = latestSubmission.map(ProgrammingSubmission::isBuildFailed).orElse(false);
+        final List<BuildLogEntry> buildLog = latestSubmission.map(ProgrammingSubmission::getBuildLogEntries).orElse(List.of());
         final Repository templateRepository = templateRepository(exercise);
         final Optional<Repository> studentRepository = studentRepository(latestSubmission);
         final Map<String, String> templateRepositoryContents = repositoryService.getFilesWithContent(templateRepository);
@@ -212,13 +211,13 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
         return new IrisChatRequestDTO(exercise, course, latestSubmission, buildFailed, buildLog, session, gitDiff, templateRepositoryContents, studentRepositoryContents);
     }
 
-    private ProgrammingSubmission getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
+    private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
         var participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
         if (participations.isEmpty()) {
-            return null;
+            return Optional.empty();
         }
         return participations.get(participations.size() - 1).getSubmissions().stream().max(Submission::compareTo)
-                .flatMap(sub -> programmingSubmissionRepository.findWithEagerBuildLogEntriesById(sub.getId())).orElse(null);
+                .flatMap(sub -> programmingSubmissionRepository.findWithEagerBuildLogEntriesById(sub.getId()));
     }
 
     private Repository templateRepository(ProgrammingExercise exercise) {
@@ -232,8 +231,8 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
         }).orElseThrow(() -> new InternalServerErrorException("Iris cannot function without template participation"));
     }
 
-    private Optional<Repository> studentRepository(@Nullable ProgrammingSubmission latestSubmission) {
-        return Optional.ofNullable(latestSubmission).map(sub -> (ProgrammingExerciseParticipation) sub.getParticipation()).map(participation -> {
+    private Optional<Repository> studentRepository(Optional<ProgrammingSubmission> latestSubmission) {
+        return latestSubmission.map(sub -> (ProgrammingExerciseParticipation) sub.getParticipation()).map(participation -> {
             try {
                 return gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), true);
             }
