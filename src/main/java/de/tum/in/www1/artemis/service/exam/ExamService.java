@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -580,6 +581,10 @@ public class ExamService {
             // set the locked property of the participation properly
             if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
                     && exercise instanceof ProgrammingExercise programmingExercise) {
+                // check if hibernate proxy is initialized
+                if (!Hibernate.isInitialized(programmingExerciseStudentParticipation.getSubmissions())) {
+                    programmingExercise = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow();
+                }
                 var submissionPolicy = programmingExercise.getSubmissionPolicy();
                 // in the unlikely case the student exam was already submitted, set all participations to locked
                 if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(studentExam.isEnded())) {
