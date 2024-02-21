@@ -141,7 +141,7 @@ test.describe('Exam management', () => {
             await examManagement.openStudentRegistration(exam.id!);
             const response = await studentExamManagement.clickRegisterCourseStudents();
             expect(response.status()).toBe(200);
-            await studentExamManagement.checkExamStudent(studentOne.username);
+            await studentExamManagement.checkStudent(studentOne.username);
         });
 
         // TODO: Investigate when generate student exams button should be disabled

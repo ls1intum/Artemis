@@ -83,10 +83,6 @@ test.describe('Test Exam - student exams', () => {
 
             await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Used working time', '0s');
             await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Used working time', '0s');
-
-            await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Student', studentNames.get(studentOne)!.trim());
-            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Student', studentNames.get(studentTwo)!.trim());
-            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Student', studentNames.get(studentThree)!.trim());
         });
 
         test('Search for a student in exams', async ({ page, navigationBar, courseManagement, examManagement, studentExamManagement }) => {

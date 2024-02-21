@@ -80,7 +80,7 @@ test.describe('Exam participation', () => {
                 const exercise = exerciseArray[j];
                 await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id!, exercise.exerciseGroup!.title!);
                 if (exercise.type === ExerciseType.TEXT) {
-                    await examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
+                    await examParticipation.verifyTextExerciseOnFinalPage(exercise.id!, exercise.additionalData!.textFixture!);
                 }
             }
             await examParticipation.checkExamTitle(examTitle);
@@ -182,7 +182,7 @@ test.describe('Exam participation', () => {
 
             await examParticipation.handInEarly();
             await examStartEnd.pressShowSummary();
-            await examParticipation.verifyTextExerciseOnFinalPage(textFixtureShort);
+            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textFixtureShort);
             await examParticipation.checkExamTitle(examTitle);
 
             await login(instructor);
@@ -212,7 +212,7 @@ test.describe('Exam participation', () => {
             await examParticipation.clickSaveAndContinue();
             await examParticipation.handInEarly();
             await examStartEnd.pressShowSummary();
-            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
+            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
             await examParticipation.checkExamTitle(examTitle);
 
             await login(instructor);
@@ -228,12 +228,12 @@ test.describe('Exam participation', () => {
             await examParticipation.clickSaveAndContinue();
             await examParticipation.handInEarly();
             await examStartEnd.pressShowSummary();
-            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
+            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
             await examParticipation.checkExamTitle(examTitle);
 
             await page.reload();
 
-            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
+            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
             await examParticipation.checkExamTitle(examTitle);
 
             await login(instructor);
@@ -280,7 +280,7 @@ test.describe('Exam participation', () => {
             const response = await examStartEnd.finishExam();
             expect(response.status()).toBe(200);
             await examStartEnd.pressShowSummary();
-            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
+            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
             await examParticipation.checkExamTitle(examTitle);
 
             await login(instructor);

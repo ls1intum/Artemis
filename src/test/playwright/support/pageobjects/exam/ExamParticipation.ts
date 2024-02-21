@@ -117,7 +117,7 @@ export class ExamParticipation {
         await this.courseList.openCourse(course.id!);
         await this.courseOverview.openExamsTab();
         await this.courseOverview.openExam(exam.id!);
-        await this.page.waitForURL(`**/exams/${exam.id}`);
+        await this.page.waitForURL(new RegExp(`/exams/${exam.id}`));
     }
 
     async startParticipation(student: UserCredentials, course: Course, exam: Exam) {
@@ -175,9 +175,9 @@ export class ExamParticipation {
         await expect(exercise.locator(`#exercise-group-title-${exerciseID}`).getByText(exerciseTitle)).toBeVisible();
     }
 
-    // TODO: Test fixture correctness.
-    async verifyTextExerciseOnFinalPage(textFixture: string): Promise<void> {
+    async verifyTextExerciseOnFinalPage(exerciseID: number, textFixture: string): Promise<void> {
+        const exercise = getExercise(this.page, exerciseID);
         const submissionText = await Fixtures.get(textFixture);
-        await expect(this.page.locator('#text-editor')).toHaveValue(submissionText!);
+        await expect(exercise.locator('#text-editor')).toHaveValue(submissionText!);
     }
 }

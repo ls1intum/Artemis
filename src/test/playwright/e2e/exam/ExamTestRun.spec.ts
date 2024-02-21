@@ -135,7 +135,7 @@ test.describe('Exam test run', () => {
                 const exercise = exerciseArray[j];
                 await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id!, exercise.exerciseGroup!.title!);
                 if (exercise.type === ExerciseType.TEXT) {
-                    await examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
+                    await examParticipation.verifyTextExerciseOnFinalPage(exercise.id!, exercise.additionalData!.textFixture!);
                 }
             }
             await examParticipation.checkExamTitle(examTitle);

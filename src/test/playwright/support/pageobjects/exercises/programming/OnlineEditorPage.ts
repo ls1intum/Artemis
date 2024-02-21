@@ -24,19 +24,27 @@ export class OnlineEditorPage {
 
     async typeSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission) {
         for (const newFile of submission.files) {
-            const filenameComponents = newFile.name.split('.');
-            const filename = filenameComponents[0];
-            const fileExtension = filenameComponents[1];
             if (submission.createFilesInRootFolder) {
-                await this.createFileInRootFolder(exerciseID, filename);
+                await this.createFileInRootFolder(exerciseID, newFile.name);
             } else {
-                await this.createFileInRootPackage(exerciseID, filename, submission.packageName!);
+                await this.createFileInRootPackage(exerciseID, newFile.name, submission.packageName!);
             }
             const fileContent = await Fixtures.get(newFile.path);
             const editorElement = getExercise(this.page, exerciseID).locator('#ace-code-editor');
             await editorElement.focus();
-            await editorElement.pressSequentially(fileContent!);
-            await this.renameFile(exerciseID, filename, `.${fileExtension}`, false);
+            // await editorElement.pressSequentially(fileContent!);
+            await this.page.evaluate(
+                ({ editorSelector, fileContent }) => {
+                    console.log('Filling code editor');
+                    const editorElement = document.querySelector(editorSelector);
+                    if (editorElement) {
+                        // @ts-expect-error ace does not exists on windows, but works without issue
+                        const editor = ace.edit(editorElement);
+                        editor.setValue(fileContent, 1); // Set the editor's content
+                    }
+                },
+                { editorSelector: '#ace-code-editor', fileContent: fileContent! },
+            );
         }
         await this.page.waitForTimeout(500);
     }

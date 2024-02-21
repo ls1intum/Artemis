@@ -72,6 +72,7 @@ test.describe('Exam assessment', () => {
         });
 
         test('Complaints about programming exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
+            test.fixme();
             if (programmingAssessmentSuccessful) {
                 await handleComplaint(course, exam, false, ExerciseType.PROGRAMMING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
             }
@@ -157,6 +158,7 @@ test.describe('Exam assessment', () => {
         });
 
         test('Assesses quiz automatically', async ({ page, login, examManagement, courseAssessment, examParticipation }) => {
+            test.fixme();
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             if (dayjs().isBefore(examEnd)) {

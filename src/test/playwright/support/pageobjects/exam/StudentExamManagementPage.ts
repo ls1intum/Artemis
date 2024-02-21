@@ -1,5 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { COURSE_BASE } from '../../constants';
+import { users } from '../../users';
 
 export class StudentExamManagementPage {
     private readonly page: Page;
@@ -36,7 +37,7 @@ export class StudentExamManagementPage {
         return this.getStudentExamRows().filter({ hasText: new RegExp(`\\s+${username}\\s+`) });
     }
 
-    private async checkPropertyValue(property: string, value: string, username?: string) {
+    private async checkPropertyValue(property: string, value: string, studentName: string) {
         await this.page.locator('.data-table-container').waitFor({ state: 'visible' });
         const headers = this.page.locator('.datatable-header-cell');
         let propertyIndex: number | undefined;
@@ -49,18 +50,24 @@ export class StudentExamManagementPage {
         }
 
         expect(propertyIndex).toBeDefined();
-        const options = username ? { hasText: username } : undefined;
         await expect(
-            this.page.locator('.datatable-body-row', options).locator('.datatable-row-center').getByRole('cell').nth(propertyIndex!).filter({ hasText: value }),
+            this.page.locator('.datatable-body-row', { hasText: studentName }).locator('.datatable-row-center').getByRole('cell').nth(propertyIndex!).getByText(value),
         ).toBeVisible();
     }
 
     async checkStudentExamProperty(username: string, property: string, value: string) {
-        await this.checkPropertyValue(property, value, username);
+        const studentInfo = await users.getUserInfo(username, this.page);
+        await this.checkPropertyValue(property, value, studentInfo.name!);
+    }
+
+    async checkStudent(username: string) {
+        const studentInfo = await users.getUserInfo(username, this.page);
+        await this.checkPropertyValue('Login', username, studentInfo.name!);
     }
 
     async checkExamStudent(username: string) {
-        await this.checkPropertyValue('Login', username);
+        const studentInfo = await users.getUserInfo(username, this.page);
+        await this.checkPropertyValue('Student', studentInfo.name!, studentInfo.name!);
     }
 
     async typeSearchText(text: string) {
