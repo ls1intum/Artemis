@@ -14,7 +14,7 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons';
             [icon]="faFileExport"
             [title]="'artemisApp.team.exportTeams.buttonLabel'"
             (onClick)="exportTeams($event)"
-        ></jhi-button>
+        />
     `,
 })
 export class TeamsExportButtonComponent {

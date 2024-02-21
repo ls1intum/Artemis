@@ -5,7 +5,6 @@ import static java.util.concurrent.CompletableFuture.failedFuture;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -22,8 +21,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.*;
 import de.tum.in.www1.artemis.service.iris.exception.*;
 
@@ -80,9 +77,9 @@ public class PyrisConnectorService {
      * @return The message response to the request which includes the {@link IrisMessage} and the used IrisModel
      */
     @Async
-    public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, String preferredModel, Map<String, Object> parameters) {
+    public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, String preferredModel, Object argumentsDTO) {
         var endpoint = "/api/v1/pipelines/{feature}/{variant}/run";
-        var request = new IrisRequestDTO(template, preferredModel, parameters);
+        var request = new PyrisRequestDTO(template, preferredModel, argumentsDTO);
         return tryGetResponse(endpoint, request, preferredModel, IrisMessageResponseDTO.class);
     }
 

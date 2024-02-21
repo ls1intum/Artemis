@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.web.rest.dto.score.StudentScoresDTO;
+
 /**
  * Contains the scores that enable the client to show statistics for a calling student.
  * This includes the percentage of points reached for a course in the course-card.component and the statistics shown in the course-statistics.component.

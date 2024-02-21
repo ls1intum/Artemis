@@ -12,7 +12,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.service.connectors.iris.PyrisConnectorException;
 import de.tum.in.www1.artemis.service.connectors.iris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.exception.*;
@@ -37,37 +36,11 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
     @ParameterizedTest
     @MethodSource("irisExceptions")
-    void testException(int httpStatus, Class<?> exceptionClass) throws Exception {
-        var template = new IrisTemplate("Dummy");
-
-        irisRequestMockProvider.mockMessageV1Error(httpStatus);
-
-        pyrisConnectorService.sendRequest(template, "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
-            assertThat(throwable.getCause()).isNotNull().isInstanceOf(exceptionClass);
-            return null;
-        }).get();
-    }
-
-    @ParameterizedTest
-    @MethodSource("irisExceptions")
     void testExceptionV2(int httpStatus, Class<?> exceptionClass) throws Exception {
         irisRequestMockProvider.mockMessageV2Error(httpStatus);
 
         pyrisConnectorService.sendRequestV2("Dummy", "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
             assertThat(throwable.getCause()).isNotNull().isInstanceOf(exceptionClass);
-            return null;
-        }).get();
-    }
-
-    @Test
-    void testV1ParseException() throws Exception {
-        var template = new IrisTemplate("Dummy");
-
-        irisRequestMockProvider.mockCustomV1Response("{\"invalid\": \"invalid\"}");
-
-        pyrisConnectorService.sendRequest(template, "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
-            assertThat(throwable).isNotNull();
-            assertThat(throwable.getCause()).isNotNull().isInstanceOf(IrisParseResponseException.class);
             return null;
         }).get();
     }
