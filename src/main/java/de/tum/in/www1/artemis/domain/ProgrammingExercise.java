@@ -654,6 +654,8 @@ public class ProgrammingExercise extends Exercise {
         setTestRepositoryUri(null);
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
+        setBuildPlanConfiguration(null);
+        setBuildScript(null);
         super.filterSensitiveInformation();
     }
 

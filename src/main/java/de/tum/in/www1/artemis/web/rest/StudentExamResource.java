@@ -778,8 +778,7 @@ public class StudentExamResource {
 
         // remove build script and config information from the student exam
         for (var programmingExercise : programmingExercises) {
-            programmingExercise.setBuildScript(null);
-            programmingExercise.setBuildPlanConfiguration(null);
+            programmingExercise.filterSensitiveInformation();
         }
 
         // Load quizzes from database, because they include lazy relationships
