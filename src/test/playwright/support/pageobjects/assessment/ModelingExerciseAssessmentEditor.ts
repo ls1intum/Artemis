@@ -11,9 +11,12 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
     async openAssessmentForComponent(componentNumber: number) {
         await this.page
             .locator('#apollon-assessment-row')
-            .locator(`${MODELING_EDITOR_CANVAS} >>> :nth-child(${componentNumber})`)
+            .locator(MODELING_EDITOR_CANVAS)
+            .locator('g')
+            .nth(componentNumber)
+            .locator('svg')
             .nth(0)
-            .click({ clickCount: 2, position: { x: 0, y: 0 }, force: true });
+            .click({ clickCount: 2, position: { x: 100, y: 5 }, force: true });
     }
 
     async assessComponent(points: number, feedback: string) {
@@ -48,15 +51,15 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
     }
 
     private getNextAssessmentField() {
-        return this.getAssessmentContainer().getByRole('region').last();
+        return this.getAssessmentContainer().locator('section', { hasText: 'Next Assessment' });
     }
 
     private getPointAssessmentField() {
-        return this.getAssessmentContainer().getByRole('region').nth(1).locator('div').locator('div').nth(1);
+        return this.getAssessmentContainer().locator('section', { hasText: 'Points' }).nth(0).locator('input');
     }
 
     private getFeedbackAssessmentField() {
-        return this.getAssessmentContainer().getByRole('region').nth(3);
+        return this.getAssessmentContainer().locator('textarea').nth(0);
     }
 
     private getAssessmentContainer() {

@@ -66,7 +66,7 @@ test.describe('Test Exam creation/deletion', () => {
         expect(exam.endText).toBe(examData.endText);
         expect(exam.confirmationStartText).toBe(examData.confirmationStartText);
         expect(exam.confirmationEndText).toBe(examData.confirmationEndText);
-        await page.waitForURL(`/exams/${exam.id}`);
+        await page.waitForURL(`**/exams/${exam.id}**`);
         await expect(examManagement.getExamTitle().getByText(examData.title)).toBeVisible();
     });
 

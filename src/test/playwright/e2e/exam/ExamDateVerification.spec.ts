@@ -4,6 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
 import { generateUUID } from '../../support/utils';
+import { Fixtures } from '../../fixtures/fixtures';
 
 test.describe('Exam date verification', () => {
     let course: Course;
@@ -47,7 +48,7 @@ test.describe('Exam date verification', () => {
             await page.goto(`/courses/${course.id}`);
             await courseOverview.openExamsTab();
             await courseOverview.openExam(exam.id!);
-            expect(page.url()).toContain(`/exams/${exam.id}`);
+            await page.waitForURL(`**/exams/${exam.id}**`);
         });
 
         // TODO: Not complete, contains fixtures
@@ -77,12 +78,12 @@ test.describe('Exam date verification', () => {
             await login(studentOne);
             await page.goto(`/courses/${course.id}/exams`);
             await courseOverview.openExam(exam.id!);
-            expect(page.url()).toContain(`/exams/${exam.id}`);
+            await page.waitForURL(`**/exams/${exam.id}**`);
             await expect(page.getByText(exam.title!).first()).toBeVisible();
             await examStartEnd.startExam();
             await examNavigation.openExerciseAtIndex(0);
-            const submission = 'Your submission text here'; // Replace this with actual submission text or fetch from a fixture.
-            await textExerciseEditor.typeSubmission(exercise.id!, submission);
+            const submission = await Fixtures.get('loremIpsum-short.txt');
+            await textExerciseEditor.typeSubmission(exercise.id!, submission!);
             await examNavigation.clickSave();
         });
 
@@ -117,8 +118,8 @@ test.describe('Exam date verification', () => {
             await expect(page.getByText(exam.title!).first()).toBeVisible();
             await examStartEnd.startExam();
             await examNavigation.openExerciseAtIndex(0);
-            const submissionText = 'Your submission text here'; // Replace this with actual submission text or fetch from a fixture.
-            await textExerciseEditor.typeSubmission(exercise.id!, submissionText);
+            const submissionText = await Fixtures.get('loremIpsum-short.txt');
+            await textExerciseEditor.typeSubmission(exercise.id!, submissionText!);
             await examNavigation.clickSave();
             if (examEnd.isAfter(dayjs())) {
                 await page.waitForTimeout(examEnd.diff(dayjs()));

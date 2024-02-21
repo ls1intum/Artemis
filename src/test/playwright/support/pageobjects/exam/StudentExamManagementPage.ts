@@ -1,5 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { COURSE_BASE } from '../../constants';
+import { users } from '../../users';
 
 export class StudentExamManagementPage {
     private readonly page: Page;
@@ -28,10 +29,6 @@ export class StudentExamManagementPage {
         return this.page.locator('#registered-students');
     }
 
-    async checkExamStudent(username: string) {
-        await expect(this.page.locator('#student-exam').getByText(new RegExp(`\\s+${username}\\s+`))).toHaveCount(1);
-    }
-
     getStudentExamRows() {
         return this.page.locator('#student-exam').locator('.datatable-body-row');
     }
@@ -40,7 +37,8 @@ export class StudentExamManagementPage {
         return this.getStudentExamRows().filter({ hasText: new RegExp(`\\s+${username}\\s+`) });
     }
 
-    async getExamProperty(username: string, property: string) {
+    private async checkPropertyValue(property: string, value: string, studentName: string) {
+        await this.page.locator('.data-table-container').waitFor({ state: 'visible' });
         const headers = this.page.locator('.datatable-header-cell');
         let propertyIndex: number | undefined;
 
@@ -52,12 +50,24 @@ export class StudentExamManagementPage {
         }
 
         expect(propertyIndex).toBeDefined();
-        return this.page.locator('.datatable-body-cell-label').nth(propertyIndex!);
+        await expect(
+            this.page.locator('.datatable-body-row', { hasText: studentName }).locator('.datatable-row-center').getByRole('cell').nth(propertyIndex!).getByText(value),
+        ).toBeVisible();
     }
 
-    async checkExamProperty(username: string, property: string, value: string) {
-        const propertyLocator = await this.getExamProperty(username, property);
-        await expect(propertyLocator).toContainText(value);
+    async checkStudentExamProperty(username: string, property: string, value: string) {
+        const studentInfo = await users.getUserInfo(username, this.page);
+        await this.checkPropertyValue(property, value, studentInfo.name!);
+    }
+
+    async checkStudent(username: string) {
+        const studentInfo = await users.getUserInfo(username, this.page);
+        await this.checkPropertyValue('Login', username, studentInfo.name!);
+    }
+
+    async checkExamStudent(username: string) {
+        const studentInfo = await users.getUserInfo(username, this.page);
+        await this.checkPropertyValue('Student', studentInfo.name!, studentInfo.name!);
     }
 
     async typeSearchText(text: string) {

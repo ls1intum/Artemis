@@ -22,7 +22,6 @@ export class OnlineEditorPage {
         return getExercise(this.page, exerciseID).locator('#cardFiles');
     }
 
-    // TODO: Not complete, needs correct conversion
     async typeSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission) {
         for (const newFile of submission.files) {
             if (submission.createFilesInRootFolder) {
@@ -30,10 +29,22 @@ export class OnlineEditorPage {
             } else {
                 await this.createFileInRootPackage(exerciseID, newFile.name, submission.packageName!);
             }
-            console.log('File path to use for fixture: ', newFile.path);
             const fileContent = await Fixtures.get(newFile.path);
             const editorElement = getExercise(this.page, exerciseID).locator('#ace-code-editor');
-            await editorElement.pressSequentially(fileContent!);
+            await editorElement.focus();
+            // await editorElement.pressSequentially(fileContent!);
+            await this.page.evaluate(
+                ({ editorSelector, fileContent }) => {
+                    console.log('Filling code editor');
+                    const editorElement = document.querySelector(editorSelector);
+                    if (editorElement) {
+                        // @ts-expect-error ace does not exists on windows, but works without issue
+                        const editor = ace.edit(editorElement);
+                        editor.setValue(fileContent, 1); // Set the editor's content
+                    }
+                },
+                { editorSelector: '#ace-code-editor', fileContent: fileContent! },
+            );
         }
         await this.page.waitForTimeout(500);
     }
