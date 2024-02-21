@@ -20,7 +20,7 @@
         @if (!isExamMode) {
             <div class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
-                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
                 <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
             </div>
         }
@@ -228,9 +228,7 @@
         <jhi-exercise-update-notification [exercise]="textExercise" [isImport]="isImport" [(notificationText)]="notificationText" />
     </div>
     <div>
-        <button type="button" class="btn btn-secondary" (click)="previousState()">
-            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
-        </button>
+        <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span></button>
         <button
             type="submit"
             (click)="save()"
@@ -238,7 +236,7 @@
             id="submit-entity"
             [disabled]="editForm.form.invalid || isSaving || textExercise.dueDateError || textExercise.assessmentDueDateError || textExercise.exampleSolutionPublicationDateError"
         >
-            <fa-icon [icon]="faSave"></fa-icon>
+            <fa-icon [icon]="faSave" />
             @if (isImport) {
                 <span jhiTranslate="artemisApp.textExercise.submitButton.import">Import</span>
             }

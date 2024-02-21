@@ -19,6 +19,7 @@
             "openGradedCodeEditor": "Open graded code editor",
             "choseGradedMode": "Graded participation chosen",
             "openModelingEditor": "Open modeling editor",
+            "openRepository": "Open repository",
             "importIntoIntelliJ": "Open in IntelliJ",
             "practiceMode": {
                 "title": "Practice Mode",

@@ -2,7 +2,7 @@
 <div class="h-100">
     <div class="postings-container expanded-thread">
         <div class="draggable-left">
-            <fa-icon [icon]="faGripLinesVertical"></fa-icon>
+            <fa-icon [icon]="faGripLinesVertical" />
         </div>
         <div class="card">
             <!-- header -->
@@ -16,7 +16,7 @@
                         <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.conversationsLayout.threadSideBar.label">Thread</h5>
                     </div>
                     <div class="col-auto">
-                        <fa-icon [icon]="faXmark"></fa-icon>
+                        <fa-icon [icon]="faXmark" />
                     </div>
                 </div>
             </div>
@@ -32,12 +32,10 @@
                             [isThreadSidebar]="true"
                             [lastReadDate]="conversation?.lastReadDate"
                             [hasChannelModerationRights]="hasChannelModerationRights"
-                        >
-                        </jhi-post>
+                        />
                         <div class="message-input">
                             @if (!readOnlyMode) {
-                                <jhi-message-reply-inline-input [posting]="createdAnswerPost" (onCreate)="createdAnswerPost = createEmptyAnswerPost()">
-                                </jhi-message-reply-inline-input>
+                                <jhi-message-reply-inline-input [posting]="createdAnswerPost" (onCreate)="createdAnswerPost = createEmptyAnswerPost()" />
                             }
                         </div>
                     </div>

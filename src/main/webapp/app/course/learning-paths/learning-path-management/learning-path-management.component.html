@@ -26,19 +26,13 @@
             </div>
         }
         @if (health.status?.includes(HealthStatus.MISSING)) {
-            <jhi-learning-path-health-status-warning [status]="HealthStatus.MISSING" (onButtonClicked)="generateMissing()"></jhi-learning-path-health-status-warning>
+            <jhi-learning-path-health-status-warning [status]="HealthStatus.MISSING" (onButtonClicked)="generateMissing()" />
         }
         @if (health.status?.includes(HealthStatus.NO_COMPETENCIES)) {
-            <jhi-learning-path-health-status-warning
-                [status]="HealthStatus.NO_COMPETENCIES"
-                (onButtonClicked)="routeToCompetencyManagement()"
-            ></jhi-learning-path-health-status-warning>
+            <jhi-learning-path-health-status-warning [status]="HealthStatus.NO_COMPETENCIES" (onButtonClicked)="routeToCompetencyManagement()" />
         }
         @if (health.status?.includes(HealthStatus.NO_RELATIONS)) {
-            <jhi-learning-path-health-status-warning
-                [status]="HealthStatus.NO_RELATIONS"
-                (onButtonClicked)="routeToCompetencyManagement()"
-            ></jhi-learning-path-health-status-warning>
+            <jhi-learning-path-health-status-warning [status]="HealthStatus.NO_RELATIONS" (onButtonClicked)="routeToCompetencyManagement()" />
         }
         @if (!health.status?.includes(HealthStatus.DISABLED)) {
             <div>
@@ -54,19 +48,19 @@
                         <tr (sortChange)="sortRows()" [(ascending)]="listSorting" [(predicate)]="sortedColumn" class="flex-row" jhiSort>
                             <th class="col-1" jhiSortBy="{{ column.ID }}">
                                 <span>#</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             <th class="col-4" jhiSortBy="{{ column.USER_NAME }}">
                                 <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.name">Name</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             <th class="col-2" jhiSortBy="{{ column.USER_LOGIN }}">
                                 <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.login">Login</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             <th class="col-4" jhiSortBy="{{ column.PROGRESS }}">
                                 <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.progress">Progress</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             <th class="col-1"></th>
                         </tr>
@@ -78,24 +72,23 @@
                                     <span>{{ learningPath.id }}</span>
                                 </td>
                                 <td class="text-break col-4">
-                                    <ngb-highlight [result]="learningPath.user?.name" [term]="searchTerm"></ngb-highlight>
+                                    <ngb-highlight [result]="learningPath.user?.name" [term]="searchTerm" />
                                 </td>
                                 <td class="text-break col-2">
-                                    <ngb-highlight [result]="learningPath.user?.login" [term]="searchTerm"></ngb-highlight>
+                                    <ngb-highlight [result]="learningPath.user?.login" [term]="searchTerm" />
                                 </td>
                                 <td class="col-4">
-                                    <ngb-progressbar type="primary" [showValue]="true" [value]="learningPath.progress ?? 0" [max]="100"></ngb-progressbar>
+                                    <ngb-progressbar type="primary" [showValue]="true" [value]="learningPath.progress ?? 0" [max]="100" />
                                 </td>
                                 <td class="col-1">
-                                    <jhi-button (onClick)="viewLearningPath(learningPath)" [title]="'entity.action.view'"></jhi-button>
+                                    <jhi-button (onClick)="viewLearningPath(learningPath)" [title]="'entity.action.view'" />
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
                 <div class="d-flex justify-content-between p-2">
-                    <ngb-pagination (pageChange)="onPageChange($event)" [(page)]="state.page" [collectionSize]="total" [maxSize]="50" [pageSize]="state.pageSize" [rotate]="true">
-                    </ngb-pagination>
+                    <ngb-pagination (pageChange)="onPageChange($event)" [(page)]="state.page" [collectionSize]="total" [maxSize]="50" [pageSize]="state.pageSize" [rotate]="true" />
                 </div>
             </div>
         }
