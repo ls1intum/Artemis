@@ -94,9 +94,6 @@ class ProgrammingExerciseIntegrationTestService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    @Value("${artemis.repo-download-clone-path}")
-    private String repoDownloadClonePath;
-
     @Autowired
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private FileService fileService;
@@ -199,6 +196,8 @@ class ProgrammingExerciseIntegrationTestService {
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private ContinuousIntegrationService continuousIntegrationService;
 
+    private File plagiarismChecksTestReposDir;
+
     void setup(String userPrefix, MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
             throws Exception {
         this.userPrefix = userPrefix;
@@ -249,6 +248,8 @@ class ProgrammingExerciseIntegrationTestService {
         // we use the temp repository as remote origin for all repositories that are created during the
         // TODO: distinguish between template, test and solution
         doReturn(new GitUtilService.MockFileRepositoryUri(remoteRepoFile)).when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
+
+        this.plagiarismChecksTestReposDir = Files.createTempDirectory("jplag-repos").toFile();
     }
 
     void tearDown() throws IOException {
@@ -279,9 +280,8 @@ class ProgrammingExerciseIntegrationTestService {
         if (remoteRepo2File != null && remoteRepo2File.exists()) {
             FileUtils.deleteDirectory(remoteRepo2File);
         }
-        var repoDownloadCloneDir = new File(repoDownloadClonePath);
-        if (repoDownloadCloneDir.exists()) {
-            FileUtils.deleteDirectory(repoDownloadCloneDir);
+        if (plagiarismChecksTestReposDir != null && plagiarismChecksTestReposDir.exists()) {
+            FileUtils.deleteDirectory(plagiarismChecksTestReposDir);
         }
     }
 
@@ -1864,7 +1864,6 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     private void prepareTwoSubmissionsForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
-        var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos");
         var projectKey = programmingExercise.getProjectKey();
 
         var exampleProgram = """
@@ -1900,13 +1899,13 @@ class ProgrammingExerciseIntegrationTestService {
                 }
                 """;
 
-        Files.createDirectories(jPlagReposDir.resolve(projectKey));
-        Path file1 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("1-Submission1.java"));
+        Files.createDirectories(plagiarismChecksTestReposDir.toPath().resolve(projectKey));
+        Path file1 = Files.createFile(plagiarismChecksTestReposDir.toPath().resolve(projectKey).resolve("1-Submission1.java"));
         FileUtils.writeStringToFile(file1.toFile(), exampleProgram, StandardCharsets.UTF_8);
-        Path file2 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("2-Submission2.java"));
+        Path file2 = Files.createFile(plagiarismChecksTestReposDir.toPath().resolve(projectKey).resolve("2-Submission2.java"));
         FileUtils.writeStringToFile(file2.toFile(), exampleProgram, StandardCharsets.UTF_8);
 
-        doReturn(jPlagReposDir).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));
+        doReturn(plagiarismChecksTestReposDir.toPath()).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));
         doReturn(null).when(uriService).getRepositorySlugFromRepositoryUri(any());
 
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
