@@ -81,25 +81,21 @@ public class ExerciseScoresChartService {
 
     private ExerciseScoresDTO createExerciseScoreDTO(Map<Long, ExerciseScoresAggregatedInformation> exerciseIdToAggregatedInformation,
             Map<Long, StudentScore> individualExerciseIdToStudentScore, Map<Long, TeamScore> teamExerciseIdToTeamScore, Exercise exercise) {
-        ExerciseScoresDTO exerciseScoresDTO = new ExerciseScoresDTO(exercise);
-
         ExerciseScoresAggregatedInformation aggregatedInformation = exerciseIdToAggregatedInformation.get(exercise.getId());
 
-        if (aggregatedInformation == null || aggregatedInformation.getAverageScoreAchieved() == null || aggregatedInformation.getMaxScoreAchieved() == null) {
-            exerciseScoresDTO.averageScoreAchieved = 0D;
-            exerciseScoresDTO.maxScoreAchieved = 0D;
-        }
-        else {
-            exerciseScoresDTO.averageScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.getAverageScoreAchieved(),
-                    exercise.getCourseViaExerciseGroupOrCourseMember());
-            exerciseScoresDTO.maxScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.getMaxScoreAchieved(),
-                    exercise.getCourseViaExerciseGroupOrCourseMember());
+        double averageScoreAchieved = 0D;
+        double maxScoreAchieved = 0D;
+
+        if (aggregatedInformation != null && aggregatedInformation.getAverageScoreAchieved() != null && aggregatedInformation.getMaxScoreAchieved() != null) {
+            averageScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.getAverageScoreAchieved(), exercise.getCourseViaExerciseGroupOrCourseMember());
+            maxScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.getMaxScoreAchieved(), exercise.getCourseViaExerciseGroupOrCourseMember());
         }
 
         ParticipantScore participantScore = exercise.getMode().equals(ExerciseMode.INDIVIDUAL) ? individualExerciseIdToStudentScore.get(exercise.getId())
                 : teamExerciseIdToTeamScore.get(exercise.getId());
-        exerciseScoresDTO.scoreOfStudent = participantScore == null || participantScore.getLastRatedScore() == null ? 0D
+        final double scoreOfStudent = participantScore == null || participantScore.getLastRatedScore() == null ? 0D
                 : roundScoreSpecifiedByCourseSettings(participantScore.getLastScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
-        return exerciseScoresDTO;
+
+        return ExerciseScoresDTO.of(exercise, scoreOfStudent, averageScoreAchieved, maxScoreAchieved);
     }
 }

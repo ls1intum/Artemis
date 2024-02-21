@@ -1,5 +1,5 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { faArrowUpRightFromSquare, faExclamationTriangle, faEye } from '@fortawesome/free-solid-svg-icons';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { faArrowUpRightFromSquare, faCodeBranch, faExclamationTriangle, faEye } from '@fortawesome/free-solid-svg-icons';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -12,6 +12,10 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { UMLModel } from '@ls1intum/apollon';
+import { Router } from '@angular/router';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { Subscription } from 'rxjs';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -41,7 +45,7 @@ export enum DetailType {
     templateUrl: './detail-overview-list.component.html',
     styleUrls: ['./detail-overview-list.component.scss'],
 })
-export class DetailOverviewListComponent implements OnInit {
+export class DetailOverviewListComponent implements OnInit, OnDestroy {
     protected readonly isEmpty = isEmpty;
     protected readonly DetailType = DetailType;
     protected readonly FeatureToggle = FeatureToggle;
@@ -61,19 +65,30 @@ export class DetailOverviewListComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faEye = faEye;
     faArrowUpRightFromSquare = faArrowUpRightFromSquare;
+    faCodeBranch = faCodeBranch;
+
+    routerLink: string;
+    profileSub: Subscription;
+    isLocalVC = false;
 
     constructor(
         private modalService: NgbModal,
         private modelingExerciseService: ModelingExerciseService,
         private alertService: AlertService,
+        private router: Router,
+        private profileService: ProfileService,
     ) {}
 
     ngOnInit() {
+        this.routerLink = this.router.url;
         this.headlines = this.sections.map((section) => {
             return {
                 id: section.headline.replaceAll('.', '-'),
                 translationKey: section.headline,
             };
+        });
+        this.profileSub = this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.isLocalVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
         this.headlinesRecord = this.headlines.reduce((previousValue, currentValue) => {
             return { ...previousValue, [currentValue.translationKey]: currentValue.id };
@@ -97,5 +112,9 @@ export class DetailOverviewListComponent implements OnInit {
                 },
             });
         }
+    }
+
+    ngOnDestroy() {
+        this.profileSub?.unsubscribe();
     }
 }

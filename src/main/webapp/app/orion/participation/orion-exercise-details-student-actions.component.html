@@ -8,7 +8,7 @@
                 [buttonType]="OrionButtonType.Download"
                 [buttonLoading]="this.exercise.loading || orionState.cloning"
                 [smallButton]="smallButtons"
-            ></jhi-ide-button>
+            />
         }
         @if (isOfflineIdeAllowed && orionState.view === ExerciseView.STUDENT && orionState.opened === this.exercise.id) {
             <jhi-ide-button
@@ -28,7 +28,7 @@
                 [buttonType]="OrionButtonType.Download"
                 [buttonLoading]="this.exercise.loading || orionState.building"
                 [smallButton]="smallButtons"
-            ></jhi-ide-button>
+            />
         }
     </ng-template>
 </jhi-exercise-details-student-actions>

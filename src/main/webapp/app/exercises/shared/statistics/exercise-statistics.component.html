@@ -2,7 +2,7 @@
     <div>
         <h2 class="row mb-5 col-md-2" id="statistics-page-heading" jhiTranslate="exercise-statistics.title">Exercise statistics</h2>
         <div class="mb-3 d-flex justify-content-around">
-            <jhi-exercise-detail-statistics [exercise]="exercise" [doughnutStats]="exerciseStatistics" [exerciseType]="exercise.type!"></jhi-exercise-detail-statistics>
+            <jhi-exercise-detail-statistics [exercise]="exercise" [doughnutStats]="exerciseStatistics" [exerciseType]="exercise.type!" />
         </div>
         @if (exerciseStatistics) {
             <jhi-statistics-score-distribution-graph
@@ -12,7 +12,7 @@
                 [exerciseType]="exercise.type!"
                 [courseId]="course.id!"
                 [exerciseId]="exercise.id!"
-            ></jhi-statistics-score-distribution-graph>
+            />
         }
         <div class="separator w-100 mb-4"></div>
         <div class="row mb-5">
@@ -39,7 +39,7 @@
                 @if (i !== 0) {
                     <hr />
                 }
-                <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [entityId]="exercise.id!"> </jhi-statistics-graph>
+                <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [entityId]="exercise.id!" />
             </div>
         }
     </div>

@@ -26,6 +26,6 @@
 </ng-template>
 <div class="treeview-container" [style.max-height.px]="maxHeight">
     @for (item of items; track item) {
-        <treeview-item [item]="item" [template]="itemTemplate || defaultItemTemplate"> </treeview-item>
+        <treeview-item [item]="item" [template]="itemTemplate || defaultItemTemplate" />
     }
 </div>

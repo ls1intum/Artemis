@@ -13,8 +13,7 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
             (questionDeleted)="questionDeleted.emit()"
             (questionMoveUp)="questionMoveUp.emit()"
             (questionMoveDown)="questionMoveDown.emit()"
-        >
-        </jhi-short-answer-question-edit>
+        />
     `,
     providers: [],
 })
