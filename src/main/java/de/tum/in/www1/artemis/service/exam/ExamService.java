@@ -581,8 +581,8 @@ public class ExamService {
             // set the locked property of the participation properly
             if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
                     && exercise instanceof ProgrammingExercise programmingExercise) {
-                // check if hibernate proxy is initialized
-                if (!Hibernate.isInitialized(programmingExerciseStudentParticipation.getSubmissions())) {
+                // check if hibernate proxy is initialized, else fetch exercise with submission policy
+                if (!Hibernate.isInitialized(programmingExercise.getSubmissionPolicy())) {
                     programmingExercise = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow();
                 }
                 var submissionPolicy = programmingExercise.getSubmissionPolicy();
