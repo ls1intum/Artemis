@@ -52,9 +52,9 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
         Repository repository = receivePack.getRepository();
 
-        String mainBranchName;
+        String defaultBranchName;
         try {
-            mainBranchName = localVCServletService.getMainBranchOfRepository(repository);
+            defaultBranchName = localVCServletService.getDefaultBranchOfRepository(repository);
         }
         catch (LocalVCInternalException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
@@ -62,7 +62,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
         }
 
         // Reject pushes to anything other than the default branch.
-        if (!command.getRefName().equals("refs/heads/" + mainBranchName)) {
+        if (!command.getRefName().equals("refs/heads/" + defaultBranchName)) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push to a branch other than the default branch.");
             return;
         }
