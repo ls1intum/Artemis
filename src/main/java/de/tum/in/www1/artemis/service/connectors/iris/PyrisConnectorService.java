@@ -71,17 +71,17 @@ public class PyrisConnectorService {
     }
 
     @Async
-    public CompletableFuture<PyrisJobDTO> executeHestiaDescriptionGenerationPipeline(String variant, Object executionDTO) {
+    public CompletableFuture<PyrisJobDTO> executeHestiaDescriptionGenerationPipeline(String variant, PyrisHestiaDescriptionGenerationPipelineExecutionDTO executionDTO) {
         return executePipeline("hestia-description-generation", variant, executionDTO);
     }
 
     @Async
-    public CompletableFuture<PyrisJobDTO> executeCodeEditorPipeline(String variant, Object executionDTO) {
+    public CompletableFuture<PyrisJobDTO> executeCodeEditorPipeline(String variant, PyrisCodeEditorPipelineExecutionDTO executionDTO) {
         return executePipeline("code-editor", variant, executionDTO);
     }
 
     @Async
-    public CompletableFuture<PyrisJobDTO> executeCompetencyGenerationPipeline(String variant, Object executionDTO) {
+    public CompletableFuture<PyrisJobDTO> executeCompetencyGenerationPipeline(String variant, PyrisCompetencyGenerationPipelineExecutionDTO executionDTO) {
         return executePipeline("competency-generation", variant, executionDTO);
     }
 
@@ -95,7 +95,7 @@ public class PyrisConnectorService {
             return failedFuture(new IrisParseResponseException(e));
         }
         catch (HttpStatusCodeException e) {
-            return failedFuture(toIrisException(e, null));
+            return failedFuture(toIrisException(e));
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send request to Pyris", e);
@@ -113,11 +113,10 @@ public class PyrisConnectorService {
         return completedFuture(parsed);
     }
 
-    private IrisException toIrisException(HttpStatusCodeException e, String preferredModel) {
+    private IrisException toIrisException(HttpStatusCodeException e) {
         return switch (e.getStatusCode()) {
             case UNAUTHORIZED, FORBIDDEN -> new IrisForbiddenException();
             case BAD_REQUEST -> new IrisInvalidTemplateException(tryExtractErrorMessage(e));
-            case NOT_FOUND -> new IrisModelNotAvailableException(preferredModel, tryExtractErrorMessage(e));
             case INTERNAL_SERVER_ERROR -> new IrisInternalPyrisErrorException(tryExtractErrorMessage(e));
             default -> new IrisInternalPyrisErrorException(e.getMessage());
         };
