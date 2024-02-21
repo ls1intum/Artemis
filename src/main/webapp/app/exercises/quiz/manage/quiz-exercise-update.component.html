@@ -226,6 +226,7 @@
                                 [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                                 [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
                                 [(ngModel)]="quizExercise.competencies"
+                                (ngModelChange)="cacheValidation()"
                                 name="competencies"
                             />
                         </div>
