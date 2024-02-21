@@ -511,7 +511,7 @@ public class LocalVCServletService {
      * @param repository the repository for which the default branch should be determined.
      * @return the name of the default branch.
      */
-    public String getMainBranchOfRepository(Repository repository) {
+    public String getDefaultBranchOfRepository(Repository repository) {
         Path repositoryFolderPath = repository.getDirectory().toPath();
         LocalVCRepositoryUri localVCRepositoryUri = getLocalVCRepositoryUri(repositoryFolderPath);
         return localVCService.getDefaultBranchOfRepository(localVCRepositoryUri);
