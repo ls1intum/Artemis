@@ -92,18 +92,16 @@ public class ExamDateService {
      * @return <code>true</code> if the working period is over, <code>false</code> otherwise
      */
     public boolean isIndividualExerciseWorkingPeriodOver(Exam exam, StudentParticipation studentParticipation) {
+        if (studentParticipation.isTestRun()) {
+            return false;
+        }
+
         var optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
         if (optionalStudentExam.isPresent()) {
             StudentExam studentExam = optionalStudentExam.get();
             return Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.isEnded();
         }
-        else {
-            // for test runs
-            var testRuns = studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(exam.getId(), studentParticipation.getParticipant().getId());
-            if (!testRuns.isEmpty()) {
-                return false;
-            }
-        }
+
         throw new IllegalStateException("No student exam found for student participation " + studentParticipation.getId());
     }
 
