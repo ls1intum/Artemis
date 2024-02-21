@@ -51,9 +51,9 @@ public class PyrisConnectorService {
      *
      * @return A list of available Models as IrisModelDTO
      */
-    public List<IrisModelDTO> getOfferedModels() throws PyrisConnectorException {
+    public List<PyrisModelDTO> getOfferedModels() throws PyrisConnectorException {
         try {
-            var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/models", IrisModelDTO[].class);
+            var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/models", PyrisModelDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
                 throw new PyrisConnectorException("Could not fetch offered models");
             }
@@ -65,34 +65,37 @@ public class PyrisConnectorService {
         }
     }
 
-    /**
-     * Requests a response from an LLM
-     *
-     * @param template       The template that should be used with the respective parameters (e.g., for initial system
-     *                           message)
-     * @param preferredModel The LLM model to be used (e.g., GPT3.5-turbo). Note: The used model might not be the
-     *                           preferred model (e.g., if an error occurs or the preferredModel is not reachable)
-     * @param parameters     A map of parameters to be included in the template through handlebars (if they are
-     *                           specified in the template)
-     * @return The message response to the request which includes the {@link IrisMessage} and the used IrisModel
-     */
     @Async
-    public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, String preferredModel, Object argumentsDTO) {
-        var endpoint = "/api/v1/pipelines/{feature}/{variant}/run";
-        var request = new PyrisRequestDTO(template, preferredModel, argumentsDTO);
-        return tryGetResponse(endpoint, request, preferredModel, IrisMessageResponseDTO.class);
+    public CompletableFuture<PyrisJobDTO> executeTutorChatPipeline(String variant, PyrisTutorChatPipelineExecutionDTO executionDTO) {
+        return executePipeline("tutor-chat", variant, executionDTO);
     }
 
-    private <T> CompletableFuture<T> tryGetResponse(String endpoint, Object request, String preferredModel, Class<T> responseType) {
+    @Async
+    public CompletableFuture<PyrisJobDTO> executeHestiaDescriptionGenerationPipeline(String variant, Object executionDTO) {
+        return executePipeline("hestia-description-generation", variant, executionDTO);
+    }
+
+    @Async
+    public CompletableFuture<PyrisJobDTO> executeCodeEditorPipeline(String variant, Object executionDTO) {
+        return executePipeline("code-editor", variant, executionDTO);
+    }
+
+    @Async
+    public CompletableFuture<PyrisJobDTO> executeCompetencyGenerationPipeline(String variant, Object executionDTO) {
+        return executePipeline("competency-generation", variant, executionDTO);
+    }
+
+    private CompletableFuture<PyrisJobDTO> executePipeline(String feature, String variant, PyrisPipelineExecutionDTO executionDTO) {
+        var endpoint = "/api/v1/pipelines/" + feature + "/" + variant + "/run";
         try {
-            return sendRequestAndParseResponse(endpoint, request, responseType);
+            return sendRequestAndParseResponse(endpoint, executionDTO, PyrisJobDTO.class);
         }
         catch (JsonProcessingException e) {
             log.error("Failed to parse response from Pyris", e);
             return failedFuture(new IrisParseResponseException(e));
         }
         catch (HttpStatusCodeException e) {
-            return failedFuture(toIrisException(e, preferredModel));
+            return failedFuture(toIrisException(e, null));
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send request to Pyris", e);
@@ -127,6 +130,17 @@ public class PyrisConnectorService {
         catch (JsonProcessingException | IllegalArgumentException e) {
             log.error("Failed to parse error message from Pyris", e);
             return "";
+        }
+    }
+
+    public boolean sendWebhook(String path, PyrisWebhookDTO dto) {
+        try {
+            restTemplate.postForEntity(pyrisUrl + "/api/v1/webhooks/" + path, dto, Void.class);
+            return true;
+        }
+        catch (RestClientException e) {
+            log.error("Failed to send webhook to Pyris", e);
+            return false;
         }
     }
 }

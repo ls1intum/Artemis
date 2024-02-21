@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.connectors.iris.PyrisConnectorException;
 import de.tum.in.www1.artemis.service.connectors.iris.PyrisConnectorService;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisModelDTO;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.PyrisModelDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
@@ -35,7 +35,7 @@ public class IrisModelsResource {
      */
     @GetMapping("iris/models")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<IrisModelDTO>> getAllModels() {
+    public ResponseEntity<List<PyrisModelDTO>> getAllModels() {
         try {
             var models = pyrisConnectorService.getOfferedModels();
             return ResponseEntity.ok(models);

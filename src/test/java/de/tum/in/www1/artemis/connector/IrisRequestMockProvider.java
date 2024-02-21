@@ -125,8 +125,8 @@ public class IrisRequestMockProvider {
     }
 
     public void mockModelsResponse() throws JsonProcessingException {
-        var irisModelDTO = new IrisModelDTO("TEST_MODEL", "Test model", "Test description");
-        var irisModelDTOArray = new IrisModelDTO[] { irisModelDTO };
+        var irisModelDTO = new PyrisModelDTO("TEST_MODEL", "Test model", "Test description");
+        var irisModelDTOArray = new PyrisModelDTO[] { irisModelDTO };
         // @formatter:off
         mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString()))
                 .andExpect(method(HttpMethod.GET))

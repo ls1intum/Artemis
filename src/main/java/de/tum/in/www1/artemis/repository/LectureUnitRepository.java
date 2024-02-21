@@ -22,6 +22,10 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> {
 
+    default LectureUnit findByIdElseThrow(long lectureUnitId) {
+        return findById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
+    }
+
     @Query("""
             SELECT lu
             FROM LectureUnit lu

@@ -10,6 +10,10 @@ import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.domain.iris.settings.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.iris.*;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedChatSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedCodeEditorSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedHestiaSubSettingsDTO;
 
 /**
  * Service for handling {@link IrisSubSettings} objects.
