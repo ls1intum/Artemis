@@ -34,6 +34,7 @@
                                     <li class="nav-item">
                                         <a
                                             class="nav-link nav-link-sidebar px-3"
+                                            [id]="sidebarItem.testId ?? ''"
                                             [ngClass]="{ 'guided-tour': sidebarItem.guidedTour }"
                                             jhiOrionFilter
                                             [showInOrionWindow]="sidebarItem.showInOrionWindow"
@@ -48,6 +49,7 @@
                                     <li class="nav-item">
                                         <a
                                             class="nav-link nav-link-sidebar px-3"
+                                            [id]="sidebarItem.testId ?? ''"
                                             [ngClass]="{ 'guided-tour': sidebarItem.guidedTour }"
                                             [routerLink]="sidebarItem.routerLink"
                                             routerLinkActive="active"

@@ -41,11 +41,13 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { animate, style, transition, trigger } from '@angular/animations';
 
 interface SidebarItem {
     routerLink: string;
     icon?: IconDefinition;
     name: string;
+    testId?: string;
     translation: string;
     hasInOrionProperty?: boolean;
     showInOrionWindow?: boolean;
@@ -58,6 +60,12 @@ interface SidebarItem {
     templateUrl: './course-overview.component.html',
     styleUrls: ['course-overview.scss', 'course-overview.component.scss'],
     providers: [MetisConversationService],
+    animations: [
+        trigger('slideIn', [
+            transition(':enter', [style({ width: 'translateX(-100%)' }), animate(0, style({ transform: 'translateX(0)' }))]),
+            transition(':leave', [animate(0, style({ transform: 'translateX(-100%)' }))]),
+        ]),
+    ],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private ngUnsubscribe = new Subject<void>();
@@ -144,7 +152,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.subscription = this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+        this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.inProduction = profileInfo.inProduction;
         });
         this.course = this.courseStorageService.getCourse(this.courseId);
@@ -210,6 +218,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             routerLink: 'exams',
             icon: faGraduationCap,
             name: 'Exams',
+            testId: 'exam-tab',
             translation: 'artemisApp.courseOverview.menu.exams',
             hasInOrionProperty: true,
             showInOrionWindow: false,
@@ -367,7 +376,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
     getPageTitle(): string {
         const routePageTitle: string = this.route.snapshot.firstChild?.routeConfig?.data?.pageTitle;
-        return routePageTitle.substring(routePageTitle.indexOf('.') + 1);
+        return routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
     }
     /**
      * Removes the controls component from the DOM and cancels the listener for controls changes.
