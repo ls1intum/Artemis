@@ -229,8 +229,8 @@ public class TutorialGroupFreePeriodResource {
      * This method checks if the given tutorial group free period overlaps with any other tutorial group free period in the same course.
      * If there is an overlap, it throws a BadRequestAlertException.
      *
-     * @param tutorialGroupFreePeriod The tutorial group free period to check for overlaps. It should have a valid start and end date, and belong to a course.
-     * @throws BadRequestAlertException If the given tutorial group free period overlaps with another tutorial group free period in the same course.
+     * @param tutorialGroupFreePeriod the tutorial group free period to check for overlaps. It should have a valid start and end date, and belong to a course.
+     * @throws BadRequestAlertException if the given tutorial group free period overlaps with another tutorial group free period in the same course.
      */
     private void checkForOverlapWithPeriod(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
         var overlappingPeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourseExclusive(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(),
@@ -259,6 +259,6 @@ public class TutorialGroupFreePeriodResource {
      * @param endDate
      * @param reason
      */
-    public record TutorialGroupFreePeriodDTO(@NotNull LocalDateTime startDate, LocalDateTime endDate, String reason) {
+    public record TutorialGroupFreePeriodDTO(@NotNull LocalDateTime startDate, @NotNull LocalDateTime endDate, String reason) {
     }
 }

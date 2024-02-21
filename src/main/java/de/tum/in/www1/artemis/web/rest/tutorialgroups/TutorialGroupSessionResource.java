@@ -218,8 +218,8 @@ public class TutorialGroupSessionResource {
     /**
      * Updates the status and associated free period of a tutorial group session based on the presence of an overlapping free period.
      *
-     * @param newSession        The tutorial group session to be updated.
-     * @param overlappingPeriod An Optional that may contain a TutorialGroupFreePeriod if there is an overlapping free period.
+     * @param newSession        the tutorial group session to be updated.
+     * @param overlappingPeriod an Optional that may contain a TutorialGroupFreePeriod if there is an overlapping free period.
      */
     public static void updateTutorialGroupSession(TutorialGroupSession newSession, Optional<TutorialGroupFreePeriod> overlappingPeriod) {
         if (overlappingPeriod.isPresent()) {
@@ -238,7 +238,6 @@ public class TutorialGroupSessionResource {
     private TutorialGroupsConfiguration validateTutorialGroupConfiguration(@PathVariable Long courseId) {
         var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         if (configurationOptional.isEmpty()) {
-
             throw new BadRequestException("The course has no tutorial groups configuration");
         }
         var configuration = configurationOptional.get();
