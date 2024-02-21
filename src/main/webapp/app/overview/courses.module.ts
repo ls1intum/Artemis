@@ -19,9 +19,6 @@ import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/co
 import { NgxChartsModule, PieChartModule } from '@swimlane/ngx-charts';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
     imports: [
@@ -38,9 +35,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
         RatingModule,
         NgxChartsModule,
         PieChartModule,
-        NgbTooltipModule,
-        MatSidenavModule,
-        BrowserAnimationsModule,
     ],
     declarations: [
         CoursesComponent,
