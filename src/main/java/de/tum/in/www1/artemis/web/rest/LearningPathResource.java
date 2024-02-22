@@ -183,7 +183,7 @@ public class LearningPathResource {
     }
 
     private ResponseEntity<NgxLearningPathDTO> getLearningPathNgx(@PathVariable long learningPathId, NgxRequestType type) {
-        LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPathId);
+        LearningPath learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
         Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
         checkLearningPathsEnabledElseThrow(course);
         User user = userRepository.getUserWithGroupsAndAuthorities();

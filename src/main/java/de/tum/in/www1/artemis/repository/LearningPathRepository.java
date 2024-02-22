@@ -12,7 +12,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -66,37 +65,10 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
             """)
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
 
-    /**
-     * Gets a learning path with eagerly fetched competencies, linked lecture units and exercises, and the corresponding domain objects storing the progress.
-     * <p>
-     * <b>As JPQL does not support conditional JOIN FETCH statements, we have to filter the fetched entities returned in this call.</b>
-     * <p>
-     * Consider using {@link #findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(long)} instead.
-     *
-     * @param learningPathId the id of the learning path to fetch
-     * @return the learning path with fetched data
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "competencies", "competencies.userProgress", "competencies.lectureUnits", "competencies.lectureUnits.completedUsers",
-            "competencies.exercises", "competencies.exercises.studentParticipations" })
-    Optional<LearningPath> findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersWithoutJoinConditionById(long learningPathId);
+    @EntityGraph(type = LOAD, attributePaths = { "competencies", "competencies.lectureUnits", "competencies.exercises" })
+    Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesById(long learningPathId);
 
-    /**
-     * Gets a learning path with eagerly fetched competencies, linked lecture units and exercises, and the corresponding domain objects storing the progress.
-     *
-     * @param learningPathId the id of the learning path to fetch
-     * @return the learning path with fetched data
-     */
-    default LearningPath findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(long learningPathId) {
-        LearningPath learningPath = findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersWithoutJoinConditionById(learningPathId)
-                .orElseThrow(() -> new EntityNotFoundException("LearningPath", learningPathId));
-        User user = learningPath.getUser();
-        learningPath.getCompetencies().forEach(competency -> {
-            competency.getUserProgress().removeIf(progress -> !progress.getUser().equals(user));
-            competency.getLectureUnits().forEach(lectureUnit -> lectureUnit.getCompletedUsers().removeIf(compUser -> !compUser.getUser().equals(user)));
-            competency.getExercises().forEach(exercise -> exercise.getStudentParticipations()
-                    .removeIf(participation -> participation.getStudent().isEmpty() || !participation.getStudent().get().equals(user)));
-        });
-
-        return learningPath;
+    default LearningPath findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(long learningPathId) {
+        return findWithCompetenciesAndLectureUnitsAndExercisesById(learningPathId).orElseThrow(() -> new EntityNotFoundException("LearningPath"));
     }
 }
