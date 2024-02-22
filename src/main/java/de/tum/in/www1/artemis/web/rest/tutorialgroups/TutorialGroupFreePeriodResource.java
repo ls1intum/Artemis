@@ -1,14 +1,12 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.*;
 import java.util.Optional;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -26,6 +24,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupFreePeriodService;
+import de.tum.in.www1.artemis.web.rest.dto.TutorialGroupFreePeriodDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @RestController
@@ -92,18 +91,17 @@ public class TutorialGroupFreePeriodResource {
             @PathVariable Long tutorialGroupFreePeriodId, @RequestBody @Valid TutorialGroupFreePeriodDTO tutorialGroupFreePeriod) throws URISyntaxException {
         log.debug("REST request to update TutorialGroupFreePeriod: {} for tutorial group configuration: {} of course: {}", tutorialGroupFreePeriodId, tutorialGroupsConfigurationId,
                 courseId);
-        if (!isStartBeforeEnd(tutorialGroupFreePeriod.startDate, tutorialGroupFreePeriod.endDate)) {
+        if (tutorialGroupFreePeriod.endDate.isBefore(tutorialGroupFreePeriod.startDate)) {
             throw new BadRequestException("The start date must be before the end date");
+        }
+        if (tutorialGroupFreePeriod.startDate.isBefore(tutorialGroupFreePeriod.endDate)) {
         }
         var existingFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
         checkEntityIdMatchesPathIds(existingFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingFreePeriod.getTutorialGroupsConfiguration().getCourse(), null);
 
         Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
-        if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration");
-        }
-        var configuration = configurationOptional.get();
+        var configuration = configurationOptional.orElseThrow(() -> new BadRequestException("The course has no tutorial groups configuration"));
         if (configuration.getCourse().getTimeZone() == null) {
             throw new BadRequestException("The course has no time zone");
         }
@@ -143,7 +141,7 @@ public class TutorialGroupFreePeriodResource {
             @RequestBody @Valid TutorialGroupFreePeriodDTO tutorialGroupFreePeriod) throws URISyntaxException {
         log.debug("REST request to create TutorialGroupFreePeriod: {} for tutorial group configuration: {} of course: {}", tutorialGroupFreePeriod, tutorialGroupsConfigurationId,
                 courseId);
-        if (!isStartBeforeEnd(tutorialGroupFreePeriod.startDate, tutorialGroupFreePeriod.endDate)) {
+        if (tutorialGroupFreePeriod.endDate.isBefore(tutorialGroupFreePeriod.startDate)) {
             throw new BadRequestException("The start date must be before the end date");
         }
         TutorialGroupsConfiguration tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository
@@ -192,10 +190,8 @@ public class TutorialGroupFreePeriodResource {
         checkEntityIdMatchesPathIds(tutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(), null);
         Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
-        if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration with ID " + tutorialGroupsConfigurationId);
-        }
-        TutorialGroupsConfiguration configuration = configurationOptional.get();
+        TutorialGroupsConfiguration configuration = configurationOptional
+                .orElseThrow(() -> new BadRequestException("The course has no tutorial groups configuration with ID " + tutorialGroupsConfigurationId));
         tutorialGroupFreePeriodService.updateOverlappingSessions(configuration.getCourse(), tutorialGroupFreePeriod, true);
         tutorialGroupFreePeriodRepository.delete(tutorialGroupFreePeriod);
         return ResponseEntity.noContent().build();
@@ -236,29 +232,15 @@ public class TutorialGroupFreePeriodResource {
         var overlappingPeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourseExclusive(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(),
                 tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd());
         var overlappingPeriodOptional = overlappingPeriod.stream().filter(period -> !period.getId().equals(tutorialGroupFreePeriod.getId())).findFirst();
-        if (!overlappingPeriodOptional.isEmpty()) {
+        if (overlappingPeriodOptional.isPresent()) {
             throw new BadRequestAlertException("The given tutorial group free period overlaps with another tutorial group free period with ID "
                     + overlappingPeriodOptional.get().getId() + " in the same course.", ENTITY_NAME, "overlapping");
         }
-    }
-
-    private boolean isStartBeforeEnd(LocalDateTime start, LocalDateTime end) {
-        return start.isBefore(end);
     }
 
     private void trimStringFields(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
         if (tutorialGroupFreePeriod.getReason() != null) {
             tutorialGroupFreePeriod.setReason(tutorialGroupFreePeriod.getReason().trim());
         }
-    }
-
-    /**
-     * Used because we want to interpret the date in the time zone of the tutorial groups configuration
-     *
-     * @param startDate
-     * @param endDate
-     * @param reason
-     */
-    public record TutorialGroupFreePeriodDTO(@NotNull LocalDateTime startDate, @NotNull LocalDateTime endDate, String reason) {
     }
 }

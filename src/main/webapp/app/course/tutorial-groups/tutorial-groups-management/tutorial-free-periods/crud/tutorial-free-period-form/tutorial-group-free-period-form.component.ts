@@ -89,9 +89,8 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
             return this.endTimeControl.value > this.startTimeControl.value;
         } else if (this.timeFrame == TimeFrame.Period && this.endDateControl && this.startDateControl) {
             return this.endDateControl.value > this.startDateControl.value;
-        } else {
-            return true;
         }
+        return true;
     }
 
     get isFreeDay(): boolean {
@@ -231,32 +230,28 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     get isStartDateInvalid() {
         if (this.startDateControl) {
             return this.startDateControl.invalid && (this.startDateControl.touched || this.startDateControl.dirty);
-        } else {
-            return false;
         }
+        return false;
     }
 
     get isEndDateInvalid() {
         if (this.endDateControl) {
             return this.endDateControl.invalid && (this.endDateControl.touched || this.endDateControl.dirty);
-        } else {
-            return false;
         }
+        return false;
     }
 
     get isStartTimeInvalid() {
         if (this.startTimeControl) {
             return this.startTimeControl.invalid && (this.startTimeControl.touched || this.startTimeControl.dirty);
-        } else {
-            return false;
         }
+        return false;
     }
 
     get isEndTimeInvalid() {
         if (this.endTimeControl) {
             return this.endTimeControl.invalid && (this.endTimeControl.touched || this.endTimeControl.dirty);
-        } else {
-            return false;
         }
+        return false;
     }
 }

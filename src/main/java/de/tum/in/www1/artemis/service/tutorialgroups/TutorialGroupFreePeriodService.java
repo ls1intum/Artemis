@@ -25,6 +25,15 @@ public class TutorialGroupFreePeriodService {
         this.tutorialGroupFreePeriodRepository = tutorialGroupFreePeriodRepository;
     }
 
+    /**
+     * Find the first free period that overlaps with the given tutorial group session.
+     * We only use the first overlapping period, because there can only be one freePeriod associated with a tutorialGroupSession.
+     * There can only be one freePeriod associated with a tutorialGroupSession, as there would be a conflict in the displayed reason.
+     *
+     * @param course               the course in which the free period is defined
+     * @param tutorialGroupSession the tutorial group session
+     * @return the first free period that overlaps with the given tutorial group session
+     */
     public Optional<TutorialGroupFreePeriod> findOverlappingPeriod(Course course, TutorialGroupSession tutorialGroupSession) {
         return tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(course, tutorialGroupSession.getStart(), tutorialGroupSession.getEnd()).stream().findFirst();
     }

@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601DateString;
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601TimeString;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.isIso8601DateString;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.isIso8601TimeString;
 
 import java.net.URI;
 import java.net.URISyntaxException;

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.interpretInTimeZone;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.interpretInTimeZone;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -131,8 +131,8 @@ public class TutorialGroupSessionResource {
             sessionToUpdate.setTutorialGroupSchedule(null);
         }
 
-        var overlappingPeriodOptional = tutorialGroupFreePeriodRepository
-                .findOverlappingInSameCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(), sessionToUpdate.getEnd()).stream().findFirst();
+        Optional<TutorialGroupFreePeriod> overlappingPeriodOptional = tutorialGroupFreePeriodRepository
+                .findFirstOverlappingInSameCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(), sessionToUpdate.getEnd());
         updateTutorialGroupSession(sessionToUpdate, overlappingPeriodOptional);
 
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
@@ -206,9 +206,9 @@ public class TutorialGroupSessionResource {
         checkEntityIdMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
         isValidTutorialGroupSession(newSession, ZoneId.of(configuration.getCourse().getTimeZone()));
 
-        var overlappingPeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroup.getCourse(), newSession.getStart(), newSession.getEnd()).stream()
-                .findFirst();
-        updateTutorialGroupSession(newSession, overlappingPeriod);
+        Optional<TutorialGroupFreePeriod> overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findFirstOverlappingInSameCourse(tutorialGroup.getCourse(),
+                newSession.getStart(), newSession.getEnd());
+        updateTutorialGroupSession(newSession, overlappingPeriodOptional);
         newSession = tutorialGroupSessionRepository.save(newSession);
 
         return ResponseEntity.created(URI.create("/api/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
@@ -237,10 +237,7 @@ public class TutorialGroupSessionResource {
 
     private TutorialGroupsConfiguration validateTutorialGroupConfiguration(@PathVariable Long courseId) {
         var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
-        if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration");
-        }
-        var configuration = configurationOptional.get();
+        var configuration = configurationOptional.orElseThrow(() -> new BadRequestException("The course has no tutorial groups configuration"));
         if (configuration.getCourse().getTimeZone() == null) {
             throw new BadRequestException("The course has no time zone");
         }

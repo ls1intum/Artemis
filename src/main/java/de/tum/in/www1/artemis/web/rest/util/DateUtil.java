@@ -1,9 +1,9 @@
-package de.tum.in.www1.artemis.web.rest.tutorialgroups;
+package de.tum.in.www1.artemis.web.rest.util;
 
 import java.time.*;
 import java.time.format.DateTimeParseException;
 
-public class TutorialGroupDateUtil {
+public class DateUtil {
 
     /*
      * Note: We can NOT use LocalTime.MIN as the precision is not supported by the database, and thus it will be rounded

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.getFirstDateOfWeekDay;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.getFirstDateOfWeekDay;
 
 import java.time.*;
 import java.util.*;
@@ -16,9 +16,9 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
-import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupSessionResource;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.ScheduleOverlapsWithSessionException;
+import de.tum.in.www1.artemis.web.rest.util.DateUtil;
 
 @Service
 public class TutorialGroupScheduleService {
@@ -99,7 +99,7 @@ public class TutorialGroupScheduleService {
     public List<TutorialGroupSession> generateSessions(Course course, TutorialGroupSchedule tutorialGroupSchedule) {
         ZoneId timeZone = ZoneId.of(course.getTimeZone());
         List<TutorialGroupSession> sessions = new ArrayList<>();
-        ZonedDateTime periodEnd = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidToInclusive()), TutorialGroupDateUtil.END_OF_DAY, timeZone);
+        ZonedDateTime periodEnd = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidToInclusive()), DateUtil.END_OF_DAY, timeZone);
 
         // generate first session in the period (starting point of generation for other sessions)
         ZonedDateTime sessionStart = ZonedDateTime.of(getFirstDateOfWeekDay(LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive()), tutorialGroupSchedule.getDayOfWeek()),

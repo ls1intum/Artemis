@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.tutorialgroups;
 
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;

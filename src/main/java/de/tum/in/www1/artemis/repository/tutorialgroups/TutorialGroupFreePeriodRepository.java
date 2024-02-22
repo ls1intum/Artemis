@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository.tutorialgroups;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -37,6 +38,10 @@ public interface TutorialGroupFreePeriodRepository extends JpaRepository<Tutoria
 
     default TutorialGroupFreePeriod findByIdElseThrow(Long tutorialGroupFreePeriodId) {
         return findById(tutorialGroupFreePeriodId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupFreePeriod", tutorialGroupFreePeriodId));
+    }
+
+    default Optional<TutorialGroupFreePeriod> findFirstOverlappingInSameCourse(Course course, ZonedDateTime fromInclusive, ZonedDateTime toInclusive) {
+        return findOverlappingInSameCourse(course, fromInclusive, toInclusive).stream().findFirst();
     }
 
     Set<TutorialGroupFreePeriod> findAllByTutorialGroupsConfigurationCourseId(Long courseId);
