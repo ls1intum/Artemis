@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.lti;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,7 +55,7 @@ public class Lti13DeepLinkingResponse {
     private String ltiVersion;
 
     @JsonProperty(Claims.CONTENT_ITEMS)
-    private String contentItems;
+    private ArrayList<Map<String, Object>> contentItems;
 
     private JsonObject deepLinkingSettings;
 
@@ -210,11 +211,11 @@ public class Lti13DeepLinkingResponse {
         this.ltiVersion = ltiVersion;
     }
 
-    public String getContentItems() {
+    public ArrayList<Map<String, Object>> getContentItems() {
         return contentItems;
     }
 
-    public void setContentItems(String contentItems) {
+    public void setContentItems(ArrayList<Map<String, Object>> contentItems) {
         this.contentItems = contentItems;
     }
 
