@@ -378,11 +378,6 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                     errorList.add(participation);
                 }
                 else {
-                    var user = getUserFromRepositoryUri(participation.getRepositoryUri());
-                    if (user != null) {
-                        // localvc expects the user to be part of the url, which is not in the normal repository uri, so we add it here
-                        url = url.replace("://", "://" + user + "@");
-                    }
                     log.debug("Migrated student participation with id {} to {}", participation.getId(), url);
                     participation.setRepositoryUri(url);
                     if (participation.getBranch() != null) {
@@ -396,15 +391,6 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                 log.error("Failed to migrate student participation with id {}", participation.getId(), e);
                 errorList.add(participation);
             }
-    }
-
-    private String getUserFromRepositoryUri(String repositoryUri) {
-        try {
-            return repositoryUri.split("@")[0].split("//")[1];
-        }
-        catch (Exception e) {
-            return null;
-        }
     }
 
     /**
@@ -434,9 +420,9 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
             var projectKey = exercise.getProjectKey();
 
             localVCService.get().createProjectForExercise(exercise);
-            log.debug("Cloning repository {} from Bitbucket and moving it to local VCS", repositoryUri);
+            log.info("Cloning repository {} from Bitbucket and moving it to local VCS", repositoryUri);
             copyRepoToLocalVC(projectKey, repositoryName, repositoryUri, exercise.getBranch());
-            log.debug("Successfully cloned repository {} from Bitbucket and moved it to local VCS", repositoryUri);
+            log.info("Successfully cloned repository {} from Bitbucket and moved it to local VCS", repositoryUri);
             var uri = new LocalVCRepositoryUri(projectKey, repositoryName, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
             return uri.toString();
         }
@@ -444,7 +430,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
             /*
              * By returning null here, we indicate that the repository does not exist anymore
              */
-            log.error("Failed to clone repository from Bitbucket: {}, the repository is unavailable.", repositoryUri);
+            log.error("Failed to clone repository from Bitbucket: {}, the repository is unavailable.", repositoryUri, e);
             return null;
         }
     }

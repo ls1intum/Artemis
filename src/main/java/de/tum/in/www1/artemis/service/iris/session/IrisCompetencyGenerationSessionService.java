@@ -100,6 +100,13 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
         irisMessageService.saveMessage(userMessage, session, IrisMessageSender.USER);
     }
 
+    // @formatter:off
+    record CompetencyGenerationDTO(
+            String courseDescription,
+            CompetencyTaxonomy[] taxonomyOptions
+    ) {}
+    // @formatter:on
+
     @Override
     public List<Competency> executeRequest(IrisCompetencyGenerationSession session) {
 
@@ -109,7 +116,7 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
         }
         var courseDescription = userMessageContent.getContentAsString();
 
-        Map<String, Object> parameters = Map.of("courseDescription", courseDescription, "taxonomyOptions", CompetencyTaxonomy.values());
+        var parameters = new CompetencyGenerationDTO(courseDescription, CompetencyTaxonomy.values());
         var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false);
         try {
             var response = irisConnectorService.sendRequestV2(irisSettings.irisCompetencyGenerationSettings().getTemplate().getContent(),
