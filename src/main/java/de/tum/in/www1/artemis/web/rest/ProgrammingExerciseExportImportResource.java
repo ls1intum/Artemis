@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -93,12 +94,15 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ConsistencyCheckService consistencyCheckService;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService, CourseRepository courseRepository,
-            ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService) {
+            ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -113,6 +117,7 @@ public class ProgrammingExerciseExportImportResource {
         this.courseRepository = courseRepository;
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
         this.consistencyCheckService = consistencyCheckService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
     /**
@@ -428,6 +433,27 @@ public class ProgrammingExerciseExportImportResource {
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = programmingExercise.getStudentParticipations().stream()
                 .filter(participation -> participationIdSet.contains(participation.getId())).map(participation -> (ProgrammingExerciseStudentParticipation) participation).toList();
         return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/export-repo-of-participation-id/:participationId : sends the submission from participation id as zip
+     *
+     * @param exerciseId      the id of the exercise to get the repos from
+     * @param participationId the id of the participation
+     * @return ResponseEntity with status
+     * @throws IOException if submissions can't be zippedRequestBody
+     */
+    @GetMapping(EXPORT_SUBMISSION_OF_PARTICIPATION)
+    @EnforceAtLeastTutor
+    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
+    public ResponseEntity<Resource> exportSubmissionOfParticipationId(@PathVariable long exerciseId, @PathVariable long participationId) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+
+        long start = System.nanoTime();
+        Optional<File> zipFile = programmingExerciseExportService.exportStudentRepositoryToZipFile(programmingExercise, participation);
+        return returnZipFileForRepositoryExport(zipFile, participation.getParticipantIdentifier(), programmingExercise, start);
     }
 
     private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations,

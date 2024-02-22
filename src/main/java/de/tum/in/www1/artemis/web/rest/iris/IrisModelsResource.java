@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.service.connectors.iris.PyrisConnectorException;
-import de.tum.in.www1.artemis.service.connectors.iris.PyrisConnectorService;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.PyrisModelDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorException;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**

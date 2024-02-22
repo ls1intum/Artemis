@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.iris;
+package de.tum.in.www1.artemis.service.connectors.pyris;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisStatusDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.IrisStatusDTO;
 
 @Component
 @Profile("iris")

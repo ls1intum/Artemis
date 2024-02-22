@@ -23,7 +23,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.service.connectors.iris.dto.*;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.*;
 
 @Component
 @Profile("iris")

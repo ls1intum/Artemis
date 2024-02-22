@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.iris.PyrisHealthIndicator;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisHealthIndicator;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedSettingsDTO;

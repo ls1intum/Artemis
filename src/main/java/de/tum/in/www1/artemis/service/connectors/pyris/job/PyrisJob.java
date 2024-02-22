@@ -1,12 +1,14 @@
-package de.tum.in.www1.artemis.service.connectors.iris.job;
+package de.tum.in.www1.artemis.service.connectors.pyris.job;
+
+import java.io.Serializable;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.PyrisResultDTO;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.PyrisStatusUpdateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisResultDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisStatusUpdateDTO;
 
-public abstract class PyrisJob {
+public abstract class PyrisJob implements Serializable {
 
     public abstract void handleStatusUpdate(PyrisStatusUpdateDTO statusUpdate);
 

@@ -30,6 +30,8 @@ public final class ProgrammingExerciseResourceEndpoints {
 
     public static final String EXPORT_SUBMISSIONS_BY_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/export-repos-by-participation-ids/{participationIds}";
 
+    public static final String EXPORT_SUBMISSION_OF_PARTICIPATION = PROGRAMMING_EXERCISE + "/export-repo-of-participation-id/{participationId}";
+
     public static final String EXPORT_INSTRUCTOR_EXERCISE = PROGRAMMING_EXERCISE + "/export-instructor-exercise";
 
     public static final String EXPORT_INSTRUCTOR_REPOSITORY = PROGRAMMING_EXERCISE + "/export-instructor-repository/{repositoryType}";

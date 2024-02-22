@@ -1,7 +1,7 @@
-package de.tum.in.www1.artemis.service.connectors.iris;
+package de.tum.in.www1.artemis.service.connectors.pyris;
 
-import static de.tum.in.www1.artemis.service.connectors.iris.dto.PyrisWebhookType.DELETE;
-import static de.tum.in.www1.artemis.service.connectors.iris.dto.PyrisWebhookType.UPDATE;
+import static de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisWebhookType.DELETE;
+import static de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisWebhookType.UPDATE;
 
 import java.util.List;
 
@@ -11,12 +11,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.PyrisWebhookDTO;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.PyrisWebhookSettingsDTO;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.PyrisWebhookType;
-import de.tum.in.www1.artemis.service.connectors.iris.job.LectureWebhookJob;
-import de.tum.in.www1.artemis.service.connectors.iris.job.PyrisJob;
-import de.tum.in.www1.artemis.service.connectors.iris.job.RepositoryWebhookJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisWebhookDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisWebhookSettingsDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisWebhookType;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.LectureWebhookJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.RepositoryWebhookJob;
 
 @Service
 public class PyrisWebhookService {

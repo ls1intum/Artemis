@@ -12,8 +12,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.service.connectors.iris.PyrisConnectorException;
-import de.tum.in.www1.artemis.service.connectors.iris.PyrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorException;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.exception.*;
 
 class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {

@@ -1,11 +1,17 @@
-package de.tum.in.www1.artemis.service.connectors.iris.job;
+package de.tum.in.www1.artemis.service.connectors.pyris.job;
+
+import java.io.Serial;
+import java.io.Serializable;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.PyrisResultDTO;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.PyrisStatusUpdateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisResultDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisStatusUpdateDTO;
 
-public class LectureWebhookJob extends PyrisJob {
+public class LectureWebhookJob extends PyrisJob implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     protected final long courseId;
 

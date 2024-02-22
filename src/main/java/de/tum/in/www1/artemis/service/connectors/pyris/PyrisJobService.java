@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.iris;
+package de.tum.in.www1.artemis.service.connectors.pyris;
 
 import java.security.SecureRandom;
 import java.util.Optional;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
-import de.tum.in.www1.artemis.service.connectors.iris.job.PyrisJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
 
 @Service
 public class PyrisJobService {
@@ -20,19 +20,19 @@ public class PyrisJobService {
 
     private IMap<String, PyrisJob> jobMap;
 
-    @Value("${server.url:unknown}")
+    @Value("${server.url}")
     private String serverUrl;
 
     @Value("${eureka.instance.instanceId:unknown}")
     private String instanceId;
 
-    @Value("${artemis.iris.job.timeout:300}")
+    @Value("${artemis.iris.jobs.timeout:300}")
     private int jobTimeout; // in seconds
 
-    @Value("${artemis.iris.job.git-username:pyris-fake-git-user}")
+    @Value("${artemis.iris.jobs.git-username:pyris-fake-git-user}")
     private String gitUsername;
 
-    @Value("${artemis.iris.job.git-password}")
+    @Value("${artemis.iris.jobs.git-password}")
     private Optional<String> gitPassword;
 
     public PyrisJobService(HazelcastInstance hazelcastInstance) {
@@ -55,7 +55,23 @@ public class PyrisJobService {
         return token;
     }
 
-    public String generateJobIdToken() {
+    public void removeJob(String token) {
+        jobMap.remove(token);
+    }
+
+    public PyrisJob getJob(String token) {
+        return jobMap.get(token);
+    }
+
+    public String getGitUsername() {
+        return gitUsername;
+    }
+
+    public String getGitPasswordForJob(String token) {
+        return gitPassword.orElse(token);
+    }
+
+    private String generateJobIdToken() {
         // Include instance name, node id, timestamp and random string
         var randomStringBuilder = new StringBuilder();
         randomStringBuilder.append(serverUrl);
@@ -75,17 +91,5 @@ public class PyrisJobService {
             }
         }
         return randomStringBuilder.toString();
-    }
-
-    public String getGitUsername() {
-        return gitUsername;
-    }
-
-    public String getGitPasswordForJob(String token) {
-        return gitPassword.orElse(token);
-    }
-
-    public PyrisJob getJob(String token) {
-        return jobMap.get(token);
     }
 }

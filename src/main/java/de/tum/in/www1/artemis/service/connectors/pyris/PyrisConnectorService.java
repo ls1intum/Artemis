@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.iris;
+package de.tum.in.www1.artemis.service.connectors.pyris;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
@@ -21,7 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.service.connectors.iris.dto.*;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.*;
 import de.tum.in.www1.artemis.service.iris.exception.*;
 
 /**

@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisHestiaSessionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.iris.PyrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
