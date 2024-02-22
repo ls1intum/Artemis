@@ -189,7 +189,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
     void test_template_exercise(ProgrammingLanguage language, ProjectType projectType, boolean testwiseCoverageAnalysis) throws Exception {
-        forceDefaultBuildPlanCreation();
+        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
         runTests(language, projectType, exerciseRepo, TestResult.FAILED, testwiseCoverageAnalysis);
     }
 
@@ -197,7 +197,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
     void test_template_solution(ProgrammingLanguage language, ProjectType projectType, boolean testwiseCoverageAnalysis) throws Exception {
-        forceDefaultBuildPlanCreation();
+        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
         runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL, testwiseCoverageAnalysis);
     }
 
@@ -304,10 +304,5 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
             }
             return TestResult.SUCCESSFUL;
         }
-    }
-
-    private void forceDefaultBuildPlanCreation() {
-        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
-        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
     }
 }
