@@ -204,13 +204,14 @@ public class LocalVCServletService {
     private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
 
         String basicAuthCredentials = checkAuthorizationHeader(authorizationHeader);
+        int separatorIndex = basicAuthCredentials.indexOf(":");
 
-        if (basicAuthCredentials.split(":").length != 2) {
+        if (separatorIndex == -1) {
             throw new LocalVCAuthException();
         }
 
-        String username = basicAuthCredentials.split(":")[0];
-        String password = basicAuthCredentials.split(":")[1];
+        String username = basicAuthCredentials.substring(0, separatorIndex);
+        String password = basicAuthCredentials.substring(separatorIndex + 1);
 
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, password);
@@ -413,17 +414,9 @@ public class LocalVCServletService {
             }
         }
 
+        // Trigger the build for the solution repository.
+        // The template repository will be built, once the result for the solution repository is available. See LocalCIResultProcessingService.
         ciTriggerService.triggerBuild(solutionParticipation, commitHash, repositoryType);
-
-        try {
-            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST, repositoryType);
-        }
-        catch (EntityNotFoundException e) {
-            // Something went wrong while retrieving the template participation.
-            // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
-            // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
-            log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", exercise.getId(), e);
-        }
     }
 
     private ProgrammingSubmission getProgrammingSubmission(ProgrammingExercise exercise, String commitHash) {

@@ -3,7 +3,7 @@
         <div class="course-overview-controls d-none d-sm-block">
             <div class="d-inline-block">
                 <button id="flip" (click)="flipOrder()" class="btn btn-primary">
-                    <fa-icon [icon]="sortingOrder === ASC ? faSortNumericUp : faSortNumericDown"></fa-icon>
+                    <fa-icon [icon]="sortingOrder === ASC ? faSortNumericUp : faSortNumericDown" />
                     <span class="ms-1">{{ 'artemisApp.courseOverview.exerciseList.' + (sortingOrder === ASC ? 'oldFirst' : 'newFirst') | artemisTranslate }}</span>
                 </button>
             </div>
@@ -21,7 +21,7 @@
                             [ngClass]="{ 'text-primary': weeklyLecturesGrouped[weekKey]!.isCurrentWeek }"
                             (click)="weeklyLecturesGrouped[weekKey]!.isCollapsed = !weeklyLecturesGrouped[weekKey]!.isCollapsed"
                         >
-                            <fa-icon class="pe-3" [icon]="weeklyLecturesGrouped[weekKey]!.isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
+                            <fa-icon class="pe-3" [icon]="weeklyLecturesGrouped[weekKey]!.isCollapsed ? faAngleDown : faAngleUp" />
                             @if (weeklyLecturesGrouped[weekKey].start && weeklyLecturesGrouped[weekKey].end) {
                                 <span>
                                     {{ weeklyLecturesGrouped[weekKey].start | artemisDate: 'long-date' }} -
@@ -45,7 +45,7 @@
                         @if (!weeklyLecturesGrouped[weekKey]!.isCollapsed) {
                             <div>
                                 @for (lecture of weeklyLecturesGrouped[weekKey]!.lectures; track lecture) {
-                                    <jhi-course-lecture-row class="pb-1" [lecture]="lecture" [course]="course"></jhi-course-lecture-row>
+                                    <jhi-course-lecture-row class="pb-1" [lecture]="lecture" [course]="course" />
                                 }
                             </div>
                         }

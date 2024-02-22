@@ -3,7 +3,7 @@
         <span class="posting-header header-author-date">
             @if (posting.author) {
                 <span class="posting-author-role" ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}">
-                    <fa-icon [icon]="userAuthorityIcon"></fa-icon>
+                    <fa-icon [icon]="userAuthorityIcon" />
                 </span>
                 <span class="posting-author">
                     {{ posting.author!.name }}
@@ -23,14 +23,9 @@
                 [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
                 [icon]="faPencilAlt"
                 (click)="posting.title !== '' ? createEditModal.open() : isModalOpen.emit()"
-            ></fa-icon>
+            />
         }
-        <jhi-post-create-edit-modal
-            #createEditModal
-            [posting]="posting"
-            [isCourseMessagesPage]="isCourseMessagesPage"
-            (isModalOpen)="isModalOpen.emit()"
-        ></jhi-post-create-edit-modal>
+        <jhi-post-create-edit-modal #createEditModal [posting]="posting" [isCourseMessagesPage]="isCourseMessagesPage" (isModalOpen)="isModalOpen.emit()" />
         @if (mayEditOrDelete) {
             <jhi-confirm-icon
                 iconSize="xs"
@@ -38,8 +33,7 @@
                 [ngClass]="'deleteIcon clickable icon'"
                 [initialTooltip]="'artemisApp.metis.deletePost' | artemisTranslate"
                 [confirmTooltip]="'artemisApp.metis.confirmDeletePost' | artemisTranslate"
-            >
-            </jhi-confirm-icon>
+            />
         }
         @if (!!isCourseMessagesPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
             <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
