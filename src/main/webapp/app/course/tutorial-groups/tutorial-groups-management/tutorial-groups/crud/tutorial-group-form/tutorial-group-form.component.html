@@ -171,12 +171,7 @@
                         <a href="https://guides.github.com/features/mastering-markdown/"> GitHub Markdown Guide</a>
                     </small>
                     <!-- not included in reactive form -->
-                    <jhi-markdown-editor
-                        aria-describedby="additionalInfoHelp"
-                        id="additionalInfo"
-                        class="markdown-editor"
-                        [(markdown)]="additionalInformation"
-                    ></jhi-markdown-editor>
+                    <jhi-markdown-editor aria-describedby="additionalInfoHelp" id="additionalInfo" class="markdown-editor" [(markdown)]="additionalInformation" />
                 </div>
                 <hr />
                 <div class="form-check">
@@ -191,7 +186,7 @@
                     </div>
                 }
                 <hr />
-                <jhi-schedule-form [hidden]="!configureSchedule" #scheduleForm [parentFormGroup]="form" [course]="course"></jhi-schedule-form>
+                <jhi-schedule-form [hidden]="!configureSchedule" #scheduleForm [parentFormGroup]="form" [course]="course" />
                 <hr [hidden]="!configureSchedule" />
                 <!-- Optional Notification Message -->
                 @if (notificationControl) {
@@ -221,7 +216,7 @@
                 <div class="row mt-2">
                     <div class="col-12">
                         <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
-                            <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                         </button>
                     </div>
                 </div>

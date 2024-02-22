@@ -12,7 +12,7 @@
             }}</span>
             @for (hint of availableExerciseHints; track hint) {
                 <div class="mb-3">
-                    <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="false" (onHintActivated)="this.onHintActivated.emit($event)"></jhi-exercise-hint-expandable>
+                    <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="false" (onHintActivated)="this.onHintActivated.emit($event)" />
                 </div>
             }
             <hr />
@@ -23,7 +23,7 @@
             <h2 jhiTranslate="artemisApp.exerciseHint.studentDialog.activatedHintsTitle">Already activated hints</h2>
             @for (hint of activatedExerciseHints; track hint) {
                 <div class="mb-3">
-                    <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="true"></jhi-exercise-hint-expandable>
+                    <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="true" />
                 </div>
             }
         </div>

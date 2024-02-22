@@ -2,7 +2,7 @@
     <div class="popover-content" (mouseenter)="openPopover()" id="theme-switch-popover-content">
         <div class="head">☾ <span jhiTranslate="artemisApp.theme.darkMode">Dark Mode</span> ☾</div>
         <div class="switch-box">
-            <div><fa-icon [icon]="faSync"></fa-icon> {{ 'artemisApp.theme.sync' | artemisTranslate }}</div>
+            <div><fa-icon [icon]="faSync" /> {{ 'artemisApp.theme.sync' | artemisTranslate }}</div>
             <div class="form-switch">
                 <input class="form-check-input" type="checkbox" (click)="toggleSynced()" [checked]="isSynced" />
             </div>
