@@ -8,6 +8,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -78,7 +79,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend = createDefaultMockMessage(irisSession);
         messageToSend.setMessageDifferentiator(1453);
 
-        irisRequestMockProvider.mockMessageV1Response("Hello World");
+        irisRequestMockProvider.mockMessageV2Response(Map.of("response", "Hello World"));
         setupExercise();
 
         var body = new IrisMessageDTO(messageToSend, new IrisClientArgumentsDTO());
@@ -260,7 +261,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockMessageV1Response("Hello World");
+        irisRequestMockProvider.mockMessageV2Response(Map.of("response", "Hello World"));
         setupExercise();
 
         var irisMessage = irisMessageService.saveMessage(messageToSend, irisSession, IrisMessageSender.USER);
@@ -278,7 +279,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend1 = createDefaultMockMessage(irisSession);
         var messageToSend2 = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockMessageV1Response("Hello World");
+        irisRequestMockProvider.mockMessageV2Response(Map.of("response", "Hello World"));
         setupExercise();
 
         var globalSettings = irisSettingsService.getGlobalSettings();
