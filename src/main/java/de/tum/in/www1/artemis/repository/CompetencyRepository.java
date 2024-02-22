@@ -40,26 +40,14 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             """)
     Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "exercises", "lectureUnits", "lectureUnits.completedUsers", "lectureUnits.lecture" })
-    Optional<Competency> findCompetencyWithUserProgressAndExercisesAndCompletedUsersAndLecturesById(Long id);
-
-    /**
-     * Fetches a competency with all linked exercises, lecture units, the associated progress, and completion of the specified user.
-     * <p>
-     * IMPORTANT: We use the entity graph to fetch the lazy loaded data. The fetched data is limited by joining on the user id.
-     *
-     * @param competencyId the id of the competency that should be fetched
-     * @param userId       the id of the user whose progress should be fetched
-     * @return the competency
-     */
-    default Optional<Competency> findByIdWithExercisesAndLectureUnitsAndProgressForUser(Long competencyId, Long userId) {
-        Optional<Competency> competency = findCompetencyWithUserProgressAndExercisesAndCompletedUsersAndLecturesById(competencyId);
-        return competency.map(c -> {
-            c.getUserProgress().removeIf(p -> !p.getUser().getId().equals(userId));
-            c.getLectureUnits().forEach(unit -> unit.getCompletedUsers().removeIf(u -> !u.getUser().getId().equals(userId)));
-            return c;
-        });
-    }
+    @Query("""
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH c.exercises
+            WHERE c.id = :competencyId
+            """)
+    Optional<Competency> findWithLectureUnitsAndExercisesById(long competencyId);
 
     @Query("""
             SELECT c
@@ -168,12 +156,12 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
         return findById(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
-    default Competency findByIdWithLectureUnitsElseThrow(long competencyId) {
-        return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+    default Competency findWithLectureUnitsAndExercisesByIdElseThrow(long competencyId) {
+        return findWithLectureUnitsAndExercisesById(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
-    default Competency findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(long competencyId, long userId) {
-        return findByIdWithExercisesAndLectureUnitsAndProgressForUser(competencyId, userId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+    default Competency findByIdWithLectureUnitsElseThrow(long competencyId) {
+        return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     long countByCourse(Course course);

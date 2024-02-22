@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.competency;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -45,8 +46,13 @@ public class CompetencyService {
 
     private final ExerciseService exerciseService;
 
+    private final CompetencyProgressRepository competencyProgressRepository;
+
+    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
     public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
-            LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService, ExerciseService exerciseService) {
+            LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService, ExerciseService exerciseService,
+            CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository) {
         this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -54,6 +60,8 @@ public class CompetencyService {
         this.competencyProgressService = competencyProgressService;
         this.lectureUnitService = lectureUnitService;
         this.exerciseService = exerciseService;
+        this.competencyProgressRepository = competencyProgressRepository;
+        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
     }
 
     /**
@@ -243,6 +251,32 @@ public class CompetencyService {
         }
 
         competencyRepository.deleteById(competency.getId());
+    }
+
+    /**
+     * Finds a competency by its id and fetches its lecture units, exercises and progress for the provided user. It also fetches the lecture unit progress for the same user.
+     * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
+     *
+     * @param competencyId The id of the competency to find
+     * @param userId       The id of the user for which to fetch the progress
+     * @return The found competency
+     */
+    public Competency findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(Long competencyId, Long userId) {
+        Competency competency = competencyRepository.findWithLectureUnitsAndExercisesByIdElseThrow(competencyId);
+        competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, userId).ifPresent(progress -> competency.setUserProgress(Set.of(progress)));
+        // collect to map lecture unit id -> this
+        var completions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(competency.getLectureUnits(), userId).stream()
+                .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), completion -> completion));
+        competency.getLectureUnits().forEach(lectureUnit -> {
+            if (completions.containsKey(lectureUnit.getId())) {
+                lectureUnit.setCompletedUsers(Set.of(completions.get(lectureUnit.getId())));
+            }
+            else {
+                lectureUnit.setCompletedUsers(Collections.emptySet());
+            }
+        });
+
+        return competency;
     }
 
     /**
