@@ -124,6 +124,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
+        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
+        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
 
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
@@ -189,7 +191,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
     void test_template_exercise(ProgrammingLanguage language, ProjectType projectType, boolean testwiseCoverageAnalysis) throws Exception {
-        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
         runTests(language, projectType, exerciseRepo, TestResult.FAILED, testwiseCoverageAnalysis);
     }
 
@@ -197,7 +198,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
     void test_template_solution(ProgrammingLanguage language, ProjectType projectType, boolean testwiseCoverageAnalysis) throws Exception {
-        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
         runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL, testwiseCoverageAnalysis);
     }
 
