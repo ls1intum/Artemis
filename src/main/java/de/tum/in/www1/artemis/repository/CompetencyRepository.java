@@ -168,21 +168,4 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "userProgress" })
     List<Competency> findWithUserProgressByCourseId(long courseId);
-
-    /**
-     * Gets all competencies for the given course with the progress of the specified user.
-     * <p>
-     * The query only fetches data related to specified user. Participations for other users are not included.
-     * IMPORTANT: JPA doesn't support JOIN-FETCH-ON statements. To fetch the relevant data we have to filter the retrieved data.
-     *
-     * @param courseId the id of the course
-     * @param userId   the id of the user
-     * @return the competencies with the progress of the user
-     */
-    default List<Competency> findWithUserSpecificProgressByCourseId(long courseId, long userId) {
-        List<Competency> competencies = findWithUserProgressByCourseId(courseId);
-        competencies.forEach(competency -> competency.getUserProgress().removeIf(progress -> progress.getUser().getId() != userId));
-        return competencies;
-    }
-
 }

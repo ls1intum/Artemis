@@ -280,6 +280,31 @@ public class CompetencyService {
     }
 
     /**
+     * Finds competencies within a course and fetch progress for the provided user.
+     * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
+     *
+     * @param courseId The id of the course for which to fetch the competencies
+     * @param userId   The id of the user for which to fetch the progress
+     * @return The found competency
+     */
+    public List<Competency> findCompetenciesWithProgressForUserByCourseId(Long courseId, Long userId) {
+        List<Competency> competencies = competencyRepository.findWithUserProgressByCourseId(courseId);
+        var progress = competencyProgressRepository.findByCompetenciesAndUser(competencies, userId).stream()
+                .collect(Collectors.toMap(completion -> completion.getCompetency().getId(), completion -> completion));
+
+        competencies.forEach(competency -> {
+            if (progress.containsKey(competency.getId())) {
+                competency.setUserProgress(Set.of(progress.get(competency.getId())));
+            }
+            else {
+                competency.setUserProgress(Collections.emptySet());
+            }
+        });
+
+        return competencies;
+    }
+
+    /**
      * Checks if the provided competencies and relations between them contain a cycle
      *
      * @param competencies The set of competencies that get checked for cycles
