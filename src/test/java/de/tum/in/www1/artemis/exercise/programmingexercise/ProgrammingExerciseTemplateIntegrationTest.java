@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
@@ -121,8 +120,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 1, 1, 0, 1);
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         Course course = courseUtilService.addEmptyCourse();
-        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
-        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
@@ -205,7 +202,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
             throws Exception {
         exercise.setProgrammingLanguage(language);
         exercise.setProjectType(projectType);
-        mockConnectorRequestsForSetup(exercise, false, false, false);
+        mockConnectorRequestsForSetup(exercise, false, true, false);
         exercise.setChannelName("exercise-pe");
         if (testwiseCoverageAnalysis) {
             exercise.setTestwiseCoverageEnabled(true);
