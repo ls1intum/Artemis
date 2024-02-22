@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.exception.ConstraintViolationException;
@@ -69,8 +68,6 @@ public class QuizScheduleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final HazelcastInstance hazelcastInstance;
-
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final Optional<LtiNewResultService> ltiNewResultService;
@@ -92,11 +89,6 @@ public class QuizScheduleService {
         this.quizMessagingService = quizMessagingService;
         this.quizStatisticService = quizStatisticService;
         this.ltiNewResultService = ltiNewResultService;
-        this.hazelcastInstance = hazelcastInstance;
-    }
-
-    @PostConstruct
-    public void init() {
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
         this.quizCache = new QuizCache(hazelcastInstance);
