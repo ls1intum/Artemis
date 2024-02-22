@@ -55,8 +55,6 @@ import { ScienceDirective } from 'app/shared/science/science.directive';
         AssessmentWarningComponent,
         StickyPopoverDirective,
         ScienceDirective,
-        // SidebarComponent,
-        // HeaderCourseComponent,
     ],
     exports: [
         ArtemisSharedLibsModule,
@@ -86,7 +84,6 @@ import { ScienceDirective } from 'app/shared/science/science.directive';
         CompetencySelectionComponent,
         StickyPopoverDirective,
         ScienceDirective,
-        // SidebarComponent,
     ],
 })
 export class ArtemisSharedModule {}

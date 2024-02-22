@@ -9,11 +9,6 @@ $footer-height-prod: 142px;
 
 .sidebar-wrapper {
     overflow-x: hidden;
-    height: calc(100vh - 124px);
-    // todo?
-    // &.sidenav-height-dev {
-    //     height: calc(100vh - 148px);
-    // }
     position: fixed;
     width: 100vw;
     margin: -1rem -1rem;
@@ -131,4 +126,8 @@ jhi-secured-image {
 
 .me-negative {
     margin-right: -5px;
+}
+
+.module-bg {
+    background-color: var(--module-bg);
 }

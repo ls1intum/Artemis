@@ -37,7 +37,6 @@ const routes: Routes = [
             pageTitle: 'overview.course',
         },
         canActivate: [UserRouteAccessService],
-        // resolve: {sidebarData: sidebarResolver},
         children: [
             {
                 path: 'exercises',

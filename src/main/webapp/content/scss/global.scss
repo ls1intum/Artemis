@@ -268,7 +268,6 @@ Generic styles
 }
 
 .page-wrapper {
-    // min-height: 100vh;
     height: calc(100vh - 124px);
     position: fixed;
     min-width: 100vw;
@@ -427,20 +426,6 @@ ui bootstrap tweaks
     input {
         max-width: 100%;
     }
-
-    // //Todo only for new design
-    // // overflow-y: scroll;
-    // overflow-x: hidden;
-    // height: calc(100vh - 124px);
-    // // TODO:
-    // // &.sidenav-height-dev {
-    // //     height: calc(100vh - 148px);
-    // // }
-    // padding: 1rem 1rem;
-    // top: 87px;
-    // position: relative;
-    // // background-color: white;
-    // width: 100vw;
 }
 
 .header-container {

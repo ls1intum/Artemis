@@ -3,7 +3,7 @@
         <mat-sidenav-container class="vw-100 vh-100" [ngClass]="{ 'sidenav-height-dev': !inProduction }" [ngClass]="{ 'container-closed': isCollapsed }">
             <mat-sidenav
                 [ngClass]="{ 'sidenav-height-dev': !inProduction }"
-                class="bg-white rounded-end rounded-3"
+                class="module-bg rounded-end rounded-3"
                 opened="true"
                 mode="side"
                 [fixedInViewport]="true"
@@ -78,7 +78,7 @@
             </mat-sidenav>
             <mat-sidenav-content [ngClass]="{ 'sidenav-height-dev': !inProduction }">
                 @if (course) {
-                    <div class="h5 bg-white m-3 mt-0 px-3 py-2 rounded rounded-3 d-flex justify-content-between">
+                    <div class="h5 module-bg m-3 mt-0 px-3 py-2 rounded rounded-3 d-flex justify-content-between">
                         <div class="align-self-center">{{ 'artemisApp.courseOverview.menu.' + pageTitle | artemisTranslate }}</div>
 
                         <div class="d-flex">
@@ -95,7 +95,7 @@
                             </button>
                         </div>
                     </div>
-                    <div class="course-body-container bg-white mx-3 p-3 rounded rounded-3">
+                    <div class="course-body-container module-bg mx-3 p-3 rounded rounded-3">
                         <ng-container class="d-flex ms-auto" #controlsViewContainer />
                         <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
                         <div class="refresh-overlay" [class.active]="refreshingCourse">
