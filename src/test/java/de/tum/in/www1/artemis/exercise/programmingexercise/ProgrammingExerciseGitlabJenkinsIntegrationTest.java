@@ -259,8 +259,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFile_buildPlanPresent_buildPlanSet() throws Exception {
-        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
-        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.importFromFile_buildPlanPresent_buildPlanUsed();
     }
 
