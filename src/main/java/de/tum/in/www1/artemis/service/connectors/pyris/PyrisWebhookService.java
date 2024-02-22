@@ -51,7 +51,7 @@ public class PyrisWebhookService {
 
     private void callPyrisWebhook(String path, PyrisWebhookType pyrisWebhookType, Object payload, PyrisJob job) {
         var token = pyrisJobService.addJob(job);
-        var settings = new PyrisWebhookSettingsDTO(token, pyrisJobService.getGitUsername(), pyrisJobService.getGitPasswordForJob(token));
+        var settings = new PyrisWebhookSettingsDTO(token);
 
         var success = false;
         for (int i = 0; i < max_retries; i++) {

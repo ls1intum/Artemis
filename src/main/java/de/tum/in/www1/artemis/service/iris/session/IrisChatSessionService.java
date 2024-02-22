@@ -16,8 +16,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
-import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
@@ -31,9 +29,9 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisTutorChatPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
-import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -176,27 +174,28 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
         String template = irisSettings.irisChatSettings().getTemplate().getContent();
         String preferredModel = irisSettings.irisChatSettings().getPreferredModel();
         var dto = createRequestArgumentsDTO(chatSession);
-        pyrisConnectorService.sendRequest(template, preferredModel, dto).handleAsync((response, throwable) -> {
-            if (throwable != null) {
-                log.error("Error while getting response from Iris model", throwable);
-                irisChatWebsocketService.sendException(chatSession, throwable.getCause());
-            }
-            else if (response != null && response.content().hasNonNull("response")) {
-                String responseText = response.content().get("response").asText();
-                IrisMessage responseMessage = new IrisMessage();
-                responseMessage.addContent(new IrisTextMessageContent(responseText));
-                var irisMessageSaved = irisMessageService.saveMessage(responseMessage, chatSession, IrisMessageSender.LLM);
-                irisChatWebsocketService.sendMessage(irisMessageSaved);
-            }
-            else {
-                log.error("No response from Iris model");
-                irisChatWebsocketService.sendException(chatSession, new IrisNoResponseException());
-            }
-            return null;
-        });
+        pyrisConnectorService.executeTutorChatPipeline("default", dto);
+        // .handleAsync((response, throwable) -> {
+        // if (throwable != null) {
+        // log.error("Error while getting response from Iris model", throwable);
+        // irisChatWebsocketService.sendException(chatSession, throwable.getCause());
+        // }
+        // else if (response != null && response.content().hasNonNull("response")) {
+        // String responseText = response.content().get("response").asText();
+        // IrisMessage responseMessage = new IrisMessage();
+        // responseMessage.addContent(new IrisTextMessageContent(responseText));
+        // var irisMessageSaved = irisMessageService.saveMessage(responseMessage, chatSession, IrisMessageSender.LLM);
+        // irisChatWebsocketService.sendMessage(irisMessageSaved);
+        // }
+        // else {
+        // log.error("No response from Iris model");
+        // irisChatWebsocketService.sendException(chatSession, new IrisNoResponseException());
+        // }
+        // return null;
+        // });
     }
 
-    private IrisChatRequestDTO createRequestArgumentsDTO(IrisChatSession session) {
+    private PyrisTutorChatPipelineExecutionDTO createRequestArgumentsDTO(IrisChatSession session) {
         final ProgrammingExercise exercise = session.getExercise();
         final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         final Optional<ProgrammingSubmission> latestSubmission = getLatestSubmissionIfExists(exercise, session.getUser());
@@ -208,7 +207,8 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
         final Map<String, String> studentRepositoryContents = studentRepository.map(repositoryService::getFilesWithContent).orElse(Map.of());
         final String gitDiff = studentRepository.map(repo -> getGitDiff(templateRepository, repo)).orElse("");
 
-        return new IrisChatRequestDTO(exercise, course, latestSubmission, buildFailed, buildLog, session, gitDiff, templateRepositoryContents, studentRepositoryContents);
+        return new PyrisTutorChatPipelineExecutionDTO(exercise, course, latestSubmission, buildFailed, buildLog, session, gitDiff, templateRepositoryContents,
+                studentRepositoryContents);
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

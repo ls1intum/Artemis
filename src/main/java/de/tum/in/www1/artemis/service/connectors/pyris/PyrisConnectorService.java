@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.*;
 
@@ -65,41 +64,21 @@ public class PyrisConnectorService {
         }
     }
 
-    @Async
-    public CompletableFuture<PyrisJobDTO> executeTutorChatPipeline(String variant, PyrisTutorChatPipelineExecutionDTO executionDTO) {
-        return executePipeline("tutor-chat", variant, executionDTO);
-    }
-
-    @Async
-    public CompletableFuture<PyrisJobDTO> executeHestiaDescriptionGenerationPipeline(String variant, PyrisHestiaDescriptionGenerationPipelineExecutionDTO executionDTO) {
-        return executePipeline("hestia-description-generation", variant, executionDTO);
-    }
-
-    @Async
-    public CompletableFuture<PyrisJobDTO> executeCodeEditorPipeline(String variant, PyrisCodeEditorPipelineExecutionDTO executionDTO) {
-        return executePipeline("code-editor", variant, executionDTO);
-    }
-
-    @Async
-    public CompletableFuture<PyrisJobDTO> executeCompetencyGenerationPipeline(String variant, PyrisCompetencyGenerationPipelineExecutionDTO executionDTO) {
-        return executePipeline("competency-generation", variant, executionDTO);
-    }
-
-    private CompletableFuture<PyrisJobDTO> executePipeline(String feature, String variant, PyrisPipelineExecutionDTO executionDTO) {
+    void executePipeline(String feature, String variant, PyrisPipelineExecutionDTO executionDTO) {
         var endpoint = "/api/v1/pipelines/" + feature + "/" + variant + "/run";
         try {
-            return sendRequestAndParseResponse(endpoint, executionDTO, PyrisJobDTO.class);
+            sendRequestAndParseResponse(endpoint, executionDTO, Void.class);
         }
         catch (JsonProcessingException e) {
             log.error("Failed to parse response from Pyris", e);
-            return failedFuture(new IrisParseResponseException(e));
+            throw new IrisParseResponseException(e);
         }
         catch (HttpStatusCodeException e) {
-            return failedFuture(toIrisException(e));
+            throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send request to Pyris", e);
-            return failedFuture(new PyrisConnectorException("Could not fetch response from Iris"));
+            throw new PyrisConnectorException("Could not fetch response from Iris");
         }
     }
 
