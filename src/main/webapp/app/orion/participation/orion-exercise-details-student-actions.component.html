@@ -18,7 +18,7 @@
                 [buttonType]="OrionButtonType.Submit"
                 [buttonLoading]="this.exercise.loading || orionState.building"
                 [smallButton]="smallButtons"
-            ></jhi-ide-button>
+            />
         }
         @if (isOfflineIdeAllowed && orionState.view === ExerciseView.STUDENT && orionState.opened === this.exercise.id && isDueDatePassed()) {
             <jhi-ide-button
