@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
@@ -9,11 +9,11 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
         <div class="form-group-narrow mb-3">
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title" for="field_submissionPolicy">Submission Policy</label>
             <select
-                #policy
+                #policy="ngModel"
                 required
                 class="form-select"
                 [ngModel]="selectedSubmissionPolicyType"
-                (ngModelChange)="policy.value = onSubmissionPolicyTypeChanged($event)"
+                (ngModelChange)="onSubmissionPolicyTypeChanged($event)"
                 name="submissionPolicyType"
                 id="field_submissionPolicy"
                 [disabled]="!editable"
@@ -34,7 +34,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                                 for="field_submissionLimitExceededPenalty"
                                 >Submission limit</label
                             >
-                            <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription"></jhi-help-icon>
+                            <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription" />
                             <div class="input-group">
                                 <input
                                     required
@@ -64,7 +64,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                                 for="field_submissionLimitExceededPenalty"
                                 >Penalty after Exceeding Submission limit</label
                             >
-                            <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription"></jhi-help-icon>
+                            <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription" />
                             <div class="input-group">
                                 <input
                                     required
@@ -96,6 +96,8 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 export class SubmissionPolicyUpdateComponent implements OnInit {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() editable: boolean;
+
+    @Output() submissionPolicyTypeChange = new EventEmitter<void>();
 
     form: FormGroup;
 
@@ -183,6 +185,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
             this.programmingExercise.submissionPolicy = newPolicy;
         }
         this.setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType);
+        this.submissionPolicyTypeChange.emit();
         return submissionPolicyType!;
     }
 

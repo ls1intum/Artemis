@@ -5,7 +5,7 @@
         </h4>
         @if (course.isAtLeastInstructor) {
             <a id="lti-config" [routerLink]="['/course-management', course.id!, 'lti-configuration', 'edit']" class="tab-item btn btn-warning btn-md">
-                <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+                <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
             </a>
         }
     </div>
@@ -33,64 +33,86 @@
                         <span>{{ 'artemisApp.lti.version13' | artemisTranslate }}</span>
                     </dd>
                 </div>
-                <div>
+                @if (selectedLtiVersionKey) {
                     <div>
-                        <dt>
-                            <span>{{ 'artemisApp.lti13.externalToolSettings' | artemisTranslate }}</span>
-                            @if (missingLti13ConfigurationField()) {
-                                <fa-icon
-                                    [icon]="faExclamationTriangle"
-                                    class="text-warning"
-                                    ngbTooltip="{{ 'artemisApp.lti13.missingConfigurationWarning' | artemisTranslate }}"
-                                ></fa-icon>
-                            }
-                            <jhi-help-icon text="artemisApp.lti13.externalToolSettingsTooltip"></jhi-help-icon>
-                        </dt>
-                        <dd></dd>
-                        <dt>
-                            <span>{{ 'artemisApp.lti.customName' | artemisTranslate }}</span>
-                        </dt>
-                        <dd>
-                            <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.customName }}</span>
-                            <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.customName ?? ''"></jhi-copy-icon-button>
-                        </dd>
-                        <dt>
-                            <span>{{ 'artemisApp.lti.registrationId' | artemisTranslate }}</span>
-                        </dt>
-                        <dd>
-                            <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.registrationId }}</span>
-                            <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.registrationId ?? ''"></jhi-copy-icon-button>
-                        </dd>
-                        <dt>
-                            <span>{{ 'artemisApp.lti.clientId' | artemisTranslate }}</span>
-                        </dt>
-                        <dd>
-                            <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.clientId }}</span>
-                            <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.clientId ?? ''"></jhi-copy-icon-button>
-                        </dd>
-                        <dt>
-                            <span>{{ 'artemisApp.lti.authorizationUri' | artemisTranslate }}</span>
-                        </dt>
-                        <dd>
-                            <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.authorizationUri }}</span>
-                            <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.authorizationUri ?? ''"></jhi-copy-icon-button>
-                        </dd>
-                        <dt>
-                            <span>{{ 'artemisApp.lti.tokenUri' | artemisTranslate }}</span>
-                        </dt>
-                        <dd>
-                            <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.tokenUri }}</span>
-                            <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.tokenUri ?? ''"></jhi-copy-icon-button>
-                        </dd>
-                        <dt>
-                            <span>{{ 'artemisApp.lti.jwkSetUri' | artemisTranslate }}</span>
-                        </dt>
-                        <dd>
-                            <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.jwkSetUri }}</span>
-                            <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.jwkSetUri ?? ''"></jhi-copy-icon-button>
-                        </dd>
+                        @if (selectedLtiVersionKey === 'artemisApp.lti.version10') {
+                            <div>
+                                <dt>
+                                    <span>{{ 'artemisApp.lti.ltiKey' | artemisTranslate }}</span>
+                                </dt>
+                                <dd>
+                                    <span>{{ onlineCourseConfiguration?.ltiKey }}</span>
+                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiKey ?? ''" />
+                                </dd>
+                                <dt>
+                                    <span>{{ 'artemisApp.lti.ltiSecret' | artemisTranslate }}</span>
+                                </dt>
+                                <dd>
+                                    <span>{{ onlineCourseConfiguration?.ltiSecret }}</span>
+                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiSecret ?? ''" />
+                                </dd>
+                            </div>
+                        }
+                        @if (selectedLtiVersionKey === 'artemisApp.lti.version13') {
+                            <div>
+                                <dt>
+                                    <span>{{ 'artemisApp.lti13.externalToolSettings' | artemisTranslate }}</span>
+                                    @if (missingLti13ConfigurationField()) {
+                                        <fa-icon
+                                            [icon]="faExclamationTriangle"
+                                            class="text-warning"
+                                            ngbTooltip="{{ 'artemisApp.lti13.missingConfigurationWarning' | artemisTranslate }}"
+                                        />
+                                    }
+                                    <jhi-help-icon text="artemisApp.lti13.externalToolSettingsTooltip" />
+                                </dt>
+                                <dd></dd>
+                                <dt>
+                                    <span>{{ 'artemisApp.lti.customName' | artemisTranslate }}</span>
+                                </dt>
+                                <dd>
+                                    <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.customName }}</span>
+                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.customName ?? ''" />
+                                </dd>
+                                <dt>
+                                    <span>{{ 'artemisApp.lti.registrationId' | artemisTranslate }}</span>
+                                </dt>
+                                <dd>
+                                    <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.registrationId }}</span>
+                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.registrationId ?? ''" />
+                                </dd>
+                                <dt>
+                                    <span>{{ 'artemisApp.lti.clientId' | artemisTranslate }}</span>
+                                </dt>
+                                <dd>
+                                    <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.clientId }}</span>
+                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.clientId ?? ''" />
+                                </dd>
+                                <dt>
+                                    <span>{{ 'artemisApp.lti.authorizationUri' | artemisTranslate }}</span>
+                                </dt>
+                                <dd>
+                                    <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.authorizationUri }}</span>
+                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.authorizationUri ?? ''" />
+                                </dd>
+                                <dt>
+                                    <span>{{ 'artemisApp.lti.tokenUri' | artemisTranslate }}</span>
+                                </dt>
+                                <dd>
+                                    <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.tokenUri }}</span>
+                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.tokenUri ?? ''" />
+                                </dd>
+                                <dt>
+                                    <span>{{ 'artemisApp.lti.jwkSetUri' | artemisTranslate }}</span>
+                                </dt>
+                                <dd>
+                                    <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.jwkSetUri }}</span>
+                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.jwkSetUri ?? ''" />
+                                </dd>
+                            </div>
+                        }
                     </div>
-                </div>
+                }
                 <div>
                     <dd>
                         <a (click)="toggleAdvancedSettings()">
@@ -107,7 +129,7 @@
                     <div>
                         <dt>
                             <span>{{ 'artemisApp.lti.ltiLaunchTarget' | artemisTranslate }}</span>
-                            <jhi-help-icon text="artemisApp.lti.launchTargetTooltip"></jhi-help-icon>
+                            <jhi-help-icon text="artemisApp.lti.launchTargetTooltip" />
                         </dt>
                         <dd>
                             <span>New Window</span>
@@ -126,7 +148,7 @@
                         </dd>
                         <dt>
                             <span>{{ 'artemisApp.lti.requestEmail' | artemisTranslate }}</span>
-                            <jhi-help-icon text="artemisApp.lti.requestUserEmailTooltip"></jhi-help-icon>
+                            <jhi-help-icon text="artemisApp.lti.requestUserEmailTooltip" />
                         </dt>
                         <dd>
                             <span>True</span>
@@ -146,31 +168,35 @@
                                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                                         <th jhiSortBy="id">
                                             id
-                                            <fa-icon [icon]="faSort"></fa-icon>
+                                            <fa-icon [icon]="faSort" />
                                         </th>
                                         <th jhiSortBy="type">
                                             {{ 'artemisApp.exercise.type' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort"></fa-icon>
+                                            <fa-icon [icon]="faSort" />
                                         </th>
                                         <th jhiSortBy="title">
                                             {{ 'artemisApp.exercise.title' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort"></fa-icon>
+                                            <fa-icon [icon]="faSort" />
+                                        </th>
+                                        <th jhiSortBy="launchUrl">
+                                            {{ 'artemisApp.lti.lti10LaunchUrl' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort" />
                                         </th>
                                         <th jhiSortBy="launchUrl">
                                             {{ 'artemisApp.lti.lti13LaunchUrl' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort"></fa-icon>
+                                            <fa-icon [icon]="faSort" />
                                         </th>
                                         <th jhiSortBy="releaseDate">
                                             {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort"></fa-icon>
+                                            <fa-icon [icon]="faSort" />
                                         </th>
                                         <th jhiSortBy="dueDate">
                                             {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort"></fa-icon>
+                                            <fa-icon [icon]="faSort" />
                                         </th>
                                         <th jhiSortBy="assessmentDueDate">
                                             {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort"></fa-icon>
+                                            <fa-icon [icon]="faSort" />
                                         </th>
                                     </tr>
                                 </thead>
@@ -181,8 +207,12 @@
                                             <td>{{ exercise.type ? exercise.type : '' }}</td>
                                             <td>{{ exercise.title ? exercise.title : '' }}</td>
                                             <td>
+                                                {{ getExerciseLti10LaunchUrl(exercise) }}
+                                                <jhi-copy-icon-button [copyText]="getExerciseLti10LaunchUrl(exercise)" />
+                                            </td>
+                                            <td>
                                                 {{ getExerciseLti13LaunchUrl(exercise) }}
-                                                <jhi-copy-icon-button [copyText]="getExerciseLti13LaunchUrl(exercise)"></jhi-copy-icon-button>
+                                                <jhi-copy-icon-button [copyText]="getExerciseLti13LaunchUrl(exercise)" />
                                             </td>
                                             <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
                                             <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>

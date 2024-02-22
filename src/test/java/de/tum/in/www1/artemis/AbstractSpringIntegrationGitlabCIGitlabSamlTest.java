@@ -88,7 +88,8 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) throws Exception {
+    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked)
+            throws Exception {
         final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
         final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
@@ -118,7 +119,7 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
 
     @Override
     public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) throws Exception {
-        mockConnectorRequestsForSetup(exerciseForImport, false);
+        mockConnectorRequestsForSetup(exerciseForImport, false, false, false);
     }
 
     @Override

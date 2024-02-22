@@ -1,0 +1,10 @@
+<select [formControl]="form" class="form-select" id="{{ selectId }}">
+    <option [ngValue]="undefined"></option>
+    @for (taxonomy of competencyTaxonomy | keyvalue: keepOrder; track taxonomy; let i = $index) {
+        <option [ngValue]="taxonomy.key">
+            {{ indent[i] }}&boxur;
+            {{ 'artemisApp.competency.taxonomies.' + taxonomy.value | artemisTranslate }}
+            ({{ 'artemisApp.competency.keywords.' + taxonomy.value | artemisTranslate }})
+        </option>
+    }
+</select>

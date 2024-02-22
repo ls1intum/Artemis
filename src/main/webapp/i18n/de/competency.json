@@ -22,20 +22,21 @@
             "masteredStudents": "Studierende mit Kompetenz",
             "mastered": "Abgeschlossen",
             "taxonomies": {
-                "remember": "Erinnern",
-                "understand": "Verstehen",
-                "apply": "Anwenden",
-                "analyze": "Analysieren",
-                "evaluate": "Evaluieren",
-                "create": "Erstellen"
+                "REMEMBER": "Erinnern",
+                "UNDERSTAND": "Verstehen",
+                "APPLY": "Anwenden",
+                "ANALYZE": "Analysieren",
+                "EVALUATE": "Evaluieren",
+                "CREATE": "Erstellen",
+                "none": "Keine Taxonomie"
             },
             "keywords": {
-                "remember": "definieren, duplizieren, auflisten, notieren, wiederholen, erkennen, reproduzieren, benennen",
-                "understand": "klassifizieren, beschreiben, erörtern, erklären, identifizieren, lokalisieren, erkennen, berichten, angeben, wählen, übersetzen",
-                "apply": "ausführen, implementieren, lösen, benutzen, demonstrieren, illustrieren, arbeiten, festlegen, zeigen, skizzieren",
-                "analyze": "differenzieren, untersuchen, experimentieren, hinterfragen, beziehen, testen, zerlegen, kontrastieren, unterscheiden",
-                "evaluate": "beurteilen, argumentieren, wählen, verteidigen, bewerten, auswählen, unterstützen, einschätzen, kritisieren",
-                "create": "entwerfen, formulieren, postulieren, erfinden, planen, bieten, schreiben, konstruieren, entwickeln"
+                "REMEMBER": "definieren, duplizieren, auflisten, notieren, wiederholen, erkennen, reproduzieren, benennen",
+                "UNDERSTAND": "klassifizieren, beschreiben, erörtern, erklären, identifizieren, lokalisieren, erkennen, berichten, angeben, wählen, übersetzen",
+                "APPLY": "ausführen, implementieren, lösen, benutzen, demonstrieren, illustrieren, arbeiten, festlegen, zeigen, skizzieren",
+                "ANALYZE": "differenzieren, untersuchen, experimentieren, hinterfragen, beziehen, testen, zerlegen, kontrastieren, unterscheiden",
+                "EVALUATE": "beurteilen, argumentieren, wählen, verteidigen, bewerten, auswählen, unterstützen, einschätzen, kritisieren",
+                "CREATE": "entwerfen, formulieren, postulieren, erfinden, planen, bieten, schreiben, konstruieren, entwickeln"
             },
             "table": {
                 "panelHeader": "Deine Fortentwicklung",

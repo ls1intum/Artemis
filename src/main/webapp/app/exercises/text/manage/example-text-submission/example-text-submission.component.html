@@ -21,7 +21,7 @@
                 <div>
                     <div class="text-start">
                         <span>{{ 'artemisApp.exampleSubmission.assessmentTraining' | artemisTranslate }}</span>
-                        <jhi-help-icon [text]="'artemisApp.exampleSubmission.selectModelExplanation'"></jhi-help-icon>
+                        <jhi-help-icon [text]="'artemisApp.exampleSubmission.selectModelExplanation'" />
                     </div>
                     <div class="btn-group" role="group">
                         <input
@@ -53,13 +53,13 @@
                 @switch (state.submissionEditButton) {
                     @case (SubmissionButtonStates.NEW) {
                         <button id="create-example-submission" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
-                            <fa-icon [icon]="faSave"></fa-icon>
+                            <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.createNewSubmission' | artemisTranslate }}
                         </button>
                     }
                     @case (SubmissionButtonStates.UPDATE) {
                         <button (click)="updateExampleTextSubmission()" class="btn btn-primary col-auto" [disabled]="!unsavedSubmissionChanges">
-                            <fa-icon [icon]="faSave"></fa-icon>
+                            <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.updateExampleSubmission' | artemisTranslate }}
                         </button>
                     }
@@ -73,26 +73,26 @@
                             confirmationTitle="artemisApp.exampleSubmission.editExampleSubmission"
                             [translateText]="true"
                             (onConfirm)="editSubmission()"
-                        ></jhi-confirm-button>
+                        />
                     }
                 }
                 @switch (state.assessButton) {
                     <!--TODO: Disable Button if unsaved changes in submission -->
                     @case (AssessButtonStates.ASSESS) {
                         <button (click)="startAssessment()" class="btn btn-primary col-auto ms-auto me-3" id="createNewAssessment" [disabled]="unsavedSubmissionChanges">
-                            <fa-icon [icon]="faSave"></fa-icon>
+                            <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.createNewAssessment' | artemisTranslate }}
                         </button>
                     }
                     @case (AssessButtonStates.CREATE) {
                         <button (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ms-auto me-3" id="saveNewAssessment">
-                            <fa-icon [icon]="faSave"></fa-icon>
+                            <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.saveNewAssessment' | artemisTranslate }}
                         </button>
                     }
                     @case (AssessButtonStates.UPDATE) {
                         <button (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ms-auto me-3">
-                            <fa-icon [icon]="faSave"></fa-icon>
+                            <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.updateAssessment' | artemisTranslate }}
                         </button>
                     }
@@ -111,7 +111,7 @@
             <span jhiTranslate="artemisApp.exampleSubmission.exampleSubmission">Example submission</span>
         }
         @if (state.ui === UIStates.ASSESSMENT) {
-            <jhi-score-display [maxPoints]="exercise?.maxPoints || 0" [score]="totalScore" [maxBonusPoints]="exercise?.bonusPoints || 0"></jhi-score-display>
+            <jhi-score-display [maxPoints]="exercise?.maxPoints || 0" [score]="totalScore" [maxBonusPoints]="exercise?.bonusPoints || 0" />
         }
     </ng-container>
     <ng-container left-body>
@@ -132,12 +132,12 @@
                 [readOnly]="readOnly || (!!exercise && !exercise.isAtLeastEditor && !toComplete)"
                 (textBlockRefsChange)="validateFeedback()"
                 (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
-            ></jhi-text-assessment-area>
+            />
         }
     </ng-container>
     <!--endregion-->
     <!--region Right Panel-->
-    <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
+    <fa-icon right-header [icon]="farListAlt" />&nbsp;
     <span right-header jhiTranslate="artemisApp.textAssessment.instructions">Instructions</span>
     <ng-container right-body>
         @if (state.ui === UIStates.SUBMISSION) {
@@ -153,18 +153,13 @@
                 [isAssessmentTraining]="toComplete"
                 [showAssessmentInstructions]="state.ui === UIStates.ASSESSMENT"
                 class="markdown-preview"
-            ></jhi-assessment-instructions>
+            />
         }
     </ng-container>
     <!--endregion-->
 </jhi-resizeable-container>
 @if (state.ui === UIStates.ASSESSMENT) {
-    <jhi-unreferenced-feedback
-        [(feedbacks)]="unreferencedFeedback"
-        [readOnly]="readOnly"
-        [addReferenceIdForExampleSubmission]="true"
-        (feedbacksChange)="validateFeedback()"
-    ></jhi-unreferenced-feedback>
+    <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" [readOnly]="readOnly" [addReferenceIdForExampleSubmission]="true" (feedbacksChange)="validateFeedback()" />
 }
 @if (toComplete) {
     <div class="col-12 text-end pt-2">
@@ -176,7 +171,7 @@
 @if (readOnly) {
     <div class="col-12 text-end pt-2">
         <button (click)="readAndUnderstood()" class="btn btn-success col-3 guided-tour-read">
-            <fa-icon [icon]="faSave"></fa-icon>
+            <fa-icon [icon]="faSave" />
             {{ 'artemisApp.exampleSubmission.readAndUnderstood' | artemisTranslate }}
         </button>
     </div>
