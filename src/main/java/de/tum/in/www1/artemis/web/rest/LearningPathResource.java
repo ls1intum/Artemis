@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.security.annotations.RoleInCourse;
+import de.tum.in.www1.artemis.security.annotations.enforceroleincourse.EnforceRoleInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -66,7 +66,7 @@ public class LearningPathResource {
         this.competencyProgressService = competencyProgressService;
     }
 
-    @RoleInCourse(Role.TEACHING_ASSISTANT)
+    @EnforceRoleInCourse(Role.STUDENT)
     @PutMapping("courses/{courseId}/annotation-test")
     public ResponseEntity<Void> testAnnotation(@PathVariable long courseId) {
         return ResponseEntity.ok().build();
