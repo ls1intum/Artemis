@@ -872,7 +872,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR (course.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
-    boolean isAtLeastStudentInCourse(String login, long courseId);
+    boolean isAtLeastStudentInCourse(@Param("login") String login, @Param("courseId") long courseId);
 
     @Query("""
             SELECT COUNT(user) > 0
@@ -885,7 +885,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR (course.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
-    boolean isAtLeastTeachingAssistantInCourse(String login, long courseId);
+    boolean isAtLeastTeachingAssistantInCourse(@Param("login") String login, @Param("courseId") long courseId);
 
     @Query("""
             SELECT COUNT(user) > 0
@@ -897,7 +897,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR (course.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
-    boolean isAtLeastEditorInCourse(String login, long courseId);
+    boolean isAtLeastEditorInCourse(@Param("login") String login, @Param("courseId") long courseId);
 
     @Query("""
             SELECT COUNT(user) > 0
@@ -909,5 +909,5 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
 
             """)
-    boolean isAtLeastInstructorInCourse(String login, long courseId);
+    boolean isAtLeastInstructorInCourse(@Param("login") String login, @Param("courseId") long courseId);
 }
