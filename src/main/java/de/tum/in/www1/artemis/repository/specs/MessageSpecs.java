@@ -26,14 +26,7 @@ public class MessageSpecs {
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getConversationSpecification(Long conversationId) {
-        return ((root, query, criteriaBuilder) -> {
-            // fetch additional values to avoid subsequent db calls
-            var answerFetch = root.fetch(Post_.ANSWERS, JoinType.LEFT);
-            answerFetch.fetch(AnswerPost_.REACTIONS, JoinType.LEFT);
-            root.fetch(Post_.REACTIONS, JoinType.LEFT);
-            root.fetch(Post_.TAGS, JoinType.LEFT);
-            return criteriaBuilder.equal(root.get(Post_.CONVERSATION).get(Conversation_.ID), conversationId);
-        });
+        return ((root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(Post_.CONVERSATION).get(Conversation_.ID), conversationId));
     }
 
     /**
@@ -72,12 +65,6 @@ public class MessageSpecs {
      */
     public static Specification<Post> getConversationsSpecification(long[] conversationIds) {
         return ((root, query, criteriaBuilder) -> {
-            // fetch additional values to avoid subsequent db calls
-            var answerFetch = root.fetch(Post_.ANSWERS, JoinType.LEFT);
-            answerFetch.fetch(AnswerPost_.REACTIONS, JoinType.LEFT);
-            root.fetch(Post_.REACTIONS, JoinType.LEFT);
-            root.fetch(Post_.TAGS, JoinType.LEFT);
-
             if (conversationIds == null || conversationIds.length == 0) {
                 return null;
             }
