@@ -78,6 +78,14 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testOnlySpringTransactionalAnnotation() {
+        ArchRule onlySpringTransactionalAnnotation = noMethods().should().beAnnotatedWith(javax.transaction.Transactional.class).orShould()
+                .beAnnotatedWith(jakarta.transaction.Transactional.class)
+                .because("Only Spring's Transactional annotation should be used as the usage of the other two is not reliable.");
+        onlySpringTransactionalAnnotation.check(allClasses);
+    }
+
+    @Test
     void testNoCollectorsToList() {
         ArchRule toListUsage = noClasses().should().callMethod(Collectors.class, "toList")
                 .because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
