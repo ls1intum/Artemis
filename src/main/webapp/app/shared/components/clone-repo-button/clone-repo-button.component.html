@@ -18,7 +18,7 @@
         @if (versionControlAccessTokenRequired && !user.vcsAccessToken) {
             {{ (currentlyLoadingToken ? 'artemisApp.exerciseActions.waitForData' : 'artemisApp.exerciseActions.fetchVCSAccessTokenError') | artemisTranslate }}
         } @else {
-            <ng-container *ngTemplateOutlet="fullPopover"></ng-container>
+            <ng-container *ngTemplateOutlet="fullPopover" />
         }
     </ng-template>
 
