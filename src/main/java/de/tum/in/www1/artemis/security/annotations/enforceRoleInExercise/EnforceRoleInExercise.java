@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.annotations;
+package de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.security.Role;
  * All classes or methods annotated with this will check (used for controller classes) if the current user has the specified role in the target exercises course.
  * This is done using a custom aspect
  *
- * @see RoleInCourseAspect
+ * @see EnforceRoleInExerciseAspect
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD, ElementType.TYPE })

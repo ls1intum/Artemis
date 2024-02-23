@@ -31,8 +31,8 @@ import com.tngtech.archunit.core.domain.*;
 import com.tngtech.archunit.lang.*;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
-import de.tum.in.www1.artemis.security.annotations.EnforceRoleInExercise;
-import de.tum.in.www1.artemis.security.annotations.enforceroleincourse.EnforceRoleInCourse;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceRoleInCourse;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceRoleInExercise;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;

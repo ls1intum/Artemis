@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.annotations.enforceroleincourse;
+package de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

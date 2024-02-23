@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.annotations;
+package de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise;
 
 import java.util.Arrays;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.annotations.enforceroleincourse;
+package de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -40,7 +40,7 @@ public class EnforceRoleInCourseAspect {
      * @return The original return value of the called method, if all features are enabled, a forbidden response entity otherwise
      * @throws Throwable If there was any error during method execution (both the aspect or the actual called method)
      */
-    @Around(value = "callAt(enforceRoleInCourse)", argNames = "joinPoint,roleInCourse")
+    @Around(value = "callAt(enforceRoleInCourse)", argNames = "joinPoint,enforceRoleInCourse")
     public Object around(ProceedingJoinPoint joinPoint, EnforceRoleInCourse enforceRoleInCourse) throws Throwable {
         final var courseId = getCourseId(joinPoint, enforceRoleInCourse)
                 .orElseThrow(() -> new IllegalArgumentException("Method annotated with @RoleInCourse must have a parameter named 'courseId'"));
