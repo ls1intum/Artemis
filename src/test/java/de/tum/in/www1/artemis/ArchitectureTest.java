@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.ClassUtils;
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,6 +31,8 @@ import com.tngtech.archunit.core.domain.*;
 import com.tngtech.archunit.lang.*;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.in.www1.artemis.security.annotations.EnforceRoleInExercise;
+import de.tum.in.www1.artemis.security.annotations.enforceroleincourse.EnforceRoleInCourse;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
@@ -169,6 +172,84 @@ class ArchitectureTest extends AbstractArchitectureTest {
         var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
                 .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
         notUseHazelcastInConstructor.check(allClasses);
+    }
+
+    @Test
+    void testEnforceRoleInCourseEndpointHasCourseIdParameter() {
+        ArchCondition<JavaMethod> haveParameterWithAnnotation = new ArchCondition<>("have a parameter with EnforceRoleInCourse annotation") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                // Get annotation
+                var enforceRoleInCourseAnnotation = method.getAnnotationOfType(EnforceRoleInCourse.class);
+                var courseIdFieldName = enforceRoleInCourseAnnotation.courseIdFieldName();
+                // Check if the method has a parameter with the given name
+                var owner = method.getOwner();
+                try {
+                    var javaClass = Class.forName(owner.getFullName());
+                    var javaMethod = javaClass.getMethod(method.getName(), method.getRawParameterTypes().stream().map(paramClass -> {
+                        try {
+                            // Using ClassUtils, as it is primitive type aware
+                            return ClassUtils.getClass(paramClass.getName());
+                        }
+                        catch (ClassNotFoundException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }).toArray(Class[]::new));
+                    var anyParamHasName = Arrays.stream(javaMethod.getParameters()).anyMatch(parameter -> parameter.getName().equals(courseIdFieldName));
+                    if (!anyParamHasName) {
+                        events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), courseIdFieldName)));
+                    }
+                }
+                catch (ClassNotFoundException | NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+
+        var enforceRoleInCourse = methods().that().areAnnotatedWith(EnforceRoleInCourse.class).or().areDeclaredInClassesThat().areAnnotatedWith(EnforceRoleInCourse.class)
+                .should(haveParameterWithAnnotation);
+
+        enforceRoleInCourse.check(productionClasses);
+    }
+
+    @Test
+    void testEnforceRoleInExerciseEndpointHasExerciseIdParameter() {
+        ArchCondition<JavaMethod> haveParameterWithAnnotation = new ArchCondition<>("have a parameter with EnforceRoleInExercise annotation") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                // Get annotation
+                var enforceRoleInExerciseAnnotation = method.getAnnotationOfType(EnforceRoleInExercise.class);
+                var exerciseIdFieldName = enforceRoleInExerciseAnnotation.exerciseIdFieldName();
+                // Check if the method has a parameter with the given name
+                var owner = method.getOwner();
+                try {
+                    var javaClass = Class.forName(owner.getFullName());
+                    var javaMethod = javaClass.getMethod(method.getName(), method.getRawParameterTypes().stream().map(paramClass -> {
+                        try {
+                            // Using ClassUtils, as it is primitive type aware
+                            return ClassUtils.getClass(paramClass.getName());
+                        }
+                        catch (ClassNotFoundException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }).toArray(Class[]::new));
+                    var anyParamHasName = Arrays.stream(javaMethod.getParameters()).anyMatch(parameter -> parameter.getName().equals(exerciseIdFieldName));
+                    if (!anyParamHasName) {
+                        events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), exerciseIdFieldName)));
+                    }
+                }
+                catch (ClassNotFoundException | NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+
+        var enforceRoleInExercise = methods().that().areAnnotatedWith(EnforceRoleInExercise.class).or().areDeclaredInClassesThat().areAnnotatedWith(EnforceRoleInExercise.class)
+                .should(haveParameterWithAnnotation);
+
+        enforceRoleInExercise.check(productionClasses);
     }
 
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
