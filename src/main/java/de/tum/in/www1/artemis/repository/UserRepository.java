@@ -1,10 +1,22 @@
 package de.tum.in.www1.artemis.repository;
 
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.*;
+import static de.tum.in.www1.artemis.repository.specs.UserSpecs.distinct;
+import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getActivatedOrDeactivatedSpecification;
+import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getAuthorityAndCourseSpecification;
+import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getAuthoritySpecification;
+import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getCourseSpecification;
+import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getInternalOrExternalSpecification;
+import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getSearchTermSpecification;
+import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getWithOrWithoutRegistrationNumberSpecification;
+import static de.tum.in.www1.artemis.repository.specs.UserSpecs.notSoftDeleted;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -14,13 +26,20 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.*;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ConversationNotificationRecipientSummary;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Organization;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -840,4 +859,62 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     default User findByIdElseThrow(long userId) throws EntityNotFoundException {
         return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            JOIN Course course
+            WHERE user.login = :login
+                AND course.id = :courseId
+                AND (
+                    (course.studentGroupName MEMBER OF user.groups)
+                    OR (course.teachingAssistantGroupName MEMBER OF user.groups)
+                    OR (course.editorGroupName MEMBER OF user.groups)
+                    OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                )
+            """)
+    boolean isAtLeastStudentInCourse(String login, long courseId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            JOIN Course course
+            WHERE user.login = :login
+                AND course.id = :courseId
+                AND (
+                    (course.teachingAssistantGroupName MEMBER OF user.groups)
+                    OR (course.editorGroupName MEMBER OF user.groups)
+                    OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                )
+            """)
+    boolean isAtLeastTeachingAssistantInCourse(String login, long courseId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            JOIN Course course
+            WHERE user.login = :login
+                AND course.id = :courseId
+                AND (
+                    (course.editorGroupName MEMBER OF user.groups)
+                    OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                )
+            """)
+    boolean isAtLeastEditorInCourse(String login, long courseId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            JOIN Course course
+            WHERE user.login = :login
+                AND course.id = :courseId
+                AND (
+                    (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                )
+            """)
+    boolean isAtLeastInstructorInCourse(String login, long courseId);
 }
