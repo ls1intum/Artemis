@@ -187,7 +187,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         var exceptions = or(declaredClassSimpleName("QuizCache"), declaredClassSimpleName("CacheHandler"));
         var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
                 .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
-        notUseHazelcastInConstructor.check(allClasses);
+        notUseHazelcastInConstructor.check(allClassesWithHazelcast);
     }
 
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes

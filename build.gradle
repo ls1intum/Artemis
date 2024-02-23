@@ -295,7 +295,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
-    implementation "com.hazelcast:hazelcast-hibernate53:5.1.0"
+    implementation "com.hazelcast:hazelcast-hibernate:5.1.0"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
     implementation "com.zaxxer:HikariCP:5.1.0"
