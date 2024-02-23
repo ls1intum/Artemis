@@ -142,7 +142,8 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
         final long estimatedTimeStudents = getRestDurationInSeconds(0, studentCount, 1, threadCount);
 
         final long estimatedTime = (estimatedTimeExercise + estimatedTimeStudents);
-        log.info("Using {} threads for migration, and assuming 2s per repository, the migration should take around {}", threadCount, TimeLogUtil.formatDuration(estimatedTime));
+        log.info("Using {} threads for migration, and assuming {}s per repository, the migration should take around {}", threadCount, ESTIMATED_TIME_PER_REPOSITORY,
+                TimeLogUtil.formatDuration(estimatedTime));
 
         // Use fixed thread pool to prevent loading too many exercises into memory at once
         ExecutorService executorService = Executors.newFixedThreadPool((int) threadCount);
@@ -363,7 +364,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
             log.error("Failed to migrate student participations because the Bitbucket migration service is not available.");
             return;
         }
-        for (var participation : participations)
+        for (var participation : participations) {
             try {
                 if (participation.getRepositoryUri() == null) {
                     log.error("Repository URI is null for student participation with id {}, cant migrate", participation.getId());
@@ -389,6 +390,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                 log.error("Failed to migrate student participation with id {}", participation.getId(), e);
                 errorList.add(participation);
             }
+        }
     }
 
     /**
@@ -414,10 +416,12 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
             }
             return null;
         }
+        // repo is already migrated -> return
         if (repositoryUri.startsWith(bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl().toString())) {
             log.info("Repository {} is already in local VC", repositoryUri);
             return repositoryUri;
         }
+        // check if the repo exists in Bitbucket, if not -> return
         if (!bitbucketService.get().repositoryUriIsValid(new VcsRepositoryUri(repositoryUri))) {
             log.info("Repository {} is not available in Bitbucket, removing the reference in the database", repositoryUri);
             return null;
