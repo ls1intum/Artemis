@@ -42,7 +42,8 @@ public class RoleInCourseAspect {
      */
     @Around(value = "callAt(roleInCourse)", argNames = "joinPoint,roleInCourse")
     public Object around(ProceedingJoinPoint joinPoint, RoleInCourse roleInCourse) throws Throwable {
-        final var courseId = getCourseId(joinPoint).orElseThrow(() -> new IllegalArgumentException("Method annotated with @RoleInCourse must have a parameter named 'courseId'"));
+        final var courseId = getCourseId(joinPoint, roleInCourse)
+                .orElseThrow(() -> new IllegalArgumentException("Method annotated with @RoleInCourse must have a parameter named 'courseId'"));
         authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(roleInCourse.value(), courseId);
         return joinPoint.proceed();
     }
@@ -53,9 +54,10 @@ public class RoleInCourseAspect {
      * @param joinPoint the join point
      * @return the courseId if it is present, empty otherwise
      */
-    private Optional<Long> getCourseId(ProceedingJoinPoint joinPoint) {
+    private Optional<Long> getCourseId(ProceedingJoinPoint joinPoint, RoleInCourse roleInCourse) {
+        final String courseIdFieldName = roleInCourse.courseIdFieldName();
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        final int indexOfCourseId = Arrays.asList(signature.getParameterNames()).indexOf("courseId");
+        final int indexOfCourseId = Arrays.asList(signature.getParameterNames()).indexOf(courseIdFieldName);
         Object[] args = joinPoint.getArgs();
 
         if (indexOfCourseId < 0 || args.length <= indexOfCourseId) {

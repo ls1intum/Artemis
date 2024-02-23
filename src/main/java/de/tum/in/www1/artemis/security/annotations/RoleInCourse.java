@@ -23,4 +23,12 @@ public @interface RoleInCourse {
      * @return the role that is required to access the annotated endpoint
      */
     Role value();
+
+    /**
+     * The name of the field in the method parameters that contains the course id.
+     * This is used to extract the course id from the method parameters
+     *
+     * @return the name of the field in the method parameters that contains the course id
+     */
+    String courseIdFieldName() default "courseId";
 }
