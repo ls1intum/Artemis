@@ -66,7 +66,7 @@ public class LearningPathResource {
         this.competencyProgressService = competencyProgressService;
     }
 
-    @RoleInCourse(Role.INSTRUCTOR)
+    @RoleInCourse(Role.TEACHING_ASSISTANT)
     @PutMapping("courses/{courseId}/annotation-test")
     public ResponseEntity<Void> testAnnotation(@PathVariable long courseId) {
         return ResponseEntity.ok().build();

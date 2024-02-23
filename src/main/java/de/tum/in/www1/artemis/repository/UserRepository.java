@@ -863,58 +863,51 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("""
             SELECT COUNT(user) > 0
             FROM User user
-            JOIN Course course
-            WHERE user.login = :login
+            INNER JOIN Course course
+            ON user.login = :login
                 AND course.id = :courseId
-                AND (
-                    (course.studentGroupName MEMBER OF user.groups)
+            WHERE (course.studentGroupName MEMBER OF user.groups)
                     OR (course.teachingAssistantGroupName MEMBER OF user.groups)
                     OR (course.editorGroupName MEMBER OF user.groups)
                     OR (course.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                )
             """)
     boolean isAtLeastStudentInCourse(String login, long courseId);
 
     @Query("""
             SELECT COUNT(user) > 0
             FROM User user
-            JOIN Course course
-            WHERE user.login = :login
+            INNER JOIN Course course
+            ON user.login = :login
                 AND course.id = :courseId
-                AND (
-                    (course.teachingAssistantGroupName MEMBER OF user.groups)
+            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
                     OR (course.editorGroupName MEMBER OF user.groups)
                     OR (course.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                )
             """)
     boolean isAtLeastTeachingAssistantInCourse(String login, long courseId);
 
     @Query("""
             SELECT COUNT(user) > 0
             FROM User user
-            JOIN Course course
-            WHERE user.login = :login
+            INNER JOIN Course course
+            ON user.login = :login
                 AND course.id = :courseId
-                AND (
-                    (course.editorGroupName MEMBER OF user.groups)
+            WHERE (course.editorGroupName MEMBER OF user.groups)
                     OR (course.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                )
             """)
     boolean isAtLeastEditorInCourse(String login, long courseId);
 
     @Query("""
             SELECT COUNT(user) > 0
             FROM User user
-            JOIN Course course
-            WHERE user.login = :login
+            INNER JOIN Course course
+            ON user.login = :login
                 AND course.id = :courseId
-                AND (
-                    (course.instructorGroupName MEMBER OF user.groups)
-                    OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                )
+            WHERE (course.instructorGroupName MEMBER OF user.groups)
+                OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+
             """)
     boolean isAtLeastInstructorInCourse(String login, long courseId);
 }
