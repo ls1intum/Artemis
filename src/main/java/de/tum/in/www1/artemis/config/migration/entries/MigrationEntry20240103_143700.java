@@ -204,7 +204,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                 executorService.submit(() -> {
                     migrateStudents(studentParticipations);
                     studentCounter.addAndGet(studentParticipationPage.getNumberOfElements());
-                    logProgress(templateCounter, templateCount, threadCount, 1, "student");
+                    logProgress(studentCounter, studentCount, threadCount, 1, "student");
                 });
             }
         }
@@ -462,7 +462,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
             Git git = Git.cloneRepository().setBranch(branch).setDirectory(repositoryPath.toFile()).setBare(true).setURI(oldOrigin).call();
 
             if (!git.getRepository().getBranch().equals(bitbucketLocalVCMigrationService.get().getDefaultBranch())) {
-                // Rename the default branch to the configured default branch.
+                // Rename the default branch to the configured default branch. Old exercises might have a different default branch.
                 git.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
                 log.debug("Renamed default branch of local git repository {} to {}", repositorySlug, bitbucketLocalVCMigrationService.get().getDefaultBranch());
                 renamedBranch = true;
@@ -470,7 +470,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
             git.close();
             // We need to clone the repo here to the local checkout directory
             // Why? because the online editor and the CI system need a checkout of the repository to work with
-            // We can't use the bare repository for this and we directly fix the branch name to the default branch
+            // We can't use the bare repository for this, and we directly fix the branch name to the default branch
             if (renamedBranch && Files.exists(cachedPath)) {
                 try (Git localGit = Git.open(cachedPath.toFile())) {
                     localGit.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
