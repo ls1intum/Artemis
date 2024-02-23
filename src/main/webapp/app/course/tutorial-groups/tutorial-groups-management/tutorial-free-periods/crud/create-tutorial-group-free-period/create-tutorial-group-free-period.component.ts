@@ -8,6 +8,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
+import { captureException } from '@sentry/angular-ivy';
 
 @Component({
     selector: 'jhi-create-tutorial-group-free-day',
@@ -81,12 +82,16 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     public static combineDateAndTimeWithAlternativeDate(date?: Date, time?: Date, alternativeDate?: Date): Date {
         if (!date) {
             // This is the case it is the endDate of a freeDay or a freePeriodWithinDay
-            if (!alternativeDate) throw new Error('date and time are undefined');
+            if (!alternativeDate) {
+                const error = new Error('date and time are undefined');
+                captureException(error);
+                throw error;
+            }
             const resDate = new Date(alternativeDate);
-            resDate.setHours(time ? time.getHours() : 23, time ? time.getMinutes() : 59);
+            resDate.setHours(time?.getHours() ?? 23, time?.getMinutes() ?? 59);
             return resDate;
         }
-        date.setHours(time ? time.getHours() : alternativeDate ? 23 : 0, time ? time.getMinutes() : alternativeDate ? 59 : 0);
+        date.setHours(time?.getHours() ?? (alternativeDate ? 23 : 0), time?.getMinutes() ?? (alternativeDate ? 59 : 0));
         return date;
     }
 

@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -48,7 +48,7 @@ public class TutorialGroupFreePeriodService {
         var overlappingSessions = tutorialGroupSessionRepository.findAllBetween(course, tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd());
 
         // Only cancel active sessions
-        List<TutorialGroupSession> sessionsToCancel = getActiveSessionsFromSet(overlappingSessions);
+        Set<TutorialGroupSession> sessionsToCancel = getActiveSessionsFromSet(overlappingSessions);
 
         sessionsToCancel.forEach(session -> {
             session.setStatus(TutorialGroupSessionStatus.CANCELLED);
@@ -85,15 +85,15 @@ public class TutorialGroupFreePeriodService {
      */
     private void findAndUpdateStillCanceledSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, Set<TutorialGroupSession> overlappingSessions,
             boolean onDeletion) {
-        // find those sessions that are still overlapping with another free period
-        List<TutorialGroupSession> sessionsStillOverlappingWithFreePeriods = overlappingSessions.stream().filter(session -> {
-            Set<TutorialGroupFreePeriod> overlappingPeriods = tutorialGroupFreePeriodRepository
-                    .findOverlappingInSameCourse(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(), session.getStart(), session.getEnd());
-            return overlappingPeriods.size() > 1;
-        }).toList();
+        overlappingSessions.stream().forEach(session -> {
 
-        sessionsStillOverlappingWithFreePeriods.forEach(session -> {
-            // if the FreePeriod should get deleted and the session was cancelled because of the free period, we update the TutorialFreePeriod to another free period
+            Set<TutorialGroupFreePeriod> overlappingFreePeriods = tutorialGroupFreePeriodRepository.findOverlappingInSameCourseExclusive(course, session.getStart(),
+                    session.getEnd());
+            // if there is only one overlapping FreePeriod, the session is not still canceled
+            if (overlappingFreePeriods.size() <= 1) {
+                return;
+            }
+
             if (onDeletion && session.getTutorialGroupFreePeriod().equals(tutorialGroupFreePeriod)) {
                 TutorialGroupFreePeriod replacementFreePeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(course, session.getStart(), session.getEnd()).stream()
                         .filter(period -> !period.equals(tutorialGroupFreePeriod)).findFirst()
@@ -102,25 +102,24 @@ public class TutorialGroupFreePeriodService {
                 session.setStatus(TutorialGroupSessionStatus.CANCELLED);
                 session.setStatusExplanation(null);
                 session.setTutorialGroupFreePeriod(replacementFreePeriod);
-                return;
             }
 
             // if one of the still overlapping FreePeriods is the same as the one that caused the session to be cancelled in the first place, we don't update the status and the
             // explanation
-            if (tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(course, session.getStart(), session.getEnd()).contains(tutorialGroupFreePeriod)) {
+            else if (overlappingFreePeriods.contains(tutorialGroupFreePeriod)) {
                 return;
             }
 
-            Optional<TutorialGroupFreePeriod> freePeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(course, session.getStart(), session.getEnd()).stream()
-                    .findFirst();
-            // if the session was cancelled because of the free period, we update the status and the explanation
+            Optional<TutorialGroupFreePeriod> freePeriod = overlappingFreePeriods.stream().findFirst();
             if (!onDeletion && freePeriod.isPresent() && session.getTutorialGroupFreePeriod().equals(tutorialGroupFreePeriod)) {
                 session.setStatus(TutorialGroupSessionStatus.CANCELLED);
                 session.setStatusExplanation(null);
                 session.setTutorialGroupFreePeriod(freePeriod.get());
             }
+
+            // Update the session
+            tutorialGroupSessionRepository.save(session);
         });
-        tutorialGroupSessionRepository.saveAll(sessionsStillOverlappingWithFreePeriods);
     }
 
     /**
@@ -132,11 +131,11 @@ public class TutorialGroupFreePeriodService {
      */
     private void findAndUpdateSessionsToReactivate(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, Set<TutorialGroupSession> overlappingSessions) {
         // filter out those sessions that are still overlapping with another free period
-        List<TutorialGroupSession> sessionsToReactivate = overlappingSessions.stream().filter(session -> {
+        Set<TutorialGroupSession> sessionsToReactivate = overlappingSessions.stream().filter(session -> {
             Set<TutorialGroupFreePeriod> overlappingPeriods = tutorialGroupFreePeriodRepository
                     .findOverlappingInSameCourse(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(), session.getStart(), session.getEnd());
             return overlappingPeriods.size() <= 1;
-        }).toList();
+        }).collect(Collectors.toSet());
 
         sessionsToReactivate.forEach(session -> {
             session.setStatus(TutorialGroupSessionStatus.ACTIVE);
@@ -146,8 +145,8 @@ public class TutorialGroupFreePeriodService {
         tutorialGroupSessionRepository.saveAll(sessionsToReactivate);
     }
 
-    public List<TutorialGroupSession> getActiveSessionsFromSet(Set<TutorialGroupSession> sessions) {
-        return sessions.stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE).toList();
+    public Set<TutorialGroupSession> getActiveSessionsFromSet(Set<TutorialGroupSession> sessions) {
+        return sessions.stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE).collect(Collectors.toSet());
     }
 
 }

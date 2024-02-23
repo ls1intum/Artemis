@@ -124,43 +124,47 @@ describe('TutorialFreePeriodFormComponent', () => {
         setTimeFrameAndCheckValues(TimeFrame.Day, validStartDateBerlin, undefined, undefined, undefined);
     });
 
-    it('should set timeFrame initial correctly when editing an existing free period', () => {
-        component.isEditMode = true;
-        component.formData = {
-            startDate: validStartDateBerlin,
-            endDate: validEndDateBerlinFreePeriod,
-            startTime: undefined,
-            endTime: undefined,
-            reason: validReason,
-        };
-        component.ngOnChanges();
-        expect(component.timeFrameControl).toBe(TimeFrame.Period);
-    });
+    const testCases = [
+        {
+            description: 'should set timeFrame initial correctly when editing an existing free period',
+            expectedTimeFrame: TimeFrame.Period,
+            formData: {
+                startDate: validStartDateBerlin,
+                endDate: validEndDateBerlinFreePeriod,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            },
+        },
+        {
+            description: 'should set timeFrame initial correctly when editing an existing free day',
+            expectedTimeFrame: TimeFrame.Day,
+            formData: {
+                startDate: validStartDateBerlin,
+                endDate: undefined,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            },
+        },
+        {
+            description: 'should set timeFrame initial correctly when editing an existing free period within day',
+            expectedTimeFrame: TimeFrame.PeriodWithinDay,
+            formData: {
+                startDate: validStartDateBerlin,
+                endDate: undefined,
+                startTime: validStartTimeBerlin,
+                endTime: validEndTimeBerlin,
+                reason: validReason,
+            },
+        },
+    ];
 
-    it('should set timeFrame initial correctly when editing an existing free day', () => {
+    test.each(testCases)('%s', ({ expectedTimeFrame, formData }) => {
         component.isEditMode = true;
-        component.formData = {
-            startDate: validStartDateBerlin,
-            endDate: undefined,
-            startTime: undefined,
-            endTime: undefined,
-            reason: validReason,
-        };
+        component.formData = formData;
         component.ngOnChanges();
-        expect(component.timeFrameControl).toBe(TimeFrame.Day);
-    });
-
-    it('should set timeFrame initial correctly when editing an existing free period within day', () => {
-        component.isEditMode = true;
-        component.formData = {
-            startDate: validStartDateBerlin,
-            endDate: undefined,
-            startTime: validStartTimeBerlin,
-            endTime: validEndTimeBerlin,
-            reason: validReason,
-        };
-        component.ngOnChanges();
-        expect(component.timeFrameControl).toBe(TimeFrame.PeriodWithinDay);
+        expect(component.timeFrameControl).toBe(expectedTimeFrame);
     });
 
     it('should allow submit when time frame is day and form is valid', () => {

@@ -173,17 +173,17 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     private setFormValues(formData: TutorialGroupFreePeriodFormData) {
         this.form.patchValue({
             startDate: formData.startDate,
-            endDate: formData.endDate || undefined,
-            startTime: formData.startTime || undefined,
-            endTime: formData.endTime || undefined,
+            endDate: formData.endDate,
+            startTime: formData.startTime,
+            endTime: formData.endTime,
             reason: formData.reason,
         });
     }
 
     private setFirstTimeFrameInEditMode(formData: TutorialGroupFreePeriodFormData) {
-        if (formData.endDate === undefined && formData.startTime === undefined && formData.endTime === undefined) {
+        if (!formData.endDate && !formData.startTime && !formData.endTime) {
             this.setTimeFrame(TimeFrame.Day);
-        } else if (formData.endDate === undefined && formData.startTime !== undefined && formData.endTime !== undefined) {
+        } else if (!formData.endDate && formData.startTime && formData.endTime) {
             this.setTimeFrame(TimeFrame.PeriodWithinDay);
         } else {
             this.setTimeFrame(TimeFrame.Period);
