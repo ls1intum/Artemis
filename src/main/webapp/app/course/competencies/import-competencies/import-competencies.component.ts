@@ -96,6 +96,8 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
      */
     filterChange(filter: CompetencyFilter) {
         this.filter = filter;
+        //navigate back to the first page when the filter changes
+        this.search.page = 1;
         this.performSearch({ ...this.filter, ...this.search });
     }
 
