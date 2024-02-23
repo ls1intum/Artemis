@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.security.annotations.EnforceRoleInExercise;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 /**
@@ -28,13 +28,9 @@ public class CoverageReportResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
-    public CoverageReportResource(TestwiseCoverageService testwiseCoverageService, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService) {
+    public CoverageReportResource(TestwiseCoverageService testwiseCoverageService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.testwiseCoverageService = testwiseCoverageService;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.authCheckService = authCheckService;
     }
 
     /**
@@ -46,13 +42,11 @@ public class CoverageReportResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/full-testwise-coverage-report")
     @EnforceAtLeastTutor
+    @EnforceRoleInExercise(Role.TEACHING_ASSISTANT)
     public ResponseEntity<CoverageReport> getLatestFullCoverageReport(@PathVariable Long exerciseId) {
         log.debug("REST request to get the latest Full Testwise CoverageReport for exercise {}", exerciseId);
 
-        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-
-        var optionalReportWithFileReports = testwiseCoverageService.getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(exercise);
+        var optionalReportWithFileReports = testwiseCoverageService.getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(exerciseId);
         if (optionalReportWithFileReports.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -68,13 +62,11 @@ public class CoverageReportResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/testwise-coverage-report")
     @EnforceAtLeastTutor
+    @EnforceRoleInExercise(Role.TEACHING_ASSISTANT)
     public ResponseEntity<CoverageReport> getLatestCoverageReport(@PathVariable Long exerciseId) {
         log.debug("REST request to get the latest Testwise CoverageReport for exercise {}", exerciseId);
 
-        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-
-        var optionalReportWithoutFileReports = testwiseCoverageService.getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(exercise);
+        var optionalReportWithoutFileReports = testwiseCoverageService.getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(exerciseId);
         if (optionalReportWithoutFileReports.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
