@@ -60,7 +60,7 @@ public class RepositoryAccessService {
         var exerciseDueDate = programmingExercise.isExamExercise() ? programmingExercise.getExerciseGroup().getExam().getEndDate() : programmingExercise.getDueDate();
         boolean hasAccessToSubmission = plagiarismService.hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), exerciseDueDate);
         if (!hasPermissions && !hasAccessToSubmission) {
-            throw new AccessUnauthorizedException();
+            throw new AccessForbiddenException();
         }
 
         boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
