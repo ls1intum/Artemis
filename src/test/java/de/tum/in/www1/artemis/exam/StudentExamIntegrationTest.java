@@ -104,6 +104,8 @@ import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
@@ -261,6 +263,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam1 = examRepository.save(exam1);
 
         exam2 = examUtilService.addExam(course1);
+        exam2 = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
 
         studentExam1 = examUtilService.addStudentExam(exam1);
         studentExam1.setWorkingTime(7200);
@@ -367,6 +370,28 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     void testGetStudentExamsForExam_asInstructor() throws Exception {
         List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExams).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetStudentExamForExam_withProgrammingExerciseWithActiveSubmissionPolicy_asInstructor() throws Exception {
+
+        // set up a programming exercise with a submission policy
+        SubmissionPolicy submissionPolicy = new LockRepositoryPolicy();
+        submissionPolicy.setSubmissionLimit(5);
+        submissionPolicy.setActive(true);
+        var programmingExercise = exerciseUtilService.getFirstExerciseWithType(exam2, ProgrammingExercise.class);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(submissionPolicy, programmingExercise);
+
+        StudentExam studentExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId(), HttpStatus.OK,
+                StudentExam.class);
+
+        // check that the submission policy is included in the response
+        for (var exercise : studentExam.getExercises()) {
+            if (exercise instanceof ProgrammingExercise) {
+                assertThat(((ProgrammingExercise) exercise).getSubmissionPolicy().isActive()).isTrue();
+            }
+        }
     }
 
     @Test
