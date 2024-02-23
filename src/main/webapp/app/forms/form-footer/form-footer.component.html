@@ -1,0 +1,32 @@
+<div class="update-programming-exercise-footer gap-4">
+    <jhi-exercise-update-notification
+        class="flex-grow-1"
+        [isCreation]="isCreation() ?? false"
+        [isImport]="isImport() ?? false"
+        [notificationText]="notificationText"
+        (notificationTextChange)="notificationTextChange.next($event)"
+    />
+    <div class="update-programming-exercise-footer-content">
+        @if (isSaving) {
+            <span jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-secondary"> </span>
+        }
+        <ng-template #tooltipTranslate>
+            @for (reason of invalidReasons; track reason) {
+                <div>
+                    <p jhiTranslate="{{ reason.translateKey }}"></p>
+                </div>
+            }
+        </ng-template>
+        @if (invalidReasons.length > 0) {
+            <span class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
+                <fa-icon [icon]="faExclamationCircle" />
+                <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
+                <span>({{ invalidReasons.length }})</span>
+            </span>
+        }
+        <button type="button" id="cancel-save" class="btn btn-secondary me-1" (click)="cancel.next()">
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <jhi-button id="save-entity" [disabled]="invalidReasons.length > 0 || isDisabled" [isLoading]="isSaving" [icon]="faSave" [title]="saveTitle()" (onClick)="save.next()" />
+    </div>
+</div>
