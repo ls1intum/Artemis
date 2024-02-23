@@ -182,19 +182,6 @@ public class CompetencyService {
     }
 
     /**
-     * Gets a new competency from an existing one (without relations).
-     * <p>
-     * The competency is not persisted.
-     *
-     * @param competency the existing competency
-     * @return the new competency
-     */
-    public Competency getCompetencyToCreate(Competency competency) {
-        return new Competency(competency.getTitle().trim(), competency.getDescription(), competency.getSoftDueDate(), competency.getMasteryThreshold(), competency.getTaxonomy(),
-                competency.isOptional());
-    }
-
-    /**
      * Creates a new competency and links it to a course and lecture units.
      *
      * @param competency the competency to create
@@ -285,6 +272,29 @@ public class CompetencyService {
         }
 
         competencyRepository.deleteById(competency.getId());
+    }
+
+    /**
+     * Gets a new competency from an existing one (without relations).
+     * <p>
+     * The competency is not persisted.
+     *
+     * @param competency the existing competency
+     * @return the new competency
+     */
+    public Competency getCompetencyToCreate(Competency competency) {
+        return new Competency(competency.getTitle().trim(), competency.getDescription(), competency.getSoftDueDate(), competency.getMasteryThreshold(), competency.getTaxonomy(),
+                competency.isOptional());
+    }
+
+    /**
+     * Converts a list of competencies to a list of {@link CompetencyWithTailRelationDTO CompetencyWithTailRelationDTOs}
+     *
+     * @param competencies the list of competencies
+     * @return the list of CompetencyWithTailRelationDTOs
+     */
+    public List<CompetencyWithTailRelationDTO> competenciesToCompetencyWithTailRelationDTOs(List<Competency> competencies) {
+        return competencies.stream().map(competency -> new CompetencyWithTailRelationDTO(competency, Collections.emptyList())).toList();
     }
 
     /**
