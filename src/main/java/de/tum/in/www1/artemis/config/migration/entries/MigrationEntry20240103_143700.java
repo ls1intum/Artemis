@@ -271,7 +271,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
     }
 
     /**
-     * Migrate the solution participations. Also Migrates the test repository of the programming exercise since we have it
+     * Migrate the solution participations. Also Migrates the test and aux repository of the programming exercise since we have it
      * in the solution participation already loaded from the database.
      *
      * @param solutionParticipations the solution participations to migrate
