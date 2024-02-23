@@ -510,6 +510,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(exercise.getExerciseGroup()).isNotNull();
                 assertThat(exercise.getExerciseGroup().getExercises()).isEmpty();
                 assertThat(exercise.getExerciseGroup().getExam()).isNull();
+                if (exercise instanceof ProgrammingExercise) {
+                    assertThat(((ProgrammingExercise) exercise).getBuildScript()).isNull();
+                    assertThat(((ProgrammingExercise) exercise).getBuildPlanConfiguration()).isNull();
+                }
             }
             assertThat(studentExamRepository.findById(studentExam.getId()).orElseThrow().isStarted()).isTrue();
             assertParticipationAndSubmissions(response, user);
