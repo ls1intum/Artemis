@@ -78,6 +78,8 @@ public class LocalVCServletService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
+    private final LocalVCService localVCService;
+
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
@@ -97,7 +99,7 @@ public class LocalVCServletService {
             ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService) {
+            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService, LocalVCService localVCService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -109,6 +111,7 @@ public class LocalVCServletService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
+        this.localVCService = localVCService;
     }
 
     /**
@@ -204,13 +207,14 @@ public class LocalVCServletService {
     private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
 
         String basicAuthCredentials = checkAuthorizationHeader(authorizationHeader);
+        int separatorIndex = basicAuthCredentials.indexOf(":");
 
-        if (basicAuthCredentials.split(":").length != 2) {
+        if (separatorIndex == -1) {
             throw new LocalVCAuthException();
         }
 
-        String username = basicAuthCredentials.split(":")[0];
-        String password = basicAuthCredentials.split(":")[1];
+        String username = basicAuthCredentials.substring(0, separatorIndex);
+        String password = basicAuthCredentials.substring(separatorIndex + 1);
 
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, password);
@@ -251,7 +255,7 @@ public class LocalVCServletService {
                 repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryActionType == RepositoryActionType.WRITE, exercise, user, repositoryTypeOrUserName);
             }
             catch (AccessForbiddenException e) {
-                throw new LocalVCAuthException(e);
+                throw new LocalVCForbiddenException(e);
             }
             return;
         }
@@ -500,5 +504,17 @@ public class LocalVCServletService {
 
         var author = revCommit.getAuthorIdent();
         return new Commit(commitHash, author.getName(), revCommit.getFullMessage(), author.getEmailAddress(), branch);
+    }
+
+    /**
+     * Determine the default branch of the given repository.
+     *
+     * @param repository the repository for which the default branch should be determined.
+     * @return the name of the default branch.
+     */
+    public String getDefaultBranchOfRepository(Repository repository) {
+        Path repositoryFolderPath = repository.getDirectory().toPath();
+        LocalVCRepositoryUri localVCRepositoryUri = getLocalVCRepositoryUri(repositoryFolderPath);
+        return localVCService.getDefaultBranchOfRepository(localVCRepositoryUri);
     }
 }
