@@ -446,14 +446,26 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     getExerciseDetailsProblemSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        const hasCompetencies = !!exercise.competencies?.length;
+        const details: Detail[] = [
+            {
+                title: hasCompetencies ? 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle' : undefined,
+                type: DetailType.ProgrammingProblemStatement,
+                data: { exercise: exercise },
+            },
+        ];
+
+        if (hasCompetencies) {
+            details.push({
+                title: 'artemisApp.competency.link.title',
+                type: DetailType.Text,
+                data: { text: exercise.competencies?.map((competency) => competency.title).join(', ') },
+            });
+        }
+
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
-            details: [
-                {
-                    type: DetailType.ProgrammingProblemStatement,
-                    data: { exercise: exercise },
-                },
-            ],
+            details: details,
         };
     }
 
