@@ -230,22 +230,23 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
     }
 
     private String migrateTestRepo(ProgrammingExercise programmingExercise) throws URISyntaxException {
-        return cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, programmingExercise.getTestRepositoryUri());
+        return cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, programmingExercise.getTestRepositoryUri(), programmingExercise.getBranch());
     }
 
     /**
      * Migrate auxiliary repositories of the given programming exercise.
      *
      * @param programmingExercise the programming exercise to migrate the auxiliary repositories for
+     * @param oldBranch           the old branch of the programming exercise
      */
-    private void migrateAuxiliaryRepositories(ProgrammingExercise programmingExercise) {
+    private void migrateAuxiliaryRepositories(ProgrammingExercise programmingExercise, String oldBranch) {
         for (var repo : getAuxiliaryRepositories(programmingExercise.getId())) {
             try {
                 if (repo.getRepositoryUri() == null) {
                     log.error("Repository URI is null for auxiliary repository with id {}, cant migrate", repo.getId());
                     continue;
                 }
-                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, repo.getRepositoryUri());
+                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, repo.getRepositoryUri(), oldBranch);
                 if (url == null) {
                     log.error("Failed to migrate auxiliary repository for programming exercise with id {}, keeping the url in the database", programmingExercise.getId());
                 }
@@ -289,7 +290,9 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                     errorList.add(solutionParticipation);
                     continue;
                 }
-                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(solutionParticipation.getProgrammingExercise(), solutionParticipation.getRepositoryUri());
+                var programmingExercise = solutionParticipation.getProgrammingExercise();
+                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(solutionParticipation.getProgrammingExercise(), solutionParticipation.getRepositoryUri(),
+                        programmingExercise.getBranch());
                 if (url == null) {
                     log.error("Failed to migrate solution repository for solution participation with id {}, keeping the url in the database", solutionParticipation.getId());
                 }
@@ -299,7 +302,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                     solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
                 }
                 url = migrateTestRepo(solutionParticipation.getProgrammingExercise());
-                var programmingExercise = solutionParticipation.getProgrammingExercise();
+                var oldBranch = programmingExercise.getBranch();
                 if (url == null) {
                     log.error("Failed to migrate test repository for solution participation with id {}, keeping the url in the database", solutionParticipation.getId());
                     errorList.add(solutionParticipation);
@@ -313,7 +316,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                     programmingExercise.setTestRepositoryUri(url);
                 }
                 programmingExerciseRepository.save(programmingExercise);
-                migrateAuxiliaryRepositories(programmingExercise);
+                migrateAuxiliaryRepositories(programmingExercise, oldBranch);
             }
             catch (Exception e) {
                 log.error("Failed to migrate solution participation with id {}", solutionParticipation.getId(), e);
@@ -335,7 +338,8 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                     errorList.add(templateParticipation);
                     continue;
                 }
-                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(templateParticipation.getProgrammingExercise(), templateParticipation.getRepositoryUri());
+                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(templateParticipation.getProgrammingExercise(), templateParticipation.getRepositoryUri(),
+                        templateParticipation.getProgrammingExercise().getBranch());
                 if (url == null) {
                     log.error("Failed to migrate template repository for template participation with id {}, keeping the url in the database", templateParticipation.getId());
                     errorList.add(templateParticipation);
@@ -371,7 +375,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                     errorList.add(participation);
                     continue;
                 }
-                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(participation.getProgrammingExercise(), participation.getRepositoryUri());
+                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBranch());
                 if (url == null) {
                     log.error("Failed to migrate student repository for student participation with id {}, keeping the url in the database", participation.getId());
                     errorList.add(participation);
@@ -399,10 +403,11 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
      *
      * @param exercise      the programming exercise
      * @param repositoryUri the repository URI
+     * @param oldBranch     the old branch of the programming exercise
      * @return the URI of the repository in the local VCS
      * @throws URISyntaxException if the repository URL is invalid
      */
-    private String cloneRepositoryFromBitbucketAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUri) throws URISyntaxException {
+    private String cloneRepositoryFromBitbucketAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUri, String oldBranch) throws URISyntaxException {
         if (localVCService.isEmpty() || bitbucketService.isEmpty() || bitbucketLocalVCMigrationService.isEmpty()) {
             log.error("Failed to clone repository from Bitbucket: {}", repositoryUri);
             if (localVCService.isEmpty()) {
@@ -432,7 +437,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
 
             localVCService.get().createProjectForExercise(exercise);
             log.info("Cloning repository {} from Bitbucket and moving it to local VCS", repositoryUri);
-            copyRepoToLocalVC(projectKey, repositoryName, repositoryUri, exercise.getBranch());
+            copyRepoToLocalVC(projectKey, repositoryName, repositoryUri, oldBranch);
             log.info("Successfully cloned repository {} from Bitbucket and moved it to local VCS", repositoryUri);
             var uri = new LocalVCRepositoryUri(projectKey, repositoryName, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
             return uri.toString();
