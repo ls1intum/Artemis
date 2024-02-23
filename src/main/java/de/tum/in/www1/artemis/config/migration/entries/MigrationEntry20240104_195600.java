@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.config.migration.entries;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -48,8 +46,6 @@ public class MigrationEntry20240104_195600 extends ProgrammingExerciseMigrationE
     private final Optional<AeolusBuildScriptGenerationService> aeolusBuildScriptGenerationService;
 
     private final Environment environment;
-
-    private final List<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
     public MigrationEntry20240104_195600(ProgrammingExerciseRepository programmingExerciseRepository, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
