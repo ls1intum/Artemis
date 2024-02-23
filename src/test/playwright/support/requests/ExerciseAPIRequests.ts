@@ -443,7 +443,7 @@ export class ExerciseAPIRequests {
      * Gets the participation data for an exercise with the specified exercise ID.
      *
      * @param exerciseId - The ID of the exercise for which to retrieve the participation data.
-     * @returns A Cypress.Chainable<Cypress.Response<any>> representing the API request response.
+     * @returns A Promise<StudentParticipation> representing the student participation.
      */
     async getExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
         const response = await this.page.request.get(EXERCISE_BASE + exerciseId + '/participation');
@@ -454,7 +454,7 @@ export class ExerciseAPIRequests {
      * Starts a participation for an exercise with the specified exercise ID.
      *
      * @param exerciseId - The ID of the exercise for which to start the participation.
-     * @returns A Cypress.Chainable<Cypress.Response<any>> representing the API request response.
+     * @returns APIResponse representing the API request response.
      */
     async startExerciseParticipation(exerciseId: number) {
         return await this.page.request.post(`${EXERCISE_BASE + exerciseId}/participations`);

@@ -26,8 +26,8 @@ export class CourseManagementExercisesPage {
         await this.page.locator('#example-submissions-button').click();
     }
 
-    getExerciseTitle() {
-        return this.page.locator('dd', { hasText: 'Title' });
+    getExerciseTitle(exerciseTitle: string) {
+        return this.page.locator('dl', { hasText: 'Title' }).getByText(exerciseTitle);
     }
 
     async deleteTextExercise(exercise: Exercise) {

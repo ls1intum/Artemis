@@ -24,7 +24,7 @@ test.describe('Static code analysis tests', () => {
         programmingExerciseScaFeedback,
     }) => {
         // Configure SCA grading
-        login(admin);
+        await login(admin);
         await programmingExercisesScaConfig.visit(course.id!, exercise.id!);
         await programmingExercisesScaConfig.makeEveryScaCategoryInfluenceGrading();
         await programmingExercisesScaConfig.saveChanges();
@@ -33,8 +33,8 @@ test.describe('Static code analysis tests', () => {
         await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
         await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaScaSubmission, async () => {
             const resultScore = await programmingExerciseEditor.getResultScore();
-            const resultText = resultScore.getByText(javaScaSubmission.expectedResult);
-            await expect(resultText).toBeVisible();
+            await expect(resultScore.getByText(javaScaSubmission.expectedResult)).toBeVisible();
+            await resultScore.click();
             await programmingExerciseScaFeedback.shouldShowPointChart();
             // We have to verify those static texts here. If we don't verify those messages the only difference between the SCA and normal programming exercise
             // tests is the score, which hardly verifies the SCA functionality

@@ -20,7 +20,7 @@ test.describe('Text exercise assessment', () => {
     let course: Course;
     let exercise: TextExercise;
 
-    test.beforeAll('Create course', async ({ browser }) => {
+    test.beforeAll('Create course and make a submission', async ({ browser }) => {
         const context = await browser.newContext();
         const page = await context.newPage();
         const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
@@ -37,19 +37,6 @@ test.describe('Text exercise assessment', () => {
         const submission = await Fixtures.get('loremIpsum-short.txt');
         await exerciseAPIRequests.makeTextExerciseSubmission(exercise.id!, submission!);
     });
-
-    // test.beforeEach('Create course', async ({ login, courseManagementAPIRequests, exerciseAPIRequests }) => {
-    //     await login(admin);
-    //     course = await courseManagementAPIRequests.createCourse();
-    //     await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-    //     await courseManagementAPIRequests.addTutorToCourse(course, tutor);
-    //     await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-    //     exercise = await exerciseAPIRequests.createTextExercise({ course });
-    //     await login(studentOne);
-    //     await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
-    //     const submission = await Fixtures.get('loremIpsum-short.txt');
-    //     await exerciseAPIRequests.makeTextExerciseSubmission(exercise.id!, submission!);
-    // });
 
     test.describe.serial('Feedback', () => {
         test('Assesses the text exercise submission', async ({ login, courseManagement, courseAssessment, exerciseAssessment, textExerciseAssessment }) => {
@@ -98,8 +85,4 @@ test.describe('Text exercise assessment', () => {
         const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
         await courseManagementAPIRequests.deleteCourse(course, admin);
     });
-
-    // test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-    //     await courseManagementAPIRequests.deleteCourse(course, admin);
-    // });
 });

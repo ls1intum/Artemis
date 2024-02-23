@@ -20,7 +20,7 @@ export class ScaFeedbackModal {
         await feedbackTextElement.scrollIntoViewIfNeeded();
         await expect(feedbackTextElement).toBeVisible();
 
-        const creditsElement = this.page.locator('.feedback-item', { has: feedbackTextElement }).locator('.feedback-item__credits');
+        const creditsElement = this.page.locator('.feedback-item', { hasText: feedbackText }).locator('.feedback-item__credits');
         await creditsElement.scrollIntoViewIfNeeded();
         await expect(creditsElement).toContainText(`-${pointReduction}P`);
         await expect(creditsElement).toBeVisible();

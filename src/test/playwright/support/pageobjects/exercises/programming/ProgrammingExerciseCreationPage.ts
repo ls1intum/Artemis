@@ -67,7 +67,10 @@ export class ProgrammingExerciseCreationPage {
         await this.page.locator(`td[aria-label="${ariaLabelDate}"]`).click();
 
         // Ensure the date picker is closed after setting the date
-        await this.page.locator('.owl-dt-control-content.owl-dt-control-button-content', { hasText: 'Set' }).click();
+        while (await this.page.locator('.owl-dt-popup').isVisible()) {
+            await this.page.locator('.owl-dt-control-content.owl-dt-control-button-content', { hasText: 'Set' }).dispatchEvent('click');
+            await this.page.waitForTimeout(500);
+        }
         await expect(this.page.locator('.owl-dt-popup')).not.toBeVisible();
     }
 }

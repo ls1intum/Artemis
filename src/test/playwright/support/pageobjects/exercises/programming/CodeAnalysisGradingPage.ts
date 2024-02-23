@@ -16,6 +16,8 @@ export class CodeAnalysisGradingPage {
     }
 
     async makeEveryScaCategoryInfluenceGrading() {
+        // Wait for categories to load
+        await this.page.waitForResponse('**/static-code-analysis-categories');
         // Using ids here would make the test more instable. Its unlikely that this selector will break in the future.
         const categories = this.page.locator('select');
         const numberOfCategories = await categories.count();

@@ -100,6 +100,7 @@ test.describe('Import exercises', () => {
             await courseManagementExercises.importModelingExercise();
             await courseManagementExercises.clickImportExercise(modelingExercise.id!);
 
+            await page.waitForTimeout(10000);
             await expect(page.locator('#field_title')).toHaveValue(modelingExercise.title!);
             await expect(page.locator('#field_points')).toHaveValue(`${modelingExercise.maxPoints!}`);
 

@@ -12,10 +12,10 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
         await this.page
             .locator('#apollon-assessment-row')
             .locator(MODELING_EDITOR_CANVAS)
-            .locator('g')
-            .nth(componentNumber)
             .locator('svg')
-            .nth(0)
+            .first()
+            .locator('svg')
+            .nth(componentNumber)
             .click({ clickCount: 2, position: { x: 100, y: 5 }, force: true });
     }
 
@@ -48,6 +48,7 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
         await super.submitWithoutInterception();
         const response = await responsePromise;
         expect(response.status()).toBe(200);
+        return response;
     }
 
     private getNextAssessmentField() {

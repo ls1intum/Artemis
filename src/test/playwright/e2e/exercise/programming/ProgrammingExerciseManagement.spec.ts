@@ -30,7 +30,7 @@ test.describe('Programming Exercise Management', () => {
             await programmingExerciseCreation.checkAllowOnlineEditor();
             const response = await programmingExerciseCreation.generate();
             const exercise: Exercise = await response.json();
-            await expect(courseManagementExercises.getExerciseTitle()).toContainText(exerciseTitle);
+            await expect(courseManagementExercises.getExerciseTitle(exerciseTitle)).toBeVisible();
             await page.waitForURL(`**/programming-exercises/${exercise.id}**`);
         });
     });

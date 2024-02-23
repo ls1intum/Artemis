@@ -81,7 +81,7 @@ export class OnlineEditorPage {
         await getExercise(this.page, exerciseID).locator('[id="create_file_root"]').click();
         await this.page.waitForTimeout(500);
         const responsePromise = this.page.waitForResponse(`${BASE_API}repository/*/file?file=${fileName}`);
-        await getExercise(this.page, exerciseID).locator('#file-browser-create-node').fill(fileName);
+        await getExercise(this.page, exerciseID).locator('#file-browser-create-node').pressSequentially(fileName);
         await this.page.waitForTimeout(500);
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');
         const response = await responsePromise;

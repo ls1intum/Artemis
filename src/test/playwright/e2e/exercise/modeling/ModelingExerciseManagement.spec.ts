@@ -31,7 +31,7 @@ test.describe('Modeling Exercise Management', () => {
             await modelingExerciseCreation.setPoints(10);
             const response = await modelingExerciseCreation.save();
             modelingExercise = await response.json();
-            await expect(page.getByText(modelingExercise.title!)).toBeAttached();
+            await expect(courseManagementExercises.getExerciseTitle(modelingExercise.title!)).toBeAttached();
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
             await modelingExerciseEditor.addComponentToExampleSolutionModel(1);
             await modelingExerciseCreation.save();

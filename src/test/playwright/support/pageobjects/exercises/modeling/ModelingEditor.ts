@@ -13,7 +13,7 @@ export class ModelingEditor {
         const exerciseElement = getExercise(this.page, exerciseID);
         const component = exerciseElement.locator('#modeling-editor-sidebar').locator('div').nth(componentNumber);
         const targetPosition = x && y ? { x, y } : undefined;
-        await component.dragTo(exerciseElement.locator(MODELING_EDITOR_CANVAS), { targetPosition });
+        await component.dragTo(exerciseElement.locator(MODELING_EDITOR_CANVAS), { targetPosition, force: true });
         await exerciseElement.locator(MODELING_EDITOR_CANVAS).dispatchEvent('pointerup');
     }
 
@@ -22,8 +22,8 @@ export class ModelingEditor {
     }
 
     async addComponentToExampleSolutionModel(componentNumber: number) {
-        const sidebarComponent = this.page.locator('#modeling-editor-sidebar').nth(componentNumber);
-        await sidebarComponent.dragTo(this.page.locator(MODELING_EDITOR_CANVAS));
+        const sidebarComponent = this.page.locator('#modeling-editor-sidebar').locator('div').nth(componentNumber);
+        await sidebarComponent.dragTo(this.page.locator(MODELING_EDITOR_CANVAS), { force: true });
         await this.page.locator(MODELING_EDITOR_CANVAS).dispatchEvent('pointerup');
     }
 

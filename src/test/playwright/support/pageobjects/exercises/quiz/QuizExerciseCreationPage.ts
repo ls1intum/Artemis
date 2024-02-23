@@ -88,7 +88,7 @@ export class QuizExerciseCreationPage {
     }
 
     async import() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}quiz-exercises`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}quiz-exercises/import/*`);
         await this.page.locator('#quiz-save').click();
         return await responsePromise;
     }
