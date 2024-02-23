@@ -142,8 +142,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
         final long estimatedTimeStudents = getRestDurationInSeconds(0, studentCount, 1, threadCount);
 
         final long estimatedTime = (estimatedTimeExercise + estimatedTimeStudents);
-        log.info("Using {} threads for migration, and assuming 2s per repository, the migration should take around {}", MAX_THREAD_COUNT,
-                TimeLogUtil.formatDuration(estimatedTime));
+        log.info("Using {} threads for migration, and assuming 2s per repository, the migration should take around {}", threadCount, TimeLogUtil.formatDuration(estimatedTime));
 
         // Use fixed thread pool to prevent loading too many exercises into memory at once
         ExecutorService executorService = Executors.newFixedThreadPool((int) threadCount);
@@ -272,7 +271,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
     }
 
     /**
-     * Migrate the solution participations. Also Migrates the test repository of the programming exercise since we have it
+     * Migrate the solution participations. Also Migrates the test and aux repository of the programming exercise since we have it
      * in the solution participation already loaded from the database.
      *
      * @param solutionParticipations the solution participations to migrate
