@@ -109,14 +109,10 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
             plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 
             plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
-            plagiarismComparison = plagiarismComparisonRepository.save(plagiarismComparison);
-
             plagiarismSubmission1.setStudentLogin(TEST_PREFIX + "student" + (i + 1));
             plagiarismSubmission1.setPlagiarismCase(plagiarismCase);
-            plagiarismSubmission1.setPlagiarismComparison(plagiarismComparison);
             plagiarismSubmission2.setStudentLogin(TEST_PREFIX + "student" + (i + 2));
             plagiarismSubmission2.setPlagiarismCase(plagiarismCase);
-            plagiarismSubmission2.setPlagiarismComparison(plagiarismComparison);
             plagiarismComparison.setSubmissionA(plagiarismSubmission1);
             plagiarismComparison.setSubmissionB(plagiarismSubmission2);
             plagiarismComparisonRepository.save(plagiarismComparison);
