@@ -403,6 +403,15 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
     private String cloneRepositoryFromBitbucketAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUri) throws URISyntaxException {
         if (localVCService.isEmpty() || bitbucketService.isEmpty() || bitbucketLocalVCMigrationService.isEmpty()) {
             log.error("Failed to clone repository from Bitbucket: {}", repositoryUri);
+            if (localVCService.isEmpty()) {
+                log.error("Local VC service is not available");
+            }
+            if (bitbucketService.isEmpty()) {
+                log.error("Bitbucket service is not available");
+            }
+            if (bitbucketLocalVCMigrationService.isEmpty()) {
+                log.error("BitbucketLocalVCMigrationService is not available");
+            }
             return null;
         }
         if (repositoryUri.startsWith(bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl().toString())) {
@@ -444,6 +453,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
     private void copyRepoToLocalVC(String projectKey, String repositorySlug, String oldOrigin, String branch) {
         if (bitbucketLocalVCMigrationService.isEmpty()) {
             log.error("Failed to clone repository from Bitbucket: {}", repositorySlug);
+            log.error("BitbucketLocalVCMigrationService is not available");
             return;
         }
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
