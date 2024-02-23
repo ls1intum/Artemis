@@ -101,12 +101,12 @@ public class AthenaModuleService {
      * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
      */
     public List<String> getAthenaTextModulesForCourse(Course course) throws NetworkingException {
-        List<String> availableProgrammingModules = getAthenaModules().stream().filter(module -> "text".equals(module.type)).map(module -> module.name).toList();
+        List<String> availableTextModules = getAthenaModules().stream().filter(module -> "text".equals(module.type)).map(module -> module.name).toList();
         if (!course.getRestrictedAthenaModulesAccess()) {
             // filter out restricted modules
-            availableProgrammingModules = availableProgrammingModules.stream().filter(moduleName -> !restrictedModules.contains(moduleName)).toList();
+            availableTextModules = availableTextModules.stream().filter(moduleName -> !restrictedModules.contains(moduleName)).toList();
         }
-        return availableProgrammingModules;
+        return availableTextModules;
     }
 
     /**
