@@ -297,7 +297,6 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                     log.debug("Migrated solution participation with id {} to {}", solutionParticipation.getId(), url);
                     solutionParticipation.setRepositoryUri(url);
                     solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
-                    errorList.add(solutionParticipation);
                 }
                 url = migrateTestRepo(solutionParticipation.getProgrammingExercise());
                 var programmingExercise = solutionParticipation.getProgrammingExercise();
