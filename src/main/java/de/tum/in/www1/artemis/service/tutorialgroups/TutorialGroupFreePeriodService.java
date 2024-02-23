@@ -66,10 +66,10 @@ public class TutorialGroupFreePeriodService {
      * @param tutorialGroupFreePeriod the free period
      * @param onDeletion              true if the free period is deleted, false otherwise
      */
-    public void updateOverlappingSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, boolean onDeletion) {
+    public void updateOverlappingSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, TutorialGroupFreePeriod updatedFreePeriod, boolean onDeletion) {
         Set<TutorialGroupSession> overlappingSessions = tutorialGroupSessionRepository.findAllBetween(course, tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd());
 
-        findAndUpdateStillCanceledSessions(course, tutorialGroupFreePeriod, overlappingSessions, onDeletion);
+        findAndUpdateStillCanceledSessions(course, tutorialGroupFreePeriod, overlappingSessions, updatedFreePeriod, onDeletion);
         findAndUpdateSessionsToReactivate(course, tutorialGroupFreePeriod, overlappingSessions);
     }
 
@@ -84,13 +84,13 @@ public class TutorialGroupFreePeriodService {
      * @param onDeletion              true if the free period is deleted, false otherwise.
      */
     private void findAndUpdateStillCanceledSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, Set<TutorialGroupSession> overlappingSessions,
-            boolean onDeletion) {
+            TutorialGroupFreePeriod updatedFreePeriod, boolean onDeletion) {
         overlappingSessions.stream().forEach(session -> {
-
             Set<TutorialGroupFreePeriod> overlappingFreePeriods = tutorialGroupFreePeriodRepository.findOverlappingInSameCourseExclusive(course, session.getStart(),
                     session.getEnd());
             // if there is only one overlapping FreePeriod, the session is not still canceled
-            if (overlappingFreePeriods.size() <= 1) {
+            // if the tutorialFreePeriod is not the same as the TutorialFreePeriod that caused the session to be canceled initially, we don't update the status and the explanation
+            if (overlappingFreePeriods.size() <= 1 || !session.getTutorialGroupFreePeriod().equals(tutorialGroupFreePeriod)) {
                 return;
             }
 
@@ -104,13 +104,14 @@ public class TutorialGroupFreePeriodService {
                 session.setTutorialGroupFreePeriod(replacementFreePeriod);
             }
 
-            // if one of the still overlapping FreePeriods is the same as the one that caused the session to be cancelled in the first place, we don't update the status and the
-            // explanation
-            else if (overlappingFreePeriods.contains(tutorialGroupFreePeriod)) {
+            // if the updated tutorialFreePeriod still overlaps with the session, we don't update the status and the explanation
+            else if (updatedFreePeriod != null && session.getStart().isBefore(updatedFreePeriod.getEnd()) && session.getEnd().isAfter(updatedFreePeriod.getStart())) {
                 return;
             }
 
-            Optional<TutorialGroupFreePeriod> freePeriod = overlappingFreePeriods.stream().findFirst();
+            // the replacementFreePeriod is the first FreePeriod that overlaps with the session, but is not the FreePeriod that caused the session to be canceled initially
+            Optional<TutorialGroupFreePeriod> freePeriod = overlappingFreePeriods.stream().filter(replacementFreePeriod -> !replacementFreePeriod.equals(tutorialGroupFreePeriod))
+                    .findFirst();
             if (!onDeletion && freePeriod.isPresent() && session.getTutorialGroupFreePeriod().equals(tutorialGroupFreePeriod)) {
                 session.setStatus(TutorialGroupSessionStatus.CANCELLED);
                 session.setStatusExplanation(null);

@@ -117,7 +117,7 @@ public class TutorialGroupFreePeriodResource {
         isValidTutorialGroupPeriod(updatedFreePeriod);
 
         // activate previously cancelled sessions
-        tutorialGroupFreePeriodService.updateOverlappingSessions(configuration.getCourse(), existingFreePeriod, false);
+        tutorialGroupFreePeriodService.updateOverlappingSessions(configuration.getCourse(), existingFreePeriod, updatedFreePeriod, false);
         // update free period
         updatedFreePeriod = tutorialGroupFreePeriodRepository.save(updatedFreePeriod);
         // cancel now overlapping sessions
@@ -192,7 +192,7 @@ public class TutorialGroupFreePeriodResource {
         Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         TutorialGroupsConfiguration configuration = configurationOptional
                 .orElseThrow(() -> new BadRequestException("The course has no tutorial groups configuration with ID " + tutorialGroupsConfigurationId));
-        tutorialGroupFreePeriodService.updateOverlappingSessions(configuration.getCourse(), tutorialGroupFreePeriod, true);
+        tutorialGroupFreePeriodService.updateOverlappingSessions(configuration.getCourse(), tutorialGroupFreePeriod, null, true);
         tutorialGroupFreePeriodRepository.delete(tutorialGroupFreePeriod);
         return ResponseEntity.noContent().build();
     }
