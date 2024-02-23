@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.annotations;
+package de.tum.in.www1.artemis.security.annotations.enforceroleincourse;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -11,11 +11,11 @@ import de.tum.in.www1.artemis.security.Role;
  * All classes or methods annotated with this will check (used for controller classes) if the current user has the specified role in the target course. This is done using a custom
  * aspect
  *
- * @see RoleInCourseAspect
+ * @see EnforceRoleInCourseAspect
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD, ElementType.TYPE })
-public @interface RoleInCourse {
+public @interface EnforceRoleInCourse {
 
     /**
      * The role that is required to access the annotated endpoint
