@@ -47,6 +47,10 @@ spring:
             - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
+    cloud:
+        loadbalancer:
+            cache:
+                enabled: false #not needed for build agents
 
 server:
     port: 8080
