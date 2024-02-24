@@ -379,7 +379,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             FROM Result r
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
-                AND r.participation.exercise.id in :exerciseIds
+                AND r.participation.exercise.id IN :exerciseIds
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)

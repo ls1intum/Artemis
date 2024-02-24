@@ -32,7 +32,7 @@ public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLo
             FROM BuildLogStatisticsEntry b
                 LEFT JOIN b.programmingSubmission s
                 LEFT JOIN s.participation p
-                LEFT JOIN TREAT (p.exercise as ProgrammingExercise ) e
+                LEFT JOIN TREAT (p.exercise AS ProgrammingExercise ) e
             WHERE e = :exercise
                 OR e.solutionParticipation = p
                 OR e.templateParticipation = p
