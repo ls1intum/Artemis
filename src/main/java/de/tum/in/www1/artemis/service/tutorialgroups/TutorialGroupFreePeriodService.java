@@ -64,6 +64,7 @@ public class TutorialGroupFreePeriodService {
      *
      * @param course                  the course in which the free period is defined
      * @param tutorialGroupFreePeriod the free period
+     * @param updatedFreePeriod       the new value of the updated free period
      * @param onDeletion              true if the free period is deleted, false otherwise
      */
     public void updateOverlappingSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, TutorialGroupFreePeriod updatedFreePeriod, boolean onDeletion) {
@@ -81,6 +82,7 @@ public class TutorialGroupFreePeriodService {
      * @param course                  the course in which the free period is defined.
      * @param tutorialGroupFreePeriod the free period.
      * @param overlappingSessions     the set of sessions that overlap with the given free period.
+     * @param updatedFreePeriod       the new value of the updated free period
      * @param onDeletion              true if the free period is deleted, false otherwise.
      */
     private void findAndUpdateStillCanceledSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, Set<TutorialGroupSession> overlappingSessions,
