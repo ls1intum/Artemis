@@ -134,7 +134,7 @@ describe('Import exercises', { scrollBehavior: 'center' }, () => {
         modelingExerciseCreation.setDueDate(dayjs().add(1, 'days'));
         modelingExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
 
-        modelingExerciseCreation.import().then((request: Interception) => {
+        modelingExerciseCreation.save().then((request: Interception) => {
             const exercise = request.response!.body;
             cy.login(studentOne, `/courses/${secondCourse.id}`);
             courseOverview.startExercise(exercise.id!);

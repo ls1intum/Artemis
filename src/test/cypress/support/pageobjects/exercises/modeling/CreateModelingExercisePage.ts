@@ -1,6 +1,5 @@
 import { Dayjs } from 'dayjs/esm';
-
-import { BASE_API, MODELING_EXERCISE_BASE, POST } from '../../../constants';
+import { MODELING_EXERCISE_BASE } from '../../../constants';
 import { enterDate } from '../../../utils';
 
 /**
@@ -28,12 +27,6 @@ export class CreateModelingExercisePage {
         cy.intercept(MODELING_EXERCISE_BASE).as('createModelingExercise');
         cy.get('#save-entity').click();
         return cy.wait('@createModelingExercise');
-    }
-
-    import() {
-        cy.intercept(POST, BASE_API + 'modeling-exercises/import/*').as('modelingExerciseImport');
-        cy.get('#modeling-exercise-creation-save').click();
-        return cy.wait('@modelingExerciseImport');
     }
 
     /**
