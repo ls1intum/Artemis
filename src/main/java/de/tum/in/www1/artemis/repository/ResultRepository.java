@@ -497,7 +497,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -520,7 +520,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -540,7 +540,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -549,7 +549,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 JOIN e.exerciseGroup eg
                 JOIN eg.exam ex
                 JOIN r.assessor a
-                LEFT JOIN FETCH Rating rating on rating.result = r
+                LEFT JOIN FETCH Rating rating ON rating.result = r
             WHERE r.completionDate IS NOT NULL
                 AND ex.id = :examId
             GROUP BY r.assessor.id

@@ -26,14 +26,14 @@ public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, 
     @Query("""
             SELECT attachmentUnit
             FROM Lecture lecture
-                LEFT JOIN TREAT(lecture.lectureUnits as AttachmentUnit) attachmentUnit
+                LEFT JOIN TREAT(lecture.lectureUnits AS AttachmentUnit) attachmentUnit
                 LEFT JOIN FETCH attachmentUnit.attachment attachment
             WHERE lecture.id = :lectureId
                 AND attachment.attachmentType = :attachmentType
             ORDER BY INDEX(attachmentUnit)
             """)
     // INDEX() is used to retrieve the order saved by @OrderColumn, see https://en.wikibooks.org/wiki/Java_Persistence/JPQL#Special_Operators
-    List<AttachmentUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType);
+    List<AttachmentUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") long lectureId, @Param("attachmentType") AttachmentType attachmentType);
 
     /**
      * Find all attachment units by lecture id and attachment type or throw if ist is empty.

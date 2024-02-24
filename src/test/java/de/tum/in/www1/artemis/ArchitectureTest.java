@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -184,6 +185,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
         rule.check(productionClasses);
     }
 
+    @Test
+    void testJPQLStyle() {
+        var queryRule = methods().that().areAnnotatedWith(Query.class).should(useUpperCaseSQLStyle()).because("@Query content should follow the style guide");
+        queryRule.check(allClasses);
+    }
+
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
 
     private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {
@@ -239,6 +246,35 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 if (!hasProfileAnnotation) {
                     String message = String.format("Class %s is not annotated with @Profile", item.getFullName());
                     events.add(SimpleConditionEvent.violated(item, message));
+                }
+            }
+        };
+    }
+
+    // See https://openjpa.apache.org/builds/1.2.3/apache-openjpa/docs/jpa_langref.html#jpa_langref_from_identifiers
+    private static final Set<String> SQL_KEYWORDS = Set.of("SELECT", "UPDATE", "SET", "DELETE", "DISTINCT", "EXISTS", "FROM", "WHERE", "LEFT", "OUTER", "INNER", "JOIN", "FETCH",
+            "TREAT", "AND", "OR", "AS", "ON", "ORDER", "BY", "ASC", "DSC", "GROUP", "COUNT", "SUM", "AVG", "MAX", "MIN", "IS", "NOT", "FALSE", "TRUE", "NULL", "LIKE", "IN",
+            "BETWEEN", "HAVING", "EMPTY", "MEMBER", "OF", "UPPER", "LOWER", "TRIM");
+
+    private ArchCondition<JavaMethod> useUpperCaseSQLStyle() {
+        return new ArchCondition<>("have keywords in upper case") {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                var queryAnnotation = item.getAnnotations().stream().filter(simpleNameAnnotation("Query")).findAny();
+                if (queryAnnotation.isEmpty()) {
+                    return;
+                }
+                Object valueProperty = queryAnnotation.get().getExplicitlyDeclaredProperty("value");
+                if (!(valueProperty instanceof String query)) {
+                    return;
+                }
+                String[] queryWords = query.split("[\\r\\n ]+");
+
+                for (var word : queryWords) {
+                    if (SQL_KEYWORDS.contains(word.toUpperCase()) && !StringUtils.isAllUpperCase(word)) {
+                        events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), word)));
+                    }
                 }
             }
         };

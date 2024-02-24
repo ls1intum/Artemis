@@ -45,7 +45,7 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             SELECT cp
             FROM CompetencyProgress cp
                 LEFT JOIN cp.competency
-            WHERE cp.competency in :competencies
+            WHERE cp.competency IN :competencies
                 AND cp.user.id = :userId
             """)
     Set<CompetencyProgress> findByCompetenciesAndUser(@Param("competencies") Collection<Competency> competencies, @Param("userId") long userId);

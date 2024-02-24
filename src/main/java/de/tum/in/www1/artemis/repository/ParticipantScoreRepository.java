@@ -116,7 +116,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     }
 
     @Query("""
-            SELECT MAX(ps.lastModifiedDate) as latestModifiedDate
+            SELECT MAX(ps.lastModifiedDate) AS latestModifiedDate
             FROM ParticipantScore ps
             """)
     Optional<Instant> getLatestModifiedDate();
@@ -138,7 +138,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             FROM ParticipantScore p
             WHERE p.exercise.id = :exerciseId
             GROUP BY p.id
-            ORDER BY p.lastRatedScore asc
+            ORDER BY p.lastRatedScore ASC
             """)
     List<ScoreDistribution> getScoreDistributionForExercise(@Param("exerciseId") Long exerciseId);
 

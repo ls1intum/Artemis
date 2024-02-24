@@ -42,8 +42,8 @@ public interface ModelElementRepository extends JpaRepository<ModelElement, Long
      * @return the number of other TextBlock's in the same cluster as the block with given `id`
      */
     @Query("""
-            SELECT element.modelElementId as elementId,
-                COUNT(DISTINCT allElements.modelElementId) as numberOfOtherElements
+            SELECT element.modelElementId AS elementId,
+                COUNT(DISTINCT allElements.modelElementId) AS numberOfOtherElements
             FROM ModelingSubmission submission
                 LEFT JOIN ModelElement element ON submission.id = element.submission.id
                 LEFT JOIN ModelCluster cluster ON element.cluster.id = cluster.id
