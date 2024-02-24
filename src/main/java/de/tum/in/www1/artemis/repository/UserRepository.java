@@ -915,9 +915,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SELECT COUNT(user) > 0
             FROM User user
             INNER JOIN Exercise exercise
-            INNER JOIN exercise.course course
             ON user.login = :login
                 AND exercise.id = :exerciseId
+            INNER JOIN exercise.course course
             WHERE (course.studentGroupName MEMBER OF user.groups)
                     OR (course.teachingAssistantGroupName MEMBER OF user.groups)
                     OR (course.editorGroupName MEMBER OF user.groups)
@@ -930,9 +930,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SELECT COUNT(user) > 0
             FROM User user
             INNER JOIN Exercise exercise
-            INNER JOIN exercise.course course
             ON user.login = :login
                 AND exercise.id = :exerciseId
+            INNER JOIN exercise.course course
             WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
                     OR (course.editorGroupName MEMBER OF user.groups)
                     OR (course.instructorGroupName MEMBER OF user.groups)
@@ -944,9 +944,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SELECT COUNT(user) > 0
             FROM User user
             INNER JOIN Exercise exercise
-            INNER JOIN exercise.course course
             ON user.login = :login
                 AND exercise.id = :exerciseId
+            INNER JOIN exercise.course course
             WHERE (course.editorGroupName MEMBER OF user.groups)
                     OR (course.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
@@ -957,9 +957,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SELECT COUNT(user) > 0
             FROM User user
             INNER JOIN Exercise exercise
-            INNER JOIN exercise.course course
             ON user.login = :login
                 AND exercise.id = :exerciseId
+            INNER JOIN exercise.course course
             WHERE (course.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
