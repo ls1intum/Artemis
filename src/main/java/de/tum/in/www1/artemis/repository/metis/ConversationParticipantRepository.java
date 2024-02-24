@@ -26,7 +26,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             SELECT DISTINCT conversationParticipant
             FROM ConversationParticipant conversationParticipant
             WHERE conversationParticipant.conversation.id = :conversationId
-                AND conversationParticipant.user.id in :userIds
+                AND conversationParticipant.user.id IN :userIds
             """)
     Set<ConversationParticipant> findConversationParticipantsByConversationIdAndUserIds(@Param("conversationId") Long conversationId, @Param("userIds") Set<Long> userIds);
 
