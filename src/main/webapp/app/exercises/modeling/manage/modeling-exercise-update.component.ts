@@ -305,7 +305,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     private onSaveError(errorRes: HttpErrorResponse): void {
         if (errorRes.error && errorRes.error.title) {
-            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.parameters);
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
         } else {
             onError(this.alertService, errorRes);
         }

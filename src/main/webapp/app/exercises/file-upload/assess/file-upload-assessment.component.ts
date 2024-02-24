@@ -474,7 +474,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                     this.alertService.closeAll();
                     const error = httpErrorResponse.error;
                     if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                        this.alertService.error(error.message, error.parameters);
+                        this.alertService.error(error.message, error.params);
                     } else {
                         this.alertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
                     }

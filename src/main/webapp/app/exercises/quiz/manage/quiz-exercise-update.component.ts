@@ -480,7 +480,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      */
     private onSaveError = (errorRes?: HttpErrorResponse): void => {
         if (errorRes?.error && errorRes.error.title) {
-            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.parameters);
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
         }
         console.error('Saving Quiz Failed! Please try again later.');
         this.alertService.error('artemisApp.quizExercise.saveError');

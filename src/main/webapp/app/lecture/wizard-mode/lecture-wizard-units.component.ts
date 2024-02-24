@@ -225,8 +225,7 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
                 this.unitManagementComponent.loadData();
             },
             error: (res: HttpErrorResponse) => {
-                // TODO: Seems to be outdated. No exception on that endpoint seems to build such a result
-                if (res.error?.parameters === 'file' && res?.error?.title) {
+                if (res.error?.params === 'file' && res?.error?.title) {
                     this.alertService.error(res.error.title);
                 } else {
                     onError(this.alertService, res);

@@ -278,7 +278,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
 
     private onSaveError(error: HttpErrorResponse) {
         if (error.error && error.error.title) {
-            this.alertService.addErrorAlert(error.error.title, error.error.message, error.error.parameters);
+            this.alertService.addErrorAlert(error.error.title, error.error.message, error.error.params);
         }
         const errorMessage = error.headers.get('X-artemisApp-alert')!;
         this.alertService.addAlert({

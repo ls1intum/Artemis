@@ -86,7 +86,7 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
     onError(httpErrorResponse: HttpErrorResponse) {
         const error = httpErrorResponse.error;
         if (error && error.errorKey && error.errorKey === 'sessionOverlapsWithSession') {
-            this.alertService.error(error.message, error.parameters);
+            this.alertService.error(error.message, error.params);
         } else {
             this.alertService.error('error.unexpectedError', {
                 error: httpErrorResponse.message,

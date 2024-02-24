@@ -274,7 +274,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (error?.error?.errorKey === 'lockedSubmissionsLimitReached') {
             this.lockLimitReached = true;
         } else if (error?.error) {
-            this.onError(error.error.detail || 'Not Found');
+            this.onError(error?.error?.detail || 'Not Found');
         }
     }
 
@@ -436,7 +436,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             },
             error: (error: HttpErrorResponse) => {
                 this.loadingParticipation = false;
-                if (error?.error?.errorKey === 'lockedSubmissionsLimitReached') {
+                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     // the lock limit is reached
                     this.onError('artemisApp.submission.lockedSubmissionsLimitReached');
                 } else {
@@ -477,7 +477,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 this.alertService.closeAll();
                 const error = httpErrorResponse.error;
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                    this.alertService.error(error.message, error.parameters);
+                    this.alertService.error(error.message, error.params);
                 } else {
                     this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
                 }

@@ -97,7 +97,7 @@ export abstract class UserSettingsDirective implements OnInit {
     protected onError(httpErrorResponse: HttpErrorResponse) {
         const error = httpErrorResponse.error;
         if (error) {
-            this.alertService.error(error.message, error.parameters);
+            this.alertService.error(error.message, error.params);
         } else {
             this.alertService.error('error.unexpectedError', {
                 error: httpErrorResponse.message,
