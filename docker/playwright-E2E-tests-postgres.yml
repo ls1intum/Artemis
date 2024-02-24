@@ -36,7 +36,7 @@ services:
             # see comments in artemis/config/cypress.env why this port is necessary
             - "54321:54321"
 
-    artemis-cypress:
+    artemis-playwright:
         extends:
             file: ./playwright.yml
             service: artemis-playwright

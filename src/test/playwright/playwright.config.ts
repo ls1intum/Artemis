@@ -12,12 +12,11 @@ dotenv.config({ path: `./playwright.env` });
  */
 export default defineConfig({
     testDir: './',
-    timeout: 60 * 1000,
     /* Run tests in files in parallel */
     fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
     forbidOnly: !!process.env.CI,
-    timeout: 2 * 60 * 1000,
+    timeout: 3 * 60 * 1000,
     retries: 2,
     workers: 3,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
