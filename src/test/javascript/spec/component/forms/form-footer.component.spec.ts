@@ -4,6 +4,7 @@ import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component
 import { MockComponent } from 'ng-mocks';
 import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
+import { InputSignal, WritableSignal, signal } from '@angular/core';
 
 describe('FormFooterComponent', () => {
     let fixture: ComponentFixture<FormFooterComponent>;
@@ -26,7 +27,17 @@ describe('FormFooterComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initializes', () => {
-        expect(comp).toBeDefined();
+    it('update title depending on input signals', () => {
+        comp.isCreation = signal(true) as any as InputSignal<boolean>;
+        comp.isImport = signal(false) as any as InputSignal<boolean>;
+        expect(comp.saveTitle()).toBe('entity.action.generate');
+
+        (comp.isImport as any as WritableSignal<boolean>).set(true);
+        expect(comp.saveTitle()).toBe('entity.action.import');
+
+        (comp.isImport as any as WritableSignal<boolean>).set(false);
+        (comp.isCreation as any as WritableSignal<boolean>).set(false);
+
+        expect(comp.saveTitle()).toBe('entity.action.save');
     });
 });
