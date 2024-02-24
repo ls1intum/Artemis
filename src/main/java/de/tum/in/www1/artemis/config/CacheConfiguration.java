@@ -188,6 +188,7 @@ public class CacheConfiguration {
             configureQueueCluster(config, jHipsterProperties);
         }
 
+        // build agents should not hold partitions and only be a lite member
         if (!activeProfiles.contains(PROFILE_CORE) && activeProfiles.contains(PROFILE_BUILDAGENT)) {
             log.info("Joining cluster as lite member");
             config.setLiteMember(true);
