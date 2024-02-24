@@ -56,18 +56,18 @@ test.describe('Course management', () => {
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
             await courseManagement.addStudentToCourse(studentOne);
-            await expect(courseManagement.getRegisteredStudents(username).first()).toBeVisible();
+            await expect(courseManagement.getRegisteredStudents().filter({ hasText: username })).toBeVisible();
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
-            await expect(courseManagement.getCourseStudentGroupName(`artemis-${course.shortName}-students (1)`).first()).toBeVisible();
+            await expect(courseManagement.getCourseStudentGroupName().filter({ hasText: `artemis-${course.shortName}-students (1)` })).toBeVisible();
 
             await navigationBar.openCourseManagement();
             await courseManagement.openStudentOverviewOfCourse(course.id!);
             await courseManagement.removeFirstUser();
-            await expect(courseManagement.getRegisteredStudents(username).first()).toBeHidden();
+            await expect(courseManagement.getRegisteredStudents().filter({ hasText: username })).toBeHidden();
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
-            await expect(courseManagement.getCourseStudentGroupName(`artemis-${course.shortName}-students (0)`).first()).toBeVisible();
+            await expect(courseManagement.getCourseStudentGroupName().filter({ hasText: `artemis-${course.shortName}-students (0)` })).toBeVisible();
         });
 
         test.afterEach(async ({ courseManagementAPIRequests }) => {
@@ -128,23 +128,23 @@ test.describe('Course management', () => {
             expect(courseBody.instructorGroupName).toBe(`artemis-${courseData.shortName}-instructors`);
             expect(courseBody.teachingAssistantGroupName).toBe(`artemis-${courseData.shortName}-tutors`);
 
-            await expect(courseManagement.getCourseHeaderTitle(courseData.title).first()).toBeVisible();
-            await expect(courseManagement.getCourseHeaderDescription(courseData.description).first()).toBeVisible();
-            await expect(courseManagement.getCourseTitle(courseData.title).first()).toBeVisible();
-            await expect(courseManagement.getCourseShortName(courseData.shortName).first()).toBeVisible();
-            await expect(courseManagement.getCourseStudentGroupName(`artemis-${courseData.shortName}-students (0)`).first()).toBeVisible();
-            await expect(courseManagement.getCourseTutorGroupName(`artemis-${courseData.shortName}-tutors (0)`).first()).toBeVisible();
-            await expect(courseManagement.getCourseEditorGroupName(`artemis-${courseData.shortName}-editors (0)`).first()).toBeVisible();
-            await expect(courseManagement.getCourseInstructorGroupName(`artemis-${courseData.shortName}-instructors (0)`).first()).toBeVisible();
-            await expect(courseManagement.getCourseStartDate(courseData.startDate.format(dateFormat)).first()).toBeVisible();
-            await expect(courseManagement.getCourseEndDate(courseData.endDate.format(dateFormat)).first()).toBeVisible();
-            await expect(courseManagement.getCourseSemester(courseData.semester).first()).toBeVisible();
-            await expect(courseManagement.getCourseProgrammingLanguage(courseData.programmingLanguage).first()).toBeVisible();
-            await expect(courseManagement.getCourseTestCourse(convertBooleanToYesNo(courseData.testCourse)).first()).toBeVisible();
-            await expect(courseManagement.getCourseMaxComplaints(courseData.maxComplaints.toString()).first()).toBeVisible();
-            await expect(courseManagement.getCourseMaxTeamComplaints(courseData.maxTeamComplaints.toString()).first()).toBeVisible();
-            await expect(courseManagement.getMaxComplaintTimeDays(courseData.maxComplaintTimeDays.toString()).first()).toBeVisible();
-            await expect(courseManagement.getMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays.toString()).first()).toBeVisible();
+            await expect(courseManagement.getCourseHeaderTitle().filter({ hasText: courseData.title })).toBeVisible();
+            await expect(courseManagement.getCourseHeaderDescription().filter({ hasText: courseData.description })).toBeVisible();
+            await expect(courseManagement.getCourseTitle().filter({ hasText: courseData.title })).toBeVisible();
+            await expect(courseManagement.getCourseShortName().filter({ hasText: courseData.shortName })).toBeVisible();
+            await expect(courseManagement.getCourseStudentGroupName().filter({ hasText: `artemis-${courseData.shortName}-students (0)` })).toBeVisible();
+            await expect(courseManagement.getCourseTutorGroupName().filter({ hasText: `artemis-${courseData.shortName}-tutors (0)` })).toBeVisible();
+            await expect(courseManagement.getCourseEditorGroupName().filter({ hasText: `artemis-${courseData.shortName}-editors (0)` })).toBeVisible();
+            await expect(courseManagement.getCourseInstructorGroupName().filter({ hasText: `artemis-${courseData.shortName}-instructors (0)` })).toBeVisible();
+            await expect(courseManagement.getCourseStartDate().filter({ hasText: courseData.startDate.format(dateFormat) })).toBeVisible();
+            await expect(courseManagement.getCourseEndDate().filter({ hasText: courseData.endDate.format(dateFormat) })).toBeVisible();
+            await expect(courseManagement.getCourseSemester().filter({ hasText: courseData.semester })).toBeVisible();
+            await expect(courseManagement.getCourseProgrammingLanguage().filter({ hasText: courseData.programmingLanguage })).toBeVisible();
+            await expect(courseManagement.getCourseTestCourse().filter({ hasText: convertBooleanToYesNo(courseData.testCourse) })).toBeVisible();
+            await expect(courseManagement.getCourseMaxComplaints().filter({ hasText: courseData.maxComplaints.toString() })).toBeVisible();
+            await expect(courseManagement.getCourseMaxTeamComplaints().filter({ hasText: courseData.maxTeamComplaints.toString() })).toBeVisible();
+            await expect(courseManagement.getMaxComplaintTimeDays().filter({ hasText: courseData.maxComplaintTimeDays.toString() })).toBeVisible();
+            await expect(courseManagement.getMaxRequestMoreFeedbackTimeDays().filter({ hasText: courseData.maxRequestMoreFeedbackTimeDays.toString() })).toBeVisible();
         });
 
         if (allowGroupCustomization) {
@@ -171,14 +171,14 @@ test.describe('Course management', () => {
                 expect(courseBody.editorGroupName).toBe(courseData.editorGroupName);
                 expect(courseBody.instructorGroupName).toBe(courseData.instructorGroupName);
 
-                await expect(courseManagement.getCourseHeaderTitle(courseData.title).first()).toBeVisible();
-                await expect(courseManagement.getCourseTitle(courseData.title).first()).toBeVisible();
-                await expect(courseManagement.getCourseShortName(courseData.shortName).first()).toBeVisible();
-                await expect(courseManagement.getCourseTestCourse(convertBooleanToYesNo(courseData.testCourse)).first()).toBeVisible();
-                await expect(courseManagement.getCourseStudentGroupName(courseData.studentGroupName).first()).toBeVisible();
-                await expect(courseManagement.getCourseTutorGroupName(courseData.tutorGroupName).first()).toBeVisible();
-                await expect(courseManagement.getCourseEditorGroupName(courseData.editorGroupName).first()).toBeVisible();
-                await expect(courseManagement.getCourseInstructorGroupName(courseData.instructorGroupName).first()).toBeVisible();
+                await expect(courseManagement.getCourseHeaderTitle().filter({ hasText: courseData.title })).toBeVisible();
+                await expect(courseManagement.getCourseTitle().filter({ hasText: courseData.title })).toBeVisible();
+                await expect(courseManagement.getCourseShortName().filter({ hasText: courseData.shortName })).toBeVisible();
+                await expect(courseManagement.getCourseTestCourse().filter({ hasText: convertBooleanToYesNo(courseData.testCourse) })).toBeVisible();
+                await expect(courseManagement.getCourseStudentGroupName().filter({ hasText: courseData.studentGroupName })).toBeVisible();
+                await expect(courseManagement.getCourseTutorGroupName().filter({ hasText: courseData.tutorGroupName })).toBeVisible();
+                await expect(courseManagement.getCourseEditorGroupName().filter({ hasText: courseData.editorGroupName })).toBeVisible();
+                await expect(courseManagement.getCourseInstructorGroupName().filter({ hasText: courseData.instructorGroupName })).toBeVisible();
             });
         }
 
@@ -215,10 +215,10 @@ test.describe('Course management', () => {
             expect(course.shortName).toBe(courseData.shortName);
             expect(course.testCourse).toBe(editedCourseData.testCourse);
 
-            await expect(courseManagement.getCourseHeaderTitle(editedCourseData.title).first()).toBeVisible();
-            await expect(courseManagement.getCourseTitle(editedCourseData.title).first()).toBeVisible();
-            await expect(courseManagement.getCourseShortName(courseData.shortName).first()).toBeVisible();
-            await expect(courseManagement.getCourseTestCourse(convertBooleanToYesNo(editedCourseData.testCourse)).first()).toBeVisible();
+            await expect(courseManagement.getCourseHeaderTitle().filter({ hasText: editedCourseData.title })).toBeVisible();
+            await expect(courseManagement.getCourseTitle().filter({ hasText: editedCourseData.title })).toBeVisible();
+            await expect(courseManagement.getCourseShortName().filter({ hasText: courseData.shortName })).toBeVisible();
+            await expect(courseManagement.getCourseTestCourse().filter({ hasText: convertBooleanToYesNo(editedCourseData.testCourse) })).toBeVisible();
         });
 
         test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
@@ -238,7 +238,7 @@ test.describe('Course management', () => {
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
             await courseManagement.deleteCourse(course);
-            await expect(courseManagement.getCourse(course.id!).first()).toBeHidden();
+            await expect(courseManagement.getCourse(course.id!)).toBeHidden();
         });
     });
 });

@@ -125,6 +125,35 @@ export class LectureManagementPage {
         await this.page.click(buttonId);
         await responsePromise;
     }
+
+    private getLectureInfo(fieldName: string) {
+        const selector = `//dt[span[contains(text(), "${fieldName}")]]/following-sibling::dd`;
+        return this.page.locator(selector).first();
+    }
+
+    getLectureTitle() {
+        return this.getLectureInfo('Title');
+    }
+
+    getLectureDescription() {
+        return this.getLectureInfo('Description');
+    }
+
+    getLectureVisibleDate() {
+        return this.getLectureInfo('Visible from');
+    }
+
+    getLectureStartDate() {
+        return this.getLectureInfo('Start Date');
+    }
+
+    getLectureEndDate() {
+        return this.getLectureInfo('End Date');
+    }
+
+    getLectureCourse() {
+        return this.getLectureInfo('Course');
+    }
 }
 
 /**

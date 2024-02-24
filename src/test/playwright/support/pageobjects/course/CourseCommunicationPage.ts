@@ -78,6 +78,15 @@ export class CourseCommunicationPage {
     }
 
     /**
+     * Verifies that a message post is visible with the specified content.
+     * @param postID - The ID of the message post to check.
+     * @param content - The content expected to be visible in the message post.
+     */
+    async checkMessagePost(postID: number, content: string) {
+        await expect(this.getSinglePostContent(postID, content)).toBeVisible();
+    }
+
+    /**
      * Searches for a message using the provided search term.
      * @param search - The search term to use.
      */
@@ -126,6 +135,10 @@ export class CourseCommunicationPage {
      */
     getSinglePost(postID: number) {
         return this.page.locator(`.items-container #item-${postID}`);
+    }
+
+    getSinglePostContent(postID: number, content: string) {
+        return this.getSinglePost(postID).locator('.markdown-preview', { hasText: content });
     }
 
     /**
@@ -239,8 +252,16 @@ export class CourseCommunicationPage {
      * @param content - The content expected to be visible in the post.
      */
     async checkSinglePost(postID: number, content: string) {
-        await expect(this.getSinglePost(postID).locator('.markdown-preview', { hasText: content })).toBeVisible();
+        await expect(this.getSinglePostContent(postID, content)).toBeVisible();
         await expect(this.getSinglePost(postID).locator('.reference-hash', { hasText: `#${postID}` })).toBeVisible();
+    }
+
+    /**
+     * Verifies that a single edited post is marked with "edited" notice.
+     * @param postID - The ID of the post to check.
+     */
+    async checkPostEdited(postID: number) {
+        await expect(this.getSinglePost(postID).locator('.edited-text', { hasText: '(edited)' })).toBeVisible();
     }
 
     /**
@@ -249,7 +270,7 @@ export class CourseCommunicationPage {
      * @param content - The content expected to be visible in the reply.
      */
     async checkReply(postID: number, content: string) {
-        await expect(this.getSinglePost(postID).locator('.markdown-preview', { hasText: content })).toBeVisible();
+        await expect(this.getSinglePostContent(postID, content)).toBeVisible();
     }
 
     /**
@@ -291,6 +312,6 @@ export class CourseCommunicationPage {
      * @param content - The content expected to be visible in the exercise post.
      */
     async checkSingleExercisePost(postID: number, content: string) {
-        await expect(this.getSinglePost(postID).locator('.markdown-preview', { hasText: content })).toBeVisible();
+        await expect(this.getSinglePostContent(postID, content)).toBeVisible();
     }
 }

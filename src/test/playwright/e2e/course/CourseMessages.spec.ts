@@ -165,23 +165,33 @@ test.describe('Course messages', () => {
                 await login(studentOne, `/courses/${course.id}/messages`);
                 await courseMessages.browseChannelsButton();
                 const techSupportChannelId = Number(await courseMessages.getChannelIdByName('tech-support'));
-                await expect(courseMessages.checkBadgeJoined(techSupportChannelId)).toContainText('Joined');
+                const techSupportJoinedBadge = courseMessages.getJoinedBadge(techSupportChannelId);
+                await expect(techSupportJoinedBadge).toBeVisible();
+                await expect(techSupportJoinedBadge).toContainText('Joined');
 
                 const randomChannelId = Number(await courseMessages.getChannelIdByName('random'));
-                await expect(courseMessages.checkBadgeJoined(randomChannelId)).toContainText('Joined');
+                const randomJoinedBadge = courseMessages.getJoinedBadge(randomChannelId);
+                await expect(randomJoinedBadge).toBeVisible();
+                await expect(randomJoinedBadge).toContainText('Joined');
 
                 const announcementChannelId = Number(await courseMessages.getChannelIdByName('announcement'));
-                await expect(courseMessages.checkBadgeJoined(announcementChannelId)).toContainText('Joined');
+                const announcementJoinedBadge = courseMessages.getJoinedBadge(announcementChannelId);
+                await expect(announcementJoinedBadge).toBeVisible();
+                await expect(announcementJoinedBadge).toContainText('Joined');
 
                 const organizationChannelId = Number(await courseMessages.getChannelIdByName('organization'));
-                await expect(courseMessages.checkBadgeJoined(organizationChannelId)).toContainText('Joined');
+                const organizationJoinedBadge = courseMessages.getJoinedBadge(organizationChannelId);
+                await expect(organizationJoinedBadge).toBeVisible();
+                await expect(organizationJoinedBadge).toContainText('Joined');
             });
 
             test('Student should be able to join a public channel', async ({ login, courseMessages }) => {
                 await login(studentOne, `/courses/${course.id}/messages`);
                 await courseMessages.browseChannelsButton();
                 await courseMessages.joinChannel(channel.id!);
-                await expect(courseMessages.checkBadgeJoined(channel.id!)).toContainText('Joined');
+                const joinedBadge = courseMessages.getJoinedBadge(channel.id!);
+                await expect(joinedBadge).toBeVisible();
+                await expect(joinedBadge).toContainText('Joined');
             });
 
             test('Student should be able to leave a public channel', async ({ login, courseMessages, communicationAPIRequests }) => {
@@ -189,7 +199,7 @@ test.describe('Course messages', () => {
                 await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, studentOne);
                 await courseMessages.browseChannelsButton();
                 await courseMessages.leaveChannel(channel.id!);
-                await expect(courseMessages.checkBadgeJoined(channel.id!)).toHaveCount(0);
+                await expect(courseMessages.getJoinedBadge(channel.id!)).toBeHidden();
             });
         });
 
@@ -335,6 +345,7 @@ test.describe('Course messages', () => {
                 await courseMessages.openSettingsTab();
                 await courseMessages.leaveGroupChat();
                 await page.goto(`/courses/${course.id}/messages`);
+                await page.waitForLoadState('networkidle');
                 await courseMessages.checkGroupChatExists(groupChatName, false);
             });
 
@@ -345,6 +356,7 @@ test.describe('Course messages', () => {
                 await courseMessages.openSettingsTab();
                 await courseMessages.leaveGroupChat();
                 await page.goto(`/courses/${course.id}/messages`);
+                await page.waitForLoadState('networkidle');
                 await courseMessages.checkGroupChatExists(groupChatName, false);
             });
         });
@@ -372,7 +384,7 @@ test.describe('Course messages', () => {
                 const newMessage = 'Edited Text';
                 await courseMessages.editMessage(message.id!, newMessage);
                 await courseMessages.checkMessage(message.id!, newMessage);
-                await expect(courseMessages.getSinglePost(message.id!).locator('.edited-text')).toBeVisible();
+                await courseMessages.checkMessageEdited(message.id!);
             });
 
             test('Students should be able to delete a message in group chat', async ({ login, courseMessages, communicationAPIRequests }) => {

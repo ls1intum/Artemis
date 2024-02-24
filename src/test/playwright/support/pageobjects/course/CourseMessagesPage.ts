@@ -94,11 +94,11 @@ export class CourseMessagesPage {
     }
 
     /**
-     * Checks for the presence of a 'joined' badge on a channel.
-     * @param channelID - The ID of the channel to check.
+     * Gets the 'joined' badge of a channel.
+     * @param channelID - The ID of the channel.
      * @returns The locator for the badge element.
      */
-    checkBadgeJoined(channelID: number) {
+    getJoinedBadge(channelID: number) {
         return this.page.locator(`#channel-${channelID} .badge`);
     }
 
@@ -250,6 +250,14 @@ export class CourseMessagesPage {
     async checkMessage(messageId: number, message: string) {
         const messagePreview = this.getSinglePost(messageId).locator('.markdown-preview').getByText(message);
         await expect(messagePreview).toBeVisible();
+    }
+
+    /**
+     * Verifies that an edited message is marked with "edited" notice.
+     * @param messageId - The ID of the message to check.
+     */
+    async checkMessageEdited(messageId: number) {
+        await expect(this.getSinglePost(messageId).locator('.edited-text', { hasText: '(edited)' })).toBeVisible();
     }
 
     /**

@@ -4,6 +4,8 @@ import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne, studentThree, studentTwo } from '../../support/users';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
+import { Fixtures } from '../../fixtures/fixtures';
+import { Post } from 'app/entities/metis/post.model';
 
 const courseConfigsToTest = [
     { description: 'messaging and communication enabled', config: { allowMessaging: true, allowCommunication: true } },
@@ -29,7 +31,7 @@ courseConfigsToTest.forEach((configToTest) => {
         });
 
         test.describe('Course overview communication', () => {
-            test('instructor should be able to pin a message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
+            test('Instructor should be able to pin a message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
                 const content = 'Pin Post Content';
                 await login(studentOne, `/courses/${course.id}/discussion`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, courseWideRandomChannel.id!, content);
@@ -39,7 +41,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkSinglePostByPosition(0, undefined, content);
             });
 
-            test('instructor should be able to select answer', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
+            test('Instructor should be able to select answer', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
                 test.fixme();
                 const content = 'Answer Post Content';
                 await login(studentOne, `/courses/${course.id}/discussion`);
@@ -54,7 +56,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkResolved(post.id!);
             });
 
-            test('other students should be able to see message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
+            test('Other students should be able to see message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
                 const content = 'Test Post Content';
                 await login(studentOne, `/courses/${course.id}/discussion`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, courseWideRandomChannel.id!, content);
@@ -63,7 +65,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkSinglePost(post.id!, content);
             });
 
-            test('other students should be able to search for message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
+            test('Other students should be able to search for message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
                 const content = 'Test Search Post Content';
                 await login(studentOne, `/courses/${course.id}/discussion`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, courseWideRandomChannel.id!, content);
@@ -73,7 +75,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkSinglePost(post.id!, content);
             });
 
-            test('other students should be able to filter for message by context', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
+            test('Other students should be able to filter for message by context', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
                 const content = 'Test Context Filter Post Content';
                 await login(studentOne, `/courses/${course.id}/discussion`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, courseWideRandomChannel.id!, content);
@@ -82,7 +84,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkSinglePost(post.id!, content);
             });
 
-            test('students should be able to filter for message by own', async ({ login, communicationAPIRequests, courseCommunication }) => {
+            test('Students should be able to filter for message by own', async ({ login, communicationAPIRequests, courseCommunication }) => {
                 const content = 'Test Own Filter Post Content';
                 await login(studentThree, `/courses/${course.id}/discussion`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, courseWideRandomChannel.id!, content);
@@ -90,7 +92,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkSinglePost(post.id!, content);
             });
 
-            test('other students should be able to reply to message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
+            test('Other students should be able to reply to message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
                 const content = 'Test Reply Post Content';
                 await login(studentOne, `/courses/${course.id}/discussion`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, courseWideRandomChannel.id!, content);
@@ -104,7 +106,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkReply(reply.id!, replyText);
             });
 
-            test('other students should be able to react to message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
+            test('Other students should be able to react to message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
                 const content = 'Test React Post Content';
                 await login(studentOne, `/courses/${course.id}/discussion`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, courseWideRandomChannel.id!, content);
@@ -115,7 +117,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkReaction(post.id!, emoji);
             });
 
-            test('students should be able to edit their message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
+            test('Students should be able to edit their message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
                 const content = 'Test Edit Post Content';
                 const newContent = 'Test Edited Post Content';
                 await login(studentOne, `/courses/${course.id}/discussion`);
@@ -123,14 +125,17 @@ courseConfigsToTest.forEach((configToTest) => {
                 await page.reload();
                 await courseCommunication.editMessage(post.id!, newContent);
                 await courseCommunication.checkSinglePost(post.id!, newContent);
+                await courseCommunication.checkPostEdited(post.id!);
             });
 
-            test('students should be able to delete their message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
+            test('Students should be able to delete their message', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
                 const content = 'Test Delete Post Content';
                 await login(studentOne, `/courses/${course.id}/discussion`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, courseWideRandomChannel.id!, content);
                 await page.reload();
                 await courseCommunication.deletePost(post.id!);
+                await page.waitForLoadState('networkidle');
+                await courseCommunication.getSinglePost(post.id!).waitFor({ state: 'detached' });
             });
         });
 
@@ -144,7 +149,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 channel = await communicationAPIRequests.getExerciseChannel(textExercise.course!.id!, textExercise.id!);
             });
 
-            test('instructor should be able pin a message within exercises', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
+            test('Instructor should be able to pin a message within exercises', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
                 const content = 'Pin Exercise Post Content';
                 await login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, content);
@@ -154,15 +159,17 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkSinglePostByPosition(0, undefined, content);
             });
 
-            test('students should be able to create messages within exercises', async ({ login, courseCommunication }) => {
+            test('Students should be able to create messages within exercises', async ({ login, courseCommunication }) => {
                 await login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
                 await courseCommunication.newPost();
-                const text = 'Sample text from fixture'; // Assuming text content is directly provided here instead of loading from a fixture
-                await courseCommunication.setContentInline(text);
-                await courseCommunication.saveMessage();
+                const text = await Fixtures.get('loremIpsum-short.txt');
+                await courseCommunication.setContentInline(text!);
+                const response = await courseCommunication.saveMessage();
+                const post: Post = await response.json();
+                await courseCommunication.checkMessagePost(post.id!, text!);
             });
 
-            test('students should be able to search for exercise messages', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
+            test('Students should be able to search for exercise messages', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
                 const content = 'Exercise Search Test Post Content';
                 await login(studentOne, `/courses/${course.id}/exercises/${textExercise.id!}`);
                 const post = await communicationAPIRequests.createCourseMessage(course, channel.id!, 'channel', content);
@@ -172,7 +179,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkSingleExercisePost(post.id!, content);
             });
 
-            test('other students should be able to filter for exercise message by context', async ({ login, communicationAPIRequests, courseCommunication }) => {
+            test('Other students should be able to filter for exercise message by context', async ({ login, communicationAPIRequests, courseCommunication }) => {
                 const content = 'Test Context Filter Exercise Post Content';
                 await login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, content);
@@ -181,7 +188,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkSinglePost(post.id!, content);
             });
 
-            test('students should be able to filter for exercise message by own', async ({ login, communicationAPIRequests, courseCommunication }) => {
+            test('Students should be able to filter for exercise message by own', async ({ login, communicationAPIRequests, courseCommunication }) => {
                 const content = 'Test Own Filter Exercise Post Content';
                 await login(studentThree, `/courses/${course.id}/discussion`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, content);
@@ -189,7 +196,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkSinglePost(post.id!, content);
             });
 
-            test('other students should be able to reply to an exercise message', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
+            test('Other students should be able to reply to an exercise message', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
                 const content = 'Test Reply Post Content';
                 await login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
                 const post = await communicationAPIRequests.createCourseMessage(course, channel.id!, 'channel', content);
@@ -203,7 +210,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkReply(reply.id!, replyText);
             });
 
-            test('other students should be able to react to an exercise message', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
+            test('Other students should be able to react to an exercise message', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
                 const content = 'Test React Post Content';
                 await login(studentOne, `/courses/${course.id}/discussion`);
                 const post = await communicationAPIRequests.createCourseMessage(course, channel.id!, 'channel', content);
@@ -225,7 +232,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 channel = await communicationAPIRequests.getLectureChannel(lecture.course!.id!, lecture.id!);
             });
 
-            test('instructor should be able pin a message within lectures', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
+            test('Instructor should be able to pin a message within lectures', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
                 const content = 'Pin Lecture Post Content';
                 await login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, content);
@@ -235,15 +242,17 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkSinglePostByPosition(0, undefined, content);
             });
 
-            test('students should be able to create messages within lecture', async ({ login, courseCommunication }) => {
+            test('Students should be able to create messages within lecture', async ({ login, courseCommunication }) => {
                 await login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
                 await courseCommunication.newPost();
-                const text = 'Lorem ipsum text for testing'; // Simplified for example purposes
-                await courseCommunication.setContentInline(text);
-                await courseCommunication.saveMessage();
+                const text = await Fixtures.get('loremIpsum-short.txt');
+                await courseCommunication.setContentInline(text!);
+                const response = await courseCommunication.saveMessage();
+                const post: Post = await response.json();
+                await courseCommunication.checkMessagePost(post.id!, text!);
             });
 
-            test('students should be able to search for lecture messages', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
+            test('Students should be able to search for lecture messages', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
                 const content = 'Lecture Search Test Post Content';
                 await login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, content);
@@ -253,7 +262,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkSingleExercisePost(post.id!, content);
             });
 
-            test('other students should be able to filter for lecture message by context', async ({ login, communicationAPIRequests, courseCommunication }) => {
+            test('Other students should be able to filter for lecture message by context', async ({ login, communicationAPIRequests, courseCommunication }) => {
                 const content = 'Test Context Filter Lecture Post Content';
                 await login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, content);
@@ -262,7 +271,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkSinglePost(post.id!, content);
             });
 
-            test('students should be able to filter for lecture message by own', async ({ login, communicationAPIRequests, courseCommunication }) => {
+            test('Students should be able to filter for lecture message by own', async ({ login, communicationAPIRequests, courseCommunication }) => {
                 const content = 'Test Own Filter Lecture Post Content';
                 await login(studentThree, `/courses/${course.id}/discussion`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, content);
@@ -270,7 +279,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkSinglePost(post.id!, content);
             });
 
-            test('other students should be able to reply to a lecture message', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
+            test('Other students should be able to reply to a lecture message', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
                 const content = 'Test Reply Post Content';
                 await login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, content);
@@ -284,7 +293,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 await courseCommunication.checkReply(reply.id!, replyText);
             });
 
-            test('other students should be able to react to a lecture message', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
+            test('Other students should be able to react to a lecture message', async ({ login, communicationAPIRequests, courseCommunication, page }) => {
                 const content = 'Test React Post Content';
                 await login(studentOne, `/courses/${course.id}/discussion`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, channel.id!, content);

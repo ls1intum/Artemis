@@ -120,172 +120,153 @@ export class CourseManagementPage {
 
     /**
      * Retrieves the locator for the registered students section with optional text filtering.
-     * @param text - Optional text to filter the registered students section.
      * @returns The locator for the registered students section.
      */
-    getRegisteredStudents(text?: string) {
-        return this.page.locator('#registered-students', { hasText: text });
+    getRegisteredStudents() {
+        return this.page.locator('#registered-students');
     }
 
     /**
-     * Retrieves the locator for the course header title with optional text filtering.
-     * @param text - Optional text to filter the course header title.
+     * Retrieves the locator for the course header title.
      * @returns The locator for the course header title.
      */
-    getCourseHeaderTitle(text?: string) {
-        return this.page.locator('#course-header-title', { hasText: text });
+    getCourseHeaderTitle() {
+        return this.page.locator('#course-header-title');
     }
 
     /**
-     * Retrieves the locator for the course header description with optional text filtering.
-     * @param text - Optional text to filter the course header description.
+     * Retrieves the locator for the course header description.
      * @returns The locator for the course header description.
      */
-    getCourseHeaderDescription(text?: string) {
-        return this.page.locator('#course-header-description', { hasText: text });
+    getCourseHeaderDescription() {
+        return this.page.locator('#course-header-description');
     }
 
     /**
-     * Retrieves the locator for the course title with optional text filtering.
-     * @param text - Optional text to filter the course title.
+     * Retrieves the locator for the course title.
      * @returns The locator for the course title.
      */
-    getCourseTitle(text?: string) {
-        return this.page.locator('#course-title', { hasText: text });
+    getCourseTitle() {
+        return this.page.locator('#course-title');
     }
 
     /**
      * Retrieves the locator for the course short name with optional text filtering.
-     * @param text - Optional text to filter the course short name.
      * @returns The locator for the course short name.
      */
-    getCourseShortName(text?: string) {
-        return this.page.locator('#course-short-name', { hasText: text });
+    getCourseShortName() {
+        return this.page.locator('#course-short-name');
     }
 
     /**
-     * Retrieves the locator for the course student group name with optional text filtering.
-     * @param text - Optional text to filter the course student group name.
+     * Retrieves the locator for the course student group name.
      * @returns The locator for the course student group name.
      */
-    getCourseStudentGroupName(text?: string) {
-        return this.page.locator('#course-student-group-name', { hasText: text });
+    getCourseStudentGroupName() {
+        return this.page.locator('#course-student-group-name');
     }
 
     /**
-     * Retrieves the locator for the course tutor group name with optional text filtering.
-     * @param text - Optional text to filter the course tutor group name.
+     * Retrieves the locator for the course tutor group name.
      * @returns The locator for the course tutor group name.
      */
-    getCourseTutorGroupName(text?: string) {
-        return this.page.locator('#course-tutor-group-name', { hasText: text });
+    getCourseTutorGroupName() {
+        return this.page.locator('#course-tutor-group-name');
     }
 
     /**
-     * Retrieves the locator for the course editor group name with optional text filtering.
-     * @param text - Optional text to filter the course editor group name.
+     * Retrieves the locator for the course editor group name.
      * @returns The locator for the course editor group name.
      */
-    getCourseEditorGroupName(text?: string) {
-        return this.page.locator('#course-editor-group-name', { hasText: text });
+    getCourseEditorGroupName() {
+        return this.page.locator('#course-editor-group-name');
     }
 
     /**
-     * Retrieves the locator for the course instructor group name with optional text filtering.
-     * @param text - Optional text to filter the course instructor group name.
+     * Retrieves the locator for the course instructor group.
      * @returns The locator for the course instructor group name.
      */
-    getCourseInstructorGroupName(text?: string) {
-        return this.page.locator('#course-instructor-group-name', { hasText: text });
+    getCourseInstructorGroupName() {
+        return this.page.locator('#course-instructor-group-name');
     }
 
     /**
-     * Retrieves the locator for the course start date with optional text filtering.
-     * @param text - Optional text to filter the course start date.
+     * Retrieves the locator for the course start date.
      * @returns The locator for the course start date.
      */
-    getCourseStartDate(text?: string) {
-        return this.page.locator('#course-start-date', { hasText: text });
+    getCourseStartDate() {
+        return this.page.locator('#course-start-date');
     }
 
     /**
-     * Retrieves the locator for the course end date with optional text filtering.
-     * @param text - Optional text to filter the course end date.
+     * Retrieves the locator for the course end date.
      * @returns The locator for the course end date.
      */
-    getCourseEndDate(text?: string) {
-        return this.page.locator('#course-end-date', { hasText: text });
+    getCourseEndDate() {
+        return this.page.locator('#course-end-date');
     }
 
     /**
-     * Retrieves the locator for the course semester with optional text filtering.
-     * @param text - Optional text to filter the course semester.
+     * Retrieves the locator for the course semester.
      * @returns The locator for the course semester.
      */
-    getCourseSemester(text?: string) {
-        return this.page.locator('#course-semester', { hasText: text });
+    getCourseSemester() {
+        return this.page.locator('#course-semester');
     }
 
     /**
-     * Retrieves the locator for the course programming language with optional text filtering.
-     * @param text - Optional text to filter the course programming language.
+     * Retrieves the locator for the course programming language.
      * @returns The locator for the course programming language.
      */
-    getCourseProgrammingLanguage(text?: string) {
-        return this.page.locator('#course-programming-language', { hasText: text });
+    getCourseProgrammingLanguage() {
+        return this.page.locator('#course-programming-language');
     }
 
     /**
-     * Retrieves the locator for the test course indicator with optional text filtering.
-     * @param text - Optional text to filter the test course indicator.
+     * Retrieves the locator for the test course indicator.
      * @returns The locator for the test course indicator.
      */
-    getCourseTestCourse(text?: string) {
-        return this.page.locator('#course-test-course', { hasText: text });
+    getCourseTestCourse() {
+        return this.page.locator('#course-test-course');
     }
 
     /**
-     * Retrieves the locator for the online course indicator with optional text filtering.
-     * @param text - Optional text to filter the online course indicator.
+     * Retrieves the locator for the online course indicator.
      * @returns The locator for the online course indicator.
      */
-    getCourseOnlineCourse(text?: string) {
-        return this.page.locator('#course-online-course', { hasText: text });
+    getCourseOnlineCourse() {
+        return this.page.locator('#course-online-course');
     }
 
     /**
-     * Retrieves the locator for the maximum complaints allowed with optional text filtering.
-     * @param text - Optional text to filter the maximum complaints allowed.
+     * Retrieves the locator for the maximum complaints allowed.
      * @returns The locator for the maximum complaints allowed.
      */
-    getCourseMaxComplaints(text?: string) {
-        return this.page.locator('#course-max-complaints', { hasText: text });
+    getCourseMaxComplaints() {
+        return this.page.locator('#course-max-complaints');
     }
 
     /**
-     * Retrieves the locator for the maximum team complaints allowed with optional text filtering.
-     * @param text - Optional text to filter the maximum team complaints allowed.
+     * Retrieves the locator for the maximum team complaints allowed.
      * @returns The locator for the maximum team complaints allowed.
      */
-    getCourseMaxTeamComplaints(text?: string) {
-        return this.page.locator('#course-max-team-complaints', { hasText: text });
+    getCourseMaxTeamComplaints() {
+        return this.page.locator('#course-max-team-complaints');
     }
 
     /**
-     * Retrieves the locator for the maximum complaint time in days with optional text filtering.
-     * @param text - Optional text to filter the maximum complaint time in days.
+     * Retrieves the locator for the maximum complaint time in days.
      * @returns The locator for the maximum complaint time in days.
      */
-    getMaxComplaintTimeDays(text?: string) {
-        return this.page.locator('#course-max-time-days', { hasText: text });
+    getMaxComplaintTimeDays() {
+        return this.page.locator('#course-max-time-days');
     }
 
     /**
-     * Retrieves the locator for the maximum request more feedback time in days with optional text filtering.
-     * @param text - Optional text to filter the maximum request more feedback time in days.
+     * Retrieves the locator for the maximum request more feedback time in days.
      * @returns The locator for the maximum request more feedback time in days.
      */
-    getMaxRequestMoreFeedbackTimeDays(text?: string) {
-        return this.page.locator('#course-max-request-more-feedback-days', { hasText: text });
+    getMaxRequestMoreFeedbackTimeDays() {
+        return this.page.locator('#course-max-request-more-feedback-days');
     }
 }

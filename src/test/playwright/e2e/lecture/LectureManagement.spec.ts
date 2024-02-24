@@ -10,6 +10,15 @@ import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { Fixtures } from '../../fixtures/fixtures';
 
+// Common primitives
+const dateFormat = 'MMM D, YYYY HH:mm';
+const lectureData = {
+    title: 'Lecture ' + generateUUID(),
+    visibleDate: dayjs(),
+    startDate: dayjs(),
+    endDate: dayjs().add(1, 'hour'),
+};
+
 test.describe('Lecture management', () => {
     let course: Course;
 
@@ -19,19 +28,27 @@ test.describe('Lecture management', () => {
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
     });
 
-    test('Creates a lecture', async ({ login, lectureManagement, lectureCreation }) => {
-        const lectureTitle = 'Lecture ' + generateUUID();
+    test('Creates a lecture', async ({ login, page, lectureManagement, lectureCreation }) => {
         await login(instructor, `/course-management/${course.id}`);
         await lectureManagement.getLectures().click();
         await lectureManagement.clickCreateLecture();
-        await lectureCreation.setTitle(lectureTitle);
-        const text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit'; // Simplified for example purposes
-        await lectureCreation.typeDescription(text);
-        await lectureCreation.setVisibleDate(dayjs());
-        await lectureCreation.setStartDate(dayjs());
-        await lectureCreation.setEndDate(dayjs().add(1, 'hour'));
+        await lectureCreation.setTitle(lectureData.title);
+        const description = await Fixtures.get('loremIpsum-short.txt');
+        await lectureCreation.typeDescription(description!);
+        await lectureCreation.setVisibleDate(lectureData.visibleDate);
+        await lectureCreation.setStartDate(lectureData.startDate);
+        await lectureCreation.setEndDate(lectureData.endDate);
         const lectureResponse = await lectureCreation.save();
+        const lecture: Lecture = await lectureResponse.json();
         expect(lectureResponse.status()).toBe(201);
+
+        await page.waitForURL(`**/${course.id}/lectures/${lecture.id}`);
+        await expect(lectureManagement.getLectureTitle()).toContainText(lectureData.title);
+        await expect(lectureManagement.getLectureDescription()).toContainText(description!);
+        await expect(lectureManagement.getLectureVisibleDate()).toContainText(lectureData.visibleDate!.format(dateFormat));
+        await expect(lectureManagement.getLectureStartDate()).toContainText(lectureData.startDate!.format(dateFormat));
+        await expect(lectureManagement.getLectureEndDate()).toContainText(lectureData.endDate!.format(dateFormat));
+        await expect(lectureManagement.getLectureCourse()).toContainText(course.title!);
     });
 
     test('Deletes a lecture', async ({ page, login, courseManagementAPIRequests, lectureManagement }) => {
