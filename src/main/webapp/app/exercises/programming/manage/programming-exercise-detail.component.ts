@@ -60,6 +60,7 @@ import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/deta
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
+import { Competency } from 'app/entities/competency.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -79,6 +80,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly documentationType: DocumentationType = 'Programming';
 
     programmingExercise: ProgrammingExercise;
+    competencies: Competency[];
     isExamExercise: boolean;
     supportsAuxiliaryRepositories: boolean;
     baseResource: string;
@@ -157,6 +159,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            this.competencies = programmingExercise.competencies;
             const exerciseId = this.programmingExercise.id!;
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
             this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
@@ -446,7 +449,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     getExerciseDetailsProblemSection(exercise: ProgrammingExercise): DetailOverviewSection {
-        const hasCompetencies = !!exercise.competencies?.length;
+        const hasCompetencies = !!this.competencies?.length;
         const details: Detail[] = [
             {
                 title: hasCompetencies ? 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle' : undefined,
@@ -459,7 +462,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             details.push({
                 title: 'artemisApp.competency.link.title',
                 type: DetailType.Text,
-                data: { text: exercise.competencies?.map((competency) => competency.title).join(', ') },
+                data: { text: this.competencies?.map((competency) => competency.title).join(', ') },
             });
         }
 
