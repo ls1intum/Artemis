@@ -8,7 +8,6 @@ import { SortingOrder } from 'app/shared/table/pageable-table';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { Competency } from 'app/entities/competency.model';
 
 describe('CompetencyTableComponent', () => {
     let componentFixture: ComponentFixture<CompetencyTableComponent>;
@@ -41,14 +40,6 @@ describe('CompetencyTableComponent', () => {
     it('should initialize', () => {
         componentFixture.detectChanges();
         expect(component).toBeDefined();
-    });
-
-    it('should track id', () => {
-        const competency: Competency = {
-            id: 1,
-            title: 'Competency Title',
-        };
-        expect(component.trackId(0, competency)).toBe(1);
     });
 
     it('should change page', () => {
