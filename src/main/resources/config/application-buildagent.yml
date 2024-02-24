@@ -36,6 +36,17 @@ artemis:
 spring:
     liquibase:
         enabled: false #not needed for build agents
+    autoconfigure:
+        exclude:
+            # Hibernate and DataSource are not needed in the build agent
+            - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+            - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+            # Those metrics are repeated here, because otherwise this would prevent their exclusion in application.yml (due to overriding)
+            - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
+            - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
+            - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
+            - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
+            - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
 
 server:
     port: 8080
