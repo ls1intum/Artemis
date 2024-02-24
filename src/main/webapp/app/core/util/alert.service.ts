@@ -77,7 +77,7 @@ export class AlertService {
 
         this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
             const httpErrorResponse: HttpErrorResponse = response.content;
-            if (httpErrorResponse.error?.skipAlert) {
+            if (httpErrorResponse.error?.parameters?.skipAlert) {
                 return;
             }
             switch (httpErrorResponse.status) {
@@ -99,9 +99,9 @@ export class AlertService {
                     });
                     if (errorHeader && !translateService.instant(errorHeader).startsWith(translationNotFoundMessage)) {
                         const entityName = translateService.instant('global.menu.entities.' + entityKey);
-                        this.addErrorAlert(errorHeader, errorHeader, { entityName, ...httpErrorResponse.error?.params });
-                    } else if (httpErrorResponse.error && httpErrorResponse.error.fieldErrors) {
-                        const fieldErrors = httpErrorResponse.error.fieldErrors;
+                        this.addErrorAlert(errorHeader, errorHeader, { entityName, ...httpErrorResponse.error?.parameters });
+                    } else if (httpErrorResponse.error && httpErrorResponse.error.parameters.fieldErrors) {
+                        const fieldErrors = httpErrorResponse.error.parameters.fieldErrors;
                         for (const fieldError of fieldErrors) {
                             // This is most likely related to server side field validations and gentrifies the error message
                             // to only tell the user that the size is wrong instead of the specific field
@@ -114,7 +114,7 @@ export class AlertService {
                             this.addErrorAlert('Error on field "' + fieldName + '"', 'error.' + fieldError.message, { fieldName });
                         }
                     } else if (httpErrorResponse.error && httpErrorResponse.error.title) {
-                        this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
+                        this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.parameters);
                     }
                     break;
 
@@ -128,7 +128,7 @@ export class AlertService {
                         if (httpErrorResponse.status === 403 && this.conflictErrorKeysToSkip.includes(httpErrorResponse.error.errorKey)) {
                             break;
                         }
-                        this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
+                        this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.parameters);
                     }
             }
         });

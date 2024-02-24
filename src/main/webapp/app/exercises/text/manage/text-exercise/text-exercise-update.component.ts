@@ -297,7 +297,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
     private onSaveError(errorRes: HttpErrorResponse) {
         if (errorRes.error && errorRes.error.title) {
-            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.parameters);
         } else {
             onError(this.alertService, errorRes);
         }

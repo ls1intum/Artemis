@@ -393,7 +393,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.alertService.closeAll();
                 const error = httpErrorResponse.error;
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                    this.alertService.error(error.message, error.params);
+                    this.alertService.error(error.message, error.parameters);
                 } else {
                     this.alertService.error('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
                 }

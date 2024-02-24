@@ -187,7 +187,7 @@ export class LectureUpdateComponent implements OnInit {
     protected onSaveError(errorRes: HttpErrorResponse) {
         this.isSaving = false;
         if (errorRes.error && errorRes.error.title) {
-            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.parameters);
         } else {
             onError(this.alertService, errorRes);
         }

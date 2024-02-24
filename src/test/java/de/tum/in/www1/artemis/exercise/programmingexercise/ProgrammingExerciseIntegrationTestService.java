@@ -1612,7 +1612,7 @@ class ProgrammingExerciseIntegrationTestService {
                         .content(request.getObjectMapper().writeValueAsString(updates)))
                 .andExpect(status().isBadRequest()) //
                 .andExpect(jsonPath("$.errorKey").value("settingNegative")) //
-                .andExpect(jsonPath("$.testCase").value(testCases.get(0).getTestName()));
+                .andExpect(jsonPath("$.parameters.testCase").value(testCases.get(0).getTestName()));
     }
 
     /**

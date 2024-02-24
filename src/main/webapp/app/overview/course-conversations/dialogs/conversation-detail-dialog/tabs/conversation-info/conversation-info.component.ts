@@ -203,7 +203,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                     this.onChangePerformed();
                 },
                 error: (errorResponse: HttpErrorResponse) => {
-                    if (errorResponse.error?.skipAlert) {
+                    if (errorResponse.error?.parameters?.skipAlert) {
                         onError(this.alertService, errorResponse);
                     }
                 },

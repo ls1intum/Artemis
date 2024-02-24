@@ -222,7 +222,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     onError(httpErrorResponse: HttpErrorResponse) {
         const error = httpErrorResponse.error;
         if (error && error.errorKey && error.errorKey === 'complaintLock') {
-            this.alertService.error(error.message, error.params);
+            this.alertService.error(error.message, error.parameters);
         } else {
             this.alertService.error('error.unexpectedError', {
                 error: httpErrorResponse.message,
