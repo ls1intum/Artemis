@@ -166,7 +166,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         };
 
         const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.courseId));
-        if (result.ok) {
+        if (result?.ok) {
             this.alertService.success('artemisApp.apollonDiagram.updated', { title: this.apollonDiagram?.title });
             this.isSaved = true;
             this.setAutoSaveTimer();
