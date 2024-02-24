@@ -269,12 +269,13 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Add a build job to the list of recent build jobs. Only the last 5 build jobs are needed.
+     * Add a build job to the list of recent build jobs. Only the last 20 build jobs are needed.
+     * TODO: make the number configurable
      *
      * @param buildJob The build job to add to the list of recent build jobs
      */
     private void addToRecentBuildJobs(LocalCIBuildJobQueueItem buildJob) {
-        if (recentBuildJobs.size() >= 5) {
+        if (recentBuildJobs.size() >= 20) {
             recentBuildJobs.remove(0);
         }
         recentBuildJobs.add(buildJob);
