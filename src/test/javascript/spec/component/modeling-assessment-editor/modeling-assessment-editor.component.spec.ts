@@ -136,6 +136,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             ],
         } as unknown as ModelingSubmission;
     };
+
     describe('ngOnInit tests', () => {
         it('ngOnInit', fakeAsync(() => {
             modelingSubmissionSpy = jest.spyOn(modelingSubmissionService, 'getSubmission');
