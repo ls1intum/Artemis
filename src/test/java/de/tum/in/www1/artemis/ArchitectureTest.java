@@ -16,6 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -175,6 +176,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testJPQLStyle() {
+        var queryRule = methods().that().areAnnotatedWith(Query.class).should(useUpperCaseSQLStyle()).because("@Query content should follow the style guide");
+        queryRule.check(allClasses);
+    }
+
+    @Test
     void testEnforceRoleInCourseEndpointHasCourseIdParameter() {
         ArchCondition<JavaMethod> haveParameterWithAnnotation = new ArchCondition<>("have a parameter with EnforceRoleInCourse annotation") {
 
@@ -293,6 +300,35 @@ class ArchitectureTest extends AbstractArchitectureTest {
                         .allMatch(annotations -> annotations.stream().anyMatch(annotationPredicate));
                 if (!satisfied) {
                     events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                }
+            }
+        };
+    }
+
+    // See https://openjpa.apache.org/builds/1.2.3/apache-openjpa/docs/jpa_langref.html#jpa_langref_from_identifiers
+    private static final Set<String> SQL_KEYWORDS = Set.of("SELECT", "UPDATE", "SET", "DELETE", "DISTINCT", "EXISTS", "FROM", "WHERE", "LEFT", "OUTER", "INNER", "JOIN", "FETCH",
+            "TREAT", "AND", "OR", "AS", "ON", "ORDER", "BY", "ASC", "DSC", "GROUP", "COUNT", "SUM", "AVG", "MAX", "MIN", "IS", "NOT", "FALSE", "TRUE", "NULL", "LIKE", "IN",
+            "BETWEEN", "HAVING", "EMPTY", "MEMBER", "OF", "UPPER", "LOWER", "TRIM");
+
+    private ArchCondition<JavaMethod> useUpperCaseSQLStyle() {
+        return new ArchCondition<>("have keywords in upper case") {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                var queryAnnotation = item.getAnnotations().stream().filter(simpleNameAnnotation("Query")).findAny();
+                if (queryAnnotation.isEmpty()) {
+                    return;
+                }
+                Object valueProperty = queryAnnotation.get().getExplicitlyDeclaredProperty("value");
+                if (!(valueProperty instanceof String query)) {
+                    return;
+                }
+                String[] queryWords = query.split("[\\r\\n ]+");
+
+                for (var word : queryWords) {
+                    if (SQL_KEYWORDS.contains(word.toUpperCase()) && !StringUtils.isAllUpperCase(word)) {
+                        events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), word)));
+                    }
                 }
             }
         };
