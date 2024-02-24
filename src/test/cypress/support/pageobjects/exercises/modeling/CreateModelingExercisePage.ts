@@ -26,7 +26,7 @@ export class CreateModelingExercisePage {
 
     save() {
         cy.intercept(MODELING_EXERCISE_BASE).as('createModelingExercise');
-        cy.get('#modeling-exercise-creation-save').click();
+        cy.get('#save-entity').click();
         return cy.wait('@createModelingExercise');
     }
 
