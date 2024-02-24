@@ -276,9 +276,6 @@ info:
     display-ribbon-on-profiles: "dev"
     sentry:
         dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029 # Leave empty to disable Sentry, must be a valid URI
-    post-hog: # Leave empty to disable PostHog
-        host: https://analytics.artemis.cit.tum.de
-        token: phc_GNN4LDYNMi5eJcwpFGla9miaOihku7jCsL9erEWs8ak
     # Allowed Orion version range. Should only be changed on major version releases
     allowed-minimum-orion-version: 1.0.0
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
