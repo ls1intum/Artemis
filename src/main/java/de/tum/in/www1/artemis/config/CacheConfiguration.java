@@ -188,6 +188,11 @@ public class CacheConfiguration {
             configureQueueCluster(config, jHipsterProperties);
         }
 
+        if (!activeProfiles.contains(PROFILE_CORE) && activeProfiles.contains(PROFILE_BUILDAGENT)) {
+            log.info("Joining cluster as lite member");
+            config.setLiteMember(true);
+        }
+
         QuizScheduleService.configureHazelcast(config);
         return Hazelcast.newHazelcastInstance(config);
     }
