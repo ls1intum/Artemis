@@ -35,6 +35,7 @@ import com.tngtech.archunit.core.domain.*;
 import com.tngtech.archunit.lang.*;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.in.www1.artemis.config.ApplicationConfiguration;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
@@ -179,7 +180,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void ensureSpringComponentsAreProfileAnnotated() {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
-                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).should(beProfileAnnotated())
+                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).and()
+                .doNotBelongToAnyOf(ApplicationConfiguration.class).should(beProfileAnnotated())
                 .because("we want to be able to exclude these classes from application startup by specifying profiles");
 
         rule.check(productionClasses);
