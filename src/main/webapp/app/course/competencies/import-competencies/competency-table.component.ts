@@ -44,16 +44,4 @@ export class CompetencyTableComponent implements OnInit {
         this.search.sortingOrder = change.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING;
         this.searchChange.emit(this.search);
     }
-
-    /**
-     *
-     * Gives the ID for a competency in the table, so that it can be tracked/identified by ngFor
-     *
-     * @param index The index of the competency in the ngFor
-     * @param competency The competency
-     * @returns The ID of the competency
-     */
-    trackId(index: number, competency: Competency): number {
-        return competency.id!;
-    }
 }
