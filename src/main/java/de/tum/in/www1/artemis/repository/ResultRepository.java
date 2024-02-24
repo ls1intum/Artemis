@@ -5,7 +5,13 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,7 +19,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
@@ -480,7 +494,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -503,7 +517,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -513,7 +527,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 LEFT JOIN FETCH Rating rating ON rating.result = r
             WHERE r.completionDate IS NOT NULL
                 AND e.id = :exerciseId
-            GROUP BY a.id
+            GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
@@ -523,7 +537,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -532,10 +546,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 JOIN e.exerciseGroup eg
                 JOIN eg.exam ex
                 JOIN r.assessor a
-                LEFT JOIN FETCH Rating rating on rating.result = r
+                LEFT JOIN FETCH Rating rating ON rating.result = r
             WHERE r.completionDate IS NOT NULL
                 AND ex.id = :examId
-            GROUP BY a.id
+            GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
 
