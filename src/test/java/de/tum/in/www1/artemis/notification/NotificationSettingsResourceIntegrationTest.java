@@ -42,13 +42,15 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
 
     private NotificationSetting settingsB;
 
+    private User student1;
+
     /**
      * Prepares the common variables and data for testing
      */
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         settingA = new NotificationSetting(student1, true, false, true, "notification.lecture-notification.attachment-changes");
         settingsB = new NotificationSetting(student1, false, false, true, "notification.exercise-notification.exercise-open-for-practice");
@@ -73,9 +75,15 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
 
         List<NotificationSetting> notificationSettings = request.getList("/api/notification-settings", HttpStatus.OK, NotificationSetting.class);
 
-        assertThat(notificationSettings).as("notificationSettings A with recipient equal to current user is returned").contains(settingA);
-        assertThat(notificationSettings).as("notificationSettings B with recipient equal to current user is returned").contains(settingsB);
         assertThat(notificationSettings).hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS);
+        assertThat(notificationSettings).as("notificationSettings A with recipient equal to current user is returned")
+                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "user").contains(settingA);
+        assertThat(notificationSettings).as("notificationSettings B with recipient equal to current user is returned")
+                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "user").contains(settingsB);
+
+        for (NotificationSetting setting : notificationSettings) {
+            assertThat(setting.getUser()).as("User of the returned notification settings is the current user").isEqualTo(student1);
+        }
     }
 
     /**
