@@ -110,8 +110,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), HttpStatus.FORBIDDEN);
         request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register-multiple", new HashSet<>(), StudentDTO.class,
                 HttpStatus.FORBIDDEN);
-        request.getList(getTutorialGroupsPath(exampleCourseId) + "campus-values", HttpStatus.FORBIDDEN, String.class);
-        request.getList(getTutorialGroupsPath(exampleCourseId) + "language-values", HttpStatus.FORBIDDEN, String.class);
+        request.getList(getTutorialGroupsPath(exampleCourseId) + "/campus-values", HttpStatus.FORBIDDEN, String.class);
+        request.getList(getTutorialGroupsPath(exampleCourseId) + "/language-values", HttpStatus.FORBIDDEN, String.class);
 
     }
 
@@ -823,7 +823,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     private List<TutorialGroupRegistrationImportDTO> sendImportRequest(List<TutorialGroupRegistrationImportDTO> tutorialGroupRegistrations) throws Exception {
-        return request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId) + "import", tutorialGroupRegistrations, TutorialGroupRegistrationImportDTO.class,
+        return request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId) + "/import", tutorialGroupRegistrations, TutorialGroupRegistrationImportDTO.class,
                 HttpStatus.OK);
     }
 
