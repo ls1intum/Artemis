@@ -113,3 +113,7 @@ export async function hasAttributeWithValue(page: Page, selector: string, value:
         { selector, value },
     );
 }
+
+export function parseNumber(text?: string): number | undefined {
+    return text ? parseInt(text) : undefined;
+}

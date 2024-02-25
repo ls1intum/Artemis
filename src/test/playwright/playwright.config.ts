@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
+import * as process from 'process';
+import { parseNumber } from './support/utils';
 
 /**
  * Read environment variables from file.
@@ -16,9 +18,9 @@ export default defineConfig({
     fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
     forbidOnly: !!process.env.CI,
-    timeout: 3 * 60 * 1000,
-    retries: 2,
-    workers: 3,
+    timeout: (parseNumber(process.env.TEST_TIMEOUT_SECONDS) ?? 3 * 60) * 1000,
+    retries: parseNumber(process.env.TEST_RETRIES) ?? 2,
+    workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 3,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: [['junit', { outputFile: './test-reports/results.xml' }]],
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
