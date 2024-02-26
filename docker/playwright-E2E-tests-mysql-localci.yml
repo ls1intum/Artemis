@@ -4,9 +4,9 @@
 
 services:
     mysql:
-    extends:
-        file: ./mysql.yml
-        service: mysql
+        extends:
+            file: ./mysql.yml
+            service: mysql
 
     artemis-app:
         extends:
