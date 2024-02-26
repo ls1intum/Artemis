@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.jgit.api.Git;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +41,7 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
+@Profile(PROFILE_CORE)
 @Component
 public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationEntry {
 
@@ -456,12 +459,10 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
 
         Path repositoryPath = localVCRepositoryUri.getLocalRepositoryPath(bitbucketLocalVCMigrationService.get().getLocalVCBasePath());
-        Path cachedPath = Paths.get(bitbucketLocalVCMigrationService.get().getRepoClonePath(), projectKey, repositorySlug);
 
         try {
             Files.createDirectories(repositoryPath);
             log.debug("Created local git repository folder {}", repositoryPath);
-            var renamedBranch = false;
 
             // Create a bare local repository with JGit.
             try (Git git = Git.cloneRepository().setBranch(branch).setDirectory(repositoryPath.toFile()).setBare(true).setURI(oldOrigin).call()) {
@@ -469,7 +470,6 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                     // Rename the default branch to the configured default branch. Old exercises might have a different default branch.
                     git.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
                     log.debug("Renamed default branch of local git repository {} to {}", repositorySlug, bitbucketLocalVCMigrationService.get().getDefaultBranch());
-                    renamedBranch = true;
                 }
             }
             catch (Exception e) {
@@ -477,19 +477,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                 throw new LocalVCInternalException("Error while cloning repository from Bitbucket.", e);
             }
 
-            // We need to clone the repo here to the local checkout directory
-            // Why? because the online editor and the CI system need a checkout of the repository to work with
-            // We can't use the bare repository for this, and we directly fix the branch name to the default branch
-            if (renamedBranch && Files.exists(cachedPath)) {
-                try (Git localGit = Git.open(cachedPath.toFile())) {
-                    localGit.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
-                    log.debug("Renamed local git branch of repository {} to {}", repositorySlug, bitbucketLocalVCMigrationService.get().getDefaultBranch());
-                }
-                catch (Exception e) {
-                    log.error("Failed to open local git repository {}", cachedPath, e);
-                }
-            }
-            log.debug("Created local git repository {} in folder {}", repositorySlug, repositoryPath);
+            log.debug("Created local git repository {} in directory {}", repositorySlug, repositoryPath);
         }
         catch (IOException e) {
             log.error("Could not create local git repo {} at location {}", repositorySlug, repositoryPath, e);

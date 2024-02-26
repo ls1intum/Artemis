@@ -22,9 +22,6 @@ public class BitbucketLocalVCMigrationService {
     @Value("${migration.local-vcs-repo-path:null}")
     private String localVCBasePath;
 
-    @Value("${artemis.repo-clone-path:null}")
-    private String repoClonePath;
-
     public String getDefaultBranch() {
         return defaultBranch;
     }
@@ -35,9 +32,5 @@ public class BitbucketLocalVCMigrationService {
 
     public String getLocalVCBasePath() {
         return localVCBasePath;
-    }
-
-    public String getRepoClonePath() {
-        return repoClonePath;
     }
 }
