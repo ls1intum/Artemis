@@ -62,7 +62,6 @@
                         @for (platform of ltiConfiguredPlatforms; track platform) {
                             <button
                                 type="button"
-                                (click)="setPlatform(platform)"
                                 [class.selected]="platform.id === onlineCourseConfiguration.ltiPlatformConfiguration?.id"
                                 [ngbTooltip]="platform.customName"
                                 ngbDropdownItem
