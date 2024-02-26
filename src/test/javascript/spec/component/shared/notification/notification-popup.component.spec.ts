@@ -204,6 +204,13 @@ describe('Notification Popup Component', () => {
             expect(notificationPopupComponent.notifications).not.toBeEmpty();
         });
 
+        it('should not add received not exam exercise relevant update notification if user is not in exam mode', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/exams/95');
+            replaceSubscribeToNotificationUpdatesUsingQuizNotification();
+            notificationPopupComponent.ngOnInit();
+            expect(notificationPopupComponent.notifications).toBeEmpty();
+        });
+
         it('should add and remove received message notification', fakeAsync(() => {
             jest.spyOn(router, 'isActive').mockReturnValue(true);
             const replay = new ReplaySubject<Notification>();
