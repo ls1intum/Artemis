@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,7 +24,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { Subject, Subscription } from 'rxjs';
+import { ReplaySubject, Subject, Subscription, TeardownLogic } from 'rxjs';
 import { omit } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
@@ -34,13 +34,14 @@ import { getNamesForAssessments } from '../assess/modeling-assessment.util';
 import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
+import { ModelingSubmissionPatch } from 'app/entities/modeling-submission-patch.model';
 
 @Component({
     selector: 'jhi-modeling-submission',
     templateUrl: './modeling-submission.component.html',
     styleUrls: ['./modeling-submission.component.scss'],
 })
-export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class ModelingSubmissionComponent implements OnInit, AfterViewChecked, OnDestroy, ComponentCanDeactivate {
     readonly addParticipationToResult = addParticipationToResult;
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
@@ -97,10 +98,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     examMode = false;
 
     // submission sync with team members
-    teamSyncInterval: number;
     private submissionChange = new Subject<ModelingSubmission>();
     submissionObservable = this.submissionChange.asObservable();
+    submissionPatchObservable = new Subject<ModelingSubmissionPatch>();
 
+    private modelingEditorInitialized = new ReplaySubject<void>();
     resizeOptions = { verticalResize: true };
 
     // Icons
@@ -136,7 +138,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         next: (modelingSubmission) => {
                             this.updateModelingSubmission(modelingSubmission);
                             if (this.modelingExercise.teamMode) {
-                                this.setupSubmissionStreamForTeam();
+                                // this.setupSubmissionStreamForTeam();
+                                this.setupSubmissionPatchStreamForTeam();
                             } else {
                                 this.setAutoSaveTimer();
                             }
@@ -150,6 +153,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         const isDisplayedOnExamSummaryPage = !this.displayHeader && this.participationId !== undefined;
         if (!isDisplayedOnExamSummaryPage) {
             window.scroll(0, 0);
+        }
+    }
+
+    ngAfterViewChecked(): void {
+        if (this.modelingEditor) {
+            this.modelingEditorInitialized.next();
+            this.modelingEditorInitialized.complete();
         }
     }
 
@@ -317,15 +327,52 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Check every 2 seconds, if the user made changes for the submission in a team exercise: if yes, send it to the sever
      */
     private setupSubmissionStreamForTeam(): void {
-        this.teamSyncInterval = window.setInterval(() => {
+        const teamSyncInterval = window.setInterval(() => {
             this.isChanged = !this.canDeactivate();
             if (this.isChanged) {
                 // make sure this.submission includes the newest content of the apollon editor
                 this.updateSubmissionWithCurrentValues();
                 // notify the team sync component to send this.submission to the server (and all online team members)
+                // TODO: this should be debounced.
                 this.submissionChange.next(this.submission);
             }
         }, AUTOSAVE_TEAM_EXERCISE_INTERVAL);
+
+        this.cleanup(() => clearInterval(teamSyncInterval));
+    }
+
+    /**
+     * Sets up a stream that intercepts patches emitted by Apollon editor
+     * and sends them to the server for team exercises.
+     * @private
+     */
+    private setupSubmissionPatchStreamForTeam(): void {
+        this.modelingEditorInitialized.subscribe(() => {
+            const editor = this.modelingEditor.apollonEditor;
+
+            if (editor) {
+                const subscriber = editor.subscribeToAllModelChangePatches((patch) => {
+                    const submissionPatch = new ModelingSubmissionPatch(patch);
+                    submissionPatch.participation = this.participation;
+                    if (submissionPatch.participation?.exercise) {
+                        submissionPatch.participation.exercise.studentParticipations = [];
+                    }
+                    this.submissionPatchObservable.next(Object.assign({}, submissionPatch));
+                });
+
+                this.cleanup(() => editor.unsubscribeFromModelChangePatches(subscriber));
+            }
+        });
+    }
+
+    /**
+     * Runs given cleanup logic when the component is destroyed.
+     * @param teardown The cleanup logic to run when the component is destroyed.
+     * @private
+     */
+    private cleanup(teardown: TeardownLogic) {
+        this.subscription ??= new Subscription();
+        this.subscription.add(teardown);
     }
 
     saveDiagram(): void {
@@ -447,6 +494,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.updateModelingSubmission(submission);
     }
 
+    onReceiveSubmissionPatchFromTeam(submissionPatch: ModelingSubmissionPatch) {
+        // FIXME: this suppresses stuttering prevention. otherwise the clients
+        //        seem to not get confirmation from the server and keep locks
+        //        on their local model.
+        // submissionPatch.patch.forEach(p => { delete p['hash']});
+        this.modelingEditor?.apollonEditor?.importPatch(submissionPatch.patch);
+    }
+
     private isModelEmpty(model?: string): boolean {
         const umlModel: UMLModel = model ? JSON.parse(model) : undefined;
         return !umlModel || !umlModel.elements || Object.values(umlModel.elements).length === 0;
@@ -455,7 +510,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     ngOnDestroy(): void {
         this.subscription?.unsubscribe();
         clearInterval(this.autoSaveInterval);
-        clearInterval(this.teamSyncInterval);
+
         if (this.automaticSubmissionWebsocketChannel) {
             this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
         }

@@ -391,6 +391,8 @@ dependencies {
     // make sure the dependencies use the latest version
     implementation "com.google.code.gson:gson:2.10.1"
 
+    implementation "com.flipkart.zjsonpatch:zjsonpatch:${zjsonpatch_version}"
+
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "javax.ws.rs", module: "jsr311-api"

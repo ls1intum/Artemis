@@ -55,8 +55,10 @@
                                     <jhi-team-submission-sync
                                         [exerciseType]="modelingExercise.type!"
                                         [submissionObservable]="submissionObservable"
+                                        [submissionPatchObservable]="submissionPatchObservable"
                                         [participation]="participation"
                                         (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
+                                        (receiveSubmissionPatch)="onReceiveSubmissionPatchFromTeam($event)"
                                     />
                                 }
                             </div>
