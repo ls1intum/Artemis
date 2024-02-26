@@ -274,6 +274,29 @@ public class ProgrammingExerciseGitDiffReportService {
     }
 
     /**
+     * Creates a new ProgrammingExerciseGitDiffReport containing the git-diff for two commits.
+     *
+     * @param participation The participation for the commits
+     * @param commitHash1   The first commit (older)
+     * @param commitHash2   The second commit (newer)
+     * @return The report with the changes between the two commits
+     * @throws GitAPIException If an error occurs while accessing the git repository
+     * @throws IOException     If an error occurs while accessing the file system
+     */
+    public ProgrammingExerciseGitDiffReport generateReportForCommits(ProgrammingExerciseParticipation participation, String commitHash1, String commitHash2)
+            throws GitAPIException, IOException {
+        var repositoryUri = participation.getVcsRepositoryUri();
+        var repo1 = gitService.getOrCheckoutRepository(repositoryUri, true);
+        var repo1Path = repo1.getLocalPath();
+        var repo2Path = fileService.getTemporaryUniqueSubfolderPath(repo1Path.getParent(), 5);
+        FileSystemUtils.copyRecursively(repo1Path, repo2Path);
+        repo1 = gitService.checkoutRepositoryAtCommit(repo1, commitHash1);
+        var repo2 = gitService.getExistingCheckedOutRepositoryByLocalPath(repo2Path, repositoryUri);
+        repo2 = gitService.checkoutRepositoryAtCommit(repo2, commitHash2);
+        return parseFilesAndCreateReport(repo1, repo2);
+    }
+
+    /**
      * Parses the files of the given repositories and creates a new ProgrammingExerciseGitDiffReport containing the git-diff.
      *
      * @param repo1 The first repository

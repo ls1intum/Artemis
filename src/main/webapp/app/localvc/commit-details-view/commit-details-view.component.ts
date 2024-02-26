@@ -5,9 +5,10 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { Subscription } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ActivatedRoute } from '@angular/router';
-import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { CommitInfo } from 'app/entities/programming-submission.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-commit-details-view',
@@ -25,8 +26,6 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     rightCommitFileContentByPath: Map<string, string>;
     commitsInfoSubscription: Subscription;
     commits: CommitInfo[] = [];
-    currentSubmission: ProgrammingSubmission;
-    previousSubmission: ProgrammingSubmission;
     currentCommit: CommitInfo;
     previousCommit: CommitInfo;
     studentParticipation: ProgrammingExerciseStudentParticipation;
@@ -67,44 +66,9 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             this.commitHash = params['commitHash'];
             this.participationSub = this.programmingExerciseParticipationService.getStudentParticipationWithAllResults(this.participationId).subscribe((participation) => {
                 this.studentParticipation = participation;
-                this.handleSubmissions();
                 this.retrieveAndHandleCommits();
-                if (this.previousSubmission && this.currentSubmission) {
-                    this.repoFilesSubscription = this.programmingExerciseService
-                        .getDiffReportForCommitDetailsViewForSubmissions(this.exerciseId, this.previousSubmission.id!, this.currentSubmission.id!)
-                        .subscribe((report) => {
-                            this.handleNewReport(report!);
-                        });
-                } else if (this.currentSubmission) {
-                    this.repoFilesSubscription = this.programmingExerciseService
-                        .getDiffReportForCommitDetailsViewForSubmissionWithTemplate(this.exerciseId, this.currentSubmission.id!)
-                        .subscribe((report) => {
-                            this.handleNewReport(report!);
-                        });
-                }
             });
         });
-    }
-
-    /**
-     * Handles the submissions and sets the current and previous submission.
-     * If there are no submissions, the current and previous submission are undefined.
-     * If there is only one submission, the current submission is set and the previous submission is undefined.
-     * This is the case for the template commit as there is no submission for the template.
-     * @private
-     */
-    private handleSubmissions() {
-        const submissions = this.studentParticipation.submissions?.sort((a, b) => (dayjs(b.submissionDate!).isAfter(dayjs(a.submissionDate!)) ? -1 : 1)) as ProgrammingSubmission[];
-        if (submissions && submissions.length > 0) {
-            for (let i = 0; i < submissions.length; i++) {
-                if (submissions[i].commitHash === this.commitHash) {
-                    this.currentSubmission = submissions[i];
-                    if (i > 0) {
-                        this.previousSubmission = submissions[i - 1];
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -114,21 +78,38 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      * @private
      */
     private retrieveAndHandleCommits() {
-        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId).subscribe((commits) => {
-            this.commits = commits.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
-            if (this.currentSubmission !== undefined) {
-                this.currentCommit = this.commits.find((commit) => commit.hash === this.currentSubmission.commitHash)!;
-            } else {
-                // choose template commit
-                this.currentCommit = this.commits[commits.length - 1];
-            }
-            if (this.previousSubmission !== undefined) {
-                this.previousCommit = this.commits.find((commit) => commit.hash === this.previousSubmission.commitHash)!;
-            } else {
-                // choose template commit
-                this.previousCommit = this.commits[commits.length - 1];
-            }
-        });
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService
+            .retrieveCommitHistoryForParticipation(this.participationId)
+            .pipe(
+                tap((commits) => {
+                    this.commits = commits.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
+                    for (let i = 0; i < this.commits.length; i++) {
+                        const commit = this.commits[i];
+                        if (commit.hash === this.commitHash) {
+                            this.currentCommit = commit;
+                            if (i < this.commits.length - 1) {
+                                this.previousCommit = this.commits[i + 1];
+                            } else {
+                                // choose template commit
+                                this.previousCommit = this.commits[this.commits.length - 1];
+                            }
+                            break;
+                        }
+                    }
+                }),
+            )
+            .subscribe({
+                next: () => {
+                    // get the DiffReport for the previous and current Commit
+                    if (this.previousCommit && this.currentCommit && this.previousCommit.hash && this.currentCommit.hash) {
+                        this.repoFilesSubscription = this.programmingExerciseService
+                            .getDiffReportForCommits(this.participationId, this.previousCommit.hash, this.currentCommit.hash)
+                            .subscribe((report) => {
+                                this.handleNewReport(report!);
+                            });
+                    }
+                },
+            });
     }
 
     /**

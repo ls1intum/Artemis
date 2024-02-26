@@ -554,33 +554,15 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Gets the git-diff report of a programming exercise for two specific submissions. This report is used for the commit details view.
-     * The user needs to have access to the submssions partipation to access this endpoint.
-     * @param exerciseId The id of a programming exercise
-     * @param olderSubmissionId The id of the older submission
-     * @param newerSubmissionId The id of the newer submission
+     * Gets the git-diff report of a programming exercise for two specific commits.
+     * The user needs to have access to the partipation to access this endpoint.
+     * @param participationId The id of a participation
+     * @param olderCommitHash The hash of the older commit
+     * @param newerCommitHash The hash of the newer commit
      */
-    getDiffReportForCommitDetailsViewForSubmissions(
-        exerciseId: number,
-        olderSubmissionId: number,
-        newerSubmissionId: number,
-    ): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+    getDiffReportForCommits(participationId: number, olderCommitHash: string, newerCommitHash: string): Observable<ProgrammingExerciseGitDiffReport | undefined> {
         return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${olderSubmissionId}/diff-report-commit-details/${newerSubmissionId}`, {
-                observe: 'response',
-            })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
-    }
-
-    /**
-     * Gets the git-diff report of a programming exercise for a specific submission with the template. This report is used for the commit details view.
-     * The user needs to have access to the submssions partipation to access this endpoint.
-     * @param exerciseId The id of a programming exercise
-     * @param submissionId The id of a submission
-     */
-    getDiffReportForCommitDetailsViewForSubmissionWithTemplate(exerciseId: number, submissionId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report-commit-details-with-template`, {
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${participationId}/commits/${olderCommitHash}/diff-report/${newerCommitHash}`, {
                 observe: 'response',
             })
             .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
