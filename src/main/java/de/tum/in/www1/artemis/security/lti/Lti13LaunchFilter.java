@@ -67,6 +67,9 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             try {
                 // here we need to check if this is a deep-linking request or a launch request
                 if ("LtiDeepLinkingRequest".equals(ltiIdToken.getClaim(Claims.MESSAGE_TYPE))) {
+                    // Manually setting the deep linking path is required due to Moodle and edX's inconsistent deep linking implementation.
+                    // Unlike standard GET request-based methods, these platforms do not guarantee a uniform approach, necessitating
+                    // manual configuration to ensure reliable navigation and resource access compatibility.
                     targetLink = CustomLti13Configurer.LTI13_DEEPLINKING_PATH;
                     lti13Service.startDeepLinking(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
                 }
