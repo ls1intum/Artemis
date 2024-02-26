@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisHealthIndicator;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.IrisStatusDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisHealthStatusDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedSettingsDTO;
@@ -100,11 +100,11 @@ public abstract class IrisExerciseChatBasedSessionResource<E extends Exercise, S
         irisSessionService.checkIsIrisActivated(session);
         var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false);
         var health = pyrisHealthIndicator.health();
-        IrisStatusDTO[] modelStatuses = (IrisStatusDTO[]) health.getDetails().get("modelStatuses");
+        PyrisHealthStatusDTO[] modelStatuses = (PyrisHealthStatusDTO[]) health.getDetails().get("modelStatuses");
         var specificModelStatus = false;
         if (modelStatuses != null) {
             specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(subSettingsFunction.apply(settings).getPreferredModel()))
-                    .anyMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
+                    .anyMatch(x -> x.status() == PyrisHealthStatusDTO.ModelStatus.UP);
         }
 
         IrisRateLimitService.IrisRateLimitInformation rateLimitInfo = null;

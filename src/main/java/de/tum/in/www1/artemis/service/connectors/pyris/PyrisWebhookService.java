@@ -21,9 +21,9 @@ import de.tum.in.www1.artemis.service.connectors.pyris.job.RepositoryWebhookJob;
 @Service
 public class PyrisWebhookService {
 
-    private final int max_retries = 5;
+    private static final int MAX_RETRIES = 5;
 
-    private final int max_delay = 8; // seconds
+    private static final int MAX_DELAY = 8; // seconds
 
     private final PyrisConnectorService pyrisConnectorService;
 
@@ -54,13 +54,13 @@ public class PyrisWebhookService {
         var settings = new PyrisWebhookSettingsDTO(token);
 
         var success = false;
-        for (int i = 0; i < max_retries; i++) {
+        for (int i = 0; i < MAX_RETRIES; i++) {
             success = pyrisConnectorService.sendWebhook(path, new PyrisWebhookDTO(pyrisWebhookType, payload, settings));
             if (success) {
                 break;
             }
             try {
-                Thread.sleep(Math.max((long) Math.pow(2, i) * 1000, max_delay));
+                Thread.sleep(Math.max((long) Math.pow(2, i) * 1000, MAX_DELAY));
             }
             catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

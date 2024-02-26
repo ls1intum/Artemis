@@ -135,8 +135,9 @@ public class IrisRequestMockProvider {
     }
 
     public void mockStatusResponse() throws JsonProcessingException {
-        var irisStatusDTOArray = new IrisStatusDTO[] { new IrisStatusDTO("TEST_MODEL_UP", IrisStatusDTO.ModelStatus.UP),
-                new IrisStatusDTO("TEST_MODEL_DOWN", IrisStatusDTO.ModelStatus.DOWN), new IrisStatusDTO("TEST_MODEL_NA", IrisStatusDTO.ModelStatus.NOT_AVAILABLE) };
+        var irisStatusDTOArray = new PyrisHealthStatusDTO[] { new PyrisHealthStatusDTO("TEST_MODEL_UP", PyrisHealthStatusDTO.ModelStatus.UP),
+                new PyrisHealthStatusDTO("TEST_MODEL_DOWN", PyrisHealthStatusDTO.ModelStatus.DOWN),
+                new PyrisHealthStatusDTO("TEST_MODEL_NA", PyrisHealthStatusDTO.ModelStatus.NOT_AVAILABLE) };
         // @formatter:off
         shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString()))
                 .andExpect(method(HttpMethod.GET))

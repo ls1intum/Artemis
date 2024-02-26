@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisCodeEditorPipeli
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisCompetencyGenerationPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisHestiaDescriptionGenerationPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisTutorChatPipelineExecutionDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 
 @Service

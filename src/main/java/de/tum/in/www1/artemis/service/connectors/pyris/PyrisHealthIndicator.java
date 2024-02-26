@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.IrisStatusDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisHealthStatusDTO;
 
 @Component
 @Profile("iris")
@@ -35,8 +35,8 @@ public class PyrisHealthIndicator implements HealthIndicator {
     public Health health() {
         ConnectorHealth health;
         try {
-            IrisStatusDTO[] status = restTemplate.getForObject(irisUrl + "/api/v1/health", IrisStatusDTO[].class);
-            var isUp = status != null && Arrays.stream(status).anyMatch(s -> s.status() == IrisStatusDTO.ModelStatus.UP);
+            PyrisHealthStatusDTO[] status = restTemplate.getForObject(irisUrl + "/api/v1/health", PyrisHealthStatusDTO[].class);
+            var isUp = status != null && Arrays.stream(status).anyMatch(s -> s.status() == PyrisHealthStatusDTO.ModelStatus.UP);
             Map<String, Object> additionalInfo = Map.of("url", irisUrl, "modelStatuses", status);
             health = new ConnectorHealth(isUp, additionalInfo);
         }

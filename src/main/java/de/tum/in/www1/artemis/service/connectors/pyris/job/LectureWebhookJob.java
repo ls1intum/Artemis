@@ -5,8 +5,8 @@ import java.io.Serializable;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisResultDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisStatusUpdateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisResultDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStatusUpdateDTO;
 
 public class LectureWebhookJob extends PyrisJob implements Serializable {
 
