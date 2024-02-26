@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.util.Map;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -13,6 +15,7 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 /**
  * Service for calculating the presentation points for a course or student.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class PresentationPointsCalculationService {
 

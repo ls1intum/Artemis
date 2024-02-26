@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.web.annotation.EndpointWebExtension;
+import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +18,7 @@ import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
  * Extends the default JHI Metrics with custom metrics for Artemis.
  */
 @Component
+@Profile(PROFILE_CORE)
 @EndpointWebExtension(endpoint = JHipsterMetricsEndpoint.class)
 public class CustomMetricsExtension {
 
