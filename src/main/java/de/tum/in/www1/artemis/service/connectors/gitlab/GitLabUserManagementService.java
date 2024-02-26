@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 
 import static org.gitlab4j.api.models.AccessLevel.*;
 
+import java.time.LocalDate;
 import java.util.*;
 
 import org.gitlab4j.api.GitLabApi;
@@ -25,13 +26,18 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRequestDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRotateRequestDTO;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRotateResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 
 @Service
 @Profile("gitlab")
 public class GitLabUserManagementService implements VcsUserManagementService {
+
+    private static final String PERSONAL_ACCESS_TOKEN_NAME = "Artemis-Automatic-Access-Token";
 
     private static final Logger log = LoggerFactory.getLogger(GitLabUserManagementService.class);
 
@@ -586,7 +592,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      */
     private String createPersonalAccessToken(Long userId) {
         // TODO: Change this to Gitlab4J api once it's supported: https://github.com/gitlab4j/gitlab4j-api/issues/653
-        var body = new GitLabPersonalAccessTokenRequestDTO("Artemis-Automatic-Access-Token", userId, new String[] { "read_repository", "write_repository" });
+        var body = new GitLabPersonalAccessTokenRequestDTO(PERSONAL_ACCESS_TOKEN_NAME, userId, new String[] { "read_repository", "write_repository" });
 
         var entity = new HttpEntity<>(body);
 
@@ -602,6 +608,53 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
         catch (HttpClientErrorException e) {
             log.error("Could not create Gitlab personal access token for user with id {}, response is null", userId);
+            throw new GitLabException("Error while creating personal access token");
+        }
+    }
+
+    private String retrieveRenewedPersonalAccessToken(Long userId) {
+        Long personalAccessTokenId = fetchPersonalAccessTokenId(userId);
+        return rotatePersonalAccessToken(personalAccessTokenId, userId);
+    }
+
+    private Long fetchPersonalAccessTokenId(Long userId) {
+        var body = new GitLabPersonalAccessTokenRequestDTO(PERSONAL_ACCESS_TOKEN_NAME, userId);
+
+        var entity = new HttpEntity<>(body);
+
+        try {
+            var response = restTemplate.exchange(gitlabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens", HttpMethod.GET, entity,
+                    GitLabPersonalAccessTokenListResponseDTO.class);
+            GitLabPersonalAccessTokenListResponseDTO responseBody = response.getBody();
+            if (responseBody == null || responseBody.getId() == null) {
+                log.error("Could not fetch personal access token id for user with id {}, response is null", userId);
+                throw new GitLabException("Error while fetching personal access token id");
+            }
+            return responseBody.getId();
+        }
+        catch (HttpClientErrorException e) {
+            log.error("Could not fetch personal access token id for user with id {}, response is null", userId);
+            throw new GitLabException("Error while fetching personal access token id");
+        }
+    }
+
+    private String rotatePersonalAccessToken(Long personalAccessTokenId, Long userId) {
+        var body = new GitLabPersonalAccessTokenRotateRequestDTO(personalAccessTokenId, LocalDate.now().plusYears(1));
+
+        var entity = new HttpEntity<>(body);
+
+        try {
+            var response = restTemplate.exchange(gitlabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens/" + personalAccessTokenId + "/rotate", HttpMethod.POST, entity,
+                    GitLabPersonalAccessTokenRotateResponseDTO.class);
+            GitLabPersonalAccessTokenRotateResponseDTO responseBody = response.getBody();
+            if (responseBody == null || responseBody.getToken() == null) {
+                log.error("Could not rotate Gitlab personal access token for user with id {}, response is null", userId);
+                throw new GitLabException("Error while creating personal access token");
+            }
+            return responseBody.getToken();
+        }
+        catch (HttpClientErrorException e) {
+            log.error("Could not rotate Gitlab personal access token for user with id {}, response is null", userId);
             throw new GitLabException("Error while creating personal access token");
         }
     }
