@@ -79,7 +79,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     public hasUnreadMessages: boolean;
     public messagesRouteLoaded: boolean;
     public communicationRouteLoaded: boolean;
-    public inProduction = true;
+    public isProduction = true;
+    public isTestServer = false;
     public pageTitle: string;
     public sidebarItems: SidebarItem[];
     public isNotManagementView: boolean;
@@ -153,7 +154,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.courseId = parseInt(params['courseId'], 10);
         });
         this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
-            this.inProduction = profileInfo.inProduction;
+            this.isProduction = profileInfo.inProduction;
+            this.isTestServer = profileInfo.testServer ?? false;
         });
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.isNotManagementView = !this.router.url.startsWith('/course-management');
@@ -353,12 +355,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * @param componentRef the sub route component that has been mounted into the router outlet
      */
     onSubRouteActivate(componentRef: any) {
+        this.getPageTitle();
         this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
         this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'discussion';
 
         this.setUpConversationService();
-
-        this.pageTitle = this.getPageTitle();
 
         if (componentRef.controlConfiguration) {
             const provider = componentRef as BarControlConfigurationProvider;
@@ -369,15 +370,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 this.controlConfiguration.subject?.subscribe((controls: TemplateRef<any>) => {
                     this.controls = controls;
                     this.tryRenderControls();
-                    // Since we might be pulling data upwards during a render cycle, we need to re-run change detection
-                    this.changeDetectorRef.detectChanges();
                 }) || undefined;
         }
+        // Since we change the pageTitle + might be pulling data upwards during a render cycle, we need to re-run change detection
+        this.changeDetectorRef.detectChanges();
     }
-    getPageTitle(): string {
-        const routePageTitle: string = this.route.snapshot.firstChild?.routeConfig?.data?.pageTitle;
-        return routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
+    getPageTitle(): void {
+        const routePageTitle: string = this.route.snapshot.firstChild?.data?.pageTitle;
+        this.pageTitle = routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
     }
+
     /**
      * Removes the controls component from the DOM and cancels the listener for controls changes.
      * Called by the router outlet as soon as the currently mounted component is removed

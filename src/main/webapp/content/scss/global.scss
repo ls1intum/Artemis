@@ -268,13 +268,13 @@ Generic styles
 }
 
 .page-wrapper {
-    height: calc(100vh - 124px);
-    position: fixed;
+    height: 100vh;
+    position: relative;
     min-width: 100vw;
-    top: 87px;
     overflow-y: auto;
-    // Todo Darkmode
-    background-color: white;
+    overflow-x: hidden;
+    background-color: var(--bs-body-bg);
+    padding-bottom: 3rem;
 }
 
 .main-container {

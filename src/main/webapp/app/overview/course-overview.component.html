@@ -1,26 +1,18 @@
 <div class="sidebar-wrapper">
-    <div class="vw-100 bg-body revert-card-margin">
-        <mat-sidenav-container class="vw-100 vh-100" [ngClass]="{ 'sidenav-height-dev': !inProduction }" [ngClass]="{ 'container-closed': isCollapsed }">
-            <mat-sidenav
-                [ngClass]="{ 'sidenav-height-dev': !inProduction }"
-                class="module-bg rounded-end rounded-3"
-                opened="true"
-                mode="side"
-                [fixedInViewport]="true"
-                [fixedTopGap]="87"
-                @slideIn
-            >
-                <div class="sidebar-container d-flex h-100 justify-content-between flex-column">
+    <div class="vw-100 bg-body pb-3">
+        <mat-sidenav-container class="vw-100" [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer, 'container-closed': isCollapsed }">
+            <mat-sidenav #sidenav [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }" class="module-bg rounded-end rounded-3" opened="true" mode="side" @slideIn>
+                <div class="sidebar-container d-flex h-100 justify-content-between flex-column" [ngClass]="{ collapsed: isCollapsed }">
                     <!-- NavItems -->
                     <div>
-                        <a routerLink="overview" class="d-flex p-3 align-items-center text-decoration-none">
+                        <a class="d-flex p-3 align-items-center text-decoration-none">
                             @if (course && course.courseIcon) {
                                 <div class="me-3">
                                     <jhi-secured-image [src]="course.courseIcon" class="rounded-circle" />
                                 </div>
                             } @else {
-                                <div class="me-2">
-                                    <img src="content/images/missing_image.png" alt="" width="32" height="32" class="rounded-circle" />
+                                <div class="course-circle me-3 d-flex align-items-center justify-content-center">
+                                    <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
                                 </div>
                             }
                             @if (!isCollapsed) {
@@ -30,12 +22,16 @@
                         <hr class="mt-0" />
                         <ul class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
                             @for (sidebarItem of sidebarItems; track sidebarItem) {
-                                @if (sidebarItem.hasInOrionProperty && sidebarItem.showInOrionWindow !== undefined) {
-                                    <li class="nav-item">
+                                <li class="nav-item">
+                                    @if (sidebarItem.hasInOrionProperty && sidebarItem.showInOrionWindow !== undefined) {
                                         <a
                                             class="nav-link nav-link-sidebar px-3"
                                             [id]="sidebarItem.testId ?? ''"
-                                            [ngClass]="{ 'guided-tour': sidebarItem.guidedTour }"
+                                            [ngClass]="{
+                                                'guided-tour': sidebarItem.guidedTour,
+                                                newMessage: !messagesRouteLoaded && hasUnreadMessages && sidebarItem.name === 'Messages',
+                                                collapsed: isCollapsed
+                                            }"
                                             jhiOrionFilter
                                             [showInOrionWindow]="sidebarItem.showInOrionWindow"
                                             [routerLink]="sidebarItem.routerLink"
@@ -44,21 +40,23 @@
                                         >
                                             <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: sidebarItem }" />
                                         </a>
-                                    </li>
-                                } @else {
-                                    <li class="nav-item">
+                                    } @else {
                                         <a
                                             class="nav-link nav-link-sidebar px-3"
                                             [id]="sidebarItem.testId ?? ''"
-                                            [ngClass]="{ 'guided-tour': sidebarItem.guidedTour }"
+                                            [ngClass]="{
+                                                'guided-tour': sidebarItem.guidedTour,
+                                                newMessage: !messagesRouteLoaded && hasUnreadMessages && sidebarItem.name === 'Messages',
+                                                collapsed: isCollapsed
+                                            }"
                                             [routerLink]="sidebarItem.routerLink"
                                             routerLinkActive="active"
                                             [jhiFeatureToggleHide]="sidebarItem.featureToggle"
                                         >
                                             <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: sidebarItem }" />
                                         </a>
-                                    </li>
-                                }
+                                    }
+                                </li>
                             }
                         </ul>
                     </div>
@@ -76,15 +74,15 @@
                     </div>
                 </div>
             </mat-sidenav>
-            <mat-sidenav-content [ngClass]="{ 'sidenav-height-dev': !inProduction }">
+            <mat-sidenav-content [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }">
                 @if (course) {
                     <div class="h5 module-bg m-3 mt-0 px-3 py-2 rounded rounded-3 d-flex justify-content-between">
                         <div class="align-self-center">{{ 'artemisApp.courseOverview.menu.' + pageTitle | artemisTranslate }}</div>
 
                         <div class="d-flex">
-                            @if (isNotManagementView && this.course.isAtLeastTutor) {
+                            @if (isNotManagementView && course.isAtLeastTutor) {
                                 <div id="manage-button" clasS="me-3">
-                                    <a class="btn btn-secondary" [routerLink]="['/course-management', this.course.id]">
+                                    <a class="btn btn-secondary" [routerLink]="['/course-management', course.id]">
                                         {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
                                     </a>
                                 </div>

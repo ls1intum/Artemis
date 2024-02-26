@@ -230,6 +230,12 @@ describe('CourseOverviewComponent', () => {
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledExactlyOnceWith(course1.id);
     });
 
+    it('should create sidebar items', () => {
+        component.course = { id: 123, lectures: [], exams: [] };
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
+    });
+
     it('loads conversations when switching to message tab once', async () => {
         const metisConversationServiceStub = jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(EMPTY);
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');

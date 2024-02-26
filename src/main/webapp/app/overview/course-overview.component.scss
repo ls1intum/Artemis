@@ -5,11 +5,19 @@ $footer-height-prod: 142px;
 
 .sidebar-container {
     width: $menu-width-open;
+    &.collapsed {
+        width: $menu-width-closed !important;
+    }
+}
+
+// ng-deep needed to remove scrollbar from mat-sidebar
+::ng-deep .mat-drawer-inner-container {
+    overflow-x: hidden !important;
 }
 
 .sidebar-wrapper {
     overflow-x: hidden;
-    position: fixed;
+    position: sticky;
     width: 100vw;
     margin: -1rem -1rem;
 }
@@ -19,6 +27,11 @@ $footer-height-prod: 142px;
 }
 
 .mat-drawer-container {
+    height: calc(100vh - $footer-height-prod);
+    &.sidenav-height-dev {
+        height: calc(100vh - $footer-height-dev);
+    }
+
     .mat-drawer {
         box-sizing: content-box;
         width: $menu-width-open;
@@ -31,10 +44,10 @@ $footer-height-prod: 142px;
     }
 
     .mat-drawer-content {
-        position: fixed;
+        position: sticky;
         z-index: 1;
         display: block;
-        height: calc(100% - $footer-height-prod);
+        height: calc(100vh - $footer-height-prod);
         width: calc(100vw - $menu-width-open);
         overflow: auto;
         margin-left: $menu-width-open !important;
@@ -70,8 +83,8 @@ a:not(.btn):not(.tab-link):hover {
 .nav-link-sidebar:hover,
 .nav-link-sidebar.active {
     width: 100%;
-    background-color: #e7f1ff !important;
-    color: #416fae;
+    background-color: var(--link-item-bg);
+    color: var(--link-item-color);
 }
 
 .refresh-overlay {
@@ -103,6 +116,29 @@ a:not(.btn):not(.tab-link):hover {
     }
 }
 
+// Displays a red circle at the top right corner of the tab item.
+// Used to indicate that there are new messages.
+%message-block {
+    position: relative;
+    content: '';
+    border-radius: 50%;
+    background-color: var(--bs-danger);
+    padding-left: 0.7rem;
+    top: -5px;
+    right: 0;
+    transform: translate(50%, -50%);
+    font-size: xx-small;
+}
+
+.newMessage:after {
+    @extend %message-block;
+    margin-left: 0.25rem;
+}
+.collapsed.newMessage:after {
+    @extend %message-block;
+    margin-left: -0.9rem;
+}
+
 jhi-secured-image {
     ::ng-deep img {
         border-radius: 50%;
@@ -114,6 +150,7 @@ jhi-secured-image {
 .double-arrow.menu-closed {
     transform: translate(16px) rotate(0deg);
 }
+
 .double-arrow {
     transform: translate(180px) rotate(180deg);
     transition: all ease 0.3s;
@@ -130,4 +167,12 @@ jhi-secured-image {
 
 .module-bg {
     background-color: var(--module-bg);
+}
+
+.course-circle {
+    height: 32px;
+    min-width: 32px;
+    background-color: var(--course-image-bg);
+    border-radius: 50%;
+    display: inline-block;
 }
