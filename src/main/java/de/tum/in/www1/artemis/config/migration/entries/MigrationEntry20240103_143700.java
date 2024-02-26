@@ -21,8 +21,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Lists;
-
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
@@ -151,20 +149,17 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
          * migrate the solution participations first, then the template participations, then the student participations
          */
         AtomicInteger solutionCounter = new AtomicInteger(0);
-        var solutionCount = solutionProgrammingExerciseParticipationRepository.count();
-        log.info("Found {} solution participations to migrate.", solutionCount);
-        for (int currentPageStart = 0; currentPageStart < solutionCount; currentPageStart += BATCH_SIZE) {
+        final var totalNumberOfSolutions = solutionProgrammingExerciseParticipationRepository.count();
+        log.info("Found {} solution participations to migrate.", totalNumberOfSolutions);
+        for (int currentPageStart = 0; currentPageStart < totalNumberOfSolutions; currentPageStart += BATCH_SIZE) {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Will migrate {} solution participations in batch.", solutionParticipationPage.getNumberOfElements());
-            var solutionParticipationsPartitions = Lists.partition(solutionParticipationPage.toList(), (int) threadCount);
-            for (var solutionParticipations : solutionParticipationsPartitions) {
-                executorService.submit(() -> {
-                    migrateSolutions(solutionParticipations);
-                    solutionCounter.addAndGet(solutionParticipationPage.getNumberOfElements());
-                    logProgress(solutionCounter.get(), solutionCount, threadCount, 2, "solution");
-                });
-            }
+            executorService.submit(() -> {
+                migrateSolutions(solutionParticipationPage.toList());
+                solutionCounter.addAndGet(solutionParticipationPage.getNumberOfElements());
+                logProgress(solutionCounter.get(), totalNumberOfSolutions, threadCount, 2, "solution");
+            });
         }
 
         log.info("Submitted all solution participations to thread pool for migration.");
@@ -178,14 +173,11 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Will migrate {} template programming exercises in batch.", templateParticipationPage.getNumberOfElements());
-            var templateParticipationsPartitions = Lists.partition(templateParticipationPage.toList(), (int) threadCount);
-            for (var templateParticipations : templateParticipationsPartitions) {
-                executorService.submit(() -> {
-                    migrateTemplates(templateParticipations);
-                    templateCounter.addAndGet(templateParticipationPage.getNumberOfElements());
-                    logProgress(templateCounter.get(), templateCount, threadCount, 1, "template");
-                });
-            }
+            executorService.submit(() -> {
+                migrateTemplates(templateParticipationPage.toList());
+                templateCounter.addAndGet(templateParticipationPage.getNumberOfElements());
+                logProgress(templateCounter.get(), templateCount, threadCount, 1, "template");
+            });
         }
 
         log.info("Submitted all template participations to thread pool for migration.");
@@ -198,14 +190,11 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = programmingExerciseStudentParticipationRepository.findAllWithRepositoryUri(pageable);
             log.info("Will migrate {} student programming exercise participations in batch.", studentParticipationPage.getNumberOfElements());
-            var studentPartitionsPartitions = Lists.partition(studentParticipationPage.toList(), (int) threadCount);
-            for (var studentParticipations : studentPartitionsPartitions) {
-                executorService.submit(() -> {
-                    migrateStudents(studentParticipations);
-                    studentCounter.addAndGet(studentParticipationPage.getNumberOfElements());
-                    logProgress(studentCounter.get(), studentCount, threadCount, 1, "student");
-                });
-            }
+            executorService.submit(() -> {
+                migrateStudents(studentParticipationPage.toList());
+                studentCounter.addAndGet(studentParticipationPage.getNumberOfElements());
+                logProgress(studentCounter.get(), studentCount, threadCount, 1, "student");
+            });
         }
 
         log.info("Submitted all student participations to thread pool for migration.");
@@ -216,7 +205,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
     }
 
     private void logProgress(long doneCount, long totalCount, long threadCount, long reposPerEntry, String migrationType) {
-        double percentage = ((double) doneCount / totalCount) * 100;
+        final double percentage = ((double) doneCount / totalCount) * 100;
         log.info("Migrated {}/{} {} participations ({}%)", doneCount, totalCount, migrationType, String.format("%.2f", percentage));
         log.info("Estimated time remaining: {} for {} repositories", TimeLogUtil.formatDuration(getRestDurationInSeconds(doneCount, totalCount, reposPerEntry, threadCount)),
                 migrationType);
