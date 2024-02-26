@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
 import java.security.SecureRandom;
-import java.util.Optional;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -12,6 +12,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Service
 public class PyrisJobService {
@@ -29,12 +30,6 @@ public class PyrisJobService {
     @Value("${artemis.iris.jobs.timeout:300}")
     private int jobTimeout; // in seconds
 
-    @Value("${artemis.iris.jobs.git-username:pyris-fake-git-user}")
-    private String gitUsername;
-
-    @Value("${artemis.iris.jobs.git-password}")
-    private Optional<String> gitPassword;
-
     public PyrisJobService(HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
     }
@@ -51,6 +46,7 @@ public class PyrisJobService {
 
     public String addJob(PyrisJob job) {
         var token = generateJobIdToken();
+        job.setId(token);
         jobMap.put(token, job);
         return token;
     }
@@ -63,12 +59,17 @@ public class PyrisJobService {
         return jobMap.get(token);
     }
 
-    public String getGitUsername() {
-        return gitUsername;
-    }
-
-    public String getGitPasswordForJob(String token) {
-        return gitPassword.orElse(token);
+    public PyrisJob getJobFromHeader(HttpServletRequest request) {
+        var authHeader = request.getHeader("Authorization");
+        if (!authHeader.startsWith("Bearer ")) {
+            throw new AccessForbiddenException("No valid token provided");
+        }
+        var token = authHeader.substring(7);
+        var job = getJob(token);
+        if (job == null) {
+            throw new AccessForbiddenException("No valid token provided");
+        }
+        return job;
     }
 
     private String generateJobIdToken() {

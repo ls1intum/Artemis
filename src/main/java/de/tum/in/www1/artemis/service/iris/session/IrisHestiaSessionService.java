@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
 import java.time.ZonedDateTime;
-import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +20,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Service to handle the Hestia integration of Iris.
@@ -95,27 +93,28 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
      */
     @Override
     public CodeHint executeRequest(IrisHestiaSession session) {
-        var irisSession = irisHestiaSessionRepository.findWithMessagesAndContentsAndCodeHintById(session.getId());
-        var codeHint = irisSession.getCodeHint();
-        var parameters = new HestiaDTO(irisSession.getCodeHint(), irisSession, codeHint.getExercise());
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(irisSession.getCodeHint().getExercise(), false).irisHestiaSettings();
-        try {
-            var response = pyrisConnectorService.sendRequest(settings.getTemplate().getContent(), settings.getPreferredModel(), parameters).get();
-            var shortDescription = response.content().get("shortDescription").asText();
-            var longDescription = response.content().get("longDescription").asText();
-            var llmMessage = new IrisMessage();
-            llmMessage.setSender(IrisMessageSender.LLM);
-            llmMessage.addContent(new IrisJsonMessageContent(response.content()));
-            irisMessageService.saveMessage(llmMessage, irisSession, IrisMessageSender.LLM);
+        // var irisSession = irisHestiaSessionRepository.findWithMessagesAndContentsAndCodeHintById(session.getId());
+        // var codeHint = irisSession.getCodeHint();
+        // var parameters = new HestiaDTO(irisSession.getCodeHint(), irisSession, codeHint.getExercise());
+        // var settings = irisSettingsService.getCombinedIrisSettingsFor(irisSession.getCodeHint().getExercise(), false).irisHestiaSettings();
+        // try {
+        // var response = pyrisConnectorService.sendRequest(settings.getTemplate().getContent(), settings.getPreferredModel(), parameters).get();
+        // var shortDescription = response.content().get("shortDescription").asText();
+        // var longDescription = response.content().get("longDescription").asText();
+        // var llmMessage = new IrisMessage();
+        // llmMessage.setSender(IrisMessageSender.LLM);
+        // llmMessage.addContent(new IrisJsonMessageContent(response.content()));
+        // irisMessageService.saveMessage(llmMessage, irisSession, IrisMessageSender.LLM);
 
-            codeHint.setDescription(shortDescription);
-            codeHint.setContent(longDescription);
-            return codeHint;
-        }
-        catch (InterruptedException | ExecutionException e) {
-            log.error("Unable to generate description", e);
-            throw new InternalServerErrorException("Unable to generate description: " + e.getMessage());
-        }
+        // codeHint.setDescription(shortDescription);
+        // codeHint.setContent(longDescription);
+        // return codeHint;
+        // }
+        // catch (InterruptedException | ExecutionException e) {
+        // log.error("Unable to generate description", e);
+        // throw new InternalServerErrorException("Unable to generate description: " + e.getMessage());
+        // }
+        return null;
     }
 
     /**

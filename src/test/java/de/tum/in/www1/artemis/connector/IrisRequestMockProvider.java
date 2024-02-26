@@ -5,7 +5,6 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 import java.net.URL;
-import java.time.ZonedDateTime;
 import java.util.Map;
 
 import org.mockito.MockitoAnnotations;
@@ -92,11 +91,9 @@ public class IrisRequestMockProvider {
      * @param responseContent The content of the response
      * @throws JsonProcessingException If the response content cannot be serialized to JSON
      */
+    @Deprecated
     public void mockMessageV2Response(Map<?, ?> responseContent) throws JsonProcessingException {
-        var dto = new IrisMessageResponseV2DTO(null, ZonedDateTime.now(), mapper.valueToTree(responseContent));
-        var json = mapper.writeValueAsString(dto);
-
-        mockCustomJsonResponse(messagesApiV2URL, json);
+        // FIXME: Remove
     }
 
     public void mockCustomJsonResponse(URL requestUrl, String responseJson) {

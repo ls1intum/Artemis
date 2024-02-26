@@ -44,11 +44,11 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
      *
      * @param irisMessage that should be sent over the websocket
      */
-    public void sendMessage(IrisMessage irisMessage) {
+    public void sendMessage(IrisMessage irisMessage, List<PyrisStageDTO> stages) {
         var session = irisMessage.getSession();
         var user = checkSessionTypeAndGetUser(session);
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
-        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(irisMessage, rateLimitInfo));
+        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(irisMessage, rateLimitInfo, stages));
     }
 
     /**
@@ -57,10 +57,15 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
      * @param session   to which the exception belongs
      * @param throwable that should be sent over the websocket
      */
-    public void sendException(IrisSession session, Throwable throwable) {
+    public void sendException(IrisSession session, Throwable throwable, List<PyrisStageDTO> stages) {
         User user = checkSessionTypeAndGetUser(session);
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
-        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(throwable, rateLimitInfo));
+        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(throwable, rateLimitInfo, stages));
+    }
+
+    public void sendStatusUpdate(IrisSession session, List<PyrisStageDTO> stages) {
+        var user = checkSessionTypeAndGetUser(session);
+        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(rateLimitService.getRateLimitInformation(user), stages));
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -98,6 +103,16 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
             this.errorMessage = throwable.getMessage();
             this.errorTranslationKey = throwable instanceof IrisException irisException ? irisException.getTranslationKey() : null;
             this.translationParams = throwable instanceof IrisException irisException ? irisException.getTranslationParams() : null;
+        }
+
+        public IrisWebsocketDTO(IrisRateLimitService.IrisRateLimitInformation rateLimitInformation, List<PyrisStageDTO> stages) {
+            this.rateLimitInfo = rateLimitInformation;
+            this.stages = stages;
+            this.type = IrisWebsocketMessageType.STATUS;
+            this.message = null;
+            this.errorMessage = null;
+            this.errorTranslationKey = null;
+            this.translationParams = null;
         }
 
         public IrisWebsocketMessageType getType() {

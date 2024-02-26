@@ -5,8 +5,6 @@ import java.io.Serializable;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisResultDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStatusUpdateDTO;
 
 public class TutorChatJob extends PyrisJob implements Serializable {
 
@@ -27,16 +25,6 @@ public class TutorChatJob extends PyrisJob implements Serializable {
     }
 
     @Override
-    public void handleStatusUpdate(PyrisStatusUpdateDTO statusUpdate) {
-        // TODO
-    }
-
-    @Override
-    public void handleResult(PyrisResultDTO result) {
-        // TODO
-    }
-
-    @Override
     public boolean canAccess(Course course) {
         return course.getId().equals(courseId);
     }
@@ -44,5 +32,17 @@ public class TutorChatJob extends PyrisJob implements Serializable {
     @Override
     public boolean canAccess(Exercise exercise) {
         return exercise.getId().equals(exerciseId);
+    }
+
+    public long getCourseId() {
+        return courseId;
+    }
+
+    public long getExerciseId() {
+        return exerciseId;
+    }
+
+    public long getSessionId() {
+        return sessionId;
     }
 }

@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -35,7 +34,6 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 import de.tum.in.www1.artemis.service.iris.session.codeeditor.IrisChangeException;
 import de.tum.in.www1.artemis.service.iris.session.codeeditor.file.*;
@@ -166,7 +164,7 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
      * @param irisSession The code editor session to send the request for with all messages and message contents loaded
      */
     @Override
-    public void requestAndHandleResponse(IrisSession irisSession) {
+    public void requestAndHandleResponse(IrisCodeEditorSession irisSession) {
         var sessionFromDB = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
         if (!(sessionFromDB instanceof IrisCodeEditorSession session)) {
             throw new BadRequestException("Iris session is not a code editor session");
@@ -183,30 +181,6 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
         );
         // @formatter:on
 
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisCodeEditorSettings();
-        pyrisConnectorService.sendRequest(settings.getChatTemplate().getContent(), settings.getPreferredModel(), dto).handleAsync((response, err) -> {
-            if (err != null) {
-                log.error("Error while getting response from Iris model", err);
-                irisCodeEditorWebsocketService.sendException(session, err.getCause());
-                return null;
-            }
-            if (response == null || !response.content().hasNonNull("response")) {
-                log.error("No response from Iris model: {}", response);
-                irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
-                return null;
-            }
-            log.info("Received response from iris model: {}", response.content().toPrettyString());
-            try {
-                var irisMessage = toIrisMessage(response.content());
-                var saved = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);
-                irisCodeEditorWebsocketService.sendMessage(saved);
-            }
-            catch (IrisParseResponseException e) {
-                log.error("Error while parsing response from Iris model", e);
-                irisCodeEditorWebsocketService.sendException(session, e);
-            }
-            return null;
-        });
     }
 
     /**
@@ -325,45 +299,6 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
                 exerciseStep.getInstructions()
         );
         // @formatter:on
-
-        pyrisConnectorService.sendRequest(template, settings.getPreferredModel(), dto).handleAsync((response, err) -> {
-            if (err != null) {
-                log.error("Error while getting response from Iris model", err);
-                irisExercisePlanStepRepository.setFailed(exerciseStep);
-                irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, err.getCause());
-                return null;
-            }
-            if (response == null) {
-                log.error("No response from Iris model");
-                irisExercisePlanStepRepository.setFailed(exerciseStep);
-                irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, new IrisNoResponseException());
-                return null;
-            }
-            log.info("Received response from iris model: {}", response.content().toPrettyString());
-            try {
-                String updatedProblemStatement = null;
-                Set<FileChange> successfulChanges = null;
-                if (component == ExerciseComponent.PROBLEM_STATEMENT) {
-                    var changes = extractProblemStatementChanges(response.content());
-                    log.info("Extracted problem statement changes: {}", changes);
-                    updatedProblemStatement = injectChangesIntoProblemStatement(exercise, changes);
-                }
-                else {
-                    var changes = extractFileChanges(response.content());
-                    log.info("Extracted file changes for exercise {}: {}", component, changes);
-                    successfulChanges = injectChangesIntoRepository(repositoryFor(exercise, component), changes);
-                }
-                log.info("Setting exercise step as executed");
-                irisExercisePlanStepRepository.setCompleted(exerciseStep);
-                irisCodeEditorWebsocketService.notifyStepSuccess(session, exerciseStep, successfulChanges, updatedProblemStatement);
-            }
-            catch (IrisParseResponseException e) {
-                log.error(e.getMessage(), e);
-                irisExercisePlanStepRepository.setFailed(exerciseStep);
-                irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, e);
-            }
-            return null;
-        });
     }
 
     /**
