@@ -257,7 +257,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         }));
 
         it('should try to submit assessment', fakeAsync(() => {
-            jest.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission)));
+            jest.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission!)));
             jest.spyOn(window, 'confirm').mockReturnValue(false);
 
             component.ngOnInit();
@@ -268,7 +268,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(window.confirm).toHaveBeenCalledOnce();
             expect(component.highlightMissingFeedback).toBeTrue();
 
-            component.modelingExercise.isAtLeastInstructor = true;
+            component.modelingExercise!.isAtLeastInstructor = true;
             expect(component.canOverride).toBeTrue();
         }));
 

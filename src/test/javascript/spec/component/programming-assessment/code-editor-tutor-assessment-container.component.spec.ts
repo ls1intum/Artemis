@@ -277,11 +277,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     }));
 
     it('should be able to override directly after submitting', () => {
-        jest.spyOn(comp, 'handleSaveOrSubmit').mockReturnValue(undefined);
+        jest.spyOn(comp, 'handleSaveOrSubmit').mockReturnValue(Promise.resolve());
 
-        const exercise = new ProgrammingExercise();
+        const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.isAtLeastInstructor = true;
-        exercise.dueDate = Date.now() + 100000;
+        exercise.dueDate = Date.now();
         comp.exercise = exercise;
         comp.isAssessor = true;
         comp.submit();
@@ -290,9 +290,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it('should validate assessments after submission is received during component init', async () => {
         // make assessment valid
-        submission.latestResult!.feedbacks[0].detailText = 'text';
-        submission.latestResult!.feedbacks[0].credits = 1;
-        submission.latestResult!.feedbacks[0].type = FeedbackType.MANUAL_UNREFERENCED;
+        submission!.latestResult!.feedbacks[0].detailText = 'text';
+        submission!.latestResult!.feedbacks[0].credits = 1;
+        submission!.latestResult!.feedbacks[0].type = FeedbackType.MANUAL_UNREFERENCED;
 
         await comp['onSubmissionReceived']('123', submission);
 

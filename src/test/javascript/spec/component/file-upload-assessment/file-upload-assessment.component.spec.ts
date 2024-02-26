@@ -168,7 +168,7 @@ describe('FileUploadAssessmentComponent', () => {
 
         it('should validate assessments on component init', () => {
             const submission = createSubmission(exercise);
-            const result = createResult(comp.submission);
+            const result = createResult(comp.submission!);
             result.feedbacks = [{ id: 23, credits: 1, reference: 'reference', detailText: 'text' }];
             setLatestSubmissionResult(submission, result);
 
@@ -365,7 +365,7 @@ describe('FileUploadAssessmentComponent', () => {
 
         it('should not invalidate assessment after saving', () => {
             const submission = createSubmission(exercise);
-            const result = createResult(comp.submission);
+            const result = createResult(comp.submission!);
             result.feedbacks = [{ id: 23, credits: 1, reference: 'reference', detailText: 'text' }];
             setLatestSubmissionResult(submission, result);
             comp.submission = submission;
