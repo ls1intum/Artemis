@@ -644,7 +644,7 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.canOverride).toBeFalse();
         });
 
-        it('should be able to override directly after submitting', async () => {
+        it('should be able to override directly after submitting', () => {
             comp.isAssessor = true;
             comp.onSubmitAssessment();
             expect(comp.canOverride).toBeTrue();

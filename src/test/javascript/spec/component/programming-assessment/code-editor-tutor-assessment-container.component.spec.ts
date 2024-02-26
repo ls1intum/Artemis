@@ -276,6 +276,42 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         flush();
     }));
 
+    it('should be able to override directly after submitting', () => {
+        jest.spyOn(comp, 'handleSaveOrSubmit').mockReturnValue(undefined);
+
+        const exercise = new ProgrammingExercise();
+        exercise.isAtLeastInstructor = true;
+        exercise.dueDate = Date.now() + 100000;
+        comp.exercise = exercise;
+        comp.isAssessor = true;
+        comp.submit();
+        expect(comp.canOverride).toBeTrue();
+    });
+
+    it('should validate assessments after submission is received during component init', async () => {
+        // make assessment valid
+        submission.latestResult!.feedbacks[0].detailText = 'text';
+        submission.latestResult!.feedbacks[0].credits = 1;
+        submission.latestResult!.feedbacks[0].type = FeedbackType.MANUAL_UNREFERENCED;
+
+        await comp['onSubmissionReceived']('123', submission);
+
+        expect(comp.assessmentsAreValid).toBeTrue();
+    });
+
+    it('should not invalidate assessment after saving', async () => {
+        jest.spyOn(comp, 'handleSaveOrSubmit').mockReturnValue(undefined);
+
+        submission.latestResult!.feedbacks[0].detailText = 'text';
+        submission.latestResult!.feedbacks[0].credits = 1;
+        submission.latestResult!.feedbacks[0].type = FeedbackType.MANUAL_UNREFERENCED;
+
+        await comp['onSubmissionReceived']('123', submission);
+
+        comp.save();
+        expect(comp.assessmentsAreValid).toBeTrue();
+    });
+
     it('should show unreferenced feedback suggestions', () => {
         comp.feedbackSuggestions = [{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }];
         expect(comp.unreferencedFeedbackSuggestions).toHaveLength(1);
