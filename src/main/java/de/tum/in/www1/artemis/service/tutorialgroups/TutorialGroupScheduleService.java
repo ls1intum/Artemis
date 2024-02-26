@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
-import static de.tum.in.www1.artemis.web.rest.util.DateUtil.getFirstDateOfWeekDay;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.getFirstDateOfWeekDay;
 
 import java.time.*;
 import java.util.*;

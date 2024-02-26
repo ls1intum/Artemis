@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
-import static de.tum.in.www1.artemis.web.rest.util.DateUtil.*;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
