@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 
 import static org.gitlab4j.api.models.AccessLevel.*;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 
 import org.gitlab4j.api.GitLabApi;
@@ -612,12 +614,47 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
     }
 
-    private String retrieveRenewedPersonalAccessToken(Long userId) {
-        Long personalAccessTokenId = fetchPersonalAccessTokenId(userId);
-        return rotatePersonalAccessToken(personalAccessTokenId, userId);
+    public void renewVersionControlAccessTokenIfNecessary(User user, Duration minimalLifetimeLeft) {
+        UserApi userApi = gitlabApi.getUserApi();
+
+        final org.gitlab4j.api.models.User gitlabUser;
+        try {
+            gitlabUser = userApi.getUser(user.getLogin());
+            if (gitlabUser == null) {
+                // No GitLab user is found -> Do nothing
+                return;
+            }
+
+            renewVersionControlAccessTokenIfNecessary(gitlabUser, user, minimalLifetimeLeft);
+        }
+        catch (GitLabApiException e) {
+            log.error("Could not renew the Gitlab access token for user {}", user.getLogin(), e);
+        }
     }
 
-    private Long fetchPersonalAccessTokenId(Long userId) {
+    private void renewVersionControlAccessTokenIfNecessary(org.gitlab4j.api.models.User gitlabUser, User user, Duration minimalLifetimeLeft) {
+        if (versionControlAccessToken && user.getVcsAccessToken() != null) {
+            Optional<String> renewedPersonalAccessToken = retrieveRenewedPersonalAccessToken(gitlabUser.getId(), minimalLifetimeLeft);
+            if (renewedPersonalAccessToken.isPresent()) {
+                user.setVcsAccessToken(renewedPersonalAccessToken.get());
+                userRepository.save(user);
+            }
+        }
+    }
+
+    private Optional<String> retrieveRenewedPersonalAccessToken(Long userId, Duration minimalLifetimeLeft) {
+        GitLabPersonalAccessTokenListResponseDTO response = fetchPersonalAccessTokenId(userId);
+
+        var minimalLifetimeLeftInstant = LocalDate.now().plus(minimalLifetimeLeft).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        if (response.getExpiresAt().toInstant().isBefore(minimalLifetimeLeftInstant)) {
+            return Optional.of(rotatePersonalAccessToken(response.getId(), userId));
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+
+    private GitLabPersonalAccessTokenListResponseDTO fetchPersonalAccessTokenId(Long userId) {
         var body = new GitLabPersonalAccessTokenRequestDTO(PERSONAL_ACCESS_TOKEN_NAME, userId);
 
         var entity = new HttpEntity<>(body);
@@ -630,7 +667,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                 log.error("Could not fetch personal access token id for user with id {}, response is null", userId);
                 throw new GitLabException("Error while fetching personal access token id");
             }
-            return responseBody.getId();
+            return responseBody;
         }
         catch (HttpClientErrorException e) {
             log.error("Could not fetch personal access token id for user with id {}, response is null", userId);
@@ -639,7 +676,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     private String rotatePersonalAccessToken(Long personalAccessTokenId, Long userId) {
-        var body = new GitLabPersonalAccessTokenRotateRequestDTO(personalAccessTokenId, LocalDate.now().plusYears(1));
+        Date aboutOneYearFromNow = Date.from(LocalDate.now().plusDays(364).atStartOfDay(ZoneId.systemDefault()).toInstant());
+        var body = new GitLabPersonalAccessTokenRotateRequestDTO(personalAccessTokenId, aboutOneYearFromNow);
 
         var entity = new HttpEntity<>(body);
 

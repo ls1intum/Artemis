@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab.dto;
 
-import java.time.LocalDate;
+import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,13 +14,13 @@ public class GitLabPersonalAccessTokenRotateRequestDTO {
     private Long id;
 
     @JsonProperty("expires_at")
-    private LocalDate expiresAt;
+    private Date expiresAt;
 
     public GitLabPersonalAccessTokenRotateRequestDTO() {
         // default constructor for Jackson
     }
 
-    public GitLabPersonalAccessTokenRotateRequestDTO(Long id, LocalDate expiresAt) {
+    public GitLabPersonalAccessTokenRotateRequestDTO(Long id, Date expiresAt) {
         this.id = id;
         this.expiresAt = expiresAt;
     }
@@ -33,11 +33,11 @@ public class GitLabPersonalAccessTokenRotateRequestDTO {
         this.id = id;
     }
 
-    public LocalDate getExpiresAt() {
+    public Date getExpiresAt() {
         return expiresAt;
     }
 
-    public void setExpiresAt(LocalDate expiresAt) {
+    public void setExpiresAt(Date expiresAt) {
         this.expiresAt = expiresAt;
     }
 }
