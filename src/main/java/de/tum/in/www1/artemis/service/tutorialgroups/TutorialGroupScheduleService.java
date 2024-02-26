@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
 import static de.tum.in.www1.artemis.web.rest.util.DateUtil.getFirstDateOfWeekDay;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.*;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -20,6 +22,7 @@ import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupSessionResour
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.ScheduleOverlapsWithSessionException;
 import de.tum.in.www1.artemis.web.rest.util.DateUtil;
 
+@Profile(PROFILE_CORE)
 @Service
 public class TutorialGroupScheduleService {
 
