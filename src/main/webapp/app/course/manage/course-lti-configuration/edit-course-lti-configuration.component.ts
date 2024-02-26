@@ -108,6 +108,11 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
         });
     }
 
+    setPlatform(platform: LtiPlatformConfiguration) {
+        this.onlineCourseConfiguration.ltiPlatformConfiguration = platform;
+        this.onlineCourseConfigurationForm.get('ltiPlatformConfiguration')!.setValue(platform);
+    }
+
     getLtiPlatform(platform: LtiPlatformConfiguration) {
         const customName = platform.customName ? platform.customName : '';
         const originalUrl = platform.originalUrl ? platform.originalUrl : '';
