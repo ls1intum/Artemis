@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.pyris.dto.data;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
-public record PyrisBuildLogEntryDTO(LocalDateTime timestamp, String message) {
+public record PyrisBuildLogEntryDTO(ZonedDateTime timestamp, String message) {
 }

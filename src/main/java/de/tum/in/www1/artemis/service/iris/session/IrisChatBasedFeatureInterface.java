@@ -17,5 +17,5 @@ public interface IrisChatBasedFeatureInterface<S extends IrisSession> extends Ir
      *
      * @param irisSession The session to get a message for
      */
-    void requestAndHandleResponse(IrisSession irisSession);
+    void requestAndHandleResponse(S irisSession);
 }

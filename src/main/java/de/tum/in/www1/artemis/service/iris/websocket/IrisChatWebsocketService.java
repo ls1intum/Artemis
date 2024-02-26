@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.iris.websocket;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -14,6 +15,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 
@@ -76,8 +78,11 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
 
         private final IrisRateLimitService.IrisRateLimitInformation rateLimitInfo;
 
-        public IrisWebsocketDTO(IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
+        private final List<PyrisStageDTO> stages;
+
+        public IrisWebsocketDTO(IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages) {
             this.rateLimitInfo = rateLimitInfo;
+            this.stages = stages;
             this.type = IrisWebsocketMessageType.MESSAGE;
             this.message = message;
             this.errorMessage = null;
@@ -85,8 +90,9 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
             this.translationParams = null;
         }
 
-        public IrisWebsocketDTO(Throwable throwable, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
+        public IrisWebsocketDTO(Throwable throwable, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages) {
             this.rateLimitInfo = rateLimitInfo;
+            this.stages = stages;
             this.type = IrisWebsocketMessageType.ERROR;
             this.message = null;
             this.errorMessage = throwable.getMessage();
@@ -118,8 +124,12 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
             return rateLimitInfo;
         }
 
+        public List<PyrisStageDTO> getStages() {
+            return stages;
+        }
+
         public enum IrisWebsocketMessageType {
-            MESSAGE, ERROR
+            MESSAGE, STATUS, ERROR
         }
 
         @Override

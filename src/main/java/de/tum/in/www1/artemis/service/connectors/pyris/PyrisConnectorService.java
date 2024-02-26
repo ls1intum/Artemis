@@ -110,15 +110,4 @@ public class PyrisConnectorService {
             return "";
         }
     }
-
-    public boolean sendWebhook(String path, PyrisWebhookDTO dto) {
-        try {
-            restTemplate.postForEntity(pyrisUrl + "/api/v1/webhooks/" + path, dto, Void.class);
-            return true;
-        }
-        catch (RestClientException e) {
-            log.error("Failed to send webhook to Pyris", e);
-            return false;
-        }
-    }
 }
