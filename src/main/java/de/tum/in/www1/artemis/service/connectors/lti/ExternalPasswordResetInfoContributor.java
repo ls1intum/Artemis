@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.lti;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -7,10 +9,12 @@ import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.Constants;
 
+@Profile(PROFILE_CORE)
 @Component
 @EnableConfigurationProperties
 @ConfigurationProperties("artemis.user-management.password-reset")
