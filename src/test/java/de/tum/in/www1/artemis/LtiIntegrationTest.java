@@ -10,7 +10,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.*;
 
 import org.hibernate.Hibernate;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,12 +30,6 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @Autowired
     ObjectMapper objectMapper;
-
-    @BeforeEach
-    void init() {
-        /* We mock the following method because we don't have the OAuth secret for edx */
-        doReturn(null).when(lti10Service).verifyRequest(any(), any());
-    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

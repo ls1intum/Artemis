@@ -5,8 +5,6 @@ import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-config
 export class OnlineCourseConfiguration implements BaseEntity {
     public id?: number;
     public course?: Course;
-    public ltiKey?: string;
-    public ltiSecret?: string;
     public userPrefix?: string;
     public requireExistingUser?: boolean;
     public ltiPlatformConfiguration?: LtiPlatformConfiguration;

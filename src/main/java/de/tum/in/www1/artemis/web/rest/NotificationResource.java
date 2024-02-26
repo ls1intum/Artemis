@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.MESSAGE_REPLY_IN_CONVERSATION_TITLE;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_TITLE;
 
@@ -9,6 +10,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -33,6 +35,7 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller for managing Notification.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class NotificationResource {
