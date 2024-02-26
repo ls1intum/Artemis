@@ -58,16 +58,13 @@ public abstract class ProgrammingExerciseMigrationEntry extends MigrationEntry {
      * @return the id of the programming exercise
      */
     private Long getProgrammingExerciseId(ProgrammingExerciseRepository repository, ProgrammingExerciseParticipation participation) {
-        if (participation.getProgrammingExercise() != null) {
-            return participation.getProgrammingExercise().getId();
-        }
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+
         if (programmingExercise == null) {
             programmingExercise = repository.getProgrammingExerciseFromParticipation(participation);
             if (programmingExercise == null) {
                 return null;
             }
-            return programmingExercise.getId();
         }
         return programmingExercise.getId();
     }
