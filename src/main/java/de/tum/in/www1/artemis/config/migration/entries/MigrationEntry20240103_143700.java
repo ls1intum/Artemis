@@ -212,7 +212,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
 
         shutdown(executorService, TIMEOUT_IN_HOURS, ERROR_MESSAGE);
         log.info("Finished migrating programming exercises and student participations");
-        evaluateErrorList();
+        evaluateErrorList(programmingExerciseRepository);
     }
 
     private void logProgress(long doneCount, long totalCount, long threadCount, long reposPerEntry, String migrationType) {

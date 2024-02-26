@@ -141,7 +141,7 @@ public class MigrationEntry20230920_181600 extends ProgrammingExerciseMigrationE
 
         shutdown(executorService, TIMEOUT_IN_HOURS, ERROR_MESSAGE);
         log.info("Finished migrating programming exercises and student participations");
-        evaluateErrorList();
+        evaluateErrorList(programmingExerciseRepository);
     }
 
     /**
