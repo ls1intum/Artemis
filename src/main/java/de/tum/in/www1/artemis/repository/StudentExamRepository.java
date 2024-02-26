@@ -361,13 +361,13 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     }
 
     /**
-     * Get one student exam by id with exercises and sessions
+     * Get one student exam by id with exercises, programming exercise submission policy and sessions
      *
      * @param studentExamId the id of the student exam
      * @return the student exam with exercises
      */
     @NotNull
-    default StudentExam findByIdWithExercisesAndSessionsElseThrow(Long studentExamId) {
+    default StudentExam findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(Long studentExamId) {
         return findWithExercisesSubmissionPolicyAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
 
