@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -58,6 +60,7 @@ import tech.jhipster.web.util.PaginationUtil;
  * <p>
  * Another option would be to have a specific JPA entity graph to handle this case.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/admin/")
 public class AdminUserResource {
@@ -179,6 +182,7 @@ public class AdminUserResource {
      * @param userId of the user to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated user
      */
+    // TODO: move into LdapResource
     @PutMapping("users/{userId}/sync-ldap")
     @EnforceAdmin
     @Profile("ldap | ldap-only")
