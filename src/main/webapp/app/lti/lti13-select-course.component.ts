@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CourseManagementService } from '../course/manage/course-management.service';
+import { SessionStorageService } from 'ngx-webstorage';
 import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
 import { AlertService } from 'app/core/util/alert.service';
 
@@ -11,6 +12,7 @@ export class LtiCoursesComponent implements OnInit {
     public courses: OnlineCourseDtoModel[];
     constructor(
         private courseService: CourseManagementService,
+        private sessionStorageService: SessionStorageService,
         private alertService: AlertService,
     ) {}
 
@@ -19,7 +21,8 @@ export class LtiCoursesComponent implements OnInit {
     }
 
     loadAndFilterCourses() {
-        this.courseService.findAllOnlineCoursesWithRegistrationId().subscribe({
+        const clientId = this.sessionStorageService.retrieve('clientRegistrationId');
+        this.courseService.findAllOnlineCoursesWithRegistrationId(clientId).subscribe({
             next: (courseResponse: OnlineCourseDtoModel[]) => {
                 this.courses = courseResponse;
             },

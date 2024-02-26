@@ -328,18 +328,21 @@ public class CourseResource {
     /**
      * GET courses/for-lti-dashboard : Retrieves a list of online courses for a specific LTI dashboard based on the client ID.
      *
+     * @param clientId the client ID of the LTI platform used to filter the courses.
      * @return a {@link ResponseEntity} containing a list of {@link OnlineCourseDTO} for the courses the user has access to.
      */
     @GetMapping("courses/for-lti-dashboard")
     @EnforceAtLeastInstructor
     @Profile("lti")
-    public ResponseEntity<List<OnlineCourseDTO>> findAllOnlineCoursesForLtiDashboard() {
+    public ResponseEntity<List<OnlineCourseDTO>> findAllOnlineCoursesForLtiDashboard(@RequestParam("clientId") String clientId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all online courses the user {} has access to", user.getLogin());
 
-        Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(user);
+        Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);
 
-        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream().map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName())).toList();
+        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream()
+                .map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(), c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId()))
+                .toList();
 
         return ResponseEntity.ok(onlineCourseDTOS);
     }

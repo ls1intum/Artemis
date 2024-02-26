@@ -3209,6 +3209,7 @@ public class CourseTestService {
         assertThat(dto.id()).isEqualTo(course.getId());
         assertThat(dto.title()).isEqualTo(course.getTitle());
         assertThat(dto.shortName()).isEqualTo(course.getShortName());
+        assertThat(dto.registrationId()).isEqualTo(clientId);
     }
 
     public MockHttpServletRequestBuilder buildCreateCourse(@NotNull Course course) throws JsonProcessingException {

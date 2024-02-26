@@ -80,8 +80,9 @@ export class CourseManagementService {
         return this.http.put<OnlineCourseConfiguration>(`${this.resourceUrl}/${courseId}/onlineCourseConfiguration`, onlineCourseConfiguration, { observe: 'response' });
     }
 
-    findAllOnlineCoursesWithRegistrationId(): Observable<OnlineCourseDtoModel[]> {
-        return this.http.get<OnlineCourseDtoModel[]>(`${this.resourceUrl}/for-lti-dashboard`, {});
+    findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
+        const params = new HttpParams().set('clientId', '' + clientId);
+        return this.http.get<OnlineCourseDtoModel[]>(`${this.resourceUrl}/for-lti-dashboard`, { params });
     }
 
     /**

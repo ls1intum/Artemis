@@ -12,5 +12,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param shortName The short name of the online course.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record OnlineCourseDTO(Long id, String title, String shortName) {
+public record OnlineCourseDTO(Long id, String title, String shortName, String registrationId) {
 }
