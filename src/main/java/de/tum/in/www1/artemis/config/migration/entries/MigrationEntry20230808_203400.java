@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDuration;
