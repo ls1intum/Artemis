@@ -86,6 +86,7 @@ export class TextAssessmentService {
      * @param textBlocks of type {TextBlock[]}
      * @param complaintResponse of type {ComplaintResponse}
      * @param submissionId of corresponding submission of type {number}
+     * @param assessmentNote of the result, if one exists
      */
     public updateAssessmentAfterComplaint(
         feedbacks: Feedback[],

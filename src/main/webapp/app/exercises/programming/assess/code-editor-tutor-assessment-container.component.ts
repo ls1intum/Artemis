@@ -470,24 +470,26 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
 
         this.setFeedbacksForManualResult();
-        this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, assessmentAfterComplaint.complaintResponse, this.submission!.id!).subscribe({
-            next: (result: Result) => {
-                assessmentAfterComplaint.onSuccess();
-                this.participation.results![0] = this.manualResult = result;
-                this.alertService.closeAll();
-                this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
-            },
-            error: (httpErrorResponse: HttpErrorResponse) => {
-                assessmentAfterComplaint.onError();
-                this.alertService.closeAll();
-                const error = httpErrorResponse.error;
-                if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                    this.alertService.error(error.message, error.params);
-                } else {
-                    this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
-                }
-            },
-        });
+        this.manualResultService
+            .updateAfterComplaint(this.manualResult!.feedbacks!, assessmentAfterComplaint.complaintResponse, this.submission!.id!, this.manualResult!.assessmentNote?.note)
+            .subscribe({
+                next: (result: Result) => {
+                    assessmentAfterComplaint.onSuccess();
+                    this.participation.results![0] = this.manualResult = result;
+                    this.alertService.closeAll();
+                    this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
+                },
+                error: (httpErrorResponse: HttpErrorResponse) => {
+                    assessmentAfterComplaint.onError();
+                    this.alertService.closeAll();
+                    const error = httpErrorResponse.error;
+                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                        this.alertService.error(error.message, error.params);
+                    } else {
+                        this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                    }
+                },
+            });
     }
 
     /**
