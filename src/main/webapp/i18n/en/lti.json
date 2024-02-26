@@ -62,12 +62,12 @@
                         "forbidden": "User prefix cannot contain special characters."
                     }
                 },
-                "ltiPlatform": "Edit LTI Platform Configuration",
                 "customNameIdTooltip": "Enter a recognizable name for the platform to easily identify it in the list. This name is for administrative reference only and will not affect the platform's actual configuration or connectivity."
             },
             "configuredPlatforms": "Configured Platforms",
             "viewAdvancedSettings": "View Advanced Settings",
-            "closeAdvancedSettings": "Close Advanced Settings"
+            "closeAdvancedSettings": "Close Advanced Settings",
+            "addOrEditLtiPlatform": "Add or edit LTI Platform Configuration"
         },
         "lti13": {
             "launch": {
@@ -97,7 +97,8 @@
             "externalToolSettingsTooltip": "An External Tool is required for exercise linking and participation, allowing seamless integration with external resources and activities",
             "editExternalToolSettingsTooltip": "Please select an External Tool for this course to enable successful LTI communication. Once a pre-configured External Tool is chosen, this online course will become available for exercise linking and participation.",
             "selectExternalTool": "Select an External Tool",
-            "selectCourse": "Select Course"
+            "selectCourse": "Select Course",
+            "addNewPlatform": "Add new platform configuration"
         }
     }
 }

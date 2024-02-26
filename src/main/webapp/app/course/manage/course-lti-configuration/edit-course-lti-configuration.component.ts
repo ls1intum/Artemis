@@ -108,7 +108,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
 
     setPlatform(platform: LtiPlatformConfiguration) {
         this.onlineCourseConfiguration.ltiPlatformConfiguration = platform;
-        this.onlineCourseConfigurationForm.get('ltiPlatformConfiguration')!.setValue(platform);
+        this.onlineCourseConfigurationForm.get('ltiPlatformConfiguration')?.setValue(platform);
     }
 
     getLtiPlatform(platform: LtiPlatformConfiguration) {

@@ -7,9 +7,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Test;
@@ -125,6 +123,27 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void createNewLtiPlatformConfigurationAsAdmin() throws Exception {
+        LtiPlatformConfiguration platformToCreate = new LtiPlatformConfiguration();
+
+        fillLtiPlatformConfig(platformToCreate);
+        platformToCreate.setRegistrationId(null);
+
+        request.getMvc().perform(post("/api/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToCreate)))
+                .andExpect(status().isOk());
+
+        verify(ltiPlatformConfigurationRepository).save(any());
+
+        Optional<LtiPlatformConfiguration> addedLtiPlatform = ltiPlatformConfigurationRepository.findByClientId(platformToCreate.getClientId());
+        assertThat(addedLtiPlatform.isPresent()).isTrue();
+        assertThat(addedLtiPlatform.get().getRegistrationId()).isNotNull();
+        assertThat(addedLtiPlatform.get().getAuthorizationUri()).isEqualTo(platformToCreate.getAuthorizationUri());
+        assertThat(addedLtiPlatform.get().getJwkSetUri()).isEqualTo(platformToCreate.getJwkSetUri());
+        assertThat(addedLtiPlatform.get().getTokenUri()).isEqualTo(platformToCreate.getTokenUri());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testFindByRegistrationId() {
         assertThat(ltiPlatformConfigurationRepository.findByRegistrationId("nonExistingId")).isEqualTo(Optional.empty());
 
@@ -163,7 +182,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     private void fillLtiPlatformConfig(LtiPlatformConfiguration ltiPlatformConfiguration) {
         ltiPlatformConfiguration.setRegistrationId("registrationId");
-        ltiPlatformConfiguration.setClientId("clientId");
+        ltiPlatformConfiguration.setClientId("platform-" + UUID.randomUUID());
         ltiPlatformConfiguration.setAuthorizationUri("authUri");
         ltiPlatformConfiguration.setTokenUri("tokenUri");
         ltiPlatformConfiguration.setJwkSetUri("jwkUri");
