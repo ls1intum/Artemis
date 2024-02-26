@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.learningpath;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -9,6 +11,7 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +37,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
  * <li>and retrieval of ngx graph representations.</li>
  * </ul>
  */
+@Profile(PROFILE_CORE)
 @Service
 public class LearningPathService {
 
