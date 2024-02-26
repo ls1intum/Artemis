@@ -41,7 +41,7 @@ spring:
             # Hibernate and DataSource are not needed in the build agent
             - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
             - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-            # Those metrics are repeated here, because otherwise this would prevent their exclusion in application.yml (due to overriding)
+            # Those metrics are repeated here, because overriding the `exclude` array is not possible
             - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
