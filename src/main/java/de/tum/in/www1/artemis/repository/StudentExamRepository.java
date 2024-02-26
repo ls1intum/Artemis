@@ -34,8 +34,15 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<StudentExam> findWithExercisesById(Long studentExamId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "examSessions" })
-    Optional<StudentExam> findWithExercisesAndSessionsById(Long studentExamId);
+    @Query("""
+            SELECT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
+                LEFT JOIN FETCH e.submissionPolicy
+                LEFT JOIN FETCH se.examSessions
+            WHERE se.id = :studentExamId
+            """)
+    Optional<StudentExam> findWithExercisesSubmissionPolicyAndSessionsById(@Param("studentExamId") long studentExamId);
 
     @Query("""
             SELECT DISTINCT se
@@ -170,6 +177,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             FROM StudentExam se
                 LEFT JOIN FETCH se.exam exam
                 LEFT JOIN FETCH se.exercises e
+                LEFT JOIN FETCH e.submissionPolicy spo
                 LEFT JOIN FETCH e.studentParticipations sp
                 LEFT JOIN FETCH sp.submissions s
                 LEFT JOIN FETCH s.results r
@@ -178,7 +186,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             WHERE se.user.id = sp.student.id
                   AND se.user.id = :userId
             """)
-    Set<StudentExam> findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserId(@Param("userId") long userId);
+    Set<StudentExam> findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(@Param("userId") long userId);
 
     @Query("""
             SELECT DISTINCT se
@@ -360,7 +368,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      */
     @NotNull
     default StudentExam findByIdWithExercisesAndSessionsElseThrow(Long studentExamId) {
-        return findWithExercisesAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+        return findWithExercisesSubmissionPolicyAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
 
     /**
