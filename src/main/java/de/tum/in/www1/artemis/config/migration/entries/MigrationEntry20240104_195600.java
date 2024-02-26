@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -84,15 +84,17 @@ public class MigrationEntry20240104_195600 extends ProgrammingExerciseMigrationE
          * migrate the solution participations, we don't care about template or
          */
         var solutionCount = solutionProgrammingExerciseParticipationRepository.count();
+        AtomicInteger counter = new AtomicInteger(0);
         log.info("Found {} solution participations to migrate.", solutionCount);
         for (int currentPageStart = 0; currentPageStart < solutionCount; currentPageStart += BATCH_SIZE) {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAllWithBuildPlanIdNotNull(pageable);
             log.info("Will migrate {} solution participations in batch.", solutionParticipationPage.getNumberOfElements());
-            var solutionParticipationsPartitions = Lists.partition(solutionParticipationPage.toList(), threadCount);
-            for (var solutionParticipations : solutionParticipationsPartitions) {
-                executorService.submit(() -> migrateSolutions(solutionParticipations));
-            }
+            executorService.submit(() -> {
+                migrateSolutions(solutionParticipationPage.toList());
+                counter.addAndGet(solutionParticipationPage.getNumberOfElements());
+
+            });
         }
 
         log.info("Submitted all solution participations to thread pool for migration.");
