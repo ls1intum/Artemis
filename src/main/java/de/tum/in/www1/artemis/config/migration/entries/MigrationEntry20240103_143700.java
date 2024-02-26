@@ -13,7 +13,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -163,7 +162,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                 executorService.submit(() -> {
                     migrateSolutions(solutionParticipations);
                     solutionCounter.addAndGet(solutionParticipationPage.getNumberOfElements());
-                    logProgress(solutionCounter, solutionCount, threadCount, 2, "solution");
+                    logProgress(solutionCounter.get(), solutionCount, threadCount, 2, "solution");
                 });
             }
         }
@@ -184,7 +183,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                 executorService.submit(() -> {
                     migrateTemplates(templateParticipations);
                     templateCounter.addAndGet(templateParticipationPage.getNumberOfElements());
-                    logProgress(templateCounter, templateCount, threadCount, 1, "template");
+                    logProgress(templateCounter.get(), templateCount, threadCount, 1, "template");
                 });
             }
         }
@@ -204,7 +203,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                 executorService.submit(() -> {
                     migrateStudents(studentParticipations);
                     studentCounter.addAndGet(studentParticipationPage.getNumberOfElements());
-                    logProgress(studentCounter, studentCount, threadCount, 1, "student");
+                    logProgress(studentCounter.get(), studentCount, threadCount, 1, "student");
                 });
             }
         }
@@ -216,11 +215,11 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
         evaluateErrorList();
     }
 
-    private void logProgress(AtomicInteger finishedCounter, long totalCount, long threadCount, long reposPerEntry, String migrationType) {
-        double percentage = ((double) finishedCounter.get() / totalCount) * 100;
-        log.info("Migrated {}/{} {} participations ({}%)", finishedCounter.get(), totalCount, migrationType, String.format("%.2f", percentage));
-        log.info("Estimated time remaining: {} for {} repositories",
-                TimeLogUtil.formatDuration(getRestDurationInSeconds(finishedCounter.get(), totalCount, reposPerEntry, threadCount)), migrationType);
+    private void logProgress(long doneCount, long totalCount, long threadCount, long reposPerEntry, String migrationType) {
+        double percentage = ((double) doneCount / totalCount) * 100;
+        log.info("Migrated {}/{} {} participations ({}%)", doneCount, totalCount, migrationType, String.format("%.2f", percentage));
+        log.info("Estimated time remaining: {} for {} repositories", TimeLogUtil.formatDuration(getRestDurationInSeconds(doneCount, totalCount, reposPerEntry, threadCount)),
+                migrationType);
     }
 
     private long getRestDurationInSeconds(final long done, final long total, final long reposPerEntry, final long threads) {
@@ -476,22 +475,25 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
             var renamedBranch = false;
 
             // Create a bare local repository with JGit.
-            Git git = Git.cloneRepository().setBranch(branch).setDirectory(repositoryPath.toFile()).setBare(true).setURI(oldOrigin).call();
-
-            if (!git.getRepository().getBranch().equals(bitbucketLocalVCMigrationService.get().getDefaultBranch())) {
-                // Rename the default branch to the configured default branch. Old exercises might have a different default branch.
-                git.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
-                log.debug("Renamed default branch of local git repository {} to {}", repositorySlug, bitbucketLocalVCMigrationService.get().getDefaultBranch());
-                renamedBranch = true;
+            try (Git git = Git.cloneRepository().setBranch(branch).setDirectory(repositoryPath.toFile()).setBare(true).setURI(oldOrigin).call()) {
+                if (!git.getRepository().getBranch().equals(bitbucketLocalVCMigrationService.get().getDefaultBranch())) {
+                    // Rename the default branch to the configured default branch. Old exercises might have a different default branch.
+                    git.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
+                    log.debug("Renamed default branch of local git repository {} to {}", repositorySlug, bitbucketLocalVCMigrationService.get().getDefaultBranch());
+                    renamedBranch = true;
+                }
             }
-            git.close();
+            catch (Exception e) {
+                log.error("Failed to clone repository from Bitbucket: {}", repositorySlug, e);
+                throw new LocalVCInternalException("Error while cloning repository from Bitbucket.", e);
+            }
+
             // We need to clone the repo here to the local checkout directory
             // Why? because the online editor and the CI system need a checkout of the repository to work with
             // We can't use the bare repository for this, and we directly fix the branch name to the default branch
             if (renamedBranch && Files.exists(cachedPath)) {
                 try (Git localGit = Git.open(cachedPath.toFile())) {
                     localGit.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
-                    localGit.close();
                     log.debug("Renamed local git branch of repository {} to {}", repositorySlug, bitbucketLocalVCMigrationService.get().getDefaultBranch());
                 }
                 catch (Exception e) {
@@ -500,7 +502,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
             }
             log.debug("Created local git repository {} in folder {}", repositorySlug, repositoryPath);
         }
-        catch (IOException | GitAPIException e) {
+        catch (IOException e) {
             log.error("Could not create local git repo {} at location {}", repositorySlug, repositoryPath, e);
             throw new LocalVCInternalException("Error while creating local git project.", e);
         }
