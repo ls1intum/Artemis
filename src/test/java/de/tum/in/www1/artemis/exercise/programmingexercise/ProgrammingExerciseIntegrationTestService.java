@@ -94,9 +94,6 @@ class ProgrammingExerciseIntegrationTestService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    @Value("${artemis.repo-download-clone-path}")
-    private String repoDownloadClonePath;
-
     @Autowired
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private FileService fileService;
@@ -160,6 +157,12 @@ class ProgrammingExerciseIntegrationTestService {
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
 
+    @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
+
     private Course course;
 
     public ProgrammingExercise programmingExercise;
@@ -196,8 +199,7 @@ class ProgrammingExerciseIntegrationTestService {
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private ContinuousIntegrationService continuousIntegrationService;
 
-    @Autowired
-    private GradingCriterionRepository gradingCriterionRepository;
+    private File plagiarismChecksTestReposDir;
 
     void setup(String userPrefix, MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
             throws Exception {
@@ -249,6 +251,8 @@ class ProgrammingExerciseIntegrationTestService {
         // we use the temp repository as remote origin for all repositories that are created during the
         // TODO: distinguish between template, test and solution
         doReturn(new GitUtilService.MockFileRepositoryUri(remoteRepoFile)).when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
+
+        this.plagiarismChecksTestReposDir = Files.createTempDirectory("jplag-repos").toFile();
     }
 
     void tearDown() throws IOException {
@@ -278,6 +282,9 @@ class ProgrammingExerciseIntegrationTestService {
         }
         if (remoteRepo2File != null && remoteRepo2File.exists()) {
             FileUtils.deleteDirectory(remoteRepo2File);
+        }
+        if (plagiarismChecksTestReposDir != null && plagiarismChecksTestReposDir.exists()) {
+            FileUtils.deleteDirectory(plagiarismChecksTestReposDir);
         }
     }
 
@@ -1784,6 +1791,21 @@ class ProgrammingExerciseIntegrationTestService {
         assertPlagiarismResult(programmingExercise, result, 100.0);
     }
 
+    void testCheckPlagiarismForTeamExercise() throws Exception {
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+
+        var programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
+        programmingExercise.setMode(ExerciseMode.TEAM);
+        programmingExerciseRepository.save(programmingExercise);
+
+        prepareTwoTeamRepositoriesForPlagiarismChecks(programmingExercise);
+
+        final var path = ROOT + CHECK_PLAGIARISM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
+        assertPlagiarismResult(programmingExercise, result, 100.0);
+    }
+
     void testCheckPlagiarismJplagReport() throws Exception {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository
@@ -1835,7 +1857,27 @@ class ProgrammingExerciseIntegrationTestService {
         participationUtilService.addResultToSubmission(submissionStudent2, AssessmentType.AUTOMATIC, null);
         participationUtilService.addResultToSubmission(submissionInstructor1, AssessmentType.AUTOMATIC, null);
 
-        var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos");
+        prepareTwoSubmissionsForPlagiarismChecks(programmingExercise);
+    }
+
+    private Team createTeam(ProgrammingExercise programmingExercise, String suffix) {
+        var student = userUtilService.getUserByLogin(userPrefix + "student" + suffix);
+        var team = new Team().name("Team " + suffix).shortName(userPrefix + "team" + suffix).exercise(programmingExercise).students(Set.of(student));
+        return teamRepository.save(programmingExercise, team);
+    }
+
+    private void prepareTwoTeamRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
+        var participationTeam1 = participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, createTeam(programmingExercise, "1"));
+        var participationTeam2 = participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, createTeam(programmingExercise, "2"));
+        var submissionTeam1 = programmingExerciseUtilService.createProgrammingSubmission(participationTeam1, false);
+        var submissionTeam2 = programmingExerciseUtilService.createProgrammingSubmission(participationTeam2, false);
+        participationUtilService.addResultToSubmission(submissionTeam1, AssessmentType.AUTOMATIC, null);
+        participationUtilService.addResultToSubmission(submissionTeam2, AssessmentType.AUTOMATIC, null);
+
+        prepareTwoSubmissionsForPlagiarismChecks(programmingExercise);
+    }
+
+    private void prepareTwoSubmissionsForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
         var projectKey = programmingExercise.getProjectKey();
 
         var exampleProgram = """
@@ -1871,13 +1913,13 @@ class ProgrammingExerciseIntegrationTestService {
                 }
                 """;
 
-        Files.createDirectories(jPlagReposDir.resolve(projectKey));
-        Path file1 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("1-Submission1.java"));
+        Files.createDirectories(plagiarismChecksTestReposDir.toPath().resolve(projectKey));
+        Path file1 = Files.createFile(plagiarismChecksTestReposDir.toPath().resolve(projectKey).resolve("1-Submission1.java"));
         FileUtils.writeStringToFile(file1.toFile(), exampleProgram, StandardCharsets.UTF_8);
-        Path file2 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("2-Submission2.java"));
+        Path file2 = Files.createFile(plagiarismChecksTestReposDir.toPath().resolve(projectKey).resolve("2-Submission2.java"));
         FileUtils.writeStringToFile(file2.toFile(), exampleProgram, StandardCharsets.UTF_8);
 
-        doReturn(jPlagReposDir).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));
+        doReturn(plagiarismChecksTestReposDir.toPath()).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));
         doReturn(null).when(uriService).getRepositorySlugFromRepositoryUri(any());
 
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
