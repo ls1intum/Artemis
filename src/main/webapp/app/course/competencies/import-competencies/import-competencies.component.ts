@@ -76,7 +76,7 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
-            this.performSearch({ ...this.filter, ...this.search });
+            this.performSearch();
             //load competencies of this course to disable their import buttons
             this.competencyService.getAllForCourse(this.courseId).subscribe({
                 next: (res) => {
@@ -98,7 +98,7 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
         this.filter = filter;
         //navigate back to the first page when the filter changes
         this.search.page = 1;
-        this.performSearch({ ...this.filter, ...this.search });
+        this.performSearch();
     }
 
     /**
@@ -108,15 +108,15 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
      */
     searchChange(search: BasePageableSearch) {
         this.search = search;
-        this.performSearch({ ...this.filter, ...this.search });
+        this.performSearch();
     }
 
     /**
      * Fetches a page of competencies matching a PageableSearch from the server.
      *
-     * @param search the complete PageableSearch object
      */
-    performSearch(search: CompetencyPageableSearch) {
+    performSearch() {
+        const search: CompetencyPageableSearch = { ...this.filter, ...this.search };
         this.isLoading = true;
         this.competencyService.getForImport(search).subscribe({
             next: (res) => {

@@ -4,10 +4,10 @@ import { BasePageableSearch, SearchResult, SortingOrder } from 'app/shared/table
 import { Competency } from 'app/entities/competency.model';
 
 @Component({
-    selector: 'jhi-competency-table',
-    templateUrl: './competency-table.component.html',
+    selector: 'jhi-import-competencies-table',
+    templateUrl: './import-competencies-table.component.html',
 })
-export class CompetencyTableComponent implements OnInit {
+export class ImportCompetenciesTableComponent implements OnInit {
     @Input() content: SearchResult<Competency>;
     @Input() search: BasePageableSearch;
     @Input() displayPagination = true;

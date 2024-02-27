@@ -22,7 +22,7 @@ import { IrisModule } from 'app/iris/iris.module';
 import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
 import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
 import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
-import { CompetencyTableComponent } from 'app/course/competencies/import-competencies/competency-table.component';
+import { ImportCompetenciesTableComponent } from 'app/course/competencies/import-competencies/import-competencies-table.component';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 
 @NgModule({
@@ -53,7 +53,7 @@ import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select
         CompetenciesPopoverComponent,
         PrerequisiteImportComponent,
         CompetencyImportCourseComponent,
-        CompetencyTableComponent,
+        ImportCompetenciesTableComponent,
         TaxonomySelectComponent,
     ],
     exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent],

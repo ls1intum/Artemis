@@ -12,7 +12,7 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
 import { Competency, CompetencyWithTailRelationDTO } from 'app/entities/competency.model';
 import { HttpResponse } from '@angular/common/http';
-import { CompetencyTableStubComponent } from './competency-table-stub.component';
+import { ImportCompetenciesTableStubComponent } from './import-competencies-table-stub.component';
 import { CompetencySearchStubComponent } from './competency-search-stub.component';
 import { By } from '@angular/platform-browser';
 import { BasePageableSearch, CompetencyFilter } from 'app/shared/table/pageable-table';
@@ -27,7 +27,7 @@ describe('ImportCompetenciesComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
-            declarations: [ImportCompetenciesComponent, MockPipe(ArtemisTranslatePipe), ButtonComponent, CompetencyTableStubComponent, CompetencySearchStubComponent],
+            declarations: [ImportCompetenciesComponent, MockPipe(ArtemisTranslatePipe), ButtonComponent, ImportCompetenciesTableStubComponent, CompetencySearchStubComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -144,10 +144,10 @@ describe('ImportCompetenciesComponent', () => {
 
         componentFixture.detectChanges();
 
-        const competencyTables = componentFixture.debugElement.queryAll(By.directive(CompetencyTableStubComponent));
+        const competencyTables = componentFixture.debugElement.queryAll(By.directive(ImportCompetenciesTableStubComponent));
         expect(competencyTables).toHaveLength(2);
         for (const element of competencyTables) {
-            const table: CompetencyTableStubComponent = element.componentInstance;
+            const table: ImportCompetenciesTableStubComponent = element.componentInstance;
             table.searchChange.emit({} as BasePageableSearch);
         }
 
