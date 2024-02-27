@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListRequestDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRequestDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
@@ -655,19 +656,19 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     private GitLabPersonalAccessTokenListResponseDTO fetchPersonalAccessTokenId(Long userId) {
-        var body = new GitLabPersonalAccessTokenRequestDTO(PERSONAL_ACCESS_TOKEN_NAME, userId);
+        var body = new GitLabPersonalAccessTokenListRequestDTO(PERSONAL_ACCESS_TOKEN_NAME, userId);
 
         var entity = new HttpEntity<>(body);
 
         try {
-            var response = restTemplate.exchange(gitlabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens", HttpMethod.GET, entity,
-                    GitLabPersonalAccessTokenListResponseDTO.class);
-            GitLabPersonalAccessTokenListResponseDTO responseBody = response.getBody();
-            if (responseBody == null || responseBody.getId() == null) {
+            var response = restTemplate.exchange(gitlabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens", HttpMethod.GET, entity, List.class);
+            var responseBody = response.getBody();
+            if (responseBody == null || responseBody.isEmpty() || !(responseBody.get(0) instanceof GitLabPersonalAccessTokenListResponseDTO)
+                    || ((GitLabPersonalAccessTokenListResponseDTO) responseBody.get(0)).getId() == null) {
                 log.error("Could not fetch personal access token id for user with id {}, response is null", userId);
                 throw new GitLabException("Error while fetching personal access token id");
             }
-            return responseBody;
+            return (GitLabPersonalAccessTokenListResponseDTO) responseBody.get(0);
         }
         catch (HttpClientErrorException e) {
             log.error("Could not fetch personal access token id for user with id {}, response is null", userId);

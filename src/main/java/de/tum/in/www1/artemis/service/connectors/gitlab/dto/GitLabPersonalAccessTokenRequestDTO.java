@@ -13,9 +13,6 @@ public class GitLabPersonalAccessTokenRequestDTO {
     @JsonProperty
     private String name;
 
-    @JsonProperty
-    private String search;
-
     @JsonProperty("user_id")
     private Long userId;
 
@@ -35,25 +32,12 @@ public class GitLabPersonalAccessTokenRequestDTO {
         this.scopes = scopes;
     }
 
-    public GitLabPersonalAccessTokenRequestDTO(String search, Long userId) {
-        this.search = search;
-        this.userId = userId;
-    }
-
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getSearch() {
-        return search;
-    }
-
-    public void setSearch(String search) {
-        this.search = search;
     }
 
     public Long getUserId() {
