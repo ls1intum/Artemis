@@ -48,7 +48,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
     /**
      * Constructor that builds a LocalVCRepositoryUri from a URL string.
      *
-     * @param urlString      the enire URL string (should already contain the base URL, otherwise an exception is thrown).
+     * @param urlString      the entire URL string (should already contain the base URL, otherwise an exception is thrown).
      * @param localVCBaseUrl the base URL of the local VC server defined in an environment variable.
      * @throws LocalVCInternalException if the URL string is invalid.
      */
