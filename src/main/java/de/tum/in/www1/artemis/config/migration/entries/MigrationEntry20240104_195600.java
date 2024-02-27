@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import com.google.gson.Gson;
 
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -118,7 +119,9 @@ public class MigrationEntry20240104_195600 extends ProgrammingExerciseMigrationE
             try {
                 Windfile windfile = aeolusBuildScriptGenerationService.get().translateBuildPlan(solutionParticipation.getBuildPlanId());
                 if (windfile == null) {
-                    log.error("Failed to migrate solution participation with id {} because the windfile is null", solutionParticipation.getId());
+                    ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(solutionParticipation);
+                    String exerciseId = exercise != null ? exercise.getId().toString() : "unknown";
+                    log.error("Failed to migrate solution participation with id {} of exercise {}, because the windfile is null", solutionParticipation.getId(), exerciseId);
                     errorList.add(solutionParticipation);
                     continue;
                 }
