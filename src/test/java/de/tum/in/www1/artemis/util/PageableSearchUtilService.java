@@ -10,6 +10,8 @@ import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.BasePageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
 
 /**
  * Service responsible for initializing the database with specific testdata related to searches for use in integration tests.
@@ -76,12 +78,34 @@ public class PageableSearchUtilService {
     }
 
     /**
+     * Generates a CompetencyPageableSearchDTO with the given search terms
+     *
+     * @param title       the competency title
+     * @param description the competency description
+     * @param courseTitle the course title
+     * @param semester    the course semester
+     * @return The generated DTO
+     */
+    public CompetencyPageableSearchDTO configureCompetencySearch(String title, String description, String courseTitle, String semester) {
+        final var search = new CompetencyPageableSearchDTO();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSortedColumn("ID");
+        search.setSortingOrder(SortingOrder.DESCENDING);
+        search.setTitle(title);
+        search.setDescription(description);
+        search.setCourseTitle(courseTitle);
+        search.setSemester(semester);
+        return search;
+    }
+
+    /**
      * Generates a LinkedMultiValueMap from the given PageableSearchDTO. The map is used for REST calls and maps the parameters to the values.
      *
      * @param search The PageableSearchDTO to use
      * @return The generated LinkedMultiValueMap
      */
-    public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search) {
+    public LinkedMultiValueMap<String, String> searchMapping(BasePageableSearchDTO<String> search) {
         final var mapType = new TypeToken<Map<String, String>>() {
         }.getType();
         final var gson = new Gson();
