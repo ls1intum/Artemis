@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -634,7 +635,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     private void renewVersionControlAccessTokenIfNecessary(org.gitlab4j.api.models.User gitlabUser, User user, Duration minimalLifetimeLeft) {
-        if (versionControlAccessToken && user.getVcsAccessToken() != null) {
+        if (user.getVcsAccessToken() != null) {
             Optional<String> renewedPersonalAccessToken = retrieveRenewedPersonalAccessToken(gitlabUser.getId(), minimalLifetimeLeft);
             if (renewedPersonalAccessToken.isPresent()) {
                 user.setVcsAccessToken(renewedPersonalAccessToken.get());
@@ -647,7 +648,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         GitLabPersonalAccessTokenListResponseDTO response = fetchPersonalAccessTokenId(userId);
 
         var minimalLifetimeLeftInstant = LocalDate.now().plus(minimalLifetimeLeft).atStartOfDay(ZoneId.systemDefault()).toInstant();
-        if (response.getExpiresAt().toInstant().isBefore(minimalLifetimeLeftInstant)) {
+        if (response.getExpiresAt() != null && response.getExpiresAt().toInstant().isBefore(minimalLifetimeLeftInstant)) {
             return Optional.of(rotatePersonalAccessToken(response.getId(), userId));
         }
         else {
@@ -661,14 +662,15 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         var entity = new HttpEntity<>(body);
 
         try {
-            var response = restTemplate.exchange(gitlabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens", HttpMethod.GET, entity, List.class);
+            var response = restTemplate.exchange(gitlabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens", HttpMethod.GET, entity,
+                    new ParameterizedTypeReference<List<GitLabPersonalAccessTokenListResponseDTO>>() {
+                    });
             var responseBody = response.getBody();
-            if (responseBody == null || responseBody.isEmpty() || !(responseBody.get(0) instanceof GitLabPersonalAccessTokenListResponseDTO)
-                    || ((GitLabPersonalAccessTokenListResponseDTO) responseBody.get(0)).getId() == null) {
+            if (responseBody == null || responseBody.isEmpty()) {
                 log.error("Could not fetch personal access token id for user with id {}, response is null", userId);
                 throw new GitLabException("Error while fetching personal access token id");
             }
-            return (GitLabPersonalAccessTokenListResponseDTO) responseBody.get(0);
+            return responseBody.get(0);
         }
         catch (HttpClientErrorException e) {
             log.error("Could not fetch personal access token id for user with id {}, response is null", userId);
@@ -685,7 +687,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         try {
             var response = restTemplate.exchange(gitlabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens/" + personalAccessTokenId + "/rotate", HttpMethod.POST, entity,
                     GitLabPersonalAccessTokenRotateResponseDTO.class);
-            GitLabPersonalAccessTokenRotateResponseDTO responseBody = response.getBody();
+            var responseBody = response.getBody();
             if (responseBody == null || responseBody.getToken() == null) {
                 log.error("Could not rotate Gitlab personal access token for user with id {}, response is null", userId);
                 throw new GitLabException("Error while creating personal access token");

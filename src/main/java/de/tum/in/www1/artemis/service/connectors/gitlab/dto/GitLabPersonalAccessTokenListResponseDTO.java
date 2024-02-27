@@ -20,6 +20,11 @@ public class GitLabPersonalAccessTokenListResponseDTO {
         // default constructor for Jackson
     }
 
+    public GitLabPersonalAccessTokenListResponseDTO(Long id, Date expiresAt) {
+        this.id = id;
+        this.expiresAt = expiresAt;
+    }
+
     public Long getId() {
         return id;
     }

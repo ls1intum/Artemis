@@ -8,6 +8,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Stream;
@@ -43,6 +45,7 @@ import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
 
 @Component
@@ -284,6 +287,20 @@ public class GitlabRequestMockProvider {
         final var response = new ObjectMapper().writeValueAsString(accessTokenResponseDTO);
 
         mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
+    }
+
+    public void mockListPersonalAccessTokens(String login, User gitlabUser) throws GitLabApiException, JsonProcessingException {
+        UserApi userApi = mock(UserApi.class);
+        doReturn(userApi).when(gitLabApi).getUserApi();
+        doReturn(gitlabUser).when(userApi).getUser(eq(login));
+
+        var responseDTO = new GitLabPersonalAccessTokenListResponseDTO();
+        responseDTO.setId(42L);
+        responseDTO.setExpiresAt(Date.from(LocalDate.now().plusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        final var response = new ObjectMapper().writeValueAsString(List.of(responseDTO));
+
+        mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens")).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
