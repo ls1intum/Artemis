@@ -6,8 +6,81 @@ Development Process
     :local:
     :depth: 2
 
-Naming Conventions for GitHub Pull Requests
+
+The Artemis Development Process Model
 ===========================================
+
+.. figure:: ./artemis-process-model.png
+    :align: center
+    :alt: Artemis Process Model - Activity Diagram
+    :figclass: align-center
+
+1. Submit a Feature Request
+---------------------------
+The initial step in our development process involves the creation of a feature request, which is accomplished through the submission of a GitHub Issue. 
+This action can be performed by any stakeholder, including developers, users, or maintainers. 
+The feature request should include a detailed description of the desired functionality, as well as any relevant information that may be useful to the development team. 
+This information may include the rationale for the feature, the expected benefits, and any potential risks or challenges that may be associated with the implementation of the feature.
+
+2. Evaluate Feature Request
+---------------------------
+Once a feature request has been submitted, the maintainers will evaluate the request together with the development team to determine its feasibility and potential impact on the system.
+
+3. Formulate a Feature Proposal
+-------------------------------
+If the feature request is deemed feasible, the development team will create a feature proposal that extensively describes the proposed feature. This step will be performed by the development team and will consist of the artifacts mentioned in the model "Create Feature Proposal" below:
+
+.. figure:: ./aremtis-feature-proposal-flow.png
+    :align: center
+    :alt: Create a Feature Proposal - Activity Diagram
+    :figclass: align-center
+
+
+Step 1: Amend Feature Proposal Template to Feature Request on GitHub
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The Feature Proposal Template outlines the structure of the feature proposal and provides a guideline for the development team to follow.
+It should be added to the respective GitHub Issue's description and filled with the necessary information.
+
+.. literalinclude:: ./feature-proposal-template.md
+    :caption: Feature Proposal Template
+    :language: markdown
+
+
+Step 2: Requirements Engineering
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This section of the feature proposal includes a description of all Functional and Non-Functional Requirements that the feature should fulfill.
+Refer to the template for more details on the format. 
+
+Step 3: Analysis
+^^^^^^^^^^^^^^^^
+This section should outline the involved Analysis Objects (Analysis Object Model) and the dynamic behavior of the feature (Activity Diagram, State Chart diagram, Communication Diagram).
+
+Step 4: System Architecture
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This step should include all involved subsystems and their interfaces (Subsystem Decomposition), as well as a description of the persistent data management (Data Model), access control / security asepcts and further architectural decisions.
+
+Step 5: UI/UX Design
+^^^^^^^^^^^^^^^^^^^^
+If the proposed feature requires a change to the software's user interface, this section should include a detailed description of the proposed changes, as well as a mockup that illustrates the new user interface.
+The mockup should be created using Figma in conjunction with the Artemis Design System and should be added to the feature proposal as a screenshot. 
+Furthermore it is important to include a description of the user flow that references the dynamic model created in the analysis section.
+
+.. figure:: ./uiux_workflow.png
+    :align: center
+    :alt: UI/UX Design Workflow - Activity Diagram
+    :figclass: align-center
+
+
+4. Implement the Feature
+------------------------
+In this step, the development team will implement the feature according to the feature proposal.
+
+5. Create a Pull Request
+------------------------
+Once the feature has been implemented, the developer will create a pull request to merge the feature into the develop branch.
+
+Naming Conventions for GitHub Pull Requests
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 1. The first term is a main feature of Artemis and is using code highlighting, e.g.  “``Programming exercises``:”.
 
@@ -32,38 +105,34 @@ Naming Conventions for GitHub Pull Requests
 
 
 Steps to Create and Merge a Pull Request
-========================================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0. Precondition -> only Developer
----------------------------------
+**0. Precondition -> only Developer**
 
 * Limit yourself to one functionality per pull request.
 * Split up your task in multiple branches & pull requests if necessary.
 * `Commit Early, Commit Often, Perfect Later, Publish Once. <https://speakerdeck.com/lemiorhan/10-git-anti-patterns-you-should-be-aware-of>`_
 
-1. Start Implementation -> only Developer
------------------------------------------
+**1. Start Implementation -> only Developer**
 
 * `Open a draft pull request. <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_ This allows for code related questions and discussions.
 
-2. Implementation is "done" -> only Developer
----------------------------------------------
+**2. Implementation is "done" -> only Developer**
 
 * Make sure all steps in the `Checklist <https://github.com/ls1intum/Artemis/blob/develop/.github/PULL_REQUEST_TEMPLATE.md>`_ are completed.
 * Add or update the "Steps for Testing" in the description of your pull request.
 * Make sure that the changes in the pull request are only the ones necessary.
 * Mark the pull request as `ready for review. <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request>`_
 
-3. Review
----------
+**3. Review**
 
-Developer
-^^^^^^^^^
+Developer:
+
 * Organize or join a testing session. Especially for large pull requests this makes testing a lot easier.
 * Actively look for reviews. Do not just open the pull request and wait.
 
-Reviewer
-^^^^^^^^
+Reviewer:
+
 * Perform the "Steps for Testing" and verify that the new functionality is working as expected.
 * Verify that related functionality is still working as expected.
 * Check the changes to
@@ -74,11 +143,10 @@ Reviewer
 * Submit your comments and status (👍 Approve or 👎 Request Changes) using GitHub.
     * Explain what you did (test, review code) and on which test server in the review comment.
 
-4. Respond to review
---------------------
+**4. Respond to review**
 
-Developer
-^^^^^^^^^
+Developer:
+
 * Use the pull request to discuss comments or ask questions.
 * Update your code where necessary.
 * Revert to draft if the changes will take a while during which review is not needed/possible.
@@ -86,22 +154,23 @@ Developer
 * Notify the reviewer(s) once your revised version is ready for the next review.
 * Comment on "inline comments" (e.g. "Done").
 
-Reviewer
-^^^^^^^^
+Reviewer:
+
 * Respond to questions raised by the reviewer.
 * Mark conversations as resolved if the change is sufficient.
 
-Iterate steps 3 & 4 until ready for merge (all reviewers approve 👍)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. note::
+      Iterate steps 3 & 4 until ready for merge (all reviewers approve 👍)
 
-5. Merge
---------
+
+**5. Merge**
+
 A project maintainer merges your changes into the ``develop`` branch.
 
 
 
 Stale Bot
-=========
+^^^^^^^^^
 
 If the pull request doesn't have any activity for at least 7 days, the stale bot will mark the PR as `stale`.
 The `stale` status can simply be removed by adding a comment or a commit to the PR.
