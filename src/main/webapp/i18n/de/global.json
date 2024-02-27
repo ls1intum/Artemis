@@ -260,7 +260,9 @@
             "ldap": "von LDAP synchronisieren",
             "notUndoable": "Diese Aktion kann nicht rückgängig gemacht werden.",
             "discardChanges": "Änderungen verwerfen",
-            "goBack": "Zurück"
+            "goBack": "Zurück",
+            "search": "Suchen",
+            "select": "Auswählen"
         },
         "detail": {
             "field": "Feld",

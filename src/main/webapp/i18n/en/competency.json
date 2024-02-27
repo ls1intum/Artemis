@@ -43,21 +43,34 @@
             },
             "manageCompetencies": {
                 "title": "Competency Management",
-                "import": "Import competency",
+                "import": "Import competencies",
+                "importAll": "Import all competencies from another course",
                 "create": "Create competency",
-                "generate": "Generate Competency Recommendations",
-                "importAll": "Import all competencies from another course"
+                "generate": "Generate Competency Recommendations"
             },
             "import": {
-                "label": "Import a Competency",
-                "search": "Search for a competency:",
-                "loading": "Loading...",
+                "title": "Import Competencies",
+                "searchTableHeader": "Search Competencies",
+                "searchTableEmpty": "Found no competencies matching your search",
+                "selectedTableHeader": "Selected Competencies",
+                "selectedTableEmpty": "No competencies selected",
+                "importRelations": "Import Relations?",
+                "search": {
+                    "title": "Competency Search",
+                    "labelCompetencyTitle": "Competency Title",
+                    "labelCompetencyDescription": "Competency Description",
+                    "labelCourseTitle": "Course title",
+                    "labelCourseSemester": "Semester",
+                    "showAdvancedSearch": "Show advanced search",
+                    "hideAdvancedSearch": "Hide advanced search"
+                },
                 "table": {
                     "TITLE": "Title",
-                    "COURSE_TITLE": "Course",
-                    "SEMESTER": "Semester",
-                    "doImport": "Select"
-                }
+                    "DESCRIPTION": "Description",
+                    "COURSE_TITLE": "Course Title",
+                    "SEMESTER": "Semester"
+                },
+                "success": "Imported {{ noOfCompetencies }} competencies."
             },
             "generate": {
                 "title": "Generate Competency Recommendations",
@@ -83,7 +96,6 @@
             "importAll": {
                 "title": "Import all Competencies from another course",
                 "search": "Search for a course:",
-                "importRelations": "Import Relations?",
                 "table": {
                     "TITLE": "Title",
                     "SEMESTER": "Semester",

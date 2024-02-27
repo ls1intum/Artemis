@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.BasePageableSearchDTO;
 
 /**
  * Wrapper for a generic search for any list of entities matching a given search term. The result should be paged,
@@ -12,48 +12,12 @@ import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
  * @see SearchResultPageDTO
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PageableSearchDTO<T> {
-
-    /**
-     * The number of the page to return
-     */
-    protected int page;
-
-    /**
-     * The maximum size of one page
-     */
-    protected int pageSize;
+public class PageableSearchDTO<T> extends BasePageableSearchDTO<T> {
 
     /**
      * The string to search for
      */
     protected String searchTerm;
-
-    /**
-     * The sort order, i.e. descending or ascending
-     */
-    protected SortingOrder sortingOrder;
-
-    /**
-     * The column for which the result should be sorted by
-     */
-    protected T sortedColumn;
-
-    public int getPage() {
-        return page;
-    }
-
-    public void setPage(int page) {
-        this.page = page;
-    }
-
-    public int getPageSize() {
-        return pageSize;
-    }
-
-    public void setPageSize(int pageSize) {
-        this.pageSize = pageSize;
-    }
 
     public String getSearchTerm() {
         return searchTerm;
@@ -61,21 +25,5 @@ public class PageableSearchDTO<T> {
 
     public void setSearchTerm(String searchTerm) {
         this.searchTerm = searchTerm;
-    }
-
-    public SortingOrder getSortingOrder() {
-        return sortingOrder;
-    }
-
-    public void setSortingOrder(SortingOrder sortingOrder) {
-        this.sortingOrder = sortingOrder;
-    }
-
-    public T getSortedColumn() {
-        return sortedColumn;
-    }
-
-    public void setSortedColumn(T sortedColumn) {
-        this.sortedColumn = sortedColumn;
     }
 }

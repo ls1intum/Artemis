@@ -39,26 +39,38 @@
                 "CREATE": "entwerfen, formulieren, postulieren, erfinden, planen, bieten, schreiben, konstruieren, entwickeln"
             },
             "table": {
-                "panelHeader": "Deine Fortentwicklung",
-                "panelDescription": "Dein Weg zum Erwerb dieser Kompetenz."
+                "panelHeader": "Deine Fortentwicklung"
             },
             "manageCompetencies": {
                 "title": "Kompetenzmanagement",
-                "import": "Kompetenz importieren",
+                "import": "Kompetenzen importieren",
+                "importAll": "Alle Kompetenzen eines Kurses importieren",
                 "create": "Kompetenz erstellen",
-                "generate": "Kompetenzvorschläge generieren",
-                "importAll": "Alle Kompetenzen eines Kurses importieren"
+                "generate": "Kompetenzvorschläge generieren"
             },
             "import": {
-                "label": "Kompetenz importieren",
-                "search": "Suche nach einer Kompetenz:",
-                "loading": "Lade...",
+                "title": "Kompetenzen importieren",
+                "searchTableHeader": "Nach Kompetenzen suchen",
+                "searchTableEmpty": "Keine Kompetenzen gefunden, die deiner Suche entsprechen",
+                "selectedTableHeader": "Ausgewählte Kompetenzen",
+                "selectedTableEmpty": "Keine Kompetenzen ausgewählt",
+                "importRelations": "Relationen importieren?",
+                "search": {
+                    "title": "Kompetenzen durchsuchen",
+                    "labelCompetencyTitle": "Kompetenztitel",
+                    "labelCompetencyDescription": "Kompetenzbeschreibung",
+                    "labelCourseTitle": "Kurstitel",
+                    "labelCourseSemester": "Semester",
+                    "showAdvancedSearch": "Erweiterte Suche anzeigen",
+                    "hideAdvancedSearch": "Erweiterte Suche ausblenden"
+                },
                 "table": {
                     "TITLE": "Titel",
-                    "COURSE_TITLE": "Kurs",
-                    "SEMESTER": "Semester",
-                    "doImport": "Auswählen"
-                }
+                    "DESCRIPTION": "Beschreibung",
+                    "COURSE_TITLE": "Kurstitel",
+                    "SEMESTER": "Semester"
+                },
+                "success": "Imported {{ noOfCompetencies }} competencies."
             },
             "generate": {
                 "title": "Kompetenzvorschläge generieren",
@@ -84,7 +96,6 @@
             "importAll": {
                 "title": "Alle Kompetenzen eines Kurses importieren",
                 "search": "Suche nach einem Kurs:",
-                "importRelations": "Relationen importieren?",
                 "table": {
                     "TITLE": "Titel",
                     "SEMESTER": "Semester",
