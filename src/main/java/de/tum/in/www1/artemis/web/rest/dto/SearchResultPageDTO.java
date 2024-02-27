@@ -5,11 +5,13 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
+
 /**
  * Wrapper for a search result which is paged <br>
  *
  * @see org.springframework.data.domain.Pageable
- * @see PageableSearchDTO
+ * @see SearchTermPageableSearchDTO
  * @param <T>
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

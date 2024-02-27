@@ -9,7 +9,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { Competency } from 'app/entities/competency.model';
-import { BasePageableSearch, CompetencyFilter, CompetencyPageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { CompetencyFilter, CompetencyPageableSearch, PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
@@ -33,7 +33,7 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
         semester: '',
         title: '',
     };
-    search: BasePageableSearch = {
+    search: PageableSearch = {
         page: 1,
         pageSize: 10,
         sortingOrder: SortingOrder.DESCENDING,
@@ -41,7 +41,7 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
     };
 
     //search object for the selected competencies. As we don't want pagination page and pageSize are 0
-    selectedCompetenciesSearch: BasePageableSearch = {
+    selectedCompetenciesSearch: PageableSearch = {
         page: 0,
         pageSize: 0,
         sortingOrder: SortingOrder.DESCENDING,
@@ -106,7 +106,7 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
      *
      * @param search the new pagination/sorting
      */
-    searchChange(search: BasePageableSearch) {
+    searchChange(search: PageableSearch) {
         this.search = search;
         this.performSearch({ ...this.filter, ...this.search });
     }
@@ -132,7 +132,7 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
      *
      * @param search the PageableSerach object with the updated sorting data
      */
-    sortSelected(search: BasePageableSearch) {
+    sortSelected(search: PageableSearch) {
         this.selectedCompetencies.resultsOnPage = this.sortingService.sortByProperty(
             this.selectedCompetencies.resultsOnPage,
             this.columnMapping[search.sortedColumn],
