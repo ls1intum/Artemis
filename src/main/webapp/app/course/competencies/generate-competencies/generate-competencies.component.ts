@@ -175,7 +175,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      * Only allow to leave page after submitting or if no pending changes exist
      */
     canDeactivate(): boolean {
-        return this.submitted || (!this.isLoading && !(this.competencies.length > 0));
+        return this.submitted || (!this.isLoading && this.competencies.length === 0);
     }
 
     get canDeactivateWarning(): string {
