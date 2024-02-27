@@ -198,6 +198,7 @@ describe('Notification Popup Component', () => {
 
         it('should add received exam exercise update notification if user is in exam mode', () => {
             jest.spyOn(router, 'isActive').mockReturnValue(true);
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/exams/95');
             jest.spyOn(examExerciseUpdateService, 'updateLiveExamExercise').mockReturnValue();
             replaceSubscribeToNotificationUpdatesUsingExamExerciseUpdateNotification();
             notificationPopupComponent.ngOnInit();
