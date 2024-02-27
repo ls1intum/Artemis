@@ -81,4 +81,21 @@ class IrisCodeEditorSessionIntegrationTest extends AbstractIrisIntegrationTest {
         List<IrisSession> irisSessions = request.getList("/api/iris/programming-exercises/" + exercise.getId() + "/code-editor-sessions", HttpStatus.OK, IrisSession.class);
         assertThat(irisSessions).hasSize(2).containsAll(List.of(irisSession1, irisSession2));
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "ADMIN")
+    void isActive() throws Exception {
+        var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/code-editor-sessions", null, IrisSession.class,
+                HttpStatus.CREATED);
+        var settings = irisSettingsService.getGlobalSettings();
+
+        irisRequestMockProvider.mockStatusResponse();
+        irisRequestMockProvider.mockStatusResponse();
+        irisRequestMockProvider.mockStatusResponse();
+
+        // FIXME: This test fails because preferredModel is null when the REST call is made despite it being set here
+        settings.getIrisCodeEditorSettings().setPreferredModel("TEST_MODEL_UP");
+        irisSettingsService.saveIrisSettings(settings);
+        assertThat(request.get("/api/iris/code-editor-sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isTrue();
+    }
 }
