@@ -402,7 +402,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         participation: exercise.templateParticipation,
                         loading: this.loadingTemplateParticipationResults,
                         submissionRouterLink: exercise.templateParticipation && this.getParticipationSubmissionLink(exercise.templateParticipation.id!),
-                        onParticipationChange: (isInitialChange) => this.onParticipationChange(isInitialChange),
+                        onParticipationChange: () => this.onParticipationChange(),
                         type: ProgrammingExerciseParticipationType.TEMPLATE,
                     },
                 },
@@ -414,7 +414,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         participation: exercise.solutionParticipation,
                         loading: this.loadingSolutionParticipationResults,
                         submissionRouterLink: exercise.solutionParticipation && this.getParticipationSubmissionLink(exercise.solutionParticipation.id!),
-                        onParticipationChange: (isInitialChange) => this.onParticipationChange(isInitialChange),
+                        onParticipationChange: () => this.onParticipationChange(),
                         type: ProgrammingExerciseParticipationType.SOLUTION,
                     },
                 },
@@ -549,11 +549,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.profileService.getProfileInfo().subscribe((profileInfo) => (this.isBuildPlanEditable = hasEditableBuildPlan(profileInfo)));
     }
 
-    onParticipationChange(isInitialChange: boolean): void {
-        if (isInitialChange) {
-            return;
-        }
-        this.loadGitDiffReport();
+    onParticipationChange(): void {
+        () => setTimeout(() => this.loadGitDiffReport());
         this.setLatestCoveredLineRatio();
     }
 
@@ -715,7 +712,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     loadGitDiffReport() {
         this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
-            if (gitDiffReport) {
+            if (
+                gitDiffReport &&
+                (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
+                    this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash)
+            ) {
                 this.programmingExercise.gitDiffReport = gitDiffReport;
                 gitDiffReport.programmingExercise = this.programmingExercise;
                 this.addedLineCount =
