@@ -12,7 +12,6 @@ import { CompetenciesPopoverComponent } from './competencies-popover/competencie
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
-import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import { GenerateCompetenciesComponent } from 'app/course/competencies/generate-competencies/generate-competencies.component';
@@ -21,6 +20,9 @@ import { CourseDescriptionFormComponent } from 'app/course/competencies/generate
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
+import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
+import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
+import { CompetencyTableComponent } from 'app/course/competencies/import-competencies/competency-table.component';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 
 @NgModule({
@@ -41,6 +43,8 @@ import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select
         CompetencyRingsComponent,
         CreateCompetencyComponent,
         EditCompetencyComponent,
+        ImportCompetenciesComponent,
+        CompetencySearchComponent,
         GenerateCompetenciesComponent,
         CompetencyRecommendationDetailComponent,
         CourseDescriptionFormComponent,
@@ -48,8 +52,8 @@ import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select
         CompetencyCardComponent,
         CompetenciesPopoverComponent,
         PrerequisiteImportComponent,
-        CompetencyImportComponent,
         CompetencyImportCourseComponent,
+        CompetencyTableComponent,
         TaxonomySelectComponent,
     ],
     exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent],
