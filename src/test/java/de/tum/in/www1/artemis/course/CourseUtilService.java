@@ -592,8 +592,6 @@ public class CourseUtilService {
      */
     public void addOnlineCourseConfigurationToCourse(Course course) {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
-        onlineCourseConfiguration.setLtiKey("artemis_lti_key");
-        onlineCourseConfiguration.setLtiSecret("fake-secret");
         onlineCourseConfiguration.setUserPrefix("prefix");
         onlineCourseConfiguration.setCourse(course);
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
