@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -142,7 +143,13 @@ public class BuildJobExecutionService {
         Path solutionRepositoryPath = null;
         if (buildJob.repositoryInfo().solutionRepositoryUri() != null) {
             solutionRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().solutionRepositoryUri(), localVCBaseUrl);
-            solutionRepositoryPath = cloneRepository(solutionRepoUri, checkoutCommitHash, false);
+            // In case we have the same repository for assignment and solution, we can use the same path
+            if (Objects.equals(solutionRepoUri.repositorySlug(), assignmentRepoUri.repositorySlug())) {
+                solutionRepositoryPath = assignmentRepositoryPath;
+            }
+            else {
+                solutionRepositoryPath = cloneRepository(solutionRepoUri, checkoutCommitHash, false);
+            }
         }
 
         String[] auxiliaryRepositoryUriList = buildJob.repositoryInfo().auxiliaryRepositoryUris();
@@ -210,7 +217,8 @@ public class BuildJobExecutionService {
             // Delete the cloned repositories
             deleteCloneRepo(assignmentRepositoryUri, checkoutCommitHash);
             deleteCloneRepo(testRepositoryUri, checkoutCommitHash);
-            if (solutionRepositoryUri != null) {
+            // do not try to delete the temp repository if it does not exist or is the same as the assignment reposity
+            if (solutionRepositoryUri != null && !Objects.equals(assignmentRepositoryUri.repositorySlug(), solutionRepositoryUri.repositorySlug())) {
                 deleteCloneRepo(solutionRepositoryUri, checkoutCommitHash);
             }
             for (VcsRepositoryUri auxiliaryRepositoryUri : auxiliaryRepositoriesUris) {
