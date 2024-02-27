@@ -181,6 +181,29 @@ describe('GenerateCompetenciesComponent', () => {
         });
     });
 
+    it('should display alerts after generating', () => {
+        const alertService = TestBed.inject(AlertService);
+        const competencyService = TestBed.inject(CompetencyService);
+        const generateCompetenciesMock = jest.spyOn(competencyService, 'generateCompetenciesFromCourseDescription');
+
+        generateCompetenciesMock.mockReturnValue(of({ body: [{ id: 1 }] } as HttpResponse<Competency[]>));
+        const successMock = jest.spyOn(alertService, 'success');
+        generateCompetenciesComponent.getCompetencyRecommendations('');
+        expect(successMock).toHaveBeenCalledOnce();
+
+        generateCompetenciesMock.mockReturnValue(of({} as HttpResponse<Competency[]>));
+        const warnMock = jest.spyOn(alertService, 'warning');
+        generateCompetenciesComponent.getCompetencyRecommendations('');
+        expect(warnMock).toHaveBeenCalled();
+    });
+
+    it('should send a warning when trying to reload', () => {
+        generateCompetenciesComponent.isLoading = true;
+        const event = { returnValue: undefined };
+        generateCompetenciesComponent.unloadNotification(event);
+        expect(event.returnValue).toBe(generateCompetenciesComponent.canDeactivateWarning);
+    });
+
     function createCompetencyFormGroup(title?: string, description?: string, taxonomy?: CompetencyTaxonomy, viewed = false): FormGroup<CompetencyFormControlsWithViewed> {
         return new FormGroup({
             competency: new FormGroup({
