@@ -4,6 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +31,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     List<Team> findAllByExerciseId(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "students")
-    List<Team> findAllWithStudentsByIdIn(List<Long> teamIds);
+    List<Team> findAllWithStudentsByIdIn(Collection<Long> teamIds);
 
     List<Team> findAllByExerciseCourseIdAndShortName(Long courseId, String shortName);
 
