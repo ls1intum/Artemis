@@ -131,6 +131,7 @@
                                 class="btn btn-primary"
                                 [class.btn-sm]="smallButtons"
                                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'repository', exercise.studentParticipations![0].id]"
+                                target="_blank"
                             >
                                 <fa-icon [icon]="faCodeBranch" [fixedWidth]="true" />
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openRepository">Open Repository</span>
