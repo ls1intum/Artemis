@@ -10,6 +10,7 @@ import { finalize } from 'rxjs';
 @Component({
     selector: 'jhi-competency-selection',
     templateUrl: './competency-selection.component.html',
+    styleUrls: ['./competency-selection.component.scss'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
@@ -21,14 +22,16 @@ import { finalize } from 'rxjs';
 export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
     @Input() labelName: string;
     @Input() labelTooltip: string;
-    @Input() value: any;
+    // selected competencies
+    @Input() value?: Competency[];
     @Input() disabled: boolean;
-    @Input() error: boolean;
-    @Input() competencies: Competency[];
+    // all course competencies
+    @Input() competencies?: Competency[];
 
     @Output() valueChange = new EventEmitter();
 
     isLoading = false;
+    checkboxStates: Record<number, boolean>;
 
     getIcon = getIcon;
     faQuestionCircle = faQuestionCircle;
@@ -47,7 +50,8 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         if (!this.competencies && courseId) {
             const course = this.courseStorageService.getCourse(courseId);
-            if (course?.competencies) {
+            // an empty array is used as fallback, if a course is cached, where no competencies have been queried
+            if (course?.competencies?.length) {
                 this.setCompetencies(course.competencies!);
             } else {
                 this.isLoading = true;
@@ -86,12 +90,35 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             competency.userProgress = undefined;
             return competency;
         });
+        this.checkboxStates = this.competencies.reduce(
+            (states, competency) => {
+                if (competency.id) {
+                    states[competency.id] = !!this.value?.find((value) => value.id === competency.id);
+                }
+                return states;
+            },
+            {} as Record<number, boolean>,
+        );
     }
 
-    updateField(newValue: Competency[]) {
-        this.value = newValue;
-        this._onChange(this.value);
-        this.valueChange.emit();
+    toggleCompetency(newValue: Competency) {
+        if (newValue.id) {
+            if (this.checkboxStates[newValue.id]) {
+                this.value = this.value?.filter((value) => value.id !== newValue.id);
+            } else {
+                this.value = [...(this.value ?? []), newValue];
+            }
+
+            this.checkboxStates[newValue.id] = !this.checkboxStates[newValue.id];
+
+            // make sure to do not send an empty list to server
+            if (!this.value?.length) {
+                this.value = undefined;
+            }
+
+            this._onChange(this.value);
+            this.valueChange.emit(this.value);
+        }
     }
 
     writeValue(value?: Competency[]): void {
@@ -100,7 +127,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             const ids = value.map((el) => el.id);
             this.value = this.competencies.filter((competency) => ids.includes(competency.id));
         } else {
-            this.value = value;
+            this.value = value ?? [];
         }
     }
 

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.io.IOException;
@@ -24,11 +25,13 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
@@ -115,6 +118,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 /**
  * Service Implementation for managing exams.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ExamService {
 
@@ -580,6 +584,10 @@ public class ExamService {
             // set the locked property of the participation properly
             if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
                     && exercise instanceof ProgrammingExercise programmingExercise) {
+                // check if hibernate proxy is initialized, else fetch exercise with submission policy
+                if (!Hibernate.isInitialized(programmingExercise.getSubmissionPolicy())) {
+                    programmingExercise = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow();
+                }
                 var submissionPolicy = programmingExercise.getSubmissionPolicy();
                 // in the unlikely case the student exam was already submitted, set all participations to locked
                 if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(studentExam.isEnded())) {
