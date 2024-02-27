@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisMessageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisResultDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisSubmissionDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisTextMessageContentDTOPyris;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisTextMessageContentDTO;
 
 @Service
 public class PyrisDTOService {
@@ -89,7 +89,7 @@ public class PyrisDTOService {
             var content = message.getContent().stream().map(messageContent -> {
                 PyrisMessageContentDTO result = null;
                 if (messageContent.getClass().equals(IrisTextMessageContent.class)) {
-                    result = new PyrisTextMessageContentDTOPyris(messageContent.getContentAsString());
+                    result = new PyrisTextMessageContentDTO(messageContent.getContentAsString());
                 }
                 else if (messageContent.getClass().equals(IrisJsonMessageContent.class)) {
                     result = new PyrisJsonMessageContentDTO(messageContent.getContentAsString());
