@@ -555,14 +555,36 @@ export class ProgrammingExerciseService {
 
     /**
      * Gets the git-diff report of a programming exercise for two specific commits.
-     * The user needs to have access to the partipation to access this endpoint.
+     * The user needs to have access to the participation to access this endpoint.
+     * @param exerciseId The id of a programming exercise
      * @param participationId The id of a participation
      * @param olderCommitHash The hash of the older commit
      * @param newerCommitHash The hash of the newer commit
      */
-    getDiffReportForCommits(participationId: number, olderCommitHash: string, newerCommitHash: string): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+    getDiffReportForCommits(
+        exerciseId: number,
+        participationId: number,
+        olderCommitHash: string,
+        newerCommitHash: string,
+    ): Observable<ProgrammingExerciseGitDiffReport | undefined> {
         return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${participationId}/commits/${olderCommitHash}/diff-report/${newerCommitHash}`, {
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/participation/${participationId}/commits/${olderCommitHash}/diff-report/${newerCommitHash}`, {
+                observe: 'response',
+            })
+            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
+    }
+
+    /**
+     * Gets the git-diff report of a programming exercise for a commit compared to an empty repository.
+     * This is currently used to show the diff for the first commit of a participation, which is usually the template commit.
+     * The user needs to have access to the participation to access this endpoint.
+     * @param exerciseId The id of a programming exercise
+     * @param participationId The id of a participation
+     * @param commitHash The hash of the commit
+     */
+    getDiffReportForCommitAndEmptyRepository(exerciseId: number, participationId: number, commitHash: string): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+        return this.http
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/participation/${participationId}/commit/${commitHash}/diff-report`, {
                 observe: 'response',
             })
             .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));

@@ -262,23 +262,15 @@ public class ProgrammingExerciseGitDiffReportService {
      * @throws IOException     If an error occurs while accessing the file system
      */
     public ProgrammingExerciseGitDiffReport generateReportForSubmissions(ProgrammingSubmission submission1, ProgrammingSubmission submission2) throws GitAPIException, IOException {
-        var repositoryUri = ((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUri();
-        var repo1 = gitService.getOrCheckoutRepository(repositoryUri, true);
-        var repo1Path = repo1.getLocalPath();
-        var repo2Path = fileService.getTemporaryUniqueSubfolderPath(repo1Path.getParent(), 5);
-        FileSystemUtils.copyRecursively(repo1Path, repo2Path);
-        repo1 = gitService.checkoutRepositoryAtCommit(repo1, submission1.getCommitHash());
-        var repo2 = gitService.getExistingCheckedOutRepositoryByLocalPath(repo2Path, repositoryUri);
-        repo2 = gitService.checkoutRepositoryAtCommit(repo2, submission2.getCommitHash());
-        return parseFilesAndCreateReport(repo1, repo2);
+        return generateReportForCommits((ProgrammingExerciseParticipation) submission1.getParticipation(), submission1.getCommitHash(), submission2.getCommitHash());
     }
 
     /**
-     * Creates a new ProgrammingExerciseGitDiffReport containing the git-diff for two commits.
+     * Creates a new ProgrammingExerciseGitDiffReport containing the git-diff for a participation and two commit hashes.
      *
-     * @param participation The participation for the commits
-     * @param commitHash1   The first commit (older)
-     * @param commitHash2   The second commit (newer)
+     * @param participation The participation for which the report should be created
+     * @param commitHash1   The first commit hash
+     * @param commitHash2   The second commit hash
      * @return The report with the changes between the two commits
      * @throws GitAPIException If an error occurs while accessing the git repository
      * @throws IOException     If an error occurs while accessing the file system
@@ -294,6 +286,34 @@ public class ProgrammingExerciseGitDiffReportService {
         var repo2 = gitService.getExistingCheckedOutRepositoryByLocalPath(repo2Path, repositoryUri);
         repo2 = gitService.checkoutRepositoryAtCommit(repo2, commitHash2);
         return parseFilesAndCreateReport(repo1, repo2);
+    }
+
+    /**
+     * Creates a new ProgrammingExerciseGitDiffReport containing the git-diff for a participation and a commit hash and an empty repository.
+     *
+     * @param participation The participation for which the report should be created
+     * @param commitHash    The commit hash
+     * @return The report with the changes between the commit and the participation
+     * @throws GitAPIException If an error occurs while accessing the git repository
+     * @throws IOException     If an error occurs while accessing the file system
+     */
+    public ProgrammingExerciseGitDiffReport generateReportForCommitAndEmptyRepository(ProgrammingExerciseParticipation participation, String commitHash)
+            throws GitAPIException, IOException {
+        var repositoryUri = participation.getVcsRepositoryUri();
+        var repo1 = gitService.getOrCheckoutRepository(repositoryUri, true);
+        var repo1Path = repo1.getLocalPath();
+        var emptyRepoPath = fileService.getTemporaryUniqueSubfolderPath(repo1Path.getParent(), 5);
+        try (Git emptyRepo = Git.init().setDirectory(emptyRepoPath.toFile()).call()) {
+            repo1 = gitService.checkoutRepositoryAtCommit(repo1, commitHash);
+
+            var oldTreeParser = new FileTreeIterator(emptyRepo.getRepository());
+            var newTreeParser = new FileTreeIterator(repo1);
+
+            var report = createReport(repo1, oldTreeParser, newTreeParser);
+            gitService.switchBackToDefaultBranchHead(repo1);
+
+            return report;
+        }
     }
 
     /**

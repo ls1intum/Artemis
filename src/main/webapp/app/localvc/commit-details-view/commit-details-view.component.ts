@@ -16,10 +16,10 @@ import { tap } from 'rxjs/operators';
 })
 export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     report: ProgrammingExerciseGitDiffReport;
-    diffForTemplateAndSolution = false;
     exerciseId: number;
     participationId: number;
     commitHash: string;
+    isTemplate = false;
 
     errorWhileFetchingRepos = false;
     leftCommitFileContentByPath: Map<string, string>;
@@ -91,6 +91,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                                 this.previousCommit = this.commits[i + 1];
                             } else {
                                 // choose template commit
+                                this.isTemplate = true;
                                 this.previousCommit = this.commits[this.commits.length - 1];
                             }
                             break;
@@ -100,16 +101,29 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             )
             .subscribe({
                 next: () => {
-                    // get the DiffReport for the previous and current Commit
-                    if (this.previousCommit && this.currentCommit && this.previousCommit.hash && this.currentCommit.hash) {
-                        this.repoFilesSubscription = this.programmingExerciseService
-                            .getDiffReportForCommits(this.participationId, this.previousCommit.hash, this.currentCommit.hash)
-                            .subscribe((report) => {
-                                this.handleNewReport(report!);
-                            });
-                    }
+                    this.getDiffReport();
                 },
             });
+    }
+
+    /**
+     * Gets the diff report for the current and previous commit or the template commit and the empty repository.
+     * @private
+     */
+    private getDiffReport() {
+        if (this.isTemplate && this.currentCommit && this.currentCommit.hash) {
+            this.repoFilesSubscription = this.programmingExerciseService
+                .getDiffReportForCommitAndEmptyRepository(this.exerciseId, this.participationId, this.currentCommit.hash)
+                .subscribe((report) => {
+                    this.handleNewReport(report!);
+                });
+        } else if (this.previousCommit && this.currentCommit && this.previousCommit.hash && this.currentCommit.hash) {
+            this.repoFilesSubscription = this.programmingExerciseService
+                .getDiffReportForCommits(this.exerciseId, this.participationId, this.previousCommit.hash, this.currentCommit.hash)
+                .subscribe((report) => {
+                    this.handleNewReport(report!);
+                });
+        }
     }
 
     /**
@@ -132,17 +146,22 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      * @private
      */
     private fetchParticipationRepoFiles() {
-        this.participationRepoFilesAtLeftCommitSubscription = this.programmingExerciseParticipationService
-            .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(this.report.participationIdForLeftCommit!, this.report.leftCommitHash!)
-            .subscribe({
-                next: (filesWithContent: Map<string, string>) => {
-                    this.leftCommitFileContentByPath = filesWithContent;
-                    this.fetchParticipationRepoFilesAtRightCommit();
-                },
-                error: () => {
-                    this.errorWhileFetchingRepos = true;
-                },
-            });
+        if (this.isTemplate) {
+            this.leftCommitFileContentByPath = new Map<string, string>();
+            this.fetchParticipationRepoFilesAtRightCommit();
+        } else {
+            this.participationRepoFilesAtLeftCommitSubscription = this.programmingExerciseParticipationService
+                .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(this.report.participationIdForLeftCommit!, this.report.leftCommitHash!)
+                .subscribe({
+                    next: (filesWithContent: Map<string, string>) => {
+                        this.leftCommitFileContentByPath = filesWithContent;
+                        this.fetchParticipationRepoFilesAtRightCommit();
+                    },
+                    error: () => {
+                        this.errorWhileFetchingRepos = true;
+                    },
+                });
+        }
     }
 
     /**

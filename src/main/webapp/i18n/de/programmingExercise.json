@@ -534,6 +534,7 @@
                 "tooltipBetweenSubmissions": "Zeigt den detaillierten Git-Diff zwischen der aktuellen und der vorherigen Abgabe.",
                 "title": "Template-Lösungs-Diff",
                 "titleForSubmissions": "Abgaben-Diff",
+                "emptyRepository": "Leeres Repository",
                 "template": "Vorlage",
                 "solution": "Lösung",
                 "previousSubmission": "Vorherige Abgabe",

@@ -537,6 +537,7 @@
                 "titleForSubmissions": "Submission-Diff",
                 "template": "Template",
                 "solution": "Solution",
+                "emptyRepository": "Empty Repository",
                 "previousSubmission": "Previous Submission",
                 "previousCommit": "Previous Commit",
                 "currentSubmission": "Current Submission",
