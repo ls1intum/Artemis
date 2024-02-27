@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
-import { Subject, firstValueFrom } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -177,7 +177,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             }
 
-            this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!).subscribe(async (updatedProgrammingExercise) => {
+            this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!).subscribe((updatedProgrammingExercise) => {
                 this.programmingExercise = updatedProgrammingExercise.body!;
 
                 this.setLatestCoveredLineRatio();
@@ -218,11 +218,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.exerciseDetailSections = this.getExerciseDetails();
                 });
 
-                await this.loadGitDiffReport();
+                this.loadGitDiffReport();
 
                 // the build logs endpoint requires at least editor privileges
                 if (this.programmingExercise.isAtLeastEditor) {
-                    this.programmingExercise.buildLogStatistics = await firstValueFrom(this.programmingExerciseService.getBuildLogStatistics(exerciseId!));
+                    this.programmingExerciseService
+                        .getBuildLogStatistics(exerciseId!)
+                        .subscribe((buildLogStatistics) => (this.programmingExercise.buildLogStatistics = buildLogStatistics));
+                    this.exerciseDetailSections = this.getExerciseDetails();
                 }
 
                 this.setLatestCoveredLineRatio();
@@ -399,7 +402,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         participation: exercise.templateParticipation,
                         loading: this.loadingTemplateParticipationResults,
                         submissionRouterLink: exercise.templateParticipation && this.getParticipationSubmissionLink(exercise.templateParticipation.id!),
-                        onParticipationChange: this.onParticipationChange,
+                        onParticipationChange: (isInitialChange) => this.onParticipationChange(isInitialChange),
                         type: ProgrammingExerciseParticipationType.TEMPLATE,
                     },
                 },
@@ -411,7 +414,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         participation: exercise.solutionParticipation,
                         loading: this.loadingSolutionParticipationResults,
                         submissionRouterLink: exercise.solutionParticipation && this.getParticipationSubmissionLink(exercise.solutionParticipation.id!),
-                        onParticipationChange: this.onParticipationChange,
+                        onParticipationChange: (isInitialChange) => this.onParticipationChange(isInitialChange),
                         type: ProgrammingExerciseParticipationType.SOLUTION,
                     },
                 },
@@ -546,7 +549,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.profileService.getProfileInfo().subscribe((profileInfo) => (this.isBuildPlanEditable = hasEditableBuildPlan(profileInfo)));
     }
 
-    onParticipationChange(): void {
+    onParticipationChange(isInitialChange: boolean): void {
+        if (isInitialChange) {
+            return;
+        }
         this.loadGitDiffReport();
         this.setLatestCoveredLineRatio();
     }
@@ -707,24 +713,26 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return link;
     }
 
-    async loadGitDiffReport(): Promise<void> {
-        const gitDiffReport = await firstValueFrom(this.programmingExerciseService.getDiffReport(this.programmingExercise.id!));
-        if (gitDiffReport) {
-            this.programmingExercise.gitDiffReport = gitDiffReport;
-            gitDiffReport.programmingExercise = this.programmingExercise;
-            this.addedLineCount =
-                gitDiffReport.entries
-                    ?.map((entry) => entry.lineCount)
-                    .filter((lineCount) => lineCount)
-                    .map((lineCount) => lineCount!)
-                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
-            this.removedLineCount =
-                gitDiffReport.entries
-                    ?.map((entry) => entry.previousLineCount)
-                    .filter((lineCount) => lineCount)
-                    .map((lineCount) => lineCount!)
-                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
-        }
+    loadGitDiffReport() {
+        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
+            if (gitDiffReport) {
+                this.programmingExercise.gitDiffReport = gitDiffReport;
+                gitDiffReport.programmingExercise = this.programmingExercise;
+                this.addedLineCount =
+                    gitDiffReport.entries
+                        ?.map((entry) => entry.lineCount)
+                        .filter((lineCount) => lineCount)
+                        .map((lineCount) => lineCount!)
+                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+                this.removedLineCount =
+                    gitDiffReport.entries
+                        ?.map((entry) => entry.previousLineCount)
+                        .filter((lineCount) => lineCount)
+                        .map((lineCount) => lineCount!)
+                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+                this.exerciseDetailSections = this.getExerciseDetails();
+            }
+        });
     }
 
     createStructuralSolutionEntries() {

@@ -103,7 +103,7 @@ interface ProgrammingTestStatusDetail extends DetailBase {
         participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
         loading?: boolean;
         exercise: ProgrammingExercise;
-        onParticipationChange: () => void;
+        onParticipationChange: (isInitialChange: boolean) => void;
         type: ProgrammingExerciseParticipationType;
         submissionRouterLink?: (string | number | undefined)[];
     };

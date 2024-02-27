@@ -38,7 +38,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      */
     @Input() personalParticipation = true;
 
-    @Output() onParticipationChange = new EventEmitter<void>();
+    @Output() onParticipationChange = new EventEmitter<boolean>();
 
     result?: Result;
     isBuilding: boolean;
@@ -98,8 +98,9 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 filter((result: Result) => this.showUngradedResults || result.rated === true),
                 map((result) => ({ ...result, completionDate: convertDateFromServer(result.completionDate), participation: this.participation })),
                 tap((result) => {
+                    const isInitialChange = !!this.result;
                     this.result = result;
-                    this.onParticipationChange.emit();
+                    this.onParticipationChange.emit(isInitialChange);
                 }),
             )
             .subscribe();
