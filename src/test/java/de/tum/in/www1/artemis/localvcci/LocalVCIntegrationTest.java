@@ -30,6 +30,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -233,5 +234,11 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
+    }
+
+    @Test
+    void testRepositoryFolderDoesNotContainSlashGit() {
+        LocalVCRepositoryUri studentAssignmentRepositoryUri = new LocalVCRepositoryUri(projectKey1, projectKey1.toLowerCase() + "-" + TEST_PREFIX + "student1", localVCBaseUrl);
+        assertThat(studentAssignmentRepositoryUri.folderNameForRepositoryUri()).doesNotContain("/git");
     }
 }
