@@ -9,7 +9,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { Competency } from 'app/entities/competency.model';
-import { CompetencyFilter, CompetencyPageableSearch, PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { CompetencyFilter, PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
@@ -76,7 +76,7 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
-            this.performSearch({ ...this.filter, ...this.search });
+            this.performSearch();
             //load competencies of this course to disable their import buttons
             this.competencyService.getAllForCourse(this.courseId).subscribe({
                 next: (res) => {
@@ -98,7 +98,7 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
         this.filter = filter;
         //navigate back to the first page when the filter changes
         this.search.page = 1;
-        this.performSearch({ ...this.filter, ...this.search });
+        this.performSearch();
     }
 
     /**
@@ -108,17 +108,16 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
      */
     searchChange(search: PageableSearch) {
         this.search = search;
-        this.performSearch({ ...this.filter, ...this.search });
+        this.performSearch();
     }
 
     /**
      * Fetches a page of competencies matching a PageableSearch from the server.
      *
-     * @param search the complete PageableSearch object
      */
-    performSearch(search: CompetencyPageableSearch) {
+    performSearch() {
         this.isLoading = true;
-        this.competencyService.getForImport(search).subscribe({
+        this.competencyService.getForImport({ ...this.filter, ...this.search }).subscribe({
             next: (res) => {
                 this.searchedCompetencies = res;
                 this.isLoading = false;
@@ -130,7 +129,7 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
     /**
      * Callback that sorts the selected competencies
      *
-     * @param search the PageableSerach object with the updated sorting data
+     * @param search the PageableSearch object with the updated sorting data
      */
     sortSelected(search: PageableSearch) {
         this.selectedCompetencies.resultsOnPage = this.sortingService.sortByProperty(
