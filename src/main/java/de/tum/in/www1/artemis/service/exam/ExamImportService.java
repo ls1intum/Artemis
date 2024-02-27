@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.util.*;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -19,6 +22,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportServi
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.errors.ExamConfigurationException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ExamImportService {
 

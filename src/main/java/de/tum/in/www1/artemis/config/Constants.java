@@ -300,6 +300,16 @@ public final class Constants {
     public static final String PROFILE_LOCALCI = "localci";
 
     /**
+     * The name of the Spring profile used to process build jobs in a local CI setup.
+     */
+    public static final String PROFILE_BUILDAGENT = "buildagent";
+
+    /**
+     * The name of the Spring profile used for Artemis core functionality.
+     */
+    public static final String PROFILE_CORE = "core";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;

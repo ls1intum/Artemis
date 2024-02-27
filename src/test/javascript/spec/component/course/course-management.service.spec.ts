@@ -115,8 +115,6 @@ describe('Course Management Service', () => {
 
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.id = 234;
-        onlineCourseConfiguration.ltiKey = 'key';
-        onlineCourseConfiguration.ltiSecret = 'secret';
         returnedFromService = { ...course } as Course;
         participations = [new StudentParticipation()];
         convertExercisesDateFromServerSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);

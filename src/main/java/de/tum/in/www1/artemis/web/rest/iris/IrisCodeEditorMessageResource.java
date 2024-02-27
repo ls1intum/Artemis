@@ -20,8 +20,8 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 /**
  * REST controller for managing {@link IrisMessage}.
  */
-@RestController
 @Profile("iris")
+@RestController
 @RequestMapping("api/iris/")
 public class IrisCodeEditorMessageResource {
 

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.export.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
 import static de.tum.in.www1.artemis.service.export.DataExportUtil.createDirectoryIfNotExistent;
 import static de.tum.in.www1.artemis.service.export.DataExportUtil.retrieveCourseDirPath;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -28,6 +30,7 @@ import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
  * This includes messages (posts), thread replies (answer posts) and reactions to posts and answer posts
  * All communication data is exported per course and stored in a CSV file.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class DataExportCommunicationDataService {
 

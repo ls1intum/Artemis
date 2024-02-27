@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -22,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -57,6 +59,7 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller for managing Exam.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ExamResource {
@@ -254,7 +257,7 @@ public class ExamResource {
      * @param workingTimeChange the working time change in seconds (can be positive or negative, but must not be 0)
      * @return the ResponseEntity with status 200 (OK) and with the updated exam as body
      */
-    @PatchMapping("/courses/{courseId}/exams/{examId}/working-time")
+    @PatchMapping("courses/{courseId}/exams/{examId}/working-time")
     @EnforceAtLeastInstructor
     public ResponseEntity<Exam> updateExamWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Integer workingTimeChange) {
         log.debug("REST request to update the working time of exam with id {}", examId);
@@ -328,7 +331,7 @@ public class ExamResource {
      * @param message  the message of the announcement
      * @return the ResponseEntity with status 200 (OK) and with the new announcement as body
      */
-    @PostMapping("/courses/{courseId}/exams/{examId}/announcements")
+    @PostMapping("courses/{courseId}/exams/{examId}/announcements")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamWideAnnouncementEventDTO> createExamAnnouncement(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody String message) {
         long start = System.nanoTime();

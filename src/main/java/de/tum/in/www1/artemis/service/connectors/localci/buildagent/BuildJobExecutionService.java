@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -53,7 +54,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * submitted to the executor service.
  */
 @Service
-@Profile("buildagent")
+@Profile(PROFILE_BUILDAGENT)
 public class BuildJobExecutionService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobExecutionService.class);
@@ -141,7 +142,7 @@ public class BuildJobExecutionService {
                 assignmentCommitHash = gitService.getLastCommitHash(assignmentRepoUri).getName();
             }
             catch (EntityNotFoundException e) {
-                throw new LocalCIException("Could not find last commit hash for assignment repository");
+                throw new LocalCIException("Could not find last commit hash for assignment repository with absolute path " + assignmentRepositoryPath, e);
             }
         }
         String testCommitHash;

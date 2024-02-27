@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.web.rest.science;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +17,7 @@ import de.tum.in.www1.artemis.web.rest.dto.science.ScienceEventDTO;
 /**
  * REST controller providing the science related endpoints.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ScienceResource {

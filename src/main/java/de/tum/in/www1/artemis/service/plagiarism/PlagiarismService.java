@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 
@@ -12,6 +13,7 @@ import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Submission;
@@ -26,6 +28,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonReposito
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class PlagiarismService {
 

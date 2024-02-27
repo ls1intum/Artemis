@@ -17,7 +17,6 @@
                     "confirm": "Bestätigen"
                 }
             },
-            "version10": "LTI 1.0",
             "version13": "LTI 1.3",
             "dynamicRegistrationUrl": "Dynamic Registration URL",
             "deepLinkingUrl": "Deep Linking URL",
@@ -42,9 +41,6 @@
             "ltiSuccessLoginRequired": "LTI Übung erfolgreich gestartet. Bitte melde dich als Nutzer:in {{user}} an.",
             "lti": "LTI",
             "configurationForCourse": "LTI Konfiguration des Kurses {{ title }}",
-            "ltiKey": "LTI Key",
-            "ltiSecret": "LTI Geheimnis",
-            "lti10LaunchUrl": "LTI 1.0 Start URL",
             "lti13LaunchUrl": "LTI 1.3 Start URL",
             "ltiLaunchTarget": "LTI Startziel",
             "scored": "Bewertet",
@@ -59,8 +55,6 @@
                 "configurationForCourse": "LTI Konfiguration der Kurs {{ title }} bearbeiten",
                 "userPrefixTooltip": "Präfix für die neuen Benutzer, die für diesen Kurs erstellt werden. Es wird empfohlen, einen Wert zu verwenden, der die Benutzer eindeutig als Teil dieses Kurses identifiziert.",
                 "requireExistingUserTooltip": "Wenn ausgewählt, erfordert das Starten der Übung einen bestehenden Benutzer in Artemis. Wenn abgewählt, kann ein Benutzer beim ersten Start erstellt werden, wenn er noch nicht existiert",
-                "ltiKeyTooltip": "Für LTI 1.0 verwendeter Key. Sie können diesen Wert frei ändern, es wird jedoch empfohlen, den automatisch generierten Wert zu verwenden.",
-                "ltiSecretTooltip": "Für LTI 1.0 verwendetes Geheimnis. Sie können diesen Wert frei ändern, es wird jedoch empfohlen, den automatisch generierten Wert zu verwenden.",
                 "registrationIdTooltip": "ID, die zur Identifizierung der Registrierung der Lernplattform verwendet wird. Diese muss für alle Kurse eindeutig sein. Sie können diesen Wert frei ändern, es wird jedoch empfohlen, den automatisch generierten Wert zu verwenden.",
                 "clientIdTooltip": "Es ist möglich, dieses Feld und die folgenden URI-Felder manuell zu konfigurieren, aber es wird dringend empfohlen, den Dynamic Registration Service zur automatischen Konfiguration zu verwenden.",
                 "form": {
@@ -68,12 +62,12 @@
                         "forbidden": "Nutzer-Präfix darf keine Sonderzeichen beinhalten."
                     }
                 },
-                "ltiPlatform": "LTI-Plattformkonfiguration bearbeiten",
                 "customNameIdTooltip": "Geben Sie einen erkennbaren Namen für die Plattform ein, um sie in der Liste leicht identifizieren zu können. Dieser Name dient nur als administrative Referenz und hat keinen Einfluss auf die tatsächliche Konfiguration oder Konnektivität der Plattform."
             },
             "configuredPlatforms": "Konfigurierte Plattformen",
             "viewAdvancedSettings": "Erweiterte Einstellungen anzeigen",
-            "closeAdvancedSettings": "Erweiterte Einstellungen schließen"
+            "closeAdvancedSettings": "Erweiterte Einstellungen schließen",
+            "addOrEditLtiPlatform": "LTI-Plattformkonfiguration hinzufügen oder bearbeiten"
         },
         "lti13": {
             "launch": {
@@ -103,7 +97,8 @@
             "externalToolSettingsTooltip": "Ein Externes Tool ist für die Verknüpfung und Teilnahme an Übungen erforderlich und ermöglicht die nahtlose Integration mit externen Ressourcen und Aktivitäten",
             "editExternalToolSettingsTooltip": "Bitte wählen Sie ein Externes Tool für diesen Kurs, um eine erfolgreiche LTI-Kommunikation zu ermöglichen. Sobald ein vorkonfiguriertes Externes Tool ausgewählt wurde, ist dieser Online-Kurs für die Verknüpfung mit Übungen und die Teilnahme daran verfügbar.",
             "selectExternalTool": "Wählen Sie ein externes Tool",
-            "selectCourse": "Kurs wählen"
+            "selectCourse": "Kurs wählen",
+            "addNewPlatform": "Neue Plattformkonfiguration hinzufügen"
         }
     }
 }

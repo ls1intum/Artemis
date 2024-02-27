@@ -26,8 +26,8 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 /**
  * REST controller for managing {@link IrisCodeEditorSession}.
  */
-@RestController
 @Profile("iris")
+@RestController
 @RequestMapping("api/iris/")
 public class IrisCodeEditorSessionResource extends IrisExerciseChatBasedSessionResource<ProgrammingExercise, IrisCodeEditorSession> {
 
@@ -100,7 +100,7 @@ public class IrisCodeEditorSessionResource extends IrisExerciseChatBasedSessionR
      * @param sessionId id of the session
      * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
      */
-    @GetMapping("/code-editor-sessions/{sessionId}/active")
+    @GetMapping("code-editor-sessions/{sessionId}/active")
     @EnforceAtLeastEditor
     public ResponseEntity<Boolean> isIrisActive(@PathVariable Long sessionId) {
         var session = irisCodeEditorSessionRepository.findByIdElseThrow(sessionId);
