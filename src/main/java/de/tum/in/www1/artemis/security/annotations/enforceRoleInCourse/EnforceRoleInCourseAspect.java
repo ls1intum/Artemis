@@ -43,7 +43,7 @@ public class EnforceRoleInCourseAspect {
     @Around(value = "callAt(enforceRoleInCourse)", argNames = "joinPoint,enforceRoleInCourse")
     public Object around(ProceedingJoinPoint joinPoint, EnforceRoleInCourse enforceRoleInCourse) throws Throwable {
         final var courseId = getCourseId(joinPoint, enforceRoleInCourse)
-                .orElseThrow(() -> new IllegalArgumentException("Method annotated with @RoleInCourse must have a parameter named 'courseId'"));
+                .orElseThrow(() -> new IllegalArgumentException("Method annotated with @EnforceRoleInCourse must have a parameter named 'courseId'"));
         authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(enforceRoleInCourse.value(), courseId);
         return joinPoint.proceed();
     }
