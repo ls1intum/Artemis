@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.pyris.dto.data;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Map;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
 public record PyrisProgrammingExerciseDTO(long id, String name, ProgrammingLanguage programmingLanguage, Map<String, String> templateRepository,
-        Map<String, String> solutionRepository, Map<String, String> testsRepository, String problemStatement, ZonedDateTime startDate, ZonedDateTime endDate) {
+        Map<String, String> solutionRepository, Map<String, String> testsRepository, String problemStatement, Instant startDate, Instant endDate) {
 
 }

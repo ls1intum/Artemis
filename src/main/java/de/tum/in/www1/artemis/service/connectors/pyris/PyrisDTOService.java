@@ -56,14 +56,15 @@ public class PyrisDTOService {
         var testsRepositoryContents = testRepo.map(repositoryService::getFilesWithContent).orElse(Map.of());
 
         return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
-                testsRepositoryContents, exercise.getProblemStatement(), exercise.getReleaseDate(), exercise.getDueDate());
+                testsRepositoryContents, exercise.getProblemStatement(), exercise.getReleaseDate().toInstant(), exercise.getDueDate().toInstant());
     }
 
     public PyrisSubmissionDTO toPyrisDTO(ProgrammingSubmission submission) {
-        var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(buildLogEntry.getTime(), buildLogEntry.getLog())).toList();
+        var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(buildLogEntry.getTime().toInstant(), buildLogEntry.getLog()))
+                .toList();
         var studentRepositoryContents = getRepository((ProgrammingExerciseParticipation) submission.getParticipation()).map(repositoryService::getFilesWithContent)
                 .orElse(Map.of());
-        return new PyrisSubmissionDTO(submission.getId(), submission.getSubmissionDate(), studentRepositoryContents, submission.getParticipation().isPracticeMode(),
+        return new PyrisSubmissionDTO(submission.getId(), submission.getSubmissionDate().toInstant(), studentRepositoryContents, submission.getParticipation().isPracticeMode(),
                 submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
     }
 
@@ -80,7 +81,7 @@ public class PyrisDTOService {
             return new PyrisFeedbackDTO(text, feedback.getTestCase().getTestName(), feedback.getCredits());
         }).toList();
 
-        return new PyrisResultDTO(latestResult.getCompletionDate(), latestResult.isSuccessful(), feedbacks);
+        return new PyrisResultDTO(latestResult.getCompletionDate().toInstant(), latestResult.isSuccessful(), feedbacks);
     }
 
     public List<PyrisMessageDTO> toPyrisDTO(List<IrisMessage> messages) {
@@ -95,7 +96,7 @@ public class PyrisDTOService {
                 }
                 return result;
             }).filter(Objects::nonNull).toList();
-            return new PyrisMessageDTO(message.getSentAt(), message.getSender(), content);
+            return new PyrisMessageDTO(message.getSentAt().toInstant(), message.getSender(), content);
         }).toList();
     }
 
