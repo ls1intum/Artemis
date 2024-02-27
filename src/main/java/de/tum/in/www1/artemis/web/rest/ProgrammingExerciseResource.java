@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -54,6 +56,7 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
 /**
  * REST controller for managing ProgrammingExercise.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping(ROOT)
 public class ProgrammingExerciseResource {
@@ -391,7 +394,7 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
         var programmingExercise = findProgrammingExercise(exerciseId, withPlagiarismDetectionConfig);
         // Fetch grading criterion into exercise of participation
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
 
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, programmingExercise);

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -17,6 +19,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -36,6 +39,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
+@Profile(PROFILE_CORE)
 @Service
 public class QuizExerciseService extends QuizService<QuizExercise> {
 
@@ -59,12 +63,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, FileService fileService, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, FilePathService filePathService) {
+            ShortAnswerMappingRepository shortAnswerMappingRepository) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -74,7 +76,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.fileService = fileService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -210,7 +211,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
-        final var pageable = PageUtil.createExercisePageRequest(search);
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXERCISE);
         final var searchTerm = search.getSearchTerm();
         Specification<QuizExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         Page<QuizExercise> exercisePage = quizExerciseRepository.findAll(specification, pageable);
@@ -323,7 +324,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Set<String> exerciseFileNames = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
         Set<String> newFileNames = isCreate ? exerciseFileNames : exerciseFileNames.stream().filter(fileNameOrUri -> {
             try {
-                return !Files.exists(filePathService.actualPathForPublicPathOrThrow(URI.create(fileNameOrUri)));
+                return !Files.exists(FilePathService.actualPathForPublicPathOrThrow(URI.create(fileNameOrUri)));
             }
             catch (FilePathParsingException e) {
                 // File is not in the internal API format and hence expected to be a new file
@@ -380,9 +381,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     private URI saveDragAndDropImage(Path basePath, MultipartFile file, @Nullable Long entityId) throws IOException {
         String clearFileExtension = FileService.sanitizeFilename(FilenameUtils.getExtension(Objects.requireNonNull(file.getOriginalFilename())));
-        Path savePath = fileService.generateFilePath("dnd_image_", clearFileExtension, basePath);
+        Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", clearFileExtension));
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
-        return filePathService.publicPathForActualPathOrThrow(savePath, entityId);
+        return FilePathService.publicPathForActualPathOrThrow(savePath, entityId);
     }
 
     /**

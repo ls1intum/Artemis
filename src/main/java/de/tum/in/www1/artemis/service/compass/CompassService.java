@@ -1,9 +1,13 @@
 package de.tum.in.www1.artemis.service.compass;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -20,6 +24,7 @@ import de.tum.in.www1.artemis.service.compass.controller.ModelClusterFactory;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
+@Profile(PROFILE_CORE)
 @Service
 public class CompassService {
 
@@ -105,7 +110,8 @@ public class CompassService {
                 if (modelElement != null) {
                     ModelCluster cluster = modelClusters.get(modelClusters.indexOf(modelElement.getCluster()));
                     Set<ModelElement> similarElements = cluster.getModelElements();
-                    List<String> similarReferences = similarElements.stream().map(element -> element.getModelElementType() + ":" + element.getModelElementId()).toList();
+                    Set<String> similarReferences = similarElements.stream().map(element -> element.getModelElementType() + ":" + element.getModelElementId())
+                            .collect(Collectors.toCollection(HashSet::new));
                     List<Feedback> similarFeedbacks = feedbacks.stream().filter(feedback -> similarReferences.contains(feedback.getReference())).toList();
                     Feedback suggestedFeedback = FeedbackSelector.selectFeedback(modelElement, similarFeedbacks, result);
                     if (suggestedFeedback != null) {

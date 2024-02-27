@@ -11,6 +11,7 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +37,7 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportSer
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 // TODO: this class has too many dependencies to other services. We should reduce this
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingSubmissionService extends SubmissionService {
 
@@ -153,15 +155,15 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         // TODO: there might be cases in which Artemis should NOT trigger the build
         try {
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, commit.commitHash(), false);
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, commit.commitHash(), null);
         }
         catch (ContinuousIntegrationException ex) {
             // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
         }
 
         // There can't be two submissions for the same participation and commitHash!
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participation.getId(),
-                commit.commitHash());
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository
+                .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(), commit.commitHash());
         if (programmingSubmission != null) {
             throw new IllegalStateException("Submission for participation id " + participation.getId() + " and commitHash " + commit.commitHash() + " already exists!");
         }
@@ -350,7 +352,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throws IllegalStateException {
         String lastCommitHash = getLastCommitHashForParticipation(participation);
         // we first try to get an existing programming submission with the last commit hash
-        var programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participation.getId(), lastCommitHash);
+        var programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(),
+                lastCommitHash);
         // in case no programming submission is available, we create one
         return Objects.requireNonNullElseGet(programmingSubmission, () -> createSubmissionWithCommitHashAndSubmissionType(participation, lastCommitHash, submissionType));
     }

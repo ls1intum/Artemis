@@ -12,13 +12,17 @@ import javax.crypto.SecretKey;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
-import de.tum.in.www1.artemis.web.rest.LtiResource;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.open.PublicLtiResource;
 import io.jsonwebtoken.Jwts;
 
 /**
@@ -32,7 +36,7 @@ import io.jsonwebtoken.Jwts;
  * see <a href="https://www.imsglobal.org/spec/lti/v1p3/#lti-message-general-details">LTI message general details</a>
  * see <a href="https://www.imsglobal.org/spec/security/v1p0/#openid_connect_launch_flow">OpenId Connect launch flow</a>
  */
-class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final SecretKey SIGNING_KEY = Jwts.SIG.HS256.key().build();
 
@@ -43,6 +47,23 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationIndependentTes
             .and().id("1234").signWith(SIGNING_KEY).compact();
 
     private static final String VALID_STATE = "validState";
+
+    private static final String TEST_PREFIX = "lti13launchintegrationtest";
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @BeforeEach
+    void init() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
+        user.setInternal(false);
+        userRepository.save(user);
+        jiraRequestMockProvider.enableMockingOfRequests();
+    }
 
     @Test
     @WithAnonymousUser
@@ -115,10 +136,11 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationIndependentTes
     }
 
     private void validateRedirect(URI locationHeader, String token) {
-        assertThat(locationHeader.getPath()).isEqualTo(LtiResource.LOGIN_REDIRECT_CLIENT_PATH);
+        assertThat(locationHeader.getPath()).isEqualTo(PublicLtiResource.LOGIN_REDIRECT_CLIENT_PATH);
 
         List<NameValuePair> params = URLEncodedUtils.parse(locationHeader, StandardCharsets.UTF_8);
         assertUriParamsContain(params, "id_token", token);
         assertUriParamsContain(params, "state", VALID_STATE);
     }
+
 }

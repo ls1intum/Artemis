@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -21,6 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Competency entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface CompetencyRepository extends JpaRepository<Competency, Long> {
 
@@ -29,22 +33,13 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             FROM Competency c
             WHERE c.course.id = :courseId
             """)
-    Set<Competency> findAllForCourse(@Param("courseId") Long courseId);
-
-    @Query("""
-            SELECT c
-            FROM Competency c
-                LEFT JOIN FETCH c.userProgress progress
-            WHERE c.course.id = :courseId
-                AND (progress IS NULL OR progress.user.id = :userId)
-            """)
-    Set<Competency> findAllForCourseWithProgressForUser(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    Set<Competency> findAllForCourse(@Param("courseId") long courseId);
 
     @Query("""
             SELECT c
             FROM Competency c
                 LEFT JOIN FETCH c.lectureUnits lu
-            WHERE c.id = :#{#competencyId}
+            WHERE c.id = :competencyId
             """)
     Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
@@ -61,7 +56,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             SELECT competency
             FROM Competency competency
                 LEFT JOIN competency.userProgress progress
-                    ON competency.id = progress.learningGoal.id AND progress.user.id = :userId
+                    ON competency.id = progress.competency.id AND progress.user.id = :userId
                 LEFT JOIN FETCH competency.exercises
                 LEFT JOIN FETCH competency.lectureUnits lectureUnits
                 LEFT JOIN lectureUnits.completedUsers completedUsers
@@ -79,7 +74,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lu.completedUsers
             WHERE c.id = :competencyId
             """)
-    Optional<Competency> findByIdWithLectureUnitsAndCompletions(@Param("competencyId") Long competencyId);
+    Optional<Competency> findByIdWithLectureUnitsAndCompletions(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT c
@@ -89,7 +84,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lu.completedUsers
             WHERE c.id = :competencyId
             """)
-    Optional<Competency> findByIdWithExercisesAndLectureUnitsAndCompletions(@Param("competencyId") Long competencyId);
+    Optional<Competency> findByIdWithExercisesAndLectureUnitsAndCompletions(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT c
@@ -100,7 +95,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lu.competencies
             WHERE c.id = :competencyId
             """)
-    Optional<Competency> findByIdWithExercisesAndLectureUnitsBidirectional(@Param("competencyId") Long competencyId);
+    Optional<Competency> findByIdWithExercisesAndLectureUnitsBidirectional(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT c
@@ -108,7 +103,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH c.consecutiveCourses
             WHERE c.id = :competencyId
             """)
-    Optional<Competency> findByIdWithConsecutiveCourses(@Param("competencyId") Long competencyId);
+    Optional<Competency> findByIdWithConsecutiveCourses(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT pr
@@ -117,7 +112,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             WHERE c.id = :courseId
             ORDER BY pr.title
             """)
-    Set<Competency> findPrerequisitesByCourseId(@Param("courseId") Long courseId);
+    Set<Competency> findPrerequisitesByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT COUNT(*)
@@ -125,7 +120,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN pr.consecutiveCourses c
             WHERE c.id = :courseId
             """)
-    Long countPrerequisitesByCourseId(@Param("courseId") Long courseId);
+    Long countPrerequisitesByCourseId(@Param("courseId") long courseId);
 
     /**
      * Query which fetches all competencies for which the user is editor or instructor in the course and
@@ -158,7 +153,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             WHERE c.id = :competencyId
             """)
     @Cacheable(cacheNames = "competencyTitle", key = "#competencyId", unless = "#result == null")
-    String getCompetencyTitle(@Param("competencyId") Long competencyId);
+    String getCompetencyTitle(@Param("competencyId") long competencyId);
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Competency> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
@@ -175,11 +170,11 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
         return findByIdWithConsecutiveCourses(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
-    default Competency findByIdElseThrow(Long competencyId) {
+    default Competency findByIdElseThrow(long competencyId) {
         return findById(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
-    default Competency findByIdWithLectureUnitsElseThrow(Long competencyId) {
+    default Competency findByIdWithLectureUnitsElseThrow(long competencyId) {
         return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
@@ -188,4 +183,25 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
     }
 
     long countByCourse(Course course);
+
+    /**
+     * Gets all competencies for the given course with the progress of the specified user.
+     * <p>
+     * The query only fetches data related to specified user. Participations for other users are not included.
+     * IMPORTANT: JPA doesn't support JOIN-FETCH-ON statements. To fetch the relevant data we utilize the entity graph annotation.
+     * Moving the ON clauses to the WHERE clause would result in significantly different and faulty output.
+     *
+     * @param courseId the id of the course
+     * @param userId   the id of the user
+     * @return the competencies with the progress of the user
+     */
+    @Query("""
+            SELECT competency
+            FROM Competency competency
+                LEFT JOIN competency.userProgress progress
+                    ON competency.id = progress.competency.id AND progress.user.id = :userId
+            WHERE competency.course.id = :courseId
+            """)
+    @EntityGraph(type = LOAD, attributePaths = { "userProgress" })
+    List<Competency> findByCourseIdWithProgressOfUser(@Param("courseId") long courseId, @Param("userId") long userId);
 }

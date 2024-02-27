@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.*;
@@ -9,6 +10,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -36,8 +38,9 @@ import io.swagger.annotations.ApiResponses;
 /**
  * REST controller for managing TextAssessment.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class TextAssessmentResource extends AssessmentResource {
 
     @Value("${jhipster.clientApp.name}")
@@ -114,9 +117,8 @@ public class TextAssessmentResource extends AssessmentResource {
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            final var exercise = (TextExercise) result.getParticipation().getExercise();
             final var feedbacksWithIds = response.getBody().getFeedbacks();
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
         }
 
         return response;
@@ -150,11 +152,10 @@ public class TextAssessmentResource extends AssessmentResource {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
         }
         final Result result = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
-        final TextExercise exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         final Submission submission = result.getSubmission();
         final TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
         final List<Feedback> feedbacksWithIds = result.getFeedbacks();
-        saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
+        saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
         return ResponseEntity.ok(result);
     }
 
@@ -231,7 +232,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         if (response.getStatusCode().is2xxSuccessful()) {
             final var feedbacksWithIds = response.getBody().getFeedbacks();
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
             sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
         }
 
@@ -263,7 +264,7 @@ public class TextAssessmentResource extends AssessmentResource {
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(textExercise, user);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLatestResult(), textExercise, assessmentUpdate);
-        saveTextBlocks(assessmentUpdate.getTextBlocks(), textSubmission, textExercise, result.getFeedbacks());
+        saveTextBlocks(assessmentUpdate.getTextBlocks(), textSubmission, result.getFeedbacks());
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
             ((StudentParticipation) result.getParticipation()).setParticipant(null);
@@ -364,7 +365,7 @@ public class TextAssessmentResource extends AssessmentResource {
         // prepare and load in all feedbacks
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, result);
 
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);
         // Remove sensitive information of submission depending on user
         textSubmissionService.hideDetails(textSubmission, user);
@@ -395,7 +396,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission which must be connected to an example submission
      * @return the example result linked to the submission
      */
-    @GetMapping("/exercises/{exerciseId}/submissions/{submissionId}/example-result")
+    @GetMapping("exercises/{exerciseId}/submissions/{submissionId}/example-result")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -456,8 +457,9 @@ public class TextAssessmentResource extends AssessmentResource {
      *
      * @param textBlocks     received from Client
      * @param textSubmission to associate blocks with
+     * @param feedbacks      the feedbacks to associate with the blocks
      */
-    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final TextExercise exercise, final List<Feedback> feedbacks) {
+    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
         if (textBlocks != null) {
             List<Feedback> nonGeneralFeedbacks = feedbacks.stream().filter(feedback -> feedback.getReference() != null).toList();
             Map<String, Feedback> feedbackMap = nonGeneralFeedbacks.stream().collect(Collectors.toMap(Feedback::getReference, Function.identity()));

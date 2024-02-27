@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -7,8 +9,10 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -23,6 +27,7 @@ import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ResultService {
 
@@ -105,9 +110,9 @@ public class ResultService {
         result.getFeedbacks().forEach(feedback -> feedback.setResult(result));
 
         // this call should cascade all feedback relevant changed and save them accordingly
-        var savedResult = resultRepository.save(result);
+        resultRepository.save(result);
         // The websocket client expects the submission and feedbacks, so we retrieve the result again instead of using the save result.
-        savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(result.getId());
+        var savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(result.getId());
 
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
@@ -268,7 +273,9 @@ public class ResultService {
         results.forEach(result -> {
             boolean isBeforeDueDateOrAutomaticAndBeforeLatestDueDate = participationBeforeDueDate
                     || (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && beforeLatestDueDate);
-            result.filterSensitiveFeedbacks(isBeforeDueDateOrAutomaticAndBeforeLatestDueDate);
+            if (Hibernate.isInitialized(result.getFeedbacks())) {
+                result.filterSensitiveFeedbacks(isBeforeDueDateOrAutomaticAndBeforeLatestDueDate);
+            }
 
             boolean assessmentTypeSetAndNonAutomatic = result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC;
             boolean beforeAssessmentDueDate = !ExerciseDateService.isAfterAssessmentDueDate(exercise);
@@ -276,7 +283,9 @@ public class ResultService {
             // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
             if (assessmentTypeSetAndNonAutomatic && beforeAssessmentDueDate) {
                 // filter all non-automatic feedbacks
-                result.getFeedbacks().removeIf(feedback -> feedback.getType() != FeedbackType.AUTOMATIC);
+                if (Hibernate.isInitialized(result.getFeedbacks())) {
+                    result.getFeedbacks().removeIf(feedback -> feedback.getType() != FeedbackType.AUTOMATIC);
+                }
             }
         });
     }
@@ -311,7 +320,8 @@ public class ResultService {
         else if (planKey.endsWith("-" + BuildPlanType.SOLUTION.getName())) {
             return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
         }
-        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findByBuildPlanId(planKey);
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository
+                .findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(planKey);
         ProgrammingExerciseStudentParticipation participation = null;
         if (!participations.isEmpty()) {
             participation = participations.get(0);

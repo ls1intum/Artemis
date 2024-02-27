@@ -4,7 +4,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { UsersImportDialogComponent } from 'app/shared/user-import/users-import-dialog.component';
 import { CourseGroup } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 @Component({
@@ -13,10 +13,10 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
         <jhi-button
             [btnType]="ButtonType.PRIMARY"
             [btnSize]="buttonSize"
-            [icon]="faPlus"
+            [icon]="faFileImport"
             [title]="'artemisApp.importUsers.buttonLabel'"
             (onClick)="openUsersImportDialog($event)"
-        ></jhi-button>
+        />
     `,
 })
 export class UsersImportButtonComponent {
@@ -33,7 +33,7 @@ export class UsersImportButtonComponent {
     @Output() finish: EventEmitter<void> = new EventEmitter();
 
     // Icons
-    faPlus = faPlus;
+    faFileImport = faFileImport;
 
     constructor(private modalService: NgbModal) {}
 

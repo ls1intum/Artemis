@@ -202,7 +202,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
             throws Exception {
         exercise.setProgrammingLanguage(language);
         exercise.setProjectType(projectType);
-        mockConnectorRequestsForSetup(exercise, false);
+        mockConnectorRequestsForSetup(exercise, false, true, false);
         exercise.setChannelName("exercise-pe");
         if (testwiseCoverageAnalysis) {
             exercise.setTestwiseCoverageEnabled(true);

@@ -3,7 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
-import { Competency, CompetencyRelationError, CourseCompetencyProgress } from 'app/entities/competency.model';
+import { Competency, CompetencyRelationError, CompetencyWithTailRelationDTO, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
 import { ActivatedRoute } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -26,6 +26,13 @@ import { By } from '@angular/platform-browser';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 // eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: 'ngx-graph', template: '' })
@@ -35,6 +42,8 @@ describe('CompetencyManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
     let component: CompetencyManagementComponent;
     let competencyService: CompetencyService;
+    let profileService: ProfileService;
+    let irisSettingsService: IrisSettingsService;
     let modalService: NgbModal;
 
     let getAllForCourseSpy: any;
@@ -51,7 +60,9 @@ describe('CompetencyManagementComponent', () => {
                 NgxGraphStubComponent,
                 MockHasAnyAuthorityDirective,
                 MockComponent(DocumentationButtonComponent),
+                MockComponent(CompetencyImportCourseComponent),
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(NgbAccordionDirective),
@@ -128,6 +139,30 @@ describe('CompetencyManagementComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('should show generate button if IRIS is enabled', () => {
+        profileService = TestBed.inject(ProfileService);
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+        const profileInfoResponse = {
+            activeProfiles: [PROFILE_IRIS],
+        } as ProfileInfo;
+        const irisSettingsResponse = {
+            irisCompetencyGenerationSettings: {
+                enabled: true,
+            },
+        } as IrisCourseSettings;
+        const getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
+        const getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettingsResponse));
+
+        fixture.detectChanges();
+        return fixture.whenStable().then(() => {
+            const generateButton = fixture.debugElement.query(By.css('#generateButton'));
+
+            expect(getProfileInfoSpy).toHaveBeenCalled();
+            expect(getIrisSettingsSpy).toHaveBeenCalled();
+            expect(generateButton).not.toBeNull();
+        });
+    });
+
     it('should load competency and associated progress', () => {
         fixture.detectChanges();
 
@@ -199,6 +234,56 @@ describe('CompetencyManagementComponent', () => {
         expect(modalService.open).toHaveBeenCalledWith(CompetencyImportComponent, { size: 'lg', backdrop: 'static' });
         expect(modalRef.componentInstance.disabledIds).toBeArrayOfSize(3);
         expect(modalRef.componentInstance.disabledIds).toContainAllValues([1, 5, 3]);
+    });
+
+    it('should open and provide results for import all modal', () => {
+        const modalRef = {
+            result: Promise.resolve({}),
+            componentInstance: {},
+        } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+
+        fixture.detectChanges();
+        const importButton = fixture.debugElement.query(By.css('#competencyImportAllButton'));
+        importButton.nativeElement.click();
+
+        expect(modalService.open).toHaveBeenCalledOnce();
+        expect(modalService.open).toHaveBeenCalledWith(CompetencyImportCourseComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalRef.componentInstance.disabledIds).toBeArrayOfSize(1);
+        expect(modalRef.componentInstance.disabledIds).toContainAllValues([1]);
+    });
+
+    function createCompetency(id: number, title: string) {
+        return {
+            id: id,
+            title: title,
+        } as Competency;
+    }
+
+    it('should correctly update data after import', () => {
+        component.competencies = [createCompetency(1, 'Competency 1'), createCompetency(2, 'Competency 2')];
+        component.nodes = [
+            { id: '1', label: 'Competency 1' },
+            { id: '2', label: 'Competency 2' },
+        ];
+        component.edges = [{ id: '1', source: '1', target: '2', label: 'EXTENDS' }];
+
+        const result = [
+            {
+                competency: createCompetency(3, 'Competency 3'),
+                tailRelations: [{ id: 1 }, { id: 2 }, { id: 3 }],
+            },
+            {
+                competency: createCompetency(4, 'Competency 4'),
+                tailRelations: [{ id: 4 }],
+            },
+        ] as CompetencyWithTailRelationDTO[];
+
+        component.updateDataAfterImportAll(result);
+
+        expect(component.competencies).toHaveLength(4);
+        expect(component.nodes).toHaveLength(4);
+        expect(component.edges).toHaveLength(5);
     });
 
     it('should create competency relation', () => {

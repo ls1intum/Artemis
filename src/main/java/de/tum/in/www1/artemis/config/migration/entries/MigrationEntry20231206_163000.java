@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -9,6 +11,7 @@ import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -21,10 +24,9 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
  * This migration entry migrates all Haskell and OCaml exercises that need to check out the solution repository
  * in a student build plan. This is necessary because earlier versions of Artemis did not store this information.
  */
+@Profile(PROFILE_CORE)
 @Component
 public class MigrationEntry20231206_163000 extends MigrationEntry {
-
-    private static final int BATCH_SIZE = 100;
 
     private static final int THREADS = 10;
 

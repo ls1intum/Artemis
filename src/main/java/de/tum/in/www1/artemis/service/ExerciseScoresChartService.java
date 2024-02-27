@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.util.List;
@@ -7,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -26,6 +28,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
  * <p>
  * This services uses the participant scores tables for performance reason
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ExerciseScoresChartService {
 
@@ -81,25 +84,21 @@ public class ExerciseScoresChartService {
 
     private ExerciseScoresDTO createExerciseScoreDTO(Map<Long, ExerciseScoresAggregatedInformation> exerciseIdToAggregatedInformation,
             Map<Long, StudentScore> individualExerciseIdToStudentScore, Map<Long, TeamScore> teamExerciseIdToTeamScore, Exercise exercise) {
-        ExerciseScoresDTO exerciseScoresDTO = new ExerciseScoresDTO(exercise);
-
         ExerciseScoresAggregatedInformation aggregatedInformation = exerciseIdToAggregatedInformation.get(exercise.getId());
 
-        if (aggregatedInformation == null || aggregatedInformation.getAverageScoreAchieved() == null || aggregatedInformation.getMaxScoreAchieved() == null) {
-            exerciseScoresDTO.averageScoreAchieved = 0D;
-            exerciseScoresDTO.maxScoreAchieved = 0D;
-        }
-        else {
-            exerciseScoresDTO.averageScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.getAverageScoreAchieved(),
-                    exercise.getCourseViaExerciseGroupOrCourseMember());
-            exerciseScoresDTO.maxScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.getMaxScoreAchieved(),
-                    exercise.getCourseViaExerciseGroupOrCourseMember());
+        double averageScoreAchieved = 0D;
+        double maxScoreAchieved = 0D;
+
+        if (aggregatedInformation != null && aggregatedInformation.getAverageScoreAchieved() != null && aggregatedInformation.getMaxScoreAchieved() != null) {
+            averageScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.getAverageScoreAchieved(), exercise.getCourseViaExerciseGroupOrCourseMember());
+            maxScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.getMaxScoreAchieved(), exercise.getCourseViaExerciseGroupOrCourseMember());
         }
 
         ParticipantScore participantScore = exercise.getMode().equals(ExerciseMode.INDIVIDUAL) ? individualExerciseIdToStudentScore.get(exercise.getId())
                 : teamExerciseIdToTeamScore.get(exercise.getId());
-        exerciseScoresDTO.scoreOfStudent = participantScore == null || participantScore.getLastRatedScore() == null ? 0D
+        final double scoreOfStudent = participantScore == null || participantScore.getLastRatedScore() == null ? 0D
                 : roundScoreSpecifiedByCourseSettings(participantScore.getLastScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
-        return exerciseScoresDTO;
+
+        return ExerciseScoresDTO.of(exercise, scoreOfStudent, averageScoreAchieved, maxScoreAchieved);
     }
 }

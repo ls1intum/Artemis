@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.learningpath;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -7,22 +9,25 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 
 /**
  * Service Implementation for the recommendation of competencies and learning objects in learning paths.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class LearningPathRecommendationService {
 
@@ -175,7 +180,7 @@ public class LearningPathRecommendationService {
      * @return map to retrieve the number of competencies a competency extends
      */
     private Map<Long, Long> getExtendsCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies) {
-        return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorCompetencies, CompetencyRelation.RelationType.EXTENDS);
+        return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorCompetencies, RelationType.EXTENDS);
     }
 
     /**
@@ -187,7 +192,7 @@ public class LearningPathRecommendationService {
      * @return map to retrieve the number of competencies a competency assumes
      */
     private Map<Long, Long> getAssumesCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies) {
-        return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorCompetencies, CompetencyRelation.RelationType.ASSUMES);
+        return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorCompetencies, RelationType.ASSUMES);
     }
 
     /**
@@ -200,7 +205,7 @@ public class LearningPathRecommendationService {
      * @return map to retrieve the number of competencies a competency extends
      */
     private Map<Long, Long> getRelationsOfTypeCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies,
-            CompetencyRelation.RelationType type) {
+            RelationType type) {
         Map<Long, Long> map = new HashMap<>();
         for (var competency : competencies) {
             if (!map.containsKey(competency.getId())) {

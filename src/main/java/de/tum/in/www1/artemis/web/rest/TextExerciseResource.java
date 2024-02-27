@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.plagiarism.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
 import static java.util.Collections.emptySet;
 
@@ -16,6 +17,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -54,6 +56,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 /**
  * REST controller for managing TextExercise.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class TextExerciseResource {
@@ -248,7 +251,7 @@ public class TextExerciseResource {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
             exercise.setCourse(null);
-            List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             exercise.setGradingCriteria(gradingCriteria);
         }
         return ResponseEntity.ok().body(exercises);
@@ -293,7 +296,7 @@ public class TextExerciseResource {
         }
 
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         textExercise.setGradingCriteria(gradingCriteria);
         textExercise.setExampleSubmissions(exampleSubmissions);
 

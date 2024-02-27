@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -9,6 +11,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,20 +28,21 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 /**
  * Spring Data repository for the StaticCodeAnalysisCategory entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface StaticCodeAnalysisCategoryRepository extends JpaRepository<StaticCodeAnalysisCategory, Long> {
 
     Logger log = LoggerFactory.getLogger(StaticCodeAnalysisCategoryRepository.class);
 
-    Set<StaticCodeAnalysisCategory> findByExerciseId(Long exerciseId);
+    Set<StaticCodeAnalysisCategory> findByExerciseId(long exerciseId);
 
     @Query("""
-             SELECT s
-             FROM StaticCodeAnalysisCategory s
-                 LEFT JOIN FETCH s.exercise
-             WHERE s.exercise.id = :exerciseId
+            SELECT s
+            FROM StaticCodeAnalysisCategory s
+                LEFT JOIN FETCH s.exercise
+            WHERE s.exercise.id = :exerciseId
             """)
-    Set<StaticCodeAnalysisCategory> findWithExerciseByExerciseId(@Param("exerciseId") Long exerciseId);
+    Set<StaticCodeAnalysisCategory> findWithExerciseByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Links the categories of an exercise with the default category mappings.

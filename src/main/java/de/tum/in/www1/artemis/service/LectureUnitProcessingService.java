@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.*;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -16,6 +18,7 @@ import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +31,7 @@ import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class LectureUnitProcessingService {
 
@@ -211,7 +215,7 @@ public class LectureUnitProcessingService {
      */
     public String saveTempFileForProcessing(long lectureId, MultipartFile file, int minutesUntilDeletion) throws IOException {
         String prefix = "Temp_" + lectureId + "_";
-        Path filePath = fileService.generateFilePath(prefix, FilenameUtils.getExtension(file.getOriginalFilename()), FilePathService.getTempFilePath());
+        Path filePath = FilePathService.getTempFilePath().resolve(fileService.generateFilename(prefix, FilenameUtils.getExtension(file.getOriginalFilename())));
         FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
         fileService.schedulePathForDeletion(filePath, minutesUntilDeletion);
         return filePath.getFileName().toString().substring(prefix.length());

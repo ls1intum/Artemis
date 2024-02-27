@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +15,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelElement;
 /**
  * Spring Data JPA repository for the ModelElement entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ModelElementRepository extends JpaRepository<ModelElement, Long> {
 
@@ -38,12 +42,14 @@ public interface ModelElementRepository extends JpaRepository<ModelElement, Long
      * @return the number of other TextBlock's in the same cluster as the block with given `id`
      */
     @Query("""
-            SELECT element.modelElementId as elementId, COUNT(DISTINCT allElements.modelElementId) as numberOfOtherElements
+            SELECT element.modelElementId AS elementId,
+                COUNT(DISTINCT allElements.modelElementId) AS numberOfOtherElements
             FROM ModelingSubmission submission
-            LEFT JOIN ModelElement element ON submission.id = element.submission.id
-            LEFT JOIN ModelCluster cluster ON element.cluster.id = cluster.id
-            LEFT JOIN ModelElement allElements ON cluster.id = allElements.cluster.id AND allElements.modelElementId <> element.modelElementId
-            WHERE submission.id = :#{#submissionId}
+                LEFT JOIN ModelElement element ON submission.id = element.submission.id
+                LEFT JOIN ModelCluster cluster ON element.cluster.id = cluster.id
+                LEFT JOIN ModelElement allElements ON cluster.id = allElements.cluster.id
+                    AND allElements.modelElementId <> element.modelElementId
+            WHERE submission.id = :submissionId
             GROUP BY element.modelElementId
             """)
     List<ModelElementRepository.ModelElementCount> countOtherElementsInSameClusterForSubmissionId(@Param("submissionId") Long submissionId);

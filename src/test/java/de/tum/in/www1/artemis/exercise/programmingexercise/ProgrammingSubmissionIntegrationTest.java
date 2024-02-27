@@ -8,9 +8,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -61,7 +59,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository submissionRepository;
+    private ProgrammingSubmissionTestRepository submissionRepository;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
@@ -630,8 +628,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // Check that grading instructions are loaded
         ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();
-        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).hasSize(1);
-        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).hasSize(3);
+        assertThat(exercise.getGradingCriteria().stream().map(GradingCriterion::getStructuredGradingInstructions).map(Set::size)).containsExactlyInAnyOrder(1, 1, 3);
     }
 
     @Test
@@ -759,8 +756,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // Check that grading instructions are loaded
         ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();
-        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).hasSize(1);
-        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).hasSize(3);
+        assertThat(exercise.getGradingCriteria().stream().map(GradingCriterion::getStructuredGradingInstructions).map(Set::size)).containsExactlyInAnyOrder(1, 1, 3);
     }
 
     @Test

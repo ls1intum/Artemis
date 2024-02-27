@@ -1,20 +1,16 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import { EntityResponseType, ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/entities/example-submission.model';
 import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
@@ -67,22 +63,17 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     farListAlt = faListAlt;
 
     constructor(
-        alertService: AlertService,
-        accountService: AccountService,
-        assessmentsService: TextAssessmentService,
-        structuredGradingCriterionService: StructuredGradingCriterionService,
-        private cdr: ChangeDetectorRef,
-        private exerciseService: ExerciseService,
-        private textSubmissionService: TextSubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
         private tutorParticipationService: TutorParticipationService,
         private route: ActivatedRoute,
         private router: Router,
-        private location: Location,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private resultService: ResultService,
         private guidedTourService: GuidedTourService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private exerciseService: ExerciseService,
+        alertService: AlertService,
+        accountService: AccountService,
+        assessmentsService: TextAssessmentService,
+        structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
         super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
         this.textBlockRefs = [];

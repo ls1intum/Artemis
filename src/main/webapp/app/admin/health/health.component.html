@@ -1,7 +1,7 @@
 <div>
     <h2>
         <span id="health-page-heading" jhiTranslate="health.title">Health Checks</span>
-        <button class="btn btn-primary float-end" (click)="refresh()"><fa-icon [icon]="faSync"></fa-icon> <span jhiTranslate="health.refresh.button">Refresh</span></button>
+        <button class="btn btn-primary float-end" (click)="refresh()"><fa-icon [icon]="faSync" /> <span jhiTranslate="health.refresh.button">Refresh</span></button>
     </h2>
     <div class="table-responsive">
         <table id="healthCheck" class="table table-striped" aria-describedby="health-page-heading">
@@ -32,7 +32,7 @@
                             <td class="text-center">
                                 @if (componentHealth.value!.details) {
                                     <a class="hand" (click)="showHealth({ key: componentHealth.key, value: componentHealth.value! })">
-                                        <fa-icon [icon]="faEye"></fa-icon>
+                                        <fa-icon [icon]="faEye" />
                                     </a>
                                 }
                             </td>
@@ -41,7 +41,7 @@
                     <tr id="websocketConnection">
                         <td>Websocket Connection (Client -> Server)</td>
                         <td class="status text-center">
-                            <jhi-connection-status></jhi-connection-status>
+                            <jhi-connection-status />
                         </td>
                         <td class="text-center">-</td>
                     </tr>

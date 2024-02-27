@@ -23,12 +23,12 @@
                 <table class="table table-striped">
                     <thead class="thead-dark">
                         <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()">
-                            <th jhiSortBy="{{ column.ID }}">
+                            <th jhiSortBy="ID">
                                 <span>#</span>
                             </th>
-                            <th jhiSortBy="{{ column.STUDENT_NAME }}">
+                            <th jhiSortBy="STUDENT_NAME">
                                 <span jhiTranslate="artemisApp.exercise.name">Name</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             <th>
                                 <span jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission Date</span>
@@ -38,19 +38,19 @@
                             </th>
                             <th style="display: table-caption">
                                 <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>
-                                @if (exercise && exercise.type === exerciseType.TEXT) {
+                                @if (exercise && exercise.type === ExerciseType.TEXT) {
                                     <fa-icon
                                         [icon]="faQuestionCircle"
                                         class="text-secondary ps-1"
                                         [ngbTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
-                                    ></fa-icon>
+                                    />
                                 }
-                                @if (exercise && exercise.type === exerciseType.MODELING) {
+                                @if (exercise && exercise.type === ExerciseType.MODELING) {
                                     <fa-icon
                                         [icon]="faQuestionCircle"
                                         class="text-secondary ps-1"
                                         [ngbTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
-                                    ></fa-icon>
+                                    />
                                 }
                             </th>
                             <th></th>
@@ -63,13 +63,13 @@
                                 <td>{{ submission.participation?.participantName }}</td>
                                 <td>{{ submission.submissionDate | artemisDate }}</td>
                                 <td>
-                                    <jhi-result [exercise]="exercise" [participation]="submission.participation!"></jhi-result>
+                                    <jhi-result [exercise]="exercise" [participation]="submission.participation!" />
                                 </td>
                                 <td>
                                     {{ submission.submissionSize }}
                                 </td>
                                 <td>
-                                    <jhi-button (onClick)="openImport(submission)" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
+                                    <jhi-button (onClick)="selectImport(submission)" [title]="'artemisApp.exercise.import.table.doImport'" />
                                 </td>
                             </tr>
                         }
@@ -85,8 +85,7 @@
             }
         }
         <div class="d-flex justify-content-between p-2">
-            <ngb-pagination [maxSize]="10" [rotate]="true" [collectionSize]="total" [(page)]="state.page" [pageSize]="state.pageSize" (pageChange)="onPageChange($event)">
-            </ngb-pagination>
+            <ngb-pagination [maxSize]="10" [rotate]="true" [collectionSize]="total" [(page)]="state.page" [pageSize]="state.pageSize" (pageChange)="onPageChange($event)" />
         </div>
     </div>
 </form>

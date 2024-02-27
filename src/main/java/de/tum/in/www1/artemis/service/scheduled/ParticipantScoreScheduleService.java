@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.CompetencyProgressService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 
 /**
@@ -175,9 +175,8 @@ public class ParticipantScoreScheduleService {
 
         // Find all outdated participant scores where the last result is null (because it was deleted)
         var participantScoresToProcess = participantScoreRepository.findAllOutdated();
-        participantScoresToProcess.forEach(participantScore -> {
-            scheduleTask(participantScore.getExercise().getId(), participantScore.getParticipant().getId(), Instant.now(), null);
-        });
+        participantScoresToProcess
+                .forEach(participantScore -> scheduleTask(participantScore.getExercise().getId(), participantScore.getParticipant().getId(), Instant.now(), null));
 
         log.debug("Processing of {} results and {} participant scores.", resultsToProcess.size(), participantScoresToProcess.size());
     }
@@ -246,7 +245,7 @@ public class ParticipantScoreScheduleService {
             Optional<ParticipantScore> participantScore;
             if (exercise.isTeamMode()) {
                 // Fetch the team and its score for the given exercise
-                participant = teamRepository.findById(participantId).orElse(null);
+                participant = teamRepository.findWithStudentsById(participantId).orElse(null);
                 if (participant == null) {
                     // If the team was deleted, we can delete all participant scores for it as well and skip
                     log.debug("Team {} no longer exists, deleting all participant scores for it.", participantId);

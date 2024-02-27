@@ -300,6 +300,16 @@ public final class Constants {
     public static final String PROFILE_LOCALCI = "localci";
 
     /**
+     * The name of the Spring profile used to process build jobs in a local CI setup.
+     */
+    public static final String PROFILE_BUILDAGENT = "buildagent";
+
+    /**
+     * The name of the Spring profile used for Artemis core functionality.
+     */
+    public static final String PROFILE_CORE = "core";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
@@ -318,6 +328,16 @@ public final class Constants {
      * The value of the version field we send with each push notification to the native clients (Android & iOS).
      */
     public static final int PUSH_NOTIFICATION_VERSION = 1;
+
+    /**
+     * The directory in the docker container in which the build script is executed
+     */
+    public static final String LOCALCI_WORKING_DIRECTORY = "/var/tmp";
+
+    /**
+     * The directory in the docker container in which the results can be found
+     */
+    public static final String LOCALCI_RESULTS_DIRECTORY = "/results";
 
     private Constants() {
     }

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -11,6 +13,7 @@ import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,6 +30,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -36,6 +40,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 /**
  * Service used to check whether user is authorized to perform actions on the entity.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class AuthorizationCheckService {
 
@@ -53,7 +58,9 @@ public class AuthorizationCheckService {
     @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseEnrollmentUsernamePattern;
 
-    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, ExamDateService examDateService) {
+    private final TeamRepository teamRepository;
+
+    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, ExamDateService examDateService, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examDateService = examDateService;
@@ -61,6 +68,7 @@ public class AuthorizationCheckService {
         if (allowedCourseEnrollmentUsernamePattern == null) {
             allowedCourseEnrollmentUsernamePattern = allowedCourseRegistrationUsernamePattern;
         }
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -555,9 +563,12 @@ public class AuthorizationCheckService {
         if (participation.getParticipant() == null) {
             return false;
         }
-        else {
-            return participation.isOwnedBy(user);
+
+        if (participation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+            participation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
         }
+
+        return participation.isOwnedBy(user);
     }
 
     /**

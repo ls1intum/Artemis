@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT;
 import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
@@ -23,7 +24,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -58,10 +61,12 @@ import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
  * Service Implementation for managing Course.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class CourseService {
 
@@ -192,6 +197,27 @@ public class CourseService {
         this.learningPathService = learningPathService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepository = lectureRepository;
+    }
+
+    /**
+     * Search for all courses fitting a {@link PageableSearchDTO search query}. The result is paged.
+     *
+     * @param search The search query defining the search term and the size of the returned page
+     * @param user   The user for whom to fetch all available lectures
+     * @return A wrapper object containing a list of all found courses and the total number of pages
+     */
+    public SearchResultPageDTO<Course> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COURSE);
+
+        final var searchTerm = search.getSearchTerm();
+        final Page<Course> coursePage;
+        if (authCheckService.isAdmin(user)) {
+            coursePage = courseRepository.findByTitleIgnoreCaseContaining(searchTerm, pageable);
+        }
+        else {
+            coursePage = courseRepository.findByTitleInCoursesWhereInstructorOrEditor(searchTerm, user.getGroups(), pageable);
+        }
+        return new SearchResultPageDTO<>(coursePage.getContent(), coursePage.getTotalPages());
     }
 
     /**
@@ -347,6 +373,18 @@ public class CourseService {
     public Set<Course> findAllEnrollableForUser(User user) {
         return courseRepository.findAllEnrollmentActiveWithOrganizationsAndPrerequisites(ZonedDateTime.now()).stream()
                 .filter(course -> !user.getGroups().contains(course.getStudentGroupName())).collect(Collectors.toSet());
+    }
+
+    /**
+     * Gets a set of all online courses for a specific LTI platform registration, filtered by the instructor user.
+     *
+     * @param registrationId the registration ID of the LTI platform to filter courses.
+     * @param user           the User object representing the instructor whose courses are to be fetched.
+     * @return a set of {@link Course} objects where the user is an instructor, related to the specified LTI platform.
+     */
+    public Set<Course> findAllOnlineCoursesForPlatformForUser(String registrationId, User user) {
+        return courseRepository.findOnlineCoursesWithRegistrationIdEager(registrationId).stream().filter(course -> authCheckService.isInstructorInCourse(course, user))
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -591,7 +629,7 @@ public class CourseService {
 
     private List<StatisticsEntry> removeDuplicateActiveUserRows(List<StatisticsEntry> activeUserRows, ZonedDateTime startDate) {
         int startIndex = statisticsRepository.getWeekOfDate(startDate);
-        Map<Integer, List<String>> usersByDate = new HashMap<>();
+        Map<Integer, Set<String>> usersByDate = new HashMap<>();
         for (StatisticsEntry listElement : activeUserRows) {
             // listElement.date has the form "2021-05-04", to convert it to ZonedDateTime, it needs a time
             String dateOfElement = listElement.getDate() + " 10:00";
@@ -827,7 +865,7 @@ public class CourseService {
     @NotNull
     public ResponseEntity<Set<User>> getAllUsersInGroup(Course course, String groupName) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        var usersInGroup = userRepository.findAllInGroup(groupName);
+        var usersInGroup = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(groupName);
         usersInGroup.forEach(user -> {
             // explicitly set the registration number
             user.setVisibleRegistrationNumber(user.getRegistrationNumber());

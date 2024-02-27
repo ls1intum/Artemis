@@ -4,14 +4,14 @@
             <div>
                 <div class="d-flex align-items-center">
                     <h2><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span> {{ programmingExercise.id }}</h2>
-                    <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+                    <jhi-documentation-button [type]="documentationType" />
                 </div>
                 <hr />
                 <div class="button-header">
                     <div class="d-flex flex-wrap gap-2">
                         @if (programmingExercise.isAtLeastEditor) {
                             <a [routerLink]="[baseResource, 'edit']" class="btn btn-warning btn-sm">
-                                <fa-icon [icon]="faWrench"></fa-icon>&nbsp;
+                                <fa-icon [icon]="faWrench" />&nbsp;
                                 <span jhiTranslate="entity.action.edit"> Edit</span>
                             </a>
                             <!-- Edit in editor button -->
@@ -23,7 +23,7 @@
                                     [routerLink]="[baseResource, 'code-editor', programmingExercise.templateParticipation.id!]"
                                     class="btn btn-warning btn-sm"
                                 >
-                                    <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                    <fa-icon [icon]="faPencilAlt" />
                                     <span jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
                                 </a>
                             }
@@ -36,7 +36,7 @@
                                     [routerLink]="[baseResource, 'edit-build-plan']"
                                     class="btn btn-warning btn-sm"
                                 >
-                                    <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                    <fa-icon [icon]="faPencilAlt" />
                                     <span jhiTranslate="entity.action.editBuildPlan">Edit build plan</span>
                                 </a>
                             }
@@ -45,12 +45,12 @@
                                     [routerLink]="['/course-management', programmingExercise.course.id!, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
                                     class="btn btn-warning btn-sm position-relative"
                                 >
-                                    <fa-icon [icon]="faLightbulb"></fa-icon>
+                                    <fa-icon [icon]="faLightbulb" />
                                     <span jhiTranslate="entity.action.hints">Hints</span>
                                 </a>
                             }
                             <a [routerLink]="[baseResource, 'grading', 'test-cases']" class="btn btn-warning btn-sm">
-                                <fa-icon [icon]="faFileSignature"></fa-icon>
+                                <fa-icon [icon]="faFileSignature" />
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                             </a>
                         }
@@ -58,29 +58,28 @@
                             <a
                                 [routerLink]="['/course-management', programmingExercise.course.id!, 'programming-exercises', programmingExercise.id, 'iris-settings']"
                                 ngbTooltip="{{ 'artemisApp.iris.settings.button.programmingExercise.tooltip' | artemisTranslate }}"
-                                class="btn btn-warning btn-sm me-1"
-                                style="margin-bottom: 10px"
+                                class="btn btn-warning btn-sm"
                             >
-                                <fa-icon [icon]="faRobot"></fa-icon>
+                                <fa-icon [icon]="faRobot" />
                                 <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title">Iris</span>
                             </a>
                         }
                         @if (programmingExercise.isAtLeastTutor) {
                             <a [routerLink]="[baseResource, 'participations']" class="btn btn-primary btn-sm">
-                                <fa-icon [icon]="faListAlt"></fa-icon>
+                                <fa-icon [icon]="faListAlt" />
                                 <span jhiTranslate="artemisApp.exercise.participations">Participations</span>
                             </a>
                         }
                         <!-- Teams -->
                         @if (programmingExercise.teamMode && programmingExercise.isAtLeastTutor) {
                             <a [routerLink]="[teamBaseResource, 'teams']" class="btn btn-primary btn-sm">
-                                <fa-icon [icon]="faUsers"></fa-icon>
+                                <fa-icon [icon]="faUsers" />
                                 <span jhiTranslate="artemisApp.exercise.teams">Teams</span>
                             </a>
                         }
                         @if (programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise.allowComplaintsForAutomaticAssessments) {
                             <a [routerLink]="[shortBaseResource, 'assessment-dashboard', programmingExercise.id]" class="btn btn-info btn-sm">
-                                <fa-icon [icon]="faUserCheck"></fa-icon>
+                                <fa-icon [icon]="faUserCheck" />
                                 <span class="d-none d-md-inline">{{ 'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate }}</span>
                             </a>
                         }
@@ -91,7 +90,7 @@
                         }
                         @if (programmingExercise.isAtLeastTutor) {
                             <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
-                                <fa-icon [icon]="faTable"></fa-icon>
+                                <fa-icon [icon]="faTable" />
                                 <span jhiTranslate="entity.action.scores">Scores</span>
                             </a>
                             @if (programmingExercise.course && !isExamExercise) {
@@ -99,7 +98,7 @@
                                     [routerLink]="['/course-management', programmingExercise.course!.id!, 'programming-exercises', programmingExercise.id!, 'exercise-statistics']"
                                     class="btn btn-info btn-sm"
                                 >
-                                    <fa-icon [icon]="faChartBar"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
+                                    <fa-icon [icon]="faChartBar" />&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
                                 </a>
                             }
                         }
@@ -107,10 +106,7 @@
                     <hr />
                     <div>
                         @if (programmingExercise.isAtLeastInstructor) {
-                            <jhi-programming-exercise-instructor-exercise-download
-                                [exerciseId]="programmingExercise.id!"
-                                class="me-1"
-                            ></jhi-programming-exercise-instructor-exercise-download>
+                            <jhi-programming-exercise-instructor-exercise-download [exerciseId]="programmingExercise.id!" class="me-1" />
                         }
                         @if (programmingExercise.isAtLeastEditor) {
                             <span class="me-1">
@@ -169,7 +165,7 @@
                                 @if (lockingOrUnlockingRepositories) {
                                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                 }
-                                <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
+                                <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
                                 <span jhiTranslate="artemisApp.programmingExercise.unlockAllRepositories">Unlock all repositories</span>
                             </button>
                             <button
@@ -181,7 +177,7 @@
                                 @if (lockingOrUnlockingRepositories) {
                                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                 }
-                                <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
+                                <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
                                 <span jhiTranslate="artemisApp.programmingExercise.lockAllRepositories">Lock all repositories</span>
                             </button>
                         }
@@ -192,7 +188,7 @@
                                 class="btn btn-outline-primary btn-sm me-1"
                                 style="margin-bottom: 10px"
                             >
-                                <fa-icon [icon]="faCheckDouble"></fa-icon> <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
+                                <fa-icon [icon]="faCheckDouble" /> <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
                             </button>
                             <button
                                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -200,7 +196,7 @@
                                 [programmingExercise]="programmingExercise"
                                 class="me-1"
                             >
-                                <fa-icon [icon]="faUndo"></fa-icon>
+                                <fa-icon [icon]="faUndo" />
                                 <span jhiTranslate="entity.action.reset">Reset</span>
                             </button>
                         }
@@ -218,7 +214,7 @@
                                 }"
                                 class="me-1"
                             >
-                                <fa-icon [icon]="faTrash"></fa-icon>
+                                <fa-icon [icon]="faTrash" />
                             </button>
                         }
                     </div>
@@ -230,11 +226,11 @@
                             [doughnutStats]="doughnutStats"
                             [exerciseType]="PROGRAMMING"
                             class="d-flex justify-content-around"
-                        ></jhi-exercise-detail-statistics>
+                        />
                     </div>
                 }
                 @if (exerciseDetailSections) {
-                    <jhi-detail-overview-list [sections]="exerciseDetailSections"></jhi-detail-overview-list>
+                    <jhi-detail-overview-list [sections]="exerciseDetailSections" />
                 }
             </div>
         }

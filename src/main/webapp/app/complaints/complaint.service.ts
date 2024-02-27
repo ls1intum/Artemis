@@ -133,7 +133,8 @@ export class ComplaintService implements IComplaintService {
      * @param teamMode If true, the number of allowed complaints for the user's team is returned
      */
     getNumberOfAllowedComplaintsInCourse(courseId: number, teamMode = false): Observable<number> {
-        return this.http.get<number>(`${this.apiUrl}/courses/${courseId}/allowed-complaints?teamMode=${teamMode}`);
+        // Note: 0 is the default value in case the server returns something that does not make sense
+        return this.http.get<number>(`${this.apiUrl}/courses/${courseId}/allowed-complaints?teamMode=${teamMode}`) ?? 0;
     }
 
     /**

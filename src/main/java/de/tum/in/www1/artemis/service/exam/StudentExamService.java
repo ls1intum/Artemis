@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.Instant;
@@ -20,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +49,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Service Implementation for managing StudentExam.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class StudentExamService {
 
@@ -371,23 +374,7 @@ public class StudentExamService {
                 // we should still be able to compare even if the quizQuestion or the quizQuestion id is null
                 if (quizQuestion1 == null || quizQuestion1.getId() == null || quizQuestion2 == null || quizQuestion2.getId() == null
                         || quizQuestion1.getId().equals(quizQuestion2.getId())) {
-                    boolean equal;
-
-                    if (answer1 instanceof DragAndDropSubmittedAnswer submittedAnswer1 && answer2 instanceof DragAndDropSubmittedAnswer submittedAnswer2) {
-                        equal = isContentEqualTo(submittedAnswer1, submittedAnswer2);
-                    }
-                    else if (answer1 instanceof MultipleChoiceSubmittedAnswer submittedAnswer1 && answer2 instanceof MultipleChoiceSubmittedAnswer submittedAnswer2) {
-                        equal = isContentEqualTo(submittedAnswer1, submittedAnswer2);
-                    }
-                    else if (answer1 instanceof ShortAnswerSubmittedAnswer submittedAnswer1 && answer2 instanceof ShortAnswerSubmittedAnswer submittedAnswer2) {
-                        equal = isContentEqualTo(submittedAnswer1, submittedAnswer2);
-                    }
-                    else {
-                        LoggerFactory.getLogger(StudentExamService.class).error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
-                        return false;
-                    }
-
-                    if (!equal) {
+                    if (!isContentEqualTo(answer1, answer2)) {
                         return false;
                     }
                 }
@@ -395,6 +382,29 @@ public class StudentExamService {
         }
         // we did not find any differences
         return true;
+    }
+
+    /**
+     * Returns {@code true} if the quiz submissions are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param answer1 a quiz submission
+     * @param answer2 a quiz submission to be compared with {@code submission1} for equality
+     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
+     * @throws RuntimeException if the answer types are not supported
+     */
+    public static boolean isContentEqualTo(SubmittedAnswer answer1, SubmittedAnswer answer2) {
+        if (answer1 instanceof DragAndDropSubmittedAnswer submittedAnswer1 && answer2 instanceof DragAndDropSubmittedAnswer submittedAnswer2) {
+            return isContentEqualTo(submittedAnswer1, submittedAnswer2);
+        }
+        else if (answer1 instanceof MultipleChoiceSubmittedAnswer submittedAnswer1 && answer2 instanceof MultipleChoiceSubmittedAnswer submittedAnswer2) {
+            return isContentEqualTo(submittedAnswer1, submittedAnswer2);
+        }
+        else if (answer1 instanceof ShortAnswerSubmittedAnswer submittedAnswer1 && answer2 instanceof ShortAnswerSubmittedAnswer submittedAnswer2) {
+            return isContentEqualTo(submittedAnswer1, submittedAnswer2);
+        }
+        log.error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
+        return false;
     }
 
     /**

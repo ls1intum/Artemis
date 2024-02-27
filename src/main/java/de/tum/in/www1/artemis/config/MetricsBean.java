@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.*;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
@@ -42,6 +45,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import io.micrometer.core.instrument.*;
 
+@Profile(PROFILE_CORE)
 @Component
 public class MetricsBean {
 
@@ -469,7 +473,7 @@ public class MetricsBean {
 
         final List<Course> courses = courseRepository.findAllActiveWithoutTestCourses(now);
         // We set the number of students once to prevent multiple queries for the same date
-        courses.forEach(course -> course.setNumberOfStudents(userRepository.countByGroupsIsContaining(course.getStudentGroupName())));
+        courses.forEach(course -> course.setNumberOfStudents(userRepository.countByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName())));
         ensureCourseInformationIsSet(courses);
 
         final List<Long> courseIds = courses.stream().mapToLong(Course::getId).boxed().toList();

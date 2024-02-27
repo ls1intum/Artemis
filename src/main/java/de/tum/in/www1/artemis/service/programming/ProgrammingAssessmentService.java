@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -18,6 +21,7 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingAssessmentService extends AssessmentService {
 
@@ -100,12 +104,10 @@ public class ProgrammingAssessmentService extends AssessmentService {
         }
 
         // Note: we always need to report the result over LTI, even if the assessment due date is not over yet.
-        // Otherwise it might never become visible in the external system
-        if (ltiNewResultService.isPresent()) {
-            ltiNewResultService.get().onNewResult((StudentParticipation) newManualResult.getParticipation());
-        }
+        // Otherwise, it might never become visible in the external system
+        ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(participation));
         if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
-            resultWebsocketService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
+            resultWebsocketService.broadcastNewResult(participation, newManualResult);
         }
 
         sendFeedbackToAthena(exercise, submission, newManualResult.getFeedbacks());

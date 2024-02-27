@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.learningpath;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -9,13 +11,14 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.CompetencyProgressService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
@@ -34,6 +37,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
  * <li>and retrieval of ngx graph representations.</li>
  * </ul>
  */
+@Profile(PROFILE_CORE)
 @Service
 public class LearningPathService {
 
@@ -63,6 +67,18 @@ public class LearningPathService {
         this.competencyRepository = competencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.learningPathNgxService = learningPathNgxService;
+    }
+
+    /**
+     * Enable learning paths for the course and generate learning paths for all students enrolled in the course
+     *
+     * @param course course the learning paths are created for
+     */
+    public void enableLearningPathsForCourse(@NotNull Course course) {
+        course.setLearningPathsEnabled(true);
+        generateLearningPaths(course);
+        courseRepository.save(course);
+        log.debug("Enabled learning paths for course (id={})", course.getId());
     }
 
     /**
@@ -107,10 +123,10 @@ public class LearningPathService {
      * @return A wrapper object containing a list of all found learning paths and the total number of pages
      */
     public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull PageableSearchDTO<String> search, @NotNull Course course) {
-        final var pageable = PageUtil.createLearningPathPageRequest(search);
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LEARNING_PATH);
         final var searchTerm = search.getSearchTerm();
         final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, course.getId(), pageable);
-        final List<LearningPathInformationDTO> contentDTOs = learningPathPage.getContent().stream().map(LearningPathInformationDTO::new).toList();
+        final List<LearningPathInformationDTO> contentDTOs = learningPathPage.getContent().stream().map(LearningPathInformationDTO::of).toList();
         return new SearchResultPageDTO<>(contentDTOs, learningPathPage.getTotalPages());
     }
 
@@ -126,6 +142,23 @@ public class LearningPathService {
         learningPaths.forEach(learningPath -> learningPath.addCompetency(competency));
         learningPathRepository.saveAll(learningPaths);
         log.debug("Linked competency (id={}) to learning paths", competency.getId());
+    }
+
+    /**
+     * Links a list of competencies to all learning paths of the course.
+     *
+     * @param competencies The list of competencies that should be added
+     * @param courseId     course id that the learning paths belong to
+     */
+    public void linkCompetenciesToLearningPathsOfCourse(@NotNull List<Competency> competencies, long courseId) {
+        if (competencies.isEmpty()) {
+            return;
+        }
+        var course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(courseId);
+        var learningPaths = course.getLearningPaths();
+        learningPaths.forEach(learningPath -> learningPath.addCompetencies(new HashSet<>(competencies)));
+        learningPathRepository.saveAll(learningPaths);
+        log.debug("Linked {} competencies to learning paths", competencies.size());
     }
 
     /**

@@ -49,7 +49,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
  */
 @Service
 @Profile("iris")
-public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterface {
+public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterface<IrisCodeEditorSession> {
 
     private static final Logger log = LoggerFactory.getLogger(IrisCodeEditorSessionService.class);
 
@@ -118,39 +118,46 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * Checks if the user has access to the Iris session. A user has access if they have access to the exercise and the
      * session belongs to them. If the user is null, the user is fetched from the database.
      *
-     * @param session The session to check
      * @param user    The user to check
+     * @param session The session to check
      */
     @Override
-    public void checkHasAccessToIrisSession(IrisSession session, User user) {
-        checkHasAccessToIrisSession(castToSessionType(session, IrisCodeEditorSession.class), user);
-    }
-
-    private void checkHasAccessToIrisSession(IrisCodeEditorSession session, User user) {
+    public void checkHasAccessTo(User user, IrisCodeEditorSession session) {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, session.getExercise(), user);
         if (!Objects.equals(session.getUser(), user)) {
             throw new AccessForbiddenException("Iris Code Editor Session", session.getId());
         }
     }
 
+    /**
+     * Checks if the feature is active for the context (e.g. an exercise) of the session.
+     *
+     * @param session The session to check
+     */
     @Override
-    public void checkRateLimit(User user) {
-        // Currently no rate limit for code editor sessions
-    }
-
-    @Override
-    public void checkIsIrisActivated(IrisSession session) {
-        checkIsIrisActivated(castToSessionType(session, IrisCodeEditorSession.class));
-    }
-
-    private void checkIsIrisActivated(IrisCodeEditorSession session) {
+    public void checkIsFeatureActivatedFor(IrisCodeEditorSession session) {
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CODE_EDITOR, session.getExercise());
     }
 
+    /**
+     * Sends a message over the websocket to a specific user
+     *
+     * @param message that should be sent over the websocket
+     */
     @Override
     public void sendOverWebsocket(IrisMessage message) {
         irisCodeEditorWebsocketService.sendMessage(message);
     }
+
+    // @formatter:off
+    record CodeEditorChatDTO(
+            String problemStatement,
+            Map<String, String> solutionRepository,
+            Map<String, String> templateRepository,
+            Map<String, String> testRepository,
+            List<IrisMessage> chatHistory
+    ) {}
+    // @formatter:on
 
     /**
      * Sends a request containing the current state of the exercise repositories in the code editor and the entire
@@ -165,11 +172,19 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             throw new BadRequestException("Iris session is not a code editor session");
         }
         var exercise = session.getExercise();
-        var params = initializeParams(exercise);
-        params.put("chatHistory", session.getMessages()); // Additionally add the chat history to the request
+
+        // @formatter:off
+        var dto = new CodeEditorChatDTO(
+                exercise.getProblemStatement(),
+                filterFiles(read(solutionRepository(exercise))),
+                filterFiles(read(templateRepository(exercise))),
+                filterFiles(read(testRepository(exercise))),
+                session.getMessages()
+        );
+        // @formatter:on
 
         var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisCodeEditorSettings();
-        irisConnectorService.sendRequestV2(settings.getChatTemplate().getContent(), settings.getPreferredModel(), params).handleAsync((response, err) -> {
+        irisConnectorService.sendRequestV2(settings.getChatTemplate().getContent(), settings.getPreferredModel(), dto).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
                 irisCodeEditorWebsocketService.sendException(session, err.getCause());
@@ -270,6 +285,16 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         return exercisePlan;
     }
 
+    // @formatter:off
+    record CodeEditorChangeDTO(
+            String problemStatement,
+            Map<String, String> solutionRepository,
+            Map<String, String> templateRepository,
+            Map<String, String> testRepository,
+            String instructions
+    ) {}
+    // @formatter:on
+
     /**
      * Requests exercise changes from the Iris model for the given session and exercise plan. This method sends a
      * request to the Iris model for each component in the exercise plan, and handles the response to extract the
@@ -291,11 +316,17 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             case TEST_REPOSITORY -> settings.getTestRepoGenerationTemplate().getContent();
         };
 
-        var params = initializeParams(exercise);
-        // Add the instructions previously generated by Iris for this step of the plan
-        params.put("instructions", exerciseStep.getInstructions());
+        // @formatter:off
+        var dto = new CodeEditorChangeDTO(
+                exercise.getProblemStatement(),
+                filterFiles(read(solutionRepository(exercise))),
+                filterFiles(read(templateRepository(exercise))),
+                filterFiles(read(testRepository(exercise))),
+                exerciseStep.getInstructions()
+        );
+        // @formatter:on
 
-        irisConnectorService.sendRequestV2(template, settings.getPreferredModel(), params).handleAsync((response, err) -> {
+        irisConnectorService.sendRequestV2(template, settings.getPreferredModel(), dto).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
                 irisExercisePlanStepRepository.setFailed(exerciseStep);
@@ -333,22 +364,6 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             }
             return null;
         });
-    }
-
-    /**
-     * Initializes the parameters for the request to Iris. This method merges the unsaved changes from the code editor
-     * with the database version of the exercise, and saves the result in a map to send to Iris.
-     *
-     * @param exercise The programming exercise
-     * @return A modifiable map with the parameters for the request to Iris
-     */
-    private Map<String, Object> initializeParams(ProgrammingExercise exercise) {
-        var params = new HashMap<String, Object>();
-        params.put("problemStatement", exercise.getProblemStatement());
-        params.put("solutionRepository", filterFiles(read(solutionRepository(exercise))));
-        params.put("templateRepository", filterFiles(read(templateRepository(exercise))));
-        params.put("testRepository", filterFiles(read(testRepository(exercise))));
-        return params;
     }
 
     /**

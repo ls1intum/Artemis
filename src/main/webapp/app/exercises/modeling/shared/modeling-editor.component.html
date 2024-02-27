@@ -83,25 +83,25 @@
         <div class="help-and-status">
             @if (!readOnly && showHelpButton) {
                 <button class="btn btn-warning" (click)="open(help)">
-                    <fa-icon [icon]="farQuestionCircle"></fa-icon>&nbsp;
+                    <fa-icon [icon]="farQuestionCircle" />&nbsp;
                     <span jhiTranslate="artemisApp.modelingEditor.helpModal.help">Help</span>
                 </button>
             }
             @if (savedStatus && !savedStatus.isChanged && !savedStatus.isSaving) {
                 <div class="status-hint text-success">
-                    <fa-icon [icon]="faCheck"></fa-icon>
+                    <fa-icon [icon]="faCheck" />
                     <span jhiTranslate="artemisApp.modelingEditor.allSaved">All changes saved</span>
                 </div>
             }
             @if (savedStatus && savedStatus.isChanged && !savedStatus.isSaving) {
                 <div class="status-hint text-warning">
-                    <fa-icon [icon]="faTimes"></fa-icon>
+                    <fa-icon [icon]="faTimes" />
                     <span jhiTranslate="artemisApp.modelingEditor.unsavedChanges">Unsaved changes</span>
                 </div>
             }
             @if (savedStatus && savedStatus.isSaving) {
                 <div class="status-hint text-info">
-                    <fa-icon class="spin" [icon]="faCircleNotch"></fa-icon>
+                    <fa-icon class="spin" [icon]="faCircleNotch" />
                     <span jhiTranslate="artemisApp.modelingEditor.saving">Saving...</span>
                 </div>
             }
@@ -111,16 +111,16 @@
         <div #editorContainer class="apollon-container"></div>
         @if (resizeOptions && resizeOptions.horizontalResize) {
             <div class="draggable-right">
-                <fa-icon [icon]="faGripLinesVertical"></fa-icon>
+                <fa-icon [icon]="faGripLinesVertical" />
             </div>
         }
         @if (resizeOptions && resizeOptions.verticalResize) {
             <div class="draggable-bottom">
-                <fa-icon [icon]="faGripLines"></fa-icon>
+                <fa-icon [icon]="faGripLines" />
             </div>
         }
     </div>
     @if (withExplanation) {
-        <jhi-modeling-explanation-editor [explanation]="explanation" (explanationChange)="onExplanationInput($event)" [readOnly]="readOnly"></jhi-modeling-explanation-editor>
+        <jhi-modeling-explanation-editor [explanation]="explanation" (explanationChange)="onExplanationInput($event)" [readOnly]="readOnly" />
     }
 </div>

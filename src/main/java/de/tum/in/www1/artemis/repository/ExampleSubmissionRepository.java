@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +22,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the ExampleSubmission entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmission, Long> {
 
@@ -49,13 +52,13 @@ public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmis
             """)
     Optional<ExampleSubmission> findByIdWithResultsAndFeedback(@Param("exampleSubmissionId") long exampleSubmissionId);
 
-    Optional<ExampleSubmission> findBySubmissionId(@Param("submissionId") long submissionId);
+    Optional<ExampleSubmission> findBySubmissionId(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results" })
-    Optional<ExampleSubmission> findWithResultsBySubmissionId(@Param("submissionId") long submissionId);
+    Optional<ExampleSubmission> findWithResultsBySubmissionId(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "submission.results.feedbacks", "exercise", "exercise.gradingCriteria" })
-    Optional<ExampleSubmission> findWithSubmissionResultExerciseGradingCriteriaById(@Param("exampleSubmissionId") long exampleSubmissionId);
+    Optional<ExampleSubmission> findWithSubmissionResultExerciseGradingCriteriaById(long exampleSubmissionId);
 
     /**
      * Given the id of an example submission, it returns the results of the linked submission, if any

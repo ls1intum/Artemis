@@ -28,10 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -41,7 +39,7 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepository;
+    ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     private LocalRepository assignmentRepository;
 
@@ -225,26 +223,15 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     void testUserCreatesNewBranch() throws Exception {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        // Users can create new branches, but pushing to them should not result in a new submission. A warning message should be returned.
+        // Users cannot create new branches.
         assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
         String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
 
         // Push the new branch.
         PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
                 .iterator().next();
-        assertThat(pushResult.getMessages()).contains("Only pushes to the default branch will be graded.");
-        Optional<ProgrammingSubmission> submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(studentParticipation.getId());
-        assertThat(submission).isNotPresent();
-
-        // Commit a new file to the new branch and push again.
-        assignmentRepository.localGit.checkout().setName("new-branch").call();
-        Path testFilePath = assignmentRepository.localRepoFile.toPath().resolve("new-file.txt");
-        Files.createFile(testFilePath);
-        assignmentRepository.localGit.add().addFilepattern(".").call();
-        GitService.commit(assignmentRepository.localGit).setMessage("Add new file").call();
-        pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).call().iterator().next();
-        assertThat(pushResult.getMessages()).contains("Only pushes to the default branch will be graded.");
-        submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(studentParticipation.getId());
-        assertThat(submission).isNotPresent();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
     }
 }

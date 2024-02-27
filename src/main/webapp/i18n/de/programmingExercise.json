@@ -97,6 +97,7 @@
             "templateBuildPlanId": "Vorlagen-Build-Plan-Id",
             "solutionBuildPlanId": "Lösungs-Build-Plan-Id",
             "repositories": "Repositories",
+            "openRepository": "Repository Öffnen",
             "buildplans": "Build-Pläne",
             "buildplan": "Build-Plan",
             "buildPlanEditor": "Build-Plan-Editor",
@@ -320,7 +321,7 @@
                 "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studierenden. Daher kann die Bewertung geändert werden, ohne dass die Abgaben von Studierenden erneut ausgeführt werden müssen."
             },
             "export": {
-                "downloadRepo": "Repo Herunterladen",
+                "downloadRepo": "Repository Herunterladen",
                 "downloadExampleSolution": "Beispiellösung herunterladen",
                 "downloadTests": "Tests herunterladen",
                 "downloadTestsWithExampleSolution": "Tests mit Beispiellösung herunterladen",
@@ -594,7 +595,9 @@
                 "message": "Nachricht",
                 "previousSubmission": "Vorherige Abgabe",
                 "currentSubmission": "Aktuelle Abgabe",
-                "template": "Vorlage"
+                "template": "Vorlage",
+                "history": "Commit-Historie",
+                "result": "Ergebnis"
             }
         },
         "error": {

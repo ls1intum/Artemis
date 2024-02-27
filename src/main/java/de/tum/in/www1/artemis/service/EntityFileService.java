@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
@@ -12,10 +14,12 @@ import org.apache.commons.io.FilenameUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Service for handling file operations for entities.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class EntityFileService {
 
@@ -23,11 +27,8 @@ public class EntityFileService {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
-    public EntityFileService(FileService fileService, FilePathService filePathService) {
+    public EntityFileService(FileService fileService) {
         this.fileService = fileService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -59,7 +60,7 @@ public class EntityFileService {
         String filename = Path.of(entityFilePath).getFileName().toString();
         String extension = FilenameUtils.getExtension(filename);
         try {
-            Path source = filePathService.actualPathForPublicPathOrThrow(filePath);
+            Path source = FilePathService.actualPathForPublicPathOrThrow(filePath);
             if (!source.startsWith(FilePathService.getTempFilePath())) {
                 return entityFilePath;
             }
@@ -68,14 +69,15 @@ public class EntityFileService {
                 target = targetFolder.resolve(filename);
             }
             else {
-                target = fileService.generateFilePath(fileService.generateTargetFilenameBase(targetFolder), extension, targetFolder);
+                String generatedFilename = fileService.generateFilename(fileService.generateTargetFilenameBase(targetFolder), extension);
+                target = targetFolder.resolve(generatedFilename);
             }
             // remove target file before copying, because moveFile() ignores CopyOptions
             if (target.toFile().exists()) {
                 FileUtils.delete(target.toFile());
             }
             FileUtils.moveFile(source.toFile(), target.toFile());
-            URI newPath = filePathService.publicPathForActualPathOrThrow(target, entityId);
+            URI newPath = FilePathService.publicPathForActualPathOrThrow(target, entityId);
             log.debug("Moved File from {} to {}", source, target);
             return newPath.toString();
         }
@@ -105,7 +107,7 @@ public class EntityFileService {
             resultingPath = moveFileBeforeEntityPersistenceWithIdIfIsTemp(newEntityFilePath, targetFolder, keepFilename, entityId);
         }
         if (oldEntityFilePath != null && !oldEntityFilePath.equals(resultingPath)) {
-            Path oldFilePath = filePathService.actualPathForPublicPathOrThrow(URI.create(oldEntityFilePath));
+            Path oldFilePath = FilePathService.actualPathForPublicPathOrThrow(URI.create(oldEntityFilePath));
             if (oldFilePath.toFile().exists()) {
                 fileService.schedulePathForDeletion(oldFilePath, 0);
             }

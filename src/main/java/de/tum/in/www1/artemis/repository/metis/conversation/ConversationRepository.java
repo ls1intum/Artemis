@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import javax.transaction.Transactional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +18,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.GeneralConversationInfo;
 import de.tum.in.www1.artemis.domain.metis.conversation.UserConversationInfo;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Repository
 public interface ConversationRepository extends JpaRepository<Conversation, Long> {
 
@@ -41,22 +45,23 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
      * @return a list of user-related conversation info for the provided conversations
      */
     @Query("""
-             SELECT new de.tum.in.www1.artemis.domain.metis.conversation.UserConversationInfo (
-                 conv.id,
-                 cp.id,
-                 cp.isModerator,
-                 cp.isFavorite,
-                 cp.isHidden,
-                 cp.lastRead,
-                 COUNT(p.id)
-             )
-             FROM Conversation conv
-                 LEFT JOIN Channel channel ON conv.id = channel.id
-                 LEFT JOIN ConversationParticipant cp ON conv.id = cp.conversation.id AND cp.user.id = :userId
-                 LEFT JOIN Post p ON conv.id = p.conversation.id AND (p.creationDate > cp.lastRead OR (channel.isCourseWide IS true AND cp.lastRead IS null))
-             WHERE conv.id IN :conversationIds
-                 AND (channel.isCourseWide IS true OR (conv.id = cp.conversation.id AND cp.user.id = :userId))
-             GROUP BY conv.id, cp.id, cp.isModerator, cp.isFavorite, cp.isHidden, cp.lastRead
+            SELECT new de.tum.in.www1.artemis.domain.metis.conversation.UserConversationInfo (
+                conv.id,
+                cp.id,
+                cp.isModerator,
+                cp.isFavorite,
+                cp.isHidden,
+                cp.isMuted,
+                cp.lastRead,
+                COUNT(p.id)
+            )
+            FROM Conversation conv
+                LEFT JOIN Channel channel ON conv.id = channel.id
+                LEFT JOIN ConversationParticipant cp ON conv.id = cp.conversation.id AND cp.user.id = :userId
+                LEFT JOIN Post p ON conv.id = p.conversation.id AND (p.creationDate > cp.lastRead OR (channel.isCourseWide IS TRUE AND cp.lastRead IS NULL))
+            WHERE conv.id IN :conversationIds
+                AND (channel.isCourseWide IS TRUE OR (conv.id = cp.conversation.id AND cp.user.id = :userId))
+            GROUP BY conv.id, cp.id, cp.isModerator, cp.isFavorite, cp.isHidden, cp.lastRead
             """)
     List<UserConversationInfo> getUserInformationForConversations(@Param("conversationIds") Iterable<Long> conversationIds, @Param("userId") Long userId);
 
@@ -67,28 +72,28 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
      * @return a list of user-related conversation info for the provided conversations
      */
     @Query("""
-             SELECT new de.tum.in.www1.artemis.domain.metis.conversation.GeneralConversationInfo (
-                 conv.id,
-                 COUNT(cp.user.id)
-             )
-             FROM Conversation conv
-                 LEFT JOIN conv.conversationParticipants cp
-             WHERE conv.id IN :conversationIds
-             GROUP BY conv.id
+            SELECT new de.tum.in.www1.artemis.domain.metis.conversation.GeneralConversationInfo (
+                conv.id,
+                COUNT(cp.user.id)
+            )
+            FROM Conversation conv
+                LEFT JOIN conv.conversationParticipants cp
+            WHERE conv.id IN :conversationIds
+            GROUP BY conv.id
             """)
     List<GeneralConversationInfo> getGeneralInformationForConversations(@Param("conversationIds") Iterable<Long> conversationIds);
 
     @Query("""
-             SELECT COUNT(p.id) > 0
-             FROM Conversation c
-                 JOIN c.posts p
-                 LEFT JOIN ConversationParticipant cp ON c.id = cp.conversation.id AND cp.user.id = :userId
-                 LEFT JOIN Channel ch ON c.id = ch.id
-             WHERE c.course.id = :courseId
-             AND (
-                 p.creationDate > cp.lastRead OR
-                 (ch.isCourseWide IS true AND cp.id IS null)
-             )
+            SELECT COUNT(p.id) > 0
+            FROM Conversation c
+                JOIN c.posts p
+                LEFT JOIN ConversationParticipant cp ON c.id = cp.conversation.id AND cp.user.id = :userId
+                LEFT JOIN Channel ch ON c.id = ch.id
+            WHERE c.course.id = :courseId
+            AND (
+                p.creationDate > cp.lastRead OR
+                (ch.isCourseWide IS TRUE AND cp.id IS NULL)
+            )
             """)
     boolean userHasUnreadMessageInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);
 }

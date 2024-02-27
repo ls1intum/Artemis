@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +19,7 @@ import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Repository
 public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long> {
 
@@ -24,36 +27,36 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
 
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
-                 SELECT DISTINCT oneToOneChat
-                 FROM OneToOneChat oneToOneChat
-                 LEFT JOIN oneToOneChat.conversationParticipants conversationParticipant
-                 LEFT JOIN FETCH oneToOneChat.conversationParticipants
-                 WHERE oneToOneChat.course.id = :#{#courseId}
-                 AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :#{#userId})
-                 AND conversationParticipant.user.id = :#{#userId}
-                 ORDER BY oneToOneChat.lastMessageDate DESC
+            SELECT DISTINCT oneToOneChat
+            FROM OneToOneChat oneToOneChat
+                LEFT JOIN oneToOneChat.conversationParticipants conversationParticipant
+                LEFT JOIN FETCH oneToOneChat.conversationParticipants
+            WHERE oneToOneChat.course.id = :courseId
+                AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :userId)
+                AND conversationParticipant.user.id = :userId
+            ORDER BY oneToOneChat.lastMessageDate DESC
             """)
     List<OneToOneChat> findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
-                 SELECT o FROM OneToOneChat o
-                 LEFT JOIN FETCH o.conversationParticipants p1
-                 LEFT JOIN FETCH o.conversationParticipants p2
-                 WHERE o.course.id = :courseId
-                 AND p1.user.id = :userIdA
-                 AND p2.user.id = :userIdB
-                 AND p1.conversation = o
-                 AND p2.conversation = o
+            SELECT o FROM OneToOneChat o
+                LEFT JOIN FETCH o.conversationParticipants p1
+                LEFT JOIN FETCH o.conversationParticipants p2
+            WHERE o.course.id = :courseId
+                AND p1.user.id = :userIdA
+                AND p2.user.id = :userIdB
+                AND p1.conversation = o
+                AND p2.conversation = o
             """)
     Optional<OneToOneChat> findBetweenUsersWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
 
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
-             SELECT DISTINCT oneToOneChat
-             FROM OneToOneChat oneToOneChat
-             LEFT JOIN FETCH oneToOneChat.conversationParticipants p
-             WHERE oneToOneChat.id = :#{#oneToOneChatId}
+            SELECT DISTINCT oneToOneChat
+            FROM OneToOneChat oneToOneChat
+                LEFT JOIN FETCH oneToOneChat.conversationParticipants p
+            WHERE oneToOneChat.id = :oneToOneChatId
             """)
     Optional<OneToOneChat> findByIdWithConversationParticipantsAndUserGroups(@Param("oneToOneChatId") Long oneToOneChatId) throws EntityNotFoundException;
 
@@ -64,7 +67,7 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
                 LEFT JOIN participants.user user
             WHERE user = :user
             """)
-    Set<OneToOneChat> findAllByParticipatingUser(User user);
+    Set<OneToOneChat> findAllByParticipatingUser(@Param("user") User user);
 
     Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
 }
