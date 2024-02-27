@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.time.Duration;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 import org.gitlab4j.api.GitLabApi;
@@ -647,7 +647,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     private Optional<String> retrieveRenewedPersonalAccessToken(Long userId, Duration minimalLifetimeLeft) {
         GitLabPersonalAccessTokenListResponseDTO response = fetchPersonalAccessTokenId(userId);
 
-        var minimalLifetimeLeftInstant = LocalDate.now().plus(minimalLifetimeLeft).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        var minimalLifetimeLeftInstant = LocalDateTime.now().plus(minimalLifetimeLeft).toInstant(ZoneOffset.UTC);
         if (response.getExpiresAt() != null && response.getExpiresAt().toInstant().isBefore(minimalLifetimeLeftInstant)) {
             return Optional.of(rotatePersonalAccessToken(response.getId(), userId));
         }
@@ -679,7 +679,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     private String rotatePersonalAccessToken(Long personalAccessTokenId, Long userId) {
-        Date aboutOneYearFromNow = Date.from(LocalDate.now().plusDays(364).atStartOfDay(ZoneId.systemDefault()).toInstant());
+        Date aboutOneYearFromNow = Date.from(LocalDateTime.now().plusDays(364).toInstant(ZoneOffset.UTC));
         var body = new GitLabPersonalAccessTokenRotateRequestDTO(personalAccessTokenId, aboutOneYearFromNow);
 
         var entity = new HttpEntity<>(body);

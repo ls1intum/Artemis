@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistEx
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRotateResponseDTO;
 
 @Component
 @Profile("gitlab")
@@ -290,17 +291,26 @@ public class GitlabRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
-    public void mockListPersonalAccessTokens(String login, User gitlabUser) throws GitLabApiException, JsonProcessingException {
+    public void mockListPersonalAccessTokens(String login, User gitlabUser, long tokenId) throws GitLabApiException, JsonProcessingException {
         UserApi userApi = mock(UserApi.class);
         doReturn(userApi).when(gitLabApi).getUserApi();
         doReturn(gitlabUser).when(userApi).getUser(eq(login));
 
         var responseDTO = new GitLabPersonalAccessTokenListResponseDTO();
-        responseDTO.setId(42L);
+        responseDTO.setId(tokenId);
         responseDTO.setExpiresAt(Date.from(LocalDate.now().plusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant()));
         final var response = new ObjectMapper().writeValueAsString(List.of(responseDTO));
 
         mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens")).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
+    }
+
+    public void mockRotatePersonalAccessTokens(long personalAccessTokenId, String newPersonalAccessToken) throws JsonProcessingException {
+        var responseDTO = new GitLabPersonalAccessTokenRotateResponseDTO();
+        responseDTO.setToken(newPersonalAccessToken);
+        final var response = new ObjectMapper().writeValueAsString(responseDTO);
+
+        mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens/" + personalAccessTokenId + "/rotate")).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
