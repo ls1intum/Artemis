@@ -1,14 +1,19 @@
 package de.tum.in.www1.artemis.config.audit;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 
 import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Component
 public class AuditEventConverter {
 
