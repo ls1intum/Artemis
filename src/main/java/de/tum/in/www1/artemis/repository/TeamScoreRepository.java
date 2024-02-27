@@ -34,7 +34,7 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
     Optional<TeamScore> findByExercise_IdAndTeam_Id(Long exerciseId, Long teamId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.score.TeamScoreSum(t.id, SUM(s.lastRatedPoints))
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.score.TeamScoreSum(t.id, COALESCE(SUM(s.lastRatedPoints), 0))
             FROM TeamScore s
                 LEFT JOIN s.team t
             WHERE s.exercise IN :exercises

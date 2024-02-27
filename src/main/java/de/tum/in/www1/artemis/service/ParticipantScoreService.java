@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -144,8 +143,7 @@ public class ParticipantScoreService {
 
         // individual exercises
         final Set<StudentScoreSum> studentAndAchievedPoints = studentScoreRepository.getAchievedPointsOfStudents(individualExercises);
-        Map<Long, Double> pointsAchieved = studentAndAchievedPoints.stream()
-                .collect(Collectors.toMap(StudentScoreSum::userId, studentScoreSum -> Optional.ofNullable(studentScoreSum.sumPointsAchieved()).orElse(0.0)));
+        Map<Long, Double> pointsAchieved = studentAndAchievedPoints.stream().collect(Collectors.toMap(StudentScoreSum::userId, StudentScoreSum::sumPointsAchieved));
 
         // We have to retrieve this separately because the students are not directly retrievable due to the taxonomy structure
         Set<TeamScoreSum> teamScoreSums = teamScoreRepository.getAchievedPointsOfTeams(teamExercises);
@@ -155,10 +153,9 @@ public class ParticipantScoreService {
         final Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
         for (TeamScoreSum teamScoreSum : teamScoreSums) {
             Team team = teamMap.get(teamScoreSum.teamId());
-            double achievedPoints = Optional.ofNullable(teamScoreSum.sumPointsAchieved()).orElse(0.0);
             for (User student : team.getStudents()) {
                 if (userIds.contains(student.getId())) {
-                    pointsAchieved.put(student.getId(), pointsAchieved.getOrDefault(student.getId(), 0.0) + achievedPoints);
+                    pointsAchieved.merge(student.getId(), teamScoreSum.sumPointsAchieved(), Double::sum);
                 }
             }
         }

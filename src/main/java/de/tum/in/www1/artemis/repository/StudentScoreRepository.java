@@ -33,7 +33,7 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
     Optional<StudentScore> findByExercise_IdAndUser_Id(long exerciseId, long userId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.score.StudentScoreSum(u.id, SUM(s.lastRatedPoints))
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.score.StudentScoreSum(u.id, COALESCE(SUM(s.lastRatedPoints), 0))
             FROM StudentScore s
                 LEFT JOIN s.user u
             WHERE s.exercise IN :exercises
