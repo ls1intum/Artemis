@@ -19,7 +19,8 @@ public class ArtemisSpringManagedContext extends SpringManagedContext {
 
     @Override
     public Object initialize(Object obj) {
-        log.info("Initialize obj {} of type {}", obj, obj.getClass().getName());
+        String type = obj != null ? obj.getClass().getName() : "null";
+        log.info("Initialize obj {} of type {}", obj, type);
         return super.initialize(obj);
     }
 }
