@@ -53,26 +53,6 @@ export class CompetencyRelationGraphComponent {
         SELF: 'artemisApp.competency.relation.selfRelation',
     };
 
-    validate(): void {
-        if (!this.tailCompetencyId || !this.headCompetencyId || !this.relationType) {
-            this.relationError = undefined;
-            return;
-        }
-        if (this.headCompetencyId === this.tailCompetencyId) {
-            this.relationError = CompetencyRelationError.SELF;
-            return;
-        }
-        if (this.doesRelationAlreadyExist()) {
-            this.relationError = CompetencyRelationError.EXISTING;
-            return;
-        }
-        if (this.containsCircularRelation()) {
-            this.relationError = CompetencyRelationError.CIRCULAR;
-            return;
-        }
-        this.relationError = undefined;
-    }
-
     createRelation() {
         this.validate();
         if (this.relationError) {
@@ -94,6 +74,26 @@ export class CompetencyRelationGraphComponent {
         //TODO: error handling (what if no relation with this id was found)
     }
 
+    validate(): void {
+        if (!this.tailCompetencyId || !this.headCompetencyId || !this.relationType) {
+            this.relationError = undefined;
+            return;
+        }
+        if (this.headCompetencyId === this.tailCompetencyId) {
+            this.relationError = CompetencyRelationError.SELF;
+            return;
+        }
+        if (this.doesRelationAlreadyExist()) {
+            this.relationError = CompetencyRelationError.EXISTING;
+            return;
+        }
+        if (this.containsCircularRelation()) {
+            this.relationError = CompetencyRelationError.CIRCULAR;
+            return;
+        }
+        this.relationError = undefined;
+    }
+
     private containsCircularRelation(): boolean {
         if (!this.tailCompetencyId || !this.headCompetencyId || !this.relationType) {
             return false;
@@ -106,7 +106,7 @@ export class CompetencyRelationGraphComponent {
     }
 
     private doesRelationAlreadyExist(): boolean {
-        return this.edges().find((edge) => edge.source === this.tailCompetencyId?.toString() && edge.target === this.headCompetencyId?.toString()) !== undefined;
+        return !!this.edges().find((edge) => edge.source === this.tailCompetencyId?.toString() && edge.target === this.headCompetencyId?.toString());
     }
 
     /**
@@ -185,7 +185,7 @@ export class CompetencyRelationGraphComponent {
  * @property visited        has this vertex been visited before
  * @property adjacencyList  an array that contains all adjacent vertices
  */
-export class Vertex {
+class Vertex {
     private readonly label: string;
     private beingVisited: boolean;
     private visited: boolean;
@@ -233,7 +233,7 @@ export class Vertex {
  *
  * @property vertices   an array of all vertices in the graph (edges are represented by the adjacent vertices property of each vertex)
  */
-export class Graph {
+class Graph {
     vertices: Vertex[];
 
     constructor() {
