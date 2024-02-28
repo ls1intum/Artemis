@@ -420,7 +420,7 @@ public class CompetencyResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies/relations get the relations for the course
+     * GET courses/:courseId/competencies/relations get the relations for the course
      *
      * @param courseId the id of the course to which the relations belong
      * @return the ResponseEntity with status 200 (OK) and with a list of relations for the course
@@ -428,7 +428,7 @@ public class CompetencyResource {
     @GetMapping("courses/{courseId}/competencies/relations")
     @EnforceAtLeastInstructor
     public ResponseEntity<Set<CompetencyRelationDTO>> getCompetencyRelations(@PathVariable long courseId) {
-        log.debug("REST request to get relations for Course : {}", courseId);
+        log.debug("REST request to get relations for course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
@@ -439,7 +439,7 @@ public class CompetencyResource {
     }
 
     /**
-     * POST /courses/:courseId/competencies/relations create a new relation
+     * POST courses/:courseId/competencies/relations create a new relation
      *
      * @param courseId the id of the course to which the competencies belong
      * @param relation the relation to create
@@ -464,7 +464,7 @@ public class CompetencyResource {
     }
 
     /**
-     * DELETE /courses/:courseId/competencies/relations/:competencyRelationId delete a relation
+     * DELETE courses/:courseId/competencies/relations/:competencyRelationId delete a relation
      *
      * @param courseId             the id of the course
      * @param competencyRelationId the id of the competency relation
