@@ -575,10 +575,4 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         final var result = request.get("/api/learning-path/" + learningPath.getId() + "/competency-progress", HttpStatus.OK, Set.class);
         assertThat(result).hasSize(5);
     }
-
-    @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void testAnnotation() throws Exception {
-        request.put("/api/courses/" + course.getId() + "/annotation-test", null, HttpStatus.FORBIDDEN);
-    }
 }

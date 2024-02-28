@@ -40,14 +40,19 @@ public class EnforceRoleInCourseAspect {
      */
     @Around(value = "callAt()", argNames = "joinPoint")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
-        var annotation = getAnnotation(joinPoint);
-
-        final var courseId = getCourseId(joinPoint, annotation)
-                .orElseThrow(() -> new IllegalArgumentException("Method annotated with @EnforceRoleInCourse must have a parameter named 'courseId'"));
+        final var annotation = getAnnotation(joinPoint);
+        final var courseId = getCourseId(joinPoint, annotation).orElseThrow(
+                () -> new IllegalArgumentException("Method annotated with @EnforceRoleInCourse must have a parameter named " + annotation.courseIdFieldName() + " of type Long."));
         authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(annotation.value(), courseId);
         return joinPoint.proceed();
     }
 
+    /**
+     * Extracts the {@link EnforceRoleInCourse} annotation from the method or type
+     *
+     * @param joinPoint the join point
+     * @return the annotation if it is present, null otherwise
+     */
     private EnforceRoleInCourse getAnnotation(ProceedingJoinPoint joinPoint) {
         var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         EnforceRoleInCourse annotation = method.getAnnotation(EnforceRoleInCourse.class);
