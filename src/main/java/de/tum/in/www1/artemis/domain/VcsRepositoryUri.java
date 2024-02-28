@@ -86,7 +86,7 @@ public class VcsRepositoryUri {
             path = path.replaceAll("\\.git$", "");
             path = path.replaceAll("/$", "");
             path = path.replaceAll("^/.*scm", "");
-            path = path.replaceAll("^/.*/git", "");
+            path = path.replaceAll("^.*?/git/", "/");
             return path;
         }
     }
