@@ -109,7 +109,6 @@ test {
         useJUnitPlatform()
         exclude "**/*IT*", "**/*IntTest*"
     }
-    systemProperty "java.util.concurrent.ForkJoinPool.common.maximumSpares", "512"
 
     testLogging {
         events "FAILED", "SKIPPED"
