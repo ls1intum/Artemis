@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,32 +58,16 @@ public class PyrisDTOService {
         var testsRepositoryContents = testRepo.map(repositoryService::getFilesWithContent).orElse(Map.of());
 
         return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
-                testsRepositoryContents, exercise.getProblemStatement(), exercise.getReleaseDate().toInstant(), exercise.getDueDate().toInstant());
+                testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
     }
 
     public PyrisSubmissionDTO toPyrisDTO(ProgrammingSubmission submission) {
-        var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(buildLogEntry.getTime().toInstant(), buildLogEntry.getLog()))
+        var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
         var studentRepositoryContents = getRepository((ProgrammingExerciseParticipation) submission.getParticipation()).map(repositoryService::getFilesWithContent)
                 .orElse(Map.of());
-        return new PyrisSubmissionDTO(submission.getId(), submission.getSubmissionDate().toInstant(), studentRepositoryContents, submission.getParticipation().isPracticeMode(),
+        return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), studentRepositoryContents, submission.getParticipation().isPracticeMode(),
                 submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
-    }
-
-    private PyrisResultDTO getLatestResult(ProgrammingSubmission submission) {
-        var latestResult = submission.getLatestResult();
-        if (latestResult == null) {
-            return null;
-        }
-        var feedbacks = latestResult.getFeedbacks().stream().map(feedback -> {
-            var text = feedback.getDetailText();
-            if (feedback.getHasLongFeedbackText()) {
-                text = feedback.getLongFeedback().get().getText();
-            }
-            return new PyrisFeedbackDTO(text, feedback.getTestCase().getTestName(), feedback.getCredits());
-        }).toList();
-
-        return new PyrisResultDTO(latestResult.getCompletionDate().toInstant(), latestResult.isSuccessful(), feedbacks);
     }
 
     public List<PyrisMessageDTO> toPyrisDTO(List<IrisMessage> messages) {
@@ -96,10 +82,52 @@ public class PyrisDTOService {
                 }
                 return result;
             }).filter(Objects::nonNull).toList();
-            return new PyrisMessageDTO(message.getSentAt().toInstant(), message.getSender(), content);
+            return new PyrisMessageDTO(toInstant(message.getSentAt()), message.getSender(), content);
         }).toList();
     }
 
+    /**
+     * Null safe conversion of ZonedDateTime to Instant
+     *
+     * @param zonedDateTime the ZonedDateTime to convert
+     * @return the Instant or null if the input was null
+     */
+    private Instant toInstant(ZonedDateTime zonedDateTime) {
+        if (zonedDateTime == null) {
+            return null;
+        }
+        return zonedDateTime.toInstant();
+    }
+
+    /**
+     * Helper method to convert the latest result of a submission to a PyrisResultDTO
+     *
+     * @param submission the submission
+     * @return the PyrisResultDTO or null if the submission has no result
+     */
+    private PyrisResultDTO getLatestResult(ProgrammingSubmission submission) {
+        var latestResult = submission.getLatestResult();
+        if (latestResult == null) {
+            return null;
+        }
+        var feedbacks = latestResult.getFeedbacks().stream().map(feedback -> {
+            var text = feedback.getDetailText();
+            if (feedback.getHasLongFeedbackText()) {
+                text = feedback.getLongFeedback().get().getText();
+            }
+            var testCaseName = feedback.getTestCase() == null ? feedback.getText() : feedback.getTestCase().getTestName();
+            return new PyrisFeedbackDTO(text, testCaseName, Objects.requireNonNullElse(feedback.getCredits(), 0D));
+        }).toList();
+
+        return new PyrisResultDTO(toInstant(latestResult.getCompletionDate()), latestResult.isSuccessful(), feedbacks);
+    }
+
+    /**
+     * Helper method to get & checkout the repository for a participation
+     *
+     * @param participation the participation
+     * @return the repository or empty if it could not be fetched
+     */
     private Optional<Repository> getRepository(ProgrammingExerciseParticipation participation) {
         try {
             return Optional.ofNullable(gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), true));

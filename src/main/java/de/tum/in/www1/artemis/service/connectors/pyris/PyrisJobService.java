@@ -85,10 +85,10 @@ public class PyrisJobService {
                 randomStringBuilder.append(randomChar);
             }
             else if (randomChar < 36) {
-                randomStringBuilder.append((char) (randomChar + 'a'));
+                randomStringBuilder.append((char) (randomChar - 10 + 'a'));
             }
             else {
-                randomStringBuilder.append((char) (randomChar + 'A'));
+                randomStringBuilder.append((char) (randomChar - 36 + 'A'));
             }
         }
         return randomStringBuilder.toString();

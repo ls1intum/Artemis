@@ -145,7 +145,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
 
         // TODO: Use settings to determine the variant
         // var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(chatSession.getExercise(), false);
-        pyrisPipelineService.executeTutorChatPipeline("default", latestSubmission, chatSession.getExercise(), chatSession);
+        pyrisPipelineService.executeTutorChatPipeline("default", latestSubmission, exercise, chatSession);
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
@@ -154,7 +154,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
             return Optional.empty();
         }
         return participations.get(participations.size() - 1).getSubmissions().stream().max(Submission::compareTo)
-                .flatMap(sub -> programmingSubmissionRepository.findWithEagerBuildLogEntriesById(sub.getId()));
+                .flatMap(sub -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(sub.getId()));
     }
 
     public void handleStatusUpdate(TutorChatJob job, PyrisTutorChatStatusUpdateDTO statusUpdate) {
