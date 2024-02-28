@@ -49,7 +49,7 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.export.DataExportCreationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 
 class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -195,7 +195,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     private Course prepareCourseDataForDataExportCreation(boolean assessmentDueDateInTheFuture, String courseShortName) throws Exception {
         var userLogin = TEST_PREFIX + "student1";
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         if (!Files.exists(repoDownloadClonePath)) {
             Files.createDirectories(repoDownloadClonePath);
         }
@@ -266,7 +266,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     private Exam prepareExamDataForDataExportCreation(String courseShortName) throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         if (!Files.exists(repoDownloadClonePath)) {
             Files.createDirectories(repoDownloadClonePath);
         }
