@@ -38,11 +38,10 @@
                                         [(ngModel)]="relationType"
                                         (change)="validate()"
                                     >
-                                        >
-                                        <option value="RELATES" selected>{{ 'artemisApp.competency.relation.relates' | artemisTranslate }}</option>
-                                        <option value="ASSUMES">{{ 'artemisApp.competency.relation.assumes' | artemisTranslate }}</option>
-                                        <option value="EXTENDS">{{ 'artemisApp.competency.relation.extends' | artemisTranslate }}</option>
-                                        <option value="MATCHES">{{ 'artemisApp.competency.relation.matches' | artemisTranslate }}</option>
+                                        <!-- TODO: keepOrder? -->
+                                        @for (relationType of competencyRelationType | keyvalue; track relationType; let i = $index) {
+                                            <option [ngValue]="relationType.key">{{ 'artemisApp.competency.relation.type.' + relationType.value | artemisTranslate }}</option>
+                                        }
                                     </select>
                                 </div>
                             </div>
@@ -105,7 +104,7 @@
                                     <svg:path class="line" stroke-width="2" marker-end="url(#arrow)" />
                                     <svg:text class="edge-label" text-anchor="middle">
                                         <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
-                                            {{ ('artemisApp.competency.relation.' + link.label.toLowerCase() | artemisTranslate).toUpperCase() }}
+                                            {{ ('artemisApp.competency.relation.type.' + link.label | artemisTranslate).toUpperCase() }}
                                         </textPath>
                                     </svg:text>
                                 </svg:g>

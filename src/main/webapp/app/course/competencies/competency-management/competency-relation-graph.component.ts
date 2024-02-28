@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Output, computed, input } from '@angular/core';
 import { Edge, Node } from '@swimlane/ngx-graph';
-import { Competency, CompetencyRelation, CompetencyRelationError } from 'app/entities/competency.model';
+import { Competency, CompetencyRelation, CompetencyRelationError, CompetencyRelationType, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -42,11 +42,12 @@ export class CompetencyRelationGraphComponent {
 
     tailCompetencyId?: number;
     headCompetencyId?: number;
-    relationType?: string;
+    relationType?: CompetencyRelationType;
     relationError?: CompetencyRelationError = undefined;
     update$: Subject<boolean> = new Subject<boolean>();
 
     //constants
+    protected readonly competencyRelationType = CompetencyRelationType;
     protected readonly errorMessage: Record<CompetencyRelationError, string> = {
         CIRCULAR: 'artemisApp.competency.relation.createsCircularRelation',
         EXISTING: 'artemisApp.competency.relation.relationAlreadyExists',
@@ -168,6 +169,8 @@ export class CompetencyRelationGraphComponent {
         }
         return graph.hasCycle();
     }
+
+    protected readonly competencyTaxonomy = CompetencyTaxonomy;
 }
 
 /**

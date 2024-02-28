@@ -18,6 +18,13 @@ export enum CompetencyTaxonomy {
     CREATE = 'CREATE',
 }
 
+export enum CompetencyRelationType {
+    RELATES = 'RELATES',
+    ASSUMES = 'ASSUMES',
+    EXTENDS = 'EXTENDS',
+    MATCHES = 'MATCHES',
+}
+
 export enum CompetencyRelationError {
     CIRCULAR = 'CIRCULAR',
     SELF = 'SELF',
@@ -66,7 +73,7 @@ export class CompetencyRelation implements BaseEntity {
     public id?: number;
     public tailCompetency?: Competency;
     public headCompetency?: Competency;
-    public type?: string;
+    public type?: CompetencyRelationType;
 
     constructor() {}
 }
@@ -75,7 +82,7 @@ export class CompetencyRelationDTO implements BaseEntity {
     id?: number;
     tailCompetencyId?: number;
     headCompetencyId?: number;
-    relationType?: string;
+    relationType?: CompetencyRelationType;
 
     constructor() {}
 }

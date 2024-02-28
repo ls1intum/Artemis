@@ -189,14 +189,16 @@
                 "tailCompetency": "Tail Competency",
                 "relationType": "Relation Type",
                 "headCompetency": "Head Competency",
-                "relates": "Relates",
-                "assumes": "Assumes",
-                "extends": "Extends",
-                "matches": "Matches",
                 "createRelation": "Create Relation",
                 "createsCircularRelation": "You can not create circular relations between competencies.",
                 "selfRelation": "You can not create a relation between a competency and itself.",
-                "relationAlreadyExists": "This relation already exists."
+                "relationAlreadyExists": "This relation already exists.",
+                "type": {
+                    "RELATES": "Relates",
+                    "ASSUMES": "Assumes",
+                    "EXTENDS": "Extends",
+                    "MATCHES": "Matches"
+                }
             }
         },
         "learningPath": {
