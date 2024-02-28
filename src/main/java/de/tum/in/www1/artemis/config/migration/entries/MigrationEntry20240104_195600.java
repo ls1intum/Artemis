@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Action;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
@@ -44,17 +45,21 @@ public class MigrationEntry20240104_195600 extends ProgrammingExerciseMigrationE
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
     private final Optional<AeolusBuildScriptGenerationService> aeolusBuildScriptGenerationService;
 
     private final Environment environment;
 
     public MigrationEntry20240104_195600(ProgrammingExerciseRepository programmingExerciseRepository, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            Optional<AeolusBuildScriptGenerationService> aeolusBuildScriptGenerationService) {
+            Optional<AeolusBuildScriptGenerationService> aeolusBuildScriptGenerationService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.environment = environment;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.aeolusBuildScriptGenerationService = aeolusBuildScriptGenerationService;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
     }
 
     @Override
@@ -122,6 +127,27 @@ public class MigrationEntry20240104_195600 extends ProgrammingExerciseMigrationE
                     ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(solutionParticipation);
                     String exerciseId = exercise != null ? exercise.getId().toString() : "unknown";
                     log.error("Failed to migrate solution participation with id {} of exercise {}, because the windfile is null", solutionParticipation.getId(), exerciseId);
+                    if (exercise != null) {
+                        var template = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId());
+                        if (template.isPresent()) {
+                            windfile = aeolusBuildScriptGenerationService.get().translateBuildPlan(template.get().getBuildPlanId());
+                            if (windfile != null) {
+                                log.info("Migrating template participation with id {} of exercise {} using the template build plan", template.get().getId(), exerciseId);
+                            }
+                            else {
+                                log.error("Failed to migrate template participation with id {} of exercise {}, because the windfile is null", template.get().getId(), exerciseId);
+                                errorList.add(solutionParticipation);
+                                continue;
+                            }
+                        }
+                    }
+                    else {
+                        errorList.add(solutionParticipation);
+                        continue;
+                    }
+                }
+                if (windfile == null) {
+                    log.error("Failed to migrate solution participation with id {}", solutionParticipation.getId());
                     errorList.add(solutionParticipation);
                     continue;
                 }
