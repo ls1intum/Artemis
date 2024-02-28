@@ -31,11 +31,11 @@ import de.tum.in.www1.artemis.service.competency.CompetencyService;
 import de.tum.in.www1.artemis.service.iris.session.IrisCompetencyGenerationSessionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -116,7 +116,7 @@ public class CompetencyResource {
      */
     @GetMapping("competencies")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<Competency>> getAllCompetenciesOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<Competency>> getAllCompetenciesOnPage(SearchTermPageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(competencyService.getAllOnPageWithSize(search, user));
     }

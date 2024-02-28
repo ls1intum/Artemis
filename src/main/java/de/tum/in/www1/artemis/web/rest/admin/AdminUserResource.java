@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
-import de.tum.in.www1.artemis.web.rest.dto.UserPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;

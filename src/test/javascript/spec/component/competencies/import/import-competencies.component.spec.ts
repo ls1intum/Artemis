@@ -15,7 +15,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ImportCompetenciesTableStubComponent } from './import-competencies-table-stub.component';
 import { CompetencySearchStubComponent } from './competency-search-stub.component';
 import { By } from '@angular/platform-browser';
-import { BasePageableSearch, CompetencyFilter } from 'app/shared/table/pageable-table';
+import { CompetencyFilter, PageableSearch } from 'app/shared/table/pageable-table';
 
 describe('ImportCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<ImportCompetenciesComponent>;
@@ -148,7 +148,7 @@ describe('ImportCompetenciesComponent', () => {
         expect(competencyTables).toHaveLength(2);
         for (const element of competencyTables) {
             const table: ImportCompetenciesTableStubComponent = element.componentInstance;
-            table.searchChange.emit({} as BasePageableSearch);
+            table.searchChange.emit({} as PageableSearch);
         }
 
         expect(searchChangeSpy).toHaveBeenCalledOnce();
