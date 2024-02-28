@@ -17,7 +17,6 @@ artemis:
         asynchronous: true
         timeout-seconds: 120
         queue-size-limit: 100
-        local-cis-build-scripts-path: local-ci-scripts
         build-container-prefix: local-ci-
         proxies:
             use-system-proxy: false
