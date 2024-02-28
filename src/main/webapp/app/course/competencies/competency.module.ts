@@ -24,6 +24,7 @@ import { ImportCompetenciesComponent } from 'app/course/competencies/import-comp
 import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
 import { ImportCompetenciesTableComponent } from 'app/course/competencies/import-competencies/import-competencies-table.component';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
+import { CompetencyRelationGraphComponent } from 'app/course/competencies/competency-management/competency-relation-graph.component';
 
 @NgModule({
     imports: [
@@ -55,6 +56,7 @@ import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select
         CompetencyImportCourseComponent,
         ImportCompetenciesTableComponent,
         TaxonomySelectComponent,
+        CompetencyRelationGraphComponent,
     ],
     exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent],
 })

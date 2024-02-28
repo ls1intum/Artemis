@@ -22,7 +22,6 @@ export enum CompetencyRelationError {
     CIRCULAR = 'CIRCULAR',
     SELF = 'SELF',
     EXISTING = 'EXISTING',
-    NONE = 'NONE',
 }
 
 export enum CompetencyValidators {
