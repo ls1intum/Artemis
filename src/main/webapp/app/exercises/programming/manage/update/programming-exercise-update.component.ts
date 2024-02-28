@@ -376,6 +376,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            if (this.programmingExercise.buildPlanConfiguration) {
+                this.programmingExercise.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
+            }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
