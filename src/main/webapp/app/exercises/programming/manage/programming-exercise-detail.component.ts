@@ -550,7 +550,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     onParticipationChange(): void {
-        () => setTimeout(() => this.loadGitDiffReport());
+        this.loadGitDiffReport();
         this.setLatestCoveredLineRatio();
     }
 
