@@ -63,6 +63,9 @@ public class CompetencyRelationService {
      * @return the persisted CompetencyRelation
      */
     public CompetencyRelation createCompetencyRelation(Competency tailCompetency, Competency headCompetency, RelationType relationType, Course course) {
+        if (relationType == null) {
+            throw new BadRequestException("Competency relation must have a relation type");
+        }
         var relation = getCompetencyRelation(tailCompetency, headCompetency, relationType);
         var competencies = competencyRepository.findAllForCourse(course.getId());
         var competencyRelations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
