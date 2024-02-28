@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
@@ -7,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +25,8 @@ import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 /**
  * Service responsible for exporting quiz exercises with their submissions.
  */
+
+@Profile(PROFILE_CORE)
 @Service
 public class QuizExerciseWithSubmissionsExportService {
 

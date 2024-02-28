@@ -32,7 +32,6 @@
                 "quizExercise": "Quiz Exercise",
                 "lecture": "Vorlesung",
                 "competency": "Kompetenz",
-                "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
                 "quizQuestion": "Question",
                 "multipleChoiceQuestion": "Multiple-Choice Question",
@@ -261,7 +260,9 @@
             "ldap": "von LDAP synchronisieren",
             "notUndoable": "Diese Aktion kann nicht rückgängig gemacht werden.",
             "discardChanges": "Änderungen verwerfen",
-            "goBack": "Zurück"
+            "goBack": "Zurück",
+            "search": "Suchen",
+            "select": "Auswählen"
         },
         "detail": {
             "field": "Feld",
