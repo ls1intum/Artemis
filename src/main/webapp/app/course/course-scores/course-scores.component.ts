@@ -250,37 +250,36 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     private calculateCourseStatistics(courseId: number) {
         const findParticipationsObservable = this.courseService.findAllParticipationsWithResults(courseId);
         // alternative course scores calculation using participant scores table
-        const courseScoresObservable = this.participantScoresService.findCourseScores(courseId);
         // find grading scale if it exists for course
         const gradingScaleObservable = this.gradingSystemService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScale>())));
         const plagiarismCasesObservable = this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(courseId);
-        forkJoin([findParticipationsObservable, courseScoresObservable, gradingScaleObservable, plagiarismCasesObservable]).subscribe(
-            ([participationsOfCourse, courseScoresResult, gradingScaleResponse, plagiarismCases]) => {
-                this.allParticipationsOfCourse = participationsOfCourse;
-                if (gradingScaleResponse.body) {
-                    this.setUpGradingScale(gradingScaleResponse.body);
-                }
+        forkJoin([findParticipationsObservable, gradingScaleObservable, plagiarismCasesObservable]).subscribe(([participationsOfCourse, gradingScaleResponse, plagiarismCases]) => {
+            this.allParticipationsOfCourse = participationsOfCourse;
+            if (gradingScaleResponse.body) {
+                this.setUpGradingScale(gradingScaleResponse.body);
+            }
 
-                this.calculateExerciseLevelStatistics();
-                this.exerciseTypesWithExercises = this.filterExercisesTypesWithExercises();
+            this.calculateExerciseLevelStatistics();
+            this.exerciseTypesWithExercises = this.filterExercisesTypesWithExercises();
 
-                this.calculateStudentLevelStatistics();
+            this.calculateStudentLevelStatistics();
 
-                // if grading scale exists set properties
-                if (this.gradingScaleExists) {
-                    this.calculateGradingScaleInformation(plagiarismCases.body ?? undefined);
-                }
+            // if grading scale exists set properties
+            if (this.gradingScaleExists) {
+                this.calculateGradingScaleInformation(plagiarismCases.body ?? undefined);
+            }
 
+            this.calculateAverageAndMedianScores();
+            this.scoresToDisplay = this.students.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course));
+            this.highlightBar(HighlightType.AVERAGE);
+
+            // this is an optional step at the moment, so we do it separately to avoid issues
+            this.participantScoresService.findCourseScores(courseId).subscribe((courseScoresResult) => {
                 // comparing with calculation from course scores (using new participation score table)
                 const courseScoreDTOs = courseScoresResult.body!;
                 this.compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs);
-                this.calculateAverageAndMedianScores();
-                this.scoresToDisplay = this.students.map((student) =>
-                    roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course),
-                );
-                this.highlightBar(HighlightType.AVERAGE);
-            },
-        );
+            });
+        });
     }
 
     /**
