@@ -47,8 +47,6 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
 
         this.onlineCourseConfigurationForm = new FormGroup({
             id: new FormControl(this.onlineCourseConfiguration.id),
-            ltiKey: new FormControl(this.onlineCourseConfiguration.ltiKey),
-            ltiSecret: new FormControl(this.onlineCourseConfiguration.ltiSecret),
             userPrefix: new FormControl(this.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
             requireExistingUser: new FormControl(this.onlineCourseConfiguration.requireExistingUser),
             ltiPlatformConfiguration: new FormControl(''),
@@ -110,7 +108,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
 
     setPlatform(platform: LtiPlatformConfiguration) {
         this.onlineCourseConfiguration.ltiPlatformConfiguration = platform;
-        this.onlineCourseConfigurationForm.get('ltiPlatformConfiguration')!.setValue(platform);
+        this.onlineCourseConfigurationForm.get('ltiPlatformConfiguration')?.setValue(platform);
     }
 
     getLtiPlatform(platform: LtiPlatformConfiguration) {

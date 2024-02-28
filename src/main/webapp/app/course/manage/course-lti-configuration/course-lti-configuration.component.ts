@@ -19,12 +19,7 @@ export class CourseLtiConfigurationComponent implements OnInit {
     exercises: Exercise[];
 
     activeTab = 1;
-    ltiVersions = {
-        'artemisApp.lti.version10': '',
-        'artemisApp.lti.version13': '',
-    };
 
-    selectedLtiVersionKey: string;
     predicate = 'type';
     reverse = false;
     showAdvancedSettings = false;
@@ -38,9 +33,7 @@ export class CourseLtiConfigurationComponent implements OnInit {
         private route: ActivatedRoute,
         private sortService: SortService,
         private courseManagementService: CourseManagementService,
-    ) {
-        this.selectedLtiVersionKey = 'artemisApp.lti.version13';
-    }
+    ) {}
 
     /**
      * Gets the configuration for the course encoded in the route and fetches the exercises
@@ -57,13 +50,6 @@ export class CourseLtiConfigurationComponent implements OnInit {
                 });
             }
         });
-    }
-
-    /**
-     * Gets the LTI 1.0 launch url for an exercise
-     */
-    getExerciseLti10LaunchUrl(exercise: Exercise): string {
-        return `${location.origin}/api/public/lti/launch/${exercise.id}`; // Needs to match url in LtiResource
     }
 
     /**
