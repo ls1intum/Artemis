@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise;
 
+import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -24,11 +25,9 @@ public class EnforceRoleInExerciseAspect {
 
     /**
      * Pointcut around all methods or classes annotated with {@link EnforceRoleInExercise}.
-     *
-     * @param enforceRoleInExercise The annotation containing the relevant role
      */
-    @Pointcut("@within(enforceRoleInExercise) || @annotation(enforceRoleInExercise)")
-    public void callAt(EnforceRoleInExercise enforceRoleInExercise) {
+    @Pointcut("@within(EnforceRoleInExercise) || @annotation(EnforceRoleInExercise) || execution(@(@EnforceRoleInExercise *) * *(..))")
+    public void callAt() {
     }
 
     /**
@@ -36,17 +35,43 @@ public class EnforceRoleInExerciseAspect {
      * method if
      * the user has the required role. Will otherwise return forbidden (as response entity)
      *
-     * @param joinPoint             Proceeding join point of the aspect
-     * @param enforceRoleInExercise The annotation containing the required role
+     * @param joinPoint Proceeding join point of the aspect
      * @return The original return value of the called method, if all features are enabled, a forbidden response entity otherwise
      * @throws Throwable If there was any error during method execution (both the aspect or the actual called method)
      */
-    @Around(value = "callAt(enforceRoleInExercise)", argNames = "joinPoint,enforceRoleInExercise")
-    public Object around(ProceedingJoinPoint joinPoint, EnforceRoleInExercise enforceRoleInExercise) throws Throwable {
-        final var exerciseId = getExerciseId(joinPoint, enforceRoleInExercise)
-                .orElseThrow(() -> new IllegalArgumentException("Method annotated with @RoleInExercise must have a parameter named 'exerciseId'"));
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(enforceRoleInExercise.value(), exerciseId);
+    @Around(value = "callAt()", argNames = "joinPoint")
+    public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
+        var annotation = getAnnotation(joinPoint);
+
+        final var exerciseId = getExerciseId(joinPoint, annotation)
+                .orElseThrow(() -> new IllegalArgumentException("Method annotated with @EnforceRoleInExercise must have a parameter named 'exerciseId'"));
+        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(annotation.value(), exerciseId);
         return joinPoint.proceed();
+    }
+
+    private EnforceRoleInExercise getAnnotation(ProceedingJoinPoint joinPoint) {
+        var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
+        EnforceRoleInExercise annotation = method.getAnnotation(EnforceRoleInExercise.class);
+        if (annotation == null) {
+            annotation = method.getDeclaringClass().getAnnotation(EnforceRoleInExercise.class);
+        }
+        if (annotation == null) {
+            for (Annotation a : method.getDeclaredAnnotations()) {
+                annotation = a.annotationType().getAnnotation(EnforceRoleInExercise.class);
+                if (annotation != null) {
+                    break;
+                }
+            }
+        }
+        if (annotation == null) {
+            for (Annotation a : method.getDeclaringClass().getDeclaredAnnotations()) {
+                annotation = a.annotationType().getAnnotation(EnforceRoleInExercise.class);
+                if (annotation != null) {
+                    break;
+                }
+            }
+        }
+        return annotation;
     }
 
     /**
