@@ -58,7 +58,7 @@ public class CompetencyRelationService {
      *
      * @param tailCompetency the tail Competency
      * @param headCompetency the head Competency
-     * @param type           the type of the relation
+     * @param relationType   the type of the relation
      * @param course         the course the relation belongs to
      * @return the persisted CompetencyRelation
      */
@@ -67,6 +67,7 @@ public class CompetencyRelationService {
         var competencies = competencyRepository.findAllForCourse(course.getId());
         var competencyRelations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
         competencyRelations.add(relation);
+
         if (competencyService.doesCreateCircularRelation(competencies, competencyRelations)) {
             throw new BadRequestException("You can't define circular dependencies between competencies");
         }
