@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.util.Arrays.asList;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
@@ -13,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -39,6 +41,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Result entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ResultRepository extends JpaRepository<Result, Long> {
 
@@ -494,7 +497,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -517,7 +520,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -537,7 +540,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -546,7 +549,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 JOIN e.exerciseGroup eg
                 JOIN eg.exam ex
                 JOIN r.assessor a
-                LEFT JOIN FETCH Rating rating on rating.result = r
+                LEFT JOIN FETCH Rating rating ON rating.result = r
             WHERE r.completionDate IS NOT NULL
                 AND ex.id = :examId
             GROUP BY r.assessor.id

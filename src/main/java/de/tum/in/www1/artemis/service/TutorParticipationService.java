@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.FeedbackType.*;
 import static de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus.*;
 import static de.tum.in.www1.artemis.service.TutorParticipationService.FeedbackCorrectionErrorType.*;
@@ -10,6 +11,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,6 +27,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Service Implementation for managing TutorParticipation.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class TutorParticipationService {
 
