@@ -35,8 +35,8 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureImportService;
 import de.tum.in.www1.artemis.service.LectureService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -145,7 +145,7 @@ public class LectureResource {
      */
     @GetMapping("lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<Lecture>> getAllLecturesOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<Lecture>> getAllLecturesOnPage(SearchTermPageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(lectureService.getAllOnPageWithSize(search, user));
     }
