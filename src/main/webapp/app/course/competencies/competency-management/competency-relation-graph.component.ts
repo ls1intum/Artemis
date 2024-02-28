@@ -12,7 +12,7 @@ export class CompetencyRelationGraphComponent {
     competencies = input<Competency[]>([]);
     relations = input<CompetencyRelation[]>([]);
 
-    @Output() onRemoveRelation = new EventEmitter<CompetencyRelation>();
+    @Output() onRemoveRelation = new EventEmitter<number>();
     @Output() onCreateRelation = new EventEmitter<CompetencyRelation>();
 
     nodes = computed<Node[]>(() => {
@@ -67,11 +67,7 @@ export class CompetencyRelationGraphComponent {
     }
 
     removeRelation(edge: Edge) {
-        const relation = this.relations().find((relation) => relation.id === Number(edge.data.id));
-        if (relation) {
-            this.onRemoveRelation.emit(relation);
-        }
-        //TODO: error handling (what if no relation with this id was found)
+        this.onRemoveRelation.emit(edge.data.id);
     }
 
     validate(): void {

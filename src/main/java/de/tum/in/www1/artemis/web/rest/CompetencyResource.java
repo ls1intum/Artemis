@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -419,70 +420,65 @@ public class CompetencyResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies/:competencyId/relations get the relations for the competency
+     * GET /courses/:courseId/competencies/relations get the relations for the course
      *
-     * @param courseId     the id of the course to which the competency belongs
-     * @param competencyId the id of the competency for which to fetch all relations
-     * @return the ResponseEntity with status 200 (OK) and with a list of relations for the competency in the body
+     * @param courseId the id of the course to which the relations belong
+     * @return the ResponseEntity with status 200 (OK) and with a list of relations for the course
      */
-    @GetMapping("courses/{courseId}/competencies/{competencyId}/relations")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Set<CompetencyRelation>> getCompetencyRelations(@PathVariable long competencyId, @PathVariable long courseId) {
-        log.debug("REST request to get relations for Competency : {}", competencyId);
+    @GetMapping("courses/{courseId}/competencies/relations")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Set<CompetencyRelationDTO>> getCompetencyRelations(@PathVariable long courseId) {
+        log.debug("REST request to get relations for Course : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var competency = competencyRepository.findByIdElseThrow(competencyId);
-        checkAuthorizationForCompetency(Role.STUDENT, course, competency);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        var relations = competencyRelationRepository.findAllByCompetencyId(competency.getId());
+        var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId);
+        var relationDTOs = relations.stream().map(competencyRelationService::relationToDTO).collect(Collectors.toSet());
 
-        return ResponseEntity.ok().body(relations);
+        return ResponseEntity.ok().body(relationDTOs);
     }
 
     /**
-     * POST /courses/:courseId/competencies/:tailCompetencyId/relations/headCompetencyId
+     * POST /courses/:courseId/competencies/relations create a new relation
      *
-     * @param courseId         the id of the course to which the competencies belong
-     * @param tailCompetencyId the id of the competency at the tail of the relation
-     * @param headCompetencyId the id of the competency at the head of the relation
-     * @param type             the type of the relation as request parameter
+     * @param courseId the id of the course to which the competencies belong
+     * @param relation the relation to create
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PostMapping("courses/{courseId}/competencies/{tailCompetencyId}/relations/{headCompetencyId}")
+    @PostMapping("courses/{courseId}/competencies/relations")
     @EnforceAtLeastInstructor
-    public ResponseEntity<CompetencyRelation> createCompetencyRelation(@PathVariable long courseId, @PathVariable long tailCompetencyId, @PathVariable long headCompetencyId,
-            @RequestParam(defaultValue = "") String type) {
-        log.info("REST request to create a relation between competencies {} and {}", tailCompetencyId, headCompetencyId);
+    public ResponseEntity<CompetencyRelation> createCompetencyRelation(@PathVariable long courseId, @RequestBody CompetencyRelation relation) {
+        var tailId = relation.getTailCompetency().getId();
+        var headId = relation.getHeadCompetency().getId();
+        log.info("REST request to create a relation between competencies {} and {}", tailId, headId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var tailCompetency = competencyRepository.findByIdElseThrow(tailCompetencyId);
+
+        var tailCompetency = competencyRepository.findByIdElseThrow(tailId);
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, tailCompetency);
-        var headCompetency = competencyRepository.findByIdElseThrow(headCompetencyId);
+        var headCompetency = competencyRepository.findByIdElseThrow(headId);
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, headCompetency);
 
-        var relation = competencyRelationService.createCompetencyRelation(tailCompetency, headCompetency, type, course);
+        var createdRelation = competencyRelationService.createCompetencyRelation(tailCompetency, headCompetency, relation.getType(), course);
 
-        return ResponseEntity.ok().body(relation);
+        return ResponseEntity.ok().body(createdRelation);
     }
 
     /**
-     * DELETE /courses/:courseId/competencies/:competencyId/relations/:competencyRelationId
+     * DELETE /courses/:courseId/competencies/relations/:competencyRelationId delete a relation
      *
      * @param courseId             the id of the course
-     * @param competencyId         the id of the competency to which the relation belongs
      * @param competencyRelationId the id of the competency relation
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("courses/{courseId}/competencies/{competencyId}/relations/{competencyRelationId}")
+    @DeleteMapping("courses/{courseId}/competencies/relations/{competencyRelationId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> removeCompetencyRelation(@PathVariable long competencyId, @PathVariable long courseId, @PathVariable long competencyRelationId) {
-        log.info("REST request to remove a competency relation: {}", competencyId);
+    public ResponseEntity<Void> removeCompetencyRelation(@PathVariable long courseId, @PathVariable long competencyRelationId) {
+        log.info("REST request to remove a competency relation: {}", competencyRelationId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var competency = competencyRepository.findByIdElseThrow(competencyId);
-        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
-
         var relation = competencyRelationRepository.findById(competencyRelationId).orElseThrow();
-        if (!relation.getTailCompetency().getId().equals(competency.getId())) {
-            throw new BadRequestException("The relation does not belong to the specified competency");
-        }
+
+        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, relation.getTailCompetency());
+        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, relation.getHeadCompetency());
 
         competencyRelationRepository.delete(relation);
 

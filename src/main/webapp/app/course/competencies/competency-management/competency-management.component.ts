@@ -121,15 +121,13 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 switchMap((res) => {
                     this.competencies = res.body!;
 
-                    const relationsObservable = this.competencies.map((lg) => {
-                        return this.competencyService.getCompetencyRelations(lg.id!, this.courseId);
-                    });
+                    const relationsObservable = this.competencyService.getCompetencyRelations(this.courseId);
 
                     const progressObservable = this.competencies.map((lg) => {
                         return this.competencyService.getCourseProgress(lg.id!, this.courseId);
                     });
 
-                    return forkJoin([forkJoin(relationsObservable), forkJoin(progressObservable)]);
+                    return forkJoin([relationsObservable, forkJoin(progressObservable)]);
                 }),
             )
             .pipe(
@@ -139,19 +137,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: ([competencyRelations, competencyProgressResponses]) => {
-                    this.relations = [
-                        ...competencyRelations
-                            .flatMap((response) => response.body!)
-                            .reduce((a, c) => {
-                                a.set(c.id, c);
-                                return a;
-                            }, new Map())
-                            .values(),
-                    ];
+                    this.relations = (competencyRelations.body ?? []).map((relationDTO) => dtoToCompetencyRelation(relationDTO));
 
                     for (const competencyProgressResponse of competencyProgressResponses) {
                         const courseCompetencyProgress: CourseCompetencyProgress = competencyProgressResponse.body!;
-                        this.competencies.find((lg) => lg.id === courseCompetencyProgress.competencyId)!.courseProgress = courseCompetencyProgress;
+                        this.competencies.find((competency) => competency.id === courseCompetencyProgress.competencyId)!.courseProgress = courseCompetencyProgress;
                     }
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -228,7 +218,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
 
     createRelation(relation: CompetencyRelation) {
         this.competencyService
-            .createCompetencyRelation(relation.tailCompetency!.id!, relation.headCompetency!.id!, relation.type!, this.courseId)
+            .createCompetencyRelation(relation, this.courseId)
             .pipe(
                 filter((res: HttpResponse<CompetencyRelation>) => res.ok),
                 map((res: HttpResponse<CompetencyRelation>) => res.body),
@@ -243,10 +233,10 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             });
     }
 
-    removeRelation(relation: CompetencyRelation) {
-        this.competencyService.removeCompetencyRelation(relation.tailCompetency!.id!, relation.id!, this.courseId).subscribe({
+    removeRelation(relationId: number) {
+        this.competencyService.removeCompetencyRelation(relationId, this.courseId).subscribe({
             next: () => {
-                this.relations = this.relations.filter((r) => r.id !== relation.id);
+                this.relations = this.relations.filter((relation) => relation.id !== relationId);
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });

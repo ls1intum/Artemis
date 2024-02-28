@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 
 /**
  * Service for managing CompetencyRelations.
@@ -61,15 +62,7 @@ public class CompetencyRelationService {
      * @param course         the course the relation belongs to
      * @return the persisted CompetencyRelation
      */
-    public CompetencyRelation createCompetencyRelation(Competency tailCompetency, Competency headCompetency, String type, Course course) {
-        RelationType relationType;
-        try {
-            relationType = RelationType.valueOf(type);
-        }
-        catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid value for relation type");
-        }
-
+    public CompetencyRelation createCompetencyRelation(Competency tailCompetency, Competency headCompetency, RelationType relationType, Course course) {
         var relation = getCompetencyRelation(tailCompetency, headCompetency, relationType);
         var competencies = competencyRepository.findAllForCourse(course.getId());
         var competencyRelations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
@@ -79,5 +72,15 @@ public class CompetencyRelationService {
         }
 
         return competencyRelationRepository.save(relation);
+    }
+
+    /**
+     * Converts a CompetencyRelation to a CompetencyRelationDTO
+     *
+     * @param relation the relation
+     * @return the CompetencyRelationDTO
+     */
+    public CompetencyRelationDTO relationToDTO(CompetencyRelation relation) {
+        return new CompetencyRelationDTO(relation.getId(), relation.getTailCompetency().getId(), relation.getHeadCompetency().getId(), relation.getType());
     }
 }
