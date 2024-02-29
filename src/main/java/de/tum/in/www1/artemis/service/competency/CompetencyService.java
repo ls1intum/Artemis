@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
@@ -77,13 +78,13 @@ public class CompetencyService {
     }
 
     /**
-     * Search for all competencies fitting a {@link PageableSearchDTO search query}. The result is paged.
+     * Search for all competencies fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
      *
      * @param search The search query defining the search term and the size of the returned page
      * @param user   The user for whom to the competencies
      * @return A wrapper object containing a list of all found competencies and the total number of pages
      */
-    public SearchResultPageDTO<Competency> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+    public SearchResultPageDTO<Competency> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COMPETENCY);
         final var searchTerm = search.getSearchTerm();
         final Page<Competency> competencyPage;
