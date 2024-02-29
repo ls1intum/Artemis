@@ -578,6 +578,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="vcs_access_token" type="varchar(50)"/>
+            <column name="vcs_access_token_expiry_date" type="datetime"/>
         </createTable>
         <createTable tableName="jhi_user_authority">
             <column name="user_id" type="bigint">

@@ -505,23 +505,6 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     /**
-     * Generate a version control access token and store it in the user object, if it is needed.
-     * It is needed if
-     * 1. the config option is enabled, and
-     * 2. the user does not yet have an access token
-     *
-     * @param gitlabUser the Gitlab user (for which the token will be created)
-     * @param user       the Artemis user (where the token will be stored)
-     */
-    private void generateVersionControlAccessTokenIfNecessary(org.gitlab4j.api.models.User gitlabUser, User user) {
-        if (versionControlAccessToken && user.getVcsAccessToken() == null) {
-            String personalAccessToken = createPersonalAccessToken(gitlabUser.getId());
-            user.setVcsAccessToken(personalAccessToken);
-            userRepository.save(user);
-        }
-    }
-
-    /**
      * Gets the name of the user or its pseudonym if the option
      * is enabled.
      *

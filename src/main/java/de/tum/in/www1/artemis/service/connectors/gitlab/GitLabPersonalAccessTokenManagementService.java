@@ -10,7 +10,6 @@ import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.UserApi;
 import org.gitlab4j.api.models.ImpersonationToken;
-import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,6 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccess
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRotateResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsTokenManagementService;
 
-@Service
+@Component
 @Profile("gitlab")
 public class GitLabPersonalAccessTokenManagementService extends VcsTokenManagementService {
 

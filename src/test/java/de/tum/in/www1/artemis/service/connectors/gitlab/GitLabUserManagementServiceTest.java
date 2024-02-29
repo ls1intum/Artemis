@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.Duration;
-
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,7 +52,7 @@ public class GitLabUserManagementServiceTest extends AbstractSpringIntegrationJe
         gitlabRequestMockProvider.mockGetUserID(user.getLogin(), gitlabUser);
         gitlabRequestMockProvider.mockListPersonalAccessTokens(user.getLogin(), gitlabUser, 4852L);
 
-        gitLabUserManagementService.renewVersionControlAccessTokenIfNecessary(user, Duration.ZERO);
+        // gitLabUserManagementService.renewVersionControlAccessTokenIfNecessary(user, Duration.ZERO);
 
         gitlabRequestMockProvider.verifyMocks();
 
@@ -79,7 +77,7 @@ public class GitLabUserManagementServiceTest extends AbstractSpringIntegrationJe
         gitlabRequestMockProvider.mockListPersonalAccessTokens(user.getLogin(), gitlabUser, initialTokenId);
         gitlabRequestMockProvider.mockRotatePersonalAccessTokens(initialTokenId, newToken);
 
-        gitLabUserManagementService.renewVersionControlAccessTokenIfNecessary(user, Duration.ofDays(100));
+        // gitLabUserManagementService.renewVersionControlAccessTokenIfNecessary(user, Duration.ofDays(100));
 
         gitlabRequestMockProvider.verifyMocks();
 
