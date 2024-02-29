@@ -2,7 +2,15 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { Competency, CompetencyRelation, CompetencyRelationDTO, CompetencyWithTailRelationDTO, CourseCompetencyProgress, getIcon } from 'app/entities/competency.model';
+import {
+    Competency,
+    CompetencyRelation,
+    CompetencyRelationDTO,
+    CompetencyWithTailRelationDTO,
+    CourseCompetencyProgress,
+    dtoToCompetencyRelation,
+    getIcon,
+} from 'app/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
@@ -149,7 +157,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: ([competencyRelations, competencyProgressResponses]) => {
-                    this.relations = (competencyRelations.body ?? []).map((relationDTO) => relationDTO.toCompetencyRelation());
+                    this.relations = (competencyRelations.body ?? []).map((relationDTO) => dtoToCompetencyRelation(relationDTO));
 
                     for (const competencyProgressResponse of competencyProgressResponses) {
                         const courseCompetencyProgress: CourseCompetencyProgress = competencyProgressResponse.body!;
@@ -222,7 +230,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             .map((dto) => dto.tailRelations)
             .flat()
             .filter((element): element is CompetencyRelationDTO => !!element)
-            .map((dto) => dto.toCompetencyRelation());
+            .map((dto) => dtoToCompetencyRelation(dto));
 
         this.competencies = this.competencies.concat(importedCompetencies);
         this.relations = this.relations.concat(importedRelations);

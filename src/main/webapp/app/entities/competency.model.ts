@@ -85,16 +85,20 @@ export class CompetencyRelationDTO implements BaseEntity {
     relationType?: CompetencyRelationType;
 
     constructor() {}
+}
 
-    public toCompetencyRelation() {
-        const relation: CompetencyRelation = {
-            id: this.id,
-            tailCompetency: { id: this.tailCompetencyId },
-            headCompetency: { id: this.headCompetencyId },
-            type: this.relationType,
-        };
-        return relation;
-    }
+/**
+ * Converts a CompetencyRelationDTO to a CompetencyRelation
+ * @param competencyRelationDTO
+ */
+export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelationDTO) {
+    const relation: CompetencyRelation = {
+        id: competencyRelationDTO.id,
+        tailCompetency: { id: competencyRelationDTO.tailCompetencyId },
+        headCompetency: { id: competencyRelationDTO.headCompetencyId },
+        type: competencyRelationDTO.relationType,
+    };
+    return relation;
 }
 
 export class CompetencyWithTailRelationDTO {
@@ -109,16 +113,16 @@ export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
         return faQuestion as IconProp;
     }
 
-    const icons: Record<CompetencyTaxonomy, IconProp> = {
-        REMEMBER: faBrain,
-        UNDERSTAND: faComments,
-        APPLY: faPenFancy,
-        ANALYZE: faMagnifyingGlass,
-        EVALUATE: faPlusMinus,
-        CREATE: faCubesStacked,
+    const icons = {
+        [CompetencyTaxonomy.REMEMBER]: faBrain,
+        [CompetencyTaxonomy.UNDERSTAND]: faComments,
+        [CompetencyTaxonomy.APPLY]: faPenFancy,
+        [CompetencyTaxonomy.ANALYZE]: faMagnifyingGlass,
+        [CompetencyTaxonomy.EVALUATE]: faPlusMinus,
+        [CompetencyTaxonomy.CREATE]: faCubesStacked,
     };
 
-    return icons[competencyTaxonomy];
+    return icons[competencyTaxonomy] as IconProp;
 }
 
 export function getProgress(competencyProgress: CompetencyProgress) {
