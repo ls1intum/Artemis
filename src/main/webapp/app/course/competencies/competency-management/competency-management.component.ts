@@ -99,9 +99,9 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             next: () => {
                 const index = this.prerequisites.findIndex((prerequisite) => prerequisite.id === competencyId);
                 this.prerequisites.splice(index, 1);
-                this.dialogErrorSource.next('');
+                this.alertService.success('artemisApp.competency.prerequisite.deleted');
             },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
 
