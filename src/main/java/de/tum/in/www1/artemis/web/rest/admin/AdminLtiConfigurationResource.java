@@ -120,7 +120,7 @@ public class AdminLtiConfigurationResource {
         log.debug("REST request to add new lti platform");
 
         String clientRegistrationId = "artemis-" + UUID.randomUUID();
-        platform.setRegistrationId("artemis-" + UUID.randomUUID());
+        platform.setRegistrationId(clientRegistrationId);
 
         ltiPlatformConfigurationRepository.save(platform);
         oAuth2JWKSService.updateKey(clientRegistrationId);
