@@ -844,5 +844,5 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 
-    Optional<User> findBySshPublicKey(String keyString);
+    Optional<User> findBySshPublicKeyHash(String keyString);
 }

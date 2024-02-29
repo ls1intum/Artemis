@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.localvcci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.springframework.context.annotation.Profile;
@@ -13,7 +15,7 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 /**
  * This class configures the JGit Servlet, which is used to receive Git push and fetch requests for local VC.
  */
-@Profile("localvc")
+@Profile(PROFILE_LOCALVC)
 public class ArtemisGitServlet extends GitServlet {
 
     /**

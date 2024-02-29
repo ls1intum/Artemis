@@ -246,6 +246,10 @@ dependencies {
     implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
 
     implementation "org.apache.sshd:sshd-core:2.12.1"
+    implementation "org.apache.sshd:sshd-git:2.12.1"
+    implementation "org.apache.sshd:sshd-osgi:2.12.1"
+    implementation "org.apache.sshd:sshd-sftp:2.12.1"
+
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:1.2024.2"

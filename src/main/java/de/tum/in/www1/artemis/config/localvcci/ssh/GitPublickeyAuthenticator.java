@@ -1,17 +1,24 @@
-package de.tum.in.www1.artemis.config.localvcci;
+package de.tum.in.www1.artemis.config.localvcci.ssh;
 
-import java.io.IOException;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 
 import org.apache.sshd.server.auth.pubkey.PublickeyAuthenticator;
 import org.apache.sshd.server.session.ServerSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.repository.UserRepository;
 
+@Profile(PROFILE_LOCALVC)
 @Service
 public class GitPublickeyAuthenticator implements PublickeyAuthenticator {
+
+    private static final Logger log = LoggerFactory.getLogger(GitPublickeyAuthenticator.class);
 
     private final UserRepository userRepository;
 
@@ -26,15 +33,15 @@ public class GitPublickeyAuthenticator implements PublickeyAuthenticator {
         try {
             String keyString = PublicKeyUtils.encodePublicKey(key);
             String keyHash = HashUtils.hashString(keyString);
-            var user = userRepository.findBySshPublicKey(keyHash);
+            var user = userRepository.findBySshPublicKeyHash(keyHash);
             if (user.isPresent()) {
-                session.setAuthenticated();
-                session.setAttribute(SSHDConstants.USER_KEY, user.get());
+                log.info("Found user {} for public key authentication", user.get().getLogin());
+                session.setAttribute(SshConstants.USER_KEY, user.get());
                 return true;
             }
         }
-        catch (NoSuchAlgorithmException | IOException e) {
-            e.printStackTrace();
+        catch (NoSuchAlgorithmException e) {
+            log.error("Error during ssh authentication", e);
         }
         return false;
     }

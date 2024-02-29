@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.localvcci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+
 import org.eclipse.jgit.http.server.GitServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +16,7 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
  * Configuration of the JGit Servlet that handles fetch and push requests for local Version Control.
  */
 @Configuration
-@Profile("localvc")
+@Profile(PROFILE_LOCALVC)
 public class JGitServletConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(JGitServletConfiguration.class);
