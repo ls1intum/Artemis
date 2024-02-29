@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
 
 @Component({
     selector: 'jhi-orion-programming-exercise',
@@ -19,7 +20,7 @@ export class OrionProgrammingExerciseComponent implements OnInit {
     @Output() filteredExerciseCount = new EventEmitter<number>();
 
     readonly ExerciseView = ExerciseView;
-
+    protected readonly OrionButtonType = OrionButtonType;
     orionState: OrionState;
 
     constructor(

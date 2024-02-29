@@ -7,7 +7,7 @@
         <div class="form-group form-inline">
             <span>{{ 'artemisApp.competency.importAll.search' | artemisTranslate }}</span>
             <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchCourse" type="text" />
-            <span class="ms-3">{{ 'artemisApp.competency.importAll.importRelations' | artemisTranslate }}</span>
+            <span class="ms-3">{{ 'artemisApp.competency.import.importRelations' | artemisTranslate }}</span>
             <input type="checkbox" class="ms-2" [(ngModel)]="importRelations" name="importRelations" />
             @if (loading) {
                 <span class="ms-3">{{ 'loading' | artemisTranslate }}</span>
