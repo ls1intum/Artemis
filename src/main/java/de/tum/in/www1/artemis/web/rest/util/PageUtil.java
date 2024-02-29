@@ -8,7 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.BasePageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 
 public class PageUtil {
 
@@ -83,7 +83,7 @@ public class PageUtil {
     }
 
     @NotNull
-    public static PageRequest createDefaultPageRequest(BasePageableSearchDTO<String> search, ColumnMapping columnMapping) {
+    public static PageRequest createDefaultPageRequest(PageableSearchDTO<String> search, ColumnMapping columnMapping) {
         var sortOptions = Sort.by(columnMapping.getMappedColumnName(search.getSortedColumn()));
         sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);

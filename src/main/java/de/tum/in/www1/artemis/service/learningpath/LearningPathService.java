@@ -19,11 +19,11 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
@@ -116,13 +116,13 @@ public class LearningPathService {
     }
 
     /**
-     * Search for all learning paths fitting a {@link PageableSearchDTO search query}. The result is paged.
+     * Search for all learning paths fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
      *
      * @param search the search query defining the search term and the size of the returned page
      * @param course the course the learning paths are linked to
      * @return A wrapper object containing a list of all found learning paths and the total number of pages
      */
-    public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull PageableSearchDTO<String> search, @NotNull Course course) {
+    public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull SearchTermPageableSearchDTO<String> search, @NotNull Course course) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LEARNING_PATH);
         final var searchTerm = search.getSearchTerm();
         final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, course.getId(), pageable);
