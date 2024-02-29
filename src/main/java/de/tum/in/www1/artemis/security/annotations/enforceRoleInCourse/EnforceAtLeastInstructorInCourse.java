@@ -12,6 +12,8 @@ import de.tum.in.www1.artemis.security.Role;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @PreAuthorize("hasRole('INSTRUCTOR')")
-@EnforceRoleInCourse(Role.INSTRUCTOR)
+@EnforceRoleInCourse(value = Role.INSTRUCTOR)
 public @interface EnforceAtLeastInstructorInCourse {
+
+    String courseIdFieldName() default "courseId";
 }

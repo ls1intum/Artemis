@@ -11,6 +11,7 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 
+import de.tum.in.www1.artemis.security.annotations.AnnotationUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 @Component
@@ -40,7 +41,7 @@ public class EnforceRoleInCourseAspect {
      */
     @Around(value = "callAt()", argNames = "joinPoint")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
-        final var annotation = getAnnotation(joinPoint);
+        final var annotation = AnnotationUtils.getAnnotation(EnforceRoleInCourse.class, joinPoint);
         final var courseId = getCourseId(joinPoint, annotation).orElseThrow(() -> new IllegalArgumentException(
                 "Method annotated with @EnforceRoleInCourse must have a parameter named " + annotation.courseIdFieldName() + " of type long/Long."));
         authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(annotation.value(), courseId);
@@ -94,8 +95,8 @@ public class EnforceRoleInCourseAspect {
             return Optional.empty();
         }
 
-        if (args[indexOfCourseId] instanceof Long) {
-            return Optional.of((Long) args[indexOfCourseId]);
+        if (args[indexOfCourseId] instanceof Long courseId) {
+            return Optional.of(courseId);
         }
         return Optional.empty();
     }

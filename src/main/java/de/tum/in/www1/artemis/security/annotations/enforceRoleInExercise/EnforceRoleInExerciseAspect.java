@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise;
 
-import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -11,6 +10,7 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 
+import de.tum.in.www1.artemis.security.annotations.AnnotationUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 @Component
@@ -41,42 +41,11 @@ public class EnforceRoleInExerciseAspect {
      */
     @Around(value = "callAt()", argNames = "joinPoint")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
-        final var annotation = getAnnotation(joinPoint);
+        final var annotation = AnnotationUtils.getAnnotation(EnforceRoleInExercise.class, joinPoint);
         final var exerciseId = getExerciseId(joinPoint, annotation).orElseThrow(() -> new IllegalArgumentException(
                 "Method annotated with @EnforceRoleInExercise must have a parameter named " + annotation.exerciseIdFieldName() + " of type long/Long."));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(annotation.value(), exerciseId);
         return joinPoint.proceed();
-    }
-
-    /**
-     * Extracts the {@link EnforceRoleInExercise} annotation from the method or type
-     *
-     * @param joinPoint the join point
-     * @return the annotation if it is present, null otherwise
-     */
-    private EnforceRoleInExercise getAnnotation(ProceedingJoinPoint joinPoint) {
-        var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
-        EnforceRoleInExercise annotation = method.getAnnotation(EnforceRoleInExercise.class);
-        if (annotation == null) {
-            annotation = method.getDeclaringClass().getAnnotation(EnforceRoleInExercise.class);
-        }
-        if (annotation == null) {
-            for (Annotation a : method.getDeclaredAnnotations()) {
-                annotation = a.annotationType().getAnnotation(EnforceRoleInExercise.class);
-                if (annotation != null) {
-                    break;
-                }
-            }
-        }
-        if (annotation == null) {
-            for (Annotation a : method.getDeclaringClass().getDeclaredAnnotations()) {
-                annotation = a.annotationType().getAnnotation(EnforceRoleInExercise.class);
-                if (annotation != null) {
-                    break;
-                }
-            }
-        }
-        return annotation;
     }
 
     /**
@@ -95,8 +64,8 @@ public class EnforceRoleInExerciseAspect {
             return Optional.empty();
         }
 
-        if (args[indexOfExerciseId] instanceof Long) {
-            return Optional.of((Long) args[indexOfExerciseId]);
+        if (args[indexOfExerciseId] instanceof Long exerciseId) {
+            return Optional.of(exerciseId);
         }
         return Optional.empty();
     }
