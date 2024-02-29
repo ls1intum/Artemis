@@ -130,6 +130,15 @@ public class User extends AbstractAuditingEntity implements Participant {
     private String vcsAccessToken = null;
 
     /**
+     * The expiry date of the VCS access token.
+     * This is used for checking if a access token needs to be renewed.
+     */
+    @Nullable
+    @JsonIgnore
+    @Column(name = "vcs_access_token_expiry_date")
+    private ZonedDateTime vcsAccessTokenExpiryDate = null;
+
+    /**
      * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
      * Workaround: Annotation @Column(name = "`groups`") escapes this word using backticks.
      */
@@ -464,6 +473,15 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setVcsAccessToken(@Nullable String vcsAccessToken) {
         this.vcsAccessToken = vcsAccessToken;
+    }
+
+    @Nullable
+    public ZonedDateTime getVcsAccessTokenExpiryDate() {
+        return vcsAccessTokenExpiryDate;
+    }
+
+    public void setVcsAccessTokenExpiryDate(@Nullable ZonedDateTime vcsAccessTokenExpiryDate) {
+        this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
     }
 
     public Set<TutorialGroupRegistration> getTutorialGroupRegistrations() {

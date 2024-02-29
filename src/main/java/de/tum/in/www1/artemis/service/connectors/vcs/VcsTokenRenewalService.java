@@ -1,0 +1,38 @@
+package de.tum.in.www1.artemis.service.connectors.vcs;
+
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.UserRepository;
+
+@Service
+public class VcsTokenRenewalService {
+
+    private static final Duration MINIMAL_LIFETIME = Duration.ofDays(28);
+
+    private final List<VcsTokenManagementService> vcsTokenManagementServices;
+
+    private final UserRepository userRepository;
+
+    public VcsTokenRenewalService(List<VcsTokenManagementService> vcsTokenManagementServices, UserRepository userRepository) {
+        this.vcsTokenManagementServices = vcsTokenManagementServices;
+        this.userRepository = userRepository;
+    }
+
+    @Scheduled(cron = "0  0  4 * * SUN") // Every sunday at 4 am
+    public void renewAllPersonalAccessTokens() {
+        for (VcsTokenManagementService vcsTokenManagementService : vcsTokenManagementServices) {
+            for (User user : userRepository.findAll()) {
+                if (user.getVcsAccessToken() != null && Duration.between(ZonedDateTime.now(), user.getVcsAccessTokenExpiryDate()).compareTo(MINIMAL_LIFETIME) < 0) {
+                    vcsTokenManagementService.renewAccessToken(user);
+                }
+            }
+        }
+    }
+
+}
