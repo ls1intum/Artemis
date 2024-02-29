@@ -81,30 +81,31 @@ public class ExamDateService {
         }
         Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
         if (exam.isTestExam()) {
-            return isTestExamWorkingPeriodOver(exam, studentParticipation);
+            return isIndividualExerciseWorkingPeriodOver(exam, studentParticipation);
         }
         return isExamWithGracePeriodOver(exam);
     }
 
     /**
-     * Returns <code>true</code> if the exercise working period is over for a test exam participation.
-     * This is the case as soon as the students hand in their results.
+     * Returns <code>true</code> if the exercise working period is over for a specific student participation.
+     * This is the case as soon as the students hand in their results, or the individual due date is reached.
      *
-     * @param exam                 the test exam
+     * @param exam                 the exam
      * @param studentParticipation used to find the related student exam
-     * @return <code>true</code> if the exercise is over, <code>false</code> otherwise
-     * @throws IllegalArgumentException if the method is called with a normal exam (no test exam)
+     * @return <code>true</code> if the working period is over, <code>false</code> otherwise
      */
-    public boolean isTestExamWorkingPeriodOver(Exam exam, StudentParticipation studentParticipation) {
-        if (!exam.isTestExam()) {
-            throw new IllegalArgumentException("This function should only be used for test exams");
+    public boolean isIndividualExerciseWorkingPeriodOver(Exam exam, StudentParticipation studentParticipation) {
+        if (studentParticipation.isTestRun()) {
+            return false;
         }
+
         var optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
         if (optionalStudentExam.isPresent()) {
             StudentExam studentExam = optionalStudentExam.get();
-            return studentExam.isSubmitted() || studentExam.isEnded();
+            return Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.isEnded();
         }
-        return false;
+
+        throw new IllegalStateException("No student exam found for student participation " + studentParticipation.getId());
     }
 
     /**
