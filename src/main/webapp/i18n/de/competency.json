@@ -46,7 +46,8 @@
                 "import": "Kompetenzen importieren",
                 "importAll": "Alle Kompetenzen eines Kurses importieren",
                 "create": "Kompetenz erstellen",
-                "generate": "Kompetenzvorschläge generieren"
+                "generate": "Kompetenzen generieren",
+                "empty": "Es existieren keine Kompetenzen für diesen Kurs"
             },
             "import": {
                 "title": "Kompetenzen importieren",
@@ -168,10 +169,8 @@
             },
             "prerequisite": {
                 "title": "Voraussetzungen",
-                "managePrerequisites": {
-                    "title": "Voraussetzungen verwalten",
-                    "select": "Voraussetzung auswählen"
-                },
+                "select": "Voraussetzung auswählen",
+                "empty": "Es existieren keine Voraussetzungen für diesen Kurs",
                 "import": {
                     "label": "Voraussetzungen hinzufügen",
                     "table": {

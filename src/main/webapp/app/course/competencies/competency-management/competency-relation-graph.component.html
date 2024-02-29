@@ -38,8 +38,7 @@
                                         [(ngModel)]="relationType"
                                         (change)="validate()"
                                     >
-                                        <!-- TODO: keepOrder? -->
-                                        @for (relationType of competencyRelationType | keyvalue; track relationType; let i = $index) {
+                                        @for (relationType of competencyRelationType | keyvalue: keepOrder; track relationType) {
                                             <option [ngValue]="relationType.key">{{ 'artemisApp.competency.relation.type.' + relationType.value | artemisTranslate }}</option>
                                         }
                                     </select>

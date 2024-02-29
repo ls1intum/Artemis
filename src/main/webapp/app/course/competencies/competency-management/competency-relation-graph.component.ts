@@ -83,6 +83,7 @@ export class CompetencyRelationGraphComponent {
      * Validates if the currently entered data would cause an error and sets relationError accordingly
      */
     validate(): void {
+        console.log('YIPPIEE');
         if (!this.tailCompetencyId || !this.headCompetencyId || !this.relationType) {
             this.relationError = undefined;
             return;
@@ -190,6 +191,13 @@ export class CompetencyRelationGraphComponent {
         }
         return graph.hasCycle();
     }
+
+    /**
+     * Keeps order of elements as-is in the keyvalue pipe
+     */
+    keepOrder = () => {
+        return 0;
+    };
 }
 
 /**
