@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.repository.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +18,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the PlagiarismCase entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, Long> {
 

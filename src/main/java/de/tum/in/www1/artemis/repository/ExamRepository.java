@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -27,6 +29,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the ExamRepository entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ExamRepository extends JpaRepository<Exam, Long> {
 
@@ -71,7 +74,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                     OR e.testExam = TRUE
                 )
             """)
-    Set<Exam> findByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames,
+    Set<Exam> findByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("groupNames") Set<String> groupNames,
             @Param("now") ZonedDateTime now);
 
     @Query("""
@@ -91,7 +94,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             FROM Exam exam
             WHERE exam.course.testCourse = FALSE
                 AND exam.endDate >= :date
-            ORDER BY exam.startDate asc
+            ORDER BY exam.startDate ASC
             """)
     List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
@@ -361,7 +364,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             SELECT exam.id, COUNT(registeredUsers)
             FROM Exam exam
                 LEFT JOIN exam.examUsers registeredUsers
-            WHERE exam.id in :examIds
+            WHERE exam.id IN :examIds
             GROUP BY exam.id
             """)
     List<long[]> countExamUsersByExamIds(@Param("examIds") List<Long> examIds);
@@ -386,7 +389,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             WHERE e.id = :examId
             """)
     @Cacheable(cacheNames = "examTitle", key = "#examId", unless = "#result == null")
-    String getExamTitle(@Param("examId") Long examId);
+    String getExamTitle(@Param("examId") long examId);
 
     @NotNull
     default Exam findByIdElseThrow(long examId) throws EntityNotFoundException {
@@ -504,5 +507,5 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                 AND e.testExam = FALSE
                 AND registeredUsers.user.id = :userId
             """)
-    Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
+    Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
 }
