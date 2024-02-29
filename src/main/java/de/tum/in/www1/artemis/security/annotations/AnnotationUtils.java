@@ -6,9 +6,9 @@ import java.util.Optional;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 
-public class AnnotationUtils {
+public final class AnnotationUtils {
 
-    public AnnotationUtils() {
+    private AnnotationUtils() {
         throw new UnsupportedOperationException("Utility class");
     }
 
