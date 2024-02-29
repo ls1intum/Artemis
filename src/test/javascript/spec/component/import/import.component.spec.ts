@@ -10,7 +10,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -32,7 +32,7 @@ describe('ImportComponent', () => {
     let activeModal: NgbActiveModal;
 
     let searchResult: SearchResult<BaseEntity>;
-    let state: PageableSearch;
+    let state: SearchTermPageableSearch;
 
     const content: BaseEntity = { id: 2 };
 

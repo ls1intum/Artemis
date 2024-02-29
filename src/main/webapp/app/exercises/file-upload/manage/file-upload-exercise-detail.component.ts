@@ -97,7 +97,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         const exercise = this.fileUploadExercise;
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
-        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement);
+        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement, this.fileUploadExercise);
         const solutionSection = getExerciseMarkdownSolution(exercise, this.formattedExampleSolution);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
         const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.formattedGradingInstructions);
