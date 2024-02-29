@@ -433,7 +433,7 @@ public class CompetencyResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId);
-        var relationDTOs = relations.stream().map(competencyRelationService::relationToDTO).collect(Collectors.toSet());
+        var relationDTOs = relations.stream().map(CompetencyRelationDTO::of).collect(Collectors.toSet());
 
         return ResponseEntity.ok().body(relationDTOs);
     }

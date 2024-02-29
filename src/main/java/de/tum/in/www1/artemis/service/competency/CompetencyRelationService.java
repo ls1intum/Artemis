@@ -13,7 +13,6 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
-import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 
 /**
  * Service for managing CompetencyRelations.
@@ -76,15 +75,5 @@ public class CompetencyRelationService {
         }
 
         return competencyRelationRepository.save(relation);
-    }
-
-    /**
-     * Converts a CompetencyRelation to a CompetencyRelationDTO
-     *
-     * @param relation the relation
-     * @return the CompetencyRelationDTO
-     */
-    public CompetencyRelationDTO relationToDTO(CompetencyRelation relation) {
-        return new CompetencyRelationDTO(relation.getId(), relation.getTailCompetency().getId(), relation.getHeadCompetency().getId(), relation.getType());
     }
 }
