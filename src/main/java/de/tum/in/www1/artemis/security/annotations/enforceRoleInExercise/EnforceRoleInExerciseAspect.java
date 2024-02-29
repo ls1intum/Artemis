@@ -43,7 +43,7 @@ public class EnforceRoleInExerciseAspect {
      */
     @Around(value = "callAt()", argNames = "joinPoint")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
-        final var annotation = AnnotationUtils.getAnnotation(EnforceRoleInExercise.class, joinPoint);
+        final var annotation = AnnotationUtils.getAnnotation(EnforceRoleInExercise.class, joinPoint).orElseThrow();
         final var exerciseIdFieldName = getCourseIdFieldName(annotation, joinPoint);
         final var exerciseId = getExerciseId(joinPoint, exerciseIdFieldName).orElseThrow(() -> new IllegalArgumentException(
                 "Method annotated with @EnforceRoleInExercise must have a parameter named " + annotation.exerciseIdFieldName() + " of type long/Long."));
@@ -59,13 +59,15 @@ public class EnforceRoleInExerciseAspect {
      * @return the courseIdFieldName
      */
     private String getCourseIdFieldName(EnforceRoleInExercise annotation, ProceedingJoinPoint joinPoint) {
-        return switch (annotation.value()) {
-            case INSTRUCTOR -> getAnnotation(EnforceAtLeastInstructorInExercise.class, joinPoint).exerciseIdFieldName();
-            case EDITOR -> getAnnotation(EnforceAtLeastEditorInExercise.class, joinPoint).exerciseIdFieldName();
-            case TEACHING_ASSISTANT -> getAnnotation(EnforceAtLeastTutorInExercise.class, joinPoint).exerciseIdFieldName();
-            case STUDENT -> getAnnotation(EnforceAtLeastStudentInExercise.class, joinPoint).exerciseIdFieldName();
-            default -> annotation.exerciseIdFieldName();
+        final var defaultFieldName = annotation.exerciseIdFieldName();
+        Optional<String> fieldNameOfSimpleAnnotation = switch (annotation.value()) {
+            case INSTRUCTOR -> getAnnotation(EnforceAtLeastInstructorInExercise.class, joinPoint).map(EnforceAtLeastInstructorInExercise::exerciseIdFieldName);
+            case EDITOR -> getAnnotation(EnforceAtLeastEditorInExercise.class, joinPoint).map(EnforceAtLeastEditorInExercise::exerciseIdFieldName);
+            case TEACHING_ASSISTANT -> getAnnotation(EnforceAtLeastTutorInExercise.class, joinPoint).map(EnforceAtLeastTutorInExercise::exerciseIdFieldName);
+            case STUDENT -> getAnnotation(EnforceAtLeastStudentInExercise.class, joinPoint).map(EnforceAtLeastStudentInExercise::exerciseIdFieldName);
+            default -> Optional.empty();
         };
+        return fieldNameOfSimpleAnnotation.orElse(defaultFieldName);
     }
 
     /**

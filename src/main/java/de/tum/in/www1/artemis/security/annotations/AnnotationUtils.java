@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.security.annotations;
 
 import java.lang.annotation.Annotation;
+import java.util.Optional;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -16,9 +17,9 @@ public class AnnotationUtils {
      *
      * @param clazz     the annotation class
      * @param joinPoint the join point
-     * @return the annotation if it is present, null otherwise
+     * @return the annotation if it is present, empty otherwise
      */
-    public static <T extends Annotation> T getAnnotation(Class<T> clazz, ProceedingJoinPoint joinPoint) {
+    public static <T extends Annotation> Optional<T> getAnnotation(Class<T> clazz, ProceedingJoinPoint joinPoint) {
         final var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         T annotation = method.getAnnotation(clazz);
         if (annotation == null) {
@@ -40,6 +41,6 @@ public class AnnotationUtils {
                 }
             }
         }
-        return annotation;
+        return Optional.ofNullable(annotation);
     }
 }
