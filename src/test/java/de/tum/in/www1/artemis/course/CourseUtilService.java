@@ -41,7 +41,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 
 /**
  * Service responsible for initializing the database with specific testdata related to courses for use in integration tests.
@@ -348,7 +348,7 @@ public class CourseUtilService {
             }
 
             for (int i = 1; i < numberOfTutorParticipations + 1; i++) {
-                String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+                String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
                 var exampleSubmission = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, modelingExercise, true));
                 exampleSubmission.assessmentExplanation("exp");
                 exampleSubmission.setTutorParticipations(tutorParticipations);
@@ -598,8 +598,6 @@ public class CourseUtilService {
      */
     public void addOnlineCourseConfigurationToCourse(Course course) {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
-        onlineCourseConfiguration.setLtiKey("artemis_lti_key");
-        onlineCourseConfiguration.setLtiSecret("fake-secret");
         onlineCourseConfiguration.setUserPrefix("prefix");
         onlineCourseConfiguration.setCourse(course);
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
@@ -903,7 +901,7 @@ public class CourseUtilService {
 
         var modelingExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
         participationUtilService.createAndSaveParticipationForExercise(modelingExercise, userPrefix + "student1");
-        String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
+        String emptyActivityModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(emptyActivityModel, true);
         participationUtilService.addSubmission(modelingExercise, submission, userPrefix + "student1");
 
@@ -941,7 +939,7 @@ public class CourseUtilService {
         var exerciseGroup3 = exerciseGroupRepository.save(new ExerciseGroup());
         var modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup2);
         modelingExercise = exerciseRepo.save(modelingExercise);
-        String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
+        String emptyActivityModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         var modelingSubmission = ParticipationFactory.generateModelingSubmission(emptyActivityModel, true);
         participationUtilService.addSubmission(modelingExercise, modelingSubmission, userPrefix + "student1");
         exerciseGroup3.addExercise(modelingExercise);

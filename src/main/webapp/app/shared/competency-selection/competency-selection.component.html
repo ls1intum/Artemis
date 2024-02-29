@@ -1,7 +1,7 @@
 @if (isLoading || (competencies && competencies.length)) {
     <div>
         @if (labelName) {
-            <label for="competency-input-field" class="form-control-label col">
+            <label for="competency-selector">
                 {{ labelName }}
             </label>
         }
@@ -16,26 +16,26 @@
                     <span class="sr-only">Loading...</span>
                 </div>
             </div>
-        }
-        @if (!isLoading) {
-            <select
-                class="form-select"
-                id="competency-input-field"
-                [ngClass]="{ 'is-invalid': error }"
-                [ngModel]="value"
-                [disabled]="disabled"
-                (ngModelChange)="updateField($event)"
-                multiple
-            >
+        } @else {
+            <div class="competency-selector p-2" id="competency-selector">
                 @for (competency of competencies; track competency) {
-                    <option [ngValue]="competency">
-                        @if (competency.taxonomy) {
-                            <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
-                        }
-                        {{ competency.title }}
-                    </option>
+                    @if (competency.id) {
+                        <div>
+                            <input
+                                id="competency-{{ competency.id }}"
+                                type="checkbox"
+                                [ngModel]="checkboxStates[competency.id]"
+                                (ngModelChange)="toggleCompetency(competency)"
+                                [disabled]="disabled"
+                            />
+                            <label for="competency-{{ competency.id }}">
+                                <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
+                                {{ competency.title }}
+                            </label>
+                        </div>
+                    }
                 }
-            </select>
+            </div>
         }
     </div>
 }

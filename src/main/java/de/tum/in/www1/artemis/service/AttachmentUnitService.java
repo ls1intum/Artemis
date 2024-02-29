@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -7,6 +9,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,6 +22,7 @@ import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class AttachmentUnitService {
 

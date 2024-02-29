@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -36,8 +37,6 @@ import com.github.dockerjava.api.model.HostConfig;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
-import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 
 /**
@@ -45,7 +44,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
  * It is closely related to the {@link BuildJobExecutionService} which contains the methods that are used to execute the build jobs.
  */
 @Service
-@Profile("buildagent")
+@Profile(PROFILE_BUILDAGENT)
 public class BuildJobContainerService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
@@ -66,15 +65,9 @@ public class BuildJobContainerService {
     @Value("${artemis.continuous-integration.proxies.default.no-proxy:}")
     private String noProxy;
 
-    AeolusTemplateService aeolusTemplateService;
-
-    BuildScriptProvider buildScriptProvider;
-
-    public BuildJobContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider) {
+    public BuildJobContainerService(DockerClient dockerClient, HostConfig hostConfig) {
         this.dockerClient = dockerClient;
         this.hostConfig = hostConfig;
-        this.aeolusTemplateService = aeolusTemplateService;
-        this.buildScriptProvider = buildScriptProvider;
     }
 
     /**

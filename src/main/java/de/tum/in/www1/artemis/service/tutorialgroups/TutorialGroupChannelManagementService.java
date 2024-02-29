@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static javax.persistence.Persistence.getPersistenceUtil;
 
 import java.util.Optional;
@@ -10,6 +11,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -26,6 +28,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 /**
  * Service for managing the channel connected to a tutorial group.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class TutorialGroupChannelManagementService {
 
