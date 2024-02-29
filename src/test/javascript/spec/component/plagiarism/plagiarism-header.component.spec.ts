@@ -148,4 +148,14 @@ describe('Plagiarism Header Component', () => {
 
         expect(comp.splitControlSubject.next).toHaveBeenCalledWith('even');
     });
+
+    it.each(['confirm-plagiarism-button', 'deny-plagiarism-button'])('should disable status update button for team exercises', (selector) => {
+        comp.exercise.teamMode = true;
+
+        const nativeElement = fixture.nativeElement;
+        const button = nativeElement.querySelector(`[data-qa=${selector}]`) as ButtonComponent;
+        fixture.detectChanges();
+
+        expect(button.disabled).toBeTrue();
+    });
 });
