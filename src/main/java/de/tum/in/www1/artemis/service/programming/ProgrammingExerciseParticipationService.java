@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.programming;
 
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -465,12 +466,23 @@ public class ProgrammingExerciseParticipationService {
      * @param participation the participation for which to get the commits.
      * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
      */
-    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseStudentParticipation participation) {
+    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseParticipation participation, boolean isTestRepository) {
         try {
-            return gitService.getCommitInfos(participation.getVcsRepositoryUri());
+            if (isTestRepository) {
+                ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
+                return gitService.getCommitInfos(new VcsRepositoryUri(exercise.getTestRepositoryUri()));
+            }
+            else {
+                return gitService.getCommitInfos(participation.getVcsRepositoryUri());
+            }
         }
-        catch (GitAPIException e) {
-            log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
+        catch (GitAPIException | URISyntaxException e) {
+            if (isTestRepository) {
+                log.error("Could not get commit infos for test repository with participation id {}", participation.getId());
+            }
+            else {
+                log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
+            }
             return List.of();
         }
     }

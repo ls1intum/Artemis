@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -247,7 +248,7 @@ public class ProgrammingExerciseParticipationResource {
     List<CommitInfoDTO> getCommitInfosForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, participation.getProgrammingExercise(), null);
-        return programmingExerciseParticipationService.getCommitInfos(participation);
+        return programmingExerciseParticipationService.getCommitInfos(participation, false);
     }
 
     /**
@@ -263,7 +264,34 @@ public class ProgrammingExerciseParticipationResource {
     public List<CommitInfoDTO> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        return programmingExerciseParticipationService.getCommitInfos(participation);
+        return programmingExerciseParticipationService.getCommitInfos(participation, false);
+    }
+
+    /**
+     * GET /programming-exercise/{exerciseID}/commit-history/{repositoryType} : Get the commit history of a programming exercise repository. The repository type can be TEMPLATE or
+     * SOLUTION or TESTS.
+     * Here we check is at least a teaching assistant for the exercise.
+     *
+     * @param exerciseID     the id of the exercise for which to retrieve the commit history
+     * @param repositoryType the type of the repository for which to retrieve the commit history
+     * @return A list of commitInfo DTOs with the commits information of the repository
+     */
+    @GetMapping("programming-exercise/{exerciseID}/commit-history/{repositoryType}")
+    @EnforceAtLeastTutor
+    public List<CommitInfoDTO> getCommitHistoryForTemplateSolutionOrTestRepo(@PathVariable long exerciseID, @PathVariable String repositoryType) {
+        boolean isTestRepository = repositoryType.equals("TESTS");
+        ProgrammingExerciseParticipation participation;
+        if (!repositoryType.equals("TEMPLATE") && !repositoryType.equals("SOLUTION") && !repositoryType.equals("TESTS")) {
+            throw new BadRequestAlertException("Invalid repository type", ENTITY_NAME, "invalidRepositoryType");
+        }
+        else if (repositoryType.equals("TEMPLATE")) {
+            participation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exerciseID);
+        }
+        else {
+            participation = programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(exerciseID);
+        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        return programmingExerciseParticipationService.getCommitInfos(participation, isTestRepository);
     }
 
     /**

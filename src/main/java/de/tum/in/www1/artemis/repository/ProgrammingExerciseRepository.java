@@ -73,8 +73,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
-            "auxiliaryRepositories" })
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.results", "templateParticipation.submissions.results",
+            "solutionParticipation.results", "solutionParticipation.submissions.results", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
@@ -672,7 +672,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     /**
      * Find a programming exercise by its id, with eagerly loaded template and solution participation,
      * including the latest result with feedback and test cases.
-     *
      * NOTICE: this query is quite expensive because it loads all feedback and test cases,
      * and it includes sub queries to retrieve the latest result
      * IMPORTANT: you should generally avoid using this query except you really need all information!!
