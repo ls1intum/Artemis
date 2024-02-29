@@ -28,9 +28,9 @@ import jakarta.servlet.http.HttpServletResponse;
  * modified so that {@code getPathInfo()} does not contain the suffix that
  * caused this pipeline to be selected.
  */
-class SuffixPipeline extends org.eclipse.jgit.http.server.glue.UrlPipeline {
+class SuffixPipeline extends UrlPipeline {
 
-    static class Binder extends org.eclipse.jgit.http.server.glue.ServletBinderImpl {
+    static class Binder extends ServletBinderImpl {
 
         private final String suffix;
 
@@ -39,7 +39,7 @@ class SuffixPipeline extends org.eclipse.jgit.http.server.glue.UrlPipeline {
         }
 
         @Override
-        org.eclipse.jgit.http.server.glue.UrlPipeline create() {
+        UrlPipeline create() {
             return new SuffixPipeline(suffix, getFilters(), getServlet());
         }
     }

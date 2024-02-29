@@ -28,7 +28,7 @@ import org.eclipse.jgit.util.TemporaryBuffer;
  * streamed to the client as its produced, most likely using HTTP/1.1 chunked
  * encoding. This is useful for servlets that produce mixed-mode content, where
  * smaller payloads are primarily pure text that compresses well, while much
- * larger payloads are heavily compressed binary data. {@link org.eclipse.jgit.http.server.UploadPackServlet}
+ * larger payloads are heavily compressed binary data. {@link UploadPackServlet}
  * is one such servlet.
  */
 class SmartOutputStream extends TemporaryBuffer {
@@ -39,7 +39,7 @@ class SmartOutputStream extends TemporaryBuffer {
 
     private final HttpServletResponse rsp;
 
-    private final boolean compressStream;
+    private boolean compressStream;
 
     private boolean startedOutput;
 
@@ -71,7 +71,7 @@ class SmartOutputStream extends TemporaryBuffer {
             // buffer. Try to use a proper Content-Length header, and also
             // deflate the response with gzip if it will be smaller.
             if (256 < this.length() && acceptsGzipEncoding(req)) {
-                TemporaryBuffer gzbuf = new Heap(LIMIT);
+                TemporaryBuffer gzbuf = new TemporaryBuffer.Heap(LIMIT);
                 try {
                     try (GZIPOutputStream gzip = new GZIPOutputStream(gzbuf)) {
                         this.writeTo(gzip, null);

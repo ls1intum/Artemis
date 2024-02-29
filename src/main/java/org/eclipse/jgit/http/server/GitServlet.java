@@ -8,10 +8,13 @@
 
 package org.eclipse.jgit.http.server;
 
-import java.io.Serial;
 import java.util.Enumeration;
 
-import jakarta.servlet.*;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.http.server.glue.MetaServlet;
@@ -48,7 +51,7 @@ import org.eclipse.jgit.transport.resolver.UploadPackFactory;
  * <p>
  * Applications may wish to add additional repository action URLs to this
  * servlet by taking advantage of its extension from
- * {@link MetaServlet}. Callers may register
+ * {@link org.eclipse.jgit.http.server.glue.MetaServlet}. Callers may register
  * their own URL suffix translations through {@link #serve(String)}, or their
  * regex translations through {@link #serveRegex(String)}. Each translation
  * should contain a complete filter pipeline which ends with the HttpServlet
@@ -56,7 +59,6 @@ import org.eclipse.jgit.transport.resolver.UploadPackFactory;
  */
 public class GitServlet extends MetaServlet {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private final GitFilter gitFilter;

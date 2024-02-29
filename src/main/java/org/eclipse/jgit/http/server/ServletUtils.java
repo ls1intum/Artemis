@@ -9,9 +9,17 @@
 package org.eclipse.jgit.http.server;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.eclipse.jgit.util.HttpSupport.*;
+import static org.eclipse.jgit.util.HttpSupport.ENCODING_GZIP;
+import static org.eclipse.jgit.util.HttpSupport.ENCODING_X_GZIP;
+import static org.eclipse.jgit.util.HttpSupport.HDR_ACCEPT_ENCODING;
+import static org.eclipse.jgit.util.HttpSupport.HDR_CONTENT_ENCODING;
+import static org.eclipse.jgit.util.HttpSupport.HDR_ETAG;
+import static org.eclipse.jgit.util.HttpSupport.TEXT_PLAIN;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.text.MessageFormat;
 import java.util.zip.GZIPInputStream;
@@ -108,13 +116,21 @@ public final class ServletUtils {
     public static void consumeRequestBody(InputStream in) {
         if (in == null)
             return;
-        try (in) {
+        try {
             while (0 < in.skip(2048) || 0 <= in.read()) {
                 // Discard until EOF.
             }
         }
         catch (IOException err) {
             // Discard IOException during read or skip.
+        }
+        finally {
+            try {
+                in.close();
+            }
+            catch (IOException err) {
+                // Discard IOException during close of input stream.
+            }
         }
     }
 

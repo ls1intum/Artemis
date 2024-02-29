@@ -66,7 +66,7 @@ public class AsIsFileService {
      * <p>
      * The default implementation of this method checks {@code http.getanyfile},
      * throwing
-     * {@link ServiceNotEnabledException} if
+     * {@link org.eclipse.jgit.transport.resolver.ServiceNotEnabledException} if
      * it was explicitly set to {@code false}, and otherwise succeeding
      * silently.
      *

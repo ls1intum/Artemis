@@ -20,7 +20,7 @@ import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 import org.eclipse.jgit.transport.resolver.UploadPackFactory;
 
 /**
- * Create and configure {@link UploadPack} service
+ * Create and configure {@link org.eclipse.jgit.transport.UploadPack} service
  * instance.
  * <p>
  * Reading by upload-pack is permitted unless {@code http.uploadpack} is

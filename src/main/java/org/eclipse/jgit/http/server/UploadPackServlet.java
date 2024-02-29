@@ -8,18 +8,30 @@
 
 package org.eclipse.jgit.http.server;
 
-import static javax.servlet.http.HttpServletResponse.*;
-import static org.eclipse.jgit.http.server.GitSmartHttpTools.*;
-import static org.eclipse.jgit.http.server.ServletUtils.*;
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.UPLOAD_PACK;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.UPLOAD_PACK_REQUEST_TYPE;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.UPLOAD_PACK_RESULT_TYPE;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.sendError;
+import static org.eclipse.jgit.http.server.ServletUtils.ATTRIBUTE_HANDLER;
+import static org.eclipse.jgit.http.server.ServletUtils.consumeRequestBody;
+import static org.eclipse.jgit.http.server.ServletUtils.getInputStream;
+import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
 import static org.eclipse.jgit.http.server.UploadPackErrorHandler.statusCodeForThrowable;
 import static org.eclipse.jgit.util.HttpSupport.HDR_USER_AGENT;
 
 import java.io.IOException;
-import java.io.Serial;
 import java.text.MessageFormat;
 import java.util.List;
 
-import jakarta.servlet.*;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,8 +40,12 @@ import org.eclipse.jgit.annotations.Nullable;
 import org.eclipse.jgit.errors.PackProtocolException;
 import org.eclipse.jgit.http.server.UploadPackErrorHandler.UploadPackRunnable;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.transport.InternalHttpServerGlue;
+import org.eclipse.jgit.transport.PacketLineOut;
 import org.eclipse.jgit.transport.RefAdvertiser.PacketLineOutRefAdvertiser;
+import org.eclipse.jgit.transport.ServiceMayNotContinueException;
+import org.eclipse.jgit.transport.UploadPack;
+import org.eclipse.jgit.transport.UploadPackInternalServerErrorException;
 import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
 import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 import org.eclipse.jgit.transport.resolver.UploadPackFactory;
@@ -37,7 +53,6 @@ import org.eclipse.jgit.transport.resolver.UploadPackFactory;
 /** Server side implementation of smart fetch over HTTP. */
 class UploadPackServlet extends HttpServlet {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     static class InfoRefs extends SmartServiceInfoRefs {
@@ -57,7 +72,7 @@ class UploadPackServlet extends HttpServlet {
         }
 
         @Override
-        protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException {
+        protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
             UploadPack up = (UploadPack) req.getAttribute(ATTRIBUTE_HANDLER);
             try {
                 up.setBiDirectionalPipe(false);
@@ -145,13 +160,16 @@ class UploadPackServlet extends HttpServlet {
             return;
         }
 
-        UploadPackRunnable r = () -> upload(req, rsp);
+        UploadPackRunnable r = () -> {
+            upload(req, rsp);
+        };
 
         handler.upload(req, rsp, r);
     }
 
-    private void upload(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+    private void upload(HttpServletRequest req, HttpServletResponse rsp) throws IOException, ServiceMayNotContinueException {
         // to be explicitly closed by caller
+        @SuppressWarnings("resource")
         SmartOutputStream out = new SmartOutputStream(req, rsp, false) {
 
             @Override
@@ -207,6 +225,6 @@ class UploadPackServlet extends HttpServlet {
     }
 
     private void log(Repository git, Throwable e) {
-        getServletContext().log(MessageFormat.format(HttpServerText.get().internalErrorDuringUploadPack, identify(git)), e);
+        getServletContext().log(MessageFormat.format(HttpServerText.get().internalErrorDuringUploadPack, ServletUtils.identify(git)), e);
     }
 }

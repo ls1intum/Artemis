@@ -8,15 +8,22 @@
 
 package org.eclipse.jgit.http.server;
 
-import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
-import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 import static org.eclipse.jgit.http.server.GitSmartHttpTools.infoRefsResultType;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.sendError;
 import static org.eclipse.jgit.http.server.ServletUtils.ATTRIBUTE_HANDLER;
+import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
 
 import java.io.IOException;
 import java.util.List;
 
-import jakarta.servlet.*;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -55,7 +62,7 @@ abstract class SmartServiceInfoRefs implements Filter {
         final HttpServletResponse res = (HttpServletResponse) response;
 
         if (svc.equals(req.getParameter("service"))) {
-            final Repository db = ServletUtils.getRepository(req);
+            final Repository db = getRepository(req);
             try {
                 begin(req, db);
             }
@@ -64,7 +71,7 @@ abstract class SmartServiceInfoRefs implements Filter {
                 return;
             }
             catch (ServiceNotEnabledException e) {
-                GitSmartHttpTools.sendError(req, res, SC_FORBIDDEN, e.getMessage());
+                sendError(req, res, SC_FORBIDDEN, e.getMessage());
                 return;
             }
 
@@ -98,13 +105,13 @@ abstract class SmartServiceInfoRefs implements Filter {
             res.sendError(SC_UNAUTHORIZED, e.getMessage());
         }
         catch (ServiceNotEnabledException e) {
-            GitSmartHttpTools.sendError(req, res, SC_FORBIDDEN, e.getMessage());
+            sendError(req, res, SC_FORBIDDEN, e.getMessage());
         }
         catch (ServiceMayNotContinueException e) {
             if (e.isOutput())
                 buf.close();
             else
-                GitSmartHttpTools.sendError(req, res, e.getStatusCode(), e.getMessage());
+                sendError(req, res, e.getStatusCode(), e.getMessage());
         }
     }
 

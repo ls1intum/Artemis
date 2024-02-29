@@ -9,10 +9,10 @@
 package org.eclipse.jgit.http.server;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.Serial;
 
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,7 +26,6 @@ import org.eclipse.jgit.util.HttpSupport;
 /** Send a complete list of current refs, including peeled values for tags. */
 class InfoRefsServlet extends HttpServlet {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -36,7 +35,7 @@ class InfoRefsServlet extends HttpServlet {
         rsp.setContentType(HttpSupport.TEXT_PLAIN);
         rsp.setCharacterEncoding(UTF_8.name());
 
-        final Repository db = ServletUtils.getRepository(req);
+        final Repository db = getRepository(req);
         try (OutputStreamWriter out = new OutputStreamWriter(new SmartOutputStream(req, rsp, true), UTF_8)) {
             final RefAdvertiser adv = new RefAdvertiser() {
 

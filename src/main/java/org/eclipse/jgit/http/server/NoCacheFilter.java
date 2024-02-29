@@ -8,11 +8,18 @@
 
 package org.eclipse.jgit.http.server;
 
-import static org.eclipse.jgit.util.HttpSupport.*;
+import static org.eclipse.jgit.util.HttpSupport.HDR_CACHE_CONTROL;
+import static org.eclipse.jgit.util.HttpSupport.HDR_EXPIRES;
+import static org.eclipse.jgit.util.HttpSupport.HDR_PRAGMA;
 
 import java.io.IOException;
 
-import jakarta.servlet.*;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletResponse;
 
 /** Add HTTP response headers to prevent caching by proxies/browsers. */

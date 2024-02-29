@@ -8,8 +8,10 @@
 
 package org.eclipse.jgit.http.server;
 
+import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
+import static org.eclipse.jgit.http.server.ServletUtils.sendPlainText;
+
 import java.io.IOException;
-import java.io.Serial;
 
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,17 +24,16 @@ import org.eclipse.jgit.lib.ObjectDatabase;
 /** Sends the current list of pack files, sorted most recent first. */
 class InfoPacksServlet extends HttpServlet {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     @Override
     public void doGet(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
-        ServletUtils.sendPlainText(packList(req), req, rsp);
+        sendPlainText(packList(req), req, rsp);
     }
 
     private static String packList(HttpServletRequest req) {
         final StringBuilder out = new StringBuilder();
-        final ObjectDatabase db = ServletUtils.getRepository(req).getObjectDatabase();
+        final ObjectDatabase db = getRepository(req).getObjectDatabase();
         if (db instanceof ObjectDirectory) {
             for (Pack pack : ((ObjectDirectory) db).getPacks()) {
                 out.append("P ");

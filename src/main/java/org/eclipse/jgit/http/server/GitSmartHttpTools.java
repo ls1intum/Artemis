@@ -8,7 +8,9 @@
 
 package org.eclipse.jgit.http.server;
 
-import static javax.servlet.http.HttpServletResponse.*;
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 import static org.eclipse.jgit.http.server.ServletUtils.ATTRIBUTE_HANDLER;
 import static org.eclipse.jgit.transport.GitProtocolConstants.CAPABILITY_SIDE_BAND_64K;
 import static org.eclipse.jgit.transport.SideBandOutputStream.CH_ERROR;
@@ -17,6 +19,8 @@ import static org.eclipse.jgit.transport.SideBandOutputStream.SMALL_BUF;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,7 +28,11 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.eclipse.jgit.internal.transport.parser.FirstCommand;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.transport.PacketLineIn;
+import org.eclipse.jgit.transport.PacketLineOut;
+import org.eclipse.jgit.transport.ReceivePack;
+import org.eclipse.jgit.transport.RequestNotYetReadException;
+import org.eclipse.jgit.transport.SideBandOutputStream;
 
 /**
  * Utility functions for handling the Git-over-HTTP protocol.
@@ -52,7 +60,7 @@ public class GitSmartHttpTools {
     public static final String RECEIVE_PACK_RESULT_TYPE = "application/x-git-receive-pack-result";
 
     /** Git service names accepted by the /info/refs?service= handler. */
-    public static final List<String> VALID_SERVICES = List.of(UPLOAD_PACK, RECEIVE_PACK);
+    public static final List<String> VALID_SERVICES = Collections.unmodifiableList(Arrays.asList(new String[] { UPLOAD_PACK, RECEIVE_PACK }));
 
     private static final String INFO_REFS_PATH = "/" + INFO_REFS;
 
@@ -60,7 +68,7 @@ public class GitSmartHttpTools {
 
     private static final String RECEIVE_PACK_PATH = "/" + RECEIVE_PACK;
 
-    private static final List<String> SERVICE_SUFFIXES = List.of(INFO_REFS_PATH, UPLOAD_PACK_PATH, RECEIVE_PACK_PATH);
+    private static final List<String> SERVICE_SUFFIXES = Collections.unmodifiableList(Arrays.asList(new String[] { INFO_REFS_PATH, UPLOAD_PACK_PATH, RECEIVE_PACK_PATH }));
 
     /**
      * Check a request for Git-over-HTTP indicators.
@@ -103,9 +111,9 @@ public class GitSmartHttpTools {
      * an HTTP response code is returned instead.
      * <p>
      * This method may only be called before handing off the request to
-     * {@link UploadPack#upload(java.io.InputStream, OutputStream, OutputStream)}
+     * {@link org.eclipse.jgit.transport.UploadPack#upload(java.io.InputStream, OutputStream, OutputStream)}
      * or
-     * {@link ReceivePack#receive(java.io.InputStream, OutputStream, OutputStream)}.
+     * {@link org.eclipse.jgit.transport.ReceivePack#receive(java.io.InputStream, OutputStream, OutputStream)}.
      *
      * @param req
      *                       current request.
@@ -122,7 +130,7 @@ public class GitSmartHttpTools {
      *                         the response cannot be sent.
      */
     public static void sendError(HttpServletRequest req, HttpServletResponse res, int httpStatus, String textForGit) throws IOException {
-        if (textForGit == null || textForGit.isEmpty()) {
+        if (textForGit == null || textForGit.length() == 0) {
             switch (httpStatus) {
                 case SC_FORBIDDEN:
                     textForGit = HttpServerText.get().repositoryAccessForbidden;
@@ -267,7 +275,7 @@ public class GitSmartHttpTools {
 
     /**
      * Strip the Git service suffix from a request path.
-     * <p>
+     *
      * Generally the suffix is stripped by the {@code SuffixPipeline} handling
      * the request, so this method is rarely needed.
      *

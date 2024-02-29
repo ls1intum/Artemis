@@ -8,12 +8,15 @@
 
 package org.eclipse.jgit.http.server.glue;
 
-import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 
 import java.io.IOException;
-import java.io.Serial;
 
-import jakarta.servlet.*;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,16 +35,15 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class MetaServlet extends HttpServlet {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.eclipse.jgit.http.server.glue.MetaFilter filter;
+    private final MetaFilter filter;
 
     /**
      * Empty servlet with no bindings.
      */
     public MetaServlet() {
-        this(new org.eclipse.jgit.http.server.glue.MetaFilter());
+        this(new MetaFilter());
     }
 
     /**
@@ -50,7 +52,7 @@ public class MetaServlet extends HttpServlet {
      * @param delegateFilter
      *                           the filter being wrapped by the servlet.
      */
-    protected MetaServlet(org.eclipse.jgit.http.server.glue.MetaFilter delegateFilter) {
+    protected MetaServlet(MetaFilter delegateFilter) {
         filter = delegateFilter;
     }
 
@@ -70,7 +72,7 @@ public class MetaServlet extends HttpServlet {
      *                 pattern to match.
      * @return binder for the passed path.
      */
-    public org.eclipse.jgit.http.server.glue.ServletBinder serve(String path) {
+    public ServletBinder serve(String path) {
         return filter.serve(path);
     }
 
@@ -81,7 +83,7 @@ public class MetaServlet extends HttpServlet {
      *                       the regular expression to pattern match the URL against.
      * @return binder for the passed expression.
      */
-    public org.eclipse.jgit.http.server.glue.ServletBinder serveRegex(String expression) {
+    public ServletBinder serveRegex(String expression) {
         return filter.serveRegex(expression);
     }
 
@@ -99,7 +101,9 @@ public class MetaServlet extends HttpServlet {
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        filter.doFilter(req, res, (ServletRequest request, ServletResponse response) -> ((HttpServletResponse) response).sendError(SC_NOT_FOUND));
+        filter.doFilter(req, res, (ServletRequest request, ServletResponse response) -> {
+            ((HttpServletResponse) response).sendError(SC_NOT_FOUND);
+        });
     }
 
     /**
@@ -110,7 +114,7 @@ public class MetaServlet extends HttpServlet {
      * @return binder for the caller, potentially after adding one or more
      *         filters into the pipeline.
      */
-    protected org.eclipse.jgit.http.server.glue.ServletBinder register(ServletBinder b) {
+    protected ServletBinder register(ServletBinder b) {
         return filter.register(b);
     }
 }

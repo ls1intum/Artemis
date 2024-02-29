@@ -19,13 +19,13 @@ import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
 import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 
 /**
- * Create and configure {@link ReceivePack} service
+ * Create and configure {@link org.eclipse.jgit.transport.ReceivePack} service
  * instance.
  * <p>
  * Writing by receive-pack is permitted if any of the following is true:
  * <ul>
  * <li>The container has authenticated the user and set
- * {@link javax.servlet.http.HttpServletRequest#getRemoteUser()} to the
+ * {@link jakarta.servlet.http.HttpServletRequest#getRemoteUser()} to the
  * authenticated name.
  * <li>The repository configuration file has {@code http.receivepack} explicitly
  * set to true.
@@ -53,14 +53,14 @@ public class DefaultReceivePackFactory implements ReceivePackFactory<HttpServlet
 
         if (cfg.set) {
             if (cfg.enabled) {
-                if (user == null || user.isEmpty())
+                if (user == null || "".equals(user))
                     user = "anonymous";
                 return createFor(req, db, user);
             }
             throw new ServiceNotEnabledException();
         }
 
-        if (user != null && !user.isEmpty())
+        if (user != null && !"".equals(user))
             return createFor(req, db, user);
         throw new ServiceNotAuthorizedException();
     }

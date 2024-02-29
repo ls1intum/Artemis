@@ -8,7 +8,7 @@
 
 package org.eclipse.jgit.http.server.glue;
 
-import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 import static org.eclipse.jgit.http.server.glue.MetaFilter.REGEX_GROUPS;
 
 import java.io.IOException;
@@ -50,7 +50,7 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 class RegexPipeline extends UrlPipeline {
 
-    static class Binder extends org.eclipse.jgit.http.server.glue.ServletBinderImpl {
+    static class Binder extends ServletBinderImpl {
 
         private final Pattern pattern;
 

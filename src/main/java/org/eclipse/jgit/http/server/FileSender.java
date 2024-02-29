@@ -8,11 +8,20 @@
 
 package org.eclipse.jgit.http.server;
 
-import static javax.servlet.http.HttpServletResponse.SC_PARTIAL_CONTENT;
-import static javax.servlet.http.HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE;
-import static org.eclipse.jgit.util.HttpSupport.*;
+import static jakarta.servlet.http.HttpServletResponse.SC_PARTIAL_CONTENT;
+import static jakarta.servlet.http.HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE;
+import static org.eclipse.jgit.util.HttpSupport.HDR_ACCEPT_RANGES;
+import static org.eclipse.jgit.util.HttpSupport.HDR_CONTENT_LENGTH;
+import static org.eclipse.jgit.util.HttpSupport.HDR_CONTENT_RANGE;
+import static org.eclipse.jgit.util.HttpSupport.HDR_IF_RANGE;
+import static org.eclipse.jgit.util.HttpSupport.HDR_RANGE;
 
-import java.io.*;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.Enumeration;
@@ -142,10 +151,9 @@ final class FileSender {
         }
 
         try {
-            final var dashPosition = Long.parseLong(range.substring(dash + 1));
             if (eq + 1 == dash) {
                 // "bytes=-500" means last 500 bytes
-                pos = dashPosition;
+                pos = Long.parseLong(range.substring(dash + 1));
                 pos = fileLen - pos;
             }
             else {
@@ -153,7 +161,7 @@ final class FileSender {
                 // "bytes=500-1000" (position 500 to 1000)
                 pos = Long.parseLong(range.substring(eq + 1, dash));
                 if (dash < range.length() - 1) {
-                    end = dashPosition;
+                    end = Long.parseLong(range.substring(dash + 1));
                     end++; // range was inclusive, want exclusive
                 }
             }

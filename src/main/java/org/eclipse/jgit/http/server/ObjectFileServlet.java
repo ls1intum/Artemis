@@ -8,14 +8,20 @@
 
 package org.eclipse.jgit.http.server;
 
-import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
-import static javax.servlet.http.HttpServletResponse.SC_NOT_MODIFIED;
+import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static jakarta.servlet.http.HttpServletResponse.SC_NOT_MODIFIED;
 import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
-import static org.eclipse.jgit.util.HttpSupport.*;
+import static org.eclipse.jgit.util.HttpSupport.HDR_ETAG;
+import static org.eclipse.jgit.util.HttpSupport.HDR_IF_MODIFIED_SINCE;
+import static org.eclipse.jgit.util.HttpSupport.HDR_IF_NONE_MATCH;
+import static org.eclipse.jgit.util.HttpSupport.HDR_LAST_MODIFIED;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.time.Instant;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,12 +32,10 @@ import org.eclipse.jgit.lib.Repository;
 /** Sends any object from {@code GIT_DIR/objects/??/0 38}, or any pack file. */
 abstract class ObjectFileServlet extends HttpServlet {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     static class Loose extends ObjectFileServlet {
 
-        @Serial
         private static final long serialVersionUID = 1L;
 
         Loose() {
@@ -39,7 +43,7 @@ abstract class ObjectFileServlet extends HttpServlet {
         }
 
         @Override
-        String etag(FileSender sender) {
+        String etag(FileSender sender) throws IOException {
             Instant lastModified = sender.getLastModified();
             return Long.toHexString(lastModified.getEpochSecond()) + Long.toHexString(lastModified.getNano());
         }
@@ -47,7 +51,6 @@ abstract class ObjectFileServlet extends HttpServlet {
 
     private abstract static class PackData extends ObjectFileServlet {
 
-        @Serial
         private static final long serialVersionUID = 1L;
 
         PackData(String contentType) {
@@ -62,7 +65,6 @@ abstract class ObjectFileServlet extends HttpServlet {
 
     static class Pack extends PackData {
 
-        @Serial
         private static final long serialVersionUID = 1L;
 
         Pack() {
@@ -72,7 +74,6 @@ abstract class ObjectFileServlet extends HttpServlet {
 
     static class PackIdx extends PackData {
 
-        @Serial
         private static final long serialVersionUID = 1L;
 
         PackIdx() {
@@ -94,7 +95,7 @@ abstract class ObjectFileServlet extends HttpServlet {
     }
 
     @Override
-    protected void doHead(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
+    protected void doHead(final HttpServletRequest req, final HttpServletResponse rsp) throws ServletException, IOException {
         serve(req, rsp, false);
     }
 

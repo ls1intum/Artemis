@@ -10,10 +10,21 @@ package org.eclipse.jgit.http.server.glue;
 
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.AbstractSet;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
-import jakarta.servlet.*;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -99,7 +110,7 @@ public class MetaFilter implements Filter {
     }
 
     private static Set<Object> newIdentitySet() {
-        final Map<Object, Object> m = new IdentityHashMap<>();
+        final IdentityHashMap<Object, Object> m = new IdentityHashMap<>();
         return new AbstractSet<>() {
 
             @Override

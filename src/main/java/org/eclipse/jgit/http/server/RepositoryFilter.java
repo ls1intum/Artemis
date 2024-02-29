@@ -8,14 +8,23 @@
 
 package org.eclipse.jgit.http.server;
 
-import static javax.servlet.http.HttpServletResponse.*;
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 import static org.eclipse.jgit.http.server.GitSmartHttpTools.sendError;
 import static org.eclipse.jgit.http.server.ServletUtils.ATTRIBUTE_REPOSITORY;
 
 import java.io.IOException;
 import java.text.MessageFormat;
 
-import jakarta.servlet.*;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -28,14 +37,14 @@ import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 
 /**
  * Open a repository named by the path info through
- * {@link RepositoryResolver}.
+ * {@link org.eclipse.jgit.transport.resolver.RepositoryResolver}.
  * <p>
  * This filter assumes it is invoked by
  * {@link org.eclipse.jgit.http.server.GitServlet} and is likely to not work as
  * expected if called from any other class. This filter assumes the path info of
  * the current request is a repository name which can be used by the configured
- * {@link RepositoryResolver} to open a
- * {@link Repository} and attach it to the current request.
+ * {@link org.eclipse.jgit.transport.resolver.RepositoryResolver} to open a
+ * {@link org.eclipse.jgit.lib.Repository} and attach it to the current request.
  * <p>
  * This filter sets request attribute
  * {@link org.eclipse.jgit.http.server.ServletUtils#ATTRIBUTE_REPOSITORY} when
@@ -54,7 +63,7 @@ public class RepositoryFilter implements Filter {
      * @param resolver
      *                     the resolver which will be used to translate the URL name
      *                     component to the actual
-     *                     {@link Repository} instance for the
+     *                     {@link org.eclipse.jgit.lib.Repository} instance for the
      *                     current web request.
      */
     public RepositoryFilter(RepositoryResolver<HttpServletRequest> resolver) {
@@ -83,9 +92,9 @@ public class RepositoryFilter implements Filter {
         }
 
         String name = req.getPathInfo();
-        while (name != null && !name.isEmpty() && name.charAt(0) == '/')
+        while (name != null && 0 < name.length() && name.charAt(0) == '/')
             name = name.substring(1);
-        if (name == null || name.isEmpty()) {
+        if (name == null || name.length() == 0) {
             sendError(req, res, SC_NOT_FOUND);
             return;
         }
@@ -96,15 +105,19 @@ public class RepositoryFilter implements Filter {
         }
         catch (RepositoryNotFoundException e) {
             sendError(req, res, SC_NOT_FOUND);
+            return;
         }
         catch (ServiceNotEnabledException e) {
             sendError(req, res, SC_FORBIDDEN, e.getMessage());
+            return;
         }
         catch (ServiceNotAuthorizedException e) {
             res.sendError(SC_UNAUTHORIZED, e.getMessage());
+            return;
         }
         catch (ServiceMayNotContinueException e) {
             sendError(req, res, e.getStatusCode(), e.getMessage());
+            return;
         }
         finally {
             request.removeAttribute(ATTRIBUTE_REPOSITORY);

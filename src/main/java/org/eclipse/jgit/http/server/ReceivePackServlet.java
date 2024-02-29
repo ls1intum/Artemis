@@ -8,17 +8,30 @@
 
 package org.eclipse.jgit.http.server;
 
-import static javax.servlet.http.HttpServletResponse.*;
-import static org.eclipse.jgit.http.server.GitSmartHttpTools.*;
-import static org.eclipse.jgit.http.server.ServletUtils.*;
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.RECEIVE_PACK;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.RECEIVE_PACK_REQUEST_TYPE;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.RECEIVE_PACK_RESULT_TYPE;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.sendError;
+import static org.eclipse.jgit.http.server.ServletUtils.ATTRIBUTE_HANDLER;
+import static org.eclipse.jgit.http.server.ServletUtils.consumeRequestBody;
+import static org.eclipse.jgit.http.server.ServletUtils.getInputStream;
+import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
 import static org.eclipse.jgit.util.HttpSupport.HDR_USER_AGENT;
 
 import java.io.IOException;
-import java.io.Serial;
 import java.text.MessageFormat;
 import java.util.List;
 
-import jakarta.servlet.*;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,7 +51,6 @@ import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 /** Server side implementation of smart push over HTTP. */
 class ReceivePackServlet extends HttpServlet {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     static class InfoRefs extends SmartServiceInfoRefs {
@@ -58,7 +70,7 @@ class ReceivePackServlet extends HttpServlet {
         }
 
         @Override
-        protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException {
+        protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
             ReceivePack rp = (ReceivePack) req.getAttribute(ATTRIBUTE_HANDLER);
             try {
                 rp.sendAdvertisedRefs(pck);
@@ -83,14 +95,14 @@ class ReceivePackServlet extends HttpServlet {
             HttpServletResponse rsp = (HttpServletResponse) response;
             ReceivePack rp;
             try {
-                rp = receivePackFactory.create(req, ServletUtils.getRepository(req));
+                rp = receivePackFactory.create(req, getRepository(req));
             }
             catch (ServiceNotAuthorizedException e) {
                 rsp.sendError(SC_UNAUTHORIZED, e.getMessage());
                 return;
             }
             catch (ServiceNotEnabledException e) {
-                GitSmartHttpTools.sendError(req, rsp, SC_FORBIDDEN, e.getMessage());
+                sendError(req, rsp, SC_FORBIDDEN, e.getMessage());
                 return;
             }
 
@@ -142,18 +154,18 @@ class ReceivePackServlet extends HttpServlet {
 
         if (handler != null) {
             handler.receive(req, rsp, () -> {
-                rp.receiveWithExceptionPropagation(ServletUtils.getInputStream(req), out, null);
+                rp.receiveWithExceptionPropagation(getInputStream(req), out, null);
                 out.close();
             });
         }
         else {
             try {
-                rp.receive(ServletUtils.getInputStream(req), out, null);
+                rp.receive(getInputStream(req), out, null);
                 out.close();
             }
             catch (CorruptObjectException e) {
                 // This should be already reported to the client.
-                getServletContext().log(MessageFormat.format(HttpServerText.get().receivedCorruptObject, e.getMessage(), identify(rp.getRepository())));
+                getServletContext().log(MessageFormat.format(HttpServerText.get().receivedCorruptObject, e.getMessage(), ServletUtils.identify(rp.getRepository())));
                 consumeRequestBody(req);
                 out.close();
 
@@ -169,13 +181,14 @@ class ReceivePackServlet extends HttpServlet {
                 log(rp.getRepository(), e);
                 if (!rsp.isCommitted()) {
                     rsp.reset();
-                    GitSmartHttpTools.sendError(req, rsp, SC_INTERNAL_SERVER_ERROR);
+                    sendError(req, rsp, SC_INTERNAL_SERVER_ERROR);
                 }
+                return;
             }
         }
     }
 
     private void log(Repository git, Throwable e) {
-        getServletContext().log(MessageFormat.format(HttpServerText.get().internalErrorDuringReceivePack, identify(git)), e);
+        getServletContext().log(MessageFormat.format(HttpServerText.get().internalErrorDuringReceivePack, ServletUtils.identify(git)), e);
     }
 }

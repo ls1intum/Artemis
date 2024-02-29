@@ -9,7 +9,6 @@
 package org.eclipse.jgit.http.server.glue;
 
 import java.io.IOException;
-import java.io.Serial;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -21,7 +20,6 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class ErrorServlet extends HttpServlet {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private final int status;

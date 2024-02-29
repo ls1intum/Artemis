@@ -19,12 +19,18 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.eclipse.jgit.http.server.glue.*;
+import org.eclipse.jgit.http.server.glue.ErrorServlet;
+import org.eclipse.jgit.http.server.glue.MetaFilter;
+import org.eclipse.jgit.http.server.glue.RegexGroupFilter;
+import org.eclipse.jgit.http.server.glue.ServletBinder;
 import org.eclipse.jgit.http.server.resolver.AsIsFileService;
 import org.eclipse.jgit.http.server.resolver.DefaultReceivePackFactory;
 import org.eclipse.jgit.http.server.resolver.DefaultUploadPackFactory;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.transport.resolver.*;
+import org.eclipse.jgit.transport.resolver.FileResolver;
+import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
+import org.eclipse.jgit.transport.resolver.RepositoryResolver;
+import org.eclipse.jgit.transport.resolver.UploadPackFactory;
 import org.eclipse.jgit.util.StringUtils;
 
 /**
@@ -36,7 +42,7 @@ import org.eclipse.jgit.util.StringUtils;
  * <p>
  * Applications may wish to add additional repository action URLs to this
  * servlet by taking advantage of its extension from
- * {@link MetaFilter}. Callers may register
+ * {@link org.eclipse.jgit.http.server.glue.MetaFilter}. Callers may register
  * their own URL suffix translations through {@link #serve(String)}, or their
  * regex translations through {@link #serveRegex(String)}. Each translation
  * should contain a complete filter pipeline which ends with the HttpServlet
@@ -52,7 +58,7 @@ public class GitFilter extends MetaFilter {
 
     private UploadPackFactory<HttpServletRequest> uploadPackFactory = new DefaultUploadPackFactory();
 
-    private org.eclipse.jgit.http.server.UploadPackErrorHandler uploadPackErrorHandler;
+    private UploadPackErrorHandler uploadPackErrorHandler;
 
     private ReceivePackFactory<HttpServletRequest> receivePackFactory = new DefaultReceivePackFactory();
 
@@ -179,7 +185,7 @@ public class GitFilter extends MetaFilter {
 
     private void assertNotInitialized() {
         if (initialized)
-            throw new IllegalStateException(org.eclipse.jgit.http.server.HttpServerText.get().alreadyInitializedByContainer);
+            throw new IllegalStateException(HttpServerText.get().alreadyInitializedByContainer);
     }
 
     @Override
@@ -195,39 +201,39 @@ public class GitFilter extends MetaFilter {
         initialized = true;
 
         if (uploadPackFactory != UploadPackFactory.DISABLED) {
-            ServletBinder b = serve("*/" + org.eclipse.jgit.http.server.GitSmartHttpTools.UPLOAD_PACK);
-            b = b.through(new org.eclipse.jgit.http.server.UploadPackServlet.Factory(uploadPackFactory));
+            ServletBinder b = serve("*/" + GitSmartHttpTools.UPLOAD_PACK);
+            b = b.through(new UploadPackServlet.Factory(uploadPackFactory));
             for (Filter f : uploadPackFilters)
                 b = b.through(f);
-            b.with(new org.eclipse.jgit.http.server.UploadPackServlet(uploadPackErrorHandler));
+            b.with(new UploadPackServlet(uploadPackErrorHandler));
         }
 
         if (receivePackFactory != ReceivePackFactory.DISABLED) {
             ServletBinder b = serve("*/" + GitSmartHttpTools.RECEIVE_PACK);
-            b = b.through(new org.eclipse.jgit.http.server.ReceivePackServlet.Factory(receivePackFactory));
+            b = b.through(new ReceivePackServlet.Factory(receivePackFactory));
             for (Filter f : receivePackFilters)
                 b = b.through(f);
-            b.with(new org.eclipse.jgit.http.server.ReceivePackServlet(receivePackErrorHandler));
+            b.with(new ReceivePackServlet(receivePackErrorHandler));
         }
 
         ServletBinder refs = serve("*/" + Constants.INFO_REFS);
         if (uploadPackFactory != UploadPackFactory.DISABLED) {
-            refs = refs.through(new org.eclipse.jgit.http.server.UploadPackServlet.InfoRefs(uploadPackFactory, uploadPackFilters));
+            refs = refs.through(new UploadPackServlet.InfoRefs(uploadPackFactory, uploadPackFilters));
         }
         if (receivePackFactory != ReceivePackFactory.DISABLED) {
-            refs = refs.through(new org.eclipse.jgit.http.server.ReceivePackServlet.InfoRefs(receivePackFactory, receivePackFilters));
+            refs = refs.through(new ReceivePackServlet.InfoRefs(receivePackFactory, receivePackFilters));
         }
         if (asIs != AsIsFileService.DISABLED) {
-            refs = refs.through(new org.eclipse.jgit.http.server.IsLocalFilter());
-            refs = refs.through(new org.eclipse.jgit.http.server.AsIsFileFilter(asIs));
+            refs = refs.through(new IsLocalFilter());
+            refs = refs.through(new AsIsFileFilter(asIs));
             refs.with(new InfoRefsServlet());
         }
         else
             refs.with(new ErrorServlet(HttpServletResponse.SC_NOT_ACCEPTABLE));
 
         if (asIs != AsIsFileService.DISABLED) {
-            final org.eclipse.jgit.http.server.IsLocalFilter mustBeLocal = new org.eclipse.jgit.http.server.IsLocalFilter();
-            final org.eclipse.jgit.http.server.AsIsFileFilter enabled = new org.eclipse.jgit.http.server.AsIsFileFilter(asIs);
+            final IsLocalFilter mustBeLocal = new IsLocalFilter();
+            final AsIsFileFilter enabled = new AsIsFileFilter(asIs);
 
             serve("*/" + Constants.HEAD)//
                     .through(mustBeLocal)//
@@ -249,36 +255,36 @@ public class GitFilter extends MetaFilter {
             serve("*/objects/info/packs")//
                     .through(mustBeLocal)//
                     .through(enabled)//
-                    .with(new org.eclipse.jgit.http.server.InfoPacksServlet());
+                    .with(new InfoPacksServlet());
 
             serveRegex("^/(.*)/objects/([0-9a-f]{2}/[0-9a-f]{38})$")//
                     .through(mustBeLocal)//
                     .through(enabled)//
                     .through(new RegexGroupFilter(2))//
-                    .with(new org.eclipse.jgit.http.server.ObjectFileServlet.Loose());
+                    .with(new ObjectFileServlet.Loose());
 
             serveRegex("^/(.*)/objects/(pack/pack-[0-9a-f]{40}\\.pack)$")//
                     .through(mustBeLocal)//
                     .through(enabled)//
                     .through(new RegexGroupFilter(2))//
-                    .with(new org.eclipse.jgit.http.server.ObjectFileServlet.Pack());
+                    .with(new ObjectFileServlet.Pack());
 
             serveRegex("^/(.*)/objects/(pack/pack-[0-9a-f]{40}\\.idx)$")//
                     .through(mustBeLocal)//
                     .through(enabled)//
                     .through(new RegexGroupFilter(2))//
-                    .with(new org.eclipse.jgit.http.server.ObjectFileServlet.PackIdx());
+                    .with(new ObjectFileServlet.PackIdx());
         }
     }
 
     private static File getFile(FilterConfig cfg, String param) throws ServletException {
         String n = cfg.getInitParameter(param);
         if (n == null || "".equals(n))
-            throw new ServletException(MessageFormat.format(org.eclipse.jgit.http.server.HttpServerText.get().parameterNotSet, param));
+            throw new ServletException(MessageFormat.format(HttpServerText.get().parameterNotSet, param));
 
         File path = new File(n);
         if (!path.exists())
-            throw new ServletException(MessageFormat.format(org.eclipse.jgit.http.server.HttpServerText.get().pathForParamNotFound, path, param));
+            throw new ServletException(MessageFormat.format(HttpServerText.get().pathForParamNotFound, path, param));
         return path;
     }
 
@@ -290,7 +296,7 @@ public class GitFilter extends MetaFilter {
             return StringUtils.toBoolean(n);
         }
         catch (IllegalArgumentException err) {
-            throw new ServletException(MessageFormat.format(org.eclipse.jgit.http.server.HttpServerText.get().invalidBoolean, param, n), err);
+            throw new ServletException(MessageFormat.format(HttpServerText.get().invalidBoolean, param, n), err);
         }
     }
 
@@ -298,7 +304,7 @@ public class GitFilter extends MetaFilter {
     protected ServletBinder register(ServletBinder binder) {
         if (resolver == null)
             throw new IllegalStateException(HttpServerText.get().noResolverAvailable);
-        binder = binder.through(new org.eclipse.jgit.http.server.NoCacheFilter());
+        binder = binder.through(new NoCacheFilter());
         binder = binder.through(new RepositoryFilter(resolver));
         return binder;
     }
