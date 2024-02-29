@@ -55,6 +55,12 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "password_hash")
     private String password;
 
+    // TODO: add ssh public key to database
+
+    @JsonIgnore
+    @Column(name = "ssh_public_key")
+    private String sshPublicKey;
+
     @Size(max = 50)
     @Column(name = "first_name", length = 50)
     private String firstName;
