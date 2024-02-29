@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse;
 
-import java.lang.annotation.Annotation;
+import static de.tum.in.www1.artemis.security.annotations.AnnotationUtils.getAnnotation;
+
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -11,7 +12,6 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 
-import de.tum.in.www1.artemis.security.annotations.AnnotationUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 @Component
@@ -41,52 +41,39 @@ public class EnforceRoleInCourseAspect {
      */
     @Around(value = "callAt()", argNames = "joinPoint")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
-        final var annotation = AnnotationUtils.getAnnotation(EnforceRoleInCourse.class, joinPoint);
-        final var courseId = getCourseId(joinPoint, annotation).orElseThrow(() -> new IllegalArgumentException(
+        final var annotation = getAnnotation(EnforceRoleInCourse.class, joinPoint);
+        final var courseIdFieldName = getCourseIdFieldName(annotation, joinPoint);
+        final var courseId = getCourseId(joinPoint, courseIdFieldName).orElseThrow(() -> new IllegalArgumentException(
                 "Method annotated with @EnforceRoleInCourse must have a parameter named " + annotation.courseIdFieldName() + " of type long/Long."));
         authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(annotation.value(), courseId);
         return joinPoint.proceed();
     }
 
     /**
-     * Extracts the {@link EnforceRoleInCourse} annotation from the method or type
+     * Extracts the courseIdFieldName from the annotation or the method arguments
      *
-     * @param joinPoint the join point
-     * @return the annotation if it is present, null otherwise
+     * @param annotation the annotation
+     * @param joinPoint  the join point
+     * @return the courseIdFieldName
      */
-    private EnforceRoleInCourse getAnnotation(ProceedingJoinPoint joinPoint) {
-        var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
-        EnforceRoleInCourse annotation = method.getAnnotation(EnforceRoleInCourse.class);
-        if (annotation == null) {
-            annotation = method.getDeclaringClass().getAnnotation(EnforceRoleInCourse.class);
-        }
-        if (annotation == null) {
-            for (Annotation a : method.getDeclaredAnnotations()) {
-                annotation = a.annotationType().getAnnotation(EnforceRoleInCourse.class);
-                if (annotation != null) {
-                    break;
-                }
-            }
-        }
-        if (annotation == null) {
-            for (Annotation a : method.getDeclaringClass().getDeclaredAnnotations()) {
-                annotation = a.annotationType().getAnnotation(EnforceRoleInCourse.class);
-                if (annotation != null) {
-                    break;
-                }
-            }
-        }
-        return annotation;
+    private String getCourseIdFieldName(EnforceRoleInCourse annotation, ProceedingJoinPoint joinPoint) {
+        return switch (annotation.value()) {
+            case INSTRUCTOR -> getAnnotation(EnforceAtLeastInstructorInCourse.class, joinPoint).courseIdFieldName();
+            case EDITOR -> getAnnotation(EnforceAtLeastEditorInCourse.class, joinPoint).courseIdFieldName();
+            case TEACHING_ASSISTANT -> getAnnotation(EnforceAtLeastTutorInCourse.class, joinPoint).courseIdFieldName();
+            case STUDENT -> getAnnotation(EnforceAtLeastStudentInCourse.class, joinPoint).courseIdFieldName();
+            default -> annotation.courseIdFieldName();
+        };
     }
 
     /**
      * Extracts the courseId from the method arguments
      *
-     * @param joinPoint the join point
+     * @param joinPoint         the join point
+     * @param courseIdFieldName the courseIdFieldName
      * @return the courseId if it is present, empty otherwise
      */
-    private Optional<Long> getCourseId(ProceedingJoinPoint joinPoint, EnforceRoleInCourse enforceRoleInCourse) {
-        final String courseIdFieldName = enforceRoleInCourse.courseIdFieldName();
+    private Optional<Long> getCourseId(ProceedingJoinPoint joinPoint, String courseIdFieldName) {
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         final int indexOfCourseId = Arrays.asList(signature.getParameterNames()).indexOf(courseIdFieldName);
         Object[] args = joinPoint.getArgs();

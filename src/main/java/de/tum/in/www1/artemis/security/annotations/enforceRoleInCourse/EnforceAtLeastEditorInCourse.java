@@ -14,4 +14,6 @@ import de.tum.in.www1.artemis.security.Role;
 @PreAuthorize("hasRole('EDITOR')")
 @EnforceRoleInCourse(Role.EDITOR)
 public @interface EnforceAtLeastEditorInCourse {
+
+    String courseIdFieldName() default "courseId";
 }

@@ -14,4 +14,12 @@ import de.tum.in.www1.artemis.security.Role;
 @PreAuthorize("hasRole('USER')")
 @EnforceRoleInExercise(Role.STUDENT)
 public @interface EnforceAtLeastStudentInExercise {
+
+    /**
+     * The name of the field in the method parameters that contains the exercise id.
+     * This is used to extract the exercise id from the method parameters
+     *
+     * @return the name of the field in the method parameters that contains the exercise id
+     */
+    String exerciseIdFieldName() default "exerciseId";
 }

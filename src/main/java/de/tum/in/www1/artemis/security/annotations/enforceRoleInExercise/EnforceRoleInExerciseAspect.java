@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise;
 
+import static de.tum.in.www1.artemis.security.annotations.AnnotationUtils.getAnnotation;
+
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -42,20 +44,38 @@ public class EnforceRoleInExerciseAspect {
     @Around(value = "callAt()", argNames = "joinPoint")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         final var annotation = AnnotationUtils.getAnnotation(EnforceRoleInExercise.class, joinPoint);
-        final var exerciseId = getExerciseId(joinPoint, annotation).orElseThrow(() -> new IllegalArgumentException(
+        final var exerciseIdFieldName = getCourseIdFieldName(annotation, joinPoint);
+        final var exerciseId = getExerciseId(joinPoint, exerciseIdFieldName).orElseThrow(() -> new IllegalArgumentException(
                 "Method annotated with @EnforceRoleInExercise must have a parameter named " + annotation.exerciseIdFieldName() + " of type long/Long."));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(annotation.value(), exerciseId);
         return joinPoint.proceed();
     }
 
     /**
+     * Extracts the exerciseIdFieldName from the annotation or the method arguments
+     *
+     * @param annotation the annotation
+     * @param joinPoint  the join point
+     * @return the courseIdFieldName
+     */
+    private String getCourseIdFieldName(EnforceRoleInExercise annotation, ProceedingJoinPoint joinPoint) {
+        return switch (annotation.value()) {
+            case INSTRUCTOR -> getAnnotation(EnforceAtLeastInstructorInExercise.class, joinPoint).exerciseIdFieldName();
+            case EDITOR -> getAnnotation(EnforceAtLeastEditorInExercise.class, joinPoint).exerciseIdFieldName();
+            case TEACHING_ASSISTANT -> getAnnotation(EnforceAtLeastTutorInExercise.class, joinPoint).exerciseIdFieldName();
+            case STUDENT -> getAnnotation(EnforceAtLeastStudentInExercise.class, joinPoint).exerciseIdFieldName();
+            default -> annotation.exerciseIdFieldName();
+        };
+    }
+
+    /**
      * Extracts the exerciseId from the method arguments
      *
-     * @param joinPoint the join point
+     * @param joinPoint           the join point
+     * @param exerciseIdFieldName the name of the exerciseId field
      * @return the exerciseId if it is present, empty otherwise
      */
-    private Optional<Long> getExerciseId(ProceedingJoinPoint joinPoint, EnforceRoleInExercise enforceRoleInExercise) {
-        final String exerciseIdFieldName = enforceRoleInExercise.exerciseIdFieldName();
+    private Optional<Long> getExerciseId(ProceedingJoinPoint joinPoint, String exerciseIdFieldName) {
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         final int indexOfExerciseId = Arrays.asList(signature.getParameterNames()).indexOf(exerciseIdFieldName);
         Object[] args = joinPoint.getArgs();

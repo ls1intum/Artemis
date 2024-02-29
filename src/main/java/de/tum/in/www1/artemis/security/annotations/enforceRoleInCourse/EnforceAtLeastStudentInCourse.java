@@ -14,4 +14,6 @@ import de.tum.in.www1.artemis.security.Role;
 @PreAuthorize("hasRole('USER')")
 @EnforceRoleInCourse(Role.STUDENT)
 public @interface EnforceAtLeastStudentInCourse {
+
+    String courseIdFieldName() default "courseId";
 }

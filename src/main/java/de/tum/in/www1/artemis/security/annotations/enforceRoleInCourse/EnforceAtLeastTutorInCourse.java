@@ -14,4 +14,6 @@ import de.tum.in.www1.artemis.security.Role;
 @PreAuthorize("hasRole('TA')")
 @EnforceRoleInCourse(Role.TEACHING_ASSISTANT)
 public @interface EnforceAtLeastTutorInCourse {
+
+    String courseIdFieldName() default "courseId";
 }
