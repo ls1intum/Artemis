@@ -117,7 +117,9 @@ describe('CompetencyManagementComponent', () => {
                         }),
                     ),
                 );
-                getCompetencyRelationsSpy = jest.spyOn(competencyService, 'getCompetencyRelations').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
+                getCompetencyRelationsSpy = jest
+                    .spyOn(competencyService, 'getCompetencyRelations')
+                    .mockReturnValue(of(new HttpResponse({ body: [{ id: 1 } as CompetencyRelation], status: 200 })));
             });
     });
 
@@ -254,13 +256,15 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should handle remove relation callback', () => {
-        component.relations = [{ id: 1 }];
-        jest.spyOn(competencyService, 'removeCompetencyRelation').mockReturnValue(of());
+        jest.spyOn(competencyService, 'removeCompetencyRelation').mockReturnValue(of(new HttpResponse<any>()));
         fixture.detectChanges();
+        component.relations = [{ id: 1 }, { id: 2 }];
 
         const relationGraph: CompetencyRelationGraphStubComponent = fixture.debugElement.query(By.directive(CompetencyRelationGraphStubComponent)).componentInstance;
         relationGraph.onRemoveRelation.emit(1);
+        fixture.detectChanges();
 
-        expect(component.relations).toBeEmpty();
+        expect(component.relations).toHaveLength(1);
+        expect(component.relations.at(0)?.id).toBe(2);
     });
 });
