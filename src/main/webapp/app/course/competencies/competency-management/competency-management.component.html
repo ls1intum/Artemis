@@ -109,7 +109,7 @@
         <div class="d-flex flex-wrap">
             <h2 jhiTranslate="artemisApp.competency.prerequisite.managePrerequisites.title">Prerequisite Management</h2>
             <div class="ms-auto text-truncate justify-content-end">
-                <button class="btn btn-primary" (click)="openPrerequisiteSelectionModal()">
+                <button id="prerequisiteImportButton" class="btn btn-primary" (click)="openPrerequisiteSelectionModal()">
                     <fa-icon [icon]="faPlus" />
                     <span>{{ 'artemisApp.competency.prerequisite.managePrerequisites.select' | artemisTranslate }}</span>
                 </button>
@@ -152,7 +152,7 @@
                                     }
                                 </td>
                                 <td class="text-end">
-                                    <button id="removeButton" class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
+                                    <button class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
                                         <fa-icon [icon]="faTrash" /> {{ 'artemisApp.competency.competencyCard.remove' | artemisTranslate }}
                                     </button>
                                 </td>

@@ -67,6 +67,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    //TODO: javadocs!
+
     ngOnDestroy() {
         this.dialogErrorSource.unsubscribe();
     }
