@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.competency;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -8,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 /**
  * Service for calculating the progress of a student in a competency.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class CompetencyProgressService {
 

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -29,6 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Course entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
@@ -232,7 +235,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             WHERE c.id = :courseId
             """)
     @Cacheable(cacheNames = "courseTitle", key = "#courseId", unless = "#result == null")
-    String getCourseTitle(@Param("courseId") Long courseId);
+    String getCourseTitle(@Param("courseId") long courseId);
 
     @Query("""
             SELECT DISTINCT c
@@ -261,7 +264,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                SUBSTRING(CAST(s.submissionDate as string), 1, 10),
+                SUBSTRING(CAST(s.submissionDate AS string), 1, 10),
                 p.student.login
             )
             FROM StudentParticipation p
@@ -269,7 +272,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             WHERE p.exercise.id IN :exerciseIds
                 AND s.submissionDate >= :startDate
                 AND s.submissionDate <= :endDate
-            GROUP BY SUBSTRING(CAST(s.submissionDate as string), 1, 10), p.student.login
+            GROUP BY SUBSTRING(CAST(s.submissionDate AS string), 1, 10), p.student.login
             """)
     List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
@@ -286,8 +289,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             FROM Course c
             WHERE (
                 c.endDate IS NULL
-                OR CAST(:now as timestamp) IS NULL
-                OR c.endDate >= CAST(:now as timestamp)
+                OR CAST(:now AS timestamp) IS NULL
+                OR c.endDate >= CAST(:now AS timestamp)
             ) AND (
                 :isAdmin = TRUE
                 OR c.teachingAssistantGroupName IN :userGroups
@@ -314,7 +317,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                         OR c.instructorGroupName = ug.group
             WHERE c.id = :courseId
             """)
-    Integer countCourseMembers(@Param("courseId") Long courseId);
+    Integer countCourseMembers(@Param("courseId") long courseId);
 
     /**
      * Query which fetches all courses for which the user is editor or instructor and matching the search criteria.

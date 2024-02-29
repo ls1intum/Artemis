@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 import static de.tum.in.www1.artemis.service.util.XmlFileUtils.getDocumentBuilderFactory;
 
@@ -35,6 +36,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -60,6 +62,8 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 /**
  * Service for exporting programming exercises.
  */
+
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExportService {
 

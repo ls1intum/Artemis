@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -14,8 +17,9 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.Exam_;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup_;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ExerciseSpecificationService {
 
@@ -97,7 +101,8 @@ public class ExerciseSpecificationService {
      *
      * @param programmingLanguage the language to filter for
      * @return a Specification that can get passed to the @{@link de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository}
-     * @see de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService#getAllWithSCAOnPageWithSize(PageableSearchDTO, boolean, boolean, ProgrammingLanguage, User)
+     * @see de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService#getAllWithSCAOnPageWithSize(SearchTermPageableSearchDTO, boolean, boolean, ProgrammingLanguage,
+     *      User)
      */
     public Specification<ProgrammingExercise> createSCAFilter(ProgrammingLanguage programmingLanguage) {
         return (root, query, criteriaBuilder) -> {

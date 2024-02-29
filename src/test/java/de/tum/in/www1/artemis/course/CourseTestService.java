@@ -1261,7 +1261,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withoutAssessments() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         // create 6 * 4 = 24 submissions
         adjustUserGroupsToCustomGroups();
         Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 0, 0, true, 0, validModel);
@@ -1281,7 +1281,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessments() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         String suffix = "statswithassessments";
         adjustUserGroupsToCustomGroups(suffix);
         Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 2, 0, true, 0, validModel);
@@ -1297,7 +1297,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaints() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         String suffix = "dashboardstatswithcomplaints";
         adjustUserGroupsToCustomGroups(suffix);
         Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, true, 0, validModel);
@@ -1323,7 +1323,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndFeedbackRequests() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         String suffix = "statsfeedbackrequests";
         adjustUserGroupsToCustomGroups(suffix);
         Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, false, 0, validModel);
@@ -1349,7 +1349,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
 
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
         String suffix = "assessStatsCom";
@@ -1387,7 +1387,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndFeedBackRequestsAndResponses() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
 
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
         String suffix = "assessStatsFR";
@@ -1425,7 +1425,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses_Large() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
         String suffix = "assessStatsLarge";
         adjustUserGroupsToCustomGroups(suffix);
@@ -1892,7 +1892,7 @@ public class CourseTestService {
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
         assertThat(lockedSubmissions).as("Locked Submissions length is 0").isEmpty();
 
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
 
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, userPrefix + "student1", userPrefix + "tutor1");
@@ -3009,8 +3009,6 @@ public class CourseTestService {
         Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         Course courseWithOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createdCourse.getId());
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
-        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
-        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(courseWithOnlineConfiguration.getShortName());
     }
 
@@ -3024,8 +3022,6 @@ public class CourseTestService {
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(updatedCourse.getOnlineCourseConfiguration()).isNotNull();
-        assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
-        assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(updatedCourse.getShortName());
     }
 
@@ -3058,8 +3054,6 @@ public class CourseTestService {
         OnlineCourseConfiguration ocConfiguration = actualCourse.getOnlineCourseConfiguration();
 
         assertThat(ocConfiguration).isNotNull();
-        assertThat(ocConfiguration.getLtiKey()).isNotNull();
-        assertThat(ocConfiguration.getLtiSecret()).isNotNull();
         assertThat(ocConfiguration.getUserPrefix()).isEqualTo(actualCourse.getShortName());
     }
 
@@ -3083,7 +3077,7 @@ public class CourseTestService {
     public void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
-        CourseFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
+        CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
 
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
@@ -3104,24 +3098,16 @@ public class CourseTestService {
         OnlineCourseConfiguration ocConfiguration = null;
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
 
-        // with invalid online course configuration - no key
         ocConfiguration = createdCourse.getOnlineCourseConfiguration();
-        CourseFactory.updateOnlineCourseConfiguration(ocConfiguration, null, "secret", "prefix", null, "10000");
-        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
-
-        // with invalid online course configuration - no secret
-        CourseFactory.updateOnlineCourseConfiguration(ocConfiguration, "key", null, "prefix", null, "10000");
-        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
-
         // with invalid user prefix - not matching regex
-        CourseFactory.updateOnlineCourseConfiguration(ocConfiguration, "key", "secret", "with space", null, "10000");
+        CourseFactory.updateOnlineCourseConfiguration(ocConfiguration, "with space", null, "10000");
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
 
     public void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
-        CourseFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
+        CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
 
         String courseId = course.getId().toString();
@@ -3137,7 +3123,7 @@ public class CourseTestService {
         Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         String courseId = createdCourse.getId().toString();
 
-        OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "key", "secret", "prefix", null);
+        OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
 
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), onlineCourseConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
@@ -3158,12 +3144,10 @@ public class CourseTestService {
     public void testUpdateValidOnlineCourseConfiguration() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
-        CourseFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
+        CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
 
         OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
-        ocConfiguration.setLtiKey("key");
-        ocConfiguration.setLtiSecret("secret");
         ocConfiguration.setUserPrefix("prefix");
 
         String courseId = course.getId().toString();
@@ -3190,7 +3174,7 @@ public class CourseTestService {
 
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
-        OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "key", "secret", "prefix", "url");
+        OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", "url");
         onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
 
         course = courseRepo.save(course);

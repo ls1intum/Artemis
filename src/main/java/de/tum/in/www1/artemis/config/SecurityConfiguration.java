@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 
 import jakarta.annotation.PostConstruct;
@@ -9,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -44,6 +47,7 @@ import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
 @Import(SecurityProblemSupport.class)
+@Profile(PROFILE_CORE)
 public class SecurityConfiguration {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;

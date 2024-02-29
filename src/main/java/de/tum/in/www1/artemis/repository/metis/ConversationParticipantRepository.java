@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.repository.metis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.scheduling.annotation.Async;
@@ -16,6 +19,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the ConversationParticipant entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ConversationParticipantRepository extends JpaRepository<ConversationParticipant, Long> {
 
@@ -23,7 +27,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             SELECT DISTINCT conversationParticipant
             FROM ConversationParticipant conversationParticipant
             WHERE conversationParticipant.conversation.id = :conversationId
-                AND conversationParticipant.user.id in :userIds
+                AND conversationParticipant.user.id IN :userIds
             """)
     Set<ConversationParticipant> findConversationParticipantsByConversationIdAndUserIds(@Param("conversationId") Long conversationId, @Param("userIds") Set<Long> userIds);
 

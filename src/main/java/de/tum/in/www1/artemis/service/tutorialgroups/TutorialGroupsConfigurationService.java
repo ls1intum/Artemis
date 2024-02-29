@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +18,7 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupFreePeriodR
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 
+@Profile(PROFILE_CORE)
 @Service
 public class TutorialGroupsConfigurationService {
 

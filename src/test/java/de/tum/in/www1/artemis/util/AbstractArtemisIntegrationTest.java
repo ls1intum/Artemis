@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
@@ -50,9 +49,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected String defaultBranch;
 
     // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
-    @SpyBean
-    protected Lti10Service lti10Service;
-
     @SpyBean
     protected Lti13Service lti13Service;
 
@@ -151,7 +147,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     protected void resetSpyBeans() {
-        Mockito.reset(lti10Service, gitService, groupNotificationService, conversationNotificationService, tutorialGroupNotificationService, singleUserNotificationService,
+        Mockito.reset(gitService, groupNotificationService, conversationNotificationService, tutorialGroupNotificationService, singleUserNotificationService,
                 websocketMessagingService, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
                 uriService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService);
     }

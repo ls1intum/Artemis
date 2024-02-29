@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.Instant;
@@ -20,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +49,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Service Implementation for managing StudentExam.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class StudentExamService {
 

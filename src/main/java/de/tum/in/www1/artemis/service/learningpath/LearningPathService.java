@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.learningpath;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -9,6 +11,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -16,11 +19,11 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
@@ -34,6 +37,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
  * <li>and retrieval of ngx graph representations.</li>
  * </ul>
  */
+@Profile(PROFILE_CORE)
 @Service
 public class LearningPathService {
 
@@ -112,13 +116,13 @@ public class LearningPathService {
     }
 
     /**
-     * Search for all learning paths fitting a {@link PageableSearchDTO search query}. The result is paged.
+     * Search for all learning paths fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
      *
      * @param search the search query defining the search term and the size of the returned page
      * @param course the course the learning paths are linked to
      * @return A wrapper object containing a list of all found learning paths and the total number of pages
      */
-    public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull PageableSearchDTO<String> search, @NotNull Course course) {
+    public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull SearchTermPageableSearchDTO<String> search, @NotNull Course course) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LEARNING_PATH);
         final var searchTerm = search.getSearchTerm();
         final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, course.getId(), pageable);

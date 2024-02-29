@@ -370,7 +370,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         TutorParticipation tutorParticipation = new TutorParticipation().tutor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"))
                 .status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS).assessedExercise(classExercise);
 
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         ExampleSubmission exampleSubmission = participationUtilService.generateExampleSubmission(validModel, classExercise, true);
         exampleSubmission.addTutorParticipations(tutorParticipation);
         participationUtilService.addExampleSubmission(exampleSubmission);

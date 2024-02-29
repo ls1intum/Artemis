@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -8,6 +10,7 @@ import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,11 +26,12 @@ import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.*;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class LearningPathResource {
@@ -106,7 +110,7 @@ public class LearningPathResource {
     @GetMapping("courses/{courseId}/learning-paths")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<LearningPathInformationDTO>> getLearningPathsOnPage(@PathVariable long courseId, PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<LearningPathInformationDTO>> getLearningPathsOnPage(@PathVariable long courseId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -160,7 +164,7 @@ public class LearningPathResource {
      * @param learningPathId the id of the learning path that should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
      */
-    @GetMapping("/learning-path/{learningPathId}/graph")
+    @GetMapping("learning-path/{learningPathId}/graph")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxGraph(@PathVariable long learningPathId) {
@@ -174,7 +178,7 @@ public class LearningPathResource {
      * @param learningPathId the id of the learning path that should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
      */
-    @GetMapping("/learning-path/{learningPathId}/path")
+    @GetMapping("learning-path/{learningPathId}/path")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxPath(@PathVariable long learningPathId) {
@@ -210,7 +214,7 @@ public class LearningPathResource {
      * @param courseId the id of the course from which the learning path id should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the id of the learning path
      */
-    @GetMapping("/courses/{courseId}/learning-path-id")
+    @GetMapping("courses/{courseId}/learning-path-id")
     @EnforceAtLeastStudent
     public ResponseEntity<Long> getLearningPathId(@PathVariable long courseId) {
         log.debug("REST request to get learning path id for course with id: {}", courseId);
@@ -240,7 +244,7 @@ public class LearningPathResource {
      * @param learningPathId the id of the learning path for which to get the progress
      * @return the ResponseEntity with status 200 (OK) and with the progress in the body
      */
-    @GetMapping("/learning-path/{learningPathId}/competency-progress")
+    @GetMapping("learning-path/{learningPathId}/competency-progress")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<CompetencyProgressForLearningPathDTO>> getCompetencyProgressForLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get competency progress for learning path: {}", learningPathId);

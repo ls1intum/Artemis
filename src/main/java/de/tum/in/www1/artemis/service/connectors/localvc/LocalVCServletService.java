@@ -123,29 +123,33 @@ public class LocalVCServletService {
      * @throws RepositoryNotFoundException if the repository could not be found.
      */
     public Repository resolveRepository(String repositoryPath) throws RepositoryNotFoundException {
+
+        long timeNanoStart = System.nanoTime();
         // Find the local repository depending on the name.
         Path repositoryDir = Paths.get(localVCBasePath, repositoryPath);
 
-        log.debug("Path to resolve repository from: {}", repositoryDir);
+        log.info("Path to resolve repository from: {}", repositoryDir);
         if (!Files.exists(repositoryDir)) {
             log.info("Could not find local repository with name {}", repositoryPath);
             throw new RepositoryNotFoundException(repositoryPath);
         }
 
         if (repositories.containsKey(repositoryPath)) {
-            log.debug("Retrieving cached local repository {}", repositoryPath);
+            log.info("Retrieving cached local repository {}", repositoryPath);
             Repository repository = repositories.get(repositoryPath);
             repository.incrementOpen();
+            log.info("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
             return repository;
         }
         else {
-            log.debug("Opening local repository {}", repositoryPath);
+            log.info("Opening local repository {}", repositoryPath);
             try (Repository repository = FileRepositoryBuilder.create(repositoryDir.toFile())) {
                 // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
                 repository.getConfig().setBoolean("http", null, "receivepack", true);
 
                 this.repositories.put(repositoryPath, repository);
                 repository.incrementOpen();
+                log.info("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
                 return repository;
             }
             catch (IOException e) {

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.push_notification;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -11,6 +13,7 @@ import javax.crypto.KeyGenerator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,8 +33,9 @@ import io.jsonwebtoken.*;
 /**
  * Rest Controller for managing push notification device tokens for native clients.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api/push_notification")
+@RequestMapping("api/push_notification")
 public class PushNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationResource.class);

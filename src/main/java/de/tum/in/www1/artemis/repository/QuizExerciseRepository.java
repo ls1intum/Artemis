@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -9,6 +10,7 @@ import java.util.Optional;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -22,6 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the QuizExercise entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long>, JpaSpecificationExecutor<QuizExercise> {
 
@@ -68,7 +71,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @NotNull
     default QuizExercise findWithEagerQuestionsByIdOrElseThrow(Long quizExerciseId) {
         return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("QuizExercise", quizExerciseId));
-    };
+    }
 
     /**
      * Get one quiz exercise
