@@ -542,6 +542,18 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the current user is at least an instructor in the given course.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param courseId the id of the course that needs to be checked
+     */
+    public void isAtLeastInstructorInCourseElseThrow(long courseId) {
+        if (!isAtLeastInstructorInCourse(courseId)) {
+            throw new AccessForbiddenException("Course", courseId);
+        }
+    }
+
+    /**
      * checks if the passed user is instructor in the given course
      *
      * @param course the course that needs to be checked
