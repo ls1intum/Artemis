@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Output, computed, input } from '@angular/core';
 import { Edge, Node } from '@swimlane/ngx-graph';
-import { Competency, CompetencyRelation, CompetencyRelationError, CompetencyRelationType, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { Competency, CompetencyRelation, CompetencyRelationError, CompetencyRelationType } from 'app/entities/competency.model';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -54,6 +54,9 @@ export class CompetencyRelationGraphComponent {
         SELF: 'artemisApp.competency.relation.selfRelation',
     };
 
+    /**
+     * creates a relation with the currently entered data if it would not cause an error
+     */
     createRelation() {
         this.validate();
         if (this.relationError) {
@@ -67,10 +70,18 @@ export class CompetencyRelationGraphComponent {
         this.onCreateRelation.emit(relation);
     }
 
+    /**
+     * removes the relation
+     *
+     * @param edge the edge symbolizing the relation
+     */
     removeRelation(edge: Edge) {
         this.onRemoveRelation.emit(edge.data.id);
     }
 
+    /**
+     * Validates if the currently entered data would cause an error and sets relationError accordingly
+     */
     validate(): void {
         if (!this.tailCompetencyId || !this.headCompetencyId || !this.relationType) {
             this.relationError = undefined;
@@ -91,6 +102,11 @@ export class CompetencyRelationGraphComponent {
         this.relationError = undefined;
     }
 
+    /**
+     *
+     *
+     * @private
+     */
     private containsCircularRelation(): boolean {
         if (!this.tailCompetencyId || !this.headCompetencyId || !this.relationType) {
             return false;
@@ -102,6 +118,11 @@ export class CompetencyRelationGraphComponent {
         } as Edge);
     }
 
+    /**
+     * checks if the currently entered data is equal to an existing relation
+     *
+     * @private
+     */
     private doesRelationAlreadyExist(): boolean {
         return !!this.edges().find((edge) => edge.source === this.tailCompetencyId?.toString() && edge.target === this.headCompetencyId?.toString());
     }
@@ -169,8 +190,6 @@ export class CompetencyRelationGraphComponent {
         }
         return graph.hasCycle();
     }
-
-    protected readonly competencyTaxonomy = CompetencyTaxonomy;
 }
 
 /**

@@ -32,14 +32,12 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     courseId: number;
     isLoading = false;
     irisCompetencyGenerationEnabled = false;
-    competencies: Competency[] = [];
-    prerequisites: Competency[] = [];
-    relations: CompetencyRelation[] = [];
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
-    readonly getIcon = getIcon;
-    readonly documentationType: DocumentationType = 'Competencies';
+    competencies: Competency[] = [];
+    prerequisites: Competency[] = [];
+    relations: CompetencyRelation[] = [];
 
     // Icons
     protected readonly faPlus = faPlus;
@@ -47,6 +45,10 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     protected readonly faTrash = faTrash;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faRobot = faRobot;
+
+    //other constants
+    readonly getIcon = getIcon;
+    readonly documentationType: DocumentationType = 'Competencies';
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -67,12 +69,15 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    //TODO: javadocs!
-
     ngOnDestroy() {
         this.dialogErrorSource.unsubscribe();
     }
 
+    /**
+     * Delete a competency (and its relations)
+     *
+     * @param competencyId the id of the competency
+     */
     deleteCompetency(competencyId: number) {
         this.competencyService.delete(competencyId, this.courseId).subscribe({
             next: () => {
@@ -84,6 +89,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Remove a prerequisite from the course
+     *
+     * @param competencyId the id of the prerequisite
+     */
     removePrerequisite(competencyId: number) {
         this.competencyService.removePrerequisite(competencyId, this.courseId).subscribe({
             next: () => {
@@ -95,6 +105,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Sends a request to determine if Iris and Competency Generation is enabled
+     *
+     * @private
+     */
     private loadIrisEnabled() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             const irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
@@ -106,6 +121,9 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Loads all data for the competency management: Prerequisites, competencies (with average course progress) and competency relations
+     */
     loadData() {
         this.isLoading = true;
         this.competencyService
@@ -218,6 +236,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         this.relations = this.relations.concat(importedRelations);
     }
 
+    /**
+     * creates a given competency relation
+     *
+     * @param relation the given competency relation
+     */
     createRelation(relation: CompetencyRelation) {
         this.competencyService
             .createCompetencyRelation(relation, this.courseId)
@@ -235,6 +258,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * deletes a competency relation with the given id
+     *
+     * @param relationId the given id
+     */
     removeRelation(relationId: number) {
         this.competencyService.removeCompetencyRelation(relationId, this.courseId).subscribe({
             next: () => {
