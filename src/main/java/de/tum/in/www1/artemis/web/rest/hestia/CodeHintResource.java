@@ -16,9 +16,7 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceRoleInExercise;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -60,8 +58,7 @@ public class CodeHintResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the code hints for the exercise
      */
     @GetMapping("programming-exercises/{exerciseId}/code-hints")
-    @EnforceAtLeastEditor
-    @EnforceRoleInExercise(Role.EDITOR)
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<Set<CodeHint>> getAllCodeHints(@PathVariable Long exerciseId) {
         var result = codeHintRepository.findByExerciseId(exerciseId);
         return ResponseEntity.ok(result);
@@ -75,8 +72,7 @@ public class CodeHintResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new code hints
      */
     @PostMapping("programming-exercises/{exerciseId}/code-hints")
-    @EnforceAtLeastEditor
-    @EnforceRoleInExercise(Role.EDITOR)
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<List<CodeHint>> generateCodeHintsForExercise(@PathVariable Long exerciseId,
             @RequestParam(value = "deleteOldCodeHints", defaultValue = "true") boolean deleteOldCodeHints) {
         log.debug("REST request to generate CodeHints for ProgrammingExercise: {}", exerciseId);
@@ -102,8 +98,7 @@ public class CodeHintResource {
     // TODO: move into some IrisResource
     @Profile("iris")
     @PostMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/generate-description")
-    @EnforceAtLeastEditor
-    @EnforceRoleInExercise(Role.EDITOR)
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<CodeHint> generateDescriptionForCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId) {
         log.debug("REST request to generate description with Iris for CodeHint: {}", codeHintId);
 
@@ -138,8 +133,7 @@ public class CodeHintResource {
      * @return 204 No Content
      */
     @DeleteMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/solution-entries/{solutionEntryId}")
-    @EnforceAtLeastEditor
-    @EnforceRoleInExercise(Role.EDITOR)
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<Void> removeSolutionEntryFromCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId, @PathVariable Long solutionEntryId) {
         log.debug("REST request to remove SolutionEntry {} from CodeHint {} in ProgrammingExercise {}", solutionEntryId, codeHintId, exerciseId);
 
