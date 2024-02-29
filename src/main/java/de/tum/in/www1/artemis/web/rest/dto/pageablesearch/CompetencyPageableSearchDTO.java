@@ -8,7 +8,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
  *
  * @see SearchResultPageDTO
  */
-public class CompetencyPageableSearchDTO extends BasePageableSearchDTO<String> {
+public class CompetencyPageableSearchDTO extends PageableSearchDTO<String> {
 
     /**
      * The search terms

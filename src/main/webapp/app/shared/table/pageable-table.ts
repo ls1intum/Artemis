@@ -11,14 +11,14 @@ export enum SortingOrder {
     DESCENDING = 'DESCENDING',
 }
 
-export interface BasePageableSearch {
+export interface PageableSearch {
     page: number;
     pageSize: number;
     sortingOrder: SortingOrder;
     sortedColumn: string;
 }
 
-export interface PageableSearch extends BasePageableSearch {
+export interface SearchTermPageableSearch extends PageableSearch {
     searchTerm: string;
 }
 
@@ -29,4 +29,4 @@ export interface CompetencyFilter {
     semester: string;
 }
 
-export interface CompetencyPageableSearch extends BasePageableSearch, CompetencyFilter {}
+export interface CompetencyPageableSearch extends PageableSearch, CompetencyFilter {}
