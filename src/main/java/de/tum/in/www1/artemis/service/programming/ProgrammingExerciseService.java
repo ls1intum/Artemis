@@ -586,6 +586,7 @@ public class ProgrammingExerciseService {
             }
         }
         else {
+            // if the user does not change the build plan configuration, we have to set the old one again
             updatedProgrammingExercise.setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildPlanConfiguration());
         }
     }
