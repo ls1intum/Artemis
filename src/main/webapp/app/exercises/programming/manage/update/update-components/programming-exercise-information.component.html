@@ -56,7 +56,7 @@
                 <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
                 <jhi-help-icon text="artemisApp.programmingExercise.preview.tooltip" />
             </div>
-            <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise" />
+            <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise" [isLocal]="isLocal" />
             @if (!programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExerciseCreationConfig.auxiliaryRepositoriesSupported) {
                 <div class="form-group">
                     @if (programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0) {
@@ -122,7 +122,7 @@
                             }
                         </ngb-alert>
                     }
-                    @if (programmingExerciseCreationConfig) {
+                    @if (programmingExerciseCreationConfig && !isLocal) {
                         <ngb-alert [dismissible]="false" [type]="'info'">
                             <span>{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}</span>
                         </ngb-alert>

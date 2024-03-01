@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -8,6 +10,7 @@ import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -29,6 +32,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 /**
  * Service Implementation for managing Exercise.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ExerciseDeletionService {
 

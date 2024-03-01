@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.*;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
@@ -9,6 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +27,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.web.rest.dto.UserPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -36,6 +38,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * If you don't need deleted user entities, add `WHERE user.isDeleted IS FALSE` to your query.
  * </p>
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 

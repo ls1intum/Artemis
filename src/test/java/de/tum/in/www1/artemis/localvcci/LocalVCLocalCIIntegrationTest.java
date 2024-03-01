@@ -598,15 +598,17 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         programmingExerciseRepository.save(programmingExercise);
 
         // Start date is in the future.
-        exam.setStartDate(ZonedDateTime.now().plusHours(1));
-        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        var now = ZonedDateTime.now();
+        exam.setStartDate(now.plusHours(1));
+        exam.setEndDate(now.plusHours(2));
+        exam.setWorkingTime(3600);
         examRepository.save(exam);
 
         // Create StudentExam.
 
         StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, student1);
         studentExam.setExercises(List.of(programmingExercise));
-        studentExam.setWorkingTime(null);
+        studentExam.setWorkingTime(exam.getWorkingTime());
         studentExamRepository.save(studentExam);
 
         // student1 should not be able to fetch or push yet, even if the repository was already prepared.
@@ -620,7 +622,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
 
         // Working time
-        exam.setStartDate(ZonedDateTime.now().minusHours(1));
+        exam.setStartDate(now.minusMinutes(30));
         examRepository.save(exam);
 
         // student1 should be able to fetch and push.
@@ -644,8 +646,26 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
 
-        // Due date is in the past.
+        // Due date is in the past but grace period is still active.
         exam.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        exam.setGracePeriod(999);
+        examRepository.save(exam);
+        studentExam.setExam(exam);
+        studentExam.setWorkingTime(0);
+        studentExamRepository.save(studentExam);
+
+        // student1 should not be able to fetch or push.
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        // tutor1 should be able to fetch but not push.
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        // instructor1 should be able to fetch and push.
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
+
+        // Grace period is over.
+        exam.setGracePeriod(0);
         examRepository.save(exam);
         studentExam.setExam(exam);
         studentExamRepository.save(studentExam);
