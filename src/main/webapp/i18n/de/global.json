@@ -138,7 +138,8 @@
             "email.pattern": "Bitte nutze eine E-Mail nach folgendem Muster:",
             "cancel": "Abbruch",
             "confirm": "Bestätigen",
-            "refresh": "Aktualisieren"
+            "refresh": "Aktualisieren",
+            "invalidInput": "Ungültiger Input"
         },
         "messages": {
             "info": {
