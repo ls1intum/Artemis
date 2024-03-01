@@ -61,8 +61,17 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "participation", "participation.results" })
     Optional<FileUploadSubmission> findWithResultsFeedbacksAssessorAndParticipationResultsById(long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "particpation", "participation.exercise", "participation.team.students" })
-    Optional<FileUploadSubmission> findWithTeamStudentsAndParticipationAndExerciseByIdAndParticipation_Exercise_Id(long id, long exerciseId);
+    @Query("""
+            SELECT submission
+            FROM FileUploadSubmission submission
+                LEFT JOIN FETCH submission.participation participation
+                LEFT JOIN FETCH participation.exercise exercise
+                LEFT JOIN FETCH participation.team team
+                LEFT JOIN FETCH team.students
+            WHERE submission.id = :submissionId
+                AND exercise.id = :exerciseId
+            """)
+    Optional<FileUploadSubmission> findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseId(@Param("submissionId") long submissionId, @Param("exerciseId") long exerciseId);
 
     /**
      * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
@@ -107,8 +116,8 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @return the file upload submission with the given id
      */
     @NotNull
-    default FileUploadSubmission findWithTeamStudentsAndParticipationAndExerciseByIdAndParticipation_Exercise_IdElseThrow(long submissionId, long exerciseId) {
-        return findWithTeamStudentsAndParticipationAndExerciseByIdAndParticipation_Exercise_Id(submissionId, exerciseId)
+    default FileUploadSubmission findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(long submissionId, long exerciseId) {
+        return findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseId(submissionId, exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
     }
 }
