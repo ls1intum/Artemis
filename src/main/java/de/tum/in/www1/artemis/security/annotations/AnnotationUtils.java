@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.security.annotations;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.Optional;
 
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -42,5 +43,27 @@ public final class AnnotationUtils {
             }
         }
         return Optional.ofNullable(annotation);
+    }
+
+    /**
+     * Extracts the id from the method arguments
+     *
+     * @param joinPoint the join point
+     * @param fieldName the fieldName
+     * @return the id if it is present, empty otherwise
+     */
+    public static Optional<Long> getIdFromSignature(ProceedingJoinPoint joinPoint, String fieldName) {
+        final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        final int indexOfId = Arrays.asList(signature.getParameterNames()).indexOf(fieldName);
+        Object[] args = joinPoint.getArgs();
+
+        if (indexOfId < 0 || args.length <= indexOfId) {
+            return Optional.empty();
+        }
+
+        if (args[indexOfId] instanceof Long id) {
+            return Optional.of(id);
+        }
+        return Optional.empty();
     }
 }

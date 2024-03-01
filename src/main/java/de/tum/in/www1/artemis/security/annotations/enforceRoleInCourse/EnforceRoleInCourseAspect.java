@@ -2,15 +2,14 @@ package de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.security.annotations.AnnotationUtils.getAnnotation;
+import static de.tum.in.www1.artemis.security.annotations.AnnotationUtils.getIdFromSignature;
 
-import java.util.Arrays;
 import java.util.Optional;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -46,7 +45,7 @@ public class EnforceRoleInCourseAspect {
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         final var annotation = getAnnotation(EnforceRoleInCourse.class, joinPoint).orElseThrow();
         final var courseIdFieldName = getCourseIdFieldName(annotation, joinPoint);
-        final var courseId = getCourseId(joinPoint, courseIdFieldName).orElseThrow(() -> new IllegalArgumentException(
+        final var courseId = getIdFromSignature(joinPoint, courseIdFieldName).orElseThrow(() -> new IllegalArgumentException(
                 "Method annotated with @EnforceRoleInCourse must have a parameter named " + annotation.courseIdFieldName() + " of type long/Long."));
         authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(annotation.value(), courseId);
         return joinPoint.proceed();
@@ -69,27 +68,5 @@ public class EnforceRoleInCourseAspect {
             default -> Optional.empty();
         };
         return fieldNameOfSimpleAnnotation.orElse(defaultFieldName);
-    }
-
-    /**
-     * Extracts the courseId from the method arguments
-     *
-     * @param joinPoint         the join point
-     * @param courseIdFieldName the courseIdFieldName
-     * @return the courseId if it is present, empty otherwise
-     */
-    private Optional<Long> getCourseId(ProceedingJoinPoint joinPoint, String courseIdFieldName) {
-        final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        final int indexOfCourseId = Arrays.asList(signature.getParameterNames()).indexOf(courseIdFieldName);
-        Object[] args = joinPoint.getArgs();
-
-        if (indexOfCourseId < 0 || args.length <= indexOfCourseId) {
-            return Optional.empty();
-        }
-
-        if (args[indexOfCourseId] instanceof Long courseId) {
-            return Optional.of(courseId);
-        }
-        return Optional.empty();
     }
 }

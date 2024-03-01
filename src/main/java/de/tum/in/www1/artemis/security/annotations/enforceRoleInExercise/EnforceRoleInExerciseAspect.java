@@ -2,19 +2,17 @@ package de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.security.annotations.AnnotationUtils.getAnnotation;
+import static de.tum.in.www1.artemis.security.annotations.AnnotationUtils.getIdFromSignature;
 
-import java.util.Arrays;
 import java.util.Optional;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import de.tum.in.www1.artemis.security.annotations.AnnotationUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 @Profile(PROFILE_CORE)
@@ -46,9 +44,9 @@ public class EnforceRoleInExerciseAspect {
      */
     @Around(value = "callAt()", argNames = "joinPoint")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
-        final var annotation = AnnotationUtils.getAnnotation(EnforceRoleInExercise.class, joinPoint).orElseThrow();
+        final var annotation = getAnnotation(EnforceRoleInExercise.class, joinPoint).orElseThrow();
         final var exerciseIdFieldName = getCourseIdFieldName(annotation, joinPoint);
-        final var exerciseId = getExerciseId(joinPoint, exerciseIdFieldName).orElseThrow(() -> new IllegalArgumentException(
+        final var exerciseId = getIdFromSignature(joinPoint, exerciseIdFieldName).orElseThrow(() -> new IllegalArgumentException(
                 "Method annotated with @EnforceRoleInExercise must have a parameter named " + annotation.exerciseIdFieldName() + " of type long/Long."));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(annotation.value(), exerciseId);
         return joinPoint.proceed();
@@ -71,27 +69,5 @@ public class EnforceRoleInExerciseAspect {
             default -> Optional.empty();
         };
         return fieldNameOfSimpleAnnotation.orElse(defaultFieldName);
-    }
-
-    /**
-     * Extracts the exerciseId from the method arguments
-     *
-     * @param joinPoint           the join point
-     * @param exerciseIdFieldName the name of the exerciseId field
-     * @return the exerciseId if it is present, empty otherwise
-     */
-    private Optional<Long> getExerciseId(ProceedingJoinPoint joinPoint, String exerciseIdFieldName) {
-        final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        final int indexOfExerciseId = Arrays.asList(signature.getParameterNames()).indexOf(exerciseIdFieldName);
-        Object[] args = joinPoint.getArgs();
-
-        if (indexOfExerciseId < 0 || args.length <= indexOfExerciseId) {
-            return Optional.empty();
-        }
-
-        if (args[indexOfExerciseId] instanceof Long exerciseId) {
-            return Optional.of(exerciseId);
-        }
-        return Optional.empty();
     }
 }
