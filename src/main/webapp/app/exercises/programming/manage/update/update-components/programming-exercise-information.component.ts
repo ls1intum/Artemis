@@ -17,6 +17,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @Input() isExamMode: boolean;
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    @Input() isLocal: boolean;
 
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelComponent: ExerciseTitleChannelNameComponent;
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
