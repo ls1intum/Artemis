@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
@@ -173,6 +173,6 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
     }
 
     private static Date getExpiryDateFromLifetime(Duration lifetime) {
-        return Date.from(LocalDateTime.now().plus(lifetime).atZone(ZoneId.systemDefault()).toInstant());
+        return Date.from(Instant.now().plus(lifetime));
     }
 }
