@@ -128,10 +128,6 @@ public abstract class Notification extends DomainObject {
         return transientPlaceholderValues;
     }
 
-    public void setPlaceholderValues(String notificationTextValues) {
-        this.placeholderValues = notificationTextValues;
-    }
-
     /**
      * @param notificationTextValues the notification text values as a string array
      *                                   We convert it to a json string, so we can store it in the database
