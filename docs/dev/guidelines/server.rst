@@ -498,7 +498,7 @@ Explicit authorization checks
 
 CAUTION: Be aware that this solution should be used only in those two cases:
     #. when you need to load user **AND** the resource anyway,
-    #. or no matching ``EnforceRoleInResource`` annotation exists.
+    #. when no matching ``EnforceRoleInResource`` annotation exists.
 
 Always annotate your REST endpoints with the corresponding annotation. Always use the annotation for the minimum role that has access.
 
