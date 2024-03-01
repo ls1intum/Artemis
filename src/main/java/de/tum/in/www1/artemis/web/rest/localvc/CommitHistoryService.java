@@ -92,7 +92,6 @@ public class CommitHistoryService {
                 formatter.format(null, commitNew);
             }
             else {
-                System.out.println("CommitOld: " + commitOld + " CommitNew: " + commitNew);
                 formatter.format(commitOld, commitNew);
             }
 
