@@ -135,7 +135,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
      */
     @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "feedbacks", "assessor", "participation.team.students" })
-    Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorById(Long resultId);
+    Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorById(long resultId);
 
     /**
      * counts the number of assessments of a course, which are either rated or not rated

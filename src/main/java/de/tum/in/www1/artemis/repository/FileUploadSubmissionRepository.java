@@ -36,7 +36,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
                 LEFT JOIN FETCH r.assessor
             WHERE submission.id = :submissionId
             """)
-    Optional<FileUploadSubmission> findByIdWithEagerResultAndAssessorAndFeedback(@Param("submissionId") Long submissionId);
+    Optional<FileUploadSubmission> findByIdWithEagerResultAndAssessorAndFeedback(@Param("submissionId") long submissionId);
 
     /**
      * @param submissionId the submission id we are interested in
@@ -49,7 +49,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
                 LEFT JOIN FETCH r.assessor
             WHERE submission.id = :submissionId
             """)
-    Optional<FileUploadSubmission> findByIdWithEagerResult(@Param("submissionId") Long submissionId);
+    Optional<FileUploadSubmission> findByIdWithEagerResult(@Param("submissionId") long submissionId);
 
     /**
      * Load the file upload submission with the given id together with its result, the feedback list of the result, the assessor of the result, its participation and all results of
@@ -59,10 +59,10 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @return the file upload submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "participation", "participation.results" })
-    Optional<FileUploadSubmission> findWithResultsFeedbacksAssessorAndParticipationResultsById(Long submissionId);
+    Optional<FileUploadSubmission> findWithResultsFeedbacksAssessorAndParticipationResultsById(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "particpation", "participation.exercise", "participation.team.students" })
-    Optional<FileUploadSubmission> findWithTeamStudentsAndParticipationAndExerciseByIdAndParticipation_Exercise_Id(Long id, Long exerciseId);
+    Optional<FileUploadSubmission> findWithTeamStudentsAndParticipationAndExerciseByIdAndParticipation_Exercise_Id(long id, long exerciseId);
 
     /**
      * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
@@ -72,7 +72,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @return the file upload submission with the given id
      */
     @NotNull
-    default FileUploadSubmission findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(Long submissionId) {
+    default FileUploadSubmission findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(long submissionId) {
         return findByIdWithEagerResultAndAssessorAndFeedback(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
     }
 
@@ -84,7 +84,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @return the file upload submission with the given id
      */
     @NotNull
-    default FileUploadSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(Long submissionId) {
+    default FileUploadSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(long submissionId) {
         return findWithResultsFeedbacksAssessorAndParticipationResultsById(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
     }
 
@@ -95,7 +95,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @return the file upload submission with the given id
      */
     @NotNull
-    default FileUploadSubmission findByIdElseThrow(Long submissionId) {
+    default FileUploadSubmission findByIdElseThrow(long submissionId) {
         return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
     }
 
