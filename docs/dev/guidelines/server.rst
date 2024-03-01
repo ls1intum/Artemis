@@ -496,7 +496,12 @@ Utilizing the ``EnforceRoleInResource`` annotation reduces the amount of code an
 Explicit authorization checks
 -----------------------------
 
-CAUTION: Be aware that this solution should be used only when necessary or no matching ``EnforceRoleInResource`` annotation exists. Always annotate your REST endpoints with the corresponding annotation. Always use the annotation for the minimum role that has access.
+CAUTION: Be aware that this solution should be used only in those two cases:
+    #. when you need to load user **AND** the resource anyway,
+    #. or no matching ``EnforceRoleInResource`` annotation exists.
+
+Always annotate your REST endpoints with the corresponding annotation. Always use the annotation for the minimum role that has access.
+
 The following example makes the call only accessible to ADMIN and INSTRUCTOR users:
 
 .. code-block:: java
