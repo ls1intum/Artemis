@@ -138,7 +138,8 @@
             "email.pattern": "Bitte nutze eine E-Mail nach folgendem Muster:",
             "cancel": "Abbruch",
             "confirm": "Bestätigen",
-            "refresh": "Aktualisieren"
+            "refresh": "Aktualisieren",
+            "invalidInput": "Ungültige Eingabe"
         },
         "messages": {
             "info": {
@@ -207,7 +208,7 @@
             "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
             "editBuildPlan": "Build-Plan bearbeiten",
-            "editInIntelliJ": "In IntelliJ bearbeiten",
+            "editInOrion": "In deiner IDE bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "exampleSubmissions": "Beispielabgaben",
             "generate": "Generieren",

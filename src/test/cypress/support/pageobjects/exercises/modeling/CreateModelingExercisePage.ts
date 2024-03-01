@@ -26,13 +26,13 @@ export class CreateModelingExercisePage {
 
     save() {
         cy.intercept(MODELING_EXERCISE_BASE).as('createModelingExercise');
-        cy.get('#modeling-exercise-creation-save').click();
+        cy.get('#save-entity').click();
         return cy.wait('@createModelingExercise');
     }
 
     import() {
         cy.intercept(POST, BASE_API + 'modeling-exercises/import/*').as('modelingExerciseImport');
-        cy.get('#modeling-exercise-creation-save').click();
+        cy.get('#save-entity').click();
         return cy.wait('@modelingExerciseImport');
     }
 

@@ -1260,7 +1260,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withoutAssessments() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         // create 6 * 4 = 24 submissions
         adjustUserGroupsToCustomGroups();
         Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 0, 0, true, 0, validModel);
@@ -1280,7 +1280,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessments() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         String suffix = "statswithassessments";
         adjustUserGroupsToCustomGroups(suffix);
         Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 2, 0, true, 0, validModel);
@@ -1296,7 +1296,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaints() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         String suffix = "dashboardstatswithcomplaints";
         adjustUserGroupsToCustomGroups(suffix);
         Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, true, 0, validModel);
@@ -1322,7 +1322,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndFeedbackRequests() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         String suffix = "statsfeedbackrequests";
         adjustUserGroupsToCustomGroups(suffix);
         Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, false, 0, validModel);
@@ -1348,7 +1348,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
 
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
         String suffix = "assessStatsCom";
@@ -1386,7 +1386,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndFeedBackRequestsAndResponses() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
 
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
         String suffix = "assessStatsFR";
@@ -1424,7 +1424,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses_Large() throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
         String suffix = "assessStatsLarge";
         adjustUserGroupsToCustomGroups(suffix);
@@ -1891,7 +1891,7 @@ public class CourseTestService {
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
         assertThat(lockedSubmissions).as("Locked Submissions length is 0").isEmpty();
 
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
 
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, userPrefix + "student1", userPrefix + "tutor1");
