@@ -491,7 +491,7 @@ Instead, use the following annotation:
         return ResponseEntity.ok().build();
     }
 
-Utilizing the ``EnforceRoleInResource`` annotation reduces the amount of code and makes the code more readable and maintainable. Also it is faster than the explicit authorization check since we don't have to load the user and course into JAVA as the check is performed directly in a database query.
+Utilizing the ``EnforceRoleInResource`` annotation reduces the amount of code and makes the code more readable and maintainable. Also it is faster than the explicit authorization check since we don't have to load the user and course into Java as the check is performed directly in a database query.
 
 Explicit authorization checks
 -----------------------------
