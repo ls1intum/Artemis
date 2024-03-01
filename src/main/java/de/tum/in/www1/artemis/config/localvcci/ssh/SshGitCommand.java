@@ -52,8 +52,8 @@ public class SshGitCommand extends GitPackCommand {
     public void run() {
         String command = getCommand();
         try {
-            List<String> strs = parseDelimitedString(command, " ", true);
-            String[] args = strs.toArray(new String[0]);
+            List<String> argsList = parseDelimitedString(command, " ", true);
+            String[] args = argsList.toArray(String[]::new);
             for (int i = 0; i < args.length; i++) {
                 String argVal = args[i];
                 if (argVal.startsWith("'") && argVal.endsWith("'")) {
@@ -87,7 +87,6 @@ public class SshGitCommand extends GitPackCommand {
                 var receivePack = new ReceivePack(db);
                 receivePack.setPreReceiveHook(new LocalVCPrePushHook());
                 receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
-
                 receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
             }
             else {

@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.config.localvcci;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
+import javax.annotation.PostConstruct;
+
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCFetchFilter;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPostPushHook;
@@ -16,8 +19,10 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
  * This class configures the JGit Servlet, which is used to receive Git push and fetch requests for local VC.
  */
 @Profile(PROFILE_LOCALVC)
-// TODO: this should rather be a @Service with instructor injection
+@Service
 public class ArtemisGitServlet extends GitServlet {
+
+    private final LocalVCServletService localVCServletService;
 
     /**
      * Constructor for ArtemisGitServlet.
@@ -25,6 +30,11 @@ public class ArtemisGitServlet extends GitServlet {
      * @param localVCServletService the service for authenticating and authorizing users and retrieving the repository from disk
      */
     public ArtemisGitServlet(LocalVCServletService localVCServletService) {
+        this.localVCServletService = localVCServletService;
+    }
+
+    @PostConstruct
+    public void init() {
         this.setRepositoryResolver((request, name) -> {
             // request – the current request, may be used to inspect session state including cookies or user authentication.
             // name – name of the repository, as parsed out of the URL (everything after /git/).

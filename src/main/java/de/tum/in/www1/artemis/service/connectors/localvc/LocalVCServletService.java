@@ -26,6 +26,8 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
+import com.google.common.base.Strings;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -222,8 +224,19 @@ public class LocalVCServletService {
         String username = basicAuthCredentials.substring(0, separatorIndex);
         String password = basicAuthCredentials.substring(separatorIndex + 1);
 
+        var user = userRepository.findOneByLogin(username);
+
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, password);
+
+            // Note: we first check if the user has used a vcs access token instead of a password
+
+            if (user.isPresent() && !Strings.isNullOrEmpty(user.get().getVcsAccessToken()) && Objects.equals(user.get().getVcsAccessToken(), password)) {
+                // user is authenticated by using the correct access token
+                return user.get();
+            }
+
+            // if the user does not have an access token or has used a password, we try to authenticate the user with it
 
             // Try to authenticate the user based on the configured options, this can include sending the data to an external system (e.g. LDAP) or using internal authentication.
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
@@ -234,7 +247,7 @@ public class LocalVCServletService {
         }
 
         // Check that the user exists.
-        return userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
+        return user.orElseThrow(LocalVCAuthException::new);
     }
 
     private String checkAuthorizationHeader(String authorizationHeader) throws LocalVCAuthException {
