@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-public class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "gitlabusermanagementservice";
 
@@ -42,7 +42,7 @@ public class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    public void testRenewAccessToken() throws GitLabApiException, JsonProcessingException {
+    void testRenewAccessToken() throws GitLabApiException, JsonProcessingException {
         final long initialTokenId = 46732L;
         final String initialToken = "ihdsf89w73rshefi8se892340f";
         final String newToken = "987z459hrf89w4r9z438rtweo84";
