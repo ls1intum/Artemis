@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
+
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,12 +18,12 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-public class GitLabUserManagementServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+public class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "gitlabusermanagementservice";
 
     @Autowired
-    private GitLabUserManagementService gitLabUserManagementService;
+    private GitLabPersonalAccessTokenManagementService gitLabPersonalAccessTokenManagementService;
 
     @Autowired
     private UserRepository userRepository;
@@ -40,32 +42,11 @@ public class GitLabUserManagementServiceTest extends AbstractSpringIntegrationJe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    public void testPersonalAccessTokenRenewalNotNecessary() throws GitLabApiException, JsonProcessingException {
-        final String token = "ihdsf89w73rshefi8se892340f";
-
-        User user = userRepository.getUser();
-        user.setVcsAccessToken(token);
-        userRepository.save(user);
-
-        var gitlabUser = new org.gitlab4j.api.models.User().withId(596423L);
-
-        gitlabRequestMockProvider.mockGetUserID(user.getLogin(), gitlabUser);
-        gitlabRequestMockProvider.mockListPersonalAccessTokens(user.getLogin(), gitlabUser, 4852L);
-
-        // gitLabUserManagementService.renewVersionControlAccessTokenIfNecessary(user, Duration.ZERO);
-
-        gitlabRequestMockProvider.verifyMocks();
-
-        user = userRepository.getUser();
-        assertThat(user.getVcsAccessToken()).isEqualTo(token);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    public void testPersonalAccessTokenRenewalNecessary() throws GitLabApiException, JsonProcessingException {
+    public void testRenewAccessToken() throws GitLabApiException, JsonProcessingException {
         final long initialTokenId = 46732L;
         final String initialToken = "ihdsf89w73rshefi8se892340f";
         final String newToken = "987z459hrf89w4r9z438rtweo84";
+        final Duration newLifetime = Duration.ofDays(365);
 
         User user = userRepository.getUser();
         user.setVcsAccessToken(initialToken);
@@ -75,9 +56,9 @@ public class GitLabUserManagementServiceTest extends AbstractSpringIntegrationJe
 
         gitlabRequestMockProvider.mockGetUserID(user.getLogin(), gitlabUser);
         gitlabRequestMockProvider.mockListPersonalAccessTokens(user.getLogin(), gitlabUser, initialTokenId);
-        gitlabRequestMockProvider.mockRotatePersonalAccessTokens(initialTokenId, newToken);
+        gitlabRequestMockProvider.mockRotatePersonalAccessTokens(initialTokenId, newToken, newLifetime);
 
-        // gitLabUserManagementService.renewVersionControlAccessTokenIfNecessary(user, Duration.ofDays(100));
+        gitLabPersonalAccessTokenManagementService.renewAccessToken(user, newLifetime);
 
         gitlabRequestMockProvider.verifyMocks();
 

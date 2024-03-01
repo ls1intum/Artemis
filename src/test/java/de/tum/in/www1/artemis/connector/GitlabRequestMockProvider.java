@@ -8,9 +8,10 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -298,16 +299,17 @@ public class GitlabRequestMockProvider {
 
         var responseDTO = new GitLabPersonalAccessTokenListResponseDTO();
         responseDTO.setId(tokenId);
-        responseDTO.setExpiresAt(Date.from(LocalDate.now().plusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        responseDTO.setExpiresAt(Date.from(Instant.now().plus(1, ChronoUnit.MONTHS)));
         final var response = new ObjectMapper().writeValueAsString(List.of(responseDTO));
 
         mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens")).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
-    public void mockRotatePersonalAccessTokens(long personalAccessTokenId, String newPersonalAccessToken) throws JsonProcessingException {
+    public void mockRotatePersonalAccessTokens(long personalAccessTokenId, String newPersonalAccessToken, Duration newLifetime) throws JsonProcessingException {
         var responseDTO = new GitLabPersonalAccessTokenRotateResponseDTO();
         responseDTO.setToken(newPersonalAccessToken);
+        responseDTO.setExpiresAt(Date.from(Instant.now().plus(newLifetime)));
         final var response = new ObjectMapper().writeValueAsString(responseDTO);
 
         mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens/" + personalAccessTokenId + "/rotate")).andExpect(method(HttpMethod.POST))
