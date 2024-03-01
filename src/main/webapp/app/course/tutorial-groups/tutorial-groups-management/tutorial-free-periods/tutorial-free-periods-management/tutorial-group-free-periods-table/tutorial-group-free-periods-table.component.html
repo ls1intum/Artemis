@@ -25,10 +25,18 @@
                         {{ freePeriod.end | artemisDate: 'long-date' : false : course.timeZone : true }}
                     </td>
                     <td>
-                        {{ freePeriod.start | artemisDate: 'time' : false : course.timeZone : false }}
+                        {{
+                            TutorialGroupFreePeriodsManagementComponent.isFreeDay(freePeriod) || TutorialGroupFreePeriodsManagementComponent.isFreePeriod(freePeriod)
+                                ? '-'
+                                : (freePeriod.start | artemisDate: 'time' : false : course.timeZone : false)
+                        }}
                     </td>
                     <td>
-                        {{ freePeriod.end | artemisDate: 'time' : false : course.timeZone : false }}
+                        {{
+                            TutorialGroupFreePeriodsManagementComponent.isFreeDay(freePeriod) || TutorialGroupFreePeriodsManagementComponent.isFreePeriod(freePeriod)
+                                ? '-'
+                                : (freePeriod.end | artemisDate: 'time' : false : course.timeZone : false)
+                        }}
                     </td>
                     <td>
                         <span class="d-inline-block text-truncate long-text"> {{ freePeriod.reason }} </span>
