@@ -10,8 +10,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -299,7 +300,7 @@ public class GitlabRequestMockProvider {
 
         var responseDTO = new GitLabPersonalAccessTokenListResponseDTO();
         responseDTO.setId(tokenId);
-        responseDTO.setExpiresAt(Date.from(Instant.now().plus(1, ChronoUnit.MONTHS)));
+        responseDTO.setExpiresAt(Date.from(LocalDateTime.now().plusDays(28).atZone(ZoneId.systemDefault()).toInstant()));
         final var response = new ObjectMapper().writeValueAsString(List.of(responseDTO));
 
         mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens")).andExpect(method(HttpMethod.GET))
