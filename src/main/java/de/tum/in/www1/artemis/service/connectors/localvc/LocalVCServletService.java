@@ -52,6 +52,7 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
  */
 @Service
 @Profile("localvc")
+// TODO: we should rename this because its used in the context of https and ssh git operations
 public class LocalVCServletService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
@@ -250,7 +251,7 @@ public class LocalVCServletService {
         return new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
     }
 
-    private void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType, boolean isPracticeRepository)
+    public void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType, boolean isPracticeRepository)
             throws LocalVCAuthException, LocalVCForbiddenException {
 
         if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString()) || auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {

@@ -9,10 +9,8 @@ import java.nio.file.Paths;
 import java.util.Optional;
 
 import org.apache.sshd.common.util.threads.ThreadUtils;
-import org.apache.sshd.git.GitLocationResolver;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
-import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +20,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 
 @Profile(PROFILE_LOCALVC)
 @Configuration
@@ -43,13 +40,19 @@ public class SshConfiguration {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    private final LocalVCServletService localVCServletService;
+    private final SshGitCommandFactory sshGitCommandFactory;
 
-    public SshConfiguration(GitPublickeyAuthenticator gitPublickeyAuthenticator, ResourceLoaderService resourceLoaderService, LocalVCServletService localVCServletService) {
+    private final SshGitLocationResolver sshGitLocationResolver;
+
+    public SshConfiguration(GitPublickeyAuthenticator gitPublickeyAuthenticator, ResourceLoaderService resourceLoaderService, SshGitCommandFactory sshGitCommandFactory,
+            SshGitLocationResolver sshGitLocationResolver) {
         this.gitPublickeyAuthenticator = gitPublickeyAuthenticator;
         this.resourceLoaderService = resourceLoaderService;
-        this.localVCServletService = localVCServletService;
+        this.sshGitCommandFactory = sshGitCommandFactory;
+        this.sshGitLocationResolver = sshGitLocationResolver;
     }
+
+    // TODO: implement pre commit hook (like for https) and post commit hook (like for https)
 
     @Bean(initMethod = "start", destroyMethod = "stop")
     public SshServer sshServer() throws IOException {
@@ -70,7 +73,7 @@ public class SshConfiguration {
             sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(Paths.get("tmp", "hostkey.ser")));
         }
         sshd.setCommandFactory(
-                new SshGitCommandFactory().withGitLocationResolver(gitLocationResolver()).withExecutorServiceProvider(() -> ThreadUtils.newFixedThreadPool("git-ssh", 8)));
+                sshGitCommandFactory.withGitLocationResolver(sshGitLocationResolver).withExecutorServiceProvider(() -> ThreadUtils.newFixedThreadPool("git-ssh", 8)));
         // sshd.setCommandFactory(gitCommandFactory());
         sshd.setPublickeyAuthenticator(gitPublickeyAuthenticator);
         // Add command factory or shell here to handle Git commands or any other commands
@@ -79,31 +82,5 @@ public class SshConfiguration {
         log.info("Started git ssh server on ssh://{}:{}", serverUrl.getHost(), sshPort);
 
         return sshd;
-    }
-
-    public GitLocationResolver gitLocationResolver() {
-        return (command, args, session, fs) -> {
-            // TODO: we need to double check read / write access based
-            // use throw new AccessDeniedException("User does not have access to this repository");
-
-            String gitComand = args[0];
-            // git-upload-pack means fetch (read operation)
-            if (gitComand.equals("git-upload-pack")) {
-                // TODO authorize
-            }
-            // git-receive-pack means push (write operation
-            else if (gitComand.equals("git-receive-pack")) {
-                // TODO authorize
-            }
-
-            String repositoryPath = args[1];
-            // We need to remove the '/git/' in the beginning
-            if (repositoryPath.startsWith("/git/")) {
-                repositoryPath = repositoryPath.substring(5);
-            }
-            try (Repository repo = localVCServletService.resolveRepository(repositoryPath)) {
-                return repo.getDirectory().toPath();
-            }
-        };
     }
 }
