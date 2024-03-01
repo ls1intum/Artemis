@@ -474,10 +474,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
-            SET user.sshPublicKeyHash = :sshPublicKeyHash
+            SET user.sshPublicKeyHash = :sshPublicKeyHash,
+                user.sshPublicKey = :sshPublicKey
             WHERE user.id = :userId
             """)
-    void updateUserSshPublicKeyHash(@Param("userId") long userId, @Param("sshPublicKeyHash") String sshPublicKeyHash);
+    void updateUserSshPublicKeyHash(@Param("userId") long userId, @Param("sshPublicKeyHash") String sshPublicKeyHash, @Param("sshPublicKey") String sshPublicKey);
 
     @Modifying
     @Transactional

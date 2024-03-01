@@ -52,8 +52,6 @@ public class SshConfiguration {
         this.sshGitLocationResolver = sshGitLocationResolver;
     }
 
-    // TODO: implement pre commit hook (like for https) and post commit hook (like for https)
-
     @Bean(initMethod = "start", destroyMethod = "stop")
     public SshServer sshServer() throws IOException {
         SshServer sshd = SshServer.setUpDefaultServer();

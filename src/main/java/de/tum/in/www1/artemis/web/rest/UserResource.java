@@ -2,11 +2,14 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.security.NoSuchAlgorithmException;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.PublicKey;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -204,11 +207,14 @@ public class UserResource {
      */
     @PutMapping("users/sshpublickey")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> addSshPublicKey(String sshPublicKey) throws NoSuchAlgorithmException {
+    public ResponseEntity<Void> addSshPublicKey(@RequestBody String sshPublicKey) throws GeneralSecurityException, IOException {
         User user = userRepository.getUser();
-        var sshPublicKeyHash = HashUtils.hashString(sshPublicKey);
-        userRepository.updateUserSshPublicKeyHash(user.getId(), sshPublicKeyHash);
+        // Parse the public key string
+        AuthorizedKeyEntry keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey);
+        // Extract the PublicKey object
+        PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
+        String keyHash = HashUtils.getSha512Fingerprint(publicKey);
+        userRepository.updateUserSshPublicKeyHash(user.getId(), keyHash, sshPublicKey);
         return ResponseEntity.ok().build();
     }
-
 }

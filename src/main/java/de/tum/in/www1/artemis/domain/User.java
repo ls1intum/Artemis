@@ -56,6 +56,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     private String password;
 
     @Nullable
+    @JsonIgnore
+    @Column(name = "ssh_public_key")
+    private String sshPublicKey = null;
+
+    @Nullable
     @Size(max = 100)
     @JsonIgnore
     @Column(name = "ssh_public_key_hash")

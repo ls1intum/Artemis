@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.config.localvcci.ssh;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 
 import org.apache.sshd.server.auth.pubkey.PublickeyAuthenticator;
@@ -28,20 +27,14 @@ public class GitPublickeyAuthenticator implements PublickeyAuthenticator {
     }
 
     @Override
-    public boolean authenticate(String username, PublicKey key, ServerSession session) {
+    public boolean authenticate(String username, PublicKey publicKey, ServerSession session) {
 
-        try {
-            String keyString = PublicKeyUtils.encodePublicKey(key);
-            String keyHash = HashUtils.hashString(keyString);
-            var user = userRepository.findBySshPublicKeyHash(keyHash);
-            if (user.isPresent()) {
-                log.info("Found user {} for public key authentication", user.get().getLogin());
-                session.setAttribute(SshConstants.USER_KEY, user.get());
-                return true;
-            }
-        }
-        catch (NoSuchAlgorithmException e) {
-            log.error("Error during ssh authentication", e);
+        String keyHash = HashUtils.getSha512Fingerprint(publicKey);
+        var user = userRepository.findBySshPublicKeyHash(keyHash);
+        if (user.isPresent()) {
+            log.info("Found user {} for public key authentication", user.get().getLogin());
+            session.setAttribute(SshConstants.USER_KEY, user.get());
+            return true;
         }
         return false;
     }
