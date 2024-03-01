@@ -72,7 +72,7 @@ public class ExerciseDateService {
         final Exercise exercise = participation.getExercise();
         if (exercise.isExamExercise()) {
             if (participation instanceof StudentParticipation studentParticipation) {
-                return examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation);
+                return examDateService.isIndividualExerciseWorkingPeriodOver(exercise.getExamViaExerciseGroupOrCourseMember(), studentParticipation);
             }
             else {
                 return examDateService.isExamWithGracePeriodOver(exercise.getExamViaExerciseGroupOrCourseMember());
