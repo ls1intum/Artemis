@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-public class EnforceRoleInCourseTest extends AbstractSpringIntegrationIndependentTest {
+class EnforceRoleInCourseTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "enforceroleincourse";
 

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.security.annotations.AnnotationUtils.getAnnotation;
 
 import java.util.Arrays;
@@ -10,11 +11,13 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.security.annotations.AnnotationUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
+@Profile(PROFILE_CORE)
 @Component
 @Aspect
 public class EnforceRoleInExerciseAspect {
