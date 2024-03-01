@@ -222,26 +222,16 @@
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="fileUploadExercise" />
         </div>
-        <jhi-exercise-update-notification [exercise]="fileUploadExercise" [isImport]="isImport" [(notificationText)]="notificationText" />
     </div>
-    <div>
-        <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
-        </button>
-        <button
-            type="submit"
-            id="save-entity"
-            (click)="save()"
-            [disabled]="
-                editForm.form.invalid ||
-                isSaving ||
-                fileUploadExercise.dueDateError ||
-                fileUploadExercise.assessmentDueDateError ||
-                fileUploadExercise.exampleSolutionPublicationDateError
-            "
-            class="btn btn-primary"
-        >
-            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
-        </button>
-    </div>
+    <jhi-form-footer
+        [isImport]="isImport"
+        [isCreation]="!fileUploadExercise.id"
+        [isSaving]="isSaving"
+        [isDisabled]="
+            !!(editForm.form.invalid || fileUploadExercise.dueDateError || fileUploadExercise.assessmentDueDateError || fileUploadExercise.exampleSolutionPublicationDateError)
+        "
+        (cancel)="previousState()"
+        (save)="save()"
+        [(notificationText)]="notificationText"
+    />
 </form>
