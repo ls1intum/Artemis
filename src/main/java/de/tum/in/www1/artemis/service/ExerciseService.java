@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -62,7 +63,7 @@ public class ExerciseService {
 
     private final ResultRepository resultRepository;
 
-    private final LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
+    private final Lti13ResourceLaunchRepository lti13ResourceLaunchRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -90,7 +91,7 @@ public class ExerciseService {
 
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, QuizScheduleService quizScheduleService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            LtiOutcomeUrlRepository ltiOutcomeUrlRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
+            Lti13ResourceLaunchRepository lti13ResourceLaunchRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
             GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService,
@@ -103,7 +104,7 @@ public class ExerciseService {
         this.submissionRepository = submissionRepository;
         this.teamRepository = teamRepository;
         this.participantScoreRepository = participantScoreRepository;
-        this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
+        this.lti13ResourceLaunchRepository = lti13ResourceLaunchRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
         this.complaintRepository = complaintRepository;
@@ -147,9 +148,9 @@ public class ExerciseService {
                     if (!exercise.isVisibleToStudents()) {
                         continue;
                     }
-                    // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
-                    Optional<LtiOutcomeUrl> ltiOutcomeUrlOptional = ltiOutcomeUrlRepository.findByUserAndExercise(user, exercise);
-                    if (ltiOutcomeUrlOptional.isPresent()) {
+                    // students in online courses can only see exercises where the lti resource launch exists, otherwise the result cannot be reported later on
+                    Collection<LtiResourceLaunch> ltiResourceLaunches = lti13ResourceLaunchRepository.findByUserAndExercise(user, exercise);
+                    if (!ltiResourceLaunches.isEmpty()) {
                         exercisesUserIsAllowedToSee.add(exercise);
                     }
                 }
@@ -301,7 +302,7 @@ public class ExerciseService {
         if (course.isOnlineCourse()) {
             // this case happens rarely, so we can reload the relevant exercises from the database
             // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
-            exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
+            exercises = exerciseRepository.findByCourseIdWhereLtiResourceLaunchExists(course.getId(), user.getLogin());
         }
 
         // students for this course might not have the right to see it, so we have to
