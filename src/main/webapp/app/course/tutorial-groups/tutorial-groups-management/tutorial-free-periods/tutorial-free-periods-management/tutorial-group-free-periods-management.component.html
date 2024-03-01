@@ -19,7 +19,7 @@
             </div>
 
             <!-- List of free Periods -->
-            @if (freePeriods && freePeriods.length > 0) {
+            @if (freePeriods?.length) {
                 <jhi-tutorial-group-free-periods-table
                     [course]="course"
                     [tutorialGroupsConfiguration]="tutorialGroupsConfiguration"
@@ -30,7 +30,7 @@
             }
 
             <!-- List of TutorialGroupFreeDays -->
-            @if (freeDays && freeDays.length > 0) {
+            @if (freeDays?.length) {
                 <jhi-tutorial-group-free-periods-table
                     [course]="course"
                     [tutorialGroupsConfiguration]="tutorialGroupsConfiguration"
@@ -41,7 +41,7 @@
             }
 
             <!-- FreePeriodWithinDay -->
-            @if (freePeriodsWithinDay && freePeriodsWithinDay.length > 0) {
+            @if (freePeriodsWithinDay?.length) {
                 <jhi-tutorial-group-free-periods-table
                     [course]="course"
                     [tutorialGroupsConfiguration]="tutorialGroupsConfiguration"
