@@ -293,7 +293,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
                 for (var word : queryWords) {
                     if (SQL_KEYWORDS.contains(word.toUpperCase()) && !StringUtils.isAllUpperCase(word)) {
-                        events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), word)));
+                        events.add(violated(item, "In the Query of %s the keyword \"%s\" should be written in upper case.".formatted(item.getFullName(), word)));
                     }
                 }
             }

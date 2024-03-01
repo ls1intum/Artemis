@@ -27,8 +27,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Query("""
             SELECT notification
             FROM Notification notification
-                LEFT JOIN TREAT(notification as GroupNotification).course course
-                LEFT JOIN TREAT(notification as SingleUserNotification).recipient recipient
+                LEFT JOIN TREAT(notification AS GroupNotification).course course
+                LEFT JOIN TREAT(notification AS SingleUserNotification).recipient recipient
             WHERE notification.notificationDate > :hideUntil
                 AND (
                     (TYPE(notification) = GroupNotification
@@ -63,8 +63,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Query("""
             SELECT notification
             FROM Notification notification
-                LEFT JOIN TREAT(notification as GroupNotification).course course
-                LEFT JOIN TREAT(notification as SingleUserNotification).recipient recipient
+                LEFT JOIN TREAT(notification AS GroupNotification).course course
+                LEFT JOIN TREAT(notification AS SingleUserNotification).recipient recipient
             WHERE notification.notificationDate > :hideUntil
                 AND (
                     (TYPE(notification) = GroupNotification
