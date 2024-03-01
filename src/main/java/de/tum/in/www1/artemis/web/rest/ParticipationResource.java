@@ -505,24 +505,42 @@ public class ParticipationResource {
             instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
 
             // when changing the individual due date after the regular due date, the repository might already have been locked
-            updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(participation -> {
-                var studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-                if (studentParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
-                    studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
-                }
-                programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation);
-            });
+            unlockStudentRepositoryAndParticipation(programmingExercise, updatedParticipations);
             // the new due date may be in the past, students should no longer be able to make any changes
-            updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).forEach(participation -> {
-                var studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-                if (studentParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
-                    studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
-                }
-                programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, studentParticipation);
-            });
+            lockStudentRepositoryAndParticipation(programmingExercise, updatedParticipations);
         }
 
         return ResponseEntity.ok().body(updatedParticipations);
+    }
+
+    private void unlockStudentRepositoryAndParticipation(ProgrammingExercise exercise, List<StudentParticipation> participations) {
+        if (!exercise.isTeamMode()) {
+            participations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(
+                    participation -> programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation));
+            return;
+        }
+        participations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(participation -> {
+            var studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
+            if (studentParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+            }
+            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation);
+        });
+    }
+
+    private void lockStudentRepositoryAndParticipation(ProgrammingExercise exercise, List<StudentParticipation> participations) {
+        if (!exercise.isTeamMode()) {
+            participations.stream().filter(exerciseDateService::isAfterDueDate).forEach(participation -> programmingExerciseParticipationService
+                    .lockStudentRepositoryAndParticipation(exercise, (ProgrammingExerciseStudentParticipation) participation));
+            return;
+        }
+        participations.stream().filter(exerciseDateService::isAfterDueDate).forEach(participation -> {
+            var studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
+            if (studentParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+            }
+            programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(exercise, (ProgrammingExerciseStudentParticipation) participation);
+        });
     }
 
     private Set<StudentParticipation> findParticipationWithLatestResults(Exercise exercise) {
