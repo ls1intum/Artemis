@@ -500,7 +500,7 @@ CAUTION: Be aware that this solution should be used only in those two cases:
     #. when you need to load user **AND** the resource anyway,
     #. when no matching ``EnforceRoleInResource`` annotation exists.
 
-Always annotate your REST endpoints with the corresponding annotation. Always use the annotation for the minimum role that has access.
+Always annotate your REST endpoints with the annotation for the minimum role that has access.
 
 The following example makes the call only accessible to ADMIN and INSTRUCTOR users:
 
