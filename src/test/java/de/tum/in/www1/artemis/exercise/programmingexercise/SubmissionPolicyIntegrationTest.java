@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.domain.Feedback.SUBMISSION_POLICY_FEEDBACK_IDENTIFIER;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 
-import java.util.ArrayList;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -406,12 +409,12 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         }
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
-        String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
-        var resultNotification = ProgrammingExerciseFactory.generateBambooBuildResult(repositoryName, null, null, null, List.of("test1"), List.of("test2", "test3"),
-                new ArrayList<>());
+        var resultNotification = ProgrammingExerciseFactory.generateBambooBuildResult(ASSIGNMENT_REPO_NAME, null, null, null, List.of("test1"), List.of("test2", "test3"), null);
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             mockBitbucketRequests(participation);
         }
+        doReturn(ZonedDateTime.now().minusSeconds(2)).when(versionControlService).getPushDate(any(), any(), any());
+
         var result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
         assertThat(result).isNotNull();
 
@@ -437,12 +440,12 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         }
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
-        String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
-        var resultNotification = ProgrammingExerciseFactory.generateBambooBuildResult(repositoryName, null, null, null, List.of("test1", "test2", "test3"), List.of(),
-                new ArrayList<>());
+        var resultNotification = ProgrammingExerciseFactory.generateBambooBuildResult(ASSIGNMENT_REPO_NAME, null, null, null, List.of("test1", "test2", "test3"), List.of(), null);
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             mockBitbucketRequests(participation);
         }
+        doReturn(ZonedDateTime.now().minusSeconds(2)).when(versionControlService).getPushDate(any(), any(), any());
+
         var result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
         assertThat(result).isNotNull();
         assertThat(result.getScore()).isEqualTo(25);
@@ -489,7 +492,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
         bitbucketRequestMockProvider.enableMockingOfRequests();
         mockSetRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), programmingExercise.getProjectKey(), Set.of(student));
-        bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, programmingExercise.getProjectKey().toLowerCase() + "-student1");
+        bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, programmingExercise.getProjectKey().toLowerCase() + TEST_PREFIX + "-student1");
     }
 
     private void test_getSubmissionPolicyOfProgrammingExercise_forbidden() throws Exception {
