@@ -575,22 +575,6 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Gets the git-diff report of a programming exercise for a commit compared to an empty repository.
-     * This is currently used to show the diff for the first commit of a participation, which is usually the template commit.
-     * The user needs to have access to the participation to access this endpoint.
-     * @param exerciseId The id of a programming exercise
-     * @param participationId The id of a participation
-     * @param commitHash The hash of the commit
-     */
-    getDiffReportForCommitAndEmptyRepository(exerciseId: number, participationId: number, commitHash: string): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/participation/${participationId}/commit/${commitHash}/diff-report`, {
-                observe: 'response',
-            })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
-    }
-
-    /**
      * Gets the testwise coverage report of a programming exercise for the latest solution submission with all descending reports
      * @param exerciseId The id of a programming exercise
      */

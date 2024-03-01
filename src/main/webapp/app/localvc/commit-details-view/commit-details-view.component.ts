@@ -111,19 +111,11 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      * @private
      */
     private getDiffReport() {
-        if (this.isTemplate && this.currentCommit && this.currentCommit.hash) {
-            this.repoFilesSubscription = this.programmingExerciseService
-                .getDiffReportForCommitAndEmptyRepository(this.exerciseId, this.participationId, this.currentCommit.hash)
-                .subscribe((report) => {
-                    this.handleNewReport(report!);
-                });
-        } else if (this.previousCommit && this.currentCommit && this.previousCommit.hash && this.currentCommit.hash) {
-            this.repoFilesSubscription = this.programmingExerciseService
-                .getDiffReportForCommits(this.exerciseId, this.participationId, this.previousCommit.hash, this.currentCommit.hash)
-                .subscribe((report) => {
-                    this.handleNewReport(report!);
-                });
-        }
+        this.repoFilesSubscription = this.programmingExerciseService
+            .getDiffReportForCommits(this.exerciseId, this.participationId, this.previousCommit.hash!, this.currentCommit.hash!)
+            .subscribe((report) => {
+                this.handleNewReport(report!);
+            });
     }
 
     /**

@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGitDiffReportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.localvc.CommitHistoryService;
 
 /**
  * REST controller for managing ProgrammingExerciseGitDiffReports and its entries.
@@ -48,18 +49,21 @@ public class ProgrammingExerciseGitDiffReportResource {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
+    private final CommitHistoryService commitHistoryService;
+
     private static final String ENTITY_NAME = "programmingExerciseGitDiffReportEntry";
 
     public ProgrammingExerciseGitDiffReportResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseGitDiffReportService gitDiffReportService, ProgrammingSubmissionRepository submissionRepository,
             ParticipationAuthorizationCheckService participationAuthCheckService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, CommitHistoryService commitHistoryService) {
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitDiffReportService = gitDiffReportService;
         this.submissionRepository = submissionRepository;
         this.participationAuthCheckService = participationAuthCheckService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.commitHistoryService = commitHistoryService;
     }
 
     /**
@@ -163,35 +167,8 @@ public class ProgrammingExerciseGitDiffReportResource {
                     "exerciseIdsMismatch");
         }
 
-        var report = gitDiffReportService.generateReportForCommits(participation, commitHash1, commitHash2);
+        var report = commitHistoryService.generateReportForCommits(participation, commitHash1, commitHash2);
         return ResponseEntity.ok(new ProgrammingExerciseGitDiffReportDTO(report));
     }
 
-    /**
-     * GET exercises/:exerciseId/participation/:participationId/commit/:commitHash/diff-report :
-     * Get the diff report for one commit and an empty repository of a programming exercise.
-     *
-     * @param exerciseId      the id of the exercise the two commits belong to
-     * @param participationId the id of the participation the two commits belong to
-     * @param commitHash      the hash of the template commit
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with the diff report as body
-     * @throws GitAPIException if errors occur while accessing the git repository
-     * @throws IOException     if errors occur while accessing the file system
-     */
-    @GetMapping("programming-exercises/{exerciseId}/participation/{participationId}/commit/{commitHash}/diff-report")
-    @EnforceAtLeastStudent
-    public ResponseEntity<ProgrammingExerciseGitDiffReportDTO> getGitDiffReportForCommitAndEmptyRepository(@PathVariable long exerciseId, @PathVariable long participationId,
-            @PathVariable String commitHash) throws GitAPIException, IOException {
-        log.debug("REST request to get a ProgrammingExerciseGitDiffReport for the commit {} and an empty repository of participation {}", commitHash, participationId);
-
-        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        if (!participation.getExercise().getId().equals(exerciseId)) {
-            throw new ConflictException("A git diff report entry can only be retrieved if the participation's exercise id matches with the exercise id", ENTITY_NAME,
-                    "exerciseIdsMismatch");
-        }
-
-        var report = gitDiffReportService.generateReportForCommitAndEmptyRepository(participation, commitHash);
-        return ResponseEntity.ok(new ProgrammingExerciseGitDiffReportDTO(report));
-    }
 }
