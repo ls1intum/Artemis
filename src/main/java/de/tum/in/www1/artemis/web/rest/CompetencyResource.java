@@ -51,6 +51,8 @@ public class CompetencyResource {
 
     private static final String ENTITY_NAME = "competency";
 
+    private static final String PREREQUISITE_NAME = "prerequisite";
+
     private final CourseRepository courseRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
@@ -555,7 +557,7 @@ public class CompetencyResource {
         course.removePrerequisite(competency);
         courseRepository.save(course);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, PREREQUISITE_NAME, competency.getTitle())).build();
     }
 
     /**

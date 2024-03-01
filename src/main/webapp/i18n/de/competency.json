@@ -170,7 +170,6 @@
             "prerequisite": {
                 "title": "Voraussetzungen",
                 "select": "Voraussetzung auswählen",
-                "deleted": "Voraussetzung entfernt",
                 "empty": "Es existieren keine Voraussetzungen für diesen Kurs",
                 "import": {
                     "label": "Voraussetzungen hinzufügen",
@@ -200,6 +199,9 @@
                     "MATCHES": "Stimmt überein mit"
                 }
             }
+        },
+        "prerequisite": {
+            "deleted": "Voraussetzung entfernt"
         },
         "learningPath": {
             "learningPathButton": "Lernpfade",

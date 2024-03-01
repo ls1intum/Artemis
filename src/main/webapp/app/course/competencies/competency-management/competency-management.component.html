@@ -101,7 +101,7 @@
                             <td class="col">
                                 <span>{{ 'global.generic.' + (competency.optional ? 'yes' : 'no') | artemisTranslate }}</span>
                             </td>
-                            <td class="col text-end">
+                            <td class="col">
                                 <div class="d-flex justify-content-end">
                                     <a class="btn btn-sm btn-primary me-1" [routerLink]="['/course-management', courseId, 'competency-management', competency.id, 'edit']">
                                         <fa-icon [icon]="faPencilAlt" />

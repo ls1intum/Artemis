@@ -171,7 +171,6 @@
             "prerequisite": {
                 "title": "Prerequisites",
                 "select": "Select prerequisite",
-                "deleted": "Prerequisite removed",
                 "empty": "No prerequisites exist for this course",
                 "import": {
                     "label": "Add prerequisites",
@@ -201,6 +200,9 @@
                     "MATCHES": "Matches"
                 }
             }
+        },
+        "prerequisite": {
+            "deleted": "Prerequisite removed"
         },
         "learningPath": {
             "learningPathButton": "Learning Paths",
