@@ -2,8 +2,6 @@
 Server
 ******
 
-WORK IN PROGRESS
-
 0. Folder structure
 ===================
 
@@ -431,23 +429,17 @@ For more details, please visit the :doc:`./criteria-builder` page.
 22. REST endpoint best practices for authorization
 ==================================================
 
-To reject unauthorized requests as early as possible, Artemis employs a two-step system:
+To reject unauthorized requests as early as possible, Artemis employs two solutions:
 
-#. ``PreAuthorize`` and ``Enforce`` annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
-#. The ``AuthorizationCheckService`` is responsible for checking access rights to individual resources by querying the database.
+#. Implicit pre- and post-authorization annotations operate in two steps:
+    #. ``EnforceRoleInResource`` (e.g. ``EnforceRoleInCourse``) annotations perform pre authorization checks to block users with wrong or missing authorization roles without querying the database.
+    #. If necessary we check for access rights to individual resources within the database via light-weight queries.
+    #. Currently we offer the following annotations: ``EnforceRoleInCourse`` (e.g. ``EnforceAtLeastInstructorInCourse``), and ``EnforceRoleInExercise`` (e.g. ``EnforceAtLeastInstructorInExercise``)
+#. Explicit authorization checks:
+    #. ``PreAuthorize`` and ``Enforce`` annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
+    #. The ``AuthorizationCheckService`` is responsible for checking access rights to individual resources by querying the database.
 
-Because the first method without database queries is substantially faster, always annotate your REST endpoints with the corresponding annotation. Always use the annotation for the minimum role that has access.
-The following example makes the call only accessible to ADMIN and INSTRUCTOR users:
-
-.. code-block:: java
-
-    @EnforceAtLeastInstructor
-    public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
-        var exercise = programmingExerciseRepository.findById(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        [...]
-        return ResponseEntity.ok(programmingExerciseRepository.findById(exerciseId));
-    }
+Because the first solution (Implicit pre- and post-authorizations) increase maintainability and is event faster in most cases, always annotate your REST endpoints with the corresponding ``EnforceRoleInResource`` annotation. Always use the annotation for the minimum role that has access.
 
 Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (teaching assistant), USER and ANONYMOUS.
 Each of the roles has the all the access rights of the roles following it, e.g. ANONYMOUS has almost no rights, while ADMIN users can access every page.
@@ -459,18 +451,63 @@ The table contains all annotations for the corresponding minimum role including 
 +------------------+----------------------------------------+-----------------+----------------+
 | ADMIN            | @EnforceAdmin                          | /api/admin/     | web.rest.admin |
 +------------------+----------------------------------------+-----------------+----------------+
-| INSTRUCTOR       | @EnforceAtLeastInstructor              | /api/           | web.rest       |
+| INSTRUCTOR       | @EnforceAtLeastInstructorInResource    | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
-| EDITOR           | @EnforceAtLeastEditor                  | /api/           | web.rest       |
+| EDITOR           | @EnforceAtLeastEditorInResource        | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
-| TA               | @EnforceAtLeastTutor                   | /api/           | web.rest       |
+| TA               | @EnforceAtLeastTutorInResource         | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
-| USER             | @EnforceAtLeastStudent                 | /api/           | web.rest       |
+| USER             | @EnforceAtLeastStudentInResource       | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
 | ANONYMOUS        | @EnforceNothing                        | /api/public/    | web.rest.open  |
 +------------------+----------------------------------------+-----------------+----------------+
 
 If, for some reason, you need to deviate from these rules, use ``@ManualConfig``. Use this annotation only if absolutely necessary as it will exclude the endpoint from the automatic authorization tests.
+
+Implicit pre- and post-authorization annotations
+------------------------------------------------
+
+The following example makes the call only accessible to ADMIN and INSTRUCTOR users and then checks the access rights to the course in the database:
+
+Do **not** write
+
+.. code-block:: java
+
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
+        var course = courseRepository.findById(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        [...]
+        return ResponseEntity.ok().build();
+    }
+
+Instead, use the following annotation:
+
+.. code-block:: java
+
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
+        [...]
+        return ResponseEntity.ok().build();
+    }
+
+Utilizing the ``EnforceRoleInResource`` annotation reduces the amount of code and makes the code more readable and maintainable. Also it is faster than the explicit authorization check since we don't have to load the user and course into JAVA as the check is performed directly in a database query.
+
+Explicit authorization checks
+-----------------------------
+
+CAUTION: Be aware that this solution should be used only when necessary or no matching ``EnforceRoleInResource`` annotation exists. Always annotate your REST endpoints with the corresponding annotation. Always use the annotation for the minimum role that has access.
+The following example makes the call only accessible to ADMIN and INSTRUCTOR users:
+
+.. code-block:: java
+
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> enableLearningPath(@PathVariable long courseId) {
+        var course = courseRepository.findById(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        [...]
+        return ResponseEntity.ok().build();
+    }
 
 If a user passes the pre-authorization, the access to individual resources like courses and exercises still has to be checked. For example, a user can be a teaching assistant in one course, but only a student in another.
 However, do not fetch the user from the database yourself (unless you need to re-use the user object), but only hand a role to the ``AuthorizationCheckService``:
@@ -494,6 +531,5 @@ To reduce duplication, do not add explicit checks for authorization or existence
         List<ProgrammingExercise> exercises = programmingExerciseService.findActiveExercisesByCourseId(courseId);
         return ResponseEntity.ok().body(exercises);
     }
-
 
 The course repository call takes care of throwing a ``404 Not Found`` exception if there exists no matching course. The ``AuthorizationCheckService`` throws a ``403 Forbidden`` exception if the user with the given role is unauthorized. Afterwards delegate to a service or repository method. The code becomes much shorter, cleaner and more maintainable.
