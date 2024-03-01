@@ -4,7 +4,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { map } from 'rxjs/operators';
-import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { captureException } from '@sentry/angular-ivy';
 import { Course } from 'app/entities/course.model';
 
@@ -138,7 +138,7 @@ export class GradingSystemService {
      *
      * @param pageable search, sort and pagination parameters
      */
-    findWithBonusGradeTypeForInstructor(pageable: PageableSearch): Observable<HttpResponse<SearchResult<GradingScale>>> {
+    findWithBonusGradeTypeForInstructor(pageable: SearchTermPageableSearch): Observable<HttpResponse<SearchResult<GradingScale>>> {
         const params = new HttpParams()
             .set('pageSize', String(pageable.pageSize))
             .set('page', String(pageable.page))
