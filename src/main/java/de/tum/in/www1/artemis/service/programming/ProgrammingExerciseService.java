@@ -543,25 +543,7 @@ public class ProgrammingExerciseService {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
-        if (continuousIntegrationService.isPresent()) {
-            if (!Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
-                if (updatedProgrammingExercise.getBuildPlanConfiguration() != null) {
-                    // we only update the build plan configuration if it has changed and is not null, otherwise we
-                    // do not have a valid exercise anymore
-                    continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
-                    continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
-                    continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
-                    resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
-                    if (buildScriptGenerationService.isPresent()) {
-                        String script = buildScriptGenerationService.get().getScript(updatedProgrammingExercise);
-                        updatedProgrammingExercise.setBuildScript(script);
-                    }
-                }
-                else {
-                    updatedProgrammingExercise.setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildPlanConfiguration());
-                }
-            }
-        }
+        updateBuildPlanForExercise(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
@@ -577,6 +559,35 @@ public class ProgrammingExerciseService {
         scheduleOperations(updatedProgrammingExercise.getId());
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
+    }
+
+    /**
+     * This method updates the build plan for the given programming exercise.
+     * It deletes the old build plan and creates a new one if the build plan configuration has changed.
+     *
+     * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
+     * @param updatedProgrammingExercise      the changed programming exercise with its new values
+     */
+    private void updateBuildPlanForExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+        if (continuousIntegrationService.isEmpty()
+                || Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
+            return;
+        }
+        // we only update the build plan configuration if it has changed and is not null, otherwise we
+        // do not have a valid exercise anymore
+        if (updatedProgrammingExercise.getBuildPlanConfiguration() != null) {
+            continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
+            continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
+            continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
+            resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
+            if (buildScriptGenerationService.isPresent()) {
+                String script = buildScriptGenerationService.get().getScript(updatedProgrammingExercise);
+                updatedProgrammingExercise.setBuildScript(script);
+            }
+        }
+        else {
+            updatedProgrammingExercise.setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildPlanConfiguration());
+        }
     }
 
     /**
