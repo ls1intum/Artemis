@@ -73,6 +73,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isImportFromFile: boolean;
     isEdit: boolean;
     isExamMode: boolean;
+    isLocal: boolean;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     backupExercise: ProgrammingExercise;
@@ -464,6 +465,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo?.activeProfiles.includes(PROFILE_LOCALCI)) {
                 this.customBuildPlansSupported = PROFILE_LOCALCI;
+                this.isLocal = true;
             }
             if (profileInfo?.activeProfiles.includes(PROFILE_AEOLUS)) {
                 this.customBuildPlansSupported = PROFILE_AEOLUS;
