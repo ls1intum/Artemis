@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.security.SecureRandom;
@@ -9,6 +10,7 @@ import java.util.*;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -28,14 +30,22 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the StudentExam entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface StudentExamRepository extends JpaRepository<StudentExam, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<StudentExam> findWithExercisesById(Long studentExamId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "examSessions" })
-    Optional<StudentExam> findWithExercisesAndSessionsById(Long studentExamId);
+    @Query("""
+            SELECT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
+                LEFT JOIN FETCH e.submissionPolicy
+                LEFT JOIN FETCH se.examSessions
+            WHERE se.id = :studentExamId
+            """)
+    Optional<StudentExam> findWithExercisesSubmissionPolicyAndSessionsById(@Param("studentExamId") long studentExamId);
 
     @Query("""
             SELECT DISTINCT se
@@ -170,6 +180,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             FROM StudentExam se
                 LEFT JOIN FETCH se.exam exam
                 LEFT JOIN FETCH se.exercises e
+                LEFT JOIN FETCH e.submissionPolicy spo
                 LEFT JOIN FETCH e.studentParticipations sp
                 LEFT JOIN FETCH sp.team t
                 LEFT JOIN FETCH t.students
@@ -180,7 +191,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             WHERE se.user.id = sp.student.id
                   AND se.user.id = :userId
             """)
-    Set<StudentExam> findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserId(@Param("userId") long userId);
+    Set<StudentExam> findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(@Param("userId") long userId);
 
     @Query("""
             SELECT DISTINCT se
@@ -355,14 +366,14 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     }
 
     /**
-     * Get one student exam by id with exercises and sessions
+     * Get one student exam by id with exercises, programming exercise submission policy and sessions
      *
      * @param studentExamId the id of the student exam
      * @return the student exam with exercises
      */
     @NotNull
-    default StudentExam findByIdWithExercisesAndSessionsElseThrow(Long studentExamId) {
-        return findWithExercisesAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+    default StudentExam findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(Long studentExamId) {
+        return findWithExercisesSubmissionPolicyAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
 
     /**

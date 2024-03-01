@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.web.rest.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +33,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 /**
  * REST controller for managing Plagiarism Cases.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class PlagiarismResource {
@@ -85,8 +89,13 @@ public class PlagiarismResource {
 
         // TODO: this check can take up to a few seconds in the worst case, we should do it directly in the database
         var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparisonId);
-        if (!Objects.equals(comparison.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+        var exercise = comparison.getPlagiarismResult().getExercise();
+        if (!Objects.equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
             throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
+        }
+
+        if (exercise.isTeamMode()) {
+            throw new BadRequestAlertException("Updating the plagiarism status is not allowed for team exercises.", "PlagiarismComparison", "noTeamExercise");
         }
 
         plagiarismService.updatePlagiarismComparisonStatus(comparisonId, statusDTO.status());

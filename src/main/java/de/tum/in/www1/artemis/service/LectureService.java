@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +16,11 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
+@Profile(PROFILE_CORE)
 @Service
 public class LectureService {
 
@@ -98,13 +102,13 @@ public class LectureService {
     }
 
     /**
-     * Search for all lectures fitting a {@link PageableSearchDTO search query}. The result is paged.
+     * Search for all lectures fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
      *
      * @param search The search query defining the search term and the size of the returned page
      * @param user   The user for whom to fetch all available lectures
      * @return A wrapper object containing a list of all found lectures and the total number of pages
      */
-    public SearchResultPageDTO<Lecture> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+    public SearchResultPageDTO<Lecture> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LECTURE);
         final var searchTerm = search.getSearchTerm();
         final Page<Lecture> lecturePage;

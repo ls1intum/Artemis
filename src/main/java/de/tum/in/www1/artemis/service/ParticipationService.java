@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -7,6 +9,7 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -26,6 +29,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Service Implementation for managing Participation.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ParticipationService {
 

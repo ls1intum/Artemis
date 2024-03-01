@@ -100,6 +100,13 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
         irisMessageService.saveMessage(userMessage, session, IrisMessageSender.USER);
     }
 
+    // @formatter:off
+    record CompetencyGenerationDTO(
+            String courseDescription,
+            CompetencyTaxonomy[] taxonomyOptions
+    ) {}
+    // @formatter:on
+
     @Override
     public List<Competency> executeRequest(IrisCompetencyGenerationSession session) {
 
@@ -109,7 +116,7 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
         }
         var courseDescription = userMessageContent.getContentAsString();
 
-        Map<String, Object> parameters = Map.of("courseDescription", courseDescription, "taxonomyOptions", CompetencyTaxonomy.values());
+        var parameters = new CompetencyGenerationDTO(courseDescription, CompetencyTaxonomy.values());
         var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false);
         try {
             var response = irisConnectorService.sendRequestV2(irisSettings.irisCompetencyGenerationSettings().getTemplate().getContent(),
@@ -145,9 +152,9 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
                 Competency competency = new Competency();
                 competency.setTitle(node.required("title").asText());
 
-                // skip competency if IRIS only replied with a title (i.e. no further competencies exist)
-                if (node.get("description") == null) {
-                    log.error("No description found, skipping competency: " + node.toPrettyString());
+                // skip competency if IRIS only replied with a title containing the special response "!done!"
+                if (node.get("description") == null && node.get("title").asText().equals("!done!")) {
+                    log.info("Received special response \"!done!\", skipping parsing of competency.");
                     continue;
                 }
                 competency.setDescription(node.required("description").asText());
