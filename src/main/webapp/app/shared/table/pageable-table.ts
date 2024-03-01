@@ -14,7 +14,19 @@ export enum SortingOrder {
 export interface PageableSearch {
     page: number;
     pageSize: number;
-    searchTerm: string;
     sortingOrder: SortingOrder;
     sortedColumn: string;
 }
+
+export interface SearchTermPageableSearch extends PageableSearch {
+    searchTerm: string;
+}
+
+export interface CompetencyFilter {
+    title: string;
+    description: string;
+    courseTitle: string;
+    semester: string;
+}
+
+export interface CompetencyPageableSearch extends PageableSearch, CompetencyFilter {}

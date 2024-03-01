@@ -49,6 +49,17 @@
                 [editorMode]="EditorMode.LATEX"
             />
         </div>
+        @if (!isExamMode) {
+            <div class="form-group">
+                <jhi-competency-selection
+                    id="competencies"
+                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                    [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+                    [(ngModel)]="fileUploadExercise.competencies"
+                    name="competencies"
+                />
+            </div>
+        }
         <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution">Example Solution</h3>
         <!-- TODO we want to have a file upload here and store a PDF, not a text. We could allow to add text in the sample_solution_explanation field -->
         <div class="form-group" id="field_exampleSolution">
@@ -207,17 +218,6 @@
             <input required minlength="2" type="text" class="form-control" name="filePattern" id="field_filePattern" [(ngModel)]="fileUploadExercise.filePattern" />
         </div>
         <jhi-presentation-score-checkbox [exercise]="fileUploadExercise" />
-        @if (!isExamMode) {
-            <div class="form-group">
-                <jhi-competency-selection
-                    id="competencies"
-                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
-                    [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
-                    [(ngModel)]="fileUploadExercise.competencies"
-                    name="competencies"
-                />
-            </div>
-        }
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="fileUploadExercise" />

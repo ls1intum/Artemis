@@ -6,5 +6,5 @@ package de.tum.in.www1.artemis.web.rest.dto.score;
  * @param userId            the id of the student
  * @param sumPointsAchieved the sum of points achieved by the student
  */
-public record StudentScoreSumDTO(long userId, double sumPointsAchieved) {
+public record StudentScoreSum(long userId, double sumPointsAchieved) {
 }

@@ -8,8 +8,8 @@
     (click)="handleClick()"
 >
     <fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="faCircleNotch" />
-    @if (!buttonLoading) {
-        <span class="intellij-logo"></span>
-    }
+    <fa-icon [hidden]="buttonType !== OrionButtonType.Reload" [icon]="faRotateRight" />
+    <fa-icon [hidden]="buttonType !== OrionButtonType.Submit" [icon]="faUpload" />
+    <fa-icon [hidden]="buttonType !== OrionButtonType.Download" [icon]="faDownload" />
     <span>{{ buttonLabel }}</span>
 </button>

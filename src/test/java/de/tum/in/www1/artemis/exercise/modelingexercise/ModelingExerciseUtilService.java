@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 
 /**
  * Service responsible for initializing the database with specific testdata related to modeling exercises for use in integration tests.
@@ -328,7 +328,7 @@ public class ModelingExerciseUtilService {
      * @throws Exception If the file can't be read
      */
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws IOException {
-        String model = FileUtils.loadFileFromResources(path);
+        String model = TestResourceUtils.loadFileFromResources(path);
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(model, true);
         submission = addModelingSubmission(exercise, submission, login);
         checkModelingSubmissionCorrectlyStored(submission.getId(), model);

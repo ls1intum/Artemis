@@ -43,6 +43,17 @@
                 [editorMode]="EditorMode.LATEX"
             />
         </div>
+        @if (!isExamMode) {
+            <div class="form-group">
+                <jhi-competency-selection
+                    id="competencies"
+                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                    [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+                    [(ngModel)]="modelingExercise.competencies"
+                    name="competencies"
+                />
+            </div>
+        }
         <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution">Example Solution</h3>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolution">Example Solution</label>
@@ -259,17 +270,6 @@
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="modelingExercise" />
         </div>
-        @if (!isExamMode) {
-            <div class="form-group">
-                <jhi-competency-selection
-                    id="competencies"
-                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
-                    [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
-                    [(ngModel)]="modelingExercise.competencies"
-                    name="competencies"
-                />
-            </div>
-        }
     </div>
     <jhi-form-footer
         [isImport]="isImport"
