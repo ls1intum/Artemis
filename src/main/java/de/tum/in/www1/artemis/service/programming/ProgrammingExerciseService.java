@@ -576,10 +576,12 @@ public class ProgrammingExerciseService {
         // we only update the build plan configuration if it has changed and is not null, otherwise we
         // do not have a valid exercise anymore
         if (updatedProgrammingExercise.getBuildPlanConfiguration() != null) {
-            continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
-            continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
-            continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
-            resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
+            if (!profileService.isLocalCi()) {
+                continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
+                continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
+                continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
+                resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
+            }
             if (buildScriptGenerationService.isPresent()) {
                 String script = buildScriptGenerationService.get().getScript(updatedProgrammingExercise);
                 updatedProgrammingExercise.setBuildScript(script);
