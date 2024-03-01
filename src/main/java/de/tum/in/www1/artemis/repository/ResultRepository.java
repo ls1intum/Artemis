@@ -146,7 +146,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 LEFT JOIN FETCH t.students
             WHERE r.id = :resultId
             """)
-    Optional<Result> findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsById(long resultId);
+    Optional<Result> findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsById(@Param("resultId") long resultId);
 
     /**
      * counts the number of assessments of a course, which are either rated or not rated
@@ -181,7 +181,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 LEFT JOIN FETCH t.students
             WHERE r.id = :resultId
             """)
-    Optional<Result> findWithSubmissionAndFeedbackAndTeamStudentsById(long resultId);
+    Optional<Result> findWithSubmissionAndFeedbackAndTeamStudentsById(@Param("resultId") long resultId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
     Optional<Result> findWithEagerSubmissionAndFeedbackAndTestCasesById(long resultId);
