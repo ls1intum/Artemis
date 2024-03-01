@@ -439,7 +439,7 @@ To reject unauthorized requests as early as possible, Artemis employs two soluti
     #. ``PreAuthorize`` and ``Enforce`` annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
     #. The ``AuthorizationCheckService`` is responsible for checking access rights to individual resources by querying the database.
 
-Because the first solution (Implicit pre- and post-authorizations) increase maintainability and is event faster in most cases, always annotate your REST endpoints with the corresponding ``EnforceRoleInResource`` annotation. Always use the annotation for the minimum role that has access.
+Because the first solution (Implicit pre- and post-authorization) increases maintainability and is faster in most cases, always annotate your REST endpoints with the corresponding ``EnforceRoleInResource`` annotation. Always use the annotation for the minimum role that has access.
 
 Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (teaching assistant), USER and ANONYMOUS.
 Each of the roles has the all the access rights of the roles following it, e.g. ANONYMOUS has almost no rights, while ADMIN users can access every page.
