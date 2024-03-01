@@ -76,8 +76,11 @@ public class PyrisJobService {
         // Include instance name, node id, timestamp and random string
         var randomStringBuilder = new StringBuilder();
         randomStringBuilder.append(serverUrl);
+        randomStringBuilder.append('-');
         randomStringBuilder.append(instanceId);
+        randomStringBuilder.append('-');
         randomStringBuilder.append(System.currentTimeMillis());
+        randomStringBuilder.append('-');
         var secureRandom = new SecureRandom();
         for (int i = 0; i < 10; i++) {
             var randomChar = secureRandom.nextInt(62);
@@ -91,6 +94,6 @@ public class PyrisJobService {
                 randomStringBuilder.append((char) (randomChar - 36 + 'A'));
             }
         }
-        return randomStringBuilder.toString();
+        return randomStringBuilder.toString().replace("https://", "").replace("http://", "").replace(":", "_").replace(".", "_").replace("/", "_");
     }
 }
