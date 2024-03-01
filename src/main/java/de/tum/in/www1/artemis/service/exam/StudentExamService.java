@@ -95,15 +95,13 @@ public class StudentExamService {
 
     private final ExamQuizQuestionsGenerator examQuizQuestionsGenerator;
 
-    private final TeamRepository teamRepository;
-
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, TextSubmissionRepository textSubmissionRepository,
             ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService, TeamRepository teamRepository) {
+            @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -123,7 +121,6 @@ public class StudentExamService {
         this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
         this.examQuizQuestionsGenerator = quizPoolService;
-        this.teamRepository = teamRepository;
     }
 
     /**
@@ -657,9 +654,6 @@ public class StudentExamService {
                     generatedParticipations.add(participation);
                     // Unlock repository and participation only if the real exam starts within 5 minutes or if we have a test exam or test run
                     if (participation instanceof ProgrammingExerciseStudentParticipation programmingParticipation && exercise instanceof ProgrammingExercise programmingExercise) {
-                        if (programmingParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
-                            programmingParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
-                        }
                         if (studentExam.isTestRun() || studentExam.isTestExam()
                                 || ExamDateService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
                             // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
