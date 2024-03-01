@@ -20,12 +20,6 @@ import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
  */
 public class LocalVCPrePushHook implements PreReceiveHook {
 
-    private final LocalVCServletService localVCServletService;
-
-    public LocalVCPrePushHook(LocalVCServletService localVCServletService) {
-        this.localVCServletService = localVCServletService;
-    }
-
     /**
      * Called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was successful).
      *
@@ -54,7 +48,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
         String defaultBranchName;
         try {
-            defaultBranchName = localVCServletService.getDefaultBranchOfRepository(repository);
+            defaultBranchName = LocalVCServletService.getDefaultBranchOfRepository(repository);
         }
         catch (LocalVCInternalException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");

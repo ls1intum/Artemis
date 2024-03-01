@@ -79,10 +79,12 @@ public class LocalVCServletService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final LocalVCService localVCService;
+    private static URL localVCBaseUrl;
 
     @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    public void setLocalVCBaseUrl(URL localVCBaseUrl) {
+        LocalVCServletService.localVCBaseUrl = localVCBaseUrl;
+    }
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
@@ -112,7 +114,6 @@ public class LocalVCServletService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
-        this.localVCService = localVCService;
     }
 
     /**
@@ -379,7 +380,7 @@ public class LocalVCServletService {
         return exercise;
     }
 
-    private LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
+    private static LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
             return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUrl);
         }
@@ -517,9 +518,8 @@ public class LocalVCServletService {
      * @param repository the repository for which the default branch should be determined.
      * @return the name of the default branch.
      */
-    public String getDefaultBranchOfRepository(Repository repository) {
+    public static String getDefaultBranchOfRepository(Repository repository) {
         Path repositoryFolderPath = repository.getDirectory().toPath();
-        LocalVCRepositoryUri localVCRepositoryUri = getLocalVCRepositoryUri(repositoryFolderPath);
-        return localVCService.getDefaultBranchOfRepository(localVCRepositoryUri);
+        return LocalVCService.getDefaultBranchOfRepository(repositoryFolderPath.toString());
     }
 }

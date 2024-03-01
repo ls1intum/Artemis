@@ -7,12 +7,20 @@ import org.apache.sshd.git.pack.GitPackCommandFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
+
 @Profile(PROFILE_LOCALVC)
 @Service
 public class SshGitCommandFactory extends GitPackCommandFactory {
 
+    public final LocalVCServletService localVCServletService;
+
+    public SshGitCommandFactory(LocalVCServletService localVCServletService) {
+        this.localVCServletService = localVCServletService;
+    }
+
     @Override
     public GitPackCommand createGitCommand(String command) {
-        return new SshGitCommand(getGitLocationResolver(), command, resolveExecutorService(command));
+        return new SshGitCommand(getGitLocationResolver(), command, resolveExecutorService(command), localVCServletService);
     }
 }

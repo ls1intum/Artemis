@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
  * This class configures the JGit Servlet, which is used to receive Git push and fetch requests for local VC.
  */
 @Profile(PROFILE_LOCALVC)
+// TODO: this should rather be a @Service with instructor injection
 public class ArtemisGitServlet extends GitServlet {
 
     /**
@@ -39,7 +40,7 @@ public class ArtemisGitServlet extends GitServlet {
         this.setReceivePackFactory((request, repository) -> {
             ReceivePack receivePack = new ReceivePack(repository);
             // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
-            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService));
+            receivePack.setPreReceiveHook(new LocalVCPrePushHook());
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
             receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
             return receivePack;
