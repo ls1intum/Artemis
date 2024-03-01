@@ -229,8 +229,9 @@ public class FileResource {
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get file for file upload submission : {}", exerciseId);
 
-        FileUploadSubmission submission = fileUploadSubmissionRepository.findWithTeamStudentsByIdElseThrow(submissionId);
-        FileUploadExercise exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
+        FileUploadSubmission submission = fileUploadSubmissionRepository.findWithTeamStudentsAndParticipationAndExerciseByIdAndParticipation_Exercise_IdElseThrow(submissionId,
+                exerciseId);
+        FileUploadExercise exercise = (FileUploadExercise) submission.getParticipation().getExercise();
 
         // check if the participation is a StudentParticipation before the following cast
         if (!(submission.getParticipation() instanceof StudentParticipation)) {

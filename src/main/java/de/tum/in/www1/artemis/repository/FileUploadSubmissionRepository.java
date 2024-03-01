@@ -61,8 +61,8 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "participation", "participation.results" })
     Optional<FileUploadSubmission> findWithResultsFeedbacksAssessorAndParticipationResultsById(Long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = "participation.team.students")
-    Optional<FileUploadSubmission> findWithTeamStudentsById(long submissionId);
+    @EntityGraph(type = LOAD, attributePaths = { "particpation", "participation.exercise", "participation.team.students" })
+    Optional<FileUploadSubmission> findWithTeamStudentsAndParticipationAndExerciseByIdAndParticipation_Exercise_Id(Long id, Long exerciseId);
 
     /**
      * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
@@ -107,7 +107,8 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @return the file upload submission with the given id
      */
     @NotNull
-    default FileUploadSubmission findWithTeamStudentsByIdElseThrow(long submissionId) {
-        return findWithTeamStudentsById(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
+    default FileUploadSubmission findWithTeamStudentsAndParticipationAndExerciseByIdAndParticipation_Exercise_IdElseThrow(long submissionId, long exerciseId) {
+        return findWithTeamStudentsAndParticipationAndExerciseByIdAndParticipation_Exercise_Id(submissionId, exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
     }
 }
