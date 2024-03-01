@@ -21,6 +21,7 @@
             "masteryDescription": "Ein gewichteter Leistungsindex aus Fortschritt und Konfidenz, der Deine Entwicklung auf dem Weg zur Beherrschung der Kompetenz veranschaulicht.",
             "masteredStudents": "Studierende mit Kompetenz",
             "mastered": "Abgeschlossen",
+            "competencies": "Kompetenzen",
             "taxonomies": {
                 "REMEMBER": "Erinnern",
                 "UNDERSTAND": "Verstehen",

@@ -72,7 +72,6 @@ export class CompetencyRelationGraphComponent {
 
     /**
      * removes the relation
-     *
      * @param edge the edge symbolizing the relation
      */
     removeRelation(edge: Edge) {
@@ -103,7 +102,15 @@ export class CompetencyRelationGraphComponent {
     }
 
     /**
-     *
+     * checks if the currently entered data is equal to an existing relation
+     * @private
+     */
+    private doesRelationAlreadyExist(): boolean {
+        return !!this.edges().find((edge) => edge.source === this.tailCompetencyId?.toString() && edge.target === this.headCompetencyId?.toString());
+    }
+
+    /**
+     * Checks if the currently entered data would create a circular relation
      *
      * @private
      */
@@ -116,15 +123,6 @@ export class CompetencyRelationGraphComponent {
             target: this.headCompetencyId! + '',
             label: this.relationType!,
         } as Edge);
-    }
-
-    /**
-     * checks if the currently entered data is equal to an existing relation
-     *
-     * @private
-     */
-    private doesRelationAlreadyExist(): boolean {
-        return !!this.edges().find((edge) => edge.source === this.tailCompetencyId?.toString() && edge.target === this.headCompetencyId?.toString());
     }
 
     /**
