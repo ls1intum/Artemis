@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.config.localvcci.ssh.HashUtils;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -194,4 +196,19 @@ public class UserResource {
         User user = userRepository.getUser();
         return ResponseEntity.ok().body(user.getIrisAcceptedTimestamp());
     }
+
+    /**
+     * PUT users/sshpublickey : sets the ssh public key
+     *
+     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
+     */
+    @PutMapping("users/sshpublickey")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> addSshPublicKey(String sshPublicKey) throws NoSuchAlgorithmException {
+        User user = userRepository.getUser();
+        var sshPublicKeyHash = HashUtils.hashString(sshPublicKey);
+        userRepository.updateUserSshPublicKeyHash(user.getId(), sshPublicKeyHash);
+        return ResponseEntity.ok().build();
+    }
+
 }

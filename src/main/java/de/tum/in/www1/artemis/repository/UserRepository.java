@@ -471,6 +471,15 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     void updateUserLanguageKey(@Param("userId") long userId, @Param("languageKey") String languageKey);
 
     @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.sshPublicKeyHash = :languageKey
+            WHERE user.id = :userId
+            """)
+    void updateUserSshPublicKeyHash(@Param("userId") long userId, @Param("sshPublicKeyHash") String sshPublicKeyHash);
+
+    @Modifying
     @Transactional
     @Query("""
             UPDATE User user
