@@ -102,46 +102,46 @@ export class ExamManagementPage {
      */
 
     getExamTitle() {
-        return this.page.locator('#exam-detail-title');
+        return this.page.locator('#detail-value-artemisApp\\.exam\\.title');
     }
 
     getExamVisibleDate() {
-        return this.page.locator('#exam-visible-date');
+        return this.page.locator('#detail-value-artemisApp\\.examManagement\\.visibleDate');
     }
 
     getExamStartDate() {
-        return this.page.locator('#exam-start-date');
+        return this.page.locator('#detail-value-artemisApp\\.exam\\.startDate');
     }
 
     getExamEndDate() {
-        return this.page.locator('#exam-end-date');
+        return this.page.locator('#detail-value-artemisApp\\.exam\\.endDate');
     }
 
     getExamNumberOfExercises() {
-        return this.page.locator('#exam-number-of-exercises');
+        return this.page.locator('#detail-value-artemisApp\\.examManagement\\.numberOfExercisesInExam');
     }
 
     getExamMaxPoints() {
-        return this.page.locator('#exam-max-points');
+        return this.page.locator('#detail-value-artemisApp\\.examManagement\\.maxPoints\\.title');
     }
 
     getExamStartText() {
-        return this.page.locator('#exam-start-text');
+        return this.page.locator('#detail-value-artemisApp\\.examManagement\\.startText');
     }
 
     getExamEndText() {
-        return this.page.locator('#exam-end-text');
+        return this.page.locator('#detail-value-artemisApp\\.examManagement\\.endText');
     }
 
     getExamConfirmationStartText() {
-        return this.page.locator('#exam-confirmation-start-text');
+        return this.page.locator('#detail-value-artemisApp\\.examManagement\\.confirmationStartText');
     }
 
     getExamConfirmationEndText() {
-        return this.page.locator('#exam-confirmation-end-text');
+        return this.page.locator('#detail-value-artemisApp\\.examManagement\\.confirmationEndText');
     }
 
     getExamWorkingTime() {
-        return this.page.locator('#exam-working-time');
+        return this.page.locator('#detail-value-artemisApp\\.exam\\.workingTime');
     }
 }

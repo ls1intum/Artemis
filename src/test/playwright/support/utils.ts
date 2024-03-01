@@ -83,12 +83,12 @@ export function titleLowercase(title: string) {
 }
 
 /**
- * Converts a boolean value to "Yes" if true, or "No" if false.
+ * Converts a boolean value to its related icon class.
  * @param boolean - The boolean value to be converted.
- * @returns The corresponding "Yes" or "No" string.
+ * @returns The corresponding ".checked" or ".unchecked" string.
  */
-export function convertBooleanToYesNo(boolean: boolean) {
-    return boolean ? 'Yes' : 'No';
+export function convertBooleanToCheckIconClass(boolean: boolean) {
+    return boolean ? '.checked' : '.unchecked';
 }
 
 export async function clearTextField(textField: Locator) {

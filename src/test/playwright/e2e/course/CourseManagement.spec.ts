@@ -2,7 +2,7 @@ import { test } from '../../support/fixtures';
 import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
 import { admin, studentOne } from '../../support/users';
-import { convertBooleanToYesNo, dayjsToString, generateUUID, trimDate } from '../../support/utils';
+import { convertBooleanToCheckIconClass, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { expect } from '@playwright/test';
 
 // Common primitives
@@ -140,7 +140,7 @@ test.describe('Course management', () => {
             await expect(courseManagement.getCourseEndDate().filter({ hasText: courseData.endDate.format(dateFormat) })).toBeVisible();
             await expect(courseManagement.getCourseSemester().filter({ hasText: courseData.semester })).toBeVisible();
             await expect(courseManagement.getCourseProgrammingLanguage().filter({ hasText: courseData.programmingLanguage })).toBeVisible();
-            await expect(courseManagement.getCourseTestCourse().filter({ hasText: convertBooleanToYesNo(courseData.testCourse) })).toBeVisible();
+            await expect(courseManagement.getCourseTestCourse().locator(convertBooleanToCheckIconClass(courseData.testCourse))).toBeVisible();
             await expect(courseManagement.getCourseMaxComplaints().filter({ hasText: courseData.maxComplaints.toString() })).toBeVisible();
             await expect(courseManagement.getCourseMaxTeamComplaints().filter({ hasText: courseData.maxTeamComplaints.toString() })).toBeVisible();
             await expect(courseManagement.getMaxComplaintTimeDays().filter({ hasText: courseData.maxComplaintTimeDays.toString() })).toBeVisible();
@@ -174,7 +174,7 @@ test.describe('Course management', () => {
                 await expect(courseManagement.getCourseHeaderTitle().filter({ hasText: courseData.title })).toBeVisible();
                 await expect(courseManagement.getCourseTitle().filter({ hasText: courseData.title })).toBeVisible();
                 await expect(courseManagement.getCourseShortName().filter({ hasText: courseData.shortName })).toBeVisible();
-                await expect(courseManagement.getCourseTestCourse().filter({ hasText: convertBooleanToYesNo(courseData.testCourse) })).toBeVisible();
+                await expect(courseManagement.getCourseTestCourse().locator(convertBooleanToCheckIconClass(courseData.testCourse))).toBeVisible();
                 await expect(courseManagement.getCourseStudentGroupName().filter({ hasText: courseData.studentGroupName })).toBeVisible();
                 await expect(courseManagement.getCourseTutorGroupName().filter({ hasText: courseData.tutorGroupName })).toBeVisible();
                 await expect(courseManagement.getCourseEditorGroupName().filter({ hasText: courseData.editorGroupName })).toBeVisible();
@@ -218,7 +218,7 @@ test.describe('Course management', () => {
             await expect(courseManagement.getCourseHeaderTitle().filter({ hasText: editedCourseData.title })).toBeVisible();
             await expect(courseManagement.getCourseTitle().filter({ hasText: editedCourseData.title })).toBeVisible();
             await expect(courseManagement.getCourseShortName().filter({ hasText: courseData.shortName })).toBeVisible();
-            await expect(courseManagement.getCourseTestCourse().filter({ hasText: convertBooleanToYesNo(editedCourseData.testCourse) })).toBeVisible();
+            await expect(courseManagement.getCourseTestCourse().locator(convertBooleanToCheckIconClass(editedCourseData.testCourse))).toBeVisible();
         });
 
         test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {

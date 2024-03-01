@@ -79,7 +79,7 @@ export class CourseManagementPage {
      * */
     async addStudentToCourse(credentials: UserCredentials) {
         const responsePromise = this.page.waitForResponse(COURSE_BASE + '*/students/' + credentials.username);
-        await this.page.locator('#add-students').click();
+        await this.page.locator('#detail-value-artemisApp\\.course\\.studentGroupName').locator('a').click();
         await this.confirmUserIntoGroup(credentials);
         await responsePromise;
     }
@@ -147,7 +147,7 @@ export class CourseManagementPage {
      * @returns The locator for the course title.
      */
     getCourseTitle() {
-        return this.page.locator('#course-title');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.title');
     }
 
     /**
@@ -155,7 +155,7 @@ export class CourseManagementPage {
      * @returns The locator for the course short name.
      */
     getCourseShortName() {
-        return this.page.locator('#course-short-name');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.shortName');
     }
 
     /**
@@ -163,7 +163,7 @@ export class CourseManagementPage {
      * @returns The locator for the course student group name.
      */
     getCourseStudentGroupName() {
-        return this.page.locator('#course-student-group-name');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.studentGroupName');
     }
 
     /**
@@ -171,7 +171,7 @@ export class CourseManagementPage {
      * @returns The locator for the course tutor group name.
      */
     getCourseTutorGroupName() {
-        return this.page.locator('#course-tutor-group-name');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.teachingAssistantGroupName');
     }
 
     /**
@@ -179,7 +179,7 @@ export class CourseManagementPage {
      * @returns The locator for the course editor group name.
      */
     getCourseEditorGroupName() {
-        return this.page.locator('#course-editor-group-name');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.editorGroupName');
     }
 
     /**
@@ -187,7 +187,7 @@ export class CourseManagementPage {
      * @returns The locator for the course instructor group name.
      */
     getCourseInstructorGroupName() {
-        return this.page.locator('#course-instructor-group-name');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.instructorGroupName');
     }
 
     /**
@@ -195,7 +195,7 @@ export class CourseManagementPage {
      * @returns The locator for the course start date.
      */
     getCourseStartDate() {
-        return this.page.locator('#course-start-date');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.startDate');
     }
 
     /**
@@ -203,7 +203,7 @@ export class CourseManagementPage {
      * @returns The locator for the course end date.
      */
     getCourseEndDate() {
-        return this.page.locator('#course-end-date');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.endDate');
     }
 
     /**
@@ -211,7 +211,7 @@ export class CourseManagementPage {
      * @returns The locator for the course semester.
      */
     getCourseSemester() {
-        return this.page.locator('#course-semester');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.semester');
     }
 
     /**
@@ -219,7 +219,7 @@ export class CourseManagementPage {
      * @returns The locator for the course programming language.
      */
     getCourseProgrammingLanguage() {
-        return this.page.locator('#course-programming-language');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.defaultProgrammingLanguage');
     }
 
     /**
@@ -227,7 +227,7 @@ export class CourseManagementPage {
      * @returns The locator for the test course indicator.
      */
     getCourseTestCourse() {
-        return this.page.locator('#course-test-course');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.testCourse\\.title');
     }
 
     /**
@@ -235,7 +235,7 @@ export class CourseManagementPage {
      * @returns The locator for the online course indicator.
      */
     getCourseOnlineCourse() {
-        return this.page.locator('#course-online-course');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.onlineCourse\\.title');
     }
 
     /**
@@ -243,7 +243,7 @@ export class CourseManagementPage {
      * @returns The locator for the maximum complaints allowed.
      */
     getCourseMaxComplaints() {
-        return this.page.locator('#course-max-complaints');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.maxComplaints\\.title');
     }
 
     /**
@@ -251,7 +251,7 @@ export class CourseManagementPage {
      * @returns The locator for the maximum team complaints allowed.
      */
     getCourseMaxTeamComplaints() {
-        return this.page.locator('#course-max-team-complaints');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.maxTeamComplaints\\.title');
     }
 
     /**
@@ -259,7 +259,7 @@ export class CourseManagementPage {
      * @returns The locator for the maximum complaint time in days.
      */
     getMaxComplaintTimeDays() {
-        return this.page.locator('#course-max-time-days');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.maxComplaintTimeDays\\.title');
     }
 
     /**
@@ -267,6 +267,6 @@ export class CourseManagementPage {
      * @returns The locator for the maximum request more feedback time in days.
      */
     getMaxRequestMoreFeedbackTimeDays() {
-        return this.page.locator('#course-max-request-more-feedback-days');
+        return this.page.locator('#detail-value-artemisApp\\.course\\.maxRequestMoreFeedbackTimeDays\\.title');
     }
 }

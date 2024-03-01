@@ -1,11 +1,11 @@
 import { Course } from 'app/entities/course.model';
 import { Page } from '@playwright/test';
 import { COURSE_BASE } from '../constants';
-import { Channel, ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Channel, ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { UserCredentials } from '../users';
 import { Post } from 'app/entities/metis/post.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 
@@ -75,8 +75,8 @@ export class CommunicationAPIRequests {
      */
     async getCourseWideChannels(courseId: number): Promise<ChannelDTO[]> {
         const response = await this.page.request.get(`${COURSE_BASE}${courseId}/conversations`);
-        const conversations: ConversationDto[] = await response.json();
-        return conversations.filter((conv: ConversationDto) => getAsChannelDto(conv)?.isCourseWide === true);
+        const conversations: ConversationDTO[] = await response.json();
+        return conversations.filter((conv: ConversationDTO) => getAsChannelDTO(conv)?.isCourseWide === true);
     }
 
     /**
