@@ -431,12 +431,12 @@ For more details, please visit the :doc:`./criteria-builder` page.
 
 To reject unauthorized requests as early as possible, Artemis employs two solutions:
 
-#. Implicit pre- and post-authorization annotations operate in two steps:
-    #. ``EnforceRoleInResource`` (e.g. ``EnforceRoleInCourse``) annotations perform pre authorization checks to block users with wrong or missing authorization roles without querying the database.
-    #. If necessary we check for access rights to individual resources within the database via light-weight queries.
-    #. Currently we offer the following annotations: ``EnforceRoleInCourse`` (e.g. ``EnforceAtLeastInstructorInCourse``), and ``EnforceRoleInExercise`` (e.g. ``EnforceAtLeastInstructorInExercise``)
-#. Explicit authorization checks:
-    #. ``PreAuthorize`` and ``Enforce`` annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
+#. Implicit pre- and post-authorization annotations:
+    #. ``EnforceRoleInResource`` (e.g. ``EnforceAtLeastInstructorInCourse``) annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
+    #. If necessary, these annotations check for access rights to individual resources within the database via light-weight queries.
+    #. Currently we offer the following annotations: ``EnforceRoleInCourse`` and ``EnforceRoleInExercise``
+#. Explicit authorization checks (which operate in two steps):
+    #. ``EnforceAtLeastRole`` (e.g. ``EnforceAtLeastInstructor``) annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
     #. The ``AuthorizationCheckService`` is responsible for checking access rights to individual resources by querying the database.
 
 Because the first solution (Implicit pre- and post-authorization) increases maintainability and is faster in most cases, always annotate your REST endpoints with the corresponding ``EnforceRoleInResource`` annotation. Always use the annotation for the minimum role that has access.
