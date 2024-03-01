@@ -139,7 +139,8 @@
             "email.pattern": "Please use an email with the following pattern:",
             "cancel": "Cancel",
             "confirm": "Confirm",
-            "refresh": "Refresh"
+            "refresh": "Refresh",
+            "invalidInput": "Invalid Input"
         },
         "messages": {
             "info": {
