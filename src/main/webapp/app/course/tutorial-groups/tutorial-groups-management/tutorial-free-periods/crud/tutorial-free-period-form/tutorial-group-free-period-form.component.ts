@@ -85,24 +85,24 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
      * @returns {boolean} - Returns true if the start time/date is before the end time/date, otherwise returns true.
      */
     get isStartBeforeEnd(): boolean {
-        if (this.timeFrame == TimeFrame.PeriodWithinDay && this.endTimeControl && this.startTimeControl) {
+        if (this.timeFrame === TimeFrame.PeriodWithinDay && this.endTimeControl && this.startTimeControl) {
             return this.endTimeControl.value > this.startTimeControl.value;
-        } else if (this.timeFrame == TimeFrame.Period && this.endDateControl && this.startDateControl) {
+        } else if (this.timeFrame === TimeFrame.Period && this.endDateControl && this.startDateControl) {
             return this.endDateControl.value > this.startDateControl.value;
         }
         return true;
     }
 
     get isFreeDay(): boolean {
-        return this.timeFrame == TimeFrame.Day;
+        return this.timeFrame === TimeFrame.Day;
     }
 
     get isFreePeriod(): boolean {
-        return this.timeFrame == TimeFrame.Period;
+        return this.timeFrame === TimeFrame.Period;
     }
 
     get isFreePeriodWithinDay(): boolean {
-        return this.timeFrame == TimeFrame.PeriodWithinDay;
+        return this.timeFrame === TimeFrame.PeriodWithinDay;
     }
 
     get timeFrameControl(): TimeFrame {
@@ -137,11 +137,11 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         if (!this.startDateControl?.valid) {
             return false;
         }
-        if (this.timeFrame == TimeFrame.Day) {
+        if (this.timeFrame === TimeFrame.Day) {
             return true;
-        } else if (this.timeFrame == TimeFrame.Period) {
+        } else if (this.timeFrame === TimeFrame.Period) {
             return !!this.endDateControl?.valid && this.isStartBeforeEnd;
-        } else if (this.timeFrame == TimeFrame.PeriodWithinDay) {
+        } else if (this.timeFrame === TimeFrame.PeriodWithinDay) {
             return !!this.startTimeControl?.valid && !!this.endTimeControl?.valid && this.isStartBeforeEnd && !this.isStartTimeInvalid && !this.isEndTimeInvalid;
         }
         return false;
