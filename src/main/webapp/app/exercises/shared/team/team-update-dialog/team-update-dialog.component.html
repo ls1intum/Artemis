@@ -45,7 +45,7 @@
                 [pattern]="shortNamePattern"
                 [(ngModel)]="pendingTeam.shortName"
                 (ngModelChange)="onTeamShortNameChanged($event)"
-                [readonly]="shortNameReadOnly"
+                [disabled]="shortNameReadOnly"
                 #shortName="ngModel"
             />
             @for (e of shortName.errors! | keyvalue | removekeys: ['required']; track e) {

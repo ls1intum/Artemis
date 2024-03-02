@@ -17,10 +17,6 @@
             </div>
             <hr />
             <div>
-                <div class="form-group" [hidden]="!course.id">
-                    <label for="id" jhiTranslate="global.field.id">ID</label>
-                    <input type="text" class="form-control" id="id" name="id" formControlName="id" readonly />
-                </div>
                 <div class="row">
                     <div class="col">
                         <div class="form-group">
@@ -42,7 +38,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.shortName" for="field_shortName">Short Name</label>
-                    <input required type="text" class="form-control" name="shortName" id="field_shortName" formControlName="shortName" [readOnly]="course.id" />
+                    <input required type="text" class="form-control" name="shortName" id="field_shortName" formControlName="shortName" [disabled]="!!course.id" />
                     @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
                         @if ((shortName.errors! | keyvalue | removekeys: ['required']).length > 0) {
                             <div class="alert alert-danger">

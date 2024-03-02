@@ -99,15 +99,7 @@
                                 <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeductionDescription' | artemisTranslate }}</p>
                                 <div class="form-inline">
                                     <div class="input-group w-auto">
-                                        <input
-                                            class="form-control"
-                                            type="number"
-                                            [(ngModel)]="verdictPointDeduction"
-                                            min="0"
-                                            max="100"
-                                            [readonly]="!!plagiarismCase.verdict"
-                                            [disabled]="!!plagiarismCase.verdict"
-                                        />
+                                        <input class="form-control" type="number" [(ngModel)]="verdictPointDeduction" min="0" max="100" [disabled]="!!plagiarismCase.verdict" />
                                         <span class="input-group-text">%</span>
                                     </div>
                                     <jhi-confirm-button
@@ -129,15 +121,7 @@
                                 <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.warningDescription' | artemisTranslate }}</p>
                                 <div class="form">
                                     <div class="form-group">
-                                        <textarea
-                                            rows="5"
-                                            cols="80"
-                                            maxlength="1000"
-                                            class="form-control"
-                                            [(ngModel)]="verdictMessage"
-                                            [disabled]="!!plagiarismCase.verdict"
-                                            [readonly]="!!plagiarismCase.verdict"
-                                        >
+                                        <textarea rows="5" cols="80" maxlength="1000" class="form-control" [(ngModel)]="verdictMessage" [disabled]="!!plagiarismCase.verdict">
                                         </textarea>
                                     </div>
                                     <jhi-confirm-button

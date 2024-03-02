@@ -45,8 +45,7 @@
                 step="0.5"
                 [(ngModel)]="feedback.credits"
                 (ngModelChange)="emitChanges()"
-                [readOnly]="feedback.gradingInstruction || readOnly"
-                [disabled]="readOnly"
+                [disabled]="!!feedback.gradingInstruction || readOnly"
                 [required]="!feedback.gradingInstruction"
             />
         </div>
