@@ -255,6 +255,37 @@ Please follow the below steps to add the LTI 1.3 component to the edX course uni
 #. As an instructor, edit the course unit where you want to add Artemis and select *Advanced* from the *Add New Component* section. Select *LTI Consumer*.
 #. Navigate *Edit* on the LTI consumer component that appeared.
 #. In the *LTI Version* field, select *LTI 1.3*.
+#. Save the component.
+#. You will see LTI component configuration details inside the unit. Copy *Access Token URL*, *Client ID*, *Access Token URL*, *Keyset URL*, *Access Token URL* details and provide them to your Artemis administrator.
+
+.. note::
+ Each LTI Consumer component in edX acts as an independent LTI consumer, meaning each LTI consumer must be defined to Artemis manually.
+
+Now we are back on the Artemis. Please follow the below steps to manually configure the edX component into Artemis:
+
+#. As an admin user, navigate to *Server Administration > LTI Configuration*.
+#. Click the *Add new platform configuration* button.
+#. Copy the following URLs that edX provides into the respective form fields on the Artemis:
+#. Copy *Access Token URL* from the edX component into the *Tool URL* field in Artemis.
+#. Copy *Client ID* into *Client ID* field.
+#. Copy *Access Token URL* into the *Token URI* field.
+#. Copy *Keyset URL* into the *JWKSet URI* field.
+#. Copy *Access Token URL* into the *Authorization URI* field.
+#. Set a platform name and save the configuration.
+#. Then, Artemis will direct you to the configured platforms list, and you will see new configuration details at the end of the list.
+#. Get *Registration ID* information from configured platforms table and append it at the end of the provide *Initiate Login URL*.
+#. #. Get *Redirect URI*, *Keyset URL*, *Deep linking URL* and *Registration ID* appended *Initiate Login URL* and provide it to your edX course instructor.
+
+.. figure:: lti/edx_artemis_mapping.png
+    :align: center
+    :width: 700
+    :alt: Edx LTI Consumer Settings
+
+Please follow below steps on edX to conclude registration process:
+
+#. As an instructor, edit the course unit where you want to add Artemis and select *Advanced* from the *Add New Component* section. Select *LTI Consumer*.
+#. Navigate *Edit* on the LTI consumer component that appeared.
+#. In the *LTI Version* field, select *LTI 1.3*.
 #. Copy the following URLs that Artemis provides into the respective form fields on the platform site:
 #. Copy *Redirect URI* into the *Registered Redirect URIs* field in the edX component.
 #. Copy *Initiate Login URL* into *Tool Initiate Login URL* field. After manually saving the edX component into Artemis, the admin must append the Artemis Registration ID to the end of the URL.
@@ -273,29 +304,6 @@ Please follow the below steps to add the LTI 1.3 component to the edX course uni
     :align: center
     :scale: 20%
     :alt: Edx LTI Consumer Settings
-
-.. note::
- Each LTI Consumer component in edX acts as an independent LTI consumer, meaning each LTI consumer must be defined to Artemis manually.
-
-Now we are back on the Artemis again. Please follow the below steps to manually configure the edX component into Artemis:
-
-#. As an admin user, navigate to *Server Administration > LTI Configuration*.
-#. Click the *Add new platform configuration* button.
-#. Copy the following URLs that edX provides into the respective form fields on the Artemis:
-#. Copy *Access Token URL* from the edX component into the *Tool URL* field in Artemis.
-#. Copy *Client ID* into *Client ID* field.
-#. Copy *Access Token URL* into the *Token URI* field.
-#. Copy *Keyset URL* into the *JWKSet URI* field.
-#. Copy *Access Token URL* into the *Authorization URI* field.
-#. Set a platform name and save the configuration.
-#. Then, Artemis will direct you to the configured platforms list, and you will see new configuration details at the end of the list.
-#. Get Registration ID information from this table for the newly configured platform and provide it to your edX course instructor.
-
-.. figure:: lti/edx_artemis_mapping.png
-    :align: center
-    :width: 700
-    :alt: Edx LTI Consumer Settings
-
 
 Sharing access to a course
 --------------------------
