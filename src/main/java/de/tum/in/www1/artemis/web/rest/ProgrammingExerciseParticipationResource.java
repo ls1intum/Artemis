@@ -252,7 +252,7 @@ public class ProgrammingExerciseParticipationResource {
     List<CommitInfoDTO> getCommitInfosForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, participation.getProgrammingExercise(), null);
-        return programmingExerciseParticipationService.getCommitInfos(participation, false);
+        return programmingExerciseParticipationService.getCommitInfos(participation);
     }
 
     /**
@@ -268,7 +268,7 @@ public class ProgrammingExerciseParticipationResource {
     public List<CommitInfoDTO> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        return programmingExerciseParticipationService.getCommitInfos(participation, false);
+        return programmingExerciseParticipationService.getCommitInfos(participation);
     }
 
     /**
@@ -282,20 +282,25 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("programming-exercise/{exerciseID}/commit-history/{repositoryType}")
     @EnforceAtLeastTutor
-    public List<CommitInfoDTO> getCommitHistoryForTemplateSolutionOrTestRepo(@PathVariable long exerciseID, @PathVariable String repositoryType) {
-        boolean isTestRepository = repositoryType.equals("TESTS");
+    public List<CommitInfoDTO> getCommitHistoryForTemplateSolutionOrTestRepo(@PathVariable long exerciseID, @PathVariable RepositoryType repositoryType) {
+        boolean isTestRepository = repositoryType.equals(RepositoryType.TESTS);
         ProgrammingExerciseParticipation participation;
-        if (!repositoryType.equals("TEMPLATE") && !repositoryType.equals("SOLUTION") && !repositoryType.equals("TESTS")) {
+        if (!repositoryType.equals(RepositoryType.SOLUTION) && !repositoryType.equals(RepositoryType.TEMPLATE) && !repositoryType.equals(RepositoryType.TESTS)) {
             throw new BadRequestAlertException("Invalid repository type", ENTITY_NAME, "invalidRepositoryType");
         }
-        else if (repositoryType.equals("TEMPLATE")) {
+        else if (repositoryType.equals(RepositoryType.TEMPLATE)) {
             participation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exerciseID);
         }
         else {
             participation = programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(exerciseID);
         }
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        return programmingExerciseParticipationService.getCommitInfos(participation, isTestRepository);
+        if (isTestRepository) {
+            return programmingExerciseParticipationService.getCommitInfosTestRepo(participation);
+        }
+        else {
+            return programmingExerciseParticipationService.getCommitInfos(participation);
+        }
     }
 
     /**
@@ -329,6 +334,10 @@ public class ProgrammingExerciseParticipationResource {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
+    }
+
+    public enum RepositoryType {
+        TEMPLATE, SOLUTION, TESTS
     }
 
 }

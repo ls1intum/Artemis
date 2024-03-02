@@ -470,23 +470,23 @@ public class ProgrammingExerciseParticipationService {
      * @param participation the participation for which to get the commits.
      * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
      */
-    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseParticipation participation, boolean isTestRepository) {
+    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseParticipation participation) {
         try {
-            if (isTestRepository) {
-                ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
-                return gitService.getCommitInfos(new VcsRepositoryUri(exercise.getTestRepositoryUri()));
-            }
-            else {
-                return gitService.getCommitInfos(participation.getVcsRepositoryUri());
-            }
+            return gitService.getCommitInfos(participation.getVcsRepositoryUri());
+        }
+        catch (GitAPIException e) {
+            log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
+            return List.of();
+        }
+    }
+
+    public List<CommitInfoDTO> getCommitInfosTestRepo(ProgrammingExerciseParticipation participation) {
+        ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
+        try {
+            return gitService.getCommitInfos(new VcsRepositoryUri(exercise.getTestRepositoryUri()));
         }
         catch (GitAPIException | URISyntaxException e) {
-            if (isTestRepository) {
-                log.error("Could not get commit infos for test repository with participation id {}", participation.getId());
-            }
-            else {
-                log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
-            }
+            log.error("Could not get commit infos for test repository with participation id {}", participation.getId());
             return List.of();
         }
     }

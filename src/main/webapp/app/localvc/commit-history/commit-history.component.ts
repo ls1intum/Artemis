@@ -68,19 +68,24 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             .pipe(
                 tap((exerciseRes) => {
                     this.exercise = exerciseRes.body!;
-                    console.log(this.exercise);
                     if (this.repositoryType === 'TEMPLATE') {
                         this.participation = this.exercise.templateParticipation!;
                         (this.participation as TemplateProgrammingExerciseParticipation).programmingExercise = this.exercise;
-                        this.participation.results?.forEach((result) => {
-                            result.participation = this.participation!;
-                        });
+                        this.participation.results = this.participation.submissions
+                            ?.filter((submission) => submission.results && submission.results?.length > 0)
+                            .map((submission) => {
+                                submission.results![0].participation = this.participation!;
+                                return submission.results![0];
+                            });
                     } else if (this.repositoryType === 'SOLUTION') {
                         this.participation = this.exercise.solutionParticipation!;
                         (this.participation as SolutionProgrammingExerciseParticipation).programmingExercise = this.exercise;
-                        this.participation.results?.forEach((result) => {
-                            result.participation = this.participation!;
-                        });
+                        this.participation.results = this.participation.submissions
+                            ?.filter((submission) => submission.results && submission.results?.length > 0)
+                            .map((submission) => {
+                                submission.results![0].participation = this.participation!;
+                                return submission.results![0];
+                            });
                     } else if (this.repositoryType === 'TESTS') {
                         this.isTestRepository = true;
                         this.participation = this.exercise.templateParticipation!;
