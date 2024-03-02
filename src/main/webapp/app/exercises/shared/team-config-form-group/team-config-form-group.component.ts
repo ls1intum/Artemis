@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, EventEmitter, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseMode } from 'app/entities/exercise.model';
@@ -38,9 +38,7 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
         },
     ];
 
-    // Subscriptions
-    minTeamSizeSubscription?: Subscription;
-    maxTeamSizeSubscription?: Subscription;
+    inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
     /**
      * Life cycle hook to indicate component creation is done
@@ -51,17 +49,18 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
     }
 
     ngAfterViewChecked() {
-        if (!this.minTeamSizeSubscription) {
-            this.minTeamSizeSubscription = this.minTeamSizeField?.valueChanges?.subscribe(() => this.calculateFormValid());
+        if (!(this.minTeamSizeField?.valueChanges as EventEmitter<number>)?.observed) {
+            this.inputFieldSubscriptions.push(this.minTeamSizeField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
-        if (!this.maxTeamSizeSubscription) {
-            this.maxTeamSizeSubscription = this.maxTeamsizeField?.valueChanges?.subscribe(() => this.calculateFormValid());
+        if (!(this.maxTeamsizeField?.valueChanges as EventEmitter<number>)?.observed) {
+            this.inputFieldSubscriptions.push(this.maxTeamsizeField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
     }
 
     ngOnDestroy() {
-        this.minTeamSizeSubscription?.unsubscribe();
-        this.maxTeamSizeSubscription?.unsubscribe();
+        for (const subscription of this.inputFieldSubscriptions) {
+            subscription?.unsubscribe();
+        }
     }
 
     calculateFormValid() {
