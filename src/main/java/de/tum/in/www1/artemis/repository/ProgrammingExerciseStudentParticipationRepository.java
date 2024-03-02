@@ -217,7 +217,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     /**
      * Remove the build plan id from all participations of the given exercise.
-     * This is used when the build plan is changed for an exercise and we want to remove the old build plan id from all participations.
+     * This is used when the build plan is changed for an exercise, and we want to remove the old build plan id from all participations.
      * By deleting the build plan in the CI platform and unsetting the build plan id in the participations, the build plan is effectively removed
      * and will be regenerated/recreated on the next submission.
      *
@@ -227,8 +227,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @Modifying
     @Query("""
             UPDATE ProgrammingExerciseStudentParticipation p
-            SET p.buildPlanId = NULL
+            SET p.buildPlanId = NULL, p.initializationState = de.tum.in.www1.artemis.domain.enumeration.InitializationState.INACTIVE
             WHERE p.exercise.id = :#{#exerciseId}
+                AND p.initializationState = de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED
             """)
     void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
 }
