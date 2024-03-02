@@ -168,9 +168,14 @@ Please note that Moodle admins also need admin privileges on the Artemis site.
 #. If prompted, choose *Register as a new external tool*. The platform will only prompt you if another Artemis tool from the same domain is already configured.
 #. After the page reloads, the tool card will be visible. To finalize the integration, click the *Activate* button. This action will complete the LTI 1.3 integration between Artemis and Moodle.
 
-.. figure:: lti/moodle_activate_lti.png
-    :align: center
-    :alt: Moodle - Activate Configuration
+    .. figure:: lti/moodle_activate_lti.png
+        :align: center
+        :alt: Moodle - Activate Configuration
+
+#. View configuration details of the tool card.
+#. Find the *Tool configuration usage* field and select *Show in activity chooser and as a preconfigured tool*
+#. Click on *Show more...* link to see further configuration settings. Set *Secure icon URL* field to Artemis icon URL.
+#. Save the recent changes.
 
 Manual Registration
 ^^^^^^^^^^^^^^^^^^^
@@ -207,6 +212,8 @@ Please follow the below steps for manual configuration:
 #. Copy *Initiate login URL* into the *Initiate login URL* field. After manually saving Moodle into Artemis, the admin must append the Artemis *Registration ID* to the end of the URL.
 #. Copy *Keyset URL* into the *Public keyset* field.
 #. Copy *Deep linking URL* into the *Content selection URL* field.
+#. Find the *Tool configuration usage* field and select *Show in activity chooser and as a preconfigured tool*
+#. Click on *Show more...* link to see further configuration settings. Set *Secure icon URL* field to Artemis icon URL.
 #. Set a tool name and save the configuration.
 #. On the resulting tool card, click *View configuration details* and provide these details to your Artemis administrator.
 
@@ -262,6 +269,11 @@ Please follow the below steps to add the LTI 1.3 component to the edX course uni
 #. Save the component.
 #. On the resulting component, you will find configuration details and provide these details to your Artemis administrator.
 
+.. figure:: lti/edx_lti_consumer_settings.png
+    :align: center
+    :scale: 20%
+    :alt: Edx LTI Consumer Settings
+
 .. note::
  Each LTI Consumer component in edX acts as an independent LTI consumer, meaning each LTI consumer must be defined to Artemis manually.
 
@@ -278,6 +290,11 @@ Now we are back on the Artemis again. Please follow the below steps to manually 
 #. Set a platform name and save the configuration.
 #. Then, Artemis will direct you to the configured platforms list, and you will see new configuration details at the end of the list.
 #. Get Registration ID information from this table for the newly configured platform and provide it to your edX course instructor.
+
+.. figure:: lti/edx_artemis_mapping.png
+    :align: center
+    :width: 700
+    :alt: Edx LTI Consumer Settings
 
 
 Sharing access to a course
