@@ -480,6 +480,12 @@ public class ProgrammingExerciseParticipationService {
         }
     }
 
+    /**
+     * Get the commits information for the test repository of the given participation's exercise.
+     *
+     * @param participation the participation for which to get the commits.
+     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
+     */
     public List<CommitInfoDTO> getCommitInfosTestRepo(ProgrammingExerciseParticipation participation) {
         ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
         try {
