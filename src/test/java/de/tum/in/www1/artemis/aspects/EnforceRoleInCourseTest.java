@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.aspects;
 
-import java.io.IOException;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +46,7 @@ class EnforceRoleInCourseTest extends AbstractSpringIntegrationIndependentTest {
     private static final String INSTRUCTOR_OF_OTHER_COURSE = OTHER_PREFIX + "instructor1";
 
     @BeforeEach
-    void setup() throws IOException {
+    void setup() {
         course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
 
         // create users of course
