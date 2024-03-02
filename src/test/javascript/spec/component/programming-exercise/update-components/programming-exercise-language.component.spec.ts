@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
@@ -49,6 +49,7 @@ describe('ProgrammingExerciseLanguageComponent', () => {
 
     it('should initialize', fakeAsync(() => {
         fixture.detectChanges();
+        tick();
         expect(comp).not.toBeNull();
     }));
 });
