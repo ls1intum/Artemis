@@ -205,10 +205,6 @@ public class SingleUserNotificationFactory {
         return notification;
     }
 
-    @NotificationPlaceholderClass("TUTORIAL_GROUP_DEREGISTRATION_STUDENT")
-    record MyPlaceholderClass(String name, String bla) {
-    }
-
     /**
      * Creates an instance of SingleUserNotification for message replies.
      *

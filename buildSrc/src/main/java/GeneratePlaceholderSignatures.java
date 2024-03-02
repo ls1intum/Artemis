@@ -7,6 +7,7 @@ import java.util.List;
 import com.google.gson.Gson;
 
 import io.github.classgraph.ClassGraph;
+import org.jetbrains.annotations.NotNull;
 
 public class GeneratePlaceholderSignatures {
 
@@ -24,24 +25,29 @@ public class GeneratePlaceholderSignatures {
      * Generates the signatures of the placeholder class files.
      *
      * @param inputClassDir where to find the compiled class files
-     * @param outputDir where to write the signature file to
+     * @param outputDir     where to write the signature file to
      * @throws IOException thrown if the signature file could not be written
      */
     public static void generateSignatures(File inputClassDir, File outputDir) throws IOException {
+        System.out.println("input dir" + inputClassDir);
         // Use ClassGraph to scan through the compiled class files
         try (var scanResult = new ClassGraph().overrideClasspath(inputClassDir).acceptPackages("de.tum.in.www1.artemis").enableAllInfo().scan()) {
             // Find the classes that are annotated as a notification placeholder file.
             var classes = scanResult.getClassesWithAnnotation(ANNOTATION_NAME);
+            if (classes.isEmpty())
+                throw new IllegalStateException("No classes were found to generate signature from. This might be a caching issue.");
 
             // create a signature for each annotated file.
             var signatures = classes.stream().map(placeholderClass -> {
-                Class<?> loaded = placeholderClass.loadClass();
-                var fieldDescriptions = Arrays.stream(loaded.getDeclaredFields()).map(field -> new FieldDescription(field.getName(), field.getType().getName())).toList();
+                    Class<?> loaded = placeholderClass.loadClass();
+                    var fieldDescriptions = Arrays.stream(loaded.getDeclaredFields()).map(field -> new FieldDescription(field.getName(), field.getType().getName())).sorted().toList();
 
-                var notificationType = (String) placeholderClass.getAnnotationInfo(ANNOTATION_NAME).getParameterValues().get("value").getValue();
+                    var notificationType = (String) placeholderClass.getAnnotationInfo(ANNOTATION_NAME).getParameterValues().get("value").getValue();
 
-                return new ClassSignature(notificationType, fieldDescriptions);
-            }).toList();
+                    return new ClassSignature(notificationType, fieldDescriptions);
+                })
+                .sorted()
+                .toList();
 
             // Signature as json
             var signature = new Gson().toJson(signatures);
@@ -55,9 +61,18 @@ public class GeneratePlaceholderSignatures {
         }
     }
 
-    private record ClassSignature(String notificationType, List<FieldDescription> fieldDescriptions) {
+    private record ClassSignature(String notificationType,
+                                  List<FieldDescription> fieldDescriptions) implements Comparable<ClassSignature> {
+        @Override
+        public int compareTo(@NotNull GeneratePlaceholderSignatures.ClassSignature classSignature) {
+            return notificationType.compareTo(classSignature.notificationType);
+        }
     }
 
-    private record FieldDescription(String fieldName, String fieldType) {
+    private record FieldDescription(String fieldName, String fieldType) implements Comparable<FieldDescription> {
+        @Override
+        public int compareTo(@NotNull GeneratePlaceholderSignatures.FieldDescription fieldDescription) {
+            return fieldName.compareTo(fieldDescription.fieldName);
+        }
     }
 }

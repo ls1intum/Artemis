@@ -532,7 +532,7 @@ tasks.register("generatePlaceholderRevisionSignatures", GenerateSignatureTask.cl
 }
 
 // Generate placeholder signatures on each compile.
-tasks.withType(JavaCompile.class).configureEach { task ->
+tasks.named("compileJava", JavaCompile.class) { task ->
     task.doLast {
         // Generate signatures of the current revision
         GeneratePlaceholderSignatures.generateSignatures(
