@@ -326,7 +326,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
                 ) AND userGroup IN :groupNames
             """, countQuery = """
-            SELECT DISTINCT user
+            SELECT COUNT(DISTINCT user)
             FROM User user
                 JOIN user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
@@ -356,7 +356,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
                 ) AND conversationParticipant.isModerator = TRUE
             """, countQuery = """
-            SELECT DISTINCT user
+            SELECT COUNT(DISTINCT user)
             FROM User user
                 JOIN user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
