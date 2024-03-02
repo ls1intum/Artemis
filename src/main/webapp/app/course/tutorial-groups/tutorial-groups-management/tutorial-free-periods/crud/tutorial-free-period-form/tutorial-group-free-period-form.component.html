@@ -35,23 +35,24 @@
                             timeFrameControl !== TimeFrame.Period
                                 ? ('artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate)
                                 : ('artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart' | artemisTranslate)
-                        }}</label
-                    >
+                        }}
+                    </label>
                     <div class="input-group">
-                        <input formControlName="startDate" required [owlDateTime]="startDate" class="d-none" />
                         <input
                             name="startDate"
                             id="startDate"
                             required
                             [class.is-invalid]="isStartDateInvalid"
-                            (focus)="markStartDateAsTouched()"
-                            [value]="startDateControl?.value | artemisDate: 'long-date' : false : undefined : true"
-                            [owlDateTimeTrigger]="startDate"
+                            [owlDateTimeTrigger]="startDatePicker"
+                            formControlName="startDate"
+                            required
+                            [owlDateTime]="startDatePicker"
                             readonly
                             class="form-control"
+                            jhiOwlDateTimeFormat
                         />
-                        <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="startDate"><fa-icon [icon]="faCalendarAlt" /></button>
-                        <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #startDate [pickerMode]="'dialog'" />
+                        <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="startDatePicker"><fa-icon [icon]="faCalendarAlt" /></button>
+                        <owl-date-time [firstDayOfWeek]="1" datePickerInput [pickerType]="'calendar'" #startDatePicker [pickerMode]="'dialog'" />
                     </div>
                     @if (startDateControl?.invalid && (startDateControl?.dirty || startDateControl?.touched) && startDateControl?.errors?.required) {
                         <div class="alert alert-danger">
@@ -63,22 +64,21 @@
                 @if (isFreePeriod) {
                     <label class="form-label" for="endDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate }}</label>
                     <div class="input-group">
-                        <input formControlName="endDate" [(ngModel)]="formData.endDate" required [owlDateTime]="endDate" class="d-none" />
                         <input
                             name="endDate"
                             id="endDate"
                             required
                             [class.is-invalid]="isEndDateInvalid"
-                            (focus)="markEndDateAsTouched()"
-                            [value]="endDateControl?.value | artemisDate: 'long-date' : false : undefined : true"
-                            [owlDateTimeTrigger]="endDate"
+                            [owlDateTimeTrigger]="endDatePicker"
+                            formControlName="endDate"
+                            required
+                            [owlDateTime]="endDatePicker"
                             readonly
                             class="form-control"
+                            jhiOwlDateTimeFormat
                         />
-                        <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="endDate">
-                            <fa-icon [icon]="faCalendarAlt" />
-                        </button>
-                        <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #endDate [pickerMode]="'dialog'" />
+                        <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="endDatePicker"><fa-icon [icon]="faCalendarAlt" /></button>
+                        <owl-date-time [firstDayOfWeek]="1" datePickerInput [pickerType]="'calendar'" #endDatePicker [pickerMode]="'dialog'" />
                     </div>
                     @if (endDateControl?.invalid && (endDateControl?.dirty || endDateControl?.touched) && endDateControl?.errors?.required) {
                         <div class="alert alert-danger">
@@ -92,36 +92,38 @@
                 } @else if (isFreePeriodWithinDay) {
                     <label class="form-label" for="startTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</label>
                     <div class="input-group">
-                        <input formControlName="startTime" [(ngModel)]="formData.startTime" required [owlDateTime]="startTime" class="d-none" />
                         <input
                             name="startTime"
                             id="startTime"
                             required
-                            (focus)="markStartTimeAsTouched()"
-                            [defaultValue]="startTimeControl?.value | artemisDate: 'time' : false : undefined : false"
-                            [owlDateTimeTrigger]="startTime"
-                            [owlDateTime]="startTime"
+                            [class.is-invalid]="isStartTimeInvalid"
+                            [owlDateTimeTrigger]="startTimePicker"
+                            formControlName="startTime"
+                            required
+                            [owlDateTime]="startTimePicker"
                             readonly
                             class="form-control"
+                            jhiOwlDateTimeFormat
                         />
-                        <owl-date-time [pickerType]="'timer'" #startTime [pickerMode]="'dialog'" />
+                        <owl-date-time timePickerInput [pickerType]="'timer'" #startTimePicker [pickerMode]="'dialog'" />
                     </div>
 
                     <label class="form-label" for="endTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</label>
                     <div class="input-group">
-                        <input formControlName="endTime" [(ngModel)]="formData.endTime" required [owlDateTime]="endTime" class="d-none" />
                         <input
                             name="endTime"
                             id="endTime"
                             required
-                            (focus)="markEndTimeAsTouched()"
-                            [defaultValue]="endTimeControl?.value | artemisDate: 'time' : false : undefined : false"
-                            [owlDateTimeTrigger]="endTime"
-                            [owlDateTime]="endTime"
+                            [class.is-invalid]="isEndTimeInvalid"
+                            [owlDateTimeTrigger]="endTimePicker"
+                            formControlName="endTime"
+                            required
+                            [owlDateTime]="endTimePicker"
                             readonly
                             class="form-control"
+                            jhiOwlDateTimeFormat
                         />
-                        <owl-date-time [pickerType]="'timer'" #endTime [pickerMode]="'dialog'" />
+                        <owl-date-time [pickerType]="'timer'" #endTimePicker [pickerMode]="'dialog'" />
                     </div>
                     @if ((endTimeControl?.dirty || startTimeControl?.dirty) && startTimeControl && !isStartBeforeEnd) {
                         <div class="alert alert-danger">

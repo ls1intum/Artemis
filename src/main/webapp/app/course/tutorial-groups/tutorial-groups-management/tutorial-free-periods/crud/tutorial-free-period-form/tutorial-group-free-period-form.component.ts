@@ -1,6 +1,12 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+import { OWL_DATE_TIME_FORMATS } from '@danielmoncada/angular-datetime-picker';
+
+export const MY_NATIVE_FORMATS = {
+    datePickerInput: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
+    timePickerInput: { hour: 'numeric', minute: 'numeric' },
+};
 
 export interface TutorialGroupFreePeriodFormData {
     startDate?: Date;
@@ -27,6 +33,7 @@ export enum TimeFrame {
     selector: 'jhi-tutorial-free-period-form',
     templateUrl: './tutorial-group-free-period-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [{ provide: OWL_DATE_TIME_FORMATS, useValue: MY_NATIVE_FORMATS }],
 })
 export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     @Input()
