@@ -127,7 +127,7 @@ public class CacheConfiguration {
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
 
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
-        config.setManagedContext(new ArtemisSpringManagedContext(applicationContext));
+        config.setManagedContext(new ArtemisSpringManagedContext(applicationContext, env));
         config.setClassLoader(applicationContext.getClassLoader());
 
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
