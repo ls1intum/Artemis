@@ -16,7 +16,8 @@ public class GitDiffReportParser {
     /**
      * Extracts the ProgrammingExerciseGitDiffEntry from the raw git-diff output
      *
-     * @param diff The raw git-diff output
+     * @param diff                 The raw git-diff output
+     * @param useAbsoluteLineCount Whether to use absolute line count or previous line count
      * @return The extracted ProgrammingExerciseGitDiffEntries
      */
     public List<ProgrammingExerciseGitDiffEntry> extractDiffEntries(String diff, boolean useAbsoluteLineCount) {
