@@ -6,7 +6,7 @@
         General Information
     </h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepMessage">Add some general information about the new exercise</p>
-    <div class="form-group" [hidden]="isImport">
+    <div class="form-group" [hidden]="isImport || !programmingExercise.id">
         <label for="id" jhiTranslate="global.field.id">ID</label>
         <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
     </div>
