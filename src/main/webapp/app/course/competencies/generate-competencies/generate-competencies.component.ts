@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -13,6 +13,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
@@ -51,19 +52,13 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
         private formBuilder: FormBuilder,
         private modalService: NgbModal,
         private artemisTranslatePipe: ArtemisTranslatePipe,
+        private translateService: TranslateService,
     ) {}
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
         });
-    }
-
-    /**
-     * Only allow to leave page after submitting or if no pending changes exist
-     */
-    canDeactivate(): boolean {
-        return this.submitted || (!this.isLoading && !(this.competencies.length > 0));
     }
 
     /**
@@ -81,7 +76,12 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
             )
             .subscribe({
                 next: (res) => {
-                    res.body?.forEach((competency) => this.addCompetencyToForm(competency));
+                    if (res.body?.length && res.body.length > 0) {
+                        this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: res.body.length });
+                        res.body?.forEach((competency) => this.addCompetencyToForm(competency));
+                    } else {
+                        this.alertService.warning('artemisApp.competency.generate.courseDescription.warning');
+                    }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -169,5 +169,26 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     //getter for form controls
     get competencies() {
         return this.form.controls.competencies;
+    }
+
+    /**
+     * Only allow to leave page after submitting or if no pending changes exist
+     */
+    canDeactivate(): boolean {
+        return this.submitted || (!this.isLoading && this.competencies.length === 0);
+    }
+
+    get canDeactivateWarning(): string {
+        return this.translateService.instant('pendingChanges');
+    }
+
+    /**
+     * Only allow to refresh the page if no pending changes exist
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: any) {
+        if (!this.canDeactivate()) {
+            event.returnValue = this.canDeactivateWarning;
+        }
     }
 }
