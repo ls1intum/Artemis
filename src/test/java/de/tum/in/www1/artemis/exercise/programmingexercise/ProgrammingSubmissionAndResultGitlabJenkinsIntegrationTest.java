@@ -149,13 +149,13 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
-        assertThat(statistics.getBuildCount()).isEqualTo(1);
-        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
-        assertThat(statistics.getTestDuration()).isEqualTo(10);
-        assertThat(statistics.getScaDuration()).isNull();
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(110);
-        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(1);
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
+        assertThat(statistics.buildCount()).isEqualTo(1);
+        assertThat(statistics.agentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.testDuration()).isEqualTo(10);
+        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.totalJobDuration()).isEqualTo(110);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(1);
     }
 
     @Test
@@ -178,13 +178,13 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
-        assertThat(statistics.getBuildCount()).isEqualTo(1);
-        assertThat(statistics.getAgentSetupDuration()).isNull();
-        assertThat(statistics.getTestDuration()).isEqualTo(20);
-        assertThat(statistics.getScaDuration()).isNull();
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(20);
-        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
+        assertThat(statistics.buildCount()).isEqualTo(1);
+        assertThat(statistics.agentSetupDuration()).isNull();
+        assertThat(statistics.testDuration()).isEqualTo(20);
+        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.totalJobDuration()).isEqualTo(20);
+        assertThat(statistics.dependenciesDownloadedCount()).isNull();
     }
 
     @Test
@@ -212,13 +212,13 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
-        assertThat(statistics.getBuildCount()).isEqualTo(1);
-        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
-        assertThat(statistics.getTestDuration()).isEqualTo(10);
-        assertThat(statistics.getScaDuration()).isEqualTo(11);
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(120);
-        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(2);
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
+        assertThat(statistics.buildCount()).isEqualTo(1);
+        assertThat(statistics.agentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.testDuration()).isEqualTo(10);
+        assertThat(statistics.scaDuration()).isEqualTo(11);
+        assertThat(statistics.totalJobDuration()).isEqualTo(120);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(2);
     }
 
     @Test
@@ -242,14 +242,14 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.PYTHON, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
         // Should not extract any statistics
-        assertThat(statistics.getBuildCount()).isZero();
-        assertThat(statistics.getAgentSetupDuration()).isNull();
-        assertThat(statistics.getTestDuration()).isNull();
-        assertThat(statistics.getScaDuration()).isNull();
-        assertThat(statistics.getTotalJobDuration()).isNull();
-        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+        assertThat(statistics.buildCount()).isZero();
+        assertThat(statistics.agentSetupDuration()).isNull();
+        assertThat(statistics.testDuration()).isNull();
+        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.totalJobDuration()).isNull();
+        assertThat(statistics.dependenciesDownloadedCount()).isNull();
     }
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {
