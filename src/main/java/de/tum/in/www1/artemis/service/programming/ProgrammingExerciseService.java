@@ -585,6 +585,7 @@ public class ProgrammingExerciseService {
             if (buildScriptGenerationService.isPresent()) {
                 String script = buildScriptGenerationService.get().getScript(updatedProgrammingExercise);
                 updatedProgrammingExercise.setBuildScript(script);
+                programmingExerciseRepository.save(updatedProgrammingExercise);
             }
         }
         else {
