@@ -15,12 +15,7 @@
             </div>
         </div>
     </div>
-    @if (audits?.length === 0) {
-        <div class="alert alert-warning">
-            <span jhiTranslate="audits.notFound">No audit found</span>
-        </div>
-    }
-    @if (audits && audits.length > 0) {
+    @if (audits?.length) {
         <div class="table-responsive">
             <table class="table table-sm table-striped" aria-describedby="audits-page-heading">
                 <thead>
@@ -61,8 +56,6 @@
                 </tbody>
             </table>
         </div>
-    }
-    @if (audits && audits.length > 0) {
         <div>
             <div class="row justify-content-center">
                 <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
@@ -79,6 +72,10 @@
                     [disabled]="!canLoad"
                 />
             </div>
+        </div>
+    } @else {
+        <div class="alert alert-warning">
+            <span jhiTranslate="audits.notFound">No audit found</span>
         </div>
     }
 </div>

@@ -50,7 +50,7 @@ export class AuditsComponent implements OnInit {
     }
 
     transition(): void {
-        if (this.calculateCanLoad()) {
+        if (this.canLoad) {
             this.router.navigate(['/admin/audits'], {
                 queryParams: {
                     page: this.page,
