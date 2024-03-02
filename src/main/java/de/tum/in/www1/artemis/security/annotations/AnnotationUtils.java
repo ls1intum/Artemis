@@ -24,15 +24,15 @@ public final class AnnotationUtils {
         final var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         T annotation = method.getAnnotation(clazz);
         if (annotation == null) {
-            annotation = method.getDeclaringClass().getAnnotation(clazz);
-        }
-        if (annotation == null) {
             for (Annotation a : method.getDeclaredAnnotations()) {
                 annotation = a.annotationType().getAnnotation(clazz);
                 if (annotation != null) {
                     break;
                 }
             }
+        }
+        if (annotation == null) {
+            annotation = method.getDeclaringClass().getAnnotation(clazz);
         }
         if (annotation == null) {
             for (Annotation a : method.getDeclaringClass().getDeclaredAnnotations()) {

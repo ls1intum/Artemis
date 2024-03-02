@@ -27,6 +27,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noCodeUnits;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
+import java.lang.annotation.Annotation;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
@@ -235,7 +236,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
             @Override
             public void check(JavaMethod method, ConditionEvents events) {
                 // Get annotation
-                var enforceRoleInCourseAnnotation = method.getAnnotationOfType(EnforceRoleInCourse.class);
+                var enforceRoleInCourseAnnotation = getAnnotation(EnforceRoleInCourse.class, method);
                 var courseIdFieldName = enforceRoleInCourseAnnotation.courseIdFieldName();
                 // Check if the method has a parameter with the given name
                 var owner = method.getOwner();
@@ -261,8 +262,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
             }
         };
 
-        var enforceRoleInCourse = methods().that().areAnnotatedWith(EnforceRoleInCourse.class).or().areDeclaredInClassesThat().areAnnotatedWith(EnforceRoleInCourse.class)
-                .should(haveParameterWithAnnotation);
+        var enforceRoleInCourse = methods().that().areAnnotatedWith(EnforceRoleInCourse.class).or().areMetaAnnotatedWith(EnforceRoleInCourse.class).or().areDeclaredInClassesThat()
+                .areAnnotatedWith(EnforceRoleInCourse.class).and().areDeclaredInClassesThat().areNotAnnotations().should(haveParameterWithAnnotation);
 
         enforceRoleInCourse.check(productionClasses);
     }
@@ -274,7 +275,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
             @Override
             public void check(JavaMethod method, ConditionEvents events) {
                 // Get annotation
-                var enforceRoleInExerciseAnnotation = method.getAnnotationOfType(EnforceRoleInExercise.class);
+                var enforceRoleInExerciseAnnotation = getAnnotation(EnforceRoleInExercise.class, method);
                 var exerciseIdFieldName = enforceRoleInExerciseAnnotation.exerciseIdFieldName();
                 // Check if the method has a parameter with the given name
                 var owner = method.getOwner();
@@ -300,10 +301,35 @@ class ArchitectureTest extends AbstractArchitectureTest {
             }
         };
 
-        var enforceRoleInExercise = methods().that().areAnnotatedWith(EnforceRoleInExercise.class).or().areDeclaredInClassesThat().areAnnotatedWith(EnforceRoleInExercise.class)
-                .should(haveParameterWithAnnotation);
+        var enforceRoleInExercise = methods().that().areAnnotatedWith(EnforceRoleInExercise.class).or().areMetaAnnotatedWith(EnforceRoleInExercise.class).or()
+                .areDeclaredInClassesThat().areAnnotatedWith(EnforceRoleInExercise.class).and().areDeclaredInClassesThat().areNotAnnotations().should(haveParameterWithAnnotation);
 
         enforceRoleInExercise.check(productionClasses);
+    }
+
+    private <T extends Annotation> T getAnnotation(Class<T> clazz, JavaMethod javaMethod) {
+        final var method = javaMethod.reflect();
+        T annotation = method.getAnnotation(clazz);
+        if (annotation == null) {
+            for (Annotation a : method.getDeclaredAnnotations()) {
+                annotation = a.annotationType().getAnnotation(clazz);
+                if (annotation != null) {
+                    break;
+                }
+            }
+        }
+        if (annotation == null) {
+            annotation = method.getDeclaringClass().getAnnotation(clazz);
+        }
+        if (annotation == null) {
+            for (Annotation a : method.getDeclaringClass().getDeclaredAnnotations()) {
+                annotation = a.annotationType().getAnnotation(clazz);
+                if (annotation != null) {
+                    break;
+                }
+            }
+        }
+        return annotation;
     }
 
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
