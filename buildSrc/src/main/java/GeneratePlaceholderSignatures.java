@@ -30,7 +30,6 @@ public class GeneratePlaceholderSignatures {
      * @throws IOException thrown if the signature file could not be written
      */
     public static void generateSignatures(File inputClassDir, File outputDir) throws IOException {
-        System.out.println("input dir" + inputClassDir);
         // Use ClassGraph to scan through the compiled class files
         try (var scanResult = new ClassGraph().overrideClasspath(inputClassDir).acceptPackages("de.tum.in.www1.artemis").enableAllInfo().scan()) {
             // Find the classes that are annotated as a notification placeholder file.
