@@ -78,6 +78,8 @@ public class LocalVCServletService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
+    private final LocalVCService localVCService;
+
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
@@ -97,7 +99,7 @@ public class LocalVCServletService {
             ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService) {
+            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService, LocalVCService localVCService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -109,6 +111,7 @@ public class LocalVCServletService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
+        this.localVCService = localVCService;
     }
 
     /**
@@ -120,29 +123,33 @@ public class LocalVCServletService {
      * @throws RepositoryNotFoundException if the repository could not be found.
      */
     public Repository resolveRepository(String repositoryPath) throws RepositoryNotFoundException {
+
+        long timeNanoStart = System.nanoTime();
         // Find the local repository depending on the name.
         Path repositoryDir = Paths.get(localVCBasePath, repositoryPath);
 
-        log.debug("Path to resolve repository from: {}", repositoryDir);
+        log.info("Path to resolve repository from: {}", repositoryDir);
         if (!Files.exists(repositoryDir)) {
             log.info("Could not find local repository with name {}", repositoryPath);
             throw new RepositoryNotFoundException(repositoryPath);
         }
 
         if (repositories.containsKey(repositoryPath)) {
-            log.debug("Retrieving cached local repository {}", repositoryPath);
+            log.info("Retrieving cached local repository {}", repositoryPath);
             Repository repository = repositories.get(repositoryPath);
             repository.incrementOpen();
+            log.info("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
             return repository;
         }
         else {
-            log.debug("Opening local repository {}", repositoryPath);
+            log.info("Opening local repository {}", repositoryPath);
             try (Repository repository = FileRepositoryBuilder.create(repositoryDir.toFile())) {
                 // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
                 repository.getConfig().setBoolean("http", null, "receivepack", true);
 
                 this.repositories.put(repositoryPath, repository);
                 repository.incrementOpen();
+                log.info("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
                 return repository;
             }
             catch (IOException e) {
@@ -204,13 +211,14 @@ public class LocalVCServletService {
     private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
 
         String basicAuthCredentials = checkAuthorizationHeader(authorizationHeader);
+        int separatorIndex = basicAuthCredentials.indexOf(":");
 
-        if (basicAuthCredentials.split(":").length != 2) {
+        if (separatorIndex == -1) {
             throw new LocalVCAuthException();
         }
 
-        String username = basicAuthCredentials.split(":")[0];
-        String password = basicAuthCredentials.split(":")[1];
+        String username = basicAuthCredentials.substring(0, separatorIndex);
+        String password = basicAuthCredentials.substring(separatorIndex + 1);
 
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, password);
@@ -251,7 +259,7 @@ public class LocalVCServletService {
                 repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryActionType == RepositoryActionType.WRITE, exercise, user, repositoryTypeOrUserName);
             }
             catch (AccessForbiddenException e) {
-                throw new LocalVCAuthException(e);
+                throw new LocalVCForbiddenException(e);
             }
             return;
         }
@@ -413,17 +421,9 @@ public class LocalVCServletService {
             }
         }
 
+        // Trigger the build for the solution repository.
+        // The template repository will be built, once the result for the solution repository is available. See LocalCIResultProcessingService.
         ciTriggerService.triggerBuild(solutionParticipation, commitHash, repositoryType);
-
-        try {
-            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST, repositoryType);
-        }
-        catch (EntityNotFoundException e) {
-            // Something went wrong while retrieving the template participation.
-            // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
-            // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
-            log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", exercise.getId(), e);
-        }
     }
 
     private ProgrammingSubmission getProgrammingSubmission(ProgrammingExercise exercise, String commitHash) {
@@ -508,5 +508,17 @@ public class LocalVCServletService {
 
         var author = revCommit.getAuthorIdent();
         return new Commit(commitHash, author.getName(), revCommit.getFullMessage(), author.getEmailAddress(), branch);
+    }
+
+    /**
+     * Determine the default branch of the given repository.
+     *
+     * @param repository the repository for which the default branch should be determined.
+     * @return the name of the default branch.
+     */
+    public String getDefaultBranchOfRepository(Repository repository) {
+        Path repositoryFolderPath = repository.getDirectory().toPath();
+        LocalVCRepositoryUri localVCRepositoryUri = getLocalVCRepositoryUri(repositoryFolderPath);
+        return localVCService.getDefaultBranchOfRepository(localVCRepositoryUri);
     }
 }

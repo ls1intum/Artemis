@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -560,7 +560,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_submissionsWithoutAssessments() throws Exception {
-        var validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        var validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         var course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         var exercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         var exampleSubmission = participationUtilService.generateExampleSubmission(validModel, exercise, true);
@@ -596,7 +596,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private List<User> findTutors(Course course) {
         List<User> tutors = new ArrayList<>();
-        Page<User> allUsers = userRepository.findAllWithGroups(Pageable.unpaged());
+        Page<User> allUsers = userRepository.findAllWithGroupsByIsDeletedIsFalse(Pageable.unpaged());
         for (User user : allUsers) {
             if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
                 tutors.add(user);

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 
@@ -21,11 +22,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -56,12 +57,13 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseService {
 
@@ -143,6 +145,10 @@ public class ProgrammingExerciseService {
 
     private final Optional<BuildScriptGenerationService> buildScriptGenerationService;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final ProfileService profileService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -155,7 +161,8 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
-            Optional<BuildScriptGenerationService> buildScriptGenerationService) {
+            Optional<BuildScriptGenerationService> buildScriptGenerationService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -185,6 +192,8 @@ public class ProgrammingExerciseService {
         this.irisSettingsService = irisSettingsService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.buildScriptGenerationService = buildScriptGenerationService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.profileService = profileService;
     }
 
     /**
@@ -211,57 +220,80 @@ public class ProgrammingExerciseService {
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException     If the template files couldn't be read
      */
-    @Transactional // TODO: apply the transaction on a smaller scope
-    // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) throws GitAPIException, IOException {
-        programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
-
         VersionControlService versionControl = versionControlService.orElseThrow();
-        programmingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
-        programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
-        initParticipations(programmingExercise);
-        setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
 
-        // Save participations to get the ids required for the webhooks
-        connectBaseParticipationsToExerciseAndSave(programmingExercise);
+        // The client sends a solution and template participation object (filled with null values) when creating a programming exercise.
+        // When saving the object leads to an exception at runtime.
+        // As the participations objects are just dummy values representing the data structure in the client, we set this to null.
+        // See https://github.com/ls1intum/Artemis/pull/7451/files#r1459228917
+        programmingExercise.setSolutionParticipation(null);
+        programmingExercise.setTemplateParticipation(null);
 
-        connectAuxiliaryRepositoriesToExercise(programmingExercise);
+        // We save once in order to generate an id for the programming exercise
+        var savedProgrammingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
 
-        programmingExerciseRepositoryService.setupExerciseTemplate(programmingExercise, exerciseCreator);
-        programmingSubmissionService.createInitialSubmissions(programmingExercise);
+        // Step 1: Setting constant facts for a programming exercise
+        savedProgrammingExercise.generateAndSetProjectKey();
+        savedProgrammingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
 
-        // make sure that plagiarism detection config does not use existing id
-        Optional.ofNullable(programmingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
+        // Step 2: Creating repositories for new exercise
+        programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
+        // Step 3: Initializing solution and template participation
+        initParticipations(savedProgrammingExercise);
 
-        // for LocalCI and Aeolus, we store the build plan definition in the database as a windfile
-        if (aeolusTemplateService.isPresent() && programmingExercise.getBuildPlanConfiguration() == null) {
+        // Step 4a: Setting build plan IDs and URLs for template and solution participation
+        setURLsAndBuildPlanIDsForNewExercise(savedProgrammingExercise);
+
+        // Step 4b: Connecting base participations with the exercise
+        connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
+
+        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+
+        // Step 4c: Connect auxiliary repositories
+        connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
+
+        // Step 5: Setup exercise template
+        programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator);
+
+        // Step 6: Create initial submission
+        programmingSubmissionService.createInitialSubmissions(savedProgrammingExercise);
+
+        // Step 7: Make sure that plagiarism detection config does not use existing id
+        Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
+
+        // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins or Bamboo as
+        // we want to use the default approach of Jenkinsfiles and Build Plans if no customizations are made
+        if (aeolusTemplateService.isPresent() && programmingExercise.getBuildPlanConfiguration() == null && !(profileService.isJenkins() || profileService.isBamboo())) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
             if (windfile != null) {
-                programmingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+                savedProgrammingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
             }
             else {
-                log.warn("No windfile for the settings of exercise {}", programmingExercise.getId());
+                log.warn("No windfile for the settings of exercise {}", savedProgrammingExercise.getId());
             }
         }
 
-        // Save programming exercise to prevent transient exception
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-
+        // Step 9: Create exercise channel
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
+        // Step 10: Setup build plans for template and solution participation
         setupBuildPlansForNewExercise(savedProgrammingExercise, isImportedFromFile);
-        // save to get the id required for the webhook
-        savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
+        savedProgrammingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(savedProgrammingExercise.getId());
 
+        // Step 11: Update task from problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
-        // The creation of the webhooks must occur after the initial push, because the participation is
-        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
+        // Step 12: Webhooks and scheduling
+        // Step 12a: Create web hooks for version control
         versionControl.addWebHooksForExercise(savedProgrammingExercise);
+        // Step 12b: Schedule operations
         scheduleOperations(savedProgrammingExercise.getId());
+        // Step 12c: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
-        return savedProgrammingExercise;
+
+        return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
 
     public void scheduleOperations(Long programmingExerciseId) {
@@ -400,7 +432,7 @@ public class ProgrammingExerciseService {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
             programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
             programmingExercise.setBuildScript(script);
-            programmingExercise = programmingExerciseRepository.save(programmingExercise);
+            programmingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
         }
 
         // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
@@ -483,6 +515,22 @@ public class ProgrammingExerciseService {
             @Nullable String notificationText) {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
+
+        if (continuousIntegrationService.isPresent()) {
+            if (!Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
+                if (updatedProgrammingExercise.getBuildPlanConfiguration() != null) {
+                    // we only update the build plan configuration if it has changed and is not null, otherwise we
+                    // do not have a valid exercise anymore
+                    continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
+                    continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
+                    continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
+                    resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
+                }
+                else {
+                    updatedProgrammingExercise.setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildPlanConfiguration());
+                }
+            }
+        }
 
         channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
@@ -716,7 +764,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Search for all programming exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * Search for all programming exercises fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged,
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
@@ -726,7 +774,7 @@ public class ProgrammingExerciseService {
      * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
+    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
             final User user) {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
@@ -747,7 +795,7 @@ public class ProgrammingExerciseService {
      * @param programmingLanguage The result will only include exercises in this language
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<ProgrammingExercise> getAllWithSCAOnPageWithSize(PageableSearchDTO<String> search, boolean isCourseFilter, boolean isExamFilter,
+    public SearchResultPageDTO<ProgrammingExercise> getAllWithSCAOnPageWithSize(SearchTermPageableSearchDTO<String> search, boolean isCourseFilter, boolean isExamFilter,
             ProgrammingLanguage programmingLanguage, User user) {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
@@ -848,5 +896,9 @@ public class ProgrammingExerciseService {
                 .map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).collect(Collectors.toSet());
         programmingExerciseTaskRepository.deleteAll(tasks);
         programmingExerciseSolutionEntryRepository.deleteAll(solutionEntries);
+    }
+
+    private void resetAllStudentBuildPlanIdsForExercise(ProgrammingExercise programmingExercise) {
+        programmingExerciseStudentParticipationRepository.unsetBuildPlanIdForExercise(programmingExercise.getId());
     }
 }

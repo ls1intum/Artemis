@@ -11,19 +11,20 @@ import {
     CourseCompetencyProgress,
     dtoToCompetencyRelation,
     getIcon,
-    getIconTooltip,
 } from 'app/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, forkJoin } from 'rxjs';
-import { faFileImport, faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
 import { Edge, Node } from '@swimlane/ngx-graph';
-import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CompetencyImportCourseComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/competency-import-course.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -33,6 +34,7 @@ import { CompetencyImportCourseComponent, ImportAllFromCourseResult } from 'app/
 export class CompetencyManagementComponent implements OnInit, OnDestroy {
     courseId: number;
     isLoading = false;
+    irisCompetencyGenerationEnabled = false;
     competencies: Competency[] = [];
     prerequisites: Competency[] = [];
 
@@ -50,20 +52,22 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     update$: Subject<boolean> = new Subject<boolean>();
 
     readonly getIcon = getIcon;
-    readonly getIconTooltip = getIconTooltip;
     readonly documentationType: DocumentationType = 'Competencies';
 
     // Icons
-    faPlus = faPlus;
-    faFileImport = faFileImport;
-    faTrash = faTrash;
-    faPencilAlt = faPencilAlt;
+    protected readonly faPlus = faPlus;
+    protected readonly faFileImport = faFileImport;
+    protected readonly faTrash = faTrash;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faRobot = faRobot;
 
     constructor(
         private activatedRoute: ActivatedRoute,
         private competencyService: CompetencyService,
         private alertService: AlertService,
         private modalService: NgbModal,
+        private profileService: ProfileService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     ngOnDestroy(): void {
@@ -75,6 +79,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             this.courseId = params['courseId'];
             if (this.courseId) {
                 this.loadData();
+                this.loadIrisEnabled();
             }
         });
     }
@@ -133,6 +138,17 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 this.loadData();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    private loadIrisEnabled() {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            const irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
+            if (irisEnabled) {
+                this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                    this.irisCompetencyGenerationEnabled = settings?.irisCompetencyGenerationSettings?.enabled ?? false;
+                });
+            }
         });
     }
 
@@ -208,28 +224,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 .subscribe({
                     next: (res: Competency) => {
                         this.prerequisites.push(res);
-                    },
-                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                });
-        });
-    }
-
-    /**
-     * Opens a modal for selecting a competency to import to the current course.
-     */
-    openImportModal() {
-        const modalRef = this.modalService.open(CompetencyImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.disabledIds = this.competencies.concat(this.prerequisites).map((competency) => competency.id);
-        modalRef.result.then((selectedCompetency: Competency) => {
-            this.competencyService
-                .import(selectedCompetency, this.courseId)
-                .pipe(
-                    filter((res: HttpResponse<Competency>) => res.ok),
-                    map((res: HttpResponse<Competency>) => res.body),
-                )
-                .subscribe({
-                    next: (res: Competency) => {
-                        this.competencies.push(res);
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
                 });

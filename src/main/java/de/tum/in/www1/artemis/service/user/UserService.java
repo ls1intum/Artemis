@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -52,6 +53,7 @@ import tech.jhipster.security.RandomUtil;
 /**
  * Service class for managing users.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class UserService {
 
@@ -618,7 +620,7 @@ public class UserService {
      */
     public void removeGroupFromUsers(String groupName) {
         log.info("Remove group {} from users", groupName);
-        Set<User> users = userRepository.findAllInGroupWithAuthorities(groupName);
+        Set<User> users = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(groupName);
         log.info("Found {} users with group {}", users.size(), groupName);
         for (User user : users) {
             user.getGroups().remove(groupName);

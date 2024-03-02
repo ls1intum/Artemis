@@ -22,7 +22,6 @@ import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from '../shared/modeling-editor.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
@@ -82,10 +81,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     bonusPointsSubscription?: Subscription;
     plagiarismSubscription?: Subscription;
     teamSubscription?: Subscription;
-
-    // Icons
-    faSave = faSave;
-    faBan = faBan;
 
     constructor(
         private alertService: AlertService,
@@ -242,7 +237,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 ),
                 empty:
                     !this.isExamMode &&
-                    (!this.modelingExercise.startDate || !this.modelingExercise.dueDate || !this.modelingExercise.assessmentDueDate || !this.modelingExercise.releaseDate),
+                    // if a dayjs object contains an empty date, it is considered "invalid"
+                    (!this.modelingExercise.startDate?.isValid() ||
+                        !this.modelingExercise.dueDate?.isValid() ||
+                        !this.modelingExercise.assessmentDueDate?.isValid() ||
+                        !this.modelingExercise.releaseDate?.isValid()),
             },
         ];
     }

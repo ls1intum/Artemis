@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
@@ -62,12 +64,14 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "localci", "localvc", "scheduling", "ldap-only", "lti", "aeolus", "buildagent" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "localci", "localvc", "scheduling", "ldap-only", "lti", "aeolus", PROFILE_BUILDAGENT })
+
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
-@TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}",
-        "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
-        "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
-        "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.user-management.use-external=false" })
+@TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.user-management.use-external=false",
+        "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}", "artemis.continuous-integration.specify-concurrent-builds=true",
+        "artemis.continuous-integration.concurrent-build-size=1", "artemis.continuous-integration.asynchronous=false",
+        "artemis.continuous-integration.build.images.java.default=dummy-docker-image", "artemis.continuous-integration.image-cleanup.enabled=true",
+        "spring.liquibase.enabled=true" })
 @ContextConfiguration(classes = LocalCITestConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
@@ -149,7 +153,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
      */
 
     @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) {
+    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked) {
         // Not implemented for local VC and local CI
     }
 

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.quiz;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.Duration;
@@ -10,12 +11,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -46,16 +49,13 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
+@Profile(PROFILE_CORE)
 @Service
 public class QuizScheduleService {
 
     private static final Logger log = LoggerFactory.getLogger(QuizScheduleService.class);
 
     private static final String HAZELCAST_PROCESS_CACHE_HANDLER = QuizProcessCacheTask.HAZELCAST_PROCESS_CACHE_TASK + "-handler";
-
-    private final IScheduledExecutorService threadPoolTaskScheduler;
-
-    private final IAtomicReference<ScheduledTaskHandler> scheduledProcessQuizSubmissions;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -69,11 +69,17 @@ public class QuizScheduleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final QuizCache quizCache;
+    private final HazelcastInstance hazelcastInstance;
 
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final Optional<LtiNewResultService> ltiNewResultService;
+
+    private QuizCache quizCache;
+
+    private IScheduledExecutorService threadPoolTaskScheduler;
+
+    private IAtomicReference<ScheduledTaskHandler> scheduledProcessQuizSubmissions;
 
     public QuizScheduleService(WebsocketMessagingService websocketMessagingService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
@@ -85,10 +91,15 @@ public class QuizScheduleService {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizMessagingService = quizMessagingService;
         this.quizStatisticService = quizStatisticService;
+        this.ltiNewResultService = ltiNewResultService;
+        this.hazelcastInstance = hazelcastInstance;
+    }
+
+    @PostConstruct
+    public void init() {
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
         this.quizCache = new QuizCache(hazelcastInstance);
-        this.ltiNewResultService = ltiNewResultService;
     }
 
     /**

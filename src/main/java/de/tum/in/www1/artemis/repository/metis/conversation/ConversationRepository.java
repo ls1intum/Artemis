@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import javax.transaction.Transactional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +18,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.GeneralConversationInfo;
 import de.tum.in.www1.artemis.domain.metis.conversation.UserConversationInfo;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Repository
 public interface ConversationRepository extends JpaRepository<Conversation, Long> {
 
@@ -47,6 +51,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
                 cp.isModerator,
                 cp.isFavorite,
                 cp.isHidden,
+                cp.isMuted,
                 cp.lastRead,
                 COUNT(p.id)
             )

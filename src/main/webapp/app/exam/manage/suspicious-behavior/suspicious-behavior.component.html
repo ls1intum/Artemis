@@ -1,6 +1,6 @@
 <h5>
     {{ 'artemisApp.examManagement.suspiciousBehavior.title' | artemisTranslate }}
-    <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+    <jhi-documentation-button [type]="documentationType" />
 </h5>
 <p>
     {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionDescription' | artemisTranslate }}
@@ -43,14 +43,13 @@
     <div class="form-group col-6">
         <div class="d-flex">
             <label for="ip-subnet" class="me-2">{{ 'artemisApp.examManagement.suspiciousBehavior.subnet' | artemisTranslate }}</label>
-            <jhi-help-icon text="artemisApp.examManagement.suspiciousBehavior.subnetHelp"></jhi-help-icon>
+            <jhi-help-icon text="artemisApp.examManagement.suspiciousBehavior.subnetHelp" />
         </div>
         <input type="text" class="form-control" id="ip-subnet" [(ngModel)]="ipSubnet" [pattern]="ipSubnetRegexPattern" required />
     </div>
 }
 <div class="mt-3 mb-3">
-    <jhi-button [title]="'artemisApp.examManagement.suspiciousBehavior.analyzeSessions'" [disabled]="!analyzeButtonEnabled" [isLoading]="analyzing" (onClick)="analyzeSessions()">
-    </jhi-button>
+    <jhi-button [title]="'artemisApp.examManagement.suspiciousBehavior.analyzeSessions'" [disabled]="!analyzeButtonEnabled" [isLoading]="analyzing" (onClick)="analyzeSessions()" />
 </div>
 <div class="column">
     @if (analyzed) {
@@ -69,5 +68,4 @@
     [anyPlagiarismCases]="anyPlagiarismCases"
     [courseId]="courseId"
     [examId]="examId"
->
-</jhi-plagiarism-cases-overview>
+/>

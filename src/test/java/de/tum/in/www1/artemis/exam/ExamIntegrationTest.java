@@ -61,6 +61,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -1455,8 +1456,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamForImportWithExercises_successful() throws Exception {
+        ExerciseGroup quizGroup = exam2.getExerciseGroups().get(0);
+        QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
+        QuizExerciseFactory.addAllQuestionTypesToQuizExercise(quiz);
+        exerciseRepository.save(quiz);
+
         Exam received = request.get("/api/exams/" + exam2.getId(), HttpStatus.OK, Exam.class);
         assertThat(received).isEqualTo(exam2);
+        assertThat(received.getExerciseGroups()).hasSize(1);
+        var group = received.getExerciseGroups().get(0);
+        assertThat(group.getExercises()).hasSize(1);
+        QuizExercise receivedExercise = (QuizExercise) group.getExercises().iterator().next();
+        // Details like the quiz questions are needed for importing and should be included
+        assertThat(receivedExercise.getQuizQuestions()).hasSize(4);
     }
 
     @Test
@@ -1485,7 +1497,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var exam = ExamFactory.generateExam(course1);
         exam.setTitle(title);
         examRepository.save(exam);
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
         final var result = request.getSearchResult("/api/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1).containsExactly(exam);
     }
@@ -1497,7 +1509,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var searchTerm = "A very distinct title that should only ever exist once in the database";
         newExam.setTitle(searchTerm);
         examRepository.save(newExam);
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(searchTerm);
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(searchTerm);
         final var result = request.getSearchResult("/api/exams?withExercises=true", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         List<Exam> foundExams = result.getResultsOnPage();
         assertThat(foundExams).hasSize(1).containsExactly(newExam);
@@ -1513,7 +1525,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setTitle(title);
         examRepository.save(exam);
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
         final var result = request.getSearchResult("/api/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(0);
     }
@@ -1528,7 +1540,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setTitle(title);
         examRepository.save(exam);
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
         final var result = request.getSearchResult("/api/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1).contains(exam);
     }
@@ -1536,14 +1548,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
     void testGetAllExamsOnPage_asTutor_failsWithForbidden() throws Exception {
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllExamsOnPage_asStudent_failsWithForbidden() throws Exception {
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
     }
     // </editor-fold>
@@ -1695,6 +1707,41 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(received.getCourse()).isEqualTo(course1);
         assertThat(received.getCourse()).isEqualTo(exam.getCourse());
         assertThat(received.getExerciseGroups()).hasSize(4);
+
+        List<ExerciseGroup> exerciseGroups = received.getExerciseGroups();
+        for (int i = 0; i < exerciseGroups.size(); i++) {
+            var exerciseGroup = exerciseGroups.get(i);
+            assertThat(exerciseGroup.getTitle()).isEqualTo("Group " + i);
+            assertThat(exerciseGroup.getIsMandatory()).isTrue();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithQuizExercise_successfulWithQuestions() throws Exception {
+        Exam exam = examUtilService.addExamWithExerciseGroup(course1, false);
+        ExerciseGroup quizGroup = exam.getExerciseGroups().get(0);
+        QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
+        quiz.addQuestions(QuizExerciseFactory.createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
+        quiz.addQuestions(QuizExerciseFactory.createShortAnswerQuestionWithRealisticText());
+        quiz.addQuestions(QuizExerciseFactory.createSingleChoiceQuestion());
+        quizGroup.addExercise(quiz);
+        exerciseRepository.save(quiz);
+
+        exam.setId(null);
+        final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
+        assertThat(received.getExerciseGroups()).hasSize(1);
+
+        ExerciseGroup receivedGroup = received.getExerciseGroups().get(0);
+        assertThat(receivedGroup.getExercises()).hasSize(1);
+        QuizExercise exercise = (QuizExercise) receivedGroup.getExercises().iterator().next();
+
+        // The directly returned exam should not contain details like the quiz questions
+        assertThat(exercise.getQuizQuestions()).isEmpty();
+
+        exercise = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(exercise.getId());
+        // Quiz questions should get imported into the exam
+        assertThat(exercise.getQuizQuestions()).hasSize(3);
     }
 
     @Test

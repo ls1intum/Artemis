@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -13,6 +15,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,13 +28,14 @@ import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CompetencyProgressService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class OnlineUnitResource {
 
     private static final Logger log = LoggerFactory.getLogger(OnlineUnitResource.class);
@@ -78,7 +82,7 @@ public class OnlineUnitResource {
      * @param onlineUnit the online unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated onlineUnit
      */
-    @PutMapping("/lectures/{lectureId}/online-units")
+    @PutMapping("lectures/{lectureId}/online-units")
     @EnforceAtLeastEditor
     public ResponseEntity<OnlineUnit> updateOnlineUnit(@PathVariable Long lectureId, @RequestBody OnlineUnit onlineUnit) {
         log.debug("REST request to update an online unit : {}", onlineUnit);
@@ -104,7 +108,7 @@ public class OnlineUnitResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new online unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/lectures/{lectureId}/online-units")
+    @PostMapping("lectures/{lectureId}/online-units")
     @EnforceAtLeastEditor
     public ResponseEntity<OnlineUnit> createOnlineUnit(@PathVariable Long lectureId, @RequestBody final OnlineUnit onlineUnit) throws URISyntaxException {
         log.debug("REST request to create onlineUnit : {}", onlineUnit);
@@ -139,7 +143,7 @@ public class OnlineUnitResource {
      * @param link The link (as request parameter) to the website to fetch the metadata from
      * @return A DTO with link, meta title, and meta description
      */
-    @GetMapping("/lectures/online-units/fetch-online-resource")
+    @GetMapping("lectures/online-units/fetch-online-resource")
     @EnforceAtLeastEditor
     public OnlineResourceDTO getOnlineResource(@RequestParam("link") String link) {
         try {

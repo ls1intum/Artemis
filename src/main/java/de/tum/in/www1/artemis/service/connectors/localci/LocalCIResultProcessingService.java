@@ -20,6 +20,8 @@ import com.hazelcast.cp.lock.FencedLock;
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.BuildJobResult;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
@@ -31,15 +33,17 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultQueueItem;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Profile("localci")
 @Service
 public class LocalCIResultProcessingService {
 
-    private final HazelcastInstance hazelcastInstance;
+    private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
 
-    private final IQueue<ResultQueueItem> resultQueue;
+    private final HazelcastInstance hazelcastInstance;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
@@ -49,29 +53,32 @@ public class LocalCIResultProcessingService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final FencedLock lock;
-
     private final ParticipationRepository participationRepository;
+
+    private final ProgrammingTriggerService programmingTriggerService;
+
+    private IQueue<ResultQueueItem> resultQueue;
+
+    private FencedLock lock;
 
     private UUID listenerId;
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
-
     public LocalCIResultProcessingService(HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository) {
+            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService) {
         this.hazelcastInstance = hazelcastInstance;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
-        this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
         this.buildJobRepository = buildJobRepository;
-        this.lock = this.hazelcastInstance.getCPSubsystem().getLock("resultQueueLock");
+        this.programmingTriggerService = programmingTriggerService;
     }
 
     @PostConstruct
-    public void addListener() {
+    public void init() {
+        this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
+        this.lock = this.hazelcastInstance.getCPSubsystem().getLock("resultQueueLock");
         this.listenerId = resultQueue.addItemListener(new ResultQueueListener(), true);
     }
 
@@ -150,7 +157,21 @@ public class LocalCIResultProcessingService {
 
                 saveFinishedBuildJob(buildJob, BuildJobResult.FAILED);
             }
+        }
 
+        // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository
+        if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
+            log.debug("Triggering build of template repository for solution build with id {}", buildJob.id());
+            try {
+                programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(), buildJob.buildConfig().commitHash(), SubmissionType.TEST,
+                        buildJob.repositoryInfo().triggeredByPushTo());
+            }
+            catch (EntityNotFoundException e) {
+                // Something went wrong while retrieving the template participation.
+                // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
+                // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
+                log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
+            }
         }
     }
 
@@ -182,5 +203,16 @@ public class LocalCIResultProcessingService {
         public void itemRemoved(ItemEvent<ResultQueueItem> event) {
 
         }
+    }
+
+    /**
+     * Checks if the given build job is a solution build of a test or auxiliary push.
+     *
+     * @param buildJob the build job to check
+     * @return true if the build job is a solution build of a test or auxiliary push, false otherwise
+     */
+    private boolean isSolutionBuildOfTestOrAuxPush(LocalCIBuildJobQueueItem buildJob) {
+        return buildJob.repositoryInfo().repositoryType() == RepositoryType.SOLUTION
+                && (buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.TESTS || buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.AUXILIARY);
     }
 }

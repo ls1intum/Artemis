@@ -1,15 +1,20 @@
 package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -19,17 +24,16 @@ import com.github.dockerjava.api.exception.BadRequestException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.repository.BuildJobRepository;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 
 /**
  * Service for Docker related operations in local CI
  */
 @Service
-@Profile("buildagent")
-
+@Profile(PROFILE_BUILDAGENT)
 public class LocalCIDockerService {
 
     private final ReentrantLock lock = new ReentrantLock();
@@ -38,7 +42,7 @@ public class LocalCIDockerService {
 
     private final DockerClient dockerClient;
 
-    private final BuildJobRepository buildJobRepository;
+    private final HazelcastInstance hazelcastInstance;
 
     @Value("${artemis.continuous-integration.image-cleanup.enabled:false}")
     private Boolean imageCleanupEnabled;
@@ -46,9 +50,30 @@ public class LocalCIDockerService {
     @Value("${artemis.continuous-integration.image-cleanup.expiry-days:2}")
     private int imageExpiryDays;
 
-    public LocalCIDockerService(DockerClient dockerClient, BuildJobRepository buildJobRepository) {
+    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
+    private String buildContainerPrefix;
+
+    public LocalCIDockerService(DockerClient dockerClient, HazelcastInstance hazelcastInstance) {
         this.dockerClient = dockerClient;
-        this.buildJobRepository = buildJobRepository;
+        this.hazelcastInstance = hazelcastInstance;
+    }
+
+    /**
+     * Removes all stranded build containers after the application has started
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
+        // NOTE: we delay this after startup, because this can take several seconds and can block the startup of the build agent otherwise
+        // remove all stranded build containers after 10s
+        var executor = Executors.newScheduledThreadPool(1);
+        executor.schedule(() -> {
+            log.info("Start cleanup stranded build containers");
+            var buildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
+                    .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).toList();
+            log.info("Found {} stranded build containers", buildContainers.size());
+            buildContainers.forEach(container -> dockerClient.removeContainerCmd(container.getId()).withForce(true).exec());
+            log.info("Cleanup stranded build containers done");
+        }, 10, TimeUnit.SECONDS);
     }
 
     /**
@@ -101,6 +126,9 @@ public class LocalCIDockerService {
             return;
         }
 
+        // Get map of docker images and their last build dates
+        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+
         // Get list of all running containers
         List<Container> containers = dockerClient.listContainersCmd().exec();
 
@@ -113,25 +141,25 @@ public class LocalCIDockerService {
         // Filter out images that are in use
         List<Image> unusedImages = allImages.stream().filter(image -> !imageIdsInUse.contains(image.getId())).toList();
 
-        List<String> imageName = new ArrayList<>();
+        Set<String> imageNames = new HashSet<>();
         for (Image image : unusedImages) {
             String[] imageRepoTags = image.getRepoTags();
             if (imageRepoTags != null) {
-                imageName.addAll(Arrays.asList(imageRepoTags));
+                Collections.addAll(imageNames, imageRepoTags);
             }
         }
 
-        Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findLastBuildDatesForDockerImages(imageName);
-
         // Delete images that have not been used for more than imageExpiryDays days
-        for (DockerImageBuild dockerImageBuild : lastBuildDatesForDockerImages) {
-            if (dockerImageBuild.lastBuildCompletionDate().isBefore(ZonedDateTime.now().minus(imageExpiryDays, ChronoUnit.DAYS))) {
-                log.info("Deleting docker image {}", dockerImageBuild.dockerImage());
-                try {
-                    dockerClient.removeImageCmd(dockerImageBuild.dockerImage()).exec();
-                }
-                catch (NotFoundException e) {
-                    log.warn("Docker image {} not found", dockerImageBuild.dockerImage());
+        for (String dockerImage : dockerImageCleanupInfo.keySet()) {
+            if (imageNames.contains(dockerImage)) {
+                if (dockerImageCleanupInfo.get(dockerImage).isBefore(ZonedDateTime.now().minus(imageExpiryDays, ChronoUnit.DAYS))) {
+                    log.info("Deleting docker image {}", dockerImage);
+                    try {
+                        dockerClient.removeImageCmd(dockerImage).exec();
+                    }
+                    catch (NotFoundException e) {
+                        log.warn("Docker image {} not found during cleanup", dockerImage);
+                    }
                 }
             }
         }

@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +20,7 @@ import de.tum.in.www1.artemis.domain.User;
 /**
  * Spring Data repository for the NotificationSetting entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface NotificationSettingRepository extends JpaRepository<NotificationSetting, Long> {
 
@@ -64,7 +67,7 @@ public interface NotificationSettingRepository extends JpaRepository<Notificatio
     @Query("""
             SELECT cp.conversation.id
             FROM ConversationParticipant cp
-            WHERE cp.user.id = :userId AND cp.isHidden IS TRUE
+            WHERE cp.user.id = :userId AND (cp.isMuted IS TRUE OR cp.isHidden IS TRUE)
             """)
     Set<Long> findMutedConversations(@Param("userId") long userId);
 }

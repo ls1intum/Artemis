@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.hestia;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -25,6 +27,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 /**
  * REST controller for managing {@link CodeHint}.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class CodeHintResource {
@@ -102,6 +105,7 @@ public class CodeHintResource {
      * @param codeHintId The id of the code hint
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated code hint
      */
+    // TODO: move into some IrisResource
     @Profile("iris")
     @PostMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/generate-description")
     @EnforceAtLeastEditor

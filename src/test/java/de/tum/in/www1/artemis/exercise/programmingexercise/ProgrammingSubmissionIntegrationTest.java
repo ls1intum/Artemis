@@ -8,9 +8,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -42,8 +40,8 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.TestConstants;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -61,7 +59,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository submissionRepository;
+    private ProgrammingSubmissionTestRepository submissionRepository;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
@@ -147,7 +145,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
         ModelingExercise classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         ModelingSubmission modelingSubmission = ParticipationFactory
-                .generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
+                .generateModelingSubmission(TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, login);
 
         String url = "/api/programming-submissions/" + modelingSubmission.getParticipation().getId() + "/trigger-build";
@@ -451,7 +449,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
         ModelingExercise classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         ModelingSubmission modelingSubmission = ParticipationFactory
-                .generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
+                .generateModelingSubmission(TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, login);
 
         String url = "/api/programming-submissions/" + modelingSubmission.getParticipation().getId() + "/trigger-failed-build";
@@ -630,8 +628,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // Check that grading instructions are loaded
         ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();
-        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).hasSize(1);
-        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).hasSize(3);
+        assertThat(exercise.getGradingCriteria().stream().map(GradingCriterion::getStructuredGradingInstructions).map(Set::size)).containsExactlyInAnyOrder(1, 1, 3);
     }
 
     @Test
@@ -759,8 +756,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // Check that grading instructions are loaded
         ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();
-        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).hasSize(1);
-        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).hasSize(3);
+        assertThat(exercise.getGradingCriteria().stream().map(GradingCriterion::getStructuredGradingInstructions).map(Set::size)).containsExactlyInAnyOrder(1, 1, 3);
     }
 
     @Test
