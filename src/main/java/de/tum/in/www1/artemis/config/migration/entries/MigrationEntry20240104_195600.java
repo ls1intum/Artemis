@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.config.migration.entries;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,6 +52,8 @@ public class MigrationEntry20240104_195600 extends ProgrammingExerciseMigrationE
 
     private final Environment environment;
 
+    private final CopyOnWriteArraySet<String> noDockerImageExercises = new CopyOnWriteArraySet<>();
+
     public MigrationEntry20240104_195600(ProgrammingExerciseRepository programmingExerciseRepository, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             Optional<AeolusBuildScriptGenerationService> aeolusBuildScriptGenerationService,
@@ -98,8 +101,7 @@ public class MigrationEntry20240104_195600 extends ProgrammingExerciseMigrationE
             log.info("Will migrate {} solution participations in batch.", solutionParticipationPage.getNumberOfElements());
             executorService.submit(() -> {
                 migrateSolutions(solutionParticipationPage.toList());
-                counter.addAndGet(solutionParticipationPage.getNumberOfElements());
-
+                log.info("Migrated {}/{} solution participations so far.", counter.addAndGet(solutionParticipationPage.getNumberOfElements()), solutionCount);
             });
         }
 
@@ -108,6 +110,10 @@ public class MigrationEntry20240104_195600 extends ProgrammingExerciseMigrationE
         shutdown(executorService, TIMEOUT_IN_HOURS, ERROR_MESSAGE);
         log.info("Finished migrating programming exercises and student participations");
         evaluateErrorList(programmingExerciseRepository);
+
+        if (!noDockerImageExercises.isEmpty()) {
+            log.info("The following exercises have no docker image set and need to be fixed manually: {}", noDockerImageExercises);
+        }
     }
 
     /**
@@ -122,10 +128,10 @@ public class MigrationEntry20240104_195600 extends ProgrammingExerciseMigrationE
         }
         for (var solutionParticipation : solutionParticipations) {
             try {
+                ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(solutionParticipation);
+                String exerciseId = exercise != null ? exercise.getId().toString() : "unknown";
                 Windfile windfile = aeolusBuildScriptGenerationService.get().translateBuildPlan(solutionParticipation.getBuildPlanId());
                 if (windfile == null) {
-                    ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(solutionParticipation);
-                    String exerciseId = exercise != null ? exercise.getId().toString() : "unknown";
                     log.error("Failed to migrate solution participation with id {} of exercise {}, because the windfile is null", solutionParticipation.getId(), exerciseId);
                     if (exercise != null) {
                         var template = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId());
@@ -152,9 +158,10 @@ public class MigrationEntry20240104_195600 extends ProgrammingExerciseMigrationE
                     continue;
                 }
                 if (windfile.getMetadata().getDocker() == null) {
+                    noDockerImageExercises.add(exerciseId);
                     log.info(
-                            "Migrating solution participation with id {} but the docker image is null, the build plan will be translated but not be functional as an instructor needs to add a docker image",
-                            solutionParticipation.getId());
+                            "Migrating solution participation with id {} of exercise {} but the docker image is null, the build plan will be translated but not be functional as an instructor needs to add a docker image",
+                            solutionParticipation.getId(), exerciseId);
                 }
                 // we don't need the following fields in the windfile
                 windfile.setRepositories(null);
