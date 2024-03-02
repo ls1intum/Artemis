@@ -144,6 +144,7 @@ public class SecurityConfiguration {
                 .requestMatchers(new AntPathRequestMatcher(HttpMethod.POST.name(), "/api/programming-exercises/test-cases-changed/*")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/websocket/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/.well-known/jwks.json")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/git/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/management/prometheus/**")).access((authentication, context) ->
                     new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
                 .requestMatchers(new AntPathRequestMatcher("/**")).authenticated()
