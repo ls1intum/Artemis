@@ -28,7 +28,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     commits: CommitInfo[];
     commitsInfoSubscription: Subscription;
     participationSub: Subscription;
-    differentParticipationSub: Subscription;
+
     exercise: ProgrammingExercise;
 
     isTestRepository = false;
@@ -43,7 +43,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
         this.paramSub?.unsubscribe();
         this.commitsInfoSubscription?.unsubscribe();
         this.participationSub?.unsubscribe();
-        this.differentParticipationSub?.unsubscribe();
     }
 
     /**
@@ -63,7 +62,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     }
 
     private loadDifferentParticipation() {
-        this.programmingExerciseService
+        this.participationSub = this.programmingExerciseService
             .findWithTemplateAndSolutionParticipation(this.exerciseId, true)
             .pipe(
                 tap((exerciseRes) => {
