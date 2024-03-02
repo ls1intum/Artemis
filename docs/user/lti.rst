@@ -71,9 +71,9 @@ Additionally, we outline the capabilities available to different user roles with
 
 This guide is structured as follows:
 
-#. Overview: Begin this section by understanding the importance of LTI and its role in enhancing the interoperability between Artemis and LMS platforms.
+#. Overview: Begin this section by understanding the importance of LTI and role in enhancing the interoperability between Artemis and LMS platforms.
 #. Preparation Steps: Before proceeding with LTI integration, ensure your Artemis platform is prepared by following the `Enabling Online Course`_ section.
-#. Registration Process: If your LMS supports `Dynamic Registration`_ or requires `Manual Registration`_, follow the specific steps outlined in the `Register Artemis with the platform`_ section.
+#. Registration Process: If your LMS supports `Dynamic Registration`_ or requires `Manual Registration`_, follow the steps outlined in the `Register Artemis with the platform`_ section.
 #. Linking Courses and Exercises: The `Sharing access to a course`_ and `Link creation via Deep Linking`_ sections provide detailed instructions for linking Artemis exercises with your LMS, ensuring a seamless experience for students.
 #. Platform-Specific Instructions: For detailed instructions tailored to Moodle or edX, refer to the respective sections that guide you through each step of the configuration process.
 #. Common Issues: Should you encounter any challenges, the `Common Issues`_ section addresses typical problems and their solutions.
@@ -100,7 +100,7 @@ As an instructor to enable the Online Course setting in Artemis, follow the step
 #. From the list of available courses, navigate to the course you wish to configure for LTI integration.
 #. You will find an |course_edit| button on the course overview page at the top right corner. Clicking this will allow you to modify various course settings.
 #. As you scroll through the course settings, you will find an *Online Course* checkbox. This particular setting is essential for enabling LTI configurability.
-#. To finalize the process, check the *Online Course* checkbox. You are activating the LTI configuration settings for that specific course by doing so. Make sure to save any changes made.
+#. To finalize the process, check the *Online Course* checkbox. You are activating the LTI configuration settings for that specific course. Make sure to save any changes made.
 
 .. figure:: lti/enable_onlinecourse.png
     :align: center
@@ -330,9 +330,6 @@ Deep Linking launches require an existing instructor role account in Artemis. Pl
 Deep Linking for Moodle
 """""""""""""""""""""""
 
-
-
-
 #. As a Moodle course instructor, navigate to the relevant course
 #. Activate the *Edit Mode* in the top right corner.
 #. Select *Add an activity or resource* under the relevant topic.
@@ -383,9 +380,9 @@ The process involves two primary steps:
 Retrieve LTI 1.3 Launch URL from Artemis
 """""""""""""""""""""""""""""""""""""""""""""
 
-#. As an instructor navigate to the |course-management| to view all your courses.
-#. From the list of available courses, select the one online course containing the exercise you would like to link to the platform.
-#. Once inside the course settings, select *LTI Configuration* tab.
+#. As an instructor, navigate to the |course-management| to view all your courses.
+#. Select the one online course containing the exercise you would like to link to the platform from the list of available courses.
+#. Once inside the course settings, select the *LTI Configuration* tab.
 #. Inside the LTI Configuration, locate and click on the Exercises tab. This tab lists all the exercises available for the course.
 #. For each exercise listed, there is an associated LTI 1.3 Launch URL. This URL is crucial for linking the exercise. Find the exercise you wish to link and copy its LTI 1.3 Launch URL.
 
@@ -399,7 +396,7 @@ Link exercise to Moodle
 
 With the LTI 1.3 Launch URL copied, you can now link the exercise in Moodle:
 
-#. As a Moodle instructor navigate to the course where you want to link the Artemis exercise.
+#. As a Moodle instructor, navigate to the course where you want to link the Artemis exercise.
 #. Once inside the course, turn on the Edit Mode. This mode allows you to make changes and add resources to the course.
 
     .. figure:: lti/moodle_editmode.png
@@ -415,7 +412,7 @@ With the LTI 1.3 Launch URL copied, you can now link the exercise in Moodle:
         :alt: Moodle - Add External Tool
 
 #. In the settings for the external tool, you will find a field labeled Resource URL. Paste the previously copied LTI 1.3 Launch URL from Artemis into this field.
-#. After entering the URL, click the Save and Return to course button to finalize the addition. The linked Artemis exercise should now be accessible directly from the Moodle course.
+#. After entering the URL, click the *Save and Return to Course* button to finalize the addition. The linked Artemis exercise should now be accessible directly from the Moodle course.
 
 .. figure:: lti/moodle_add_external_tool_page.png
     :align: center
@@ -429,14 +426,12 @@ Link exercise to edX
 #. Locate the unit and the corresponding LTI component in Studio.
 #. Click on *Edit* for the LTI component.
 #. Find the *Tool URL* field and paste the previously copied LTI 1.3 Launch URL from Artemis into this field.
-#. Save the LTI Component and click on *Publish* for make LTI Component accessible for the students.
+#. Save the LTI Component and click on *Publish* to make LTI Component accessible for the students.
 
 .. figure:: lti/edx_add_exercise_link.png
     :align: center
     :width: 700
     :alt: edX - Add Tool URL
-
-
 
 Common Issues
 -------------
@@ -444,13 +439,13 @@ Common Issues
 Issue: No Configuration Card Appears After Dynamic Registration in Moodle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If, as a Moodle administrator, you initiate the dynamic registration process with Artemis and find that no configuration card appears, it's important to verify your permissions.
-Please reach out to your Artemis administrator to ensure you have the necessary privileges for conducting dynamic registration successfully.
+As a Moodle administrator, verifying your permissions is essential if you initiate the dynamic registration process with Artemis and find that no configuration card appears.
+Please get in touch with your Artemis administrator to ensure you have the privileges to successfully conduct dynamic registration.
 
 Issue: Blank Page on Exercise Launch in edX
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When instructors or students attempt to launch an Artemis exercise from edX and encounter a blank page, it typically indicates a configuration issue with the LTI provider settings within edX. To resolve this, edX super administrators must ensure that the Artemis platform is correctly configured as an LTI provider for the affected course and any relevant LTI blocks.
+When instructors or students attempt to launch an Artemis exercise from edX and encounter a blank page, it typically indicates a configuration issue with the LTI provider settings within edX. To resolve this, edX super administrators must ensure the Artemis platform is correctly configured as an LTI provider for the affected course and any relevant LTI blocks.
 
 Resolution Steps:
 
@@ -458,7 +453,7 @@ Resolution Steps:
 #. Within the Studio Administration, locate the option to change the course's live configuration settings.
 #. Select *Add Course Live Configuration*.
 #. Fill Course Key, LTI Configuration.
-#. Fill LTI provider as the Artemis platform's link. This ensures that edX recognizes Artemis as a trusted source for launching external exercises.
+#. Fill in the LTI provider as the Artemis platform's link. This step ensures that edX recognizes Artemis as a trusted source for launching external exercises.
 #. For the course and each LTI block where the issue is observed, add a new LTI provider configuration.
 
 .. figure:: lti/edx_change_course_live.png
