@@ -111,7 +111,7 @@
                     <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime">Working Time</label>
                     <jhi-help-icon [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'" />
                     @if (!exam.testExam) {
-                        <input disabled type="text" class="form-control" [value]="workingTimeInMinutes" />
+                        <input readonly disabled type="text" class="form-control" [value]="workingTimeInMinutes" />
                     }
                     @if (exam.testExam) {
                         <input

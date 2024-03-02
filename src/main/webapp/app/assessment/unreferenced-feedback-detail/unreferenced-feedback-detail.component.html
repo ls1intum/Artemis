@@ -46,6 +46,7 @@
                 [(ngModel)]="feedback.credits"
                 (ngModelChange)="emitChanges()"
                 [disabled]="!!feedback.gradingInstruction || readOnly"
+                [readOnly]="!!feedback.gradingInstruction || readOnly"
                 [required]="!feedback.gradingInstruction"
             />
         </div>

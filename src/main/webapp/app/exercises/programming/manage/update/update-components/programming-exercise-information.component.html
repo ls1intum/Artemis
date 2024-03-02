@@ -35,6 +35,7 @@
             minlength="3"
             [pattern]="programmingExerciseCreationConfig.shortNamePattern"
             [(ngModel)]="programmingExercise.shortName"
+            [readOnly]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise.id"
             [disabled]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise.id"
             #shortName="ngModel"
         />

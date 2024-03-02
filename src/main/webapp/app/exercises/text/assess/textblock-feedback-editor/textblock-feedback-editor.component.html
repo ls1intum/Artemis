@@ -82,6 +82,7 @@
                     (keyup)="textareaAutogrow()"
                     (keydown.escape)="escKeyup()"
                     (focus)="inFocus()"
+                    [readOnly]="readOnly"
                     [disabled]="readOnly"
                     (ngModelChange)="didChange()"
                 ></textarea>
@@ -97,6 +98,7 @@
                     (click)="onScoreClick($event)"
                     (focus)="inFocus()"
                     (ngModelChange)="didChange()"
+                    [readOnly]="feedback.gradingInstruction || readOnly"
                     [disabled]="!!feedback.gradingInstruction || readOnly"
                 />
             </div>

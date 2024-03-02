@@ -28,6 +28,7 @@
                         class="text-editor-textarea"
                         [maxLength]="maxCharacterCount"
                         [(ngModel)]="answer"
+                        [readOnly]="readonly || !studentSubmission"
                         [disabled]="readonly || !studentSubmission"
                         (keydown.tab)="onTextEditorTab(textEditor, $event)"
                         (input)="onTextEditorInput($event)"
