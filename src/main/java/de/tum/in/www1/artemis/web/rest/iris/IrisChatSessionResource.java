@@ -5,7 +5,11 @@ import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
@@ -16,7 +20,6 @@ import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisHealthIndicator;
 import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
@@ -26,8 +29,8 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 /**
  * REST controller for managing {@link IrisChatSession}.
  */
-@RestController
 @Profile("iris")
+@RestController
 @RequestMapping("api/iris/")
 public class IrisChatSessionResource extends IrisExerciseChatBasedSessionResource<ProgrammingExercise, IrisChatSession> {
 
@@ -35,9 +38,8 @@ public class IrisChatSessionResource extends IrisExerciseChatBasedSessionResourc
 
     protected IrisChatSessionResource(AuthorizationCheckService authCheckService, IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            IrisHealthIndicator irisHealthIndicator, IrisRateLimitService irisRateLimitService) {
-        super(authCheckService, userRepository, irisSessionService, irisSettingsService, irisHealthIndicator, irisRateLimitService,
-                programmingExerciseRepository::findByIdElseThrow);
+            IrisRateLimitService irisRateLimitService) {
+        super(authCheckService, userRepository, irisSessionService, irisSettingsService, irisRateLimitService, programmingExerciseRepository::findByIdElseThrow);
         this.irisChatSessionRepository = irisChatSessionRepository;
     }
 
@@ -95,7 +97,7 @@ public class IrisChatSessionResource extends IrisExerciseChatBasedSessionResourc
      * @param sessionId id of the session
      * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
      */
-    @GetMapping("/sessions/{sessionId}/active")
+    @GetMapping("sessions/{sessionId}/active")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisHealthDTO> isIrisActive(@PathVariable Long sessionId) {
         var session = irisChatSessionRepository.findByIdElseThrow(sessionId);

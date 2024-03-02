@@ -28,6 +28,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
+import { getSemesters } from 'app/utils/semester-utils';
 
 @Component({
     selector: 'jhi-course-update',
@@ -69,6 +70,8 @@ export class CourseUpdateComponent implements OnInit {
     messagingEnabled = true;
     ltiEnabled = false;
     isAthenaEnabled = false;
+
+    readonly semesters = getSemesters();
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
@@ -492,22 +495,6 @@ export class CourseUpdateComponent implements OnInit {
     changeRestrictedAthenaModulesEnabled() {
         this.course.restrictedAthenaModulesAccess = !this.course.restrictedAthenaModulesAccess;
         this.courseForm.controls['restrictedAthenaModulesAccess'].setValue(this.course.restrictedAthenaModulesAccess);
-    }
-
-    /**
-     * Returns a string array of possible semester values
-     */
-    getSemesters() {
-        // 2018 is the first year we offer semesters for and go one year into the future
-        const years = dayjs().year() - 2018 + 1;
-        // Add an empty semester as default value
-        const semesters: string[] = [];
-        for (let i = 0; i <= years; i++) {
-            semesters[2 * i] = 'WS' + (18 + years - i) + '/' + (19 + years - i);
-            semesters[2 * i + 1] = 'SS' + (18 + years - i);
-        }
-        semesters.push('');
-        return semesters;
     }
 
     /**

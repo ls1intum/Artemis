@@ -32,9 +32,9 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 /**
  * REST controller for Athena feedback suggestions.
  */
+@Profile("athena")
 @RestController
 @RequestMapping("api/")
-@Profile("athena")
 public class AthenaResource {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaResource.class);

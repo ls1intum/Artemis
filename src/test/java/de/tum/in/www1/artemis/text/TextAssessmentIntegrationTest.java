@@ -459,6 +459,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getDataForTextEditor_testExam() throws Exception {
+        var student = TEST_PREFIX + "student1";
         // create exam
         Exam exam = examUtilService.addTestExamWithExerciseGroup(course, true);
         exam.setStartDate(now().minusHours(2));
@@ -473,8 +474,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         examRepository.save(exam);
 
+        examUtilService.addStudentExamWithUser(exam, student);
+
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, student);
         var participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
         assertThat(participation).isNotNull();
         assertThat(participation.getSubmissions()).containsExactly(textSubmission);

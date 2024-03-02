@@ -175,7 +175,7 @@
                 <div class="form-group">
                     <label for="semester" jhiTranslate="artemisApp.course.semester"></label>
                     <select id="semester" class="form-select" formControlName="semester">
-                        @for (semester of getSemesters(); track semester) {
+                        @for (semester of semesters; track semester) {
                             <option [value]="semester">{{ semester }}</option>
                         }
                     </select>

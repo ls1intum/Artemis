@@ -92,7 +92,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         const exercise = this.textExercise;
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
-        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement);
+        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement, this.textExercise);
         const solutionSection = getExerciseMarkdownSolution(exercise, this.formattedExampleSolution);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
         const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.formattedGradingInstructions);
