@@ -4,10 +4,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.google.gson.Gson;
 
 import io.github.classgraph.ClassGraph;
-import org.jetbrains.annotations.NotNull;
 
 public class GeneratePlaceholderSignatures {
 
@@ -39,15 +40,13 @@ public class GeneratePlaceholderSignatures {
 
             // create a signature for each annotated file.
             var signatures = classes.stream().map(placeholderClass -> {
-                    Class<?> loaded = placeholderClass.loadClass();
-                    var fieldDescriptions = Arrays.stream(loaded.getDeclaredFields()).map(field -> new FieldDescription(field.getName(), field.getType().getName())).sorted().toList();
+                Class<?> loaded = placeholderClass.loadClass();
+                var fieldDescriptions = Arrays.stream(loaded.getDeclaredFields()).map(field -> new FieldDescription(field.getName(), field.getType().getName())).sorted().toList();
 
-                    var notificationType = (String) placeholderClass.getAnnotationInfo(ANNOTATION_NAME).getParameterValues().get("value").getValue();
+                var notificationType = (String) placeholderClass.getAnnotationInfo(ANNOTATION_NAME).getParameterValues().get("value").getValue();
 
-                    return new ClassSignature(notificationType, fieldDescriptions);
-                })
-                .sorted()
-                .toList();
+                return new ClassSignature(notificationType, fieldDescriptions);
+            }).sorted().toList();
 
             // Signature as json
             var signature = new Gson().toJson(signatures);
@@ -61,8 +60,8 @@ public class GeneratePlaceholderSignatures {
         }
     }
 
-    private record ClassSignature(String notificationType,
-                                  List<FieldDescription> fieldDescriptions) implements Comparable<ClassSignature> {
+    private record ClassSignature(String notificationType, List<FieldDescription> fieldDescriptions) implements Comparable<ClassSignature> {
+
         @Override
         public int compareTo(@NotNull GeneratePlaceholderSignatures.ClassSignature classSignature) {
             return notificationType.compareTo(classSignature.notificationType);
@@ -70,6 +69,7 @@ public class GeneratePlaceholderSignatures {
     }
 
     private record FieldDescription(String fieldName, String fieldType) implements Comparable<FieldDescription> {
+
         @Override
         public int compareTo(@NotNull GeneratePlaceholderSignatures.FieldDescription fieldDescription) {
             return fieldName.compareTo(fieldDescription.fieldName);
