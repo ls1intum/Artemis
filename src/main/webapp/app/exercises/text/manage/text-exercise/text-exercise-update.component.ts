@@ -21,7 +21,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { AthenaService } from 'app/assessment/athena.service';
 import { Observable, Subscription } from 'rxjs';
@@ -79,10 +78,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     bonusPointsSubscription?: Subscription;
     plagiarismSubscription?: Subscription;
     teamSubscription?: Subscription;
-
-    // Icons
-    faSave = faSave;
-    faBan = faBan;
 
     constructor(
         private alertService: AlertService,

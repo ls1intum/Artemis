@@ -30,6 +30,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -233,5 +234,24 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
+    }
+
+    @Test
+    void testRepositoryFolderName() {
+
+        // we specifically choose logins containing "git" to test it does not accidentally get replaced
+        String login1 = "ab123git";
+        String login2 = "git123ab";
+
+        LocalVCRepositoryUri studentAssignmentRepositoryUri1 = new LocalVCRepositoryUri(projectKey1, projectKey1.toLowerCase() + "-" + login1, localVCBaseUrl);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri2 = new LocalVCRepositoryUri(projectKey1, projectKey1.toLowerCase() + "-" + login2, localVCBaseUrl);
+
+        // assert that the URIs are correct
+        assertThat(studentAssignmentRepositoryUri1.getURI().toString()).isEqualTo(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1 + ".git");
+        assertThat(studentAssignmentRepositoryUri2.getURI().toString()).isEqualTo(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2 + ".git");
+
+        // assert that the folder names are correct
+        assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo("/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1);
+        assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo("/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2);
     }
 }

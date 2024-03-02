@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.util.ResourceUtils;
 
-public class FileUtils {
+public class TestResourceUtils {
 
     /**
      * @param path path relative to the test resources folder complaint
