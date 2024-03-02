@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.GitDiffReportParser;
 @RequestMapping("api/")
 public class CommitHistoryService {
 
-    private final Logger log = LoggerFactory.getLogger(CommitHistoryService.class);
+    private static final Logger log = LoggerFactory.getLogger(CommitHistoryService.class);
 
     private final GitService gitService;
 
