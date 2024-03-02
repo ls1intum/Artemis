@@ -227,10 +227,11 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
     /**
      * Migrate auxiliary repositories of the given programming exercise.
      *
-     * @param programmingExercise the programming exercise to migrate the auxiliary repositories for
-     * @param oldBranch           the old branch of the programming exercise
+     * @param solutionParticipation the solution participation to migrate the auxiliary repositories for
+     * @param programmingExercise   the programming exercise to migrate the auxiliary repositories for
+     * @param oldBranch             the old branch of the programming exercise
      */
-    private void migrateAuxiliaryRepositories(ProgrammingExercise programmingExercise, String oldBranch) {
+    private void migrateAuxiliaryRepositories(SolutionProgrammingExerciseParticipation solutionParticipation, ProgrammingExercise programmingExercise, String oldBranch) {
         for (var repo : getAuxiliaryRepositories(programmingExercise.getId())) {
             try {
                 if (repo.getRepositoryUri() == null) {
@@ -239,6 +240,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                 }
                 var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, repo.getRepositoryUri(), oldBranch);
                 if (url == null) {
+                    errorList.add(solutionParticipation);
                     log.error("Failed to migrate auxiliary repository for programming exercise with id {}, keeping the url in the database", programmingExercise.getId());
                 }
                 else {
@@ -286,6 +288,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                         programmingExercise.getBranch());
                 if (url == null) {
                     log.error("Failed to migrate solution repository for solution participation with id {}, keeping the url in the database", solutionParticipation.getId());
+                    errorList.add(solutionParticipation);
                 }
                 else {
                     log.debug("Migrated solution participation with id {} to {}", solutionParticipation.getId(), url);
@@ -307,7 +310,7 @@ public class MigrationEntry20240103_143700 extends ProgrammingExerciseMigrationE
                     programmingExercise.setTestRepositoryUri(url);
                 }
                 programmingExerciseRepository.save(programmingExercise);
-                migrateAuxiliaryRepositories(programmingExercise, oldBranch);
+                migrateAuxiliaryRepositories(solutionParticipation, programmingExercise, oldBranch);
             }
             catch (Exception e) {
                 log.error("Failed to migrate solution participation with id {}", solutionParticipation.getId(), e);

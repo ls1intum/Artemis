@@ -270,26 +270,14 @@
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="modelingExercise" />
         </div>
-        <jhi-exercise-update-notification [exercise]="modelingExercise" [isImport]="isImport" [(notificationText)]="notificationText" />
     </div>
-    <div>
-        <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" (click)="previousState()">
-            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
-        </button>
-        <button
-            type="button"
-            [disabled]="
-                editForm.form.invalid ||
-                isSaving ||
-                modelingExercise.dueDateError ||
-                modelingExercise.assessmentDueDateError ||
-                modelingExercise.exampleSolutionPublicationDateError
-            "
-            class="btn btn-primary"
-            id="modeling-exercise-creation-save"
-            (click)="save()"
-        >
-            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
-        </button>
-    </div>
+    <jhi-form-footer
+        [isImport]="isImport"
+        [isCreation]="!modelingExercise.id"
+        [isSaving]="isSaving"
+        [isDisabled]="!!(editForm.form.invalid || modelingExercise.dueDateError || modelingExercise.assessmentDueDateError || modelingExercise.exampleSolutionPublicationDateError)"
+        (cancel)="previousState()"
+        (save)="save()"
+        [(notificationText)]="notificationText"
+    />
 </form>
