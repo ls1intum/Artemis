@@ -13,8 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 
@@ -38,15 +36,14 @@ public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLo
                 LEFT JOIN b.programmingSubmission s
                 LEFT JOIN s.participation p
             WHERE p.exercise = :exercise
-                OR p = :templateParticipation
-                OR p = :solutionParticipation
+                OR p.id = :templateParticipationId
+                OR p.id = :solutionParticipationId
             """)
-    BuildLogStatisticsDTO findAverageBuildLogStatistics(@Param("exercise") ProgrammingExercise exercise,
-            @Param("templateParticipation") TemplateProgrammingExerciseParticipation templateParticipation,
-            @Param("solutionParticipation") SolutionProgrammingExerciseParticipation solutionParticipation);
+    BuildLogStatisticsDTO findAverageBuildLogStatistics(@Param("exercise") ProgrammingExercise exercise, @Param("templateParticipationId") long templateParticipationId,
+            @Param("solutionParticipationId") long solutionParticipationId);
 
     default BuildLogStatisticsDTO findAverageBuildLogStatistics(ProgrammingExercise exercise) {
-        return findAverageBuildLogStatistics(exercise, exercise.getTemplateParticipation(), exercise.getSolutionParticipation());
+        return findAverageBuildLogStatistics(exercise, exercise.getTemplateParticipation().getId(), exercise.getSolutionParticipation().getId());
     }
 
     @Transactional // ok because of delete
