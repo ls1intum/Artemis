@@ -39,11 +39,12 @@ public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLo
                 OR p.id = :templateParticipationId
                 OR p.id = :solutionParticipationId
             """)
-    BuildLogStatisticsDTO findAverageBuildLogStatistics(@Param("exercise") ProgrammingExercise exercise, @Param("templateParticipationId") long templateParticipationId,
-            @Param("solutionParticipationId") long solutionParticipationId);
+    BuildLogStatisticsDTO findAverageBuildLogStatistics(@Param("exercise") ProgrammingExercise exercise, @Param("templateParticipationId") Long templateParticipationId,
+            @Param("solutionParticipationId") Long solutionParticipationId);
 
     default BuildLogStatisticsDTO findAverageBuildLogStatistics(ProgrammingExercise exercise) {
-        return findAverageBuildLogStatistics(exercise, exercise.getTemplateParticipation().getId(), exercise.getSolutionParticipation().getId());
+        return findAverageBuildLogStatistics(exercise, exercise.getTemplateParticipation() != null ? exercise.getTemplateParticipation().getId() : null,
+                exercise.getSolutionParticipation() != null ? exercise.getSolutionParticipation().getId() : null);
     }
 
     @Transactional // ok because of delete
