@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.transaction.Transactional;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -32,6 +35,9 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
 
     // This is used only for testing purposes
     List<Conversation> findAllByCourseId(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants" })
+    Optional<Conversation> findWithParticipantsById(long conversationId);
 
     default Conversation findByIdElseThrow(long conversationId) {
         return this.findById(conversationId).orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
