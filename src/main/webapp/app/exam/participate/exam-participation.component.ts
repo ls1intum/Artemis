@@ -275,6 +275,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.pageComponentVisited = new Array(studentExam.exercises!.length).fill(false);
             // TODO: move to exam-participation.service after studentExam was retrieved
             // initialize all submissions as synced
+            if (this.quizExam) {
+                this.quizExam.submission.isSynced = true;
+                if (this.quizExam.submission.submitted == undefined) {
+                    this.quizExam.submission.submitted = false;
+                }
+            }
             this.studentExam.exercises!.forEach((exercise: Exercise) => {
                 if (exercise.studentParticipations) {
                     exercise.studentParticipations!.forEach((participation) => {
@@ -766,6 +772,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
         // save the studentExam in localStorage, so that we would be able to retrieve it later on, in case the student needs to reload the page while being offline
         this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
+
+        if (this.quizExam) {
+            if (this.quizExam.submission?.isSynced === false) {
+                this.examParticipationService.updateQuizExamSubmission(this.quizExam.submission).subscribe({
+                    next: (updatedSubmission) => {
+                        this.quizExam!.submission = updatedSubmission;
+                        this.quizExam!.submission.studentExam = new StudentExam();
+                        this.quizExam!.submission.studentExam.id = this.studentExam.id;
+                        this.onSaveSubmissionSuccess(updatedSubmission);
+                    },
+                    error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                });
+            }
+        }
 
         // if no connection available -> don't try to sync, except it is forced
         // based on the submissions that need to be saved and the exercise, we perform different actions

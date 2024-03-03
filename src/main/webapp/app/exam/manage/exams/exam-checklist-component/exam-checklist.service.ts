@@ -148,7 +148,7 @@ export class ExamChecklistService {
                 false) ||
             ((exam.hasQuizExam &&
                 numberOfMandatoryExerciseGroups <= (exam.numberOfExercisesInExam ?? 0) &&
-                (exam.numberOfExercisesInExam ?? 0) <= (exam.exerciseGroups?.length ?? 1)) ??
+                (exam.numberOfExercisesInExam ?? 0) <= (exam.exerciseGroups?.length ?? 0 + (exam.hasQuizExam ? 1 : 0))) ??
                 false)
         );
     }

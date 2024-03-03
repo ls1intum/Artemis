@@ -80,6 +80,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -98,6 +99,7 @@ import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizGroup;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
@@ -122,6 +124,7 @@ import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.in.www1.artemis.repository.QuizExamSubmissionRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -131,6 +134,7 @@ import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
@@ -231,6 +235,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private QuizPoolService quizPoolService;
+
+    @Autowired
+    private QuizExerciseService quizExerciseService;
+
+    @Autowired
+    private QuizExamSubmissionRepository quizExamSubmissionRepository;
 
     private User student1;
 
@@ -1112,6 +1122,53 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSubmitStudentQuizExam() throws Exception {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student);
+        QuizGroup quizGroup = QuizExerciseFactory.createQuizGroup(String.valueOf(0));
+        MultipleChoiceQuestion quizQuestion = QuizExerciseFactory.createMultipleChoiceQuestionWithTitleAndGroup("0", quizGroup);
+        prepareQuizPoolForSubmitQuizExamTest(exam.getId(), quizGroup, quizQuestion);
+        StudentExam studentExam = prepareStudentExamWithQuizQuestionsForConduction(exam);
+        QuizExamSubmission quizExamSubmission = new QuizExamSubmission();
+        Set<SubmittedAnswer> submittedAnswers = prepareSubmittedAnswersForQuizQuestion(quizQuestion);
+        quizExamSubmission.setSubmittedAnswers(submittedAnswers);
+        studentExam.setQuizExamSubmission(quizExamSubmission);
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course1, ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), QuizMode.INDIVIDUAL);
+        quizExerciseService.save(quizExercise);
+        studentExam.setExercises(List.of(quizExercise));
+
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/submit", studentExam, HttpStatus.OK, null);
+        StudentExam submittedStudentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
+        Optional<QuizExamSubmission> submittedQuizExamSubmissionOptional = quizExamSubmissionRepository.findWithEagerSubmittedAnswersByStudentExamId(submittedStudentExam.getId());
+        assertThat(submittedQuizExamSubmissionOptional).isPresent();
+        QuizExamSubmission submittedQuizExamSubmission = submittedQuizExamSubmissionOptional.get();
+        assertThat(submittedQuizExamSubmission.isSubmitted()).isTrue();
+        assertThat(submittedQuizExamSubmission.getStudentExam().getId()).isEqualTo(submittedStudentExam.getId());
+        assertThat(submittedQuizExamSubmission.getSubmittedAnswers()).hasSize(submittedAnswers.size());
+    }
+
+    private static Set<SubmittedAnswer> prepareSubmittedAnswersForQuizQuestion(MultipleChoiceQuestion quizQuestion) {
+        MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
+        submittedAnswer.setQuizQuestion(quizQuestion);
+        submittedAnswer.setSelectedOptions(Set.of(quizQuestion.getAnswerOptions().get(0)));
+        return Set.of(submittedAnswer);
+    }
+
+    private void prepareQuizPoolForSubmitQuizExamTest(Long examId, QuizGroup quizGroup, MultipleChoiceQuestion quizQuestion) throws IOException {
+        QuizPool quizPool = new QuizPool();
+        List<QuizGroup> quizGroups = new ArrayList<>();
+        List<QuizQuestion> quizQuestions = new ArrayList<>();
+        quizGroups.add(quizGroup);
+        quizQuestions.add(quizQuestion);
+        quizPool.setQuizGroups(quizGroups);
+        quizPool.setQuizQuestions(quizQuestions);
+        quizPool.setMaxPoints(1);
+        quizPool.setRandomizeQuestionOrder(true);
+        quizPoolService.update(examId, quizPool, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitStudentExam_testExamTriggersBuilds() throws Exception {
         ExamFactory.generateExerciseGroup(true, testExam1);
         testExam1 = examRepository.save(testExam1);
@@ -1909,7 +1966,20 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private StudentExam createStudentExamWithResultsAndAssessments(boolean setFields, int numberOfStudents) throws Exception {
         StudentExam studentExam = prepareStudentExamsForConduction(false, setFields, numberOfStudents).get(0);
         var exam = examRepository.findById(studentExam.getExam().getId()).orElseThrow();
+
+        QuizPool quizPool = new QuizPool();
+        MultipleChoiceQuestion mcQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
+        quizPool.setQuizQuestions(List.of(mcQuestion));
+        quizPoolService.update(exam.getId(), quizPool, null);
+
         StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam, studentExam.getUser().getLogin(), studentExam);
+        QuizExamSubmission quizExamSubmission = new QuizExamSubmission();
+        quizExamSubmission.setStudentExam(studentExamWithSubmissions);
+        MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
+        submittedAnswer.setQuizQuestion(mcQuestion);
+        submittedAnswer.setSelectedOptions(Set.of(mcQuestion.getAnswerOptions().get(0)));
+        quizExamSubmission.setSubmittedAnswers(Set.of(submittedAnswer));
+        studentExamWithSubmissions.setQuizExamSubmission(quizExamSubmission);
 
         // now we change to the point of time when the student exam needs to be submitted
         // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time

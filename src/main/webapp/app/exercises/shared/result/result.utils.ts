@@ -235,6 +235,26 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
     return 'text-danger';
 };
 
+export const getQuizExamTextColorClass = (result: Result | undefined) => {
+    if (!result) {
+        return 'text-secondary';
+    }
+
+    if (result?.score === undefined) {
+        return result?.successful ? 'text-success' : 'text-danger';
+    }
+
+    if (result.score >= MIN_SCORE_GREEN) {
+        return 'text-success';
+    }
+
+    if (result.score >= MIN_SCORE_ORANGE) {
+        return 'result-orange';
+    }
+
+    return 'text-danger';
+};
+
 /**
  * Get the icon type for the result icon as an array
  *

@@ -491,7 +491,7 @@ public class Exam extends DomainObject {
 
     @JsonProperty(value = "quizExamMaxPoints", access = JsonProperty.Access.READ_ONLY)
     public Integer getQuizExamMaxPoints() {
-        return quizExamMaxPoints;
+        return quizExamMaxPoints == null ? 0 : quizExamMaxPoints;
     }
 
     @JsonProperty(value = "quizExamMaxPoints", access = JsonProperty.Access.WRITE_ONLY)

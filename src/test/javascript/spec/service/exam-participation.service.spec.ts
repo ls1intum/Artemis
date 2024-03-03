@@ -22,6 +22,7 @@ import { GradeType } from 'app/entities/grading-scale.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { HttpHeaders } from '@angular/common/http';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
 
 describe('Exam Participation Service', () => {
     let service: ExamParticipationService;
@@ -29,6 +30,7 @@ describe('Exam Participation Service', () => {
     let exam: Exam;
     let studentExam: StudentExam;
     let quizSubmission: QuizSubmission;
+    let quizExamSubmission: QuizExamSubmission;
     let localStorage: LocalStorageService;
 
     beforeEach(() => {
@@ -47,6 +49,7 @@ describe('Exam Participation Service', () => {
         exam = new Exam();
         studentExam = new StudentExam();
         quizSubmission = new QuizSubmission();
+        quizExamSubmission = new QuizExamSubmission();
     });
 
     it('should load a StudentExam with exercises for conduction', async () => {
@@ -212,6 +215,17 @@ describe('Exam Participation Service', () => {
         req.flush(returnedFromService);
     });
     it('should update a QuizSubmission', async () => {
+        const returnedFromService = Object.assign({}, quizExamSubmission);
+        const expected = Object.assign({}, returnedFromService);
+        service
+            .updateQuizExamSubmission(quizExamSubmission)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(returnedFromService);
+    });
+    it('should update a QuizExamSubmission', async () => {
         const returnedFromService = Object.assign({}, quizSubmission);
         const expected = Object.assign({}, returnedFromService);
         service

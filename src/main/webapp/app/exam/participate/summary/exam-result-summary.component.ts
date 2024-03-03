@@ -15,16 +15,20 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { roundScorePercentSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/shared/util/utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
-import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
-import { Submission } from 'app/entities/submission.model';
+import { evaluateTemplateStatus, getQuizExamTextColorClass, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
+import { Submission, SubmissionType } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular-ivy';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { isExamResultPublished } from 'app/exam/participate/exam.utils';
 import { Course } from 'app/entities/course.model';
+import { TranslateService } from '@ngx-translate/core';
+import { QuizExam } from 'app/entities/quiz-exam.model';
+import { Result } from 'app/entities/result.model';
+import { orderBy as _orderBy } from 'lodash-es';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -90,6 +94,9 @@ export class ExamResultSummaryComponent implements OnInit {
         this.tryLoadPlagiarismCaseInfosForStudent();
     }
 
+    @Input()
+    quizExam?: QuizExam;
+
     /**
      * Grade info for current student's exam.
      */
@@ -119,6 +126,7 @@ export class ExamResultSummaryComponent implements OnInit {
     isAfterStudentReviewStart = false;
 
     exerciseInfos: Record<number, ResultSummaryExerciseInfo>;
+    quizExamInfo: ResultSummaryExerciseInfo;
 
     /**
      * Passed to components with overlapping elements to ensure that the overlapping
@@ -139,6 +147,7 @@ export class ExamResultSummaryComponent implements OnInit {
         private examParticipationService: ExamParticipationService,
         private plagiarismCasesService: PlagiarismCasesService,
         private alertService: AlertService,
+        private translateService: TranslateService,
     ) {}
 
     /**
@@ -162,14 +171,33 @@ export class ExamResultSummaryComponent implements OnInit {
             this.examParticipationService
                 .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id, this.isTestRun)
                 .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
+                    const quizExamSubmission = studentExamWithGrade.studentExam?.quizExamSubmission;
                     studentExamWithGrade.studentExam = this.studentExam;
                     this.studentExamGradeInfoDTO = studentExamWithGrade;
                     this.exerciseInfos = this.getExerciseInfos(studentExamWithGrade);
+                    this.quizExamInfo = {
+                        ...this.quizExamInfo,
+                        colorClass: getQuizExamTextColorClass(this.getLatestResult(quizExamSubmission?.results)),
+                        achievedPercentage: studentExamWithGrade.studentResult.quizExamResult.achievedScore,
+                    };
                 });
         }
 
         this.exampleSolutionPublished = !!this.studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(this.studentExam.exam.exampleSolutionPublicationDate);
 
+        this.quizExamInfo = {
+            icon: getIcon(ExerciseType.QUIZ),
+            isCollapsed: false,
+            achievedPoints: 0,
+            achievedPercentage: 0,
+            colorClass: 'text-secondary',
+            resultIconClass: faQuestionCircle,
+
+            submission: this.quizExam?.submission,
+            participation: undefined,
+            displayExampleSolution: false,
+            releaseTestsWithExampleSolution: false,
+        };
         this.exerciseInfos = this.getExerciseInfos();
 
         this.setExamWithOnlyIdAndStudentReviewPeriod();
@@ -468,4 +496,14 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     protected readonly getIcon = getIcon;
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly MANUAL = SubmissionType.MANUAL;
+
+    private getLatestResult(results: Result[] | undefined) {
+        if (results) {
+            const sortedResults = _orderBy(results, 'completionDate', 'desc');
+            return sortedResults.find(({ rated }) => rated === true);
+        }
+        return undefined;
+    }
 }

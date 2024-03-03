@@ -69,7 +69,10 @@ const submissionWithAnswers = {
     submittedAnswers: [multipleChoiceSubmittedAnswer, dragAndDropSubmittedAnswer, shortAnswerSubmittedAnswer],
     submitted: true,
 } as QuizSubmission;
-const exercise = { id: 1, studentParticipations: [studentParticipation], quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] } as QuizExercise;
+const exercise = new QuizExercise(undefined, undefined);
+exercise.id = 1;
+exercise.studentParticipations = [studentParticipation];
+exercise.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion];
 
 describe('QuizExamSummaryComponent', () => {
     let fixture: ComponentFixture<QuizExamSummaryComponent>;
@@ -85,10 +88,7 @@ describe('QuizExamSummaryComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(QuizExamSummaryComponent);
                 component = fixture.componentInstance;
-                component.quizParticipation = {
-                    quizQuestions: exercise.quizQuestions!,
-                    studentParticipations: exercise.studentParticipations,
-                };
+                component.quizConfiguration = exercise;
                 component.submission = { id: 2, submittedAnswers: [] };
                 component.resultsPublished = true;
                 component.exam = { id: 1 } as Exam;

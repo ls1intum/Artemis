@@ -8,12 +8,13 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Result } from 'app/entities/result.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { QuizParticipation } from 'app/entities/quiz/quiz-participation.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizConfiguration } from 'app/entities/quiz/quiz-configuration.model';
+import { QuizExam } from 'app/entities/quiz-exam.model';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -29,7 +30,7 @@ export class QuizExamSummaryComponent implements OnChanges {
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
     @Input()
-    quizParticipation: QuizParticipation;
+    quizConfiguration: QuizConfiguration;
 
     @Input()
     submission: QuizSubmission;
@@ -42,17 +43,14 @@ export class QuizExamSummaryComponent implements OnChanges {
 
     result?: Result;
 
-    constructor(
-        private exerciseService: QuizExerciseService,
-        private serverDateService: ArtemisServerDateService,
-    ) {}
+    constructor(private serverDateService: ArtemisServerDateService) {}
 
     ngOnChanges(): void {
         this.updateViewFromSubmission();
-        if (this.quizParticipation.studentParticipations) {
+        if (this.quizConfiguration instanceof QuizExercise && this.quizConfiguration.studentParticipations) {
             this.result =
-                this.quizParticipation.studentParticipations.length > 0 && this.quizParticipation.studentParticipations[0].results?.length
-                    ? this.quizParticipation.studentParticipations[0].results[0]
+                this.quizConfiguration.studentParticipations.length > 0 && this.quizConfiguration.studentParticipations[0].results?.length
+                    ? this.quizConfiguration.studentParticipations[0].results[0]
                     : undefined;
         } else {
             this.result = this.submission.results?.length ? this.submission.results[0] : undefined;
@@ -72,9 +70,9 @@ export class QuizExamSummaryComponent implements OnChanges {
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.quizParticipation.quizQuestions && this.submission) {
+        if (this.quizConfiguration.quizQuestions && this.submission) {
             // iterate through all questions of this quiz
-            this.quizParticipation.quizQuestions.forEach((question) => {
+            this.quizConfiguration.quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
                 const submittedAnswer = this.submission.submittedAnswers
                     ? this.submission.submittedAnswers.find((answer) => {
@@ -132,7 +130,14 @@ export class QuizExamSummaryComponent implements OnChanges {
      * We only show the notice when there is a publishResultsDate that has already passed by now and the result is missing
      */
     get showMissingResultsNotice(): boolean {
-        if (this.exam && this.exam.publishResultsDate && this.quizParticipation.studentParticipations && this.quizParticipation.studentParticipations.length > 0) {
+        if (
+            (this.exam &&
+                this.exam.publishResultsDate &&
+                this.quizConfiguration instanceof QuizExercise &&
+                this.quizConfiguration.studentParticipations &&
+                this.quizConfiguration.studentParticipations.length > 0) ||
+            (this.quizConfiguration instanceof QuizExam && this.quizConfiguration.submission)
+        ) {
             return dayjs(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) && !this.result;
         }
         return false;

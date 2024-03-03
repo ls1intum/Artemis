@@ -114,8 +114,11 @@ export class ExamNavigationBarComponent implements OnInit {
         return this.examParticipationService.getExerciseButtonTooltip(exercise);
     }
 
+    /**
+     * Get tooltip for quiz exam button
+     */
     getQuizExamButtonTooltip(): ButtonTooltipType {
-        return 'synced';
+        return this.examParticipationService.getButtonTooltip(this.quizExam?.submission, ExerciseType.QUIZ);
     }
 
     triggerExamAboutToEnd() {
@@ -187,7 +190,9 @@ export class ExamNavigationBarComponent implements OnInit {
             submission.submitted = true;
         }
         if (changeExercise) {
-            if (newIndex > this.exercises.length - 1) {
+            if (this.isQuizExamOnly()) {
+                this.changePage(false, true, newIndex, true);
+            } else if (newIndex > this.exercises.length - 1) {
                 // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
                 this.changePage(false, false, this.exerciseIndex, true);
             } else {
@@ -211,12 +216,23 @@ export class ExamNavigationBarComponent implements OnInit {
     /**
      * Set the icon of the quiz exam button and return the status of the button
      */
-    setQuizExamButtonStatus(): 'synced' | 'synced active' {
+    setQuizExamButtonStatus(): 'synced' | 'synced active' | 'notSynced' {
         this.icon = faEdit;
-        if (this.quizExamPageOpen) {
-            return 'synced active';
-        } else {
+        if (!this.quizExam?.submission) {
             return 'synced';
+        }
+        if (this.quizExam?.submission.submitted) {
+            this.icon = faCheck;
+        }
+        if (this.quizExam?.submission.isSynced) {
+            if (this.quizExamPageOpen) {
+                return 'synced active';
+            } else {
+                return 'synced';
+            }
+        } else {
+            this.icon = faEdit;
+            return 'notSynced';
         }
     }
 
@@ -278,5 +294,9 @@ export class ExamNavigationBarComponent implements OnInit {
      */
     handInEarly() {
         this.onExamHandInEarly.emit();
+    }
+
+    private isQuizExamOnly() {
+        return this.quizExam !== undefined && this.exercises.length === 0;
     }
 }

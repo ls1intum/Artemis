@@ -57,6 +57,8 @@ import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exe
 import * as Utils from 'app/shared/util/utils';
 import * as ExamUtils from 'app/exam/participate/exam.utils';
 import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -217,6 +219,7 @@ function sharedSetup(url: string[]) {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
             ],
         })

@@ -7,6 +7,7 @@ import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participat
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { QuizExam } from 'app/entities/quiz-exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
@@ -24,8 +25,9 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     readonly ExerciseType = ExerciseType;
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
-    quizIconTooltip: string;
-    quizIcon: IconProp;
+    quizExamIconTooltip: string;
+    quizExamIcon: IconProp;
+    quizExamIconStatus: IconProp;
 
     constructor(
         protected changeDetectorReference: ChangeDetectorRef,
@@ -41,8 +43,8 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
             item.icon = faEdit;
             this.examExerciseOverviewItems.push(item);
         });
-        this.quizIconTooltip = getIconTooltip(ExerciseType.QUIZ);
-        this.quizIcon = getIcon(ExerciseType.QUIZ);
+        this.quizExamIconTooltip = getIconTooltip(ExerciseType.QUIZ);
+        this.quizExamIcon = getIcon(ExerciseType.QUIZ);
     }
 
     ngOnChanges() {
@@ -79,20 +81,47 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
         // start with a yellow status (edit icon)
         item.icon = faEdit;
         const submission = ExamParticipationService.getSubmissionForExercise(item.exercise);
+        if (submission) {
+            if (submission.submitted) {
+                item.icon = faCheck;
+            }
+            if (!submission.isSynced) {
+                item.icon = faEdit;
+            }
+        }
+        return this.getIconClass(submission);
+    }
+
+    setQuizExamIconStatus() {
+        // start with a yellow status (edit icon)
+        this.quizExamIconStatus = faEdit;
+        const submission = this.quizExam?.submission;
+        if (submission) {
+            if (submission.submitted) {
+                this.quizExamIconStatus = faCheck;
+            }
+            if (!submission.isSynced) {
+                this.quizExamIconStatus = faEdit;
+            }
+        }
+        return this.getIconClass(submission);
+    }
+
+    getIconClass(submission?: Submission) {
         if (!submission) {
             // in case no participation/submission yet exists -> display synced
             return 'synced';
-        }
-        if (submission.submitted) {
-            item.icon = faCheck;
         }
         if (submission.isSynced) {
             // make status blue
             return 'synced';
         } else {
             // make status yellow
-            item.icon = faEdit;
             return 'notSynced';
         }
+    }
+
+    getQuizExamButtonTooltip(): ButtonTooltipType {
+        return this.examParticipationService.getButtonTooltip(this.quizExam?.submission, ExerciseType.QUIZ);
     }
 }

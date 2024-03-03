@@ -54,6 +54,8 @@ import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/s
 import { ExamPage } from 'app/entities/exam-page.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -394,6 +396,8 @@ describe('ExamParticipationComponent', () => {
         firstParticipation.id = 2;
 
         studentExam.exercises = [firstExercise, secondExercise];
+        studentExam.exam!.quizExamMaxPoints = 100;
+        studentExam.quizQuestions = [new MultipleChoiceQuestion()];
         comp.examStarted(studentExam);
         expect(firstParticipation.submissions).toBeDefined();
         expect(firstParticipation.submissions!.length).toBeGreaterThan(0);
@@ -414,6 +418,9 @@ describe('ExamParticipationComponent', () => {
         // Initialize Exam Overview Page
         expect(comp.activeExamPage.exercise).toBeUndefined();
         expect(comp.activeExamPage.isOverviewPage).toBeTrue();
+
+        expect(comp.quizExam!.submission.isSynced).toBeTrue();
+        expect(comp.quizExam!.submission.submitted).toBeFalse();
     };
 
     it('should initialize exercises when exam starts', () => {
@@ -422,6 +429,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.testRun = true;
         comp.testStartTime = dayjs().subtract(1000, 'seconds');
         comp.exam = new Exam();
+        studentExam.exam = comp.exam;
         testExamStarted(studentExam);
     });
 
@@ -433,6 +441,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.workingTime = 100;
         comp.testStartTime = dayjs().subtract(1000, 'seconds');
         comp.exam = exam;
+        studentExam.exam = comp.exam;
         testExamStarted(studentExam);
     });
 
@@ -446,6 +455,7 @@ describe('ExamParticipationComponent', () => {
         const workingTime = 1000;
         const studentExam = new StudentExam();
         studentExam.workingTime = workingTime;
+        studentExam.exam = comp.exam;
         testExamStarted(studentExam);
         expect(comp.individualStudentEndDate).toEqual(startDate.add(workingTime, 'seconds'));
     });
@@ -542,7 +552,6 @@ describe('ExamParticipationComponent', () => {
         let quizSubmissionUpdateSpy: jest.SpyInstance;
 
         beforeEach(() => {
-            comp.studentExam = new StudentExam();
             comp.exam = new Exam();
         });
 
@@ -563,7 +572,9 @@ describe('ExamParticipationComponent', () => {
             participation.submissions = [submission, syncedSubmission];
             participation.submissions = [submission, syncedSubmission];
             textExercise.studentParticipations = [participation];
-            comp.studentExam.exercises = [textExercise];
+            const studentExam = new StudentExam();
+            studentExam.exercises = [textExercise];
+            comp.studentExam = studentExam;
             textSubmissionUpdateSpy = jest.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
             comp.triggerSave(false);
             expect(textSubmissionUpdateSpy).toHaveBeenCalledWith(submission, 5);
@@ -580,7 +591,9 @@ describe('ExamParticipationComponent', () => {
             syncedSubmission.isSynced = true;
             participation.submissions = [submission, syncedSubmission];
             modelingExercise.studentParticipations = [participation];
-            comp.studentExam.exercises = [modelingExercise];
+            const studentExam = new StudentExam();
+            studentExam.exercises = [modelingExercise];
+            comp.studentExam = studentExam;
             modelingSubmissionUpdateSpy = jest.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
             comp.triggerSave(false);
             expect(modelingSubmissionUpdateSpy).toHaveBeenCalledWith(submission, 5);
@@ -597,13 +610,36 @@ describe('ExamParticipationComponent', () => {
             syncedSubmission.isSynced = true;
             participation.submissions = [submission, syncedSubmission];
             quizExercise.studentParticipations = [participation];
-            comp.studentExam.exercises = [quizExercise];
+            const studentExam = new StudentExam();
+            studentExam.exercises = [quizExercise];
+            comp.studentExam = studentExam;
             quizSubmissionUpdateSpy = jest.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(submission));
             comp.triggerSave(false);
             tick(500);
             expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, submission);
             expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, syncedSubmission);
             expectSyncedSubmissions(submission, syncedSubmission);
+        }));
+
+        it('should sync quiz exam submissions', fakeAsync(() => {
+            const studentExam = new StudentExam();
+            studentExam.id = 1;
+            studentExam.exam = new Exam();
+            studentExam.exam.quizExamMaxPoints = 100;
+            studentExam.quizQuestions = [new MultipleChoiceQuestion()];
+            const submission = new QuizExamSubmission();
+            submission.isSynced = false;
+            submission.submitted = false;
+            submission.studentExam = new StudentExam();
+            submission.studentExam.id = studentExam.id;
+            studentExam.quizExamSubmission = submission;
+            const expectedSubmission = Object.assign({}, submission);
+            studentExam.exercises = [];
+            comp.studentExam = studentExam;
+            quizSubmissionUpdateSpy = jest.spyOn(examParticipationService, 'updateQuizExamSubmission').mockReturnValue(of(submission));
+            comp.triggerSave(false);
+            tick(500);
+            expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(expectedSubmission);
         }));
     });
 

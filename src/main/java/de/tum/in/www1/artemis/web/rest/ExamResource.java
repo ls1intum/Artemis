@@ -618,6 +618,7 @@ public class ExamResource {
         var isInstructorInCourse = authCheckService.isAtLeastInstructorInCourse(course, null);
 
         Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
+        quizPoolService.fetchQuizExamMaxPoints(exam);
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, isInstructorInCourse);
 
         return ResponseEntity.ok(examChecklistDTO);
@@ -966,6 +967,7 @@ public class ExamResource {
         }
 
         Integer numOfEvaluatedExercises = examService.evaluateQuizExercises(exam);
+        examService.evaluateQuizExam(exam);
 
         log.info("Evaluated {} quiz exercises of exam {}", numOfEvaluatedExercises, examId);
 

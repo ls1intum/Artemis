@@ -12,8 +12,16 @@ export class ExamScoreDTO {
     public hasSecondCorrectionAndStarted: boolean;
     public exerciseGroups: ExerciseGroup[];
     public studentResults: StudentResult[];
+    public quizExam: QuizExamDTO;
 
     constructor() {}
+}
+
+export class QuizExamDTO {
+    public maxPoints: number;
+    public numberOfParticipants: number;
+    public averagePoints: number;
+    public averagePercentage: number;
 }
 
 export class ExerciseGroup {
@@ -52,8 +60,15 @@ export class StudentResult {
     public gradeWithBonus?: BonusResult;
     public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult };
     public mostSeverePlagiarismVerdict?: PlagiarismVerdict;
+    public quizExamResult: QuizExamResult;
 
     constructor() {}
+}
+
+export class QuizExamResult {
+    public maxPoints: number;
+    public achievedScore: number;
+    public achievedPoints: number;
 }
 
 export class StudentExamWithGradeDTO {

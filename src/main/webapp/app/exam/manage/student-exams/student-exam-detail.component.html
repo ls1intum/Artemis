@@ -264,6 +264,19 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
+                        <td></td>
+                        <td class="align-middle" style="font-size: 1.35rem"><fa-icon [icon]="faCheckDouble"></fa-icon></td>
+                        <td class="align-middle">
+                            <span jhiTranslate="artemisApp.quizPool.title">Quiz Exam</span>
+                        </td>
+                        <td class="align-middle">{{ quizExamResult.achievedPoints }}</td>
+                        <td class="align-middle">{{ quizExamResult.maxPoints }}</td>
+                        <td class="align-middle">0</td>
+                        <td></td>
+                        <td class="align-middle"><span jhiTranslate="global.generic.no"></span></td>
+                        <td></td>
+                    </tr>
                     @for (exercise of studentExam.exercises; track exercise) {
                         <tr
                             jhi-student-exam-detail-table-row

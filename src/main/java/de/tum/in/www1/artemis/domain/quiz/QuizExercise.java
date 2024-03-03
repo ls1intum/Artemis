@@ -288,19 +288,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     }
 
     /**
-     * Get the score for this submission as a number from 0 to 100 (100 being the best possible result)
-     *
-     * @param quizSubmission the submission that should be evaluated
-     * @return the resulting score
-     */
-    public Double getScoreForSubmission(QuizSubmission quizSubmission) {
-        double score = quizSubmission.getScoreInPoints(getQuizQuestions());
-        double maxPoints = getOverallQuizPoints();
-        // map the resulting score to the 0 to 100 scale
-        return 100.0 * score / maxPoints;
-    }
-
-    /**
      * Get question by ID
      *
      * @param questionId the ID of the question, which should be found
@@ -461,23 +448,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
             updateOfResultsAndStatisticsNecessary = true;
         }
         return updateOfResultsAndStatisticsNecessary;
-    }
-
-    /**
-     * Get the maximum total score for this quiz
-     *
-     * @return the sum of all the quizQuestions' maximum scores
-     */
-    @JsonIgnore
-    public Double getOverallQuizPoints() {
-        double maxPoints = 0.0;
-        // iterate through all quizQuestions of this quiz and add up the score
-        if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
-            for (QuizQuestion quizQuestion : getQuizQuestions()) {
-                maxPoints += quizQuestion.getPoints();
-            }
-        }
-        return maxPoints;
     }
 
     @Override

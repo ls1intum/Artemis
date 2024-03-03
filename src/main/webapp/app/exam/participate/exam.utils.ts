@@ -4,6 +4,7 @@ import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
 import { ServerDateService } from 'app/shared/server-date.service';
 import { QuizExam } from 'app/entities/quiz-exam.model';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
 
 /**
  * Calculates the individual end time based on the studentExam
@@ -108,6 +109,16 @@ export function createQuizExam(studentExam: StudentExam, title: string): QuizExa
         quizExam.quizQuestions = studentExam.quizQuestions;
         quizExam.randomizeQuestionOrder = studentExam.exam?.randomizeQuizExamQuestionsOrder;
         quizExam.maxPoints = studentExam.exam?.quizExamMaxPoints;
+        let quizExamSubmission;
+        if (studentExam.quizExamSubmission) {
+            quizExamSubmission = Object.assign({}, studentExam.quizExamSubmission);
+        } else {
+            quizExamSubmission = new QuizExamSubmission();
+        }
+        studentExam.quizExamSubmission = undefined;
+        quizExamSubmission.studentExam = new StudentExam();
+        quizExamSubmission.studentExam.id = studentExam.id;
+        quizExam.submission = quizExamSubmission;
         return quizExam;
     }
     return undefined;

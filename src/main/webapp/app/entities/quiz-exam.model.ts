@@ -2,8 +2,8 @@ import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.mode
 import { QuizConfiguration } from 'app/entities/quiz/quiz-configuration.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
-import { AbstractQuizSubmission } from 'app/entities/quiz/abstract-quiz-exam-submission.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
 
 export class QuizExam implements QuizConfiguration {
     public id?: number;
@@ -14,7 +14,7 @@ export class QuizExam implements QuizConfiguration {
     public title?: string;
     public maxPoints?: number;
     public includedInOverallScore?: IncludedInOverallScore;
-    public submission?: AbstractQuizSubmission;
+    public submission: QuizExamSubmission;
 
     constructor() {
         this.id = 0;

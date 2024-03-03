@@ -1,11 +1,11 @@
-@if (quizParticipation.quizQuestions && quizParticipation.quizQuestions.length > 0) {
+@if (quizConfiguration.quizQuestions && quizConfiguration.quizQuestions.length > 0) {
     <div class="quiz-content container">
         @if (showMissingResultsNotice) {
             <div class="alert alert-info mb-2">
                 {{ 'artemisApp.exam.examSummary.missingResultNotice' | artemisTranslate }}
             </div>
         }
-        @for (question of quizParticipation.quizQuestions!; track question; let i = $index) {
+        @for (question of quizConfiguration.quizQuestions!; track question; let i = $index) {
             <div>
                 <!-- TODO: Map vs Array consistency -->
                 @if (question.type === MULTIPLE_CHOICE) {
@@ -15,7 +15,7 @@
                         [selectedAnswerOptions]="selectedAnswerOptions.get(question.id!)!"
                         [clickDisabled]="true"
                         [showResult]="resultsPublished && !showMissingResultsNotice"
-                        [quizQuestions]="quizParticipation.quizQuestions"
+                        [quizQuestions]="quizConfiguration.quizQuestions"
                         [submittedResult]="result!"
                         [forceSampleSolution]="false"
                         [questionIndex]="i + 1"

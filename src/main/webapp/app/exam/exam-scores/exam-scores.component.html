@@ -21,7 +21,7 @@
             }
         </div>
     }
-    @if (!isLoading && studentResults && exerciseGroups) {
+    @if (!isLoading && studentResults && (exerciseGroups || examScoreDTO.quizExam)) {
         <div>
             <div class="d-flex">
                 @if (examScoreDTO.title) {
@@ -35,13 +35,15 @@
                 @if (examScoreDTO.maxPoints) {
                     <h6>{{ 'artemisApp.examScores.maxPoints' | artemisTranslate }}: {{ localize(examScoreDTO.maxPoints) }},</h6>
                 }
-                <a [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'exercise-groups']">
-                    <h6 class="ms-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }}</h6>
-                </a>
-                <h6>,</h6>
-                <a [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'students']">
-                    <h6 class="ms-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}</h6>
-                </a>
+                @if (exerciseGroups) {
+                    <a [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'exercise-groups']">
+                        <h6 class="ms-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }}</h6>
+                    </a>
+                    <h6>,</h6>
+                    <a [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'students']">
+                        <h6 class="ms-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}</h6>
+                    </a>
+                }
             </div>
             <div class="mb-2">
                 <h4>
@@ -481,6 +483,31 @@
                                     </th>
                                 </tr>
                             </thead>
+                            @if (examScoreDTO.quizExam) {
+                                <tbody>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td>{{ 'artemisApp.quizPool.title' | artemisTranslate }}</td>
+                                        <td>
+                                            {{ examScoreDTO.quizExam.numberOfParticipants }}
+                                            / {{ examScoreDTO.studentResults.length }} ({{
+                                                roundAndPerformLocalConversion((examScoreDTO.quizExam.numberOfParticipants / examScoreDTO.studentResults.length) * 100)
+                                            }}
+                                            %)
+                                        </td>
+                                        <td>
+                                            {{ examScoreDTO.quizExam.averagePoints !== null ? roundAndPerformLocalConversion(examScoreDTO.quizExam.averagePoints) : '-' }}
+                                            /
+                                            {{ localize(examScoreDTO.quizExam.maxPoints) }}
+                                            ({{ examScoreDTO.quizExam.averagePercentage !== null ? roundAndPerformLocalConversion(examScoreDTO.quizExam.averagePercentage) : '-' }}
+                                            %)
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            }
                             @for (exerciseGroupResult of aggregatedExerciseGroupResults; track exerciseGroupResult; let i = $index) {
                                 <tbody>
                                     @for (exerciseResult of exerciseGroupResult.exerciseResults; track exerciseResult; let isFirst = $first) {
@@ -569,11 +596,18 @@
                                 <span jhiTranslate="artemisApp.examScores.registrationNumberColumn">Matriculation Number</span>
                                 <fa-icon [icon]="faSort" />
                             </th>
-                            @for (exerciseGroup of examScoreDTO.exerciseGroups; track exerciseGroup) {
-                                <th [jhiSortBy]="'exerciseGroupIdToExerciseResult.' + exerciseGroup.id + '.achievedPoints'">
-                                    <span>{{ exerciseGroup.title }}</span>
-                                    <fa-icon [icon]="faSort" />
+                            @if (examScoreDTO.quizExam) {
+                                <th>
+                                    <span jhiTranslate="artemisApp.quizPool.title">Quiz Exam</span>
                                 </th>
+                            }
+                            @if (exerciseGroups) {
+                                @for (exerciseGroup of examScoreDTO.exerciseGroups; track exerciseGroup) {
+                                    <th [jhiSortBy]="'exerciseGroupIdToExerciseResult.' + exerciseGroup.id + '.achievedPoints'">
+                                        <span>{{ exerciseGroup.title }}</span>
+                                        <fa-icon [icon]="faSort" />
+                                    </th>
+                                }
                             }
                             <th jhiSortBy="overallPointsAchieved">
                                 <span jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Points</span>
@@ -636,18 +670,32 @@
                                 <td>{{ studentResult.login }}</td>
                                 <td>{{ studentResult.email ? studentResult.email : '-' }}</td>
                                 <td>{{ studentResult.registrationNumber ? studentResult.registrationNumber : '-' }}</td>
-                                @for (exerciseGroup of examScoreDTO.exerciseGroups; track exerciseGroup) {
-                                    @if (studentResult.exerciseGroupIdToExerciseResult && studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id]) {
-                                        <td>
-                                            {{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].title }}
-                                            :
-                                            {{ roundAndPerformLocalConversion(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedPoints) }}
-                                            (
-                                            {{ roundAndPerformLocalConversion(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore) }}
-                                            %)
-                                        </td>
-                                    } @else {
-                                        <td>-</td>
+                                @if (studentResult.quizExamResult) {
+                                    <td>
+                                        {{ 'artemisApp.quizPool.title' | artemisTranslate }}
+                                        :
+                                        {{ roundAndPerformLocalConversion(studentResult.quizExamResult.achievedPoints) }}
+                                        (
+                                        {{ roundAndPerformLocalConversion(studentResult.quizExamResult.achievedScore) }}
+                                        %)
+                                    </td>
+                                } @else {
+                                    <td>-</td>
+                                }
+                                @if (examScoreDTO.exerciseGroups) {
+                                    @for (exerciseGroup of examScoreDTO.exerciseGroups; track exerciseGroup) {
+                                        @if (studentResult.exerciseGroupIdToExerciseResult && studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id]) {
+                                            <td>
+                                                {{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].title }}
+                                                :
+                                                {{ roundAndPerformLocalConversion(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedPoints) }}
+                                                (
+                                                {{ roundAndPerformLocalConversion(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedScore) }}
+                                                %)
+                                            </td>
+                                        } @else {
+                                            <td>-</td>
+                                        }
                                     }
                                 }
                                 <td>{{ roundAndPerformLocalConversion(studentResult.overallPointsAchieved) }}</td>

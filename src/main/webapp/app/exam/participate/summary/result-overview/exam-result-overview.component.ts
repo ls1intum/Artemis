@@ -3,7 +3,7 @@ import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
+import { faAward, faCheckDouble, faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { BonusStrategy } from 'app/entities/bonus.model';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
@@ -11,6 +11,7 @@ import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/util
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular-ivy';
 import { isExamResultPublished } from 'app/exam/participate/exam.utils';
+import { Course } from 'app/entities/course.model';
 
 type ExerciseInfo = {
     icon: IconProp;
@@ -29,11 +30,13 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly BonusStrategy = BonusStrategy;
 
+    @Input() course: Course;
     @Input() studentExamWithGrade: StudentExamWithGradeDTO;
     @Input() isGradingKeyCollapsed: boolean = true;
     @Input() isBonusGradingKeyCollapsed: boolean = true;
     @Input() exerciseInfos: Record<number, ExerciseInfo>;
     @Input() isTestRun: boolean = false;
+    @Input() quizExamInfo?: ExerciseInfo;
 
     gradingScaleExists = false;
     isBonus = false;
@@ -44,6 +47,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     faClipboard = faClipboard;
     faAward = faAward;
     faChevronRight = faChevronRight;
+    faCheckDouble = faCheckDouble;
 
     showIncludedInScoreColumn = false;
     /**
@@ -231,4 +235,6 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     toggleCollapse(resultOverviewSection: ResultOverviewSection) {
         return () => (this.isCollapsed[resultOverviewSection] = !this.isCollapsed[resultOverviewSection]);
     }
+
+    protected readonly roundScorePercentSpecifiedByCourseSettings = roundScorePercentSpecifiedByCourseSettings;
 }

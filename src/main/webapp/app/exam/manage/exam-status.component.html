@@ -18,6 +18,7 @@
                         <span>{{
                             'artemisApp.examStatus.preparation.configureExercises' | artemisTranslate: { amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0 }
                         }}</span>
+                        {{ configuredExercises }}
                         @if (configuredExercises) {
                             <fa-icon [icon]="faCheckCircle" class="check" />
                         }

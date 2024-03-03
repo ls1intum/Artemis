@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.util.Collection;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public interface QuizConfiguration {
 
     /**
@@ -114,5 +116,32 @@ public interface QuizConfiguration {
         if (component != null && component.getId() != null) {
             component.setQuestion(quizQuestion);
         }
+    }
+
+    /**
+     * Get the score for this submission as a number from 0 to 100 (100 being the best possible result)
+     *
+     * @param abstractQuizSubmission the submission that should be evaluated
+     * @return the resulting score
+     */
+    default Double getScoreForSubmission(AbstractQuizSubmission abstractQuizSubmission) {
+        double score = abstractQuizSubmission.getScoreInPoints(getQuizQuestions());
+        double maxPoints = getOverallQuizPoints();
+        // map the resulting score to the 0 to 100 scale
+        return 100.0 * score / maxPoints;
+    }
+
+    /**
+     * Get the maximum total score for this quiz
+     *
+     * @return the sum of all the quizQuestions' maximum scores
+     */
+    @JsonIgnore
+    default Double getOverallQuizPoints() {
+        double maxPoints = 0.0;
+        for (QuizQuestion quizQuestion : getQuizQuestions()) {
+            maxPoints += quizQuestion.getPoints();
+        }
+        return maxPoints;
     }
 }

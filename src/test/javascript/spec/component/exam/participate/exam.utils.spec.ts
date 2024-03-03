@@ -7,6 +7,7 @@ import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExam } from 'app/entities/quiz-exam.model';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
 
 let artemisServerDateService: ArtemisServerDateService;
 
@@ -67,6 +68,31 @@ describe('ExamUtils', () => {
                 expect(quizExam!.quizQuestions).toEqual(studentExam.quizQuestions);
                 expect(quizExam!.randomizeQuestionOrder).toEqual(studentExam.exam!.randomizeQuizExamQuestionsOrder);
                 expect(quizExam!.maxPoints).toEqual(studentExam.exam!.quizExamMaxPoints);
+            });
+
+            it('should create a QuizExam object with the correct values when the student exam has quiz questions, non-zero quizExamMaxPoints value, and quizExamSubmission', () => {
+                const studentExam: StudentExam = new StudentExam();
+                const title: string = 'Quiz Exam';
+                studentExam.id = 2;
+                studentExam.exam = new Exam();
+                studentExam.exam.quizExamMaxPoints = 10;
+                studentExam.quizQuestions = [new MultipleChoiceQuestion(), new MultipleChoiceQuestion()];
+                studentExam.exam.randomizeQuizExamQuestionsOrder = true;
+                const quizExamSubmission = new QuizExamSubmission();
+                quizExamSubmission.studentExam = new StudentExam();
+                quizExamSubmission.studentExam.id = studentExam.id;
+                studentExam.quizExamSubmission = quizExamSubmission;
+                studentExam.quizExamSubmission.id = 1;
+
+                const quizExam: QuizExam | undefined = createQuizExam(studentExam, title);
+
+                expect(quizExam).toBeDefined();
+                expect(quizExam!.title).toEqual(title);
+                expect(quizExam!.exerciseGroup!.title).toEqual(title);
+                expect(quizExam!.quizQuestions).toEqual(studentExam.quizQuestions);
+                expect(quizExam!.randomizeQuestionOrder).toEqual(studentExam.exam!.randomizeQuizExamQuestionsOrder);
+                expect(quizExam!.maxPoints).toEqual(studentExam.exam!.quizExamMaxPoints);
+                expect(quizExam!.submission).toEqual(quizExamSubmission);
             });
 
             it('should return undefined when the student exam has a quizExamMaxPoints value of 0', () => {

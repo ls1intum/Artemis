@@ -26,11 +26,13 @@
 @if (studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO) {
     <div class="mb-4" id="exam-summary-result-overview">
         <jhi-exam-result-overview
+            [course]="studentExam.exam!.course!"
             [studentExamWithGrade]="studentExamGradeInfoDTO!"
             [isGradingKeyCollapsed]="isGradingKeyCollapsed"
             [isBonusGradingKeyCollapsed]="isBonusGradingKeyCollapsed"
             [exerciseInfos]="exerciseInfos"
             [isTestRun]="isTestRun"
+            [quizExamInfo]="quizExamInfo"
         />
     </div>
 }
@@ -43,11 +45,47 @@
 <h3>
     {{ 'artemisApp.exam.exercises' | artemisTranslate }}
 </h3>
+@if (quizExam) {
+    <div>
+        <div class="question card">
+            <jhi-result-summary-exercise-card-header
+                [index]="0"
+                [id]="0"
+                [title]="quizExam!.title"
+                [exerciseType]="ExerciseType.QUIZ"
+                [maxPoints]="quizExam!.maxPoints"
+                [submissionType]="MANUAL"
+                [exerciseInfo]="quizExamInfo"
+                [resultsPublished]="resultsArePublished"
+            />
+            <div class="card-body question-card-body" [ngbCollapse]="quizExamInfo.isCollapsed">
+                <div class="clearfix"></div>
+                <div>
+                    <jhi-quiz-exam-summary
+                        [quizConfiguration]="quizExam!"
+                        [exam]="studentExam.exam!"
+                        [submission]="quizExam!.submission"
+                        [resultsPublished]="resultsArePublished"
+                    />
+                </div>
+            </div>
+        </div>
+    </div>
+}
 @for (exercise of studentExam?.exercises; track exercise; let i = $index) {
     <div [id]="'exercise-' + exercise.id">
         <jhi-collapsible-card [isCardContentCollapsed]="exerciseInfos[exercise.id!].isCollapsed" [toggleCollapse]="toggleCollapseExercise(exerciseInfos[exercise.id!])">
             <div class="header">
-                <jhi-result-summary-exercise-card-header [index]="i" [exercise]="exercise" [exerciseInfo]="exerciseInfos[exercise.id!]" [resultsPublished]="resultsArePublished" />
+                <jhi-result-summary-exercise-card-header
+                    [index]="i + (quizExam ? 1 : 0)"
+                    [id]="exercise.id"
+                    [title]="exercise.exerciseGroup?.title"
+                    [exerciseType]="exercise?.type"
+                    [maxPoints]="exercise.maxPoints"
+                    [submissionType]="exercise.studentParticipations?.[0]?.submissions?.[0]?.type"
+                    [exerciseInfo]="exerciseInfos[exercise.id!]"
+                    [resultsPublished]="resultsArePublished"
+                />
             </div>
             <div class="collapsible-content">
                 <div class="clearfix">
@@ -140,7 +178,7 @@
                                     }
                                     @case (QUIZ) {
                                         <jhi-quiz-exam-summary
-                                            [quizParticipation]="exercise"
+                                            [quizConfiguration]="exercise"
                                             [exam]="studentExam.exam!"
                                             [submission]="exerciseInfos[exercise.id!]!.submission!"
                                             [resultsPublished]="resultsArePublished"

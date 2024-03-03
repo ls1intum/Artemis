@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.hestia.CoverageFileReport;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizConfiguration;
+import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -466,6 +468,12 @@ public class Result extends DomainObject implements Comparable<Result> {
             QuizExercise quizExercise = (QuizExercise) studentParticipation.getExercise();
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission), quizExercise.getCourseViaExerciseGroupOrCourseMember());
+        }
+    }
+
+    public void evaluateQuizExamSubmission(QuizConfiguration quizConfiguration, Course course) {
+        if (submission instanceof QuizExamSubmission quizExamSubmission) {
+            setScore(quizConfiguration.getScoreForSubmission(quizExamSubmission), course);
         }
     }
 

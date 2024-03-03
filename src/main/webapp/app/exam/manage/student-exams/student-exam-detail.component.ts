@@ -9,9 +9,9 @@ import dayjs from 'dayjs/esm';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { QuizExamResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { combineLatest, takeWhile } from 'rxjs';
 
 @Component({
@@ -23,6 +23,7 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
     examId: number;
     courseId: number;
     studentExam: StudentExam;
+    quizExamResult: QuizExamResult;
     achievedPointsPerExercise: { [exerciseId: number]: number };
     course: Course;
     student: User;
@@ -42,6 +43,7 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
 
     // Icons
     faSave = faSave;
+    faCheckDouble = faCheckDouble;
 
     workingTimeSeconds = 0;
 
@@ -64,8 +66,9 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
                 this.examId = params.examId;
                 this.courseId = params.courseId;
                 this.setStudentExamWithGrade(data.studentExam);
-                this.isTestExam = data.studentExam.exam.testExam;
+                this.isTestExam = data.studentExam.studentExam.exam.testExam;
                 this.isTestRun = url[1]?.toString() === 'test-runs';
+                this.quizExamResult = data.studentExam.studentResult.quizExamResult;
             });
     }
 

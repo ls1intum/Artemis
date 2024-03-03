@@ -12,10 +12,12 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 
 @Entity
@@ -68,6 +70,9 @@ public class StudentExam extends AbstractAuditingEntity {
     @ManyToMany
     @JoinTable(name = "student_exam_quiz_question", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "quiz_question_id", referencedColumnName = "id"))
     private List<QuizQuestion> quizQuestions = new ArrayList<>();
+
+    @Transient
+    private QuizExamSubmission quizExamSubmission;
 
     public Boolean isSubmitted() {
         return submitted;
@@ -182,6 +187,16 @@ public class StudentExam extends AbstractAuditingEntity {
 
     public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
         this.quizQuestions = quizQuestions;
+    }
+
+    @JsonProperty(value = "quizExamSubmission", access = JsonProperty.Access.READ_ONLY)
+    public QuizExamSubmission getQuizExamSubmission() {
+        return quizExamSubmission;
+    }
+
+    @JsonProperty(value = "quizExamSubmission", access = JsonProperty.Access.WRITE_ONLY)
+    public void setQuizExamSubmission(QuizExamSubmission quizExamSubmission) {
+        this.quizExamSubmission = quizExamSubmission;
     }
 
     /**

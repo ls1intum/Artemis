@@ -87,6 +87,11 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
         this.quizQuestions = quizQuestions;
     }
 
+    @Override
+    public Double getOverallQuizPoints() {
+        return (double) this.maxPoints;
+    }
+
     @JsonProperty(value = "quizGroups", access = JsonProperty.Access.READ_ONLY)
     // NOTE: there is no guarantee for a specific order because the underlying data is stored in a set without order column
     public List<QuizGroup> getQuizGroups() {

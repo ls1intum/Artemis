@@ -19,7 +19,11 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.QuizConfiguration;
+import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
@@ -205,34 +209,11 @@ public class ExamQuizService {
                     }
                     // Only create Results once after the first evaluation
                     if (!resultExisting) {
-                        // delete result from quizSubmission, to be able to set a new one
-                        if (quizSubmission.getLatestResult() != null) {
-                            resultService.deleteResult(quizSubmission.getLatestResult(), true);
-                        }
-                        result.setRated(true);
-                        result.setAssessmentType(AssessmentType.AUTOMATIC);
-                        result.setCompletionDate(ZonedDateTime.now());
-
-                        // set submission to calculate scores
-                        result.setSubmission(quizSubmission);
-                        // calculate scores and update result and submission accordingly
-                        quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
-                        result.evaluateQuizSubmission();
-                        // remove submission to follow save order for ordered collections
-                        result.setSubmission(null);
-
-                        // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
-                        submissionRepository.save(quizSubmission);
-                        result = resultRepository.save(result);
+                        result = calculateResult(quizExercise, quizSubmission, result);
 
                         // add result to participation
                         participation.addResult(result);
                         studentParticipationRepository.save(participation);
-
-                        // add result to submission
-                        result.setSubmission(quizSubmission);
-                        quizSubmission.addResult(result);
-                        submissionRepository.save(quizSubmission);
 
                         // Add result so that it can be returned (and processed later)
                         createdResults.add(result);
@@ -246,5 +227,40 @@ public class ExamQuizService {
 
         }
         return createdResults;
+    }
+
+    public Result calculateResult(QuizConfiguration quizConfiguration, AbstractQuizSubmission quizSubmission, Result result) {
+        // delete result from quizSubmission, to be able to set a new one
+        if (quizSubmission.getLatestResult() != null) {
+            resultService.deleteResult(quizSubmission.getLatestResult(), true);
+        }
+        result.setRated(true);
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setCompletionDate(ZonedDateTime.now());
+
+        // set submission to calculate scores
+        result.setSubmission(quizSubmission);
+        // calculate scores and update result and submission accordingly
+        quizSubmission.calculateAndUpdateScores(quizConfiguration.getQuizQuestions());
+        if (quizSubmission instanceof QuizSubmission) {
+            result.evaluateQuizSubmission();
+        }
+        else if (quizSubmission instanceof QuizExamSubmission) {
+            QuizPool quizPool = (QuizPool) quizConfiguration;
+            result.evaluateQuizExamSubmission(quizConfiguration, quizPool.getExam().getCourse());
+        }
+        // remove submission to follow save order for ordered collections
+        result.setSubmission(null);
+
+        // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
+        submissionRepository.save(quizSubmission);
+        result = resultRepository.save(result);
+
+        // add result to submission
+        result.setSubmission(quizSubmission);
+        quizSubmission.addResult(result);
+        submissionRepository.save(quizSubmission);
+
+        return result;
     }
 }

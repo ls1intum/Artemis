@@ -58,6 +58,7 @@ import {
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
 import { BonusStrategy } from 'app/entities/bonus.model';
+import { TranslateService } from '@ngx-translate/core';
 
 export enum MedianType {
     PASSED,
@@ -119,6 +120,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     hasSecondCorrectionAndStarted: boolean;
     hasNumericGrades: boolean;
     presentationScoreThreshold?: number;
+    hasQuizExam: boolean;
 
     course?: Course;
 
@@ -141,6 +143,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private participantScoresService: ParticipantScoresService,
         private gradingSystemService: GradingSystemService,
         private courseManagementService: CourseManagementService,
+        private translateService: TranslateService,
     ) {}
 
     ngOnInit() {
@@ -163,6 +166,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.hasSecondCorrectionAndStarted = this.examScoreDTO.hasSecondCorrectionAndStarted;
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
+                        this.hasQuizExam = !!this.examScoreDTO.quizExam;
 
                         const titleMap = new Map<string, number>();
                         if (this.exerciseGroups) {
@@ -193,7 +197,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.hasNumericGrades = !this.gradingScale!.gradeSteps.some((step) => isNaN(Number(step.gradeName)));
                     }
                     // Only try to calculate statistics if the exam has exercise groups and student results
-                    if (this.studentResults && this.exerciseGroups) {
+                    if (this.studentResults && (this.exerciseGroups || this.hasQuizExam)) {
                         this.hasPlagiarismVerdicts = this.studentResults.some((studentResult) => studentResult.mostSeverePlagiarismVerdict);
                         this.hasPlagiarismVerdictsInBonusSource =
                             this.hasBonus && this.studentResults.some((studentResult) => studentResult.gradeWithBonus?.mostSeverePlagiarismVerdict);
@@ -304,15 +308,23 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         // Create data structures holding the statistics for all exercise groups and exercises
         const groupIdToGroupResults = new Map<number, AggregatedExerciseGroupResult>();
-        for (const exerciseGroup of this.exerciseGroups) {
-            const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.id, exerciseGroup.title, exerciseGroup.maxPoints, exerciseGroup.numberOfParticipants);
-            // We initialize the data structure for exercises here as it can happen that no student was assigned to an exercise
-            exerciseGroup.containedExercises.forEach((exerciseInfo) => {
-                const type = declareExerciseType(exerciseInfo);
-                const exerciseResult = new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title, exerciseInfo.maxPoints, exerciseInfo.numberOfParticipants, type!);
-                groupResult.exerciseResults.push(exerciseResult);
-            });
-            groupIdToGroupResults.set(exerciseGroup.id, groupResult);
+        if (this.exerciseGroups) {
+            for (const exerciseGroup of this.exerciseGroups) {
+                const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.id, exerciseGroup.title, exerciseGroup.maxPoints, exerciseGroup.numberOfParticipants);
+                // We initialize the data structure for exercises here as it can happen that no student was assigned to an exercise
+                exerciseGroup.containedExercises.forEach((exerciseInfo) => {
+                    const type = declareExerciseType(exerciseInfo);
+                    const exerciseResult = new AggregatedExerciseResult(
+                        exerciseInfo.exerciseId,
+                        exerciseInfo.title,
+                        exerciseInfo.maxPoints,
+                        exerciseInfo.numberOfParticipants,
+                        type!,
+                    );
+                    groupResult.exerciseResults.push(exerciseResult);
+                });
+                groupIdToGroupResults.set(exerciseGroup.id, groupResult);
+            }
         }
 
         // Calculate the total points and number of participants when filters apply for each exercise group and exercise
@@ -676,7 +688,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Localizes a number, e.g. switching the decimal separator
      */
     localize(numberToLocalize: number): string {
-        return this.localeConversionService.toLocaleString(numberToLocalize, this.course!.accuracyOfScores!);
+        return this.localeConversionService.toLocaleString(numberToLocalize, this.course?.accuracyOfScores);
     }
 
     /**
@@ -684,11 +696,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     private generateExportColumnNames(): Array<string> {
         const headers = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
-        this.exerciseGroups.forEach((exerciseGroup) => {
-            headers.push(`${exerciseGroup.title} ${EXAM_ASSIGNED_EXERCISE}`);
-            headers.push(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`);
-            headers.push(`${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`);
-        });
+        if (this.exerciseGroups) {
+            this.exerciseGroups.forEach((exerciseGroup) => {
+                headers.push(`${exerciseGroup.title} ${EXAM_ASSIGNED_EXERCISE}`);
+                headers.push(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`);
+                headers.push(`${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`);
+            });
+        }
         headers.push(EXAM_OVERALL_POINTS_KEY);
         headers.push(EXAM_OVERALL_SCORE_KEY);
         if (this.gradingScaleExists) {
@@ -739,18 +753,25 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         rowData.setUserInformation(studentResult.name, studentResult.login, studentResult.email, studentResult.registrationNumber);
 
-        this.exerciseGroups.forEach((exerciseGroup) => {
-            const exerciseResult = studentResult.exerciseGroupIdToExerciseResult?.[exerciseGroup.id];
-            if (exerciseResult) {
-                rowData.set(`${exerciseGroup.title} ${EXAM_ASSIGNED_EXERCISE}`, exerciseResult.title);
-                rowData.setPoints(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`, exerciseResult.achievedPoints);
-                rowData.setScore(`${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`, exerciseResult.achievedScore);
-            } else {
-                rowData.set(`${exerciseGroup.title} ${EXAM_ASSIGNED_EXERCISE}`, '');
-                rowData.set(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`, '');
-                rowData.set(`${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`, '');
-            }
-        });
+        if (studentResult.quizExamResult) {
+            rowData.set(EXAM_ASSIGNED_EXERCISE, this.translateService.instant('artemisApp.quizPool.title'));
+            rowData.setPoints(EXAM_ACHIEVED_POINTS, studentResult.quizExamResult.achievedPoints);
+            rowData.setScore(EXAM_ACHIEVED_SCORE, studentResult.quizExamResult.achievedScore);
+        }
+        if (this.exerciseGroups) {
+            this.exerciseGroups.forEach((exerciseGroup) => {
+                const exerciseResult = studentResult.exerciseGroupIdToExerciseResult?.[exerciseGroup.id];
+                if (exerciseResult) {
+                    rowData.set(`${exerciseGroup.title} ${EXAM_ASSIGNED_EXERCISE}`, exerciseResult.title);
+                    rowData.setPoints(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`, exerciseResult.achievedPoints);
+                    rowData.setScore(`${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`, exerciseResult.achievedScore);
+                } else {
+                    rowData.set(`${exerciseGroup.title} ${EXAM_ASSIGNED_EXERCISE}`, '');
+                    rowData.set(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`, '');
+                    rowData.set(`${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`, '');
+                }
+            });
+        }
 
         rowData.setPoints(EXAM_OVERALL_POINTS_KEY, studentResult.overallPointsAchieved);
         rowData.setScore(EXAM_OVERALL_SCORE_KEY, studentResult.overallScoreAchieved);

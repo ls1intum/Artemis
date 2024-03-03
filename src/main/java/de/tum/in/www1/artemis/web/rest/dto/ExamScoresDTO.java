@@ -8,7 +8,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamScoresDTO(Long examId, String title, Integer maxPoints, Double averagePointsAchieved, Boolean hasSecondCorrectionAndStarted, List<ExerciseGroup> exerciseGroups,
-        List<StudentResult> studentResults) {
+        List<StudentResult> studentResults, QuizExam quizExam) {
 
     // Inner DTO
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -23,11 +23,20 @@ public record ExamScoresDTO(Long examId, String title, Integer maxPoints, Double
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record StudentResult(Long userId, String name, String email, String login, String registrationNumber, Boolean submitted, Double overallPointsAchieved,
             Double overallScoreAchieved, String overallGrade, String overallGradeInFirstCorrection, Boolean hasPassed, Double overallPointsAchievedInFirstCorrection,
-            BonusResultDTO gradeWithBonus, Map<Long, ExerciseResult> exerciseGroupIdToExerciseResult, PlagiarismVerdict mostSeverePlagiarismVerdict) {
+            BonusResultDTO gradeWithBonus, Map<Long, ExerciseResult> exerciseGroupIdToExerciseResult, PlagiarismVerdict mostSeverePlagiarismVerdict,
+            QuizExamResult quizExamResult) {
     }
 
     // Inner DTO
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExerciseResult(Long exerciseId, String title, Double maxScore, Double achievedScore, Double achievedPoints, Boolean hasNonEmptySubmission) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record QuizExam(Integer maxPoints, Long numberOfParticipants, Double averagePoints, Double averagePercentage) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record QuizExamResult(Integer maxPoints, Double achievedScore, Double achievedPoints) {
     }
 }
