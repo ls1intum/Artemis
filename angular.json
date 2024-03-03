@@ -105,6 +105,11 @@
                 "glob": "**/*",
                 "input": "src/main/webapp/swagger-ui/",
                 "output": "swagger-ui"
+              },
+              {
+                "glob": "**/*",
+                "input": "./node_modules/monaco-editor/min/vs",
+                "output": "vs"
               }
             ],
             "styles": [
