@@ -118,6 +118,16 @@ public class Windfile {
         this.metadata.setResultHook(resultHook);
     }
 
+    /**
+     * Sets the author for the windfile.
+     *
+     * @param author the author for the windfile.
+     */
+    public void setAuthor(String author) {
+        checkMetadata();
+        this.metadata.setAuthor(author);
+    }
+
     public void setRepositories(Map<String, AeolusRepository> repositories) {
         this.repositories = repositories;
     }

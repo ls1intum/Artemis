@@ -24,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
@@ -215,5 +216,35 @@ public class AeolusBuildPlanService {
             repositoryMap.put(auxRepo.name(), new AeolusRepository(auxRepo.repositoryUri().toString(), branch, auxRepo.name()));
         }
         return repositoryMap;
+    }
+
+    /**
+     * Generates a windfile for a programming exercise using Aeolus
+     *
+     * @param target       the target to generate the windfile for, either bamboo or jenkins
+     * @param buildPlanKey the key of the build plan to generate the windfile for
+     * @return the generated windfile
+     */
+    public Windfile translateBuildPlan(AeolusTarget target, String buildPlanKey) {
+        String requestUrl = aeolusUrl + "/translate/" + target.getName() + "/" + buildPlanKey;
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
+        builder.queryParam("result_format", "json");
+        builder.queryParam("exclude_repositories", true);
+        Map<String, Object> body = new HashMap<>();
+        body.put("url", getCiUrl());
+        body.put("username", ciUsername);
+        body.put("token", ciToken);
+        var headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.PUT, new HttpEntity<>(body, headers), String.class);
+            if (response.getBody() != null) {
+                return Windfile.deserialize(response.getBody());
+            }
+        }
+        catch (RestClientException | JsonSyntaxException e) {
+            log.error("Error while generating build script for build plan {}", buildPlanKey, e);
+        }
+        return null;
     }
 }
