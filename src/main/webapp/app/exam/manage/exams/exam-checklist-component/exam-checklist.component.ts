@@ -1,9 +1,10 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
-import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -22,6 +23,9 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     hasOptionalExercises = false;
     countMandatoryExercises = 0;
     isTestExam: boolean;
+    allAssessmentsFinished: boolean = true;
+    unfinishedAssessments: Submission[];
+    isAssessmentsCollapsed = true;
 
     numberOfSubmitted = 0;
     numberOfStarted = 0;
@@ -35,6 +39,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     faListAlt = faListAlt;
     faThList = faThList;
     faChartBar = faChartBar;
+    faAngleUp = faAngleUp;
+    faAngleDown = faAngleDown;
 
     constructor(
         private examChecklistService: ExamChecklistService,
@@ -63,6 +69,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 !!this.exam.numberOfExamUsers && this.exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist);
             this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
             this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
+            this.unfinishedAssessments = this.examChecklist.unfinishedAssessments;
+            this.allAssessmentsFinished = !(this.unfinishedAssessments && this.unfinishedAssessments.length > 0);
         });
     }
 

@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.Submission;
 
 /**
  * This is a dto for providing statistics for the exam instructor dashboard
@@ -25,6 +29,16 @@ public class ExamChecklistDTO {
     private Long numberOfAllComplaintsDone;
 
     private boolean allExamExercisesAllStudentsPrepared;
+
+    private List<Submission> unfinishedAssessments;
+
+    public List<?> getUnfinishedAssessments() {
+        return unfinishedAssessments;
+    }
+
+    public void setUnfinishedAssessments(List<Submission> unfinishedAssessments) {
+        this.unfinishedAssessments = unfinishedAssessments;
+    }
 
     public Long getNumberOfTotalParticipationsForAssessment() {
         return numberOfTotalParticipationsForAssessment;

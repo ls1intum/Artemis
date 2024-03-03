@@ -1118,6 +1118,8 @@ public class ExamService {
             examChecklistDTO.setNumberOfExamsSubmitted(numberOfStudentExamsSubmitted);
         }
         examChecklistDTO.setNumberOfTotalParticipationsForAssessment(totalNumberOfParticipationsForAssessment);
+        final List<Submission> unfinishedAssessments = resultRepository.getUnfinishedAssessmentsForExam(exam.getId());
+        examChecklistDTO.setUnfinishedAssessments(unfinishedAssessments);
         return examChecklistDTO;
     }
 
@@ -1266,6 +1268,7 @@ public class ExamService {
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExamLeaderboard(course, exam);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
+
         return stats;
     }
 
