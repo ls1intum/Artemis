@@ -3,7 +3,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.google.gson.GsonBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import com.google.gson.Gson;
@@ -34,21 +36,19 @@ public class GeneratePlaceholderSignatures {
         try (var scanResult = new ClassGraph().overrideClasspath(inputClassDir).acceptPackages("de.tum.in.www1.artemis").enableAllInfo().scan()) {
             // Find the classes that are annotated as a notification placeholder file.
             var classes = scanResult.getClassesWithAnnotation(ANNOTATION_NAME);
-            if (classes.isEmpty())
-                throw new IllegalStateException("No classes were found to generate signature from. This might be a caching issue.");
 
             // create a signature for each annotated file.
-            var signatures = classes.stream().map(placeholderClass -> {
+            var signatures = classes.stream().flatMap(placeholderClass -> {
                 Class<?> loaded = placeholderClass.loadClass();
                 var fieldDescriptions = Arrays.stream(loaded.getDeclaredFields()).map(field -> new FieldDescription(field.getName(), field.getType().getName())).sorted().toList();
 
-                var notificationType = (String) placeholderClass.getAnnotationInfo(ANNOTATION_NAME).getParameterValues().get("value").getValue();
+                var notificationTypes = (String[]) placeholderClass.getAnnotationInfo(ANNOTATION_NAME).getParameterValues().get("values").getValue();
 
-                return new ClassSignature(notificationType, fieldDescriptions);
+                return Arrays.stream(notificationTypes).map(notificationType -> new ClassSignature(notificationType, fieldDescriptions));
             }).sorted().toList();
 
             // Signature as json
-            var signature = new Gson().toJson(signatures);
+            var signature = new GsonBuilder().setPrettyPrinting().create().toJson(signatures);
             outputDir.mkdirs();
 
             // Write the signature file
@@ -59,7 +59,8 @@ public class GeneratePlaceholderSignatures {
         }
     }
 
-    private record ClassSignature(String notificationType, List<FieldDescription> fieldDescriptions) implements Comparable<ClassSignature> {
+    private record ClassSignature(String notificationType,
+                                  List<FieldDescription> fieldDescriptions) implements Comparable<ClassSignature> {
 
         @Override
         public int compareTo(@NotNull GeneratePlaceholderSignatures.ClassSignature classSignature) {

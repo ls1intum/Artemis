@@ -4,8 +4,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.HIG
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.DataExport;
@@ -221,15 +219,10 @@ public class SingleUserNotificationFactory {
         }
 
         Conversation conversation = answerPost.getPost().getConversation();
-        List<String> placeholders = new ArrayList<>();
-        placeholders.add(conversation.getCourse().getTitle());
-        placeholders.add(answerPost.getPost().getContent());
-        placeholders.add(answerPost.getPost().getCreationDate().toString());
-        placeholders.add(answerPost.getPost().getAuthor().getName());
-        placeholders.add(answerPost.getContent());
-        placeholders.add(answerPost.getCreationDate().toString());
-        placeholders.add(answerPost.getAuthor().getName());
-        placeholders.add(conversation.getHumanReadableNameForReceiver(answerPost.getAuthor()));
+
+        var placeholders = new NotificationPlaceholders.ConversationReplyPlaceholders(conversation.getCourse().getTitle(), answerPost.getPost().getContent(),
+                answerPost.getPost().getCreationDate(), answerPost.getPost().getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate(),
+                answerPost.getAuthor().getName(), conversation.getHumanReadableNameForReceiver(answerPost.getAuthor()));
 
         String messageReplyTextType = MESSAGE_REPLY_IN_CONVERSATION_TEXT;
 
@@ -237,7 +230,7 @@ public class SingleUserNotificationFactory {
             messageReplyTextType = MESSAGE_REPLY_IN_CHANNEL_TEXT;
         }
 
-        SingleUserNotification notification = new SingleUserNotification(user, title, messageReplyTextType, true, placeholders.toArray(String[]::new));
+        SingleUserNotification notification = new SingleUserNotification(user, title, messageReplyTextType, true, placeholders);
         notification.setTransientAndStringTarget(createMessageReplyTarget(answerPost, conversation.getCourse().getId()));
         notification.setAuthor(responsibleForAction);
         return notification;

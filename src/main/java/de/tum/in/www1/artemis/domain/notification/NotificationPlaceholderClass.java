@@ -9,5 +9,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface NotificationPlaceholderClass {
 
-    String value();
+    String[] values();
 }
