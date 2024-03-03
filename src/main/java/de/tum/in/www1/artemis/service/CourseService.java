@@ -426,6 +426,7 @@ public class CourseService {
         deleteGradingScaleOfCourse(course);
         irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
+        log.debug("Successfully deleted course {}.", course.getTitle());
     }
 
     private void deleteTutorialGroupsOfCourse(Course course) {
@@ -439,7 +440,8 @@ public class CourseService {
     }
 
     private void deleteConversationsOfCourse(Course course) {
-        // we cannot delete tutorial group channels because the tutorial group references the channel
+        // We cannot delete tutorial group channels here because the tutorial group references the channel.
+        // These are deleted on deleteTutorialGroupsOfCourse().
         // Posts and Conversation Participants should be automatically deleted due to cascade
         conversationRepository.deleteAllByCourseId(course.getId());
     }
