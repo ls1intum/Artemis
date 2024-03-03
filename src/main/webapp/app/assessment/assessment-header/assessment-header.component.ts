@@ -98,8 +98,12 @@ export class AssessmentHeaderComponent {
             // otherwise, we wouldn't be able to save the assessment note without making prior changes to the feedback
             return !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
         } else {
-            return this.submitDisabled;
+            return this.saveDisabledWhenNoAssessmentNotePresent;
         }
+    }
+
+    get saveDisabledWhenNoAssessmentNotePresent() {
+        return !this.assessmentsAreValid || !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
     }
 
     get submitDisabled() {

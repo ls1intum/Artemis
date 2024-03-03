@@ -68,12 +68,11 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * @param submit               true if the result should also be submitted
      * @return the new saved result
      */
-    public Result saveAndSubmitManualAssessment(StudentParticipation participation, Result newManualResult, Result existingManualResult, User assessor,
-            AssessmentNote assessmentNote, boolean submit) {
+    public Result saveAndSubmitManualAssessment(StudentParticipation participation, Result newManualResult, Result existingManualResult, User assessor, boolean submit) {
         // make sure that the submission cannot be manipulated on the client side
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
         ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
-
+        AssessmentNote assessmentNote = newManualResult.getAssessmentNote();
         if (assessmentNote != null) {
             assessmentNote.setCreator(assessor);
             newManualResult.setAssessmentNote(assessmentNote);
@@ -90,7 +89,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
         savedResult.setSubmission(submission);
 
         // Re-load result to fetch the test cases
-        newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(newManualResult.getId());
+        newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(newManualResult.getId());
 
         if (submit) {
             return submitManualAssessment(newManualResult, submission, participation, exercise);

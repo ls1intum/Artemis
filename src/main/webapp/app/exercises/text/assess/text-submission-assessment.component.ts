@@ -379,7 +379,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         super.handleSaveOrSubmitSuccessWithAlert(response, translationKey);
         this.result = response.body!;
-        console.log(this.result);
         setSubmissionResultByCorrectionRound(this.submission!, this.result, this.correctionRound);
         this.saveBusy = this.submitBusy = false;
     }

@@ -112,7 +112,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     Set<Result> findAllByParticipationExerciseId(long exerciseId);
 
     /**
-     * Load a result from the database by its id together with the associated submission, the list of feedback items, its assessor and assessment note
+     * Load a result from the database by its id together with the associated submission, the list of feedback items, its assessor and assessment note.
      *
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
@@ -145,9 +145,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
     Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
-    Optional<Result> findWithEagerSubmissionAndFeedbackAndTestCasesById(long resultId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase", "assessmentNote" })
     Optional<Result> findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(long resultId);
@@ -688,7 +685,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 .orElseThrow(() -> new EntityNotFoundException("Result by participationId", participationId));
     }
 
-    default Result findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(long resultId) {
+    default Result findWithEagerSubmissionAndFeedbackAndAssessorAssessmentNoteByIdElseThrow(long resultId) {
         return findWithEagerSubmissionAndFeedbackAndAssessorAndAssessmentNoteById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
@@ -710,10 +707,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default Result findByIdWithEagerSubmissionAndFeedbackElseThrow(long resultId) {
         return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
-    }
-
-    default Result findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(long resultId) {
-        return findWithEagerSubmissionAndFeedbackAndTestCasesById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
     default Result findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(long resultId) {

@@ -86,8 +86,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
      *
      * @param submissionId       id of the submission
      * @param resultId           id of the result
-     * @param modelingAssessment the DTO containing the list of feedbacks and the assessment note, if one exists
      * @param submit             if true the assessment is submitted, else only saved
+     * @param modelingAssessment the DTO containing the list of feedbacks and the assessment note, if one exists
      * @return result after saving/submitting modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
@@ -97,7 +97,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody ModelingAssessmentDTO modelingAssessment) {
-        Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+        Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
         return super.saveAssessment(submission, submit, modelingAssessment.feedbacks(), resultId, modelingAssessment.assessmentNote());
     }
 
@@ -135,7 +135,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ModelingSubmission modelingSubmission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessmentNoteElseThrow(submissionId);
+        ModelingSubmission modelingSubmission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(submissionId);
         long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(modelingExercise, user);

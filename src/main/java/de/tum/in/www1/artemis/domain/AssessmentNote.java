@@ -2,15 +2,13 @@ package de.tum.in.www1.artemis.domain;
 
 import java.time.Instant;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -19,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Entity
 @Table(name = "assessment_note")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@EntityListeners(AuditingEntityListener.class)
 public class AssessmentNote extends DomainObject {
 
     @OneToOne
@@ -27,11 +26,13 @@ public class AssessmentNote extends DomainObject {
 
     @CreatedDate
     @Column(name = "created_date", updatable = false)
-    private final Instant createdDate = Instant.now();
+    @JsonIgnore
+    private Instant createdDate;
 
     @LastModifiedDate
     @Column(name = "last_modified_date")
-    private Instant lastModifiedDate = Instant.now();
+    @JsonIgnore
+    private Instant lastModifiedDate;
 
     @Column(name = "note")
     private String note;

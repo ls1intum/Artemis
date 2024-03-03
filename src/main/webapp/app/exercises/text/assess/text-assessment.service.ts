@@ -53,8 +53,7 @@ export class TextAssessmentService {
      * @param assessmentNote of the result
      */
     public submit(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): Observable<EntityResponseType> {
-        const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
-        body.assessmentNote = assessmentNote;
+        const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks, assessmentNote);
         return this.http
             .post<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/submit-text-assessment`, body, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));

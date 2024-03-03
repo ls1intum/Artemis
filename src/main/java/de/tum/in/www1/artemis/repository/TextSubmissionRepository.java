@@ -55,8 +55,10 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     Optional<TextSubmission> findWithEagerResultsAndFeedbackAndTextBlocksById(long submissionId);
 
     /**
+     * Gets the TextSubmission together with its results, feedback, text blocks and also assessment note.
+     *
      * @param submissionId the submission id we are interested in
-     * @return the submission with its feedback and assessor and assessment note
+     * @return the submission with its feedback, text blocks, assessor and assessment note
      */
     @EntityGraph(type = LOAD, attributePaths = { "results.assessor", "results.feedbacks", "results.assessmentNote", "blocks" })
     Optional<TextSubmission> findWithEagerResultsAndFeedbackAndTextBlocksAndAssessmentNoteById(long submissionId);

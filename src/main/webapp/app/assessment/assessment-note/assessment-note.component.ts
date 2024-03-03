@@ -24,6 +24,7 @@ export class AssessmentNoteComponent {
 
     /**
      * Called whenever an input is made on the internal tutor note text box.
+     * @param event the input event containing the text of the note
      */
     onAssessmentNoteInput(event: any) {
         this._assessmentNote.note = event.target.value;

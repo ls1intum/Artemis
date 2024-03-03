@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -687,7 +686,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         assessmentNote.setNote("note");
         manualResult.setAssessmentNote(assessmentNote);
 
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        User user = userRepository.getUser();
         manualResult.setAssessor(user);
         assertThat(manualResult.getAssessmentNote().getCreator()).isNull();
 
@@ -704,18 +703,18 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         AssessmentNote assessmentNote = new AssessmentNote();
         assessmentNote.setNote("note1");
         manualResult.setAssessmentNote(assessmentNote);
+
         manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
+        manualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(manualResult.getId());
 
         Instant createdDate = manualResult.getAssessmentNote().getCreatedDate();
         Instant initialLastModifiedDate = manualResult.getAssessmentNote().getLastModifiedDate();
+        assertThat(createdDate).isEqualTo(initialLastModifiedDate);
 
-        // Because the two timestamps are created sequentially, it is required to compare them based on some epsilon,
-        // which is a second here. Going too low might make the test flaky.
-        Duration difference = Duration.between(createdDate, initialLastModifiedDate);
-        assertThat(difference.abs().toSeconds()).isNotPositive();
         manualResult.getAssessmentNote().setNote("note2");
 
         manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
+        manualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(manualResult.getId());
         assertThat(createdDate).isEqualTo(manualResult.getAssessmentNote().getCreatedDate());
         assertThat(manualResult.getAssessmentNote().getLastModifiedDate()).isAfter(initialLastModifiedDate);
     }
@@ -1072,7 +1071,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         // we will only delete the middle automatic result at index 2
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/" + midResult.getId(),
                 HttpStatus.OK);
-        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(4);
         assertThat(submission.getResults().get(0)).isEqualTo(firstResult);
         assertThat(submission.getResults().get(2)).isEqualTo(firstSemiAutomaticResult);

@@ -582,7 +582,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         Result lastResult = submission.getLatestResult();
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
-        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
     }
@@ -606,7 +606,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         request.delete(
                 "/api/participations/" + submission1.getParticipation().getId() + "/file-upload-submissions/" + submission1.getId() + "/results/" + resultOfOtherSubmission.getId(),
                 HttpStatus.BAD_REQUEST);
-        submission1 = submissionRepository.findOneWithEagerResultAndFeedback(submission1.getId());
+        submission1 = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission1.getId());
         assertThat(submission1.getResults()).hasSize(3);
         assertThat(submission1.getResults().get(2)).isEqualTo(lastResult);
     }
@@ -627,7 +627,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         Result lastResult = submission.getLatestResult();
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/results/" + lastResult.getId(),
                 HttpStatus.BAD_REQUEST);
-        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
     }

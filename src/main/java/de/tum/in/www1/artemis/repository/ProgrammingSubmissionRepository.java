@@ -124,7 +124,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     }
 
     @NotNull
-    default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorAssessmentNoteTestCases(long submissionId) {
+    default ProgrammingSubmission findByIdWithResultsFeedbacksTestCasesAssessorAssessmentNote(long submissionId) {
         return findWithEagerResultsFeedbacksTestCasesAssessorAssessmentNoteById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Submission", submissionId));
     }

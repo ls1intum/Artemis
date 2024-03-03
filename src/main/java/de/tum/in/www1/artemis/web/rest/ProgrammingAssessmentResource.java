@@ -61,7 +61,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorAssessmentNoteTestCases(submissionId);
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksTestCasesAssessorAssessmentNote(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
         if (!programmingExercise.areManualResultsAllowed()) {
@@ -122,7 +122,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // prevent that tutors create multiple manual results
         newManualResult.setId(existingManualResult.getId());
         // load assessor
-        existingManualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(existingManualResult.getId());
+        existingManualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorAssessmentNoteByIdElseThrow(existingManualResult.getId());
 
         // make sure that the participation and submission cannot be manipulated on the client side
         newManualResult.setParticipation(participation);
@@ -159,8 +159,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("In case feedback is present, a feedback must contain points.", ENTITY_NAME, "feedbackCreditsNull");
         }
 
-        newManualResult = programmingAssessmentService.saveAndSubmitManualAssessment(participation, newManualResult, existingManualResult, user,
-                newManualResult.getAssessmentNote(), submit);
+        newManualResult = programmingAssessmentService.saveAndSubmitManualAssessment(participation, newManualResult, existingManualResult, user, submit);
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
             newManualResult.getParticipation().filterSensitiveInformation();

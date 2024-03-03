@@ -221,7 +221,7 @@ public class AssessmentService {
      * @return the saved result
      */
     private Result submitManualAssessment(long resultId, Exercise exercise) {
-        Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(resultId);
+        Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorAssessmentNoteByIdElseThrow(resultId);
         result.setRatedIfNotAfterDueDate();
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.submitResult(result, exercise);
@@ -240,9 +240,10 @@ public class AssessmentService {
      * <p>
      * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result, User)}.
      *
-     * @param submission   the submission to which the feedback belongs to
-     * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
-     * @param resultId     id of the result we want to save the feedbackList to, null if no result exists
+     * @param submission         the submission to which the feedback belongs to
+     * @param feedbackList       the assessment as a feedback list that should be added to the result of the corresponding submission
+     * @param resultId           id of the result we want to save the feedbackList to, null if no result exists
+     * @param assessmentNoteText the text of the assessment note of the result
      * @return the saved result
      */
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText) {
@@ -273,7 +274,6 @@ public class AssessmentService {
             assessmentNote.setNote(assessmentNoteText);
             assessmentNote.setCreator(user);
             result.setAssessmentNote(assessmentNote);
-            result = resultRepository.save(result);
         }
 
         if (result.getSubmission() == null) {
@@ -292,11 +292,12 @@ public class AssessmentService {
      * Saves a new manual assessment. Submits the result if the submit-parameter is set to true.
      * Also notifies the student about the assessment if it is visible (after the assessment due date).
      *
-     * @param exercise     the exercise this assessment belongs to
-     * @param submission   the assessed submission
-     * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
-     * @param resultId     if of the result we want to save the feedbackList to, null if no result exists
-     * @param submit       true if the result should also be submitted
+     * @param exercise           the exercise this assessment belongs to
+     * @param submission         the assessed submission
+     * @param feedbackList       the assessment as a feedback list that should be added to the result of the corresponding submission
+     * @param resultId           if of the result we want to save the feedbackList to, null if no result exists
+     * @param assessmentNoteText the text of the assessment note for from result
+     * @param submit             true if the result should also be submitted
      * @return the saved result
      */
     public Result saveAndSubmitManualAssessment(final Exercise exercise, final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText,

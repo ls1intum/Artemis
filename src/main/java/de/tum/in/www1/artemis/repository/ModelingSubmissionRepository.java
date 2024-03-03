@@ -35,10 +35,9 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
                 LEFT JOIN FETCH submission.results r
                 LEFT JOIN FETCH r.feedbacks
                 LEFT JOIN FETCH r.assessor
-                LEFT JOIN FETCH r.assessmentNote
             WHERE submission.id = :submissionId
             """)
-    Optional<ModelingSubmission> findByIdWithEagerResultAndAssessorAndFeedbackAndAssessmentNote(@Param("submissionId") Long submissionId);
+    Optional<ModelingSubmission> findByIdWithEagerResultAndAssessorAndFeedback(@Param("submissionId") Long submissionId);
 
     /**
      * Load the modeling submission with the given id together with its result, the feedback list of the result, the assessor of the result, the assessment note of the result,
@@ -80,8 +79,8 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the modeling submission with the given id
      */
-    default ModelingSubmission findByIdWithEagerResultAndFeedbackAndAssessmentNoteElseThrow(Long submissionId) {
-        return findByIdWithEagerResultAndAssessorAndFeedbackAndAssessmentNote(submissionId).orElseThrow(() -> new EntityNotFoundException("Modeling Submission", submissionId));
+    default ModelingSubmission findByIdWithEagerResultAndFeedbackElseThrow(Long submissionId) {
+        return findByIdWithEagerResultAndAssessorAndFeedback(submissionId).orElseThrow(() -> new EntityNotFoundException("Modeling Submission", submissionId));
     }
 
     /**
