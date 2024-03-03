@@ -3,10 +3,6 @@
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
             <h2 id="myUserLabel" jhiTranslate="artemisApp.userManagement.home.createOrEditLabel">Create or edit a User</h2>
             <div>
-                <div class="form-group" [hidden]="!user.id">
-                    <label for="id" jhiTranslate="global.field.id">ID</label>
-                    <input id="id" type="text" class="form-control" name="id" formControlName="idInput" [(ngModel)]="user.id" readonly />
-                </div>
                 <div class="form-group">
                     <label for="login" class="form-control-label" jhiTranslate="artemisApp.userManagement.login">Login</label>
                     <input
