@@ -287,7 +287,7 @@ Please follow below steps on edX to conclude registration process:
 #. Navigate *Edit* on the LTI consumer component that appeared.
 #. In the *LTI Version* field, select *LTI 1.3*.
 #. Copy the following URLs that Artemis provides into the respective form fields on the platform site:
-#. Copy *Redirect URI* into the *Registered Redirect URIs* field in the edX component.
+#. Copy *Redirect URI* into the *Registered Redirect URIs* field in the edX component. This step could differ based on your edX version. If *Registered Redirect URIs* field is not available on your edX version you can skip this step.
 #. Copy *Initiate Login URL* into *Tool Initiate Login URL* field. After manually saving the edX component into Artemis, the admin must append the Artemis Registration ID to the end of the URL.
 #. Select *Tool Public Key Mode* as *Keyset URL*.
 #. Copy *Keyset URL* into the *Tool Keyset URL* field.
@@ -399,6 +399,7 @@ Manual Link Creation
 
 The following process guides instructors on linking exercises, assuming they have already completed the tool-platform registration.
 The process involves two primary steps:
+
 #. Retrieving the LTI 1.3 Launch URL for the desired Artemis exercise.
 #. Linking this URL to the platform course. We will separately explain how to link exercise links to Moodle and edX.
 
@@ -436,7 +437,8 @@ With the LTI 1.3 Launch URL copied, you can now link the exercise in Moodle:
         :width: 700
         :alt: Moodle - Add External Tool
 
-#. In the settings for the external tool, you will find a field labeled Resource URL. Paste the previously copied LTI 1.3 Launch URL from Artemis into this field.
+#. In the settings for the external tool, add an *Activity Name*.
+#. Then you will find a field labeled *Tool URL*. Paste the previously copied LTI 1.3 Launch URL from Artemis into this field.
 #. After entering the URL, click the *Save and Return to Course* button to finalize the addition. The linked Artemis exercise should now be accessible directly from the Moodle course.
 
 .. figure:: lti/moodle_add_external_tool_page.png
