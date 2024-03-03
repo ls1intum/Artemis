@@ -17,6 +17,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @Input() isExamMode: boolean;
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    @Input() isLocal: boolean;
 
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelComponent: ExerciseTitleChannelNameComponent;
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
@@ -57,7 +58,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
         this.formValid = Boolean(
             this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValid &&
-                this.shortNameField.valid &&
+                !this.shortNameField.invalid &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&
                 isUpdateTemplateFilesValid &&
