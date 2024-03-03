@@ -3,7 +3,10 @@
     <div class="d-flex justify-content-between">
         @for (formStatusSection of formStatusSections; track formStatusSection.title) {
             <div class="d-flex flex-column align-items-center gap-2">
-                <div class="d-flex align-items-center justify-content-center border rounded-circle border-secondary form-status-circle">
+                <div
+                    class="d-flex align-items-center justify-content-center border rounded-circle border-secondary form-status-circle"
+                    (click)="scrollToHeadline(formStatusSection.title)"
+                >
                     <jhi-checklist-check
                         [checkAttribute]="formStatusSection.valid"
                         [iconColor]="formStatusSection.empty && formStatusSection.valid ? 'var(--bs-gray)' : undefined"
