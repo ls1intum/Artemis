@@ -846,7 +846,8 @@ public class ProgrammingExerciseResource {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId).orElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
-        var buildLogStatistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(programmingExercise);
+        var buildLogStatistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(programmingExercise);
         return ResponseEntity.ok(buildLogStatistics);
     }
+
 }
