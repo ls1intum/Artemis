@@ -5,6 +5,7 @@ import 'app/shared/util/string.extension';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { ProdConfig } from './core/config/prod.config';
 import { ArtemisAppModule } from './app.module';
+import { MonacoConfig } from 'app/core/config/monaco.config';
 
 ProdConfig();
 
@@ -14,6 +15,8 @@ if (module['hot']) {
         console.clear();
     }
 }
+
+MonacoConfig();
 
 platformBrowserDynamic()
     .bootstrapModule(ArtemisAppModule, { preserveWhitespaces: true })
