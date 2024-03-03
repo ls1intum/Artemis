@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
  * needed and thus contain an empty implementation.
  */
 @Service
+@Primary // only needed for the bamboo to local ci migration
 @Profile("localci")
 public class LocalCIService extends AbstractContinuousIntegrationService {
 

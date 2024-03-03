@@ -305,6 +305,11 @@ public final class Constants {
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
 
     /**
+     * The name of the Spring profile used for Artemis core functionality.
+     */
+    public static final String PROFILE_CORE = "core";
+
+    /**
      * The maximum length of a group conversation human-readable name before it is truncated if no name is specified.
      */
     public static final int GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT = 100;

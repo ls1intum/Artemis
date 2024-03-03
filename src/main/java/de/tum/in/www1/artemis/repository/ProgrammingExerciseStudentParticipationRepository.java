@@ -57,7 +57,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             WHERE p.id = :participationId AND ((pr.assessmentType = 'AUTOMATIC'
                         OR (pr.completionDate IS NOT NULL
                             AND (p.exercise.assessmentDueDate IS NULL
-                                OR p.exercise.assessmentDueDate < :#{#dateTime}))) OR pr.id IS NULL)
+                                OR p.exercise.assessmentDueDate < :dateTime))) OR pr.id IS NULL)
              """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
@@ -201,6 +201,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
             WHERE p.buildPlanId IS NOT NULL
+            ORDER BY p.id DESC
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId(Pageable pageable);
 
@@ -211,6 +212,14 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 OR p.repositoryUri IS NOT NULL
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUriOrBuildPlanId(Pageable pageable);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.repositoryUri IS NOT NULL
+            ORDER BY p.id DESC
+            """)
+    Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUri(Pageable pageable);
 
     /**
      * Remove the build plan id from all participations of the given exercise.
@@ -225,7 +234,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @Query("""
             UPDATE ProgrammingExerciseStudentParticipation p
             SET p.buildPlanId = NULL
-            WHERE p.exercise.id = :#{#exerciseId}
+            WHERE p.exercise.id = :exerciseId
             """)
     void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
 }

@@ -12,6 +12,7 @@ import javax.annotation.PostConstruct;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +43,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
  * Service for triggering builds on the local CI system.
  */
 @Service
+@Primary // only needed for the bamboo to local ci migration
 @Profile("localci")
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
 

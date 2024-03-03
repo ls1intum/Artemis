@@ -33,6 +33,10 @@ public class ProfileService {
         return isProfileActive("gitlabci") || isJenkins();
     }
 
+    public boolean isBitbucket() {
+        return isProfileActive("bitbucket");
+    }
+
     /**
      * Checks if the local CI profile is active
      *
