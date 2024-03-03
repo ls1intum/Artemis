@@ -14,7 +14,7 @@ import { DocsComponent } from 'app/admin/docs/docs.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
-import { LocalCIGuard } from 'app/localci/build-queue/localci-guard.service';
+import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { ltiConfigurationRoute } from 'app/admin/lti-configuration/lti-configuration.route';
 import { BuildAgentsComponent } from 'app/localci/build-agents/build-agents.component';
 

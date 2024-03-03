@@ -1,10 +1,10 @@
 <div>
     <!-- Inject resizing bar -->
-    <ng-content select="[resizingbar]"></ng-content>
+    <ng-content select="[resizingbar]" />
     <div class="card-header text-white bg-primary" (click)="toggleCollapse($event, toggleCollapseId)">
-        <span class="float-end"><fa-icon [icon]="faChevronRight"></fa-icon></span>
+        <span class="float-end"><fa-icon [icon]="faChevronRight" /></span>
         <h3 class="card-title">
-            <fa-icon [icon]="farListAlt"></fa-icon>
+            <fa-icon [icon]="farListAlt" />
             <span jhiTranslate="artemisApp.textAssessment.instructions"> &nbsp; Instructions &nbsp; </span>
         </h3>
     </div>
@@ -29,6 +29,6 @@
                 <p class="markdown-preview" [innerHTML]="gradingInstructions | htmlForMarkdown"></p>
             </div>
         }
-        <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly" [criteria]="criteria"></jhi-structured-grading-instructions-assessment-layout>
+        <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly" [criteria]="criteria" />
     </div>
 </div>

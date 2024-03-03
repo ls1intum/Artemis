@@ -10,7 +10,7 @@
       }]
       @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
         <jhi-included-in-score-badge
-        [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+        [includedInOverallScore]="exercise.includedInOverallScore" />
       }</span>
         <!--region Left Panel-->
         <div left-body class="px-2 pb-2 w-100">
@@ -64,12 +64,12 @@
         </div>
         <!--endregion-->
         <!--region Right Panel-->
-        <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
+        <fa-icon right-header [icon]="farListAlt" />&nbsp;
         <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
         <ng-container right-body>
             <!-- problem statement update & difference highlighter -->
             @if (exercise) {
-                <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)"> </jhi-exam-exercise-update-highlighter>
+                <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
             }
             @if (exercise!.problemStatement) {
                 <p class="mb-3 markdown-preview">

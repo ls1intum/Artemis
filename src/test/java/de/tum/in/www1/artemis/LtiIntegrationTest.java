@@ -7,11 +7,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -32,12 +30,6 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @Autowired
     ObjectMapper objectMapper;
-
-    @BeforeEach
-    void init() {
-        /* We mock the following method because we don't have the OAuth secret for edx */
-        doReturn(null).when(lti10Service).verifyRequest(any(), any());
-    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -68,7 +60,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         List<LtiPlatformConfiguration> expectedPlatforms = Arrays.asList(platform1, platform2);
         doReturn(expectedPlatforms).when(ltiPlatformConfigurationRepository).findAll();
 
-        MvcResult mvcResult = request.getMvc().perform(get("/api/admin/lti-platforms")).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = request.getMvc().perform(get("/api/lti-platforms")).andExpect(status().isOk()).andReturn();
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         List<LtiPlatformConfiguration> actualPlatforms = objectMapper.readValue(jsonContent, new TypeReference<>() {
@@ -80,9 +72,9 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void getAllConfiguredLtiPlatformsAsInstructor() throws Exception {
-        request.get("/api/admin/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
+    @WithMockUser(username = TEST_PREFIX + "student", roles = "STUDENT")
+    void getAllConfiguredLtiPlatformsAsStudent() throws Exception {
+        request.get("/api/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
     }
 
     @Test
@@ -130,16 +122,67 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student3")
-    void testRepositoryMethods() {
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void createNewLtiPlatformConfigurationAsAdmin() throws Exception {
+        LtiPlatformConfiguration platformToCreate = new LtiPlatformConfiguration();
+
+        fillLtiPlatformConfig(platformToCreate);
+        platformToCreate.setRegistrationId(null);
+
+        request.getMvc().perform(post("/api/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToCreate)))
+                .andExpect(status().isOk());
+
+        verify(ltiPlatformConfigurationRepository).save(any());
+
+        Optional<LtiPlatformConfiguration> addedLtiPlatform = ltiPlatformConfigurationRepository.findByClientId(platformToCreate.getClientId());
+        assertThat(addedLtiPlatform.isPresent()).isTrue();
+        assertThat(addedLtiPlatform.get().getRegistrationId()).isNotNull();
+        assertThat(addedLtiPlatform.get().getAuthorizationUri()).isEqualTo(platformToCreate.getAuthorizationUri());
+        assertThat(addedLtiPlatform.get().getJwkSetUri()).isEqualTo(platformToCreate.getJwkSetUri());
+        assertThat(addedLtiPlatform.get().getTokenUri()).isEqualTo(platformToCreate.getTokenUri());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testFindByRegistrationId() {
+        assertThat(ltiPlatformConfigurationRepository.findByRegistrationId("nonExistingId")).isEqualTo(Optional.empty());
+
+        LtiPlatformConfiguration newPlatformConfiguration = new LtiPlatformConfiguration();
+        fillLtiPlatformConfig(newPlatformConfiguration);
+        ltiPlatformConfigurationRepository.save(newPlatformConfiguration);
+
+        assertThat(ltiPlatformConfigurationRepository.findByRegistrationId(newPlatformConfiguration.getRegistrationId())).isEqualTo(Optional.of(newPlatformConfiguration));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testFindByIdElseThrow() {
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> ltiPlatformConfigurationRepository.findByIdElseThrow(Long.MAX_VALUE));
 
-        assertThat(ltiPlatformConfigurationRepository.findByRegistrationId("")).isEqualTo(Optional.empty());
+        LtiPlatformConfiguration newPlatformConfiguration = new LtiPlatformConfiguration();
+        fillLtiPlatformConfig(newPlatformConfiguration);
+        LtiPlatformConfiguration savedPlatformConfiguration = ltiPlatformConfigurationRepository.save(newPlatformConfiguration);
+
+        assertThat(ltiPlatformConfigurationRepository.findByIdElseThrow(savedPlatformConfiguration.getId())).isEqualTo(savedPlatformConfiguration);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testFindLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow() {
+        LtiPlatformConfiguration newPlatformConfiguration = new LtiPlatformConfiguration();
+        fillLtiPlatformConfig(newPlatformConfiguration);
+        LtiPlatformConfiguration savedPlatformConfiguration = ltiPlatformConfigurationRepository.save(newPlatformConfiguration);
+
+        LtiPlatformConfiguration fetchedPlatformConfiguration = ltiPlatformConfigurationRepository
+                .findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(savedPlatformConfiguration.getId());
+
+        assertThat(fetchedPlatformConfiguration).isEqualTo(savedPlatformConfiguration);
+        assertThat(Hibernate.isInitialized(fetchedPlatformConfiguration.getOnlineCourseConfigurations())).isTrue();
     }
 
     private void fillLtiPlatformConfig(LtiPlatformConfiguration ltiPlatformConfiguration) {
         ltiPlatformConfiguration.setRegistrationId("registrationId");
-        ltiPlatformConfiguration.setClientId("clientId");
+        ltiPlatformConfiguration.setClientId("platform-" + UUID.randomUUID());
         ltiPlatformConfiguration.setAuthorizationUri("authUri");
         ltiPlatformConfiguration.setTokenUri("tokenUri");
         ltiPlatformConfiguration.setJwkSetUri("jwkUri");

@@ -4,14 +4,10 @@
             <h4 class="modal-title">
                 <span>
                     @if (getAsChannel(activeConversation); as channel) {
-                        <jhi-channel-icon
-                            [isPublic]="channel.isPublic!"
-                            [isArchived]="channel.isArchived!"
-                            [isAnnouncementChannel]="channel.isAnnouncementChannel!"
-                        ></jhi-channel-icon>
+                        <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!" [isAnnouncementChannel]="channel.isAnnouncementChannel!" />
                     }
                     @if (getAsGroupChat(activeConversation); as groupChat) {
-                        <jhi-group-chat-icon></jhi-group-chat-icon>
+                        <jhi-group-chat-icon />
                     }
                     {{ conversationService.getConversationName(activeConversation, true) }}
                 </span>
@@ -49,14 +45,10 @@
         <div class="modal-body">
             @switch (selectedTab) {
                 @case (Tabs.MEMBERS) {
-                    <jhi-conversation-members
-                        [course]="course"
-                        [activeConversation]="activeConversation"
-                        (changesPerformed)="changesWerePerformed = true"
-                    ></jhi-conversation-members>
+                    <jhi-conversation-members [course]="course" [activeConversation]="activeConversation" (changesPerformed)="changesWerePerformed = true" />
                 }
                 @case (Tabs.INFO) {
-                    <jhi-conversation-info [activeConversation]="activeConversation" [course]="course" (changesPerformed)="changesWerePerformed = true"></jhi-conversation-info>
+                    <jhi-conversation-info [activeConversation]="activeConversation" [course]="course" (changesPerformed)="changesWerePerformed = true" />
                 }
                 @case (Tabs.SETTINGS) {
                     <jhi-conversation-settings
@@ -65,7 +57,7 @@
                         (channelArchivalChange)="onArchivalChange()"
                         (channelDeleted)="onChannelDeleted()"
                         (conversationLeave)="onConversationLeave()"
-                    ></jhi-conversation-settings>
+                    />
                 }
             }
         </div>

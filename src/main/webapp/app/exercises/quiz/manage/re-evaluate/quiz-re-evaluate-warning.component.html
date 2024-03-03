@@ -86,32 +86,30 @@
                 <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirmtext"></span>
             }
             @if (successful && !busy) {
-                <span style="color: green"
-                    ><fa-icon [icon]="faCheck"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.succesfully_confirm"></span
-                ></span>
+                <span style="color: green"><fa-icon [icon]="faCheck" />&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.succesfully_confirm"></span></span>
             }
             @if (failed && !busy) {
-                <span style="color: red"><fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span>Saving Quiz Failed! Please try again later.</span></span>
+                <span style="color: red"><fa-icon [icon]="faTimes" />&nbsp;<span>Saving Quiz Failed! Please try again later.</span></span>
             }
             @if (busy) {
-                <span style="color: grey"><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait, conducting changes!</span></span>
+                <span style="color: grey"><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;<span>Please wait, conducting changes!</span></span>
             }
         </h4>
         &nbsp;
         <div class="form-group">
             @if (!successful) {
                 <button [disabled]="busy" type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
-                    <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
             }
             @if (!successful && !failed) {
                 <button [disabled]="busy" type="submit" (click)="confirmChange()" class="btn btn-primary">
-                    <fa-icon [icon]="faCheckCircle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirm"></span>
+                    <fa-icon [icon]="faCheckCircle" />&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirm"></span>
                 </button>
             }
             @if (successful && !failed) {
                 <button type="submit" (click)="closeAndNavigate()" class="btn btn-primary">
-                    <fa-icon [icon]="faCheckCircle"></fa-icon>&nbsp;<span jhiTranslate="entity.action.close"></span>
+                    <fa-icon [icon]="faCheckCircle" />&nbsp;<span jhiTranslate="entity.action.close"></span>
                 </button>
             }
         </div>

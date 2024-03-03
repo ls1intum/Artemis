@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
-import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 export const generateExampleChannelDTO = ({
@@ -21,6 +21,7 @@ export const generateExampleChannelDTO = ({
     isCreator = true,
     isFavorite = false,
     isHidden = false,
+    isMuted = false,
     isMember = true,
     isAnnouncementChannel = false,
     isCourseWide = false,
@@ -30,33 +31,34 @@ export const generateExampleChannelDTO = ({
     subType = ChannelSubType.GENERAL,
     subTypeReferenceId = undefined,
 }: ChannelDTO) => {
-    const exampleChannelDto = new ChannelDTO();
-    exampleChannelDto.id = id;
-    exampleChannelDto.name = name;
-    exampleChannelDto.description = description;
-    exampleChannelDto.topic = topic;
-    exampleChannelDto.isPublic = isPublic;
-    exampleChannelDto.isArchived = isArchived;
-    exampleChannelDto.isChannelModerator = isChannelModerator;
-    exampleChannelDto.hasChannelModerationRights = hasChannelModerationRights;
-    exampleChannelDto.creationDate = creationDate;
-    exampleChannelDto.lastMessageDate = lastMessageDate;
-    exampleChannelDto.lastReadDate = lastReadDate;
-    exampleChannelDto.numberOfMembers = numberOfMembers;
-    exampleChannelDto.creator = creator;
-    exampleChannelDto.isCreator = isCreator;
-    exampleChannelDto.isFavorite = isFavorite;
-    exampleChannelDto.isHidden = isHidden;
-    exampleChannelDto.isMember = isMember;
-    exampleChannelDto.isAnnouncementChannel = isAnnouncementChannel;
-    exampleChannelDto.isCourseWide = isCourseWide;
-    exampleChannelDto.unreadMessagesCount = unreadMessagesCount;
-    exampleChannelDto.tutorialGroupTitle = tutorialGroupTitle;
-    exampleChannelDto.tutorialGroupId = tutorialGroupId;
-    exampleChannelDto.subType = subType;
-    exampleChannelDto.subTypeReferenceId = subTypeReferenceId;
+    const exampleChannelDTO = new ChannelDTO();
+    exampleChannelDTO.id = id;
+    exampleChannelDTO.name = name;
+    exampleChannelDTO.description = description;
+    exampleChannelDTO.topic = topic;
+    exampleChannelDTO.isPublic = isPublic;
+    exampleChannelDTO.isArchived = isArchived;
+    exampleChannelDTO.isChannelModerator = isChannelModerator;
+    exampleChannelDTO.hasChannelModerationRights = hasChannelModerationRights;
+    exampleChannelDTO.creationDate = creationDate;
+    exampleChannelDTO.lastMessageDate = lastMessageDate;
+    exampleChannelDTO.lastReadDate = lastReadDate;
+    exampleChannelDTO.numberOfMembers = numberOfMembers;
+    exampleChannelDTO.creator = creator;
+    exampleChannelDTO.isCreator = isCreator;
+    exampleChannelDTO.isFavorite = isFavorite;
+    exampleChannelDTO.isHidden = isHidden;
+    exampleChannelDTO.isMuted = isMuted;
+    exampleChannelDTO.isMember = isMember;
+    exampleChannelDTO.isAnnouncementChannel = isAnnouncementChannel;
+    exampleChannelDTO.isCourseWide = isCourseWide;
+    exampleChannelDTO.unreadMessagesCount = unreadMessagesCount;
+    exampleChannelDTO.tutorialGroupTitle = tutorialGroupTitle;
+    exampleChannelDTO.tutorialGroupId = tutorialGroupId;
+    exampleChannelDTO.subType = subType;
+    exampleChannelDTO.subTypeReferenceId = subTypeReferenceId;
 
-    return exampleChannelDto;
+    return exampleChannelDTO;
 };
 
 export const generateExampleGroupChatDTO = ({
@@ -74,10 +76,11 @@ export const generateExampleGroupChatDTO = ({
     isCreator = true,
     isFavorite = false,
     isHidden = false,
+    isMuted = false,
     isMember = true,
     unreadMessagesCount = 0,
-}: GroupChatDto) => {
-    const exampleGroupChatDTO = new GroupChatDto();
+}: GroupChatDTO) => {
+    const exampleGroupChatDTO = new GroupChatDTO();
     exampleGroupChatDTO.id = id;
     exampleGroupChatDTO.name = name;
     exampleGroupChatDTO.creationDate = creationDate;
@@ -88,6 +91,7 @@ export const generateExampleGroupChatDTO = ({
     exampleGroupChatDTO.isCreator = isCreator;
     exampleGroupChatDTO.isFavorite = isFavorite;
     exampleGroupChatDTO.isHidden = isHidden;
+    exampleGroupChatDTO.isMuted = isMuted;
     exampleGroupChatDTO.members = members;
     exampleGroupChatDTO.isMember = isMember;
     exampleGroupChatDTO.unreadMessagesCount = unreadMessagesCount;
@@ -109,9 +113,10 @@ export const generateOneToOneChatDTO = ({
     isCreator = true,
     isFavorite = false,
     isHidden = false,
+    isMuted = false,
     isMember = true,
     unreadMessagesCount = 0,
-}: GroupChatDto) => {
+}: GroupChatDTO) => {
     const exampleOneToOneChatDTO = new OneToOneChatDTO();
     exampleOneToOneChatDTO.id = id;
     exampleOneToOneChatDTO.creationDate = creationDate;
@@ -122,6 +127,7 @@ export const generateOneToOneChatDTO = ({
     exampleOneToOneChatDTO.isCreator = isCreator;
     exampleOneToOneChatDTO.isFavorite = isFavorite;
     exampleOneToOneChatDTO.isHidden = isHidden;
+    exampleOneToOneChatDTO.isMuted = isMuted;
     exampleOneToOneChatDTO.members = members;
     exampleOneToOneChatDTO.isMember = isMember;
     exampleOneToOneChatDTO.unreadMessagesCount = unreadMessagesCount;

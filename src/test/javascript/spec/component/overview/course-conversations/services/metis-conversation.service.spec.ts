@@ -13,7 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
 import { Subject, forkJoin, of } from 'rxjs';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../helpers/conversationExampleModels';
-import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
@@ -38,7 +38,7 @@ describe('MetisConversationService', () => {
     let newOrUpdatedMessageSubject: Subject<MetisPostDTO>;
 
     const course = { id: 1 } as Course;
-    let groupChat: GroupChatDto;
+    let groupChat: GroupChatDTO;
     let oneToOneChat: OneToOneChatDTO;
     let channel: ChannelDTO;
     let receiveMockSubject: Subject<ConversationWebsocketDTO>;

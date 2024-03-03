@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.component;
 
+import java.util.Objects;
+
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
@@ -71,6 +73,11 @@ public class UMLComponentInterface extends UMLElement {
     @Override
     public String getType() {
         return UML_COMPONENT_INTERFACE_TYPE;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name);
     }
 
     @Override

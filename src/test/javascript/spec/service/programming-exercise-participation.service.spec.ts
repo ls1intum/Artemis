@@ -70,6 +70,19 @@ describe('ProgrammingExerciseParticipation Service', () => {
             expect(accessRightsSpy).toHaveBeenCalledExactlyOnceWith(participation.exercise);
         }));
 
+        it('getStudentParticipationWithAllResults', fakeAsync(() => {
+            const participation = { id: 42, exercise: { id: 123 } };
+            const expected = Object.assign({}, participation);
+
+            service.getStudentParticipationWithAllResults(participation.id).subscribe((resp) => expect(resp).toEqual(expected));
+
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}${participation.id}/student-participation-with-all-results` });
+            req.flush(participation);
+            tick();
+            expect(titleSpy).toHaveBeenCalledExactlyOnceWith(participation);
+            expect(accessRightsSpy).toHaveBeenCalledExactlyOnceWith(participation.exercise);
+        }));
+
         it('checkIfParticipationHasResult', fakeAsync(() => {
             const participation = { id: 42 };
 
@@ -93,6 +106,32 @@ describe('ProgrammingExerciseParticipation Service', () => {
                 expect(successful).toBeTrue();
             }),
         );
+
+        it('retrieveCommitHistoryForParticipation', fakeAsync(() => {
+            const participationId = 42;
+            const commitHistory = [{ hash: '123', author: 'author', timestamp: dayjs('2021-01-01'), message: 'commit message' }];
+            service.retrieveCommitHistoryForParticipation(participationId).subscribe((resp) => {
+                expect(resp).toEqual(commitHistory);
+            });
+
+            const expectedURL = `${resourceUrl}${participationId}/commit-history`;
+            const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
+            req.flush(commitHistory);
+            tick();
+        }));
+
+        it('getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView', fakeAsync(() => {
+            const participationId = 42;
+            const commitId = 'commitId';
+            const files = new Map<string, string>();
+            files.set('file1', 'content1');
+            files.set('file2', 'content2');
+            service.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(participationId, commitId).subscribe();
+            const expectedURL = `${resourceUrl}${participationId}/files-content-commit-details/${commitId}`;
+            const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
+            req.flush(files);
+            tick();
+        }));
     });
 
     it('should make GET request to retrieve commits infos for participation', fakeAsync(() => {

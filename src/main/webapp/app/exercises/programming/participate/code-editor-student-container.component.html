@@ -4,13 +4,13 @@
             <div class="card-body">
                 @if (loadingParticipation) {
                     <span>
-                        <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                        <fa-icon [icon]="faCircleNotch" [spin]="true" />
                         <p class="d-inline" jhiTranslate="artemisApp.editor.fetchingParticipation">Your participation is being loaded...</p>
                     </span>
                 }
                 @if (participationCouldNotBeFetched) {
                     <span>
-                        <fa-icon [icon]="faTimesCircle" class="text-danger"></fa-icon>
+                        <fa-icon [icon]="faTimesCircle" class="text-danger" />
                         <p class="d-inline" jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</p>
                     </span>
                 }
@@ -40,7 +40,7 @@
                     }
                     ]
                     @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+                        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
                     }
                 </span>
             </div>
@@ -66,14 +66,13 @@
             <!-- prettier-ignore -->
             <div editorToolbar class="d-inline-flex align-items-center">
               @if (repositoryIsLocked) {
-                <jhi-code-editor-repository-is-locked class="me-3">
-                </jhi-code-editor-repository-is-locked>
+                <jhi-code-editor-repository-is-locked class="me-3" />
               }
               <jhi-exercise-hint-button-overlay
                 [availableExerciseHints]="availableExerciseHints"
                 [activatedExerciseHints]="activatedExerciseHints"
                 (onHintActivated)="onHintActivated($event)"
-              ></jhi-exercise-hint-button-overlay>
+              />
               @if (participation) {
                 <jhi-updating-result
                   [exercise]="exercise"
@@ -83,14 +82,14 @@
                   [personalParticipation]="true"
                   (onParticipationChange)="receivedNewResult()"
                   class="me-2"
-                ></jhi-updating-result>
+                />
               }
               <jhi-programming-exercise-student-trigger-build-button
                 class="me-2"
                 [exercise]="exercise"
                 [participation]="participation"
                 [btnSize]="ButtonSize.MEDIUM"
-              ></jhi-programming-exercise-student-trigger-build-button>
+              />
             </div>
             <jhi-programming-exercise-instructions
                 editorSidebar
@@ -99,13 +98,12 @@
                 [participation]="participation"
                 [personalParticipation]="true"
                 class="instructions-wrapper__content card-body p-0"
-            ></jhi-programming-exercise-instructions>
+            />
         </jhi-code-editor-container>
     }
     <div class="row ms-0">
         @if (unreferencedFeedback.length > 0) {
-            <jhi-additional-feedback class="col-xl-8 mt-3 alert unreferencedFeedback" [feedback]="unreferencedFeedback" [additional]="true" [course]="course">
-            </jhi-additional-feedback>
+            <jhi-additional-feedback class="col-xl-8 mt-3 alert unreferencedFeedback" [feedback]="unreferencedFeedback" [additional]="true" [course]="course" />
         }
     </div>
 </div>

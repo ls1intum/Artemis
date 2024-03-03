@@ -31,7 +31,7 @@ describe('Modeling Exercise Management', () => {
     });
 
     describe('Create Modeling Exercise', () => {
-        it('Create a new modeling exercise', () => {
+        it('Create a new modeling exercise', { scrollBehavior: 'center' }, () => {
             cy.login(instructor);
             cy.visit(`/course-management/${course.id}/exercises`);
             courseManagementExercises.createModelingExercise();
@@ -86,7 +86,7 @@ describe('Modeling Exercise Management', () => {
             });
         });
 
-        it('Edit Existing Modeling Exercise', () => {
+        it('Edit Existing Modeling Exercise', { scrollBehavior: 'center' }, () => {
             cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
             const newTitle = 'New Modeling Exercise Title';
             const points = 100;

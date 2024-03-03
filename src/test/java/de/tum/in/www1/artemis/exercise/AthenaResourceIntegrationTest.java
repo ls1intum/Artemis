@@ -47,7 +47,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;

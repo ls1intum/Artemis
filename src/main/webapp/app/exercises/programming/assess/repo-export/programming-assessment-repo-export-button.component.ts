@@ -18,7 +18,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             [icon]="faDownload"
             [title]="singleParticipantMode ? 'artemisApp.instructorDashboard.exportRepos.titleSingle' : 'artemisApp.instructorDashboard.exportRepos.title'"
             (onClick)="openRepoExportDialog($event)"
-        ></jhi-button>
+        />
     `,
 })
 export class ProgrammingAssessmentRepoExportButtonComponent {

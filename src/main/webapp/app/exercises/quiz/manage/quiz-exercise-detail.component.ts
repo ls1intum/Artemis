@@ -77,6 +77,14 @@ export class QuizExerciseDetailComponent implements OnInit {
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
+
+        if (exercise.competencies?.length) {
+            modeSection.details.push({
+                title: 'artemisApp.competency.link.title',
+                type: DetailType.Text,
+                data: { text: exercise.competencies?.map((competency) => competency.title).join(', ') },
+            });
+        }
         return [
             generalSection,
             {
@@ -98,8 +106,8 @@ export class QuizExerciseDetailComponent implements OnInit {
             },
             {
                 headline: 'artemisApp.exercise.sections.grading',
-                details: [...defaultGradingDetails].filter(Boolean),
+                details: defaultGradingDetails,
             },
-        ] as DetailOverviewSection[];
+        ];
     }
 }

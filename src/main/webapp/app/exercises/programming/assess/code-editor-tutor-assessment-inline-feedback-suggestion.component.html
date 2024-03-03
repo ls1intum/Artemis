@@ -1,5 +1,5 @@
 <div class="inline-feedback-suggestion alert p-1 mb-1 border rounded">
-    <jhi-feedback-suggestion-badge [feedback]="feedback"></jhi-feedback-suggestion-badge>
+    <jhi-feedback-suggestion-badge [feedback]="feedback" />
     <div class="container flex-container px-4">
         <div class="row left-section">
             <div class="col-auto ps-0">
@@ -16,11 +16,11 @@
         </div>
         <div class="row right-section ml-2">
             <button class="btn btn-success m-1 btn-sm" (click)="onAcceptSuggestion.emit(feedback)">
-                <fa-icon [icon]="faCheck"></fa-icon>
+                <fa-icon [icon]="faCheck" />
                 <span jhiTranslate="artemisApp.assessment.detail.accept">Accept</span>
             </button>
             <button class="btn btn-danger m-1 btn-sm" (click)="onDiscardSuggestion.emit(feedback)">
-                <fa-icon [icon]="faTrash"></fa-icon>
+                <fa-icon [icon]="faTrash" />
                 <span jhiTranslate="artemisApp.assessment.detail.discard">Discard</span>
             </button>
         </div>

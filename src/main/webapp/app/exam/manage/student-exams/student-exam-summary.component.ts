@@ -4,7 +4,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-student-exam-summary',
-    template: '<jhi-exam-participation-summary [studentExam]="studentExam" [instructorView]="true"></jhi-exam-participation-summary>',
+    template: '<jhi-exam-participation-summary [studentExam]="studentExam" [instructorView]="true" />',
 })
 export class StudentExamSummaryComponent implements OnInit {
     studentExam: StudentExam;

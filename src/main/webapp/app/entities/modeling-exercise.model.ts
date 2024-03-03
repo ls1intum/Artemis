@@ -2,23 +2,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-
-/**
- * The UMLDiagramType enumeration. This has to be exactly the same as defined in Apollon (see diagram-type.d.ts)
- */
-export enum UMLDiagramType {
-    ClassDiagram = 'ClassDiagram',
-    ObjectDiagram = 'ObjectDiagram',
-    ActivityDiagram = 'ActivityDiagram',
-    UseCaseDiagram = 'UseCaseDiagram',
-    CommunicationDiagram = 'CommunicationDiagram',
-    ComponentDiagram = 'ComponentDiagram',
-    DeploymentDiagram = 'DeploymentDiagram',
-    PetriNet = 'PetriNet',
-    SyntaxTree = 'SyntaxTree',
-    Flowchart = 'Flowchart',
-    BPMN = 'BPMN',
-}
+import { type UMLDiagramType, UMLDiagramType as UMLDiagramTypes } from '@ls1intum/apollon';
 
 export class ModelingExercise extends Exercise {
     public diagramType?: UMLDiagramType;
@@ -33,7 +17,7 @@ export class ModelingExercise extends Exercise {
         // default value
 
         this.assessmentType = AssessmentType.MANUAL;
-        if (this.diagramType === UMLDiagramType.ClassDiagram || this.diagramType === UMLDiagramType.ActivityDiagram) {
+        if (this.diagramType === UMLDiagramTypes.ClassDiagram || this.diagramType === UMLDiagramTypes.ActivityDiagram) {
             this.assessmentType = AssessmentType.SEMI_AUTOMATIC;
         }
     }

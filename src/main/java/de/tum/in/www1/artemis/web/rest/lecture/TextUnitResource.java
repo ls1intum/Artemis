@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,13 +19,13 @@ import de.tum.in.www1.artemis.repository.TextUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CompetencyProgressService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class TextUnitResource {
 
     private static final Logger log = LoggerFactory.getLogger(TextUnitResource.class);
@@ -62,7 +65,7 @@ public class TextUnitResource {
         }
         TextUnit textUnit = optionalTextUnit.get();
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
         return ResponseEntity.ok().body(textUnit);
@@ -75,7 +78,7 @@ public class TextUnitResource {
      * @param textUnitForm the text unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated textUnit
      */
-    @PutMapping("/lectures/{lectureId}/text-units")
+    @PutMapping("lectures/{lectureId}/text-units")
     @EnforceAtLeastEditor
     public ResponseEntity<TextUnit> updateTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnitForm) {
         log.debug("REST request to update an text unit : {}", textUnitForm);
@@ -86,7 +89,7 @@ public class TextUnitResource {
         var textUnit = textUnitRepository.findByIdWithCompetenciesBidirectional(textUnitForm.getId()).orElseThrow();
 
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
 
@@ -107,7 +110,7 @@ public class TextUnitResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new text unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/lectures/{lectureId}/text-units")
+    @PostMapping("lectures/{lectureId}/text-units")
     @EnforceAtLeastEditor
     public ResponseEntity<TextUnit> createTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) throws URISyntaxException {
         log.debug("REST request to create TextUnit : {}", textUnit);
@@ -118,7 +121,7 @@ public class TextUnitResource {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
 
         if (lecture.getCourse() == null || (textUnit.getLecture() != null && !lecture.getId().equals(textUnit.getLecture().getId()))) {
-            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
 

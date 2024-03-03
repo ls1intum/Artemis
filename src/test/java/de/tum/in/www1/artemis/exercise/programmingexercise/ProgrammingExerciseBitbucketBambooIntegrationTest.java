@@ -68,6 +68,20 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(value = ProgrammingLanguage.class)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_custom_build_plan_validExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_custom_build_plan_validExercise_created(programmingLanguage, true);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(value = ProgrammingLanguage.class)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_failed_custom_build_plan_validExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_custom_build_plan_validExercise_created(programmingLanguage, false);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_mode_validExercise_created(ExerciseMode mode) throws Exception {
@@ -567,5 +581,4 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
             bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + name + i);
         }
     }
-
 }

@@ -10,7 +10,7 @@
         <!-- Lecture Unit Rows-->
         @if (showCreationCard) {
             <div class="w-100 d-flex justify-content-end" [class.justify-content-center]="!lectureUnits?.length">
-                <jhi-unit-creation-card></jhi-unit-creation-card>
+                <jhi-unit-creation-card />
             </div>
         }
         <div class="component-container" cdkDropList (cdkDropListDropped)="drop($event)">
@@ -49,29 +49,25 @@
                         </div>
                         @switch (lectureUnit.type) {
                             @case (LectureUnitType.ATTACHMENT) {
-                                <jhi-attachment-unit [attachmentUnit]="lectureUnit" [isPresentationMode]="true"></jhi-attachment-unit>
+                                <jhi-attachment-unit [attachmentUnit]="lectureUnit" [isPresentationMode]="true" />
                             }
                             @case (LectureUnitType.EXERCISE) {
-                                <jhi-exercise-unit [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!"></jhi-exercise-unit>
+                                <jhi-exercise-unit [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!" />
                             }
                             @case (LectureUnitType.VIDEO) {
-                                <jhi-video-unit [videoUnit]="lectureUnit" [isPresentationMode]="true"></jhi-video-unit>
+                                <jhi-video-unit [videoUnit]="lectureUnit" [isPresentationMode]="true" />
                             }
                             @case (LectureUnitType.TEXT) {
-                                <jhi-text-unit [textUnit]="lectureUnit" [isPresentationMode]="true"></jhi-text-unit>
+                                <jhi-text-unit [textUnit]="lectureUnit" [isPresentationMode]="true" />
                             }
                             @case (LectureUnitType.ONLINE) {
-                                <jhi-online-unit [onlineUnit]="lectureUnit" [isPresentationMode]="true"></jhi-online-unit>
+                                <jhi-online-unit [onlineUnit]="lectureUnit" [isPresentationMode]="true" />
                             }
                         }
                     </div>
                     <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
                         @if (lecture.course?.id && showCompetencies) {
-                            <jhi-competencies-popover
-                                [courseId]="lecture.course!.id!"
-                                [competencies]="lectureUnit.competencies || []"
-                                [navigateTo]="'competencyManagement'"
-                            ></jhi-competencies-popover>
+                            <jhi-competencies-popover [courseId]="lecture.course!.id!" [competencies]="lectureUnit.competencies || []" [navigateTo]="'competencyManagement'" />
                         }
                         <div class="d-flex gap-1 w-100">
                             @if (this.emitEditEvents) {
@@ -82,7 +78,7 @@
                                         (click)="onEditButtonClicked(lectureUnit)"
                                         [ngbTooltip]="'entity.action.edit' | artemisTranslate"
                                     >
-                                        <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                        <fa-icon [icon]="faPencilAlt" />
                                     </button>
                                 }
                             } @else {
@@ -93,7 +89,7 @@
                                         [routerLink]="['./', routerEditLinksBase[lectureUnit.type!], lectureUnit.id, 'edit']"
                                         [ngbTooltip]="'entity.action.edit' | artemisTranslate"
                                     >
-                                        <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                        <fa-icon [icon]="faPencilAlt" />
                                     </a>
                                 }
                             }
@@ -112,7 +108,7 @@
                                     (delete)="deleteLectureUnit(lectureUnit.id!)"
                                     [dialogError]="dialogError$"
                                 >
-                                    <fa-icon [icon]="faTrash"></fa-icon>
+                                    <fa-icon [icon]="faTrash" />
                                 </button>
                             }
                         </div>

@@ -160,9 +160,9 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
         expect(startExerciseButton).toBeNull();
 
-        // Check that button "Clone repository" is shown
+        // Check that button "Clone repository" is not shown (repo_url is null)
         const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepositoryButton).not.toBeNull();
+        expect(cloneRepositoryButton).toBeNull();
 
         fixture.destroy();
         flush();
@@ -199,7 +199,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startPracticeButton).toBeNull();
 
         cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepositoryButton).not.toBeNull();
+        expect(cloneRepositoryButton).toBeNull();
 
         fixture.destroy();
         flush();
@@ -226,7 +226,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startPracticeButton).toBeNull();
 
         const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepositoryButton).not.toBeNull();
+        expect(cloneRepositoryButton).toBeNull();
 
         fixture.destroy();
         flush();
@@ -299,7 +299,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
         expect(codeEditorButton).toBeNull();
         cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepoButton).not.toBeNull();
+        expect(cloneRepoButton).toBeNull();
     }));
 
     // Quiz not supported yet

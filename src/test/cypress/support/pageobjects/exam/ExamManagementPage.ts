@@ -91,46 +91,46 @@ export class ExamManagementPage {
      * helper methods to get information of course
      * */
     getExamTitle() {
-        return cy.get('#exam-detail-title');
+        return cy.get('#detail-value-artemisApp\\.exam\\.title');
     }
 
     getExamVisibleDate() {
-        return cy.get('#exam-visible-date');
+        return cy.get('#detail-value-artemisApp\\.examManagement\\.visibleDate');
     }
 
     getExamStartDate() {
-        return cy.get('#exam-start-date');
+        return cy.get('#detail-value-artemisApp\\.exam\\.startDate');
     }
 
     getExamEndDate() {
-        return cy.get('#exam-end-date');
+        return cy.get('#detail-value-artemisApp\\.exam\\.endDate');
     }
 
     getExamNumberOfExercises() {
-        return cy.get('#exam-number-of-exercises');
+        return cy.get('#detail-value-artemisApp\\.examManagement\\.numberOfExercisesInExam');
     }
 
     getExamMaxPoints() {
-        return cy.get('#exam-max-points');
+        return cy.get('#detail-value-artemisApp\\.examManagement\\.maxPoints\\.title');
     }
 
     getExamStartText() {
-        return cy.get('#exam-start-text');
+        return cy.get('#detail-value-artemisApp\\.examManagement\\.startText');
     }
 
     getExamEndText() {
-        return cy.get('#exam-end-text');
+        return cy.get('#detail-value-artemisApp\\.examManagement\\.endText');
     }
 
     getExamConfirmationStartText() {
-        return cy.get('#exam-confirmation-start-text');
+        return cy.get('#detail-value-artemisApp\\.examManagement\\.confirmationStartText');
     }
 
     getExamConfirmationEndText() {
-        return cy.get('#exam-confirmation-end-text');
+        return cy.get('#detail-value-artemisApp\\.examManagement\\.confirmationEndText');
     }
 
     getExamWorkingTime() {
-        return cy.get('#exam-working-time');
+        return cy.get('#detail-value-artemisApp\\.exam\\.workingTime');
     }
 }

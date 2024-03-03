@@ -12,7 +12,7 @@
                 [showIcon]="showIcon"
                 [short]="short"
                 [personalParticipation]="true"
-            ></jhi-updating-result>
+            />
         </span>
     } @else {
         <!-- On desktop -->
@@ -66,10 +66,6 @@
     }
     <!-- For programming exercises -->
     @if (exercise.type === ExerciseType.PROGRAMMING && studentParticipation) {
-        <jhi-programming-exercise-student-trigger-build-button
-            [exercise]="exercise"
-            [participation]="studentParticipation"
-            [triggerLastGraded]="triggerLastGraded"
-        ></jhi-programming-exercise-student-trigger-build-button>
+        <jhi-programming-exercise-student-trigger-build-button [exercise]="exercise" [participation]="studentParticipation" [triggerLastGraded]="triggerLastGraded" />
     }
 </div>

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci.dto;
 
+import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,7 +18,7 @@ import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
  * Represents all the information returned by the local CI system about a build.
  * Note: due to limitations with inheritance, we cannot declare this as a record, but we can use it in a similar way with final fields.
  */
-public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
+public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO implements Serializable {
 
     private final String assignmentRepoBranchName;
 
@@ -139,7 +140,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
      * @param failedTests     list of failed tests.
      * @param successfulTests list of successful tests.
      */
-    public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) implements BuildJobDTOInterface {
+    public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) implements BuildJobDTOInterface, Serializable {
 
         @Override
         public List<? extends TestCaseDTOInterface> getFailedTests() {
@@ -158,7 +159,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
      * @param name   name of the test case.
      * @param errors list of error messages.
      */
-    public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseDTOInterface {
+    public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseDTOInterface, Serializable {
 
         @Override
         public String getName() {

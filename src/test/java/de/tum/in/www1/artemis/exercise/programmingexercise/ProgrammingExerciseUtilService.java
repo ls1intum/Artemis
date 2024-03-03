@@ -87,7 +87,7 @@ public class ProgrammingExerciseUtilService {
     private SubmissionPolicyRepository submissionPolicyRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepo;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepo;
 
     @Autowired
     private ResultRepository resultRepo;

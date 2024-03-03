@@ -46,7 +46,7 @@
                     }
                 </div>
                 <div class="form-group">
-                    <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate"></jhi-date-time-picker>
+                    <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate" />
                 </div>
                 <div class="form-group">
                     <jhi-competency-selection
@@ -54,7 +54,7 @@
                         [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                         [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
                         formControlName="competencies"
-                    ></jhi-competency-selection>
+                    />
                 </div>
                 <div class="container" style="padding: 0">
                     <div class="row">
@@ -78,7 +78,7 @@
                         </div>
                         <div class="col-1 mx-auto text-center align-self-center">
                             <button id="transformButton" type="button" class="btn btn-sm btn-primary" [disabled]="!isTransformable" (click)="setEmbeddedVideoUrl($event)">
-                                <fa-icon [icon]="faArrowLeft"></fa-icon>
+                                <fa-icon [icon]="faArrowLeft" />
                             </button>
                         </div>
                         <div class="col-7">
@@ -126,7 +126,7 @@
                         </button>
                         @if (hasCancelButton) {
                             <button type="button" (click)="cancelForm()" class="btn btn-default">
-                                <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                                <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                             </button>
                         }
                     </div>

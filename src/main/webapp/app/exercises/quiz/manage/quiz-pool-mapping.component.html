@@ -1,7 +1,7 @@
 <div cdkDropListGroup>
     <div class="form-group row">
         <div class="mb-2">
-            <fa-icon [icon]="faExclamationCircle"></fa-icon>
+            <fa-icon [icon]="faExclamationCircle" />
             <span jhiTranslate="artemisApp.quizPool.groupExplanation"></span>
         </div>
         @if (!disabled) {
@@ -11,7 +11,7 @@
             </div>
             <div class="col-12 col-lg-2 d-flex align-items-end mt-2 mt-lg-0">
                 <a class="btn btn-primary text-truncate w-100" (click)="addGroup(groupName.value); groupName.value = ''">
-                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.quizPool.addGroup">Add Group</span>
                 </a>
             </div>
@@ -40,7 +40,7 @@
                                     [disabled]="disabled"
                                     [quizQuestions]="quizGroupNameQuestionsMap.get(quizGroup.name)!"
                                     (onQuizQuestionDropped)="handleOnQuizQuestionDropped($event, quizGroup)"
-                                ></jhi-quiz-pool-mapping-question-list>
+                                />
                             </td>
                             <td>
                                 @if (!disabled) {
@@ -52,7 +52,7 @@
                                         [dialogError]="dialogError$"
                                         class="delete-group mb-0"
                                     >
-                                        <fa-icon [icon]="faTimes"></fa-icon>
+                                        <fa-icon [icon]="faTimes" />
                                     </button>
                                 }
                             </td>
@@ -65,13 +65,12 @@
     <div class="mt-3 mb-5" [ngStyle]="{ display: quizQuestions.length > 0 ? 'block' : 'none' }">
         @if (!disabled) {
             <div>
-                <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                <fa-icon [icon]="faExclamationCircle" />
                 <span jhiTranslate="artemisApp.quizPool.dragExplanation"></span>
             </div>
         }
         <div class="question-list-container px-3 py-3">
-            <jhi-quiz-pool-mapping-question-list [disabled]="disabled" [quizQuestions]="unmappedQuizQuestions" (onQuizQuestionDropped)="handleOnQuizQuestionDropped($event)">
-            </jhi-quiz-pool-mapping-question-list>
+            <jhi-quiz-pool-mapping-question-list [disabled]="disabled" [quizQuestions]="unmappedQuizQuestions" (onQuizQuestionDropped)="handleOnQuizQuestionDropped($event)" />
         </div>
     </div>
 </div>

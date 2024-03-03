@@ -1,13 +1,13 @@
 package de.tum.in.www1.artemis.connectors;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +28,13 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.service.connectors.aeolus.*;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusRepository;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
+import de.tum.in.www1.artemis.service.connectors.aeolus.WindfileMetadata;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
 class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -199,5 +205,24 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExercise.setTestwiseCoverageEnabled(true);
         String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNull();
+    }
+
+    @Test
+    void testGetWindfileFor() throws IOException {
+        Windfile windfile = aeolusTemplateService.getWindfileFor(ProgrammingLanguage.JAVA, Optional.empty(), false, false, false);
+        assertThat(windfile).isNotNull();
+        assertThat(windfile.getActions()).isNotNull();
+        assertThat(windfile.getActions()).hasSize(1);
+    }
+
+    @Test
+    void testGetDefaultWindfileFor() {
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.setSequentialTestRuns(true);
+        programmingExercise.setTestwiseCoverageEnabled(true);
+        Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
+        assertThat(windfile).isNull();
     }
 }

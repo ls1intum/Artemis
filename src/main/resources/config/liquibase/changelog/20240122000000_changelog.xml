@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20240122000000" author="anzinger">
+
+        <dropForeignKeyConstraint baseTableName="learning_goal_relation" constraintName="FKbeaa051892e67ac2783f413bbf882a547db27e60" />
+        <dropForeignKeyConstraint baseTableName="learning_goal_relation" constraintName="FKd84cd79d225d13687cfe9c1395fb1cc69e09f553" />
+
+        <dropIndex tableName="learning_goal_relation" indexName="UQymvhyta1mtg5mmu2n2fjmjc4m2y0mtniymy4odjh"/>
+        <dropIndex tableName="learning_goal_relation" indexName="FKd84cd79d225d13687cfe9c1395fb1cc69e09f553"/>
+
+        <!-- rename tables from learning goal to competency -->
+        <renameTable oldTableName="learning_goal" newTableName="competency"/>
+        <renameTable oldTableName="learning_goal_relation" newTableName="competency_relation"/>
+        <renameTable oldTableName="learning_goal_course" newTableName="competency_course"/>
+        <renameTable oldTableName="learning_goal_exercise" newTableName="competency_exercise"/>
+        <renameTable oldTableName="learning_goal_lecture_unit" newTableName="competency_lecture_unit"/>
+        <renameTable oldTableName="learning_goal_user" newTableName="competency_user"/>
+
+        <!-- rename columns from learning goal to competency -->
+        <renameColumn tableName="competency_relation" oldColumnName="tail_learning_goal_id" newColumnName="tail_competency_id" columnDataType="bigint" />
+        <renameColumn tableName="competency_relation" oldColumnName="head_learning_goal_id" newColumnName="head_competency_id" columnDataType="bigint" />
+        <renameColumn tableName="competency_course" oldColumnName="learning_goal_id" newColumnName="competency_id" columnDataType="bigint" />
+        <renameColumn tableName="competency_exercise" oldColumnName="learning_goal_id" newColumnName="competency_id" columnDataType="bigint" />
+        <renameColumn tableName="competency_lecture_unit" oldColumnName="learning_goal_id" newColumnName="competency_id" columnDataType="bigint" />
+        <renameColumn tableName="competency_user" oldColumnName="learning_goal_id" newColumnName="competency_id" columnDataType="bigint" />
+
+        <!-- migrate competency relation type-column -->
+        <renameColumn tableName="competency_relation" oldColumnName="type" newColumnName="type_old" columnDataType="varchar(31)" />
+        <addColumn tableName="competency_relation">
+            <column name="type" type="tinyint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <sql>
+            UPDATE competency_relation
+            SET type = CASE
+                    WHEN type_old = 'A' THEN 1
+                    WHEN type_old = 'E' THEN 2
+                    WHEN type_old = 'M' THEN 3
+                    ELSE 0
+                END
+        </sql>
+
+        <dropColumn tableName="competency_relation" columnName="type_old"/>
+
+        <createIndex indexName="idx_head_tail_type" tableName="competency_relation" unique="true">
+            <column name="head_competency_id"/>
+            <column name="tail_competency_id"/>
+            <column name="type"/>
+        </createIndex>
+
+        <createIndex indexName="idx_head_competency_id" tableName="competency_relation">
+            <column name="head_competency_id"/>
+        </createIndex>
+        <createIndex indexName="idx_tail_competency_id" tableName="competency_relation">
+            <column name="tail_competency_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseColumnNames="head_competency_id" baseTableName="competency_relation" constraintName="FK_head_competency_id"
+                                 deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency"
+                                 validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="tail_competency_id" baseTableName="competency_relation" constraintName="FK_tail_competency_id"
+                                 deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency"
+                                 validate="true"/>
+    </changeSet>
+</databaseChangeLog>

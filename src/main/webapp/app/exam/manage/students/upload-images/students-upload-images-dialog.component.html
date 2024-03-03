@@ -17,10 +17,10 @@
             <div class="d-flex align-items-end">
                 <div>
                     <label for="importPDF" class="label-narrow font-weight-bold" jhiTranslate="artemisApp.exam.examUsers.pdfFile.label">Select .pdf file</label>
-                    <jhi-help-icon text="artemisApp.exam.examUsers.pdfFile.tooltip" class="me-1"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.exam.examUsers.pdfFile.tooltip" class="me-1" />
                 </div>
                 @if (isParsing) {
-                    <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true"></fa-icon>
+                    <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" />
                 }
             </div>
             <div class="mt-2">
@@ -63,18 +63,18 @@
         <div class="flex-grow-1 d-flex justify-content-end">
             @if (!hasParsed) {
                 <button type="button" class="btn btn-default cancel me-2" data-dismiss="modal" (click)="clear()">
-                    <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
             }
             @if (!hasParsed) {
                 <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="!file || isParsing" (click)="parsePDFFile()">
-                    <fa-icon [icon]="faUpload" class="me-2"></fa-icon>
+                    <fa-icon [icon]="faUpload" class="me-2" />
                     <span jhiTranslate="artemisApp.exam.examUsers.saveImages">Save Images</span>
-                    <fa-icon class="ms-1" [hidden]="!isParsing" [spin]="true" [icon]="faCircleNotch"></fa-icon>
+                    <fa-icon class="ms-1" [hidden]="!isParsing" [spin]="true" [icon]="faCircleNotch" />
                 </button>
             } @else {
                 <button [ngClass]="hasParsed && notFoundUsers?.numberOfUsersNotFound === 0 ? 'btn btn-success' : 'btn btn-danger'" id="finish-button" (click)="onFinish()">
-                    <fa-icon [icon]="faCheck" class="me-2"></fa-icon>
+                    <fa-icon [icon]="faCheck" class="me-2" />
                     <span jhiTranslate="entity.action.finish">Finish</span>
                 </button>
             }

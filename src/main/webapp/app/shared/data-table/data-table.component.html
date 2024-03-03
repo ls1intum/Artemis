@@ -30,7 +30,7 @@
                         (blur)="onSearchInputBlur()"
                     />
                     <div class="search-info" [class.active]="isSearching">
-                        <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                        <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true" />
                     </div>
                     <div class="search-info" [class.active]="searchFailed">
                         <span class="badge bg-danger" jhiTranslate="artemisApp.dataTable.search.failed"> Search failed </span>
@@ -49,14 +49,14 @@
     }
     @if (entities && !isPreparing) {
         <div class="table-responsive data-table-container">
-            <ng-container *ngTemplateOutlet="templateRef; context: context"></ng-container>
+            <ng-container *ngTemplateOutlet="templateRef; context: context" />
             <div class="transitioning-container" [class.active]="isTransitioning">
-                <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true" />
             </div>
         </div>
     } @else {
         <div class="loading-container d-flex justify-content-center align-items-center">
-            <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
+            <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true" />
         </div>
     }
 </div>

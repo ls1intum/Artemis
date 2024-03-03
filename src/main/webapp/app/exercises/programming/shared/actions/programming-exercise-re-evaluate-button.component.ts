@@ -24,8 +24,7 @@ import { faRedo } from '@fortawesome/free-solid-svg-icons';
             [title]="'artemisApp.programmingExercise.reEvaluate'"
             [featureToggle]="FeatureToggle.ProgrammingExercises"
             (onClick)="triggerReEvaluate()"
-        >
-        </jhi-button>
+        />
     `,
 })
 export class ProgrammingExerciseReEvaluateButtonComponent {

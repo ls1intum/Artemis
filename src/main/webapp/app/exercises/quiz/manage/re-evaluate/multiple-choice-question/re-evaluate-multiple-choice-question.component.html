@@ -8,7 +8,7 @@
                     [attr.aria-expanded]="!isQuestionCollapsed"
                     [attr.aria-controls]="'collapseQuestion' + questionIndex"
                 >
-                    <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown"></fa-icon>
+                    <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
                 </button>
             </div>
             <div class="col-9 col-lg-8 text-start mt-3">
@@ -29,7 +29,7 @@
                                 (click)="resetQuestionTitle()"
                                 [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionTitle' | artemisTranslate"
                             >
-                                <fa-icon [icon]="faUndo"></fa-icon>
+                                <fa-icon [icon]="faUndo" />
                             </button>
                         </span>
                     </div>
@@ -49,7 +49,7 @@
                         (click)="moveUp()"
                         [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveUp' | artemisTranslate"
                     >
-                        <fa-icon [icon]="faChevronUp"></fa-icon>
+                        <fa-icon [icon]="faChevronUp" />
                     </button>
                     <button
                         id="move-down-button"
@@ -58,7 +58,7 @@
                         (click)="moveDown()"
                         [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveDown' | artemisTranslate"
                     >
-                        <fa-icon [icon]="faChevronDown"></fa-icon>
+                        <fa-icon [icon]="faChevronDown" />
                     </button>
                     <button
                         id="reset-button"
@@ -67,7 +67,7 @@
                         (click)="resetQuestion()"
                         [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestion' | artemisTranslate"
                     >
-                        <fa-icon [icon]="faUndo"></fa-icon>
+                        <fa-icon [icon]="faUndo" />
                     </button>
                 </div>
             </div>
@@ -126,7 +126,7 @@
                 </div>
                 <div class="col-2">
                     <div class="re-evaluate-button" id="delete-button" class="delete-button" (click)="delete()">
-                        <fa-icon [icon]="faTrash" size="2x"></fa-icon>
+                        <fa-icon [icon]="faTrash" size="2x" />
                     </div>
                 </div>
             </div>
@@ -150,7 +150,7 @@
                             [enableFileUpload]="false"
                             class="editor col"
                             style="width: 90%"
-                        ></jhi-markdown-editor>
+                        />
                     </div>
                     <div class="col-2 col-lg-1">
                         <span class="reset-question-group col-auto input-group-btn d-flex align-items-start">
@@ -160,7 +160,7 @@
                                 (click)="resetQuestionText()"
                                 [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionText' | artemisTranslate"
                             >
-                                <fa-icon [icon]="faUndo"></fa-icon>
+                                <fa-icon [icon]="faUndo" />
                             </button>
                         </span>
                     </div>
@@ -173,7 +173,7 @@
                     <div class="question-options row align-items-start">
                         <div class="col-3 col-lg-1 drag-handle">
                             <div class="answer-handle re-evaluate-order-button text-center" cdkDragHandle style="width: 100%">
-                                <fa-icon [icon]="faArrowsAltV" size="2x"></fa-icon>
+                                <fa-icon [icon]="faArrowsAltV" size="2x" />
                             </div>
                         </div>
                         <div class="col-9 col-lg-7 option-text">
@@ -192,7 +192,7 @@
                                 [enableFileUpload]="false"
                                 class="editor"
                                 style="width: 65%"
-                            ></jhi-markdown-editor>
+                            />
                         </div>
                         <div class="col-12 col-lg-4">
                             <div class="form-group question-options-actions text-center d-flex flex-wrap">
@@ -214,7 +214,7 @@
                                     (click)="resetAnswer(answer)"
                                     [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetAnswer' | artemisTranslate"
                                 >
-                                    <fa-icon [icon]="faUndo"></fa-icon>
+                                    <fa-icon [icon]="faUndo" />
                                 </button>
                                 <button
                                     class="btn btn-outline-secondary"
@@ -222,7 +222,7 @@
                                     (click)="deleteAnswer(answer)"
                                     [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.deleteAnswer' | artemisTranslate"
                                 >
-                                    <fa-icon [icon]="faTrash"></fa-icon>
+                                    <fa-icon [icon]="faTrash" />
                                 </button>
                             </div>
                         </div>

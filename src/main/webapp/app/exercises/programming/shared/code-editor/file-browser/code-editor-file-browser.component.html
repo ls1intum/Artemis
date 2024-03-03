@@ -3,20 +3,20 @@
         <h3 class="card-title justify-content-center">
             @if (!collapsed) {
                 <span>
-                    <fa-icon [icon]="faFolderOpen"></fa-icon>
+                    <fa-icon [icon]="faFolderOpen" />
                     <span class="ms-2" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
                 </span>
             }
             @if (collapsed) {
                 <span class="collapsed-file-browser">
-                    <fa-icon class="top-icon" [icon]="faChevronRight"></fa-icon>
+                    <fa-icon class="top-icon" [icon]="faChevronRight" />
                     <span class="header" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
-                    <fa-icon [icon]="faFolderOpen" class="fa-rotate-270" id="panel-symbol"></fa-icon>
-                    <fa-icon class="bottom-icon" [icon]="faChevronRight"></fa-icon>
+                    <fa-icon [icon]="faFolderOpen" class="fa-rotate-270" id="panel-symbol" />
+                    <fa-icon class="bottom-icon" [icon]="faChevronRight" />
                 </span>
             }
         </h3>
-        <fa-icon class="ms-auto clickable" [icon]="faChevronLeft"></fa-icon>
+        <fa-icon class="ms-auto clickable" [icon]="faChevronLeft" />
     </div>
     <!-- Root actions -->
     <div class="card-second-header">
@@ -27,8 +27,8 @@
             (click)="setCreatingFileInRoot(FileType.FILE)"
             title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | artemisTranslate }}"
         >
-            <fa-icon [icon]="faPlus"></fa-icon>
-            <fa-icon [icon]="faFile" class="ms-1"></fa-icon>
+            <fa-icon [icon]="faPlus" />
+            <fa-icon [icon]="faFile" class="ms-1" />
         </button>
         <button
             id="create_folder_root"
@@ -37,8 +37,8 @@
             (click)="setCreatingFileInRoot(FileType.FOLDER)"
             title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | artemisTranslate }}"
         >
-            <fa-icon [icon]="faPlus"></fa-icon>
-            <fa-icon [icon]="faFolder" class="ms-1"></fa-icon>
+            <fa-icon [icon]="faPlus" />
+            <fa-icon [icon]="faFolder" class="ms-1" />
         </button>
         <button
             id="compress_tree"
@@ -47,7 +47,7 @@
             (click)="toggleTreeCompress()"
             title="{{ 'artemisApp.editor.fileBrowser.compressTree' | artemisTranslate }}"
         >
-            <fa-icon [icon]="compressFolders ? faAngleDoubleUp : faAngleDoubleDown"></fa-icon>
+            <fa-icon [icon]="compressFolders ? faAngleDoubleUp : faAngleDoubleDown" />
         </button>
     </div>
     <!-- File Tree -->
@@ -59,21 +59,21 @@
                 [folder]="''"
                 (onClearCreatingFile)="clearCreatingFile()"
                 (onCreateFile)="onCreateFile($event)"
-            ></jhi-code-editor-file-browser-create-node>
+            />
         }
         @if (!isLoadingFiles) {
-            <treeview #treeview [maxHeight]="treeViewMaxHeight" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </treeview>
+            <treeview #treeview [maxHeight]="treeViewMaxHeight" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate" />
         }
         <!-- Loading files indicator -->
         @if (isLoadingFiles) {
             <div class="text-center lead text-body-secondary pt-2">
-                <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                <fa-icon [icon]="faCircleNotch" [spin]="true" />
                 <span jhiTranslate="artemisApp.editor.loadingFiles">Loading file</span>
             </div>
         }
     </div>
     @if (!collapsed) {
-        <jhi-code-editor-status #status [editorState]="editorState" [commitState]="commitState"></jhi-code-editor-status>
+        <jhi-code-editor-status #status [editorState]="editorState" [commitState]="commitState" />
     }
 </div>
 <!--Treeview Item Template-->
@@ -95,7 +95,7 @@
             (onDeleteNode)="openDeleteFileModal(item)"
             (onClearRenamingNode)="clearRenamingFile()"
             (onSetCreatingNodeInFolder)="setCreatingFile($event)"
-        ></jhi-code-editor-file-browser-folder>
+        />
     }
     <!--file-->
     @if (repositoryFiles[item.value] === FileType.FILE) {
@@ -112,7 +112,7 @@
             (onNodeSelect)="handleNodeSelected(item)"
             (onDeleteNode)="openDeleteFileModal(item)"
             (onClearRenamingNode)="clearRenamingFile()"
-        ></jhi-code-editor-file-browser-file>
+        />
     }
     <!--new item-->
     @if (creatingFile && creatingFile[0] === item.value) {
@@ -121,6 +121,6 @@
             [folder]="''"
             (onClearCreatingFile)="clearCreatingFile()"
             (onCreateFile)="onCreateFile($event)"
-        ></jhi-code-editor-file-browser-create-node>
+        />
     }
 </ng-template>

@@ -12,6 +12,6 @@
 </div>
 @for (entry of fileReportByFileName | keyvalue; track identifyCoverageFileComponent($index, entry)) {
     <div class="mt-2">
-        <jhi-testwise-coverage-file [fileContent]="fileContentByPath.get(entry.key)!" [fileName]="entry.key" [fileReport]="entry.value"> </jhi-testwise-coverage-file>
+        <jhi-testwise-coverage-file [fileContent]="fileContentByPath.get(entry.key)!" [fileName]="entry.key" [fileReport]="entry.value" />
     </div>
 }

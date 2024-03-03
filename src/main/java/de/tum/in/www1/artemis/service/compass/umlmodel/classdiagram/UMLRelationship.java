@@ -161,6 +161,11 @@ public class UMLRelationship extends UMLElement implements Serializable {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), source, target, sourceRole, targetRole, sourceMultiplicity, targetMultiplicity, relationshipType);
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (!super.equals(obj)) {
             return false;

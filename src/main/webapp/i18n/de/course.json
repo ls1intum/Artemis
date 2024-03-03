@@ -66,6 +66,7 @@
             "startDate": "Start",
             "endDate": "Ende",
             "semester": "Semester",
+            "ltiConfiguration": "LTI Konfiguration",
             "recentlyAccessed": "Zuletzt verwendet",
             "maxPoints": {
                 "title": "Maximale Punktzahl",
@@ -208,6 +209,12 @@
             },
             "detail": {
                 "title": "Kurs Details:",
+                "sections": {
+                    "general": "Informationen",
+                    "mode": "Modus",
+                    "enrollment": "Einschreibung",
+                    "messaging": "Nachrichten & Kommunikation"
+                },
                 "assessmentsTitle": "Insgesamte Bewertungen",
                 "complaintsTitle": "Insgesamte Beschwerden",
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",

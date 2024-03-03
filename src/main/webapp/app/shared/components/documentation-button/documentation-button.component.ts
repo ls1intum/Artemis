@@ -33,7 +33,7 @@ export type DocumentationType = keyof typeof DocumentationLinks;
     styleUrls: ['./documentation-button.component.scss'],
     template: `
         <a class="text-primary documentation-button ms-1 mb-1" href="{{ baseUrl + DocumentationLinks[this.type] }}">
-            <fa-icon [icon]="faCircleInfo" ngbTooltip="{{ getTooltipForType() }}"></fa-icon>
+            <fa-icon [icon]="faCircleInfo" ngbTooltip="{{ getTooltipForType() }}" />
         </a>
     `,
 })

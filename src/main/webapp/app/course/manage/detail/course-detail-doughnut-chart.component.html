@@ -17,10 +17,10 @@
             }
             @if (!receivedStats) {
                 <div class="h3">
-                    <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                    <fa-icon [icon]="faSpinner" [spin]="true" />
                 </div>
             }
         </div>
-        <ngx-charts-pie-chart [view]="[160, 160]" [results]="ngxData" [scheme]="ngxColor" [doughnut]="true" [tooltipText]="bindFormatting"> </ngx-charts-pie-chart>
+        <ngx-charts-pie-chart [view]="[160, 160]" [results]="ngxData" [scheme]="ngxColor" [doughnut]="true" [tooltipText]="bindFormatting" />
     </div>
 </div>

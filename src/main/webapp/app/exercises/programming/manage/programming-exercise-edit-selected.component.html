@@ -48,11 +48,11 @@
                                 <label class="label-narrow label-timeline" jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline">
                                     Timeline for the whole programming exercise
                                 </label>
-                                <jhi-help-icon text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
+                                <jhi-help-icon text="artemisApp.programmingExercise.timeline.timelineTooltip" />
                             </div>
-                            <jhi-programming-exercise-lifecycle id="timeline" [exercise]="newProgrammingExercise" [isExamMode]="false"></jhi-programming-exercise-lifecycle>
+                            <jhi-programming-exercise-lifecycle id="timeline" [exercise]="newProgrammingExercise" [isExamMode]="false" />
                             <jhi-button class="text-center" id="save-entity" [icon]="faSave" [title]="'entity.action.save'" [isLoading]="isSaving">
-                                <fa-icon [icon]="faSave"></fa-icon>
+                                <fa-icon [icon]="faSave" />
                                 <span jhiTranslate="entity.action.save">Save</span>
                             </jhi-button>
                         </div>

@@ -16,18 +16,20 @@ public interface ExerciseHintActivationRepository extends JpaRepository<Exercise
     void deleteAllByUser(User user);
 
     @Query("""
-            SELECT ueha FROM ExerciseHintActivation ueha
-            LEFT JOIN FETCH ueha.exerciseHint eh
-            LEFT JOIN FETCH eh.solutionEntries se
-            WHERE ueha.exerciseHint.exercise.id = :exerciseId
-            AND ueha.user.id = :userId
+            SELECT hintActivation
+            FROM ExerciseHintActivation hintActivation
+                LEFT JOIN FETCH hintActivation.exerciseHint hint
+                LEFT JOIN FETCH hint.solutionEntries
+            WHERE hintActivation.exerciseHint.exercise.id = :exerciseId
+                AND hintActivation.user.id = :userId
             """)
     Set<ExerciseHintActivation> findByExerciseAndUserWithExerciseHintRelations(@Param("exerciseId") long exerciseId, @Param("userId") long userId);
 
     @Query("""
-            SELECT ueha FROM ExerciseHintActivation ueha
-            WHERE ueha.exerciseHint.id = :exerciseHintId
-            AND ueha.user.id = :userId
+            SELECT hintActivation
+            FROM ExerciseHintActivation hintActivation
+            WHERE hintActivation.exerciseHint.id = :exerciseHintId
+                AND hintActivation.user.id = :userId
             """)
     Optional<ExerciseHintActivation> findByExerciseHintAndUser(@Param("exerciseHintId") long exerciseHintId, @Param("userId") long userId);
 

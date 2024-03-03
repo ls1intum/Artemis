@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,14 +57,14 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setFeedbackSuggestionsEnabled(true);
-        textExercise.setGradingCriteria(List.of(new GradingCriterion()));
+        textExercise.setGradingCriteria(Set.of(new GradingCriterion()));
         textExerciseRepository.save(textExercise);
         textSubmission1 = new TextSubmission(1L);
         textSubmission2 = new TextSubmission(2L);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         programmingExercise.setFeedbackSuggestionsEnabled(true);
-        programmingExercise.setGradingCriteria(List.of(new GradingCriterion()));
+        programmingExercise.setGradingCriteria(Set.of(new GradingCriterion()));
         programmingExerciseRepository.save(programmingExercise);
         programmingSubmission1 = new ProgrammingSubmission();
         programmingSubmission1.setId(3L);

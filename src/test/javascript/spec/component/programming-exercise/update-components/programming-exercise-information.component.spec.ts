@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
 import { DefaultValueAccessor, NgModel } from '@angular/forms';
@@ -13,6 +13,8 @@ import { CategorySelectorComponent } from 'app/shared/category-selector/category
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
+import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import { QueryList } from '@angular/core';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
@@ -60,4 +62,24 @@ describe('ProgrammingExerciseInformationComponent', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
     }));
+
+    it('should should calculate Form Sections correctly', () => {
+        const calculateFormValidSpy = jest.spyOn(comp, 'calculateFormValid');
+        const editableField = { editingInput: { valueChanges: new Subject(), valid: true } } as any as TableEditableFieldComponent;
+        comp.exerciseTitleChannelComponent = { titleChannelNameComponent: { formValidChanges: new Subject(), formValid: true } } as ExerciseTitleChannelNameComponent;
+        comp.shortNameField = { valueChanges: new Subject(), valid: true } as any as NgModel;
+        comp.checkoutSolutionRepositoryField = { valueChanges: new Subject(), valid: true } as any as NgModel;
+        comp.recreateBuildPlansField = { valueChanges: new Subject(), valid: true } as any as NgModel;
+        comp.updateTemplateFilesField = { valueChanges: new Subject(), valid: true } as any as NgModel;
+        comp.tableEditableFields = { changes: new Subject<any>() } as any as QueryList<TableEditableFieldComponent>;
+        comp.ngAfterViewInit();
+        (comp.tableEditableFields.changes as Subject<any>).next({ toArray: () => [editableField] } as any as QueryList<TableEditableFieldComponent>);
+        comp.exerciseTitleChannelComponent.titleChannelNameComponent.formValidChanges.next(false);
+        (comp.shortNameField.valueChanges as Subject<boolean>).next(false);
+        (comp.checkoutSolutionRepositoryField.valueChanges as Subject<boolean>).next(false);
+        (comp.recreateBuildPlansField.valueChanges as Subject<boolean>).next(false);
+        (comp.updateTemplateFilesField.valueChanges as Subject<boolean>).next(false);
+        (editableField.editingInput.valueChanges as Subject<boolean>).next(false);
+        expect(calculateFormValidSpy).toHaveBeenCalledTimes(6);
+    });
 });

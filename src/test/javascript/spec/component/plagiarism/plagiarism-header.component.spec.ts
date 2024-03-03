@@ -51,12 +51,12 @@ describe('Plagiarism Header Component', () => {
         comp.confirmPlagiarism();
 
         expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.CONFIRMED);
-        expect(comp.disableConfirmDenyButton).toBeTrue();
+        expect(comp.isLoading).toBeTrue();
     });
 
     it('should disable confirm button if plagiarism status is dirty', () => {
         comp.comparison.status = PlagiarismStatus.NONE;
-        comp.disableConfirmDenyButton = true;
+        comp.isLoading = true;
 
         const nativeElement = fixture.nativeElement;
         const button = nativeElement.querySelector("[data-qa='confirm-plagiarism-button']") as ButtonComponent;
@@ -70,12 +70,12 @@ describe('Plagiarism Header Component', () => {
         comp.denyPlagiarism();
 
         expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.DENIED);
-        expect(comp.disableConfirmDenyButton).toBeTrue();
+        expect(comp.isLoading).toBeTrue();
     });
 
     it('should disable deny button if plagiarism status is dirty', () => {
         comp.comparison.status = PlagiarismStatus.NONE;
-        comp.disableConfirmDenyButton = true;
+        comp.isLoading = true;
 
         const nativeElement = fixture.nativeElement;
         const button = nativeElement.querySelector("[data-qa='deny-plagiarism-button']") as ButtonComponent;
@@ -94,7 +94,7 @@ describe('Plagiarism Header Component', () => {
 
         expect(comp.updatePlagiarismStatus).not.toHaveBeenCalled();
         expect(modalSpy).toHaveBeenCalledOnce();
-        expect(comp.disableConfirmDenyButton).toBeTrue();
+        expect(comp.isLoading).toBeTrue();
     });
 
     it('should update the plagiarism status', fakeAsync(() => {
@@ -107,7 +107,7 @@ describe('Plagiarism Header Component', () => {
 
         expect(updatePlagiarismComparisonStatusStub).toHaveBeenCalledOnce();
         expect(comp.comparison.status).toEqual(PlagiarismStatus.CONFIRMED);
-        expect(comp.disableConfirmDenyButton).toBeFalse();
+        expect(comp.isLoading).toBeFalse();
     }));
 
     it('should emit when expanding left split view pane', () => {
@@ -147,5 +147,15 @@ describe('Plagiarism Header Component', () => {
         fixture.detectChanges();
 
         expect(comp.splitControlSubject.next).toHaveBeenCalledWith('even');
+    });
+
+    it.each(['confirm-plagiarism-button', 'deny-plagiarism-button'])('should disable status update button for team exercises', (selector) => {
+        comp.exercise.teamMode = true;
+
+        const nativeElement = fixture.nativeElement;
+        const button = nativeElement.querySelector(`[data-qa=${selector}]`) as ButtonComponent;
+        fixture.detectChanges();
+
+        expect(button.disabled).toBeTrue();
     });
 });

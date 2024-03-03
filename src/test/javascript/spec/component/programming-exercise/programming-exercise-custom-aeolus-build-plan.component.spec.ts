@@ -311,6 +311,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should not call loadAeolusTemplate on existing exercise', () => {
         comp.programmingExercise.id = 1;
+        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         const resetCustomBuildPlanSpy = jest.spyOn(comp, 'resetCustomBuildPlan');
         comp.loadAeolusTemplate();
         expect(resetCustomBuildPlanSpy).not.toHaveBeenCalled();

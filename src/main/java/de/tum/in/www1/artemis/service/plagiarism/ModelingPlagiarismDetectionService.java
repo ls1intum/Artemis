@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
 import static com.google.gson.JsonParser.parseString;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.service.plagiarism.PlagiarismService.hasMinimumScore;
 
 import java.io.IOException;
 import java.util.*;
@@ -8,9 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -20,12 +21,12 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ModelingPlagiarismDetectionService {
 
@@ -35,13 +36,13 @@ public class ModelingPlagiarismDetectionService {
 
     private final PlagiarismCacheService plagiarismCacheService;
 
-    private final AuthorizationCheckService authCheckService;
+    private final PlagiarismService plagiarismService;
 
     public ModelingPlagiarismDetectionService(PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService,
-            AuthorizationCheckService authCheckService) {
+            PlagiarismService plagiarismService) {
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
-        this.authCheckService = authCheckService;
+        this.plagiarismService = plagiarismService;
     }
 
     /**
@@ -63,12 +64,10 @@ public class ModelingPlagiarismDetectionService {
             }
             plagiarismCacheService.setActivePlagiarismCheck(courseId);
 
-            final List<ModelingSubmission> modelingSubmissions = modelingSubmissionsForComparison(exerciseWithParticipationsSubmissionsResults);
-
-            log.info("Found {} modeling submissions in exercise {}", modelingSubmissions.size(), exerciseWithParticipationsSubmissionsResults.getId());
+            final List<ModelingSubmission> modelingSubmissions = modelingSubmissionsForComparison(exerciseWithParticipationsSubmissionsResults, minimumScore);
 
             Long exerciseId = exerciseWithParticipationsSubmissionsResults.getId();
-            ModelingPlagiarismResult result = checkPlagiarism(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore, exerciseId);
+            ModelingPlagiarismResult result = checkPlagiarism(modelingSubmissions, minimumSimilarity, minimumModelSize, exerciseId);
 
             result.setExercise(exerciseWithParticipationsSubmissionsResults);
 
@@ -97,41 +96,35 @@ public class ModelingPlagiarismDetectionService {
      * @param modelingSubmissions List of modeling submissions
      * @param minimumSimilarity   the minimum similarity so that the result is considered
      * @param minimumModelSize    the minimum number of model elements to be considered as plagiarism
-     * @param minimumScore        the minimum result score (if available) to be considered as plagiarism
      * @param exerciseId          the id of the exercise for which the modeling submissions are compared
      * @return List of submission id pairs and similarity score
      */
-    public ModelingPlagiarismResult checkPlagiarism(List<ModelingSubmission> modelingSubmissions, double minimumSimilarity, int minimumModelSize, int minimumScore,
-            Long exerciseId) {
+    public ModelingPlagiarismResult checkPlagiarism(List<ModelingSubmission> modelingSubmissions, double minimumSimilarity, int minimumModelSize, Long exerciseId) {
         String topic = plagiarismWebsocketService.getModelingExercisePlagiarismCheckTopic(exerciseId);
 
         ModelingPlagiarismResult result = new ModelingPlagiarismResult();
 
         Map<UMLDiagram, ModelingSubmission> models = new HashMap<>();
-        ObjectMapper objectMapper = new ObjectMapper();
 
         AtomicInteger processedSubmissionCount = new AtomicInteger(1);
-        modelingSubmissions.stream().filter(modelingSubmission -> !modelingSubmission.isEmpty(objectMapper))
-                .filter(modelingSubmission -> minimumScore == 0 || modelingSubmission.getLatestResult() != null && modelingSubmission.getLatestResult().getScore() != null
-                        && modelingSubmission.getLatestResult().getScore() >= minimumScore)
-                .forEach(modelingSubmission -> {
-                    String progressMessage = "Getting UML diagram for submission: " + processedSubmissionCount + "/" + modelingSubmissions.size();
-                    plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
+        modelingSubmissions.forEach(modelingSubmission -> {
+            String progressMessage = "Getting UML diagram for submission: " + processedSubmissionCount + "/" + modelingSubmissions.size();
+            plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
 
-                    try {
-                        log.debug("Build UML diagram from json");
-                        UMLDiagram model = UMLModelParser.buildModelFromJSON(parseString(modelingSubmission.getModel()).getAsJsonObject(), modelingSubmission.getId());
+            try {
+                log.debug("Build UML diagram from json");
+                UMLDiagram model = UMLModelParser.buildModelFromJSON(parseString(modelingSubmission.getModel()).getAsJsonObject(), modelingSubmission.getId());
 
-                        if (model.getAllModelElements().size() >= minimumModelSize) {
-                            models.put(model, modelingSubmission);
-                        }
-                    }
-                    catch (IOException e) {
-                        log.error("Parsing the modeling submission {} did throw an exception:", modelingSubmission.getId(), e);
-                    }
+                if (model.getAllModelElements().size() >= minimumModelSize) {
+                    models.put(model, modelingSubmission);
+                }
+            }
+            catch (IOException e) {
+                log.error("Parsing the modeling submission {} did throw an exception:", modelingSubmission.getId(), e);
+            }
 
-                    processedSubmissionCount.getAndIncrement();
-                });
+            processedSubmissionCount.getAndIncrement();
+        });
 
         log.info("Found {} modeling submissions with at least {} elements to compare", models.size(), minimumModelSize);
 
@@ -201,15 +194,15 @@ public class ModelingPlagiarismDetectionService {
     /**
      * Reduce a ModelingExercise Object to a list of latest modeling submissions.
      *
-     * @param exerciseWithParticipationsAndSubmissions ModelingExercise with fetched participations
-     *                                                     and submissions
+     * @param exerciseWithParticipationsAndSubmissions ModelingExercise with fetched participations and submissions
+     * @param minimumScore                             consider only submissions whose score is greater or equal to this value
      * @return List containing the latest modeling submission for every participation
      */
-    public List<ModelingSubmission> modelingSubmissionsForComparison(ModelingExercise exerciseWithParticipationsAndSubmissions) {
-        return exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().filter(participation -> participation.getStudent().isPresent())
-                .filter(participation -> !authCheckService.isAtLeastTeachingAssistantForExercise(exerciseWithParticipationsAndSubmissions, participation.getStudent().get()))
-                .map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof ModelingSubmission)
-                .map(submission -> (ModelingSubmission) submission).toList();
-    }
+    public List<ModelingSubmission> modelingSubmissionsForComparison(ModelingExercise exerciseWithParticipationsAndSubmissions, int minimumScore) {
 
+        // Note: minimum size is checked at a different place in this service
+        return exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().filter(plagiarismService.filterForStudents())
+                .map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof ModelingSubmission)
+                .map(submission -> (ModelingSubmission) submission).filter(submission -> hasMinimumScore(submission, minimumScore)).toList();
+    }
 }

@@ -3,8 +3,10 @@ package de.tum.in.www1.artemis;
 import static com.tngtech.archunit.base.DescribedPredicate.*;
 import static com.tngtech.archunit.core.domain.JavaCall.Predicates.target;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
+import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
+import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.*;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
@@ -13,17 +15,27 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.slf4j.Logger;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.stereotype.*;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.hazelcast.core.HazelcastInstance;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.*;
 import com.tngtech.archunit.lang.*;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.in.www1.artemis.config.ApplicationConfiguration;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
@@ -137,27 +149,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
         jsonParser.check(allClasses);
     }
 
-    // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
-
-    private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {
-        return equalTo(name).as("Annotation with simple name " + name).onResultOf(annotation -> annotation.getRawType().getSimpleName());
-    }
-
-    private DescribedPredicate<? super JavaAnnotation<?>> resideInPackageAnnotation(String packageName) {
-        return equalTo(packageName).as("Annotation in package " + packageName).onResultOf(annotation -> annotation.getRawType().getPackageName());
-    }
-
-    private ArchCondition<JavaMethod> notHaveAnyParameterAnnotatedWith(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate) {
-        return new ArchCondition<>("have parameters annotated with ") {
-
-            @Override
-            public void check(JavaMethod item, ConditionEvents events) {
-                boolean satisfied = item.getParameterAnnotations().stream().flatMap(Collection::stream).noneMatch(annotationPredicate);
-                if (!satisfied) {
-                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
-                }
-            }
-        };
+    @Test
+    void testRepositoryParamAnnotation() {
+        var useParamInQueries = methods().that().areAnnotatedWith(Query.class).should(haveAllParametersAnnotatedWithUnless(rawType(Param.class), type(Pageable.class)));
+        var notUseParamOutsideQueries = methods().that().areNotAnnotatedWith(Query.class).should(notHaveAnyParameterAnnotatedWith(rawType(Param.class)));
+        useParamInQueries.check(productionClasses);
+        notUseParamOutsideQueries.check(productionClasses);
     }
 
     /**
@@ -169,5 +166,119 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
         var classesWithoutGitService = allClasses.that(not(assignableTo(GitService.class)));
         usage.check(classesWithoutGitService);
+    }
+
+    @Test
+    void testNoHazelcastUsageInConstructors() {
+        // CacheHandler and QuizCache are exceptions because these classes are not created during startup
+        var exceptions = or(declaredClassSimpleName("QuizCache"), declaredClassSimpleName("CacheHandler"));
+        var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
+                .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
+        notUseHazelcastInConstructor.check(allClasses);
+    }
+
+    @Test
+    void ensureSpringComponentsAreProfileAnnotated() {
+        ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
+                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).and()
+                .doNotBelongToAnyOf(ApplicationConfiguration.class).should(beProfileAnnotated())
+                .because("we want to be able to exclude these classes from application startup by specifying profiles");
+
+        rule.check(productionClasses);
+    }
+
+    @Test
+    void testJPQLStyle() {
+        var queryRule = methods().that().areAnnotatedWith(Query.class).should(useUpperCaseSQLStyle()).because("@Query content should follow the style guide");
+        queryRule.check(allClasses);
+    }
+
+    // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
+
+    private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {
+        return equalTo(name).as("Annotation with simple name " + name).onResultOf(annotation -> annotation.getRawType().getSimpleName());
+    }
+
+    private DescribedPredicate<? super JavaAnnotation<?>> resideInPackageAnnotation(String packageName) {
+        return equalTo(packageName).as("Annotation in package " + packageName).onResultOf(annotation -> annotation.getRawType().getPackageName());
+    }
+
+    private DescribedPredicate<? super JavaCodeUnit> declaredClassSimpleName(String name) {
+        return equalTo(name).as("Declared in class with simple name " + name).onResultOf(unit -> unit.getOwner().getSimpleName());
+    }
+
+    private ArchCondition<JavaMethod> notHaveAnyParameterAnnotatedWith(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate) {
+        return new ArchCondition<>("not have parameters annotated with " + annotationPredicate.getDescription()) {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                boolean satisfied = item.getParameterAnnotations().stream().flatMap(Collection::stream).noneMatch(annotationPredicate);
+                if (!satisfied) {
+                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                }
+            }
+        };
+    }
+
+    private ArchCondition<JavaMethod> haveAllParametersAnnotatedWithUnless(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate,
+            DescribedPredicate<JavaClass> exception) {
+        return new ArchCondition<>("have all parameters annotated with " + annotationPredicate.getDescription()) {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                boolean satisfied = item.getParameters().stream()
+                        // Ignore annotations of the Pageable parameter
+                        .filter(javaParameter -> !exception.test(javaParameter.getRawType())).map(JavaParameter::getAnnotations)
+                        // Else, one of the annotations should match the given predicate
+                        // This allows parameters with multiple annotations (e.g. @NonNull @Param)
+                        .allMatch(annotations -> annotations.stream().anyMatch(annotationPredicate));
+                if (!satisfied) {
+                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                }
+            }
+        };
+    }
+
+    private static ArchCondition<JavaClass> beProfileAnnotated() {
+        return new ArchCondition<>("be annotated with @Profile") {
+
+            @Override
+            public void check(JavaClass item, ConditionEvents events) {
+                boolean hasProfileAnnotation = item.isAnnotatedWith(Profile.class);
+                if (!hasProfileAnnotation) {
+                    String message = String.format("Class %s is not annotated with @Profile", item.getFullName());
+                    events.add(SimpleConditionEvent.violated(item, message));
+                }
+            }
+        };
+    }
+
+    // See https://openjpa.apache.org/builds/1.2.3/apache-openjpa/docs/jpa_langref.html#jpa_langref_from_identifiers
+    private static final Set<String> SQL_KEYWORDS = Set.of("SELECT", "UPDATE", "SET", "DELETE", "DISTINCT", "EXISTS", "FROM", "WHERE", "LEFT", "OUTER", "INNER", "JOIN", "FETCH",
+            "TREAT", "AND", "OR", "AS", "ON", "ORDER", "BY", "ASC", "DSC", "GROUP", "COUNT", "SUM", "AVG", "MAX", "MIN", "IS", "NOT", "FALSE", "TRUE", "NULL", "LIKE", "IN",
+            "BETWEEN", "HAVING", "EMPTY", "MEMBER", "OF", "UPPER", "LOWER", "TRIM");
+
+    private ArchCondition<JavaMethod> useUpperCaseSQLStyle() {
+        return new ArchCondition<>("have keywords in upper case") {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                var queryAnnotation = item.getAnnotations().stream().filter(simpleNameAnnotation("Query")).findAny();
+                if (queryAnnotation.isEmpty()) {
+                    return;
+                }
+                Object valueProperty = queryAnnotation.get().getExplicitlyDeclaredProperty("value");
+                if (!(valueProperty instanceof String query)) {
+                    return;
+                }
+                String[] queryWords = query.split("[\\r\\n ]+");
+
+                for (var word : queryWords) {
+                    if (SQL_KEYWORDS.contains(word.toUpperCase()) && !StringUtils.isAllUpperCase(word)) {
+                        events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), word)));
+                    }
+                }
+            }
+        };
     }
 }

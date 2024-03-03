@@ -14,7 +14,7 @@ import { faPlus, faUpload } from '@fortawesome/free-solid-svg-icons';
             [icon]="faUpload"
             [title]="'artemisApp.exam.examUsers.uploadImage'"
             (onClick)="openUploadImagesDialog($event)"
-        ></jhi-button>
+        />
     `,
 })
 export class StudentsUploadImagesButtonComponent {

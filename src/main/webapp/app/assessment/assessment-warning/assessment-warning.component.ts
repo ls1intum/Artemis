@@ -15,7 +15,7 @@ import { Submission } from 'app/entities/submission.model';
         <h6>
             @if (showWarning) {
                 <div class="card-header">
-                    <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom auto"></fa-icon>
+                    <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom auto" />
                     @if (isBeforeExerciseDueDate) {
                         <span>{{ 'artemisApp.assessment.dashboard.warning' | artemisTranslate }}</span>
                     }

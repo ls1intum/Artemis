@@ -9,12 +9,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 @Component({
     selector: 'jhi-programming-exercise-configure-grading-actions',
     template: `
-        <jhi-programming-exercise-re-evaluate-button [exercise]="exercise" [disabled]="isSaving"></jhi-programming-exercise-re-evaluate-button>
-        <jhi-programming-exercise-trigger-all-button
-            [exercise]="exercise"
-            [disabled]="isSaving"
-            (onBuildTriggered)="onBuildTriggered.emit()"
-        ></jhi-programming-exercise-trigger-all-button>
+        <jhi-programming-exercise-re-evaluate-button [exercise]="exercise" [disabled]="isSaving" />
+        <jhi-programming-exercise-trigger-all-button [exercise]="exercise" [disabled]="isSaving" (onBuildTriggered)="onBuildTriggered.emit()" />
     `,
 })
 export class ProgrammingExerciseConfigureGradingActionsComponent {

@@ -13,7 +13,7 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
             [icon]="faPlus"
             [title]="'entity.action.addAuxiliaryRepository'"
             (onClick)="addAuxiliaryRepositoryRow()"
-        ></jhi-button>
+        />
     `,
 })
 export class AddAuxiliaryRepositoryButtonComponent {

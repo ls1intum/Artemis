@@ -17,12 +17,12 @@
                     <!-- ID column, always present -->
                     <th class="col-1" jhiSortBy="ID">
                         <span>#</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     @for (column of columns; track column) {
                         <th class="col-4" [jhiSortBy]="column.name">
                             <span [jhiTranslate]="'artemisApp.' + entityName + '.import.table.' + column.name"></span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                     }
                     <th class="col-1"></th>
@@ -36,7 +36,7 @@
                         </td>
                         @for (column of columns; track column) {
                             <td class="text-break col-4">
-                                <ngb-highlight [result]="column.getProperty(entity)" [term]="searchTerm"></ngb-highlight>
+                                <ngb-highlight [result]="column.getProperty(entity)" [term]="searchTerm" />
                             </td>
                         }
                         <td class="col-1">
@@ -44,15 +44,14 @@
                                 (onClick)="selectImport(entity)"
                                 [disabled]="disabledIds.includes(entity.id!)"
                                 [title]="'artemisApp.' + entityName + '.import.table.doImport'"
-                            ></jhi-button>
+                            />
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
         <div class="d-flex justify-content-between p-2">
-            <ngb-pagination (pageChange)="onPageChange($event)" [(page)]="state.page" [collectionSize]="total" [maxSize]="10" [pageSize]="state.pageSize" [rotate]="true">
-            </ngb-pagination>
+            <ngb-pagination (pageChange)="onPageChange($event)" [(page)]="state.page" [collectionSize]="total" [maxSize]="10" [pageSize]="state.pageSize" [rotate]="true" />
         </div>
     </div>
 </form>

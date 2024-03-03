@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.*;
@@ -33,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,6 +48,7 @@ import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Service
 public class FileService implements DisposableBean {
 
@@ -940,7 +944,7 @@ public class FileService implements DisposableBean {
      * @param mergedPdfFilename title of merged pdf file
      * @return byte array of the merged file
      */
-    public Optional<byte[]> mergePdfFiles(List<String> paths, String mergedPdfFilename) {
+    public Optional<byte[]> mergePdfFiles(List<Path> paths, String mergedPdfFilename) {
         if (paths == null || paths.isEmpty()) {
             return Optional.empty();
         }
@@ -948,10 +952,9 @@ public class FileService implements DisposableBean {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         try {
-            for (String path : paths) {
-                File file = new File(path);
-                if (file.exists()) {
-                    pdfMerger.addSource(file);
+            for (Path path : paths) {
+                if (Files.exists(path)) {
+                    pdfMerger.addSource(path.toFile());
                 }
             }
 

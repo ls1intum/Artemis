@@ -3,7 +3,7 @@
         <div class="card-header unit-card-header row align-content-center justify-content-between" (click)="handleCollapse($event)">
             <div class="col-auto row align-content-center flex-shrink-1">
                 <h5 class="m-0 fw-medium">
-                    <fa-icon class="me-2" [icon]="getAttachmentIcon()" [ngbTooltip]="'artemisApp.attachmentUnit.tooltip' | artemisTranslate"> </fa-icon>
+                    <fa-icon class="me-2" [icon]="getAttachmentIcon()" [ngbTooltip]="'artemisApp.attachmentUnit.tooltip' | artemisTranslate" />
                     {{ attachmentUnit?.attachment?.name ? attachmentUnit?.attachment?.name : '' }}
                     @if (!attachmentUnit?.visibleToStudents) {
                         <span
@@ -17,7 +17,7 @@
             </div>
             <div class="col-auto d-flex align-items-center gap-3 pe-2">
                 <button id="downloadButton" class="btn btn-primary btn-sm" (click)="downloadAttachment($event)">
-                    <fa-icon [icon]="faDownload"></fa-icon>
+                    <fa-icon [icon]="faDownload" />
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.attachmentUnit.download">Download</span>
                 </button>
                 @if (!isPresentationMode && attachmentUnit.visibleToStudents) {
@@ -29,7 +29,7 @@
                                 [icon]="faSquareCheck"
                                 [ngbTooltip]="'artemisApp.lectureUnit.completedTooltip' | artemisTranslate"
                                 (click)="handleClick($event, false)"
-                            ></fa-icon>
+                            />
                         } @else {
                             <fa-icon
                                 class="text-body-secondary"
@@ -37,7 +37,7 @@
                                 [icon]="faSquare"
                                 [ngbTooltip]="'artemisApp.lectureUnit.uncompletedTooltip' | artemisTranslate"
                                 (click)="handleClick($event, true)"
-                            ></fa-icon>
+                            />
                         }
                     </div>
                 }

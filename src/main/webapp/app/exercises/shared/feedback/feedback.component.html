@@ -10,7 +10,7 @@
 
         @if (activeModal) {
             <button type="button" class="feedback-header__close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
-                <fa-icon [icon]="faXmark" size="xl"></fa-icon>
+                <fa-icon [icon]="faXmark" size="xl" />
             </button>
         }
     </div>
@@ -30,7 +30,7 @@
     <!-- Loading state -->
     @if (isLoading) {
         <div class="text-body-secondary d-flex justify-content-center" id="result-detail-spinner">
-            <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch"></fa-icon>
+            <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch" />
         </div>
     } @else {
         @if (!loadingFailed && feedbackItemNodes?.length) {
@@ -98,8 +98,7 @@
                                 [legendTitle]="''"
                                 [legendPosition]="legendPosition"
                                 [tooltipDisabled]="true"
-                            >
-                            </ngx-charts-bar-horizontal-stacked>
+                            />
                         </div>
                     </div>
                 }
@@ -109,7 +108,7 @@
                 }
 
                 <!-- Always show failed build logs first -->
-                <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null"></ng-container>
+                <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null" />
 
                 @if (buildLogs?.length) {
                     <hr />
@@ -131,7 +130,7 @@
 
                 <div class="feedback-list">
                     @for (feedbackItemNode of feedbackItemNodes; track feedbackItemNode) {
-                        <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course"></jhi-feedback-node>
+                        <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course" />
                     }
                 </div>
             </div>

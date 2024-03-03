@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -19,6 +19,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('Course Management Service', () => {
     let service: CourseExerciseService;

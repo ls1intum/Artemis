@@ -116,14 +116,14 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="resetInProgress">
-                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
             <div [style.cursor]="this.resetForm.form.invalid || !this.canSubmit ? 'not-allowed' : 'pointer'">
                 <button type="submit" class="btn btn-danger" [disabled]="this.resetForm.form.invalid || !this.canSubmit">
                     @if (resetInProgress) {
-                        <span><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
+                        <span><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;</span>
                     }
-                    <fa-icon [icon]="faUndo"></fa-icon>&nbsp;
+                    <fa-icon [icon]="faUndo" />&nbsp;
                     <span jhiTranslate="entity.action.reset">Reset</span>
                 </button>
             </div>
@@ -131,6 +131,6 @@
     </form>
 } @else {
     <div class="d-flex justify-content-center mt-4 mb-4">
-        <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
+        <fa-icon [icon]="faCircleNotch" [spin]="true" />
     </div>
 }

@@ -2,20 +2,15 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-1">
         <h2 class="mb-1">
             <!-- Additional Header NG-Content-->
-            <ng-content></ng-content>
+            <ng-content />
         </h2>
         <div class="d-flex mt-1 mb-1 gap-1">
             @if (course?.isAtLeastInstructor) {
-                <jhi-user-import-button
-                    [courseId]="course.id!"
-                    [courseGroup]="courseGroup!"
-                    (finish)="importFinish.emit()"
-                    [tutorialGroup]="tutorialGroup"
-                ></jhi-user-import-button>
+                <jhi-user-import-button [courseId]="course.id!" [courseGroup]="courseGroup!" (finish)="importFinish.emit()" [tutorialGroup]="tutorialGroup" />
             }
             @if (course?.isAtLeastInstructor && allGroupUsers.length > 0) {
                 <button class="btn btn-primary btn-sm" (click)="exportUserInformation()">
-                    <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
+                    <fa-icon [icon]="faDownload" [fixedWidth]="true" />
                     <span jhiTranslate="artemisApp.instructorDashboard.exportCSV">&nbsp;Export Users</span>
                 </button>
             }
@@ -58,7 +53,7 @@
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id"> ID </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('id')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -73,7 +68,7 @@
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.login"> Login </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('login')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('login')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -84,7 +79,7 @@
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('visibleRegistrationNumber')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.registrationNumber"> Registration Number </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('visibleRegistrationNumber')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('visibleRegistrationNumber')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -95,7 +90,7 @@
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.name"> Name </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('name')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('name')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -106,7 +101,7 @@
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.email"> Email </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('email')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('email')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -114,7 +109,7 @@
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="" [minWidth]="150" [width]="200">
-                    <ng-template ngx-datatable-header-template> </ng-template>
+                    <ng-template ngx-datatable-header-template />
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-end">
                             <button
@@ -125,7 +120,7 @@
                                 (delete)="removeFromGroup(value)"
                                 [dialogError]="dialogError$"
                             >
-                                <fa-icon [icon]="faUserSlash" class="me-1"></fa-icon>
+                                <fa-icon [icon]="faUserSlash" class="me-1" />
                             </button>
                         </div>
                     </ng-template>

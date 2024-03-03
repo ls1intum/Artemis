@@ -15,8 +15,7 @@
                             [questionIndex]="i + 1"
                             (questionUpdated)="handleQuestionUpdated()"
                             (questionDeleted)="handleQuestionDeleted(i)"
-                        >
-                        </jhi-multiple-choice-question-edit>
+                        />
                     </div>
                 }
                 @if (quizQuestion.type === DRAG_AND_DROP) {
@@ -30,8 +29,7 @@
                             (questionDeleted)="handleQuestionDeleted(i)"
                             (addNewFile)="handleFileAdded($event)"
                             (removeFile)="handleFileRemoved($event)"
-                        >
-                        </jhi-drag-and-drop-question-edit>
+                        />
                     </div>
                 }
                 @if (quizQuestion.type === SHORT_ANSWER) {
@@ -42,8 +40,7 @@
                             [questionIndex]="i + 1"
                             (questionUpdated)="handleQuestionUpdated()"
                             (questionDeleted)="handleQuestionDeleted(i)"
-                        >
-                        </jhi-short-answer-question-edit>
+                        />
                     </div>
                 }
             </div>
@@ -53,31 +50,31 @@
         <div class="row mt-2">
             <div class="col-12 col-sm-6 col-xl mb-1">
                 <button id="quiz-add-mc-question" class="btn btn-block btn-success" (click)="addMultipleChoiceQuestion()">
-                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.quizExercise.addMultipleChoiceQuestion"></span>
                 </button>
             </div>
             <div class="col-12 col-sm-6 col-xl mb-1">
                 <button id="quiz-add-dnd-question" class="btn btn-block btn-success" (click)="addDragAndDropQuestion()">
-                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.quizExercise.addDragAndDropQuestion"></span>
                 </button>
             </div>
             <div class="col-12 col-sm-6 col-xl mb-1">
                 <button id="quiz-import-apollon-dnd-question" class="btn btn-block btn-success" (click)="importApollonDragAndDropQuestion()">
-                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.quizExercise.addApollonDragAndDropQuestion"></span>
                 </button>
             </div>
             <div class="col-12 col-sm-6 col-xl mb-1">
                 <button id="quiz-add-short-answer-question" class="btn btn-block btn-success" (click)="addShortAnswerQuestion()">
-                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.quizExercise.addShortAnswerQuestion"></span>
                 </button>
             </div>
             <div class="col-12 col-sm-6 col-xl mb-1">
                 <button class="btn btn-block" (click)="showHideExistingQuestions()" [ngClass]="{ 'btn-primary': showExistingQuestions, 'btn-success': !showExistingQuestions }">
-                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.quizExercise.addExistingQuestions"></span>
                 </button>
             </div>
@@ -91,7 +88,7 @@
                 [filePool]="fileMap"
                 (onQuestionsAdded)="handleExistingQuestionsAdded($event)"
                 (onFilesAdded)="handleFilesAdded($event)"
-            ></jhi-quiz-question-list-edit-existing>
+            />
         </div>
     }
 </div>

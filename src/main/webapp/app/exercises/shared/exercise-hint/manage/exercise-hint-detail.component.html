@@ -25,7 +25,7 @@
                     </dd>
                     @if (exerciseHint.type === HintType.CODE) {
                         <dd>
-                            <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint"></jhi-code-hint-container>
+                            <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint" />
                         </dd>
                     }
                     <dt><span jhiTranslate="artemisApp.exerciseHint.exercise">Exercise</span></dt>
@@ -37,7 +37,7 @@
                         }
                     </dd>
                 </dl>
-                <a [routerLink]="['edit']" class="btn btn-warning"> <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span> </a>
+                <a [routerLink]="['edit']" class="btn btn-warning"> <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span> </a>
             </div>
         }
     </div>

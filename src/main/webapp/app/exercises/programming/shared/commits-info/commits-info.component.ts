@@ -6,6 +6,8 @@ import { createCommitUrl } from 'app/exercises/programming/shared/utils/programm
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
+import { faCircle } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-commits-info',
@@ -18,21 +20,29 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     @Input() participationId?: number;
     @Input() submissions?: ProgrammingSubmission[];
     @Input() exerciseProjectKey?: string;
+    @Input() isRepositoryView = false;
     private commitHashURLTemplate: string;
     private commitsInfoSubscription: Subscription;
     private profileInfoSubscription: Subscription;
     localVC = false;
+    routerLink: string;
+
+    faCircle = faCircle;
 
     constructor(
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private profileService: ProfileService,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
+        this.routerLink = this.router.url;
         if (!this.commits) {
             if (this.participationId) {
                 this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
-                    this.commits = this.sortCommitsByTimestampDesc(commits);
+                    if (commits) {
+                        this.commits = this.sortCommitsByTimestampDesc(commits);
+                    }
                 });
             }
         }
@@ -41,6 +51,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
             this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
             this.localVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
+        this.setCommitDetails();
     }
 
     ngOnDestroy(): void {
@@ -48,13 +59,17 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
         this.profileInfoSubscription?.unsubscribe();
     }
 
-    sortCommitsByTimestampDesc(commitInfos: CommitInfo[]) {
-        return commitInfos.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
+    private setCommitDetails() {
+        if (this.commits && this.submissions) {
+            for (const commit of this.commits) {
+                const submission = this.findSubmissionForCommit(commit, this.submissions);
+                commit.commitUrl = createCommitUrl(this.commitHashURLTemplate, this.exerciseProjectKey, submission?.participation, submission);
+            }
+        }
     }
 
-    getCommitUrl(commitInfo: CommitInfo) {
-        const submission = this.findSubmissionForCommit(commitInfo, this.submissions);
-        return createCommitUrl(this.commitHashURLTemplate, this.exerciseProjectKey, submission?.participation, submission);
+    private sortCommitsByTimestampDesc(commitInfos: CommitInfo[]) {
+        return commitInfos.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
     }
 
     private findSubmissionForCommit(commitInfo: CommitInfo, submissions: ProgrammingSubmission[] | undefined) {

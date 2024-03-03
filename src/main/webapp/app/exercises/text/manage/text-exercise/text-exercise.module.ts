@@ -28,6 +28,7 @@ import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-
 import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
+import { FormsModule } from 'app/forms/forms.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -56,6 +57,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         ExerciseUpdateNotificationModule,
         ExerciseUpdatePlagiarismModule,
         DetailModule,
+        FormsModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseRowButtonsComponent],
     exports: [TextExerciseComponent],

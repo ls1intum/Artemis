@@ -10,7 +10,7 @@
             (didDelete)="removeTextBlockRef($event)"
             [highlightDifferences]="highlightDifferences"
             [criteria]="criteria"
-        ></jhi-textblock-assessment-card>
+        />
     }
 } @else {
     <jhi-manual-textblock-selection
@@ -20,7 +20,7 @@
         (textBlockRefAdded)="addTextBlockRef($event)"
         [submission]="submission"
         [criteria]="criteria"
-    ></jhi-manual-textblock-selection>
+    />
 }
 <div>
     <span class="badge bg-primary mb-2" id="text-assessment-word-count">

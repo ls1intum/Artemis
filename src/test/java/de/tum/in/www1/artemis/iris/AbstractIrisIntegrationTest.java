@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -71,38 +72,49 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
     protected void activateIrisGlobally() {
         var globalSettings = irisSettingsService.getGlobalSettings();
-        globalSettings.getIrisChatSettings().setEnabled(true);
-        globalSettings.getIrisChatSettings().setPreferredModel(null);
-        globalSettings.getIrisHestiaSettings().setEnabled(true);
-        globalSettings.getIrisHestiaSettings().setPreferredModel(null);
-        globalSettings.getIrisCodeEditorSettings().setEnabled(true);
-        globalSettings.getIrisCodeEditorSettings().setPreferredModel(null);
+        activateSubSettings(globalSettings.getIrisChatSettings());
+        activateSubSettings(globalSettings.getIrisCodeEditorSettings());
+        activateSubSettings(globalSettings.getIrisHestiaSettings());
+        activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
         irisSettingsRepository.save(globalSettings);
+    }
+
+    /**
+     * Sets a type of IrisSubSettings to enabled and their preferred model to null.
+     *
+     * @param settings the settings to be enabled
+     */
+    private void activateSubSettings(IrisSubSettings settings) {
+        settings.setEnabled(true);
+        settings.setPreferredModel(null);
     }
 
     protected void activateIrisFor(Course course) {
         var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
-        courseSettings.getIrisChatSettings().setEnabled(true);
+
+        activateSubSettings(courseSettings.getIrisChatSettings());
         courseSettings.getIrisChatSettings().setTemplate(createDummyTemplate());
-        courseSettings.getIrisChatSettings().setPreferredModel(null);
-        courseSettings.getIrisHestiaSettings().setEnabled(true);
+
+        activateSubSettings(courseSettings.getIrisHestiaSettings());
         courseSettings.getIrisHestiaSettings().setTemplate(createDummyTemplate());
-        courseSettings.getIrisHestiaSettings().setPreferredModel(null);
-        courseSettings.getIrisCodeEditorSettings().setEnabled(true);
+
+        activateSubSettings(courseSettings.getIrisCodeEditorSettings());
         courseSettings.getIrisCodeEditorSettings().setChatTemplate(createDummyTemplate());
         courseSettings.getIrisCodeEditorSettings().setProblemStatementGenerationTemplate(createDummyTemplate());
         courseSettings.getIrisCodeEditorSettings().setTemplateRepoGenerationTemplate(createDummyTemplate());
         courseSettings.getIrisCodeEditorSettings().setSolutionRepoGenerationTemplate(createDummyTemplate());
         courseSettings.getIrisCodeEditorSettings().setTestRepoGenerationTemplate(createDummyTemplate());
-        courseSettings.getIrisCodeEditorSettings().setPreferredModel(null);
+
+        activateSubSettings(courseSettings.getIrisCompetencyGenerationSettings());
+        courseSettings.getIrisCompetencyGenerationSettings().setTemplate(createDummyTemplate());
+
         irisSettingsRepository.save(courseSettings);
     }
 
     protected void activateIrisFor(ProgrammingExercise exercise) {
         var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
-        exerciseSettings.getIrisChatSettings().setEnabled(true);
+        activateSubSettings(exerciseSettings.getIrisChatSettings());
         exerciseSettings.getIrisChatSettings().setTemplate(createDummyTemplate());
-        exerciseSettings.getIrisChatSettings().setPreferredModel(null);
         irisSettingsRepository.save(exerciseSettings);
     }
 

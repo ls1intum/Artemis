@@ -275,7 +275,7 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testMergePdf() throws IOException {
-        List<String> paths = new ArrayList<>();
+        List<Path> paths = new ArrayList<>();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         PDDocument doc1 = new PDDocument();
         doc1.addPage(new PDPage());
@@ -295,8 +295,8 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         writeFile("testfile2.pdf", outputStream.toByteArray());
 
-        paths.add(Path.of(".", "exportTest", "testfile1.pdf").toString());
-        paths.add(Path.of(".", "exportTest", "testfile2.pdf").toString());
+        paths.add(Path.of(".", "exportTest", "testfile1.pdf"));
+        paths.add(Path.of(".", "exportTest", "testfile2.pdf"));
 
         Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths, "list_of_pdfs");
         assertThat(mergedFile).isPresent();

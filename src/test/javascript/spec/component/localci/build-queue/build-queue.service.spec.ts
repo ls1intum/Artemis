@@ -11,11 +11,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { BuildJob } from 'app/entities/build-job.model';
 import dayjs from 'dayjs/esm';
 import { fakeAsync, tick } from '@angular/core/testing';
+import { RepositoryInfo } from 'app/entities/repository-info.model';
+import { JobTimingInfo } from 'app/entities/job-timing-info.model';
+import { BuildConfig } from 'app/entities/build-config.model';
 
 describe('BuildQueueService', () => {
     let service: BuildQueueService;
     let httpMock: HttpTestingController;
     let elem1: BuildJob;
+    let repositoryInfo: RepositoryInfo;
+    let jobTimingInfo: JobTimingInfo;
+    let buildConfig: BuildConfig;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -30,17 +36,42 @@ describe('BuildQueueService', () => {
         service = TestBed.inject(BuildQueueService);
         httpMock = TestBed.inject(HttpTestingController);
         elem1 = new BuildJob();
+        repositoryInfo = new RepositoryInfo();
+        jobTimingInfo = new JobTimingInfo();
+        buildConfig = new BuildConfig();
+
+        repositoryInfo.repositoryName = 'name1';
+        repositoryInfo.repositoryType = 'USER';
+        repositoryInfo.triggeredByPushTo = 'USER';
+        repositoryInfo.assignmentRepositoryUri = 'uri1';
+        repositoryInfo.testRepositoryUri = 'uri2';
+        repositoryInfo.solutionRepositoryUri = 'uri3';
+        repositoryInfo.auxiliaryRepositoryUris = ['uri4'];
+        repositoryInfo.auxiliaryRepositoryCheckoutDirectories = ['dir1'];
+
+        jobTimingInfo.submissionDate = dayjs('2023-01-02');
+        jobTimingInfo.buildStartDate = dayjs('2023-01-02');
+        jobTimingInfo.buildCompletionDate = dayjs('2023-01-02');
+
+        buildConfig.dockerImage = 'image1';
+        buildConfig.commitHash = 'hash1';
+        buildConfig.branch = 'branch1';
+        buildConfig.programmingLanguage = 'lang1';
+        buildConfig.projectType = 'type1';
+        buildConfig.scaEnabled = false;
+        buildConfig.sequentialTestRunsEnabled = false;
+        buildConfig.testwiseCoverageEnabled = false;
+        buildConfig.resultPaths = ['path1'];
+
         elem1.id = '1';
         elem1.name = 'test1';
         elem1.participationId = 1;
-        elem1.repositoryTypeOrUserName = 'test1';
-        elem1.commitHash = 'test1';
-        elem1.submissionDate = dayjs('2023-01-02');
         elem1.retryCount = 1;
-        elem1.buildStartDate = dayjs('2023-01-02');
         elem1.priority = 1;
         elem1.courseId = 1;
-        elem1.isPushToTestRepository = false;
+        elem1.repositoryInfo = repositoryInfo;
+        elem1.jobTimingInfo = jobTimingInfo;
+        elem1.buildConfig = buildConfig;
     });
 
     it('should return build job for course', () => {

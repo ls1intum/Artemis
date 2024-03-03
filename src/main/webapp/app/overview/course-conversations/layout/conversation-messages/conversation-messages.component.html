@@ -5,7 +5,7 @@
                 <!-- search bar -->
                 <div class="input-group ps-0" [class.search-active]="!!searchText">
                     <span class="input-group-text">
-                        <fa-icon [icon]="faSearch" size="sm"></fa-icon>
+                        <fa-icon [icon]="faSearch" size="sm" />
                         <span [hidden]="true" id="inputLabel">{{ 'artemisApp.conversationsLayout.conversationMessages.searchLabel' | artemisTranslate }}</span>
                     </span>
                     <input
@@ -27,7 +27,7 @@
                             id="clearSearchButton"
                         >
                             <span id="clearSearchLabel" [hidden]="true">{{ 'artemisApp.conversationsLayout.conversationMessages.clearSearch' | artemisTranslate }}</span>
-                            <fa-icon [icon]="faTimes" size="xs"></fa-icon>
+                            <fa-icon [icon]="faTimes" size="xs" />
                         </button>
                     }
                     <span class="input-group-text" [hidden]="!searchText" id="searchResult">
@@ -49,13 +49,13 @@
                 <!-- loading messages -->
                 @if (isFetchingPosts) {
                     <div class="envelope">
-                        <fa-icon size="3x" [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                        <fa-icon size="3x" [icon]="faCircleNotch" [spin]="true" />
                     </div>
                 }
                 <!-- no message exist -->
                 @if (!isFetchingPosts && (totalNumberOfPosts === 0 || !_activeConversation)) {
                     <div class="envelope">
-                        <fa-icon size="5x" [icon]="faEnvelope"></fa-icon>
+                        <fa-icon size="5x" [icon]="faEnvelope" />
                     </div>
                 }
                 <!-- list of messages -->
@@ -80,8 +80,7 @@
                             [readOnlyMode]="!!getAsChannel(_activeConversation)?.isArchived"
                             [isCourseMessagesPage]="true"
                             (openThread)="setPostForThread($event)"
-                        >
-                        </jhi-posting-thread>
+                        />
                     }
                 </div>
                 @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation)) {
@@ -96,7 +95,7 @@
                                     [posting]="newPost!"
                                     [isCourseMessagesPage]="true"
                                     (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"
-                                ></jhi-post-create-edit-modal>
+                                />
                             </div>
                         } @else {
                             <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="createEmptyPost(); scrollToBottomOfMessages()" />

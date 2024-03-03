@@ -8,6 +8,7 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { CompetencyPageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 
 type EntityResponseType = HttpResponse<Competency>;
 type EntityArrayResponseType = HttpResponse<Competency[]>;
@@ -24,18 +25,18 @@ export class CompetencyService {
         private lectureUnitService: LectureUnitService,
         private accountService: AccountService,
     ) {}
+    getForImport(pageable: CompetencyPageableSearch) {
+        const params = this.createCompetencySearchHttpParams(pageable);
+        return this.httpClient
+            .get(`${this.resourceURL}/competencies/for-import`, { params, observe: 'response' })
+            .pipe(map((resp: HttpResponse<SearchResult<Competency>>) => resp && resp.body!));
+    }
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => CompetencyService.convertArrayResponseDatesFromServer(res)),
             tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
         );
-    }
-
-    getAllPrerequisitesForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient
-            .get<Competency[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' })
-            .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
     getProgress(competencyId: number, courseId: number, refresh = false) {
@@ -68,21 +69,9 @@ export class CompetencyService {
         return this.httpClient.post<Competency>(`${this.resourceURL}/courses/${courseId}/competencies`, copy, { observe: 'response' });
     }
 
-    import(competency: Competency, courseId: number): Observable<EntityResponseType> {
-        const competencyCopy = this.convertCompetencyFromClient(competency);
-        return this.httpClient.post<Competency>(`${this.resourceURL}/courses/${courseId}/competencies/import`, competencyCopy, { observe: 'response' });
-    }
-
-    importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
-        const params = new HttpParams().set('importRelations', importRelations);
-        return this.httpClient.post<Array<CompetencyWithTailRelationDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import-all/${sourceCourseId}`, null, {
-            params: params,
-            observe: 'response',
-        });
-    }
-
-    addPrerequisite(competencyId: number, courseId: number): Observable<EntityResponseType> {
-        return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/prerequisites/${competencyId}`, null, { observe: 'response' });
+    createBulk(competencies: Competency[], courseId: number) {
+        const copy = competencies.map((competency) => this.convertCompetencyFromClient(competency));
+        return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/bulk`, copy, { observe: 'response' });
     }
 
     update(competency: Competency, courseId: number): Observable<EntityResponseType> {
@@ -94,9 +83,48 @@ export class CompetencyService {
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}`, { observe: 'response' });
     }
 
+    import(competency: Competency, courseId: number): Observable<EntityResponseType> {
+        const competencyCopy = this.convertCompetencyFromClient(competency);
+        return this.httpClient.post<Competency>(`${this.resourceURL}/courses/${courseId}/competencies/import`, competencyCopy, { observe: 'response' });
+    }
+
+    importBulk(competencies: Competency[], courseId: number, importRelations: boolean) {
+        const params = new HttpParams().set('importRelations', importRelations);
+        return this.httpClient.post<Array<CompetencyWithTailRelationDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import/bulk`, competencies, {
+            params: params,
+            observe: 'response',
+        });
+    }
+
+    importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
+        const params = new HttpParams().set('importRelations', importRelations);
+        return this.httpClient.post<Array<CompetencyWithTailRelationDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import-all/${sourceCourseId}`, null, {
+            params: params,
+            observe: 'response',
+        });
+    }
+
+    generateCompetenciesFromCourseDescription(courseDescription: string, courseId: number): Observable<EntityArrayResponseType> {
+        return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/generate-from-description`, courseDescription, { observe: 'response' });
+    }
+
+    //prerequisites
+
+    getAllPrerequisitesForCourse(courseId: number): Observable<EntityArrayResponseType> {
+        return this.httpClient
+            .get<Competency[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' })
+            .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
+    }
+
+    addPrerequisite(competencyId: number, courseId: number): Observable<EntityResponseType> {
+        return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/prerequisites/${competencyId}`, null, { observe: 'response' });
+    }
+
     removePrerequisite(competencyId: number, courseId: number) {
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/prerequisites/${competencyId}`, { observe: 'response' });
     }
+
+    //relations
 
     createCompetencyRelation(tailCompetencyId: number, headCompetencyId: number, type: string, courseId: number): Observable<EntityResponseType> {
         let params = new HttpParams();
@@ -117,6 +145,26 @@ export class CompetencyService {
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/relations/${competencyRelationId}`, {
             observe: 'response',
         });
+    }
+
+    //helper methods
+
+    /**
+     * Creates HttpParams for each field of the given pageable element.
+     *
+     * @param pageable the CompetencyPageableSearch to create HttpParams for
+     * @return the HttpParams
+     */
+    createCompetencySearchHttpParams(pageable: CompetencyPageableSearch) {
+        return new HttpParams()
+            .set('pageSize', String(pageable.pageSize))
+            .set('page', String(pageable.page))
+            .set('sortingOrder', pageable.sortingOrder)
+            .set('sortedColumn', pageable.sortedColumn)
+            .set('title', pageable.title)
+            .set('description', pageable.description)
+            .set('courseTitle', pageable.courseTitle)
+            .set('semester', pageable.semester);
     }
 
     convertCompetencyResponseFromServer(res: EntityResponseType): EntityResponseType {

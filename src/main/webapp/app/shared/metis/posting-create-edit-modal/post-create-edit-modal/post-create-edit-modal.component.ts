@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -39,7 +39,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
 
     readonly PageType = PageType;
     readonly EditType = PostingEditType;
-    protected readonly getAsChannel = getAsChannelDto;
+    protected readonly getAsChannel = getAsChannelDTO;
 
     // Icons
     faAngleUp = faAngleUp;
@@ -150,7 +150,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         if (this.editType === this.EditType.UPDATE) {
             this.modalTitle = 'artemisApp.metis.editPosting';
         } else if (this.editType === this.EditType.CREATE) {
-            this.modalTitle = 'artemisApp.metis.' + (getAsChannelDto(this.posting.conversation)?.isAnnouncementChannel ? 'createModalTitleAnnouncement' : 'createModalTitlePost');
+            this.modalTitle = 'artemisApp.metis.' + (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel ? 'createModalTitleAnnouncement' : 'createModalTitlePost');
         }
     }
 

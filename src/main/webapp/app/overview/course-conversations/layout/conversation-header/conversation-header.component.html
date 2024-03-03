@@ -8,10 +8,10 @@
                             [isPublic]="activeConversationAsChannel.isPublic!"
                             [isArchived]="activeConversationAsChannel.isArchived!"
                             [isAnnouncementChannel]="activeConversationAsChannel.isAnnouncementChannel!"
-                        ></jhi-channel-icon>
+                        />
                     }
                     @if (getAsGroupChat(activeConversation); as groupChat) {
-                        <jhi-group-chat-icon></jhi-group-chat-icon>
+                        <jhi-group-chat-icon />
                     }
                     {{ conversationService.getConversationName(activeConversation, true) }}
                 </h3>
@@ -34,11 +34,11 @@
                             </a>
                         }
                         <button type="button" class="btn btn-outline-secondary members" (click)="openConversationDetailDialog($event, MEMBERS)">
-                            <fa-icon [icon]="faUserGroup"></fa-icon> {{ activeConversation.numberOfMembers || 0 }}
+                            <fa-icon [icon]="faUserGroup" /> {{ activeConversation.numberOfMembers || 0 }}
                         </button>
                         @if (canAddUsers(activeConversation)) {
                             <button type="button" class="btn btn-outline-secondary addUsers" (click)="openAddUsersDialog($event)">
-                                <fa-icon [icon]="faUserPlus"></fa-icon>
+                                <fa-icon [icon]="faUserPlus" />
                             </button>
                         }
                     </div>

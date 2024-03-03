@@ -53,13 +53,13 @@
                         [icon]="testCaseSortOrder === SortingOrder.ASCENDING ? faSortDown : testCaseSortOrder === SortingOrder.DESCENDING ? faSortUp : faSort"
                         class="sort-icon"
                         (click)="changeTestCaseSortOrder()"
-                    ></fa-icon>
+                    />
                 </th>
                 <th scope="col" class="text-left">File Path</th>
                 <th scope="col" class="text-left">{{ 'artemisApp.exerciseHint.content' | artemisTranslate }}</th>
                 <th scope="col" class="text-left">
                     <span jhiTranslate="artemisApp.codeHint.entryType">Type (S/B)</span>
-                    <jhi-help-icon text="artemisApp.codeHint.entryTypeTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.codeHint.entryTypeTooltip" />
                 </th>
             </tr>
         </thead>
@@ -87,7 +87,7 @@
                                 (delete)="deleteSolutionEntry(entry)"
                                 [dialogError]="dialogError$"
                             >
-                                <fa-icon [icon]="faTimes"></fa-icon>
+                                <fa-icon [icon]="faTimes" />
                             </button>
                         </div>
                     </td>

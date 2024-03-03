@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 
 export enum ConversationDetailTabs {
@@ -19,7 +19,7 @@ export enum ConversationDetailTabs {
     templateUrl: './conversation-detail-dialog.component.html',
 })
 export class ConversationDetailDialogComponent extends AbstractDialogComponent {
-    @Input() public activeConversation: ConversationDto;
+    @Input() public activeConversation: ConversationDTO;
     @Input() course: Course;
     @Input() selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 
@@ -29,9 +29,9 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
         super.initialize(['course', 'activeConversation', 'selectedTab']);
     }
 
-    isOneToOneChat = isOneToOneChatDto;
-    getAsChannel = getAsChannelDto;
-    getAsGroupChat = getAsGroupChatDto;
+    isOneToOneChat = isOneToOneChatDTO;
+    getAsChannel = getAsChannelDTO;
+    getAsGroupChat = getAsGroupChatDTO;
 
     changesWerePerformed = false;
 

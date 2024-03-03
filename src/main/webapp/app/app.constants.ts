@@ -25,4 +25,6 @@ export const PROFILE_LOCALCI = 'localci';
 
 export const PROFILE_AEOLUS = 'aeolus';
 
+export const PROFILE_IRIS = 'iris';
+
 export const PROFILE_LTI = 'lti';

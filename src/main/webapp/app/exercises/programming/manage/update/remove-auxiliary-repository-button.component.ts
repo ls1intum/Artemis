@@ -2,18 +2,12 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
-import { faMinus } from '@fortawesome/free-solid-svg-icons';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-remove-auxiliary-repository-button',
     template: `
-        <jhi-button
-            [btnType]="ButtonType.ERROR"
-            [btnSize]="ButtonSize.SMALL"
-            [icon]="faMinus"
-            [title]="'entity.action.remove'"
-            (onClick)="removeAuxiliaryRepository()"
-        ></jhi-button>
+        <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [icon]="faTrash" [title]="'entity.action.remove'" (onClick)="removeAuxiliaryRepository()" />
     `,
 })
 export class RemoveAuxiliaryRepositoryButtonComponent {
@@ -27,7 +21,7 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
     @Output() onRefresh: EventEmitter<any> = new EventEmitter<any>();
 
     // Icons
-    faMinus = faMinus;
+    faTrash = faTrash;
 
     /**
      * Removes the auxiliary repository of the selected row from the respective programming exercise.

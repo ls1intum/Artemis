@@ -10,20 +10,20 @@
             >
                 @if (containsCodeHints) {
                     <div>
-                        <fa-icon [icon]="faWrench"></fa-icon>
+                        <fa-icon [icon]="faWrench" />
                         <span>Manage Code Hints</span>
                     </div>
                 }
                 @if (!containsCodeHints) {
                     <div>
-                        <fa-icon [icon]="faArrowsRotate"></fa-icon>
+                        <fa-icon [icon]="faArrowsRotate" />
                         <span jhiTranslate="artemisApp.programmingExercise.generateCodeHintsTitle">Generate Code Hints</span>
                     </div>
                 }
             </a>
         }
         <a id="jh-create-entity" class="btn btn-primary float-end jh-create-entity create-exercise-hint mx-2" routerLink="new">
-            <fa-icon [icon]="faPlus"></fa-icon>
+            <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.exerciseHint.home.createLabel"> Create new Exercise Hint </span>
         </a>
     </h2>
@@ -55,10 +55,10 @@
                                 {{ exerciseHint.title }}
                                 <br />
                                 @if (exerciseHint.type === HintType.CODE && exerciseHint.exercise?.type === ExerciseType.PROGRAMMING) {
-                                    <span class="badge bg-info"><fa-icon [icon]="faCode"></fa-icon> {{ 'artemisApp.codeHint.type' | artemisTranslate }}</span>
+                                    <span class="badge bg-info"><fa-icon [icon]="faCode" /> {{ 'artemisApp.codeHint.type' | artemisTranslate }}</span>
                                 }
                                 @if (exerciseHint.type === HintType.TEXT && exerciseHint.exercise?.type === ExerciseType.PROGRAMMING) {
-                                    <span class="badge bg-info"><fa-icon [icon]="faText"></fa-icon> {{ 'artemisApp.exerciseHint.textHint' | artemisTranslate }}</span>
+                                    <span class="badge bg-info"><fa-icon [icon]="faText" /> {{ 'artemisApp.exerciseHint.textHint' | artemisTranslate }}</span>
                                 }
                             </td>
                             <td>
@@ -83,11 +83,11 @@
                             <td class="text-end">
                                 <div class="btn-group">
                                     <a [routerLink]="[exerciseHint.id]" class="btn btn-info btn-sm me-1">
-                                        <fa-icon [icon]="faEye"></fa-icon>
+                                        <fa-icon [icon]="faEye" />
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                                     </a>
                                     <a [routerLink]="[exerciseHint.id, 'edit']" class="btn btn-warning btn-sm me-1">
-                                        <fa-icon [icon]="faWrench"></fa-icon>
+                                        <fa-icon [icon]="faWrench" />
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                     </a>
                                     <button
@@ -97,7 +97,7 @@
                                         (delete)="deleteExerciseHint(exerciseHint.id!)"
                                         [dialogError]="dialogError$"
                                     >
-                                        <fa-icon [icon]="faTimes"></fa-icon>
+                                        <fa-icon [icon]="faTimes" />
                                     </button>
                                 </div>
                             </td>

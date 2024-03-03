@@ -28,8 +28,8 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 
@@ -40,7 +40,7 @@ export class MetisService implements OnDestroy {
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
 
     private currentPostContextFilter: PostContextFilter = {};
-    private currentConversation?: ConversationDto = undefined;
+    private currentConversation?: ConversationDTO = undefined;
     private user: User;
     private pageType: PageType;
     private course: Course;
@@ -82,7 +82,7 @@ export class MetisService implements OnDestroy {
         return this.totalNumberOfPosts$.asObservable();
     }
 
-    getCurrentConversation(): ConversationDto | undefined {
+    getCurrentConversation(): ConversationDTO | undefined {
         return this.currentConversation;
     }
 
@@ -175,7 +175,7 @@ export class MetisService implements OnDestroy {
      * @param {boolean} forceUpdate if true, forces a re-fetch even if filter property did not change
      * @param conversation active conversation if available
      */
-    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true, conversation: ConversationDto | undefined = undefined): void {
+    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true, conversation: ConversationDTO | undefined = undefined): void {
         // store value for promise
         this.forceUpdate = forceUpdate;
 
@@ -533,7 +533,7 @@ export class MetisService implements OnDestroy {
         let queryParams = undefined;
         let displayName = '';
         if (post.conversation) {
-            displayName = getAsChannelDto(post.conversation)?.name ?? '';
+            displayName = getAsChannelDTO(post.conversation)?.name ?? '';
             routerLinkComponents = ['/courses', this.courseId, 'messages'];
             queryParams = { conversationId: post.conversation.id! };
         }
@@ -576,11 +576,14 @@ export class MetisService implements OnDestroy {
     private handleNewOrUpdatedMessage = (postDTO: MetisPostDTO): void => {
         const postConvId = postDTO.post.conversation?.id;
         const postIsNotFromCurrentConversation = this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId;
+        const postIsNotFromCurrentPlagiarismCase =
+            this.currentPostContextFilter.plagiarismCaseId && postDTO.post.plagiarismCase?.id !== this.currentPostContextFilter.plagiarismCaseId;
         const postIsNotFromSelectedCourseWideChannels =
-            this.currentPostContextFilter.courseWideChannelIds?.length && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId);
-        const postIsNotCourseWide = !getAsChannelDto(postDTO.post.conversation)?.isCourseWide;
+            this.currentPostContextFilter.courseWideChannelIds?.length !== undefined &&
+            (!getAsChannelDTO(postDTO.post.conversation)?.isCourseWide ||
+                (this.currentPostContextFilter.courseWideChannelIds.length > 0 && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId)));
 
-        if (postIsNotFromCurrentConversation || postIsNotFromSelectedCourseWideChannels || postIsNotCourseWide) {
+        if (postIsNotFromCurrentConversation || postIsNotFromSelectedCourseWideChannels || postIsNotFromCurrentPlagiarismCase) {
             return;
         }
 
@@ -597,7 +600,7 @@ export class MetisService implements OnDestroy {
                     this.currentPostContextFilter.searchText?.length &&
                     !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase().trim());
 
-                if (!postConvId || doesNotMatchOwnFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
+                if (doesNotMatchOwnFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
                     break;
                 }
                 // we can add the received conversation message to the cached messages without violating the current context filter setting

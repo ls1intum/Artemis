@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -13,6 +12,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('ApollonDiagramCreateForm Component', () => {
     let apollonDiagramService: ApollonDiagramService;

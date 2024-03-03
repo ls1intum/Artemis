@@ -23,7 +23,7 @@ import { By } from '@angular/platform-browser';
             [rolesToAllowSearchingIn]="rolesToAllowSearchingIn"
             [multiSelect]="multiSelect"
             [showUserList]="showUserList"
-        ></jhi-course-users-selector>
+        />
     `,
 })
 class WrapperComponent {

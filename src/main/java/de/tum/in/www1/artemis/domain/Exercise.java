@@ -72,7 +72,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private String gradingInstructions;
 
     @ManyToMany
-    @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
+    @JoinTable(name = "competency_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "exercises", "course" })
     @JsonView(QuizView.Before.class)
     private Set<Competency> competencies = new HashSet<>();
@@ -115,7 +115,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List<GradingCriterion> gradingCriteria = new ArrayList<>();
+    private Set<GradingCriterion> gradingCriteria = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -790,7 +790,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.feedbackSuggestionsEnabled = feedbackSuggestionsEnabled;
     }
 
-    public List<GradingCriterion> getGradingCriteria() {
+    public Set<GradingCriterion> getGradingCriteria() {
         return gradingCriteria;
     }
 
@@ -799,11 +799,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         gradingCriterion.setExercise(this);
     }
 
-    public void setGradingCriteria(List<GradingCriterion> gradingCriteria) {
+    public void setGradingCriteria(Set<GradingCriterion> gradingCriteria) {
         reconnectCriteriaWithExercise(gradingCriteria);
     }
 
-    private void reconnectCriteriaWithExercise(List<GradingCriterion> gradingCriteria) {
+    private void reconnectCriteriaWithExercise(Set<GradingCriterion> gradingCriteria) {
         this.gradingCriteria = gradingCriteria;
         if (gradingCriteria != null) {
             this.gradingCriteria.forEach(gradingCriterion -> gradingCriterion.setExercise(this));
@@ -869,8 +869,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading criteria list
      */
-    public List<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        List<GradingCriterion> newGradingCriteria = new ArrayList<>();
+    public Set<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        Set<GradingCriterion> newGradingCriteria = new HashSet<>();
         for (GradingCriterion originalGradingCriterion : getGradingCriteria()) {
             GradingCriterion newGradingCriterion = new GradingCriterion();
             newGradingCriterion.setExercise(this);
@@ -890,9 +890,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading instruction list of the grading criterion
      */
-    private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
+    private Set<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
             Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        List<GradingInstruction> newGradingInstructions = new ArrayList<>();
+        Set<GradingInstruction> newGradingInstructions = new HashSet<>();
         for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
             GradingInstruction newGradingInstruction = new GradingInstruction();
             newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
@@ -985,25 +985,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private void validateExamExerciseIncludedInScoreCompletely() {
         if (isExamExercise() && includedInOverallScore == IncludedInOverallScore.NOT_INCLUDED) {
             throw new BadRequestAlertException("An exam exercise must be included in the score.", getTitle(), "examExerciseNotIncludedInScore");
-        }
-    }
-
-    /**
-     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
-     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
-     */
-    public enum ExerciseSearchColumn {
-
-        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title"), EXAM_TITLE("exerciseGroup.exam.title");
-
-        private final String mappedColumnName;
-
-        ExerciseSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
         }
     }
 

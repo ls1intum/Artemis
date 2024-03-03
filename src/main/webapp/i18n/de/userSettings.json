@@ -8,6 +8,9 @@
             "accountInformation": "Account Informationen",
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
+            "scienceSettings": "Forschung",
+            "scienceSettingsFeatureDisabled": "Dieses Feature ist derzeit deaktiviert. Du kannst deine Einstellungen trotzdem bearbeiten, falls das Feature wieder aktiviert wird.",
+            "scienceSettingsInfo": "Hilf Artemis dabei besser zu werden!",
             "accountInformationPage": {
                 "registrationNumber": "Matrikelnummer",
                 "fullName": "Vollständiger Name",
@@ -16,7 +19,8 @@
                 "joinedArtemis": "Artemis beigetreten am"
             },
             "categories": {
-                "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen"
+                "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
+                "SCIENCE_SETTINGS": "Forschungseinstellungen"
             },
             "settingGroupNames": {
                 "weeklySummary": "Wöchentliche Zusammenfassung",
@@ -29,7 +33,8 @@
                 "tutorNotifications": "Benachrichtigungen für Tutor:innen",
                 "conversationNotifications": "Benachrichtigungen über Unterhaltungen",
                 "editorNotifications": "Benachrichtigungen für Editor:innen",
-                "instructorNotifications": "Benachrichtigungen für Lehrende"
+                "instructorNotifications": "Benachrichtigungen für Lehrende",
+                "general": "Allgemein"
             },
             "settingNames": {
                 "basicWeeklySummary": "Einfache wöchentliche Zusammenfassung",
@@ -54,7 +59,8 @@
                 "tutorialGroupUpdateDelete": "Änderungen und Löschungen von Übungsgruppen",
                 "newConversationMessages": "Neue Nachrichten in Unterhaltung",
                 "newReplyMessage": "Neue Antworten in Unterhaltung",
-                "assignUnassignTutorialGroup": "Anmeldungen und Abmeldungen von Übungsgruppenleitung"
+                "assignUnassignTutorialGroup": "Anmeldungen und Abmeldungen von Übungsgruppenleitung",
+                "activity": "Aktivitäten"
             },
             "settingDescriptions": {
                 "basicWeeklySummaryDescription": "Erhalte jeden Freitag um 17:00 Uhr eine einfache wöchentliche Zusammenfassung (bsp. welche neuen Aufgaben diese Woche veröffentlicht wurden und noch bearbeitbar sind)",
@@ -80,7 +86,8 @@
                 "tutorialGroupUpdateDeleteDescription": "Erhalte eine Mitteilung, wenn eine Übungsgruppe aktualisiert oder gelöscht wurde in der du registriert oder Tutor:in bist",
                 "newConversationMessageDescription": "Erhalte eine Mitteilung, wenn du eine neue Nachricht in einer Unterhaltung erhältst",
                 "conversationNewReplyMessageDescription": "Erhalte eine Mitteilung, wenn du eine neue Antwort in einer Unterhaltung erhältst",
-                "assignUnassignTutorialGroupDescription": "Erhalte eine Mitteilung, wenn du als Tutor:in der Leitung einer Übungsgruppe zugewiesen oder entzogen wurdest"
+                "assignUnassignTutorialGroupDescription": "Erhalte eine Mitteilung, wenn du als Tutor:in der Leitung einer Übungsgruppe zugewiesen oder entzogen wurdest",
+                "activityDescription": "Teile welche Features von Artemis du nutzt und wie du mit ihnen interagierst. Die Informationen sind für Administratoren zugänglich."
             }
         }
     }

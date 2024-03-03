@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+@Profile(PROFILE_CORE)
 @Service
 public class TimeService {
 

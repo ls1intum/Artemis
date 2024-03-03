@@ -1,7 +1,7 @@
 <!--Folder-->
 <li (click)="onCollapseExpand()" class="list-group-item list-group-item--folder" id="file-browser-folder">
-    <fa-icon aria-hidden="true" [icon]="item.collapsed ? faChevronRight : faChevronDown" [fixedWidth]="true" class="me-1" size="xs"></fa-icon>
-    <fa-icon aria-hidden="true" [icon]="item.collapsed ? faFolder : faFolderOpen" [fixedWidth]="true"></fa-icon>
+    <fa-icon aria-hidden="true" [icon]="item.collapsed ? faChevronRight : faChevronDown" [fixedWidth]="true" class="me-1" size="xs" />
+    <fa-icon aria-hidden="true" [icon]="item.collapsed ? faFolder : faFolderOpen" [fixedWidth]="true" />
     @if (!isBeingRenamed) {
         <span class="ms-1 list-group-item__fileName">{{ item.text }}</span>
     }
@@ -19,16 +19,16 @@
     }
     <!-- File badges -->
     @for (badge of badges; track badge) {
-        <jhi-file-browser-badge [badge]="badge"></jhi-file-browser-badge>
+        <jhi-file-browser-badge [badge]="badge" />
     }
     <!-- Folder level actions -->
     @if (!disableActions) {
         <span class="file-icons">
             <button (click)="setCreatingNodeInFolder($event, FileType.FILE)" class="btn btn-small">
-                <fa-icon id="file-browser-folder-create-file" [icon]="faFile" title="{{ 'artemisApp.editor.fileBrowser.createFile' | artemisTranslate }}"></fa-icon>
+                <fa-icon id="file-browser-folder-create-file" [icon]="faFile" title="{{ 'artemisApp.editor.fileBrowser.createFile' | artemisTranslate }}" />
             </button>
             <button (click)="setCreatingNodeInFolder($event, FileType.FOLDER)" class="btn btn-small">
-                <fa-icon [icon]="faFolder" title="{{ 'artemisApp.editor.fileBrowser.createFolder' | artemisTranslate }}"></fa-icon>
+                <fa-icon [icon]="faFolder" title="{{ 'artemisApp.editor.fileBrowser.createFolder' | artemisTranslate }}" />
             </button>
             <button [disabled]="isCompressed && item.value.includes('/')" (click)="setRenamingNode($event)" class="btn btn-small">
                 <fa-icon
@@ -37,10 +37,10 @@
                         (isCompressed && item.value.includes('/') ? 'artemisApp.editor.fileBrowser.renameFolderDisabledTooltip' : 'artemisApp.editor.fileBrowser.renameFolder')
                             | artemisTranslate
                     }}"
-                ></fa-icon>
+                />
             </button>
             <button (click)="deleteNode($event)" class="btn btn-small">
-                <fa-icon [icon]="faTrash" title="{{ 'artemisApp.editor.fileBrowser.deleteFolder' | artemisTranslate }}"></fa-icon>
+                <fa-icon [icon]="faTrash" title="{{ 'artemisApp.editor.fileBrowser.deleteFolder' | artemisTranslate }}" />
             </button>
         </span>
     }

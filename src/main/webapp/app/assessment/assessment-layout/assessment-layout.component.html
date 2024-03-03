@@ -27,9 +27,9 @@
     [complaintHandled]="!!complaint ? complaint.accepted !== undefined : false"
     [complaintType]="complaint?.complaintType"
     (useAsExampleSubmission)="useAsExampleSubmission.emit()"
-></jhi-assessment-header>
-<jhi-assessment-complaint-alert [complaint]="complaint"></jhi-assessment-complaint-alert>
-<ng-content></ng-content>
+/>
+<jhi-assessment-complaint-alert [complaint]="complaint" />
+<ng-content />
 @if (complaint) {
     <jhi-complaints-for-tutor-form
         class="row mt-4"
@@ -40,5 +40,5 @@
         [submission]="submission"
         [isTestRun]="isTestRun"
         (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint.emit($event)"
-    ></jhi-complaints-for-tutor-form>
+    />
 }

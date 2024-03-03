@@ -8,7 +8,7 @@ import { Course } from 'app/entities/course.model';
         <div>
             @for (tutorialGroup of tutorialGroups; track tutorialGroup) {
                 <div>
-                    <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
+                    <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }" />
                 </div>
             }
         </div>
@@ -57,7 +57,7 @@ export class TutorialGroupsTableStubComponent {
             }
             @if (extraColumn) {
                 <div>
-                    <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
+                    <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }" />
                 </div>
             }
         </div>

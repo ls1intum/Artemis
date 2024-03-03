@@ -101,16 +101,16 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testAll_LectureWithoutCourse_shouldReturnConflict() throws Exception {
+    void testAll_LectureWithoutCourse_shouldReturnBadRequest() throws Exception {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("commaSeparatedKeyPhrases", "Break, Example Solution");
 
         request.postWithMultipartFile("/api/lectures/" + invalidLecture.getId() + "/attachment-units/upload", null, "upload", createLectureFile(true), String.class,
-                HttpStatus.CONFLICT);
-        request.get("/api/lectures/" + invalidLecture.getId() + "/attachment-units/data/any-file", HttpStatus.CONFLICT, LectureUnitInformationDTO.class);
-        request.get("/api/lectures/" + invalidLecture.getId() + "/attachment-units/slides-to-remove/any-file", HttpStatus.CONFLICT, LectureUnitInformationDTO.class, params);
+                HttpStatus.BAD_REQUEST);
+        request.get("/api/lectures/" + invalidLecture.getId() + "/attachment-units/data/any-file", HttpStatus.BAD_REQUEST, LectureUnitInformationDTO.class);
+        request.get("/api/lectures/" + invalidLecture.getId() + "/attachment-units/slides-to-remove/any-file", HttpStatus.BAD_REQUEST, LectureUnitInformationDTO.class, params);
         request.postListWithResponseBody("/api/lectures/" + invalidLecture.getId() + "/attachment-units/split/any-file", lectureUnitSplits, AttachmentUnit.class,
-                HttpStatus.CONFLICT);
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test

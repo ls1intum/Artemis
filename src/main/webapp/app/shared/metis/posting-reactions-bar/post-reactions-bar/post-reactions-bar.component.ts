@@ -7,11 +7,11 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
-import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
@@ -61,17 +61,17 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
      *
      * @param currentConversation the conversation the post belongs to
      */
-    private setCanPin(currentConversation: ConversationDto | undefined) {
+    private setCanPin(currentConversation: ConversationDTO | undefined) {
         if (!currentConversation) {
             this.canPin = this.metisService.metisUserIsAtLeastInstructorInCourse();
             return;
         }
 
-        if (isChannelDto(currentConversation)) {
+        if (isChannelDTO(currentConversation)) {
             this.canPin = currentConversation.hasChannelModerationRights ?? false;
-        } else if (isGroupChatDto(currentConversation)) {
+        } else if (isGroupChatDTO(currentConversation)) {
             this.canPin = currentConversation.creator?.id === this.accountService.userIdentity?.id;
-        } else if (isOneToOneChatDto(currentConversation)) {
+        } else if (isOneToOneChatDTO(currentConversation)) {
             this.canPin = true;
         }
     }

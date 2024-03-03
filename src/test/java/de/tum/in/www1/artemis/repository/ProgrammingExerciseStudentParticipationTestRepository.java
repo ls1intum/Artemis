@@ -24,7 +24,7 @@ public interface ProgrammingExerciseStudentParticipationTestRepository extends J
     @Modifying
     @Query("""
             UPDATE ProgrammingExerciseStudentParticipation p
-            SET p.buildPlanId = :#{#buildPlanId}
+            SET p.buildPlanId = :buildPlanId
             """)
     void updateBuildPlanIdOfAll(@Param("buildPlanId") Long buildPlanId);
 

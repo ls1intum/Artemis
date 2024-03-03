@@ -28,7 +28,7 @@
         @if (!showImportFromExercise) {
             <div class="form-group">
                 <div class="d-flex align-items-end">
-                    <jhi-teams-import-from-file-form (teamsChanged)="onTeamsChanged($event)"></jhi-teams-import-from-file-form>
+                    <jhi-teams-import-from-file-form (teamsChanged)="onTeamsChanged($event)" />
                 </div>
             </div>
         }
@@ -37,10 +37,10 @@
                 <div class="d-flex align-items-end">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.team.sourceExercise.label">Source exercise</label>
-                        <jhi-help-icon text="artemisApp.team.sourceExercise.tooltip" class="me-1"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.team.sourceExercise.tooltip" class="me-1" />
                     </div>
                     @if (searchingExercises) {
-                        <fa-icon class="loading-spinner" [icon]="faSpinner" [spin]="true"></fa-icon>
+                        <fa-icon class="loading-spinner" [icon]="faSpinner" [spin]="true" />
                     }
                     @if (searchingExercisesNoResultsForQuery === '') {
                         <span class="error-message text-danger">
@@ -65,8 +65,7 @@
                     (searching)="searchingExercises = $event"
                     (searchNoResults)="searchingExercisesNoResultsForQuery = $event"
                     (searchFailed)="searchingExercisesFailed = $event"
-                >
-                </jhi-team-exercise-search>
+                />
             </div>
         }
         @if (sourceExercise || sourceTeams) {
@@ -74,10 +73,10 @@
                 <div class="d-flex align-items-end">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label">Source teams</label>
-                        <jhi-help-icon text="artemisApp.team.sourceTeams.tooltip" class="me-1"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.team.sourceTeams.tooltip" class="me-1" />
                     </div>
                     @if (loadingSourceTeams) {
-                        <fa-icon class="loading-spinner" [icon]="faSpinner" [spin]="true"></fa-icon>
+                        <fa-icon class="loading-spinner" [icon]="faSpinner" [spin]="true" />
                     }
                     @if (loadingSourceTeamsFailed) {
                         <span class="error-message text-danger" jhiTranslate="artemisApp.team.loadSourceTeams.failed"> Loading teams failed. Please try again. </span>
@@ -103,8 +102,7 @@
                                             [errorStudentLogins]="problematicLogins"
                                             [withRegistrationNumber]="true"
                                             [errorStudentRegistrationNumbers]="problematicRegistrationNumbers"
-                                        >
-                                        </jhi-team-students-list>
+                                        />
                                     </div>
                                 </li>
                             }
@@ -127,28 +125,28 @@
                                 <hr class="mt-3 mb-2" />
                                 <div>
                                     <label jhiTranslate="artemisApp.team.sourceTeams.legend.label">Legend</label>
-                                    <jhi-help-icon text="artemisApp.team.sourceTeams.legend.tooltip" class="me-1"></jhi-help-icon>
+                                    <jhi-help-icon text="artemisApp.team.sourceTeams.legend.tooltip" class="me-1" />
                                 </div>
                                 <div class="source-teams-legend-box">
                                     <div class="source-teams-legend d-flex justify-content-between">
                                         <div>
                                             <div class="list-group-item--teams" [class.has-success]="true">
                                                 <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | artemisTranslate }}1</div>
-                                                <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students || []"> </jhi-team-students-list>
+                                                <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students || []" />
                                             </div>
                                             <div class="label-with-tooltip">
                                                 <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.label">Conflict-free team</label>
-                                                <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.tooltip" class="me-1"></jhi-help-icon>
+                                                <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.tooltip" class="me-1" />
                                             </div>
                                         </div>
                                         <div>
                                             <div class="list-group-item--teams" [class.has-error]="true">
                                                 <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | artemisTranslate }}2</div>
-                                                <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students || []"> </jhi-team-students-list>
+                                                <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students || []" />
                                             </div>
                                             <div class="label-with-tooltip">
                                                 <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.label">Team short name conflict</label>
-                                                <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.tooltip" class="me-1"></jhi-help-icon>
+                                                <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.tooltip" class="me-1" />
                                             </div>
                                         </div>
                                         <div>
@@ -158,12 +156,11 @@
                                                     class="team-students"
                                                     [students]="sampleTeamForLegend.students || []"
                                                     [errorStudentLogins]="sampleErrorStudentLoginsForLegend"
-                                                >
-                                                </jhi-team-students-list>
+                                                />
                                             </div>
                                             <div class="label-with-tooltip">
                                                 <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.studentConflict.label">Student conflict</label>
-                                                <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.studentConflict.tooltip" class="me-1"></jhi-help-icon>
+                                                <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.studentConflict.tooltip" class="me-1" />
                                             </div>
                                         </div>
                                     </div>
@@ -179,7 +176,7 @@
             <div class="form-group mb-0">
                 <div>
                     <label class="label-narrow" jhiTranslate="artemisApp.team.importStrategy.label">Import conflict strategy</label>
-                    <jhi-help-icon text="artemisApp.team.importStrategy.tooltip" class="me-1"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.team.importStrategy.tooltip" class="me-1" />
                 </div>
                 <div class="d-flex flex-column mt-2 ps-2">
                     <label class="d-flex align-items-start">
@@ -267,13 +264,13 @@
         }
         <div class="flex-grow-1 d-flex justify-content-end">
             <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
-                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
             @if (importStrategy !== ImportStrategy.PURGE_EXISTING) {
                 <button type="submit" class="btn btn-warning" [disabled]="editForm.invalid || isSubmitDisabled">
-                    <fa-icon [icon]="faUpload" class="me-2"></fa-icon>
+                    <fa-icon [icon]="faUpload" class="me-2" />
                     <span jhiTranslate="entity.action.to-import">Import</span>
-                    <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch"></fa-icon>
+                    <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch" />
                 </button>
             }
             @if (importStrategy === ImportStrategy.PURGE_EXISTING) {
@@ -289,10 +286,10 @@
                     (delete)="purgeAndImportTeams()"
                     [dialogError]="dialogError$"
                 >
-                    <fa-icon [icon]="faUpload" class="me-1"></fa-icon>
+                    <fa-icon [icon]="faUpload" class="me-1" />
                     <span jhiTranslate="entity.action.purge">Purge</span> +
                     <span jhiTranslate="entity.action.to-import">Import</span>
-                    <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch"></fa-icon>
+                    <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch" />
                 </button>
             }
         </div>

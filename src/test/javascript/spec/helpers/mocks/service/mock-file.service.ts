@@ -2,7 +2,7 @@ import { of } from 'rxjs';
 
 export class MockFileService {
     downloadMergedFile = () => {
-        return { subscribe: (fn: (value: any) => void) => fn({ body: new Window() }) };
+        return of({ body: null });
     };
 
     downloadFile = () => {

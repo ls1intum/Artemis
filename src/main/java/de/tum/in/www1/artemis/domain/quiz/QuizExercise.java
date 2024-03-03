@@ -75,6 +75,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @JoinColumn(unique = true)
     private QuizPointStatistic quizPointStatistic;
 
+    // TODO: test if we should use mappedBy here as well
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JoinColumn(name = "exercise_id")

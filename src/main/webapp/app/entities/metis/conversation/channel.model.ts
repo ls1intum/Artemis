@@ -1,4 +1,4 @@
-import { Conversation, ConversationDto, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exam } from 'app/entities/exam.model';
@@ -36,7 +36,7 @@ export class Channel extends Conversation {
 /**
  * DTO
  */
-export class ChannelDTO extends ConversationDto {
+export class ChannelDTO extends ConversationDTO {
     public subType?: ChannelSubType;
     public subTypeReferenceId?: number;
     public name?: string;
@@ -52,6 +52,7 @@ export class ChannelDTO extends ConversationDto {
     public tutorialGroupId?: number;
 
     public tutorialGroupTitle?: string;
+
     constructor() {
         super(ConversationType.CHANNEL);
     }
@@ -65,13 +66,13 @@ export class ChannelIdAndNameDTO {
     public name?: string;
 }
 
-export function isChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
+export function isChannelDTO(conversation: ConversationDTO): conversation is ChannelDTO {
     return conversation.type === ConversationType.CHANNEL;
 }
 
-export function getAsChannelDto(conversation: ConversationDto | undefined): ChannelDTO | undefined {
+export function getAsChannelDTO(conversation: ConversationDTO | undefined): ChannelDTO | undefined {
     if (!conversation) {
         return undefined;
     }
-    return isChannelDto(conversation) ? conversation : undefined;
+    return isChannelDTO(conversation) ? conversation : undefined;
 }

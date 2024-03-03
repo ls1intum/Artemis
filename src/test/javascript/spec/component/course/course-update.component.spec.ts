@@ -480,18 +480,6 @@ describe('Course Management Update Component', () => {
         });
     });
 
-    describe('getSemesters', () => {
-        it('should get semesters around current year', () => {
-            const years = dayjs().year() - 2018 + 1;
-            const semesters = comp.getSemesters();
-            expect(semesters[0]).toBe('');
-            for (let i = 0; i <= years; i++) {
-                expect(semesters[2 * i + 1]).toBe('SS' + (18 + i));
-                expect(semesters[2 * i + 2]).toBe('WS' + (18 + i) + '/' + (19 + i));
-            }
-        });
-    });
-
     describe('isValidDate', () => {
         it('should handle valid dates', () => {
             comp.course = new Course();

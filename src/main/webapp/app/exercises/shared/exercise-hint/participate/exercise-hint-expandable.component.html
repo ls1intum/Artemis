@@ -1,7 +1,7 @@
 <mat-expansion-panel [expanded]="expanded" [disabled]="true" class="exercise-hint-student-expansion-panel-wrapper">
     <mat-expansion-panel-header>
         <mat-panel-description>
-            <mat-panel-title><fa-icon [icon]="faQuestionCircle" size="2x"></fa-icon></mat-panel-title>
+            <mat-panel-title><fa-icon [icon]="faQuestionCircle" size="2x" /></mat-panel-title>
             <mat-panel-description>
                 <div>
                     <div>{{ exerciseHint!.description }}</div>
@@ -37,7 +37,7 @@
             }
             @if (exerciseHint.type === HintType.CODE && (exerciseHint | castToCodeHint)?.solutionEntries) {
                 <div>
-                    <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint"></jhi-code-hint-container>
+                    <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint" />
                 </div>
             }
             <div class="d-flex align-items-end flex-column">
@@ -50,7 +50,7 @@
                     [readOnly]="false"
                     [totalStars]="5"
                     (rate)="onRate($event)"
-                ></star-rating>
+                />
             </div>
         </div>
     }

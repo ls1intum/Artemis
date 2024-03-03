@@ -1,6 +1,6 @@
-<jhi-split-pane-header studentLogin="{{ plagiarismSubmission?.studentLogin }}"></jhi-split-pane-header>
+<jhi-split-pane-header studentLogin="{{ plagiarismSubmission?.studentLogin }}" />
 @if (!loading) {
-    <jhi-modeling-editor [umlModel]="submissionModel" [diagramType]="exercise.diagramType" [readOnly]="true"></jhi-modeling-editor>
+    <jhi-modeling-editor [umlModel]="submissionModel" [diagramType]="exercise.diagramType" [readOnly]="true" />
 }
 @if (loading) {
     <div class="plagiarism-submission-loader">

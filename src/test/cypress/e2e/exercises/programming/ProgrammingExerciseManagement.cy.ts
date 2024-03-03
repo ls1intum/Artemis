@@ -18,7 +18,7 @@ describe('Programming Exercise Management', () => {
     });
 
     describe('Programming exercise creation', () => {
-        it('Creates a new programming exercise', () => {
+        it('Creates a new programming exercise', { scrollBehavior: 'center' }, () => {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
             courseManagement.openExercisesOfCourse(course.id!);

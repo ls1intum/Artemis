@@ -1,5 +1,5 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Component, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { isDate } from 'app/shared/util/utils';
 import { faCalendarCheck, faCalendarMinus, faCalendarPlus } from '@fortawesome/free-solid-svg-icons';
@@ -17,7 +17,7 @@ import { faCalendarCheck, faCalendarMinus, faCalendarPlus } from '@fortawesome/f
     styleUrls: ['./programming-exercise-test-schedule-picker.scss'],
 })
 export class ProgrammingExerciseTestScheduleDatePickerComponent implements ControlValueAccessor {
-    @ViewChild('dateInput', { static: false }) dateInput: ElementRef;
+    @ViewChild('dateInput', { static: false }) dateInput: NgModel;
     @Input() selectedDate?: Date;
     @Input() startAt?: dayjs.Dayjs;
     @Input() min?: dayjs.Dayjs;

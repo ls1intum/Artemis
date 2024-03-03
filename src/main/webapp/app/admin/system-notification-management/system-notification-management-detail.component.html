@@ -19,9 +19,9 @@
             <dd>{{ notification.expireDate | artemisDate }}</dd>
         </dl>
         <a id="editButton" [routerLink]="['edit']" class="btn btn-warning">
-            <fa-icon [icon]="faWrench"></fa-icon>
+            <fa-icon [icon]="faWrench" />
             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
         </a>
     </div>
 }
-<router-outlet></router-outlet>
+<router-outlet />

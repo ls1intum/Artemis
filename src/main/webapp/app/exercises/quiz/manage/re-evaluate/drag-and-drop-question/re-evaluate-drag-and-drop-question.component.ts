@@ -16,8 +16,7 @@ import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag
             (questionMoveDown)="questionMoveDown.emit()"
             (addNewFile)="handleAddFile($event)"
             (removeFile)="handleRemoveFile($event)"
-        >
-        </jhi-drag-and-drop-question-edit>
+        />
     `,
     providers: [],
 })

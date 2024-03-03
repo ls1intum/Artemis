@@ -45,13 +45,13 @@ export class TextExerciseCreationPage {
 
     create() {
         cy.intercept(POST, BASE_API + 'text-exercises').as('textExerciseCreation');
-        cy.get('#submit-entity').click();
+        cy.get('#save-entity').click();
         return cy.wait('@textExerciseCreation');
     }
 
     import() {
         cy.intercept(POST, BASE_API + 'text-exercises/import/*').as('textExerciseImport');
-        cy.get('#submit-entity').click();
+        cy.get('#save-entity').click();
         return cy.wait('@textExerciseImport');
     }
 

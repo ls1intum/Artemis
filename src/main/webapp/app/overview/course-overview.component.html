@@ -1,31 +1,31 @@
 <div>
     @if (course) {
         <div>
-            <jhi-header-course [course]="course"></jhi-header-course>
+            <jhi-header-course [course]="course" />
             <div class="tab-bar">
                 @if (course.exams && hasVisibleExams()) {
                     <a class="tab-link" id="exam-tab" jhiOrionFilter [showInOrionWindow]="false" routerLink="exams" routerLinkActive="active">
-                        <fa-icon [icon]="faGraduationCap"></fa-icon>
+                        <fa-icon [icon]="faGraduationCap" />
                         <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</span>
                     </a>
                 }
                 <a class="tab-link" routerLink="exercises" routerLinkActive="active">
-                    <fa-icon [icon]="faListAlt"></fa-icon>
+                    <fa-icon [icon]="faListAlt" />
                     <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>
                 </a>
                 @if (course.lectures) {
                     <a class="tab-link" jhiOrionFilter [showInOrionWindow]="false" routerLink="lectures" routerLinkActive="active">
-                        <fa-icon [icon]="faFilePdf"></fa-icon>
+                        <fa-icon [icon]="faFilePdf" />
                         <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
                     </a>
                 }
                 <a class="tab-link guided-tour" jhiOrionFilter [showInOrionWindow]="false" routerLink="statistics" routerLinkActive="active">
-                    <fa-icon [icon]="faChartBar"></fa-icon>
+                    <fa-icon [icon]="faChartBar" />
                     <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
                 </a>
                 @if (isCommunicationEnabled(course)) {
                     <a class="tab-link" jhiOrionFilter [showInOrionWindow]="false" routerLink="discussion" routerLinkActive="active">
-                        <fa-icon [icon]="faComment"></fa-icon>
+                        <fa-icon [icon]="faComment" />
                         <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.communication">Communication</span>
                     </a>
                 }
@@ -38,7 +38,7 @@
                         routerLink="messages"
                         routerLinkActive="active"
                     >
-                        <fa-icon [icon]="faComments"></fa-icon>
+                        <fa-icon [icon]="faComments" />
                         <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</span>
                     </a>
                 }
@@ -51,13 +51,13 @@
                         routerLink="tutorial-groups"
                         routerLinkActive="active"
                     >
-                        <fa-icon [icon]="faPersonChalkboard"></fa-icon>
+                        <fa-icon [icon]="faPersonChalkboard" />
                         <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.tutorialGroups">Tutorial Groups</span>
                     </a>
                 }
                 @if (hasCompetencies()) {
                     <a class="tab-link" jhiOrionFilter [showInOrionWindow]="false" routerLink="competencies" routerLinkActive="active">
-                        <fa-icon [icon]="faFlag"></fa-icon>
+                        <fa-icon [icon]="faFlag" />
                         <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.competencies">Competencies</span>
                     </a>
                 }
@@ -70,22 +70,22 @@
                         routerLink="learning-path"
                         routerLinkActive="active"
                     >
-                        <fa-icon [icon]="faNetworkWired"></fa-icon>
+                        <fa-icon [icon]="faNetworkWired" />
                         <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.learningPath">Learning Path</span>
                     </a>
                 }
                 <div class="controls">
-                    <ng-container #controlsViewContainer></ng-container>
+                    <ng-container #controlsViewContainer />
                     <button class="btn btn-primary btn-md" (click)="loadCourse(true)" [disabled]="refreshingCourse">
-                        <fa-icon [icon]="faSync" [spin]="refreshingCourse"></fa-icon>
+                        <fa-icon [icon]="faSync" [spin]="refreshingCourse" />
                         <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
                     </button>
                 </div>
             </div>
             <div class="course-body-container">
-                <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()"></router-outlet>
+                <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
                 <div class="refresh-overlay" [class.active]="refreshingCourse">
-                    <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                    <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true" />
                 </div>
             </div>
         </div>

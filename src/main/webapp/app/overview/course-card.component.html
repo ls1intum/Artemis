@@ -5,7 +5,7 @@
             <div class="row d-flex">
                 <div class="col-2 header-col image-col">
                     @if (course.courseIcon) {
-                        <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
+                        <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon" />
                     }
                 </div>
                 <div class="col-7 header-col title-col px-3">
@@ -76,7 +76,7 @@
                         <h6 jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel">Next exercises:</h6>
                     </div>
                     <div class="col-6 next-exercise-col">
-                        <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" placement="right auto" [ngbTooltip]="nextExerciseTooltip | artemisTranslate"></fa-icon>
+                        <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" placement="right auto" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" />
                         <span class="next-exercise-title">{{ nextRelevantExercise.title }}</span>
                     </div>
                     <div class="col-3 next-exercise-col text-nowrap">

@@ -260,6 +260,7 @@ $md-resize-icon-color: $gray-400;
 // Metis
 $metis-conversation-sidebar: $gray-500;
 $metis-conversation-sidebar-active: $gray-100;
+$metis-conversation-sidebar-muted: $gray-600;
 $metis-conversation-sidebar-button-background-hover: $gray-700;
 
 $metis-light-gray: #979797;
@@ -305,10 +306,11 @@ $stat-av-sc-legend-critical: rgba(204, 0, 0, 1);
 $stat-av-sc-legend-median: rgba(127, 127, 127, 255);
 $stat-av-sc-legend-best: rgba(40, 164, 40, 1);
 
-// Programming Exercise Form (scss)
-$update-programming-exercise-footer-background: $brighter-body-bg;
-$update-programming-exercise-footer-box-shadow: rgba(0, 0, 0, 0.7);
+// Programming Exercise Update
 $update-programming-exercise-plan-preview-box-background: transparentize(#fff, 0.95);
+
+// Form Footer
+$update-footer-background: $brighter-body-bg;
 
 // Edit Quiz
 $quiz-mapping-letter-number-mixin-color: white;

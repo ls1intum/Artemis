@@ -67,7 +67,7 @@
                         <button class="btn btn-outline-secondary" (click)="applyFilter()" jhiTranslate="artemisApp.quizExercise.filter.applyFilter"></button>
                     </div>
                 }
-                @if (allExistingQuestions.length === 0 && selectedCourseId != null) {
+                @if (allExistingQuestions.length === 0 && selectedCourseId !== undefined) {
                     <div>
                         <div>&nbsp;</div>
                         <span jhiTranslate="artemisApp.quizExercise.noQuestionsFoundCourse"></span>
@@ -132,7 +132,7 @@
                         </table>
                     </div>
                 }
-                @if (allExistingQuestions.length !== 0 && existingQuestions.length === 0 && selectedCourseId != null) {
+                @if (allExistingQuestions.length !== 0 && existingQuestions.length === 0 && selectedCourseId !== undefined) {
                     <div jhiTranslate="artemisApp.quizExercise.noMatchingQuestionsFound" class="ms-3"></div>
                 }
                 @if (existingQuestions.length !== 0) {

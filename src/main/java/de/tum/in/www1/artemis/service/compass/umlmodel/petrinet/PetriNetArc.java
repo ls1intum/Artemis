@@ -71,6 +71,11 @@ public class PetriNetArc extends UMLElement {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), source, target, multiplicity);
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (!super.equals(obj)) {
             return false;

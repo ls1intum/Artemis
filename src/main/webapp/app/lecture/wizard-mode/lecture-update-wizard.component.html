@@ -1,29 +1,24 @@
 <div>
     @if (currentStep >= 1) {
-        <jhi-lecture-update-wizard-title class="form-step" [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-title>
+        <jhi-lecture-update-wizard-title class="form-step" [currentStep]="currentStep" [lecture]="lecture" />
     }
     @if (currentStep >= 2) {
-        <jhi-lecture-update-wizard-period
-            class="form-step"
-            [currentStep]="currentStep"
-            [lecture]="lecture"
-            [validateDatesFunction]="validateDatesFunction"
-        ></jhi-lecture-update-wizard-period>
+        <jhi-lecture-update-wizard-period class="form-step" [currentStep]="currentStep" [lecture]="lecture" [validateDatesFunction]="validateDatesFunction" />
     }
     @if (currentStep >= 3) {
-        <jhi-lecture-update-wizard-attachments class="form-step" [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-attachments>
+        <jhi-lecture-update-wizard-attachments class="form-step" [currentStep]="currentStep" [lecture]="lecture" />
     }
     @if (currentStep >= 4) {
-        <jhi-lecture-update-wizard-units class="form-step" [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-units>
+        <jhi-lecture-update-wizard-units class="form-step" [currentStep]="currentStep" [lecture]="lecture" />
     }
     @if (currentStep >= 5) {
-        <jhi-lecture-update-wizard-competencies class="form-step" [currentStep]="currentStep" [lecture]="lecture" [isSaving]="isSaving"></jhi-lecture-update-wizard-competencies>
+        <jhi-lecture-update-wizard-competencies class="form-step" [currentStep]="currentStep" [lecture]="lecture" [isSaving]="isSaving" />
     }
     <!-- Bottom Navigation Bar -->
     <div class="d-flex align-items-center">
         <div class="me-3">
             <button type="button" id="back" [disabled]="isSaving" class="btn btn-secondary" (click)="toggleWizardMode()">
-                <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToTraditionalModeLabel">Switch to normal mode</span>
+                <fa-icon [icon]="faHandShakeAngle" />&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToTraditionalModeLabel">Switch to normal mode</span>
             </button>
         </div>
         <div class="flex-grow-1 d-flex justify-content-center">
@@ -32,36 +27,36 @@
                     [currentlySelected]="isCurrent(1)"
                     [isPerformed]="isCompleted(1)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.titleStepTitle'"
-                ></jhi-lecture-update-wizard-step>
+                />
                 <div class="connector" [ngClass]="isCompleted(1) ? 'check' : 'unset'"></div>
                 <jhi-lecture-update-wizard-step
                     [currentlySelected]="isCurrent(2)"
                     [isPerformed]="isCompleted(2)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.periodStepTitle'"
-                ></jhi-lecture-update-wizard-step>
+                />
                 <div class="connector" [ngClass]="isCompleted(2) ? 'check' : 'unset'"></div>
                 <jhi-lecture-update-wizard-step
                     [currentlySelected]="isCurrent(3)"
                     [isPerformed]="isCompleted(3)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle'"
-                ></jhi-lecture-update-wizard-step>
+                />
                 <div class="connector" [ngClass]="isCompleted(3) ? 'check' : 'unset'"></div>
                 <jhi-lecture-update-wizard-step
                     [currentlySelected]="isCurrent(4)"
                     [isPerformed]="isCompleted(4)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.unitsStepTitle'"
-                ></jhi-lecture-update-wizard-step>
+                />
                 <div class="connector" [ngClass]="isCompleted(4) ? 'check' : 'unset'"></div>
                 <jhi-lecture-update-wizard-step
                     [currentlySelected]="isCurrent(5)"
                     [isPerformed]="isCompleted(5)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.competenciesStepTitle'"
-                ></jhi-lecture-update-wizard-step>
+                />
             </div>
         </div>
         <div class="ms-3">
             <button type="button" id="next" [disabled]="(currentStep === 2 && !lecture.title) || isSaving" class="btn btn-primary" (click)="next()">
-                <fa-icon [icon]="getNextIcon()"></fa-icon>&nbsp;<span [jhiTranslate]="getNextText()">Next</span>
+                <fa-icon [icon]="getNextIcon()" />&nbsp;<span [jhiTranslate]="getNextText()">Next</span>
             </button>
         </div>
     </div>

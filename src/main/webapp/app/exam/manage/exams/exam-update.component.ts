@@ -195,6 +195,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
                 this.isSaving = false;
                 return;
             }
+            this.exam.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExerciseGroups();
             return this.examManagementService.import(this.course.id!, this.exam);
         } else if (this.exam.id) {
             return this.examManagementService.update(this.course.id!, this.exam);

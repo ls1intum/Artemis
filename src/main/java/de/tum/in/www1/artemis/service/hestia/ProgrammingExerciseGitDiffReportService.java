@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.hestia;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,6 +20,7 @@ import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
@@ -39,6 +42,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 /**
  * The service handling ProgrammingExerciseGitDiffReport and their ProgrammingExerciseGitDiffEntries.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseGitDiffReportService {
 

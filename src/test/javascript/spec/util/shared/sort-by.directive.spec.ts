@@ -11,7 +11,7 @@ import { ArtemisTestModule } from '../../test.module';
         <table>
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition($event)">
-                    <th jhiSortBy="name">ID<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="name">ID<fa-icon [icon]="faSort" /></th>
                 </tr>
             </thead>
         </table>

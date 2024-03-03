@@ -4,19 +4,31 @@
             <jhi-ide-button
                 [featureToggle]="FeatureToggle.ProgrammingExercises"
                 (clickHandler)="importIntoIDE()"
-                [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | artemisTranslate"
+                [buttonLabel]="'artemisApp.exerciseActions.importIntoIDE' | artemisTranslate"
+                [buttonType]="OrionButtonType.Download"
                 [buttonLoading]="this.exercise.loading || orionState.cloning"
                 [smallButton]="smallButtons"
-            ></jhi-ide-button>
+            />
         }
         @if (isOfflineIdeAllowed && orionState.view === ExerciseView.STUDENT && orionState.opened === this.exercise.id) {
             <jhi-ide-button
                 [featureToggle]="FeatureToggle.ProgrammingExercises"
                 (clickHandler)="submitChanges()"
                 buttonLabel="Submit"
+                [buttonType]="OrionButtonType.Submit"
                 [buttonLoading]="this.exercise.loading || orionState.building"
                 [smallButton]="smallButtons"
-            ></jhi-ide-button>
+            />
+        }
+        @if (isOfflineIdeAllowed && orionState.view === ExerciseView.STUDENT && orionState.opened === this.exercise.id && isDueDatePassed()) {
+            <jhi-ide-button
+                [featureToggle]="FeatureToggle.ProgrammingExercises"
+                (clickHandler)="initializeTestRepository()"
+                buttonLabel="Download Tests"
+                [buttonType]="OrionButtonType.Download"
+                [buttonLoading]="this.exercise.loading || orionState.building"
+                [smallButton]="smallButtons"
+            />
         }
     </ng-template>
 </jhi-exercise-details-student-actions>

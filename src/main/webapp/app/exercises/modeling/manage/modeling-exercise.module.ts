@@ -26,6 +26,7 @@ import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-
 import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
+import { FormsModule } from 'app/forms/forms.module';
 
 @NgModule({
     imports: [
@@ -53,6 +54,7 @@ import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.mo
         ExerciseUpdateNotificationModule,
         ExerciseUpdatePlagiarismModule,
         DetailModule,
+        FormsModule,
     ],
     declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
     exports: [ModelingExerciseComponent],

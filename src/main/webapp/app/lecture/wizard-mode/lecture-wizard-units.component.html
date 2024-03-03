@@ -7,10 +7,10 @@
         (onEditLectureUnitClicked)="startEditLectureUnit($event)"
         [showCreationCard]="false"
         [showCompetencies]="false"
-    ></jhi-lecture-unit-management>
+    />
     @if (!isAnyUnitFormOpen()) {
         <div class="form-group w-100 d-flex justify-content-start">
-            <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)"></jhi-unit-creation-card>
+            <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)" />
         </div>
     }
     @if (isAnyUnitFormOpen()) {
@@ -28,7 +28,7 @@
                     (onCancel)="onCloseLectureUnitForms()"
                     (formSubmitted)="createEditTextUnit($event)"
                     [formData]="textUnitFormData"
-                ></jhi-text-unit-form>
+                />
             }
             @if (isVideoUnitFormOpen) {
                 <jhi-video-unit-form
@@ -37,7 +37,7 @@
                     (onCancel)="onCloseLectureUnitForms()"
                     (formSubmitted)="createEditVideoUnit($event)"
                     [formData]="videoUnitFormData"
-                ></jhi-video-unit-form>
+                />
             }
             @if (isOnlineUnitFormOpen) {
                 <jhi-online-unit-form
@@ -46,7 +46,7 @@
                     (onCancel)="onCloseLectureUnitForms()"
                     (formSubmitted)="createEditOnlineUnit($event)"
                     [formData]="onlineUnitFormData"
-                ></jhi-online-unit-form>
+                />
             }
             @if (isAttachmentUnitFormOpen) {
                 <jhi-attachment-unit-form
@@ -55,7 +55,7 @@
                     (onCancel)="onCloseLectureUnitForms()"
                     (formSubmitted)="createEditAttachmentUnit($event)"
                     [formData]="attachmentUnitFormData"
-                ></jhi-attachment-unit-form>
+                />
             }
             @if (isExerciseUnitFormOpen) {
                 <jhi-create-exercise-unit
@@ -67,7 +67,7 @@
                     [hasCancelButton]="true"
                     [hasCreateExerciseButton]="true"
                     (onCancel)="onCloseLectureUnitForms()"
-                ></jhi-create-exercise-unit>
+                />
             }
         </div>
     }

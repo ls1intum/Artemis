@@ -1,22 +1,21 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
-import static java.util.stream.Collectors.toSet;
 
-import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
 /**
  * Service for calculating the presentation points for a course or student.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class PresentationPointsCalculationService {
 
@@ -52,14 +51,14 @@ public class PresentationPointsCalculationService {
     }
 
     /**
-     * Adds the presentation points to the ScoreDTOs given the gradingScale, the reachable presentation points of the
+     * Adds the presentation points to the achieved points given the gradingScale, the reachable presentation points of the
      * course, and the presentationsWeight of the courses GradingScale.
      *
      * @param gradingScale                the grading scale with the presentation configuration
-     * @param scoreDTOS                   the ScoreDTOs to which the presentation points should be added
+     * @param pointsAchieved              the achieved points to which the presentation points should be added
      * @param reachablePresentationPoints the reachable presentation points in the given course.
      */
-    public void addPresentationPointsToScoreDTOs(GradingScale gradingScale, Collection<ScoreDTO> scoreDTOS, double reachablePresentationPoints) {
+    public void addPresentationPointsToPointsAchieved(GradingScale gradingScale, Map<Long, Double> pointsAchieved, double reachablePresentationPoints) {
         // return if grading scale is not set
         if (gradingScale == null) {
             return;
@@ -70,13 +69,13 @@ public class PresentationPointsCalculationService {
             return;
         }
 
-        Set<Long> studentIds = scoreDTOS.stream().map(scoreDTO -> scoreDTO.studentId).collect(toSet());
-        Map<Long, Double> studentIdToPresentationPointSum = studentParticipationRepository.mapStudentIdToPresentationScoreSumByCourseIdAndStudentIds(course.getId(), studentIds);
+        Map<Long, Double> studentIdToPresentationPointSum = studentParticipationRepository.mapStudentIdToPresentationScoreSumByCourseIdAndStudentIds(course.getId(),
+                pointsAchieved.keySet());
 
-        scoreDTOS.forEach(scoreDTO -> {
-            double presentationScoreSum = studentIdToPresentationPointSum.getOrDefault(scoreDTO.studentId, 0.0);
+        pointsAchieved.forEach((userId, points) -> {
+            double presentationScoreSum = studentIdToPresentationPointSum.getOrDefault(userId, 0D);
             double presentationPoints = calculatePresentationPoints(gradingScale, reachablePresentationPoints, presentationScoreSum);
-            scoreDTO.pointsAchieved += presentationPoints;
+            pointsAchieved.put(userId, points + presentationPoints);
         });
     }
 

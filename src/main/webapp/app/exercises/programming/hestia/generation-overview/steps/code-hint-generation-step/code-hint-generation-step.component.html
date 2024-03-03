@@ -61,7 +61,7 @@
                 <div>
                     @if (codeHint?.solutionEntries) {
                         <div>
-                            <jhi-code-hint-container [codeHint]="codeHint"></jhi-code-hint-container>
+                            <jhi-code-hint-container [codeHint]="codeHint" />
                         </div>
                     }
                     <div class="btn-group">
@@ -69,7 +69,7 @@
                             [routerLink]="['/course-management', exercise?.course?.id, 'programming-exercises', exercise?.id, 'exercise-hints', codeHint.id, 'edit']"
                             class="btn btn-warning btn-sm me-1"
                         >
-                            <fa-icon [icon]="faWrench"></fa-icon>
+                            <fa-icon [icon]="faWrench" />
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </a>
                     </div>

@@ -28,15 +28,15 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import {
     metisCourse,
-    metisExamChannelDto,
+    metisExamChannelDTO,
     metisExercise,
     metisExercise2,
-    metisExerciseChannelDto,
-    metisGeneralChannelDto,
+    metisExerciseChannelDTO,
+    metisGeneralChannelDTO,
     metisLecture,
     metisLecture2,
     metisLecture3,
-    metisLectureChannelDto,
+    metisLectureChannelDTO,
     metisPostInChannel,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
@@ -106,7 +106,7 @@ describe('CourseDiscussionComponent', () => {
                     get: () => new BehaviorSubject(true).asObservable(),
                 });
                 Object.defineProperty(metisConversationService, 'conversationsOfUser$', {
-                    get: () => new BehaviorSubject([metisGeneralChannelDto, metisExerciseChannelDto, metisLectureChannelDto, metisExamChannelDto]).asObservable(),
+                    get: () => new BehaviorSubject([metisGeneralChannelDTO, metisExerciseChannelDTO, metisLectureChannelDTO, metisExamChannelDTO]).asObservable(),
                 });
 
                 jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(metisCourse));
@@ -164,12 +164,12 @@ describe('CourseDiscussionComponent', () => {
         const contextOptions = getElement(fixture.debugElement, 'mat-select[name=context]');
         expect(component.lectures).toEqual([metisLecture, metisLecture2, metisLecture3]);
         expect(component.exercises).toEqual([metisExercise, metisExercise2]);
-        expect(component.courseWideChannels).toEqual([metisGeneralChannelDto, metisExerciseChannelDto, metisLectureChannelDto, metisExamChannelDto]);
+        expect(component.courseWideChannels).toEqual([metisGeneralChannelDTO, metisExerciseChannelDTO, metisLectureChannelDTO, metisExamChannelDTO]);
         // select should provide all context options
-        expect(contextOptions.textContent).toContain(metisGeneralChannelDto.name);
-        expect(contextOptions.textContent).toContain(metisExerciseChannelDto.name);
-        expect(contextOptions.textContent).toContain(metisLectureChannelDto.name);
-        expect(contextOptions.textContent).toContain(metisExamChannelDto.name);
+        expect(contextOptions.textContent).toContain(metisGeneralChannelDTO.name);
+        expect(contextOptions.textContent).toContain(metisExerciseChannelDTO.name);
+        expect(contextOptions.textContent).toContain(metisLectureChannelDTO.name);
+        expect(contextOptions.textContent).toContain(metisExamChannelDTO.name);
         // nothing should be selected
         const selectedContextOption = getElement(fixture.debugElement, 'mat-select[name=context]');
         expect(selectedContextOption.value).toBeUndefined();

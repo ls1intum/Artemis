@@ -1,8 +1,8 @@
-<jhi-split-pane-header [files]="files" (selectFile)="handleFileSelect($event)" studentLogin="{{ plagiarismSubmission?.studentLogin }}"></jhi-split-pane-header>
+<jhi-split-pane-header [files]="files" (selectFile)="handleFileSelect($event)" studentLogin="{{ plagiarismSubmission?.studentLogin }}" />
 @if (cannotLoadFiles) {
     <div class="text-submission-viewer text-warning">
         <div class="text-submission-viewer-warning">
-            <fa-icon [icon]="faExclamationTriangle" class="icon"></fa-icon>
+            <fa-icon [icon]="faExclamationTriangle" class="icon" />
             <span jhiTranslate="artemisApp.plagiarism.cannotLoadFiles"></span>
         </div>
     </div>

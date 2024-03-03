@@ -11,13 +11,13 @@
             </h4>
             @if (course && course.isAtLeastInstructor) {
                 <a [routerLink]="['/course-management', course.id, 'grading-system']" class="btn btn-info btn-md">
-                    <fa-icon [icon]="faClipboard"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
+                    <fa-icon [icon]="faClipboard" /> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
                 </a>
             }
         </div>
         @if (!exportReady) {
             <span style="color: grey"
-                ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span jhitranslate="artemisApp.instructorDashboard.loadingStudents"
+                ><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;<span jhitranslate="artemisApp.instructorDashboard.loadingStudents"
                     >Loading the results of all students...</span
                 ></span
             >
@@ -28,8 +28,7 @@
                     <h4 jhiTranslate="artemisApp.instructorDashboard.courseScoreChart.scoreDistribution">Course score distribution</h4>
                 </div>
                 @if (scoresToDisplay) {
-                    <jhi-participant-scores-distribution [gradingScale]="gradingScale" [scores]="scoresToDisplay" [scoreToHighlight]="valueToHighlight">
-                    </jhi-participant-scores-distribution>
+                    <jhi-participant-scores-distribution [gradingScale]="gradingScale" [scores]="scoresToDisplay" [scoreToHighlight]="valueToHighlight" />
                 }
             </div>
             <div class="col-lg-3 mt-3">
@@ -113,7 +112,7 @@
                     [disabled]="!(students.length > 0)"
                     [buttonSize]="ButtonSize.SMALL"
                     (onExport)="exportResults($event)"
-                ></jhi-csv-export-button>
+                />
             }
         </div>
         @if (exportReady) {
@@ -123,35 +122,35 @@
                         <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                             <th jhiSortBy="user.name">
                                 <span jhiTranslate="artemisApp.instructorDashboard.name">Name</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="user.login">
                                 <span jhiTranslate="artemisApp.instructorDashboard.username">Username</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="numberOfParticipatedExercises">
                                 <span jhiTranslate="artemisApp.instructorDashboard.participated">Participated in Exercises (%)</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="numberOfSuccessfulExercises">
                                 <span jhiTranslate="artemisApp.instructorDashboard.successful">Successful Exercises (%)</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             @for (exerciseType of exerciseTypes; track exerciseType) {
                                 @if (maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0) {
                                     <th jhiSortBy="sumPointsPerExerciseType.{{ exerciseType }}">
                                         <span jhiTranslate="artemisApp.instructorDashboard.{{ exerciseType }}Points"></span>
-                                        <fa-icon [icon]="faSort"></fa-icon>
+                                        <fa-icon [icon]="faSort" />
                                     </th>
                                 }
                             }
                             @if (maxNumberOfPresentationPoints > 0) {
                                 <th jhiSortBy="presentationPoints">
-                                    <span jhiTranslate="artemisApp.instructorDashboard.presentationPoints">Presentation Points (%)</span> <fa-icon [icon]="faSort"></fa-icon>
+                                    <span jhiTranslate="artemisApp.instructorDashboard.presentationPoints">Presentation Points (%)</span> <fa-icon [icon]="faSort" />
                                 </th>
                             }
                             <th jhiSortBy="overallPoints">
-                                <span jhiTranslate="artemisApp.instructorDashboard.overallScore">Overall Points (%)</span> <fa-icon [icon]="faSort"></fa-icon>
+                                <span jhiTranslate="artemisApp.instructorDashboard.overallScore">Overall Points (%)</span> <fa-icon [icon]="faSort" />
                             </th>
                             @if (gradingScaleExists) {
                                 <th jhiSortBy="overallPoints">
@@ -162,7 +161,7 @@
                                                 : ('artemisApp.courseScoreCalculation.gradingSystemGrade' | artemisTranslate)
                                         }}
                                     </span>
-                                    <fa-icon [icon]="faSort"></fa-icon>
+                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                         </tr>

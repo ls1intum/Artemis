@@ -6,7 +6,7 @@
     <div class="row">
         <div class="col">
             <button (click)="openCreateDiagramDialog(courseId)" id="create-apollon-diagram" class="btn btn-primary">
-                <fa-icon [icon]="faPlus"></fa-icon>
+                <fa-icon [icon]="faPlus" />
                 <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel">Create a New Apollon Diagram</span>
             </button>
         </div>
@@ -16,10 +16,10 @@
             <table class="table table-striped">
                 <thead>
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                        <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                        <th jhiSortBy="courseId"><span jhiTranslate="artemisApp.apollonDiagram.courseId">Course ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                        <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                        <th jhiSortBy="diagramType"><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                        <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                        <th jhiSortBy="courseId"><span jhiTranslate="artemisApp.apollonDiagram.courseId">Course ID</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                        <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                        <th jhiSortBy="diagramType"><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span>&nbsp;<fa-icon [icon]="faSort" /></th>
                         <th jhiTranslate="artemisApp.exercise.actions">Actions</th>
                     </tr>
                 </thead>
@@ -48,7 +48,7 @@
                                         [dialogError]="dialogError$"
                                         jhiDeleteButton
                                     >
-                                        <fa-icon [icon]="faTimes"></fa-icon>
+                                        <fa-icon [icon]="faTimes" />
                                     </button>
                                 }
                             </td>

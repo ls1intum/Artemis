@@ -44,16 +44,10 @@
             @if (exercise.isAtLeastTutor) {
                 <div class="d-flex ms-auto">
                     @if (exercise.isAtLeastInstructor || team.owner?.id === currentUser.id) {
-                        <jhi-team-update-button [exercise]="exercise" [team]="team" [buttonSize]="ButtonSize.MEDIUM" (save)="onTeamUpdate($event)"></jhi-team-update-button>
+                        <jhi-team-update-button [exercise]="exercise" [team]="team" [buttonSize]="ButtonSize.MEDIUM" (save)="onTeamUpdate($event)" />
                     }
                     @if (exercise.isAtLeastInstructor) {
-                        <jhi-team-delete-button
-                            class="ms-1"
-                            [exercise]="exercise"
-                            [team]="team"
-                            [buttonSize]="ButtonSize.MEDIUM"
-                            (delete)="onTeamDelete()"
-                        ></jhi-team-delete-button>
+                        <jhi-team-delete-button class="ms-1" [exercise]="exercise" [team]="team" [buttonSize]="ButtonSize.MEDIUM" (delete)="onTeamDelete()" />
                     }
                 </div>
             }
@@ -77,7 +71,7 @@
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.detail.students.login"> Login </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('login')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('login')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -88,7 +82,7 @@
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.detail.students.name"> Name </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('name')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('name')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -99,7 +93,7 @@
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.detail.students.email"> Email </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('email')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('email')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -114,12 +108,6 @@
             {{ 'artemisApp.team.detail.participationsTable.title' | artemisTranslate: { courseTitle: exercise.course!.title } }}
             <code class="ms-2 team-short-name">{{ team.shortName }}</code>
         </h4>
-        <jhi-team-participation-table
-            [team]="team"
-            [course]="exercise.course!"
-            [exercise]="exercise"
-            [isAdmin]="isAdmin"
-            [isTeamOwner]="isTeamOwner"
-        ></jhi-team-participation-table>
+        <jhi-team-participation-table [team]="team" [course]="exercise.course!" [exercise]="exercise" [isAdmin]="isAdmin" [isTeamOwner]="isTeamOwner" />
     }
 </div>

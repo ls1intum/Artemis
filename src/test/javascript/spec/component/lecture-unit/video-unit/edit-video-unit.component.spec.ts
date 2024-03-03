@@ -21,7 +21,7 @@ class VideoUnitFormStubComponent {
     @Output() formSubmitted: EventEmitter<VideoUnitFormData> = new EventEmitter<VideoUnitFormData>();
 }
 
-@Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content></ng-content>' })
+@Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content />' })
 class LectureUnitLayoutStubComponent {
     @Input()
     isLoading = false;

@@ -12,7 +12,7 @@
     }
     <!-- Edit -->
     <button type="button" [id]="'edit-' + tutorialGroupSession.id" (click)="openEditSessionDialog($event)" class="btn btn-warning btn-sm me-1">
-        <fa-icon [icon]="faWrench"></fa-icon>
+        <fa-icon [icon]="faWrench" />
         <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
     </button>
     <!-- Delete -->
@@ -27,6 +27,6 @@
         (delete)="deleteTutorialGroupSession()"
         [dialogError]="dialogError$"
     >
-        <fa-icon [icon]="faTrash"></fa-icon>
+        <fa-icon [icon]="faTrash" />
     </button>
 </div>

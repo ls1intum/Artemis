@@ -3,7 +3,7 @@
     <div class="col-auto d-none d-md-block">
         <a class="exercise-row-icon" [routerLink]="routerLink">
             @if (exercise.type) {
-                <fa-icon [icon]="getIcon(exercise.type)" size="2x" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate"></fa-icon>
+                <fa-icon [icon]="getIcon(exercise.type)" size="2x" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
             }
         </a>
     </div>
@@ -12,7 +12,7 @@
             <div class="col-auto d-md-none">
                 <h4 class="fw-medium exercise-title">
                     @if (exercise.type) {
-                        <fa-icon [icon]="getIcon(exercise.type)"></fa-icon>
+                        <fa-icon [icon]="getIcon(exercise.type)" />
                     }
                     &nbsp;
                     {{ exercise.title }}
@@ -22,8 +22,7 @@
                 <h4 class="fw-medium exercise-title">{{ exercise.title }}</h4>
             </div>
             @if (!isPresentationMode) {
-                <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" [triggerLastGraded]="false" class="result">
-                </jhi-submission-result-status>
+                <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" [triggerLastGraded]="false" class="result" />
             }
         </div>
         <div class="row" style="justify-content: space-between">
@@ -37,13 +36,13 @@
                     [equalColumns]="false"
                     [exercise]="exercise"
                     [ngClass]="'mt-2 mb-2 raised-actions'"
-                ></jhi-exercise-details-student-actions>
+                />
             }
             <jhi-exercise-categories
                 [exercise]="exercise"
                 [showTags]="{ difficulty: true, includedInScore: true, notReleased: true, quizLive: !isPresentationMode }"
                 class="exercise-tags col-auto col-sm justify-content-center d-none d-md-flex"
-            ></jhi-exercise-categories>
+            />
             @if (dueDate) {
                 <div class="col-sm-auto mb-2 due-date" [ngClass]="getUrgentClass(dueDate) || ''" [ngbTooltip]="dueDate | artemisDate" [routerLink]="routerLink">
                     <span class="d-none d-sm-inline"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: </span>

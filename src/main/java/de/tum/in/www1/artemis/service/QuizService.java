@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -14,6 +16,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +26,7 @@ import de.tum.in.www1.artemis.repository.DragAndDropMappingRepository;
 import de.tum.in.www1.artemis.repository.ShortAnswerMappingRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @Service
 public abstract class QuizService<T extends QuizConfiguration> {
 
@@ -34,8 +38,6 @@ public abstract class QuizService<T extends QuizConfiguration> {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     /**
      * Save the given QuizConfiguration to the database according to the implementor.
      *
@@ -44,12 +46,10 @@ public abstract class QuizService<T extends QuizConfiguration> {
      */
     protected abstract T saveAndFlush(T quizConfiguration);
 
-    protected QuizService(DragAndDropMappingRepository dragAndDropMappingRepository, ShortAnswerMappingRepository shortAnswerMappingRepository, FileService fileService,
-            FilePathService filePathService) {
+    protected QuizService(DragAndDropMappingRepository dragAndDropMappingRepository, ShortAnswerMappingRepository shortAnswerMappingRepository, FileService fileService) {
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
         this.fileService = fileService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -409,7 +409,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
         Set<String> configurationFileNames = getAllPathsFromDragAndDropQuestionsOfExercise(quizConfiguration);
         Set<String> newFileNames = isCreate ? configurationFileNames : configurationFileNames.stream().filter(fileNameOrUri -> {
             try {
-                return !Files.exists(filePathService.actualPathForPublicPathOrThrow(URI.create(fileNameOrUri)));
+                return !Files.exists(FilePathService.actualPathForPublicPathOrThrow(URI.create(fileNameOrUri)));
             }
             catch (FilePathParsingException e) {
                 // File is not in the internal API format and hence expected to be a new file
@@ -468,6 +468,6 @@ public abstract class QuizService<T extends QuizConfiguration> {
         String clearFileExtension = FileService.sanitizeFilename(FilenameUtils.getExtension(Objects.requireNonNull(file.getOriginalFilename())));
         Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", clearFileExtension));
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
-        return filePathService.publicPathForActualPathOrThrow(savePath, entityId);
+        return FilePathService.publicPathForActualPathOrThrow(savePath, entityId);
     }
 }

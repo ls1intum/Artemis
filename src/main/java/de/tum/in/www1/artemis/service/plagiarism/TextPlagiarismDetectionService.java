@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.service.plagiarism.PlagiarismService.hasMinimumScore;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -10,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
@@ -25,12 +29,12 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.export.TextSubmissionExportService;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class TextPlagiarismDetectionService {
 
@@ -42,14 +46,14 @@ public class TextPlagiarismDetectionService {
 
     private final PlagiarismCacheService plagiarismCacheService;
 
-    private final AuthorizationCheckService authCheckService;
+    private final PlagiarismService plagiarismService;
 
     public TextPlagiarismDetectionService(TextSubmissionExportService textSubmissionExportService, PlagiarismWebsocketService plagiarismWebsocketService,
-            PlagiarismCacheService plagiarismCacheService, AuthorizationCheckService authCheckService) {
+            PlagiarismCacheService plagiarismCacheService, PlagiarismService plagiarismService) {
         this.textSubmissionExportService = textSubmissionExportService;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
-        this.authCheckService = authCheckService;
+        this.plagiarismService = plagiarismService;
     }
 
     /**
@@ -61,13 +65,10 @@ public class TextPlagiarismDetectionService {
      * @return List containing the latest text submission for every participation
      */
     public List<TextSubmission> textSubmissionsForComparison(TextExercise exerciseWithParticipationsAndSubmissions, int minimumScore, int minimumSize) {
-        var textSubmissions = exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().filter(participation -> participation.getStudent().isPresent())
-                .filter(participation -> !authCheckService.isAtLeastTeachingAssistantForExercise(exerciseWithParticipationsAndSubmissions, participation.getStudent().get()))
+        var textSubmissions = exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().filter(plagiarismService.filterForStudents())
                 .map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof TextSubmission)
                 .map(submission -> (TextSubmission) submission).filter(submission -> minimumSize == 0 || submission.getText() != null && submission.countWords() >= minimumSize)
-                .filter(submission -> minimumScore == 0
-                        || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore)
-                .toList();
+                .filter(submission -> hasMinimumScore(submission, minimumScore)).toList();
 
         log.info("Found {} text submissions in exercise {}", textSubmissions.size(), exerciseWithParticipationsAndSubmissions.getId());
 

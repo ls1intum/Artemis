@@ -33,12 +33,7 @@
                             />
                         </td>
                         <td>
-                            <jhi-date-time-picker
-                                [shouldDisplayTimeZoneWarning]="false"
-                                [(ngModel)]="units[i].releaseDate"
-                                name="releaseDate"
-                                id="release-date"
-                            ></jhi-date-time-picker>
+                            <jhi-date-time-picker [shouldDisplayTimeZoneWarning]="false" [(ngModel)]="units[i].releaseDate" name="releaseDate" id="release-date" />
                         </td>
                         <td>
                             <input
@@ -70,13 +65,13 @@
                         </td>
                         <td>
                             <div class="text-center">
-                                <button [disabled]="units && units.length === 1" (click)="deleteRow(i)" class="btn btn-danger"><fa-icon [icon]="faTimes"></fa-icon></button>
+                                <button [disabled]="units && units.length === 1" (click)="deleteRow(i)" class="btn btn-danger"><fa-icon [icon]="faTimes" /></button>
                             </div>
                         </td>
                     </tr>
                 }
                 <button (click)="addRow()" class="btn btn-success mt-2">
-                    <fa-icon [icon]="faPlus"></fa-icon>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.addUnit' | artemisTranslate }}
+                    <fa-icon [icon]="faPlus" />{{ 'artemisApp.attachmentUnit.createAttachmentUnits.addUnit' | artemisTranslate }}
                 </button>
             </tbody>
         </table>
@@ -106,7 +101,7 @@
     </div>
     @if (units && units.length < 1) {
         <div class="alert alert-danger mt-3">
-            <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+            <fa-icon [icon]="faExclamationTriangle" />
             {{ 'artemisApp.attachmentUnit.createAttachmentUnits.noUnitDetected' | artemisTranslate }}
         </div>
     }
@@ -119,10 +114,10 @@
     >
         <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
     </button>
-    <button (click)="cancelSplit()" class="btn btn-default"><fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span></button>
+    <button (click)="cancelSplit()" class="btn btn-default"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span></button>
     @if (invalidUnitTableMessage) {
         <div class="alert alert-warning mt-3">
-            <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+            <fa-icon [icon]="faExclamationTriangle" />
             <span>
                 {{ invalidUnitTableMessage }}
             </span>

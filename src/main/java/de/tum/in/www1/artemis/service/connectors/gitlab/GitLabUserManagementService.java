@@ -140,9 +140,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         log.info("Update Gitlab permissions for programming exercises: {}", programmingExercises.stream().map(ProgrammingExercise::getProjectKey).toList());
         // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
 
-        final Set<User> allUsers = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
-        allUsers.addAll(userRepository.findAllInGroupWithAuthorities(oldEditorGroup));
-        allUsers.addAll(userRepository.findAllInGroupWithAuthorities(oldTeachingAssistantGroup));
+        final Set<User> allUsers = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(oldInstructorGroup);
+        allUsers.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(oldEditorGroup));
+        allUsers.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(oldTeachingAssistantGroup));
         allUsers.addAll(userRepository.findAllUserInGroupAndNotIn(updatedCourse.getInstructorGroupName(), allUsers));
         allUsers.addAll(userRepository.findAllUserInGroupAndNotIn(updatedCourse.getEditorGroupName(), allUsers));
         allUsers.addAll(userRepository.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), allUsers));

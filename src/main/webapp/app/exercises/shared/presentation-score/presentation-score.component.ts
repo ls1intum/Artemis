@@ -28,7 +28,7 @@ import { GradeStepsDTO } from 'app/entities/grade-step.model';
                             [icon]="faQuestionCircle"
                             class="text-secondary"
                             ngbTooltip="{{ 'artemisApp.exercise.presentationScoreEnabled.description' | artemisTranslate }}"
-                        ></fa-icon>
+                        />
                     </div>
                 </div>
             }

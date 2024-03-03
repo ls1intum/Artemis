@@ -46,10 +46,10 @@
                     [elementCounts]="submission && submission.similarElements"
                     [resizeOptions]="resizeOptions"
                     [course]="course"
-                ></jhi-modeling-assessment>
+                />
             }
             @if (modelingExercise) {
-                <jhi-collapsable-assessment-instructions [readOnly]="false" [exercise]="modelingExercise" [collapsed]="false"></jhi-collapsable-assessment-instructions>
+                <jhi-collapsable-assessment-instructions [readOnly]="false" [exercise]="modelingExercise" [collapsed]="false" />
             }
         </div>
         <div class="row mt-3">
@@ -58,7 +58,7 @@
                 (feedbacksChange)="validateFeedback()"
                 [readOnly]="readOnly"
                 [highlightDifferences]="highlightDifferences"
-            ></jhi-unreferenced-feedback>
+            />
             @if ((hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate) {
                 <div class="col-md-6">
                     <h4 jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.title">Highlighting Color(s)</h4>
@@ -112,10 +112,10 @@
                 [elementCounts]="submission && submission.similarElements"
                 [resizeOptions]="resizeOptions"
                 [course]="course"
-            ></jhi-modeling-assessment>
+            />
         }
         @if (modelingExercise) {
-            <jhi-collapsable-assessment-instructions [readOnly]="false" [exercise]="modelingExercise" [collapsed]="false"></jhi-collapsable-assessment-instructions>
+            <jhi-collapsable-assessment-instructions [readOnly]="false" [exercise]="modelingExercise" [collapsed]="false" />
         }
     </div>
     <div class="row mt-3">
@@ -124,7 +124,7 @@
             (feedbacksChange)="validateFeedback()"
             [readOnly]="readOnly"
             [highlightDifferences]="highlightDifferences"
-        ></jhi-unreferenced-feedback>
+        />
         @if ((hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate) {
             <div class="col-md-6">
                 <h4 jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.title">Highlighting Color(s)</h4>

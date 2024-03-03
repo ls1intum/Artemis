@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Competency, CompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
+import { Competency, CompetencyProgress, getIcon } from 'app/entities/competency.model';
 
 @Component({
     selector: 'jhi-competency-card',
@@ -17,7 +17,6 @@ export class CompetencyCardComponent {
     isPrerequisite: boolean;
 
     getIcon = getIcon;
-    getIconTooltip = getIconTooltip;
 
     constructor(public translateService: TranslateService) {}
 

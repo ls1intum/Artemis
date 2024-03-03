@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -14,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,6 +37,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * This service contains the functions to manage QuizPool entity.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQuestionsGenerator {
 
@@ -48,9 +52,8 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
     private final ExamRepository examRepository;
 
     public QuizPoolService(DragAndDropMappingRepository dragAndDropMappingRepository, ShortAnswerMappingRepository shortAnswerMappingRepository,
-            QuizPoolRepository quizPoolRepository, QuizGroupRepository quizGroupRepository, ExamRepository examRepository, FileService fileService,
-            FilePathService filePathService) {
-        super(dragAndDropMappingRepository, shortAnswerMappingRepository, fileService, filePathService);
+            QuizPoolRepository quizPoolRepository, QuizGroupRepository quizGroupRepository, ExamRepository examRepository, FileService fileService) {
+        super(dragAndDropMappingRepository, shortAnswerMappingRepository, fileService);
         this.quizPoolRepository = quizPoolRepository;
         this.quizGroupRepository = quizGroupRepository;
         this.examRepository = examRepository;

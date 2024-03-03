@@ -9,15 +9,15 @@
             <div class="col-12 col-sm-auto d-flex flex-btn-group-container me-1 mb-1">
                 @if (exercise.course.isAtLeastEditor) {
                     <a class="btn btn-primary me-1 mb-1" [routerLink]="getLinkToExampleSubmission('new')">
-                        <fa-icon [icon]="faPlus"></fa-icon>
-                        <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
+                        <fa-icon [icon]="faPlus" />
+                        <fa-icon class="d-xl-none" [icon]="faFont" />
                         <span class="d-none d-xl-inline" jhiTranslate="artemisApp.modelingExercise.createExampleSubmission" id="create-example-submission"></span>
                     </a>
                 }
                 @if (exercise.course.isAtLeastEditor) {
                     <a class="btn btn-primary me-1 mb-1" (click)="openImportModal()">
-                        <fa-icon [icon]="faPlus"></fa-icon>
-                        <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
+                        <fa-icon [icon]="faPlus" />
+                        <fa-icon class="d-xl-none" [icon]="faFont" />
                         <span class="d-none d-xl-inline" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmission"></span>
                     </a>
                 }
@@ -40,14 +40,14 @@
                                     [icon]="faQuestionCircle"
                                     class="text-secondary ps-1"
                                     [ngbTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
-                                ></fa-icon>
+                                />
                             }
                             @if (exercise.type === exerciseType.MODELING) {
                                 <fa-icon
                                     [icon]="faQuestionCircle"
                                     class="text-secondary ps-1"
                                     [ngbTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
-                                ></fa-icon>
+                                />
                             }
                         </th>
                         <th><span jhiTranslate="artemisApp.exampleSubmission.assessmentTraining"></span></th>
@@ -72,9 +72,9 @@
                             </td>
                             <td>
                                 @if (exampleSubmission.submission && exampleSubmission.submission!.results && exampleSubmission.submission!.results!.length > 0) {
-                                    <jhi-result [result]="exampleSubmission.submission!.results![0]" [exercise]="exercise"></jhi-result>
+                                    <jhi-result [result]="exampleSubmission.submission!.results![0]" [exercise]="exercise" />
                                 } @else {
-                                    <jhi-result></jhi-result>
+                                    <jhi-result />
                                 }
                             </td>
                             <td>
@@ -93,13 +93,13 @@
                                         [icon]="faExclamationTriangle"
                                         class="text-warning"
                                         [ngbTooltip]="'artemisApp.exampleSubmission.exampleAssessmentWarning' | artemisTranslate"
-                                    ></fa-icon>
+                                    />
                                 }
                             </td>
                             @if (exercise.course.isAtLeastEditor) {
                                 <td>
                                     <button (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
-                                        <fa-icon [icon]="faTimes"></fa-icon>
+                                        <fa-icon [icon]="faTimes" />
                                         {{ 'entity.action.delete' | artemisTranslate }}
                                     </button>
                                 </td>

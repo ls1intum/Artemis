@@ -8,6 +8,9 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceService } from 'app/shared/science/science.service';
+import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
 
 describe('OnlineUnitComponent', () => {
     const exampleName = 'Test';
@@ -16,9 +19,12 @@ describe('OnlineUnitComponent', () => {
     let onlineUnitComponentFixture: ComponentFixture<OnlineUnitComponent>;
     let onlineUnitComponent: OnlineUnitComponent;
     let onlineUnit: OnlineUnit;
+    let scienceService: ScienceService;
+    let logEventStub: jest.SpyInstance;
 
     beforeEach(() => {
         onlineUnit = new OnlineUnit();
+        onlineUnit.id = 1;
         onlineUnit.name = exampleName;
         onlineUnit.description = exampleDescription;
         onlineUnit.source = exampleSource;
@@ -26,14 +32,18 @@ describe('OnlineUnitComponent', () => {
         TestBed.configureTestingModule({
             imports: [BrowserModule, MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
             declarations: [OnlineUnitComponent, SafeResourceUrlPipe, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            providers: [{ provide: SafeResourceUrlPipe, useClass: SafeResourceUrlPipe }],
-            schemas: [],
+            providers: [
+                { provide: SafeResourceUrlPipe, useClass: SafeResourceUrlPipe },
+                { provide: ScienceService, useClass: MockScienceService },
+            ],
         })
             .compileComponents()
             .then(() => {
                 onlineUnitComponentFixture = TestBed.createComponent(OnlineUnitComponent);
                 onlineUnitComponent = onlineUnitComponentFixture.componentInstance;
                 onlineUnitComponent.onlineUnit = onlineUnit;
+                scienceService = TestBed.inject(ScienceService);
+                logEventStub = jest.spyOn(scienceService, 'logEvent');
             });
     });
 
@@ -82,4 +92,13 @@ describe('OnlineUnitComponent', () => {
             onlineUnitComponent.handleClick(new Event('click'), false);
         });
     }, 1000);
+
+    it('should log event on open link', () => {
+        jest.spyOn(window, 'open').mockImplementation(() => {
+            return null;
+        });
+        onlineUnitComponentFixture.detectChanges(); // ngInit
+        onlineUnitComponent.openLink(new Event('click'));
+        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__OPEN_UNIT, onlineUnit.id!);
+    });
 });

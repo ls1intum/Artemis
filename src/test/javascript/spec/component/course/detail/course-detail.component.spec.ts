@@ -106,19 +106,38 @@ describe('Course Management Detail Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('should call registerChangeInCourses on init', () => {
+    it('should call registerChangeInCourses on init', async () => {
         const registerSpy = jest.spyOn(component, 'registerChangeInCourses');
-
-        fixture.detectChanges();
         component.ngOnInit();
+        await Promise.resolve();
+        await Promise.resolve();
         expect(component.courseDTO).toEqual(dtoMock);
         expect(component.course).toEqual(course);
-        expect(registerSpy).toHaveBeenCalledTimes(2);
+        expect(registerSpy).toHaveBeenCalledOnce();
     });
 
     it('should destroy event subscriber onDestroy', () => {
         const destroySpy = jest.spyOn(eventManager, 'destroy');
         component.ngOnDestroy();
         expect(destroySpy).toHaveBeenCalledOnce();
+    });
+
+    it.each([false, true])(`should return correct course-details with different settings enabled`, (allSettingsEnabled) => {
+        component.course = course;
+        if (allSettingsEnabled) {
+            component.ltiEnabled = true;
+            component.course.complaintsEnabled = true;
+            component.course.requestMoreFeedbackEnabled = true;
+            component.course.enrollmentEnabled = true;
+            component.course.unenrollmentEnabled = true;
+            component.course.organizations = [{ id: 32, name: 'TUM' }];
+        }
+        component.getCourseDetailSections();
+        for (const section of component.courseDetailSections) {
+            expect(section.headline).toBeTruthy();
+            for (const detail of section.details) {
+                expect(detail).toBeTruthy();
+            }
+        }
     });
 });

@@ -19,18 +19,18 @@
                     [colorCommands]="[]"
                     [defaultCommands]="COMMANDS"
                     (markdownChange)="textContentChanged($event)"
-                ></jhi-markdown-editor>
+                />
             </div>
             @if (announcement) {
                 <h3 class="p-2" jhiTranslate="artemisApp.examManagement.announcementCreate.preview">Preview</h3>
-                <jhi-exam-live-event [event]="announcement!"></jhi-exam-live-event>
+                <jhi-exam-live-event [event]="announcement!" />
             }
         </div>
     }
     @if (status === 'submitting') {
         <div class="modal-body">
             <h2 class="mb-0">
-                <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>
+                <fa-icon [icon]="faSpinner" [spin]="true" />
                 <span jhiTranslate="artemisApp.examManagement.announcementCreate.sending">Sending announcement...</span>
             </h2>
         </div>
@@ -38,11 +38,11 @@
     @if (status === 'submitted') {
         <div class="modal-body">
             <h2 class="mb-4">
-                <fa-icon [icon]="faCheckCircle" class="success-color"></fa-icon>
+                <fa-icon [icon]="faCheckCircle" class="success-color" />
                 <span jhiTranslate="artemisApp.examManagement.announcementCreate.sent">Announcement sent!</span>
             </h2>
             @if (announcement) {
-                <jhi-exam-live-event [event]="announcement!"></jhi-exam-live-event>
+                <jhi-exam-live-event [event]="announcement!" />
             }
         </div>
     }

@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.text.ParseException;
+import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,7 +18,9 @@ import com.google.gson.JsonObject;
 import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -25,9 +30,9 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 /**
  * REST controller to handle LTI13 launches.
  */
-@RestController
-@RequestMapping("/api")
 @Profile("lti")
+@RestController
+@RequestMapping("api/")
 public class LtiResource {
 
     private final LtiDeepLinkingService ltiDeepLinkingService;
@@ -36,6 +41,8 @@ public class LtiResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
     /**
      * Constructor for LtiResource.
      *
@@ -43,10 +50,12 @@ public class LtiResource {
      * @param authCheckService      Service for authorization checks.
      * @param ltiDeepLinkingService Service for LTI deep linking.
      */
-    public LtiResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, LtiDeepLinkingService ltiDeepLinkingService) {
+    public LtiResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, LtiDeepLinkingService ltiDeepLinkingService,
+            LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.ltiDeepLinkingService = ltiDeepLinkingService;
+        this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
     }
 
     /**
@@ -55,14 +64,14 @@ public class LtiResource {
      * builds a deep linking response, and returns the target link URI in a JSON object.
      *
      * @param courseId             The identifier of the course for which the deep linking is being performed.
-     * @param exerciseId           The identifier of the exercise to be included in the deep linking response.
+     * @param exerciseIds          The identifier of the exercises to be included in the deep linking response.
      * @param ltiIdToken           The token holding the deep linking information.
      * @param clientRegistrationId The identifier online of the course configuration.
      * @return A ResponseEntity containing a JSON object with the 'targetLinkUri' property set to the deep linking response target link.
      */
-    @PostMapping("/lti13/deep-linking/{courseId}")
+    @PostMapping("lti13/deep-linking/{courseId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseId") String exerciseId,
+    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseIds") Set<Long> exerciseIds,
             @RequestParam(name = "ltiIdToken") String ltiIdToken, @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
@@ -74,10 +83,22 @@ public class LtiResource {
 
         OidcIdToken idToken = new OidcIdToken(ltiIdToken, null, null, SignedJWT.parse(ltiIdToken).getJWTClaimsSet().getClaims());
 
-        String targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, Long.valueOf(exerciseId));
+        String targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, exerciseIds);
 
         JsonObject json = new JsonObject();
         json.addProperty("targetLinkUri", targetLink);
         return ResponseEntity.ok(json.toString());
+    }
+
+    /**
+     * GET lti platforms : Get all configured lti platforms
+     *
+     * @return ResponseEntity containing a list of all lti platforms with status 200 (OK)
+     */
+    @GetMapping("lti-platforms")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<LtiPlatformConfiguration>> getAllConfiguredLtiPlatforms() {
+        List<LtiPlatformConfiguration> platforms = ltiPlatformConfigurationRepository.findAll();
+        return ResponseEntity.ok(platforms);
     }
 }

@@ -58,6 +58,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.plagiarism.PlagiarismUtilService;
@@ -92,9 +93,6 @@ class ProgrammingExerciseIntegrationTestService {
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
-
-    @Value("${artemis.repo-download-clone-path}")
-    private String repoDownloadClonePath;
 
     @Autowired
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
@@ -159,6 +157,9 @@ class ProgrammingExerciseIntegrationTestService {
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
 
+    @Autowired
+    private TeamRepository teamRepository;
+
     private Course course;
 
     public ProgrammingExercise programmingExercise;
@@ -194,6 +195,8 @@ class ProgrammingExerciseIntegrationTestService {
 
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private ContinuousIntegrationService continuousIntegrationService;
+
+    private File plagiarismChecksTestReposDir;
 
     void setup(String userPrefix, MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
             throws Exception {
@@ -245,6 +248,8 @@ class ProgrammingExerciseIntegrationTestService {
         // we use the temp repository as remote origin for all repositories that are created during the
         // TODO: distinguish between template, test and solution
         doReturn(new GitUtilService.MockFileRepositoryUri(remoteRepoFile)).when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
+
+        this.plagiarismChecksTestReposDir = Files.createTempDirectory("jplag-repos").toFile();
     }
 
     void tearDown() throws IOException {
@@ -274,6 +279,9 @@ class ProgrammingExerciseIntegrationTestService {
         }
         if (remoteRepo2File != null && remoteRepo2File.exists()) {
             FileUtils.deleteDirectory(remoteRepo2File);
+        }
+        if (plagiarismChecksTestReposDir != null && plagiarismChecksTestReposDir.exists()) {
+            FileUtils.deleteDirectory(plagiarismChecksTestReposDir);
         }
     }
 
@@ -371,13 +379,13 @@ class ProgrammingExerciseIntegrationTestService {
         // Create the eclipse .project file which will be modified.
         Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
         File projectFile = new File(projectFilePath.toString());
-        String projectFileContents = de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources("test-data/repository-export/sample.project");
+        String projectFileContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/sample.project");
         FileUtils.writeStringToFile(projectFile, projectFileContents, StandardCharsets.UTF_8);
 
         // Create the maven .pom file
         Path pomPath = Path.of(repository1.getLocalPath().toString(), "pom.xml");
         File pomFile = new File(pomPath.toString());
-        String pomContents = de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources("test-data/repository-export/pom.xml");
+        String pomContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/pom.xml");
         FileUtils.writeStringToFile(pomFile, pomContents, StandardCharsets.UTF_8);
 
         var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), userPrefix + "student1");
@@ -692,15 +700,16 @@ class ProgrammingExerciseIntegrationTestService {
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
 
-        List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(programmingExerciseServer);
+        exerciseUtilService.addGradingInstructionsToExercise(programmingExerciseServer);
 
-        assertThat(programmingExerciseServer.getGradingCriteria().get(0).getTitle()).isNull();
-        assertThat(programmingExerciseServer.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");
+        GradingCriterion criterionWithoutTitle = GradingCriterionUtil.findGradingCriterionByTitle(programmingExerciseServer, null);
+        GradingCriterion criterionWithTitle = GradingCriterionUtil.findGradingCriterionByTitle(programmingExerciseServer, "test title");
 
-        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions()).hasSize(1);
-        assertThat(gradingCriteria.get(1).getStructuredGradingInstructions()).hasSize(3);
-        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
-                .isEqualTo("created first instruction with empty criteria for testing");
+        assertThat(criterionWithTitle.getStructuredGradingInstructions()).hasSize(3);
+        assertThat(criterionWithoutTitle.getStructuredGradingInstructions()).hasSize(1);
+        final String expectedDescription = "created first instruction with empty criteria for testing";
+        assertThat(criterionWithoutTitle.getStructuredGradingInstructions().stream().filter(instruction -> expectedDescription.equals(instruction.getInstructionDescription()))
+                .findAny()).isPresent();
     }
 
     void testGetProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
@@ -1435,7 +1444,7 @@ class ProgrammingExerciseIntegrationTestService {
 
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
         mockDelegate.mockConnectorRequestsForImport(programmingExercise, exerciseToBeImported, false, false);
-        mockDelegate.mockConnectorRequestsForSetup(exerciseToBeImported, false);
+        mockDelegate.mockConnectorRequestsForSetup(exerciseToBeImported, false, false, false);
         mockBuildPlanAndRepositoryCheck(programmingExercise);
         doNothing().when(versionControlService).addWebHooksForExercise(any());
         doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
@@ -1768,6 +1777,21 @@ class ProgrammingExerciseIntegrationTestService {
         assertPlagiarismResult(programmingExercise, result, 100.0);
     }
 
+    void testCheckPlagiarismForTeamExercise() throws Exception {
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+
+        var programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
+        programmingExercise.setMode(ExerciseMode.TEAM);
+        programmingExerciseRepository.save(programmingExercise);
+
+        prepareTwoTeamRepositoriesForPlagiarismChecks(programmingExercise);
+
+        final var path = ROOT + CHECK_PLAGIARISM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
+        assertPlagiarismResult(programmingExercise, result, 100.0);
+    }
+
     void testCheckPlagiarismJplagReport() throws Exception {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository
@@ -1819,7 +1843,27 @@ class ProgrammingExerciseIntegrationTestService {
         participationUtilService.addResultToSubmission(submissionStudent2, AssessmentType.AUTOMATIC, null);
         participationUtilService.addResultToSubmission(submissionInstructor1, AssessmentType.AUTOMATIC, null);
 
-        var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos");
+        prepareTwoSubmissionsForPlagiarismChecks(programmingExercise);
+    }
+
+    private Team createTeam(ProgrammingExercise programmingExercise, String suffix) {
+        var student = userUtilService.getUserByLogin(userPrefix + "student" + suffix);
+        var team = new Team().name("Team " + suffix).shortName(userPrefix + "team" + suffix).exercise(programmingExercise).students(Set.of(student));
+        return teamRepository.save(programmingExercise, team);
+    }
+
+    private void prepareTwoTeamRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
+        var participationTeam1 = participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, createTeam(programmingExercise, "1"));
+        var participationTeam2 = participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, createTeam(programmingExercise, "2"));
+        var submissionTeam1 = programmingExerciseUtilService.createProgrammingSubmission(participationTeam1, false);
+        var submissionTeam2 = programmingExerciseUtilService.createProgrammingSubmission(participationTeam2, false);
+        participationUtilService.addResultToSubmission(submissionTeam1, AssessmentType.AUTOMATIC, null);
+        participationUtilService.addResultToSubmission(submissionTeam2, AssessmentType.AUTOMATIC, null);
+
+        prepareTwoSubmissionsForPlagiarismChecks(programmingExercise);
+    }
+
+    private void prepareTwoSubmissionsForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
         var projectKey = programmingExercise.getProjectKey();
 
         var exampleProgram = """
@@ -1855,13 +1899,13 @@ class ProgrammingExerciseIntegrationTestService {
                 }
                 """;
 
-        Files.createDirectories(jPlagReposDir.resolve(projectKey));
-        Path file1 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("1-Submission1.java"));
+        Files.createDirectories(plagiarismChecksTestReposDir.toPath().resolve(projectKey));
+        Path file1 = Files.createFile(plagiarismChecksTestReposDir.toPath().resolve(projectKey).resolve("1-Submission1.java"));
         FileUtils.writeStringToFile(file1.toFile(), exampleProgram, StandardCharsets.UTF_8);
-        Path file2 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("2-Submission2.java"));
+        Path file2 = Files.createFile(plagiarismChecksTestReposDir.toPath().resolve(projectKey).resolve("2-Submission2.java"));
         FileUtils.writeStringToFile(file2.toFile(), exampleProgram, StandardCharsets.UTF_8);
 
-        doReturn(jPlagReposDir).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));
+        doReturn(plagiarismChecksTestReposDir.toPath()).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));
         doReturn(null).when(uriService).getRepositorySlugFromRepositoryUri(any());
 
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
@@ -2091,7 +2135,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, true, true, false, false);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, false);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, false);
-        mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
 
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, true);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.OK);
@@ -2169,7 +2213,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setShortName("ExerciseTitle");
         programmingExercise.setTitle("Title");
         if (expectedStatus == HttpStatus.CREATED) {
-            mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
+            mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
             mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
         }
         request.postWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, ProgrammingExercise.class, expectedStatus);

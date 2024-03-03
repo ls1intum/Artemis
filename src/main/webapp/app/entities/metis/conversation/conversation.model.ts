@@ -32,7 +32,7 @@ export abstract class Conversation implements BaseEntity {
 /**
  * DTO
  */
-export abstract class ConversationDto {
+export abstract class ConversationDTO {
     public type?: ConversationType;
     public id?: number;
     public creationDate?: dayjs.Dayjs;
@@ -44,10 +44,18 @@ export abstract class ConversationDto {
     public creator?: ConversationUserDTO;
     public isCreator?: boolean;
     public isFavorite?: boolean;
-
     public isHidden?: boolean;
+    public isMuted?: boolean;
 
     protected constructor(type: ConversationType) {
         this.type = type;
     }
+}
+
+/**
+ * Checks if a notification, due to this conversation, should notify its recipients.
+ * @param conversation a conversation
+ */
+export function shouldNotifyRecipient(conversation: ConversationDTO): boolean {
+    return !conversation.isMuted && !conversation.isHidden;
 }

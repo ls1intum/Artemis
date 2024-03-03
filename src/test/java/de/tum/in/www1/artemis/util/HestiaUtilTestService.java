@@ -56,7 +56,7 @@ public class HestiaUtilTestService {
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;

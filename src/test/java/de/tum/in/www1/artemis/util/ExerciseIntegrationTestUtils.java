@@ -12,6 +12,7 @@ import org.springframework.util.MultiValueMap;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
  * Service responsible for util methods / shared code that is helpful or common for testing all exercise types
@@ -64,20 +65,22 @@ public class ExerciseIntegrationTestUtils {
         String examFilterExerciseTitle = resultWithOnlyExamFilterActive.getResultsOnPage().get(0).getTitle();
         assertThat(examFilterExerciseTitle).isEqualTo(searchTerm + "-Morpork");
 
-        for (var sort : Exercise.ExerciseSearchColumn.values()) {
-            if (sort == Exercise.ExerciseSearchColumn.PROGRAMMING_LANGUAGE && !apiPath.contains("programming")) {
+        var columnNameMap = PageUtil.ColumnMapping.EXERCISE.getColumnNameMap();
+
+        for (var sort : columnNameMap.keySet()) {
+            if (sort.equals("PROGRAMMING_LANGUAGE") && !apiPath.contains("programming")) {
                 continue;
             }
             for (var order : List.of(SortingOrder.ASCENDING, SortingOrder.DESCENDING)) {
                 search = pageableSearchUtilService.configureSearch(searchTerm);
-                search.setSortedColumn(sort.toString());
+                search.setSortedColumn(sort);
                 search.setSortingOrder(order);
                 var params = pageableSearchUtilService.searchMapping(search);
 
-                if (sort == Exercise.ExerciseSearchColumn.EXAM_TITLE) {
+                if (sort.equals("EXAM_TITLE")) {
                     params.add("isCourseFilter", "false");
                 }
-                else if (sort == Exercise.ExerciseSearchColumn.COURSE_TITLE) {
+                else if (sort.equals("COURSE_TITLE")) {
                     params.add("isExamFilter", "false");
                 }
 
@@ -92,13 +95,14 @@ public class ExerciseIntegrationTestUtils {
         }
     }
 
-    private Comparator<Exercise> getExpectedComparator(Exercise.ExerciseSearchColumn sort) {
+    private Comparator<Exercise> getExpectedComparator(String sort) {
         return switch (sort) {
-            case ID -> Comparator.comparing(exercise -> exercise.getId());
-            case TITLE -> Comparator.comparing(exercise -> exercise.getTitle());
-            case COURSE_TITLE -> Comparator.comparing(exercise -> exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
-            case EXAM_TITLE -> Comparator.comparing(exercise -> exercise.getExerciseGroup().getExam().getTitle());
-            case PROGRAMMING_LANGUAGE -> Comparator.comparing(exercise -> ((ProgrammingExercise) exercise).getProgrammingLanguage());
+            case "ID" -> Comparator.comparing(exercise -> exercise.getId());
+            case "TITLE" -> Comparator.comparing(exercise -> exercise.getTitle());
+            case "COURSE_TITLE" -> Comparator.comparing(exercise -> exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
+            case "EXAM_TITLE" -> Comparator.comparing(exercise -> exercise.getExerciseGroup().getExam().getTitle());
+            case "PROGRAMMING_LANGUAGE" -> Comparator.comparing(exercise -> ((ProgrammingExercise) exercise).getProgrammingLanguage());
+            default -> throw new IllegalStateException("Unexpected value: " + sort);
         };
     }
 

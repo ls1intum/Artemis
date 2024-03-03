@@ -14,6 +14,7 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { Channel, ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Exam } from 'app/entities/exam.model';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 
 export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'directory/attachments/slides/Metis-Slide-1.png' } as Slide;
 export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/attachments/Metis-Attachment.pdf' } as Attachment;
@@ -283,7 +284,15 @@ export const metisPostInChannel = {
     conversation: metisChannel,
 } as Post;
 
-export const metisGeneralChannelDto = {
+export const plagiarismPost = {
+    id: 11,
+    author: metisUser1,
+    title: 'title',
+    content: 'plagiarism Case',
+    plagiarismCase: { id: 1 } as PlagiarismCase,
+} as Post;
+
+export const metisGeneralChannelDTO = {
     id: 17,
     type: ConversationType.CHANNEL,
     subType: ChannelSubType.GENERAL,
@@ -291,7 +300,7 @@ export const metisGeneralChannelDto = {
     name: 'general-channel',
 } as ChannelDTO;
 
-export const metisExerciseChannelDto = {
+export const metisExerciseChannelDTO = {
     id: 14,
     type: ConversationType.CHANNEL,
     subType: ChannelSubType.EXERCISE,
@@ -301,7 +310,7 @@ export const metisExerciseChannelDto = {
     name: 'exercise-channel',
 } as ChannelDTO;
 
-export const metisLectureChannelDto = {
+export const metisLectureChannelDTO = {
     id: 15,
     type: ConversationType.CHANNEL,
     subType: ChannelSubType.LECTURE,
@@ -310,7 +319,7 @@ export const metisLectureChannelDto = {
     name: 'lecture-channel',
 } as ChannelDTO;
 
-export const metisExamChannelDto = {
+export const metisExamChannelDTO = {
     id: 20,
     type: ConversationType.CHANNEL,
     subType: ChannelSubType.EXAM,

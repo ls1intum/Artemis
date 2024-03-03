@@ -1,6 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync } from '@angular/core/testing';
+import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
@@ -11,6 +12,7 @@ import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('LectureUnitService', () => {
     let service: LectureUnitService;
@@ -19,12 +21,13 @@ describe('LectureUnitService', () => {
     let attachmentUnit: AttachmentUnit;
     let textUnit: TextUnit;
     let videoUnit: VideoUnit;
+    let lecture: Lecture;
     let expectedResultArray: any;
     let convertDateFromServerEntitySpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [ArtemisTestModule, HttpClientTestingModule],
         });
         expectedResultArray = {} as HttpResponse<LectureUnit[]>;
         service = TestBed.inject(LectureUnitService);
@@ -52,6 +55,12 @@ describe('LectureUnitService', () => {
         exerciseUnit = new ExerciseUnit();
         exerciseUnit.id = 42;
         exerciseUnit.exercise = exercise;
+        exerciseUnit.visibleToStudents = true;
+
+        lecture = {
+            id: 5,
+            lectureUnits: [exerciseUnit],
+        };
 
         textUnit = new TextUnit();
         textUnit.id = 23;
@@ -96,5 +105,31 @@ describe('LectureUnitService', () => {
     it('should send a request to the server to get ngx representation of learning path', fakeAsync(() => {
         service.getLectureUnitForLearningPathNodeDetails(1).subscribe();
         httpMock.expectOne({ method: 'GET', url: 'api/lecture-units/1/for-learning-path-node-details' });
+    }));
+
+    it('should set lecture unit as completed', fakeAsync(() => {
+        exerciseUnit.completed = false;
+        service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: true });
+        httpMock.expectOne({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=true' }).flush(null);
+        expect(exerciseUnit.completed).toBeTrue();
+    }));
+
+    it('should set lecture unit as uncompleted', fakeAsync(() => {
+        exerciseUnit.completed = true;
+        service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
+        httpMock.expectOne({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=false' }).flush(null);
+        expect(exerciseUnit.completed).toBeFalse();
+    }));
+
+    it('should not set completion status if already completed', fakeAsync(() => {
+        exerciseUnit.completed = false;
+        service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
+        httpMock.expectNone({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=false' });
+    }));
+
+    it('should not set completion status if not visible', fakeAsync(() => {
+        exerciseUnit.visibleToStudents = false;
+        service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
+        httpMock.expectNone({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=false' });
     }));
 });

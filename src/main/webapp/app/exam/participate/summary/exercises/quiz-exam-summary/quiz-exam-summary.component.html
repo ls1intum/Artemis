@@ -20,7 +20,7 @@
                         [forceSampleSolution]="false"
                         [questionIndex]="i + 1"
                         [score]="getScoreForQuizQuestion(question.id!)"
-                    ></jhi-multiple-choice-question>
+                    />
                 }
                 <!-- TODO: Map vs Array consistency -->
                 @if (question.type === DRAG_AND_DROP) {
@@ -33,7 +33,7 @@
                         [forceSampleSolution]="false"
                         [questionIndex]="i + 1"
                         [score]="getScoreForQuizQuestion(question.id!)"
-                    ></jhi-drag-and-drop-question>
+                    />
                 }
                 <!-- TODO: Map vs Array consistency -->
                 @if (question.type === SHORT_ANSWER) {
@@ -46,7 +46,7 @@
                         [forceSampleSolution]="false"
                         [questionIndex]="i + 1"
                         [score]="getScoreForQuizQuestion(question.id!)"
-                    ></jhi-short-answer-question>
+                    />
                 }
             </div>
         }

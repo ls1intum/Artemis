@@ -70,7 +70,7 @@ the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
         build-timeout: 30
     git:
         name: Artemis
-        email: artemis.in@tum.de
+        email: artemis@xcit.tum.de
    jenkins:
        internal-urls:
            ci-url: http://jenkins:8080

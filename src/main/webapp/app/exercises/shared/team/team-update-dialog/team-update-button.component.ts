@@ -15,7 +15,7 @@ import { faPencilAlt, faPlus } from '@fortawesome/free-solid-svg-icons';
             [icon]="team ? faPencilAlt : faPlus"
             [title]="team ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'"
             (onClick)="openTeamCreateDialog($event)"
-        ></jhi-button>
+        />
     `,
 })
 export class TeamUpdateButtonComponent {

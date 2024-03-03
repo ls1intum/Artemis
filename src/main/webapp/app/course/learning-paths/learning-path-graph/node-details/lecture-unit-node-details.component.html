@@ -3,7 +3,7 @@
         <div class="col">
             <h3 class="mb-0">
                 @if (lectureUnit.type) {
-                    <fa-icon [icon]="getIcon(lectureUnit.type!)" [fixedWidth]="true" [ngbTooltip]="getIconTooltip(lectureUnit.type!) | artemisTranslate" container="body"></fa-icon>
+                    <fa-icon [icon]="getIcon(lectureUnit.type!)" [fixedWidth]="true" [ngbTooltip]="getIconTooltip(lectureUnit.type!) | artemisTranslate" container="body" />
                 }
                 <span>{{ lectureUnit.name }}</span>
             </h3>

@@ -305,7 +305,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         assertThat(channel.getCreator()).isNull();
         assertThat(channel.getIsAnnouncementChannel()).isFalse();
 
-        var members = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
+        var members = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId());
         var moderators = members.stream().filter(ConversationParticipant::getIsModerator).collect(Collectors.toSet());
         var nonModerators = members.stream().filter(participant -> !participant.getIsModerator()).collect(Collectors.toSet());
 

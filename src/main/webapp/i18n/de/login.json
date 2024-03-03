@@ -18,8 +18,8 @@
             "forgot": "Du hast dein Passwort vergessen?"
         },
         "ide": {
-            "confirmation": "Wills du deinen Login und dein Passwort in IntelliJ speichern?\nDas wird das Importieren deiner Programmieraufgaben sehr vereinfachen!",
-            "title": "IntelliJ Login"
+            "confirmation": "Wills du deinen Login und dein Passwort in deiner IDE speichern?\nDas wird das Importieren deiner Programmieraufgaben sehr vereinfachen!",
+            "title": "IDE Login"
         }
     },
     "logout": {

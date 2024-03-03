@@ -8,8 +8,7 @@
         [currentPercentage]="doughnutStats?.averageScoreOfExercise"
         [currentAbsolute]="doughnutStats?.absoluteAveragePoints"
         [currentMax]="doughnutStats?.maxPointsOfExercise"
-    >
-    </jhi-doughnut-chart>
+    />
     <jhi-doughnut-chart
         class="col-md-4"
         [course]="course"
@@ -19,8 +18,7 @@
         [currentPercentage]="doughnutStats?.participationsInPercent"
         [currentAbsolute]="doughnutStats?.numberOfParticipations"
         [currentMax]="doughnutStats?.numberOfStudentsOrTeamsInCourse"
-    >
-    </jhi-doughnut-chart>
+    />
     @if (isCommunicationEnabled(course)) {
         <jhi-doughnut-chart
             class="col-md-4"
@@ -31,7 +29,6 @@
             [currentPercentage]="doughnutStats?.resolvedPostsInPercent"
             [currentAbsolute]="doughnutStats?.numberOfResolvedPosts"
             [currentMax]="doughnutStats?.numberOfPosts"
-        >
-        </jhi-doughnut-chart>
+        />
     }
 </div>

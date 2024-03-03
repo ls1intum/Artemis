@@ -16,7 +16,7 @@
                         [isLoading]="isSaving"
                         [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
                         [tooltip]="submitButtonTooltip"
-                    ></jhi-button>
+                    />
                 }
             </ng-container>
         </jhi-header-participation-page>
@@ -33,7 +33,7 @@
                                 [participation]="participation"
                                 [typing$]="submissionObservable"
                                 [dockedToRightSide]="true"
-                            ></jhi-team-participate-info-box>
+                            />
                         </div>
                     }
                 </div>
@@ -57,7 +57,7 @@
                                         [submissionObservable]="submissionObservable"
                                         [participation]="participation"
                                         (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
-                                    ></jhi-team-submission-sync>
+                                    />
                                 }
                             </div>
                         }
@@ -76,7 +76,7 @@
                                         [course]="course"
                                         (selectionChanged)="onSelectionChanged($event)"
                                         [explanation]="explanation"
-                                    ></jhi-modeling-assessment>
+                                    />
                                 </div>
                             </div>
                         }
@@ -127,7 +127,7 @@
                                                                     class="text-secondary"
                                                                     [icon]="faExclamationTriangle"
                                                                     [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
-                                                                ></fa-icon>
+                                                                />
                                                             }
                                                         </td>
                                                     </tr>
@@ -142,23 +142,21 @@
                 </jhi-fullscreen>
                 <div class="row">
                     @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {
-                        <jhi-additional-feedback class="col-xl-8 mt-3 alert unreferencedFeedback" [feedback]="unreferencedFeedback || []" [additional]="true" [course]="course">
-                        </jhi-additional-feedback>
+                        <jhi-additional-feedback class="col-xl-8 mt-3 alert unreferencedFeedback" [feedback]="unreferencedFeedback || []" [additional]="true" [course]="course" />
                     }
                 </div>
                 @if (result) {
                     <div class="row">
-                        <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)"></jhi-rating>
+                        <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)" />
                     </div>
                 }
                 @if (result && !examMode) {
-                    <jhi-complaint-student-view [exercise]="modelingExercise" [participation]="participation" [result]="resultWithComplaint ? resultWithComplaint : result">
-                    </jhi-complaint-student-view>
+                    <jhi-complaint-student-view [exercise]="modelingExercise" [participation]="participation" [result]="resultWithComplaint ? resultWithComplaint : result" />
                 }
             </div>
             <!--endregion-->
             <!--region Right Panel-->
-            <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
+            <fa-icon right-header [icon]="farListAlt" />&nbsp;
             <span right-header id="problem-statement" jhiTranslate="artemisApp.modelingSubmission.problemStatement">Problem Statement</span>
             <p right-body class="mb-3 markdown-preview">
                 @if (modelingExercise!.problemStatement) {

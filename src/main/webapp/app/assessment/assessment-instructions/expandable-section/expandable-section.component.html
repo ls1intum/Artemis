@@ -1,21 +1,21 @@
 @if (hasTranslation === false && headerKey !== null && isSubHeader === false) {
     <h5 class="expandable-header" (click)="toggleCollapsed()">
         {{ headerKey }}
-        <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown"></fa-icon>
+        <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown" />
     </h5>
 }
 @if (hasTranslation === true && headerKey !== null && isSubHeader === false) {
     <h5 class="expandable-header" (click)="toggleCollapsed()">
         {{ headerKey | artemisTranslate }}
-        <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown"></fa-icon>
+        <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown" />
     </h5>
 }
 @if (hasTranslation === false && headerKey !== null && isSubHeader === true) {
     <h6 class="expandable-header" (click)="toggleCollapsed()">
         {{ headerKey }}
-        <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown"></fa-icon>
+        <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown" />
     </h6>
 }
 <div [ngbCollapse]="isCollapsed">
-    <ng-content></ng-content>
+    <ng-content />
 </div>
