@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import io.github.classgraph.AnnotationEnumValue;
 import org.jetbrains.annotations.NotNull;
 
 import com.google.gson.GsonBuilder;
@@ -40,9 +41,9 @@ public class GeneratePlaceholderSignatures {
                 Class<?> loaded = placeholderClass.loadClass();
                 var fieldDescriptions = Arrays.stream(loaded.getDeclaredFields()).map(field -> new FieldDescription(field.getName(), field.getType().getName())).sorted().toList();
 
-                var notificationTypes = (String[]) placeholderClass.getAnnotationInfo(ANNOTATION_NAME).getParameterValues().get("values").getValue();
+                var notificationTypes = (Object[]) placeholderClass.getAnnotationInfo(ANNOTATION_NAME).getParameterValues().get("values").getValue();
 
-                return Arrays.stream(notificationTypes).map(notificationType -> new ClassSignature(notificationType, fieldDescriptions));
+                return Arrays.stream(notificationTypes).map(notificationType -> new ClassSignature(((AnnotationEnumValue) notificationType).getValueName(), fieldDescriptions));
             }).sorted().toList();
 
             // Signature as json
@@ -57,7 +58,8 @@ public class GeneratePlaceholderSignatures {
         }
     }
 
-    private record ClassSignature(String notificationType, List<FieldDescription> fieldDescriptions) implements Comparable<ClassSignature> {
+    private record ClassSignature(String notificationType,
+                                  List<FieldDescription> fieldDescriptions) implements Comparable<ClassSignature> {
 
         @Override
         public int compareTo(@NotNull GeneratePlaceholderSignatures.ClassSignature classSignature) {

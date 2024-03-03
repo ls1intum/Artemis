@@ -64,7 +64,7 @@ public class GroupNotification extends Notification {
         this.setTitle(title);
         this.setText(notificationText);
         this.setTextIsPlaceholder(textIsPlaceholder);
-        this.setPlaceholderValues(placeholderValues);
+        // this.setPlaceholderValues(placeholderValues); // TODO
         this.setAuthor(user);
     }
 
@@ -76,7 +76,7 @@ public class GroupNotification extends Notification {
         this.setTitle(title);
         this.setText(notificationText);
         this.setTextIsPlaceholder(textIsPlaceholder);
-        this.setPlaceholderValues(placeholderValues);
+        // this.setPlaceholderValues(placeholderValues); // TODO
         this.setAuthor(user);
         this.setPriority(priority);
     }

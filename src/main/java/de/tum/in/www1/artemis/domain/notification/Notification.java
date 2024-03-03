@@ -13,8 +13,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
@@ -125,7 +123,8 @@ public abstract class Notification extends DomainObject {
 
     @JsonIgnore
     public NotificationPlaceholders getTransientPlaceholderValuesAsArray() {
-        return transientPlaceholderValues;
+        throw new RuntimeException();
+        // return transientPlaceholderValues;
     }
 
     /**
@@ -133,21 +132,21 @@ public abstract class Notification extends DomainObject {
      *                                   We convert it to a json string, so we can store it in the database
      */
     public void setPlaceholderValues(NotificationPlaceholders notificationTextValues) {
-        transientPlaceholderValues = notificationTextValues;
+        throw new RuntimeException();
 
-        if (notificationTextValues == null || notificationTextValues.length == 0) {
-            this.placeholderValues = null;
-        }
-        else {
-            String jsonString = null;
-            try {
-                jsonString = new ObjectMapper().writeValueAsString(notificationTextValues);
-            }
-            catch (JsonProcessingException exception) {
-                log.error(exception.getMessage(), exception);
-            }
-            this.placeholderValues = jsonString;
-        }
+        // transientPlaceholderValues = notificationTextValues;
+
+        // if (notificationTextValues == null || notificationTextValues.length == 0) {
+        // this.placeholderValues = null;
+        // } else {
+        // String jsonString = null;
+        // try {
+        // jsonString = new ObjectMapper().writeValueAsString(notificationTextValues);
+        // } catch (JsonProcessingException exception) {
+        // log.error(exception.getMessage(), exception);
+        // }
+        // this.placeholderValues = jsonString;
+        // }
     }
 
     public ZonedDateTime getNotificationDate() {

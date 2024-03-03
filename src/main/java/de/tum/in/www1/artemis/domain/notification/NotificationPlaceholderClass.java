@@ -5,9 +5,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)
 public @interface NotificationPlaceholderClass {
 
-    String[] values();
+    NotificationType[] values();
 }

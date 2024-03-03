@@ -42,7 +42,7 @@ public class ConversationNotification extends Notification {
         this.setTitle(title);
         this.setText(text);
         this.setAuthor(new User(author.getId(), null, author.getFirstName(), author.getLastName(), null, null));
-        this.setPlaceholderValues(placeholderValues);
+        // this.setPlaceholderValues(placeholderValues); // TODO
         this.setTextIsPlaceholder(textIsPlaceholder);
     }
 

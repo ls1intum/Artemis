@@ -50,7 +50,7 @@ public class TutorialGroupNotification extends Notification {
         this.setTitle(title);
         this.setText(text);
         this.setTextIsPlaceholder(textIsPlaceholder);
-        this.setPlaceholderValues(placeholderValues);
+        // this.setPlaceholderValues(placeholderValues); // TODO
     }
 
     public TutorialGroup getTutorialGroup() {

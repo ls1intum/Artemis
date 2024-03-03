@@ -142,8 +142,9 @@ public abstract class PushNotificationService implements InstantNotificationServ
         }
 
         final String date = Instant.now().toString();
-        final String payload = gson.toJson(
-                new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date, Constants.PUSH_NOTIFICATION_VERSION));
+        final String payload = ""; // TODO
+        // final String payload = gson.toJson(
+        // new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date, Constants.PUSH_NOTIFICATION_VERSION));
 
         final byte[] initializationVector = new byte[16];
 

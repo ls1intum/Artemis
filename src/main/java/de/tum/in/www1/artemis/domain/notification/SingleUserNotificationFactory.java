@@ -230,7 +230,7 @@ public class SingleUserNotificationFactory {
             messageReplyTextType = MESSAGE_REPLY_IN_CHANNEL_TEXT;
         }
 
-        SingleUserNotification notification = new SingleUserNotification(user, title, messageReplyTextType, true, placeholders);
+        SingleUserNotification notification = new SingleUserNotification(user, title, messageReplyTextType, true, new String[] {}); // TODO
         notification.setTransientAndStringTarget(createMessageReplyTarget(answerPost, conversation.getCourse().getId()));
         notification.setAuthor(responsibleForAction);
         return notification;
