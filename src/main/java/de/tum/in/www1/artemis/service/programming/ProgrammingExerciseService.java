@@ -50,6 +50,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
@@ -149,6 +150,8 @@ public class ProgrammingExerciseService {
 
     private final ProfileService profileService;
 
+    private final ExamLiveEventsService examLiveEventsService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -162,7 +165,8 @@ public class ProgrammingExerciseService {
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService,
+            ExamLiveEventsService examLiveEventsService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -194,6 +198,7 @@ public class ProgrammingExerciseService {
         this.buildScriptGenerationService = buildScriptGenerationService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.profileService = profileService;
+        this.examLiveEventsService = examLiveEventsService;
     }
 
     /**
@@ -542,9 +547,14 @@ public class ProgrammingExerciseService {
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
-        // TODO: in case of an exam exercise, this is not necessary
-        scheduleOperations(updatedProgrammingExercise.getId());
-        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
+        if (programmingExerciseBeforeUpdate.isExamExercise()) {
+            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedProgrammingExercise, notificationText);
+        }
+        else {
+            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise,
+                    notificationText);
+            scheduleOperations(updatedProgrammingExercise.getId());
+        }
         return savedProgrammingExercise;
     }
 
@@ -622,7 +632,12 @@ public class ProgrammingExerciseService {
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
 
-        groupNotificationService.notifyAboutExerciseUpdate(programmingExercise, notificationText);
+        if (programmingExercise.isExamExercise()) {
+            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(programmingExercise, notificationText);
+        }
+        else {
+            groupNotificationService.notifyAboutExerciseUpdate(programmingExercise, notificationText);
+        }
 
         return updatedProgrammingExercise;
     }

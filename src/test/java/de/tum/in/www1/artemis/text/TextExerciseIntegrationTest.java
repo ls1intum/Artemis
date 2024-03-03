@@ -2,6 +2,10 @@ package de.tum.in.www1.artemis.text;
 
 import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -16,6 +20,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -41,6 +46,8 @@ import de.tum.in.www1.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
@@ -110,6 +117,12 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private PlagiarismUtilService plagiarismUtilService;
+
+    @SpyBean
+    private ExamLiveEventsService examLiveEventsService;
+
+    @SpyBean
+    private GroupNotificationScheduleService groupNotificationScheduleService;
 
     @BeforeEach
     void initTestCase() {
@@ -385,6 +398,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
 
+        // update problem statement
+        textExercise.setProblemStatement("New problem statement");
+
         // add example submission to exercise
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
         textSubmissionRepository.save(textSubmission);
@@ -401,6 +417,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(updatedTextExercise.getCourseViaExerciseGroupOrCourseMember()).as("course was set for normal exercise").isNotNull();
         assertThat(updatedTextExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
         assertThat(updatedTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
+        verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any());
+        verify(groupNotificationScheduleService, times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
     }
 
     @Test
@@ -492,6 +510,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setTitle(updateTitle);
         textExercise.setDifficulty(updateDifficulty);
 
+        // update problem statement
+        textExercise.setProblemStatement("New problem statement");
+
         TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.OK);
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(updateTitle);
@@ -499,6 +520,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(updatedTextExercise.isCourseExercise()).as("course was not set for exam exercise").isFalse();
         assertThat(updatedTextExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(updatedTextExercise.getExerciseGroup().getId()).as("exerciseGroupId was not updated").isEqualTo(exerciseGroup.getId());
+        verify(examLiveEventsService, times(1)).createAndSendProblemStatementUpdateEvent(any(), any());
+        verify(groupNotificationScheduleService, never()).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

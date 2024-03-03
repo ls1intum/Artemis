@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.exercise.modelingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
@@ -14,6 +16,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -35,6 +38,7 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -95,6 +99,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
+
+    @SpyBean
+    private ExamLiveEventsService examLiveEventsService;
 
     private ModelingExercise classExercise;
 
@@ -211,10 +218,30 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 params);
         assertThat(returnedModelingExercise.getGradingCriteria()).hasSameSizeAs(gradingCriteria);
         verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
+        verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(returnedModelingExercise, notificationText);
 
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
         modelingExercise = ModelingExerciseFactory.createModelingExercise(Long.MAX_VALUE, classExercise.getId());
         request.put("/api/modeling-exercises", modelingExercise, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateModelingExerciseForExam_asInstructor() throws Exception {
+        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
+        modelingExerciseRepository.save(modelingExercise);
+
+        modelingExercise.setProblemStatement("New problem statement");
+        var params = new LinkedMultiValueMap<String, String>();
+        var notificationText = "notified!";
+        params.add("notificationText", notificationText);
+        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.OK,
+                params);
+
+        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
+        verify(examLiveEventsService, times(1)).createAndSendProblemStatementUpdateEvent(returnedModelingExercise, notificationText);
+
     }
 
     @Test

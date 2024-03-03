@@ -59,6 +59,15 @@
                     }
                 </div>
             }
+            @case (ExamLiveEventType.PROBLEM_STATEMENT_UPDATE) {
+                <div>
+                    <div jhiTranslate="artemisApp.exam.events.messages.problemStatementUpdate.description" class="wt-title">
+                        The problem statement of the exercise was updated. Please open the corresponding exercise to see the changes
+                    </div>
+                    <div [innerHTML]="'Instructors message:' | htmlForMarkdown"></div>
+                    <div [innerHTML]="problemStatementUpdateEvent.text | htmlForMarkdown"></div>
+                </div>
+            }
         }
     </div>
     @if (showAcknowledge) {

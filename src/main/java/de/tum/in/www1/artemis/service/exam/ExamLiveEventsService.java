@@ -5,11 +5,14 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.event.*;
 import de.tum.in.www1.artemis.repository.ExamLiveEventRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 /**
@@ -19,6 +22,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
  * <li>Exam Wide Announcements
  * <li>Working Time Updates
  * <li>Exam Attendance Check
+ * <li>Problem Statement Updates
  * </ul>
  * <p>
  * In the future, we can incorporate more events here.
@@ -44,9 +48,16 @@ public class ExamLiveEventsService {
 
     private final ExamLiveEventRepository examLiveEventRepository;
 
-    public ExamLiveEventsService(WebsocketMessagingService websocketMessagingService, ExamLiveEventRepository examLiveEventRepository) {
+    private final StudentExamRepository studentExamRepository;
+
+    private final UserRepository userRepository;
+
+    public ExamLiveEventsService(WebsocketMessagingService websocketMessagingService, ExamLiveEventRepository examLiveEventRepository, StudentExamRepository studentExamRepository,
+            UserRepository userRepository) {
         this.websocketMessagingService = websocketMessagingService;
         this.examLiveEventRepository = examLiveEventRepository;
+        this.studentExamRepository = studentExamRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -113,6 +124,40 @@ public class ExamLiveEventsService {
         event.setNewWorkingTime(newWorkingTime);
         event.setOldWorkingTime(oldWorkingTime);
         event.setCourseWide(courseWide);
+
+        this.storeAndDistributeLiveExamEvent(event);
+    }
+
+    /**
+     * Send a problem statement update to all affected students.
+     *
+     * @param exercise The exam exercise the problem statement was updated for
+     * @param message  The message to send
+     */
+    public void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message) {
+        User instructor = userRepository.getUser();
+        Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
+        studentExamRepository.findAllWithExercisesByExamId(exam.getId()).stream().filter(studentExam -> studentExam.getExercises().contains(exercise))
+                .forEach(studentExam -> this.createAndSendProblemStatementUpdateEvent(studentExam, message, instructor));
+    }
+
+    /**
+     * Send a problem statement update to the specified student.
+     *
+     * @param studentExam The student exam the time was updated for
+     * @param message     The message to send
+     * @param sentBy      The user who performed the update
+     */
+    public void createAndSendProblemStatementUpdateEvent(StudentExam studentExam, String message, User sentBy) {
+        var event = new ProblemStatementUpdateEvent();
+
+        // Common fields
+        event.setExamId(studentExam.getExam().getId());
+        event.setStudentExamId(studentExam.getId());
+        event.setCreatedBy(sentBy.getName());
+
+        // Specific fields
+        event.setTextContent(message);
 
         this.storeAndDistributeLiveExamEvent(event);
     }

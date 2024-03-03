@@ -5,6 +5,7 @@ import {
     ExamLiveEvent,
     ExamLiveEventType,
     ExamWideAnnouncementEvent,
+    ProblemStatementUpdateEvent,
     WorkingTimeUpdateEvent,
 } from 'app/exam/participate/exam-participation-live-events.service';
 
@@ -40,6 +41,10 @@ export class ExamLiveEventComponent {
 
     get workingTimeUpdateEvent(): WorkingTimeUpdateEvent {
         return this.event as WorkingTimeUpdateEvent;
+    }
+
+    get problemStatementUpdateEvent(): ProblemStatementUpdateEvent {
+        return this.event as ProblemStatementUpdateEvent;
     }
 
     acknowledgeEvent() {

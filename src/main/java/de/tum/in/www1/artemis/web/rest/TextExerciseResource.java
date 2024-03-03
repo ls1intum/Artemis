@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
 import de.tum.in.www1.artemis.service.export.TextSubmissionExportService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -114,6 +115,8 @@ public class TextExerciseResource {
 
     private final ChannelRepository channelRepository;
 
+    private final ExamLiveEventsService examLiveEventsService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
@@ -121,7 +124,7 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
-            ChannelService channelService, ChannelRepository channelRepository) {
+            ChannelService channelService, ChannelRepository channelRepository, ExamLiveEventsService examLiveEventsService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -145,6 +148,7 @@ public class TextExerciseResource {
         this.courseRepository = courseRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.examLiveEventsService = examLiveEventsService;
     }
 
     /**
@@ -230,7 +234,13 @@ public class TextExerciseResource {
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedTextExercise, textExerciseBeforeUpdate.getDueDate());
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
         exerciseService.checkExampleSubmissions(updatedTextExercise);
-        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
+        if (textExerciseBeforeUpdate.isExamExercise() && !Objects.equals(textExerciseBeforeUpdate.getProblemStatement(), updatedTextExercise.getProblemStatement())) {
+            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(textExerciseBeforeUpdate, notificationText);
+        }
+        else if (textExerciseBeforeUpdate.isCourseExercise()) {
+            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
+        }
+
         return ResponseEntity.ok(updatedTextExercise);
     }
 

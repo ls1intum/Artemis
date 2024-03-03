@@ -182,7 +182,8 @@
                 "type": {
                     "examWideAnnouncement": "Klausurweite Ankündigung",
                     "workingTimeUpdate": "Bearbeitungszeit Aktualisiert",
-                    "examAttendanceCheck": "Anwesenheitskontrolle"
+                    "examAttendanceCheck": "Anwesenheitskontrolle",
+                    "problemStatementUpdate": "Aufgabenstellung Aktualisiert"
                 },
                 "from": "von",
                 "acknowledge": "Bestätigen",
