@@ -427,12 +427,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             WHERE user.isDeleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
                 )
-                AND (course.studentGroupName MEMBER OF groups
-                    OR course.teachingAssistantGroupName MEMBER OF groups
-                    OR course.editorGroupName MEMBER OF groups
-                    OR course.instructorGroupName MEMBER OF groups
+                AND (course.studentGroupName = groups
+                    OR course.teachingAssistantGroupName = groups
+                    OR course.editorGroupName = groups
+                    OR course.instructorGroupName = groups
                 )
             """, countQuery = """
             SELECT COUNT(DISTINCT user)
@@ -442,12 +442,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             WHERE user.isDeleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
                 )
-                AND (course.studentGroupName MEMBER OF groups
-                    OR course.teachingAssistantGroupName MEMBER OF groups
-                    OR course.editorGroupName MEMBER OF groups
-                    OR course.instructorGroupName MEMBER OF groups
+                AND (course.studentGroupName = groups
+                    OR course.teachingAssistantGroupName = groups
+                    OR course.editorGroupName = groups
+                    OR course.instructorGroupName = groups
                 )
             """)
     Page<User> searchAllByLoginOrNameInCourse(Pageable page, @Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
