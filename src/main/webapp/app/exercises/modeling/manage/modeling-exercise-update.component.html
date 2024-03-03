@@ -12,10 +12,6 @@
     <jhi-form-status-bar [formStatusSections]="formSectionStatus" />
     <div>
         <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general">General Information</h3>
-        <div class="form-group" [hidden]="!modelingExercise.id">
-            <label for="id" jhiTranslate="global.field.id">ID</label>
-            <input type="text" class="form-control" id="id" name="id" [(ngModel)]="modelingExercise.id" readonly />
-        </div>
         <jhi-exercise-title-channel-name [exercise]="modelingExercise" [course]="modelingExercise.course" [isExamMode]="isExamMode" [isImport]="isImport" />
         @if (!isExamMode) {
             <div class="form-group position-relative">
