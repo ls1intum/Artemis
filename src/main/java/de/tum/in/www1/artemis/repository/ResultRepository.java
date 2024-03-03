@@ -344,11 +344,11 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             SELECT s
             FROM StudentParticipation p
                 JOIN p.submissions s
-                LEFT JOIN s.results r
+                JOIN s.results r
             WHERE p.exercise.exerciseGroup.exam.id = :examId
                 AND p.testRun IS FALSE
                 AND s.submitted IS TRUE
-                AND r.rated IS FALSE
+                AND r.completionDate IS NULL
             """)
     List<Submission> getUnfinishedAssessmentsByExamId(@Param("examId") long examId);
 
