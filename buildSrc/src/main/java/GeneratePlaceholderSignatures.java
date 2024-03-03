@@ -3,12 +3,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import com.google.gson.GsonBuilder;
 import org.jetbrains.annotations.NotNull;
 
-import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import io.github.classgraph.ClassGraph;
 
@@ -59,8 +57,7 @@ public class GeneratePlaceholderSignatures {
         }
     }
 
-    private record ClassSignature(String notificationType,
-                                  List<FieldDescription> fieldDescriptions) implements Comparable<ClassSignature> {
+    private record ClassSignature(String notificationType, List<FieldDescription> fieldDescriptions) implements Comparable<ClassSignature> {
 
         @Override
         public int compareTo(@NotNull GeneratePlaceholderSignatures.ClassSignature classSignature) {
