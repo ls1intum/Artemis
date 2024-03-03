@@ -43,7 +43,6 @@ import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
-import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
 
 @Component
 @Profile("gitlab")
@@ -263,11 +262,11 @@ public class GitlabRequestMockProvider {
     /**
      * Mocks that given user is not found in GitLab and is hence created.
      *
-     * @param login Login of the user who's creation is mocked
+     * @param login Login of the user whose creation is mocked
      * @throws GitLabApiException Never
      */
-    public void mockCreationOfUser(String login) throws GitLabApiException, JsonProcessingException {
-        var userId = 1234L;
+    public void mockCreationOfUser(String login) throws GitLabApiException {
+        long userId = 1234;
         UserApi userApi = mock(UserApi.class);
         doReturn(userApi).when(gitLabApi).getUserApi();
         doReturn(null).when(userApi).getUser(eq(login));
@@ -277,14 +276,16 @@ public class GitlabRequestMockProvider {
             return user;
         }).when(userApi).createUser(any(), any(), anyBoolean());
 
-        var accessTokenResponseDTO = new GitLabPersonalAccessTokenResponseDTO();
-        accessTokenResponseDTO.setName("acccess-token-name");
-        accessTokenResponseDTO.setToken("acccess-token-value");
-        accessTokenResponseDTO.setUserId(userId);
-        final var response = new ObjectMapper().writeValueAsString(accessTokenResponseDTO);
+        mockAccessTokenCreation(userApi, userId);
+    }
 
-        mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens")).andExpect(method(HttpMethod.POST))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
+    private void mockAccessTokenCreation(UserApi userApi, long userId) throws GitLabApiException {
+        final ImpersonationToken token = new ImpersonationToken();
+        token.setUserId(userId);
+        token.setExpiresAt(Date.from(ZonedDateTime.now().plusMonths(2).toInstant()));
+        token.setToken("glpat-super-secret-token");
+
+        doReturn(token).when(userApi).createPersonalAccessToken(any(), any(), any(), any());
     }
 
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws GitLabApiException {
@@ -500,6 +501,7 @@ public class GitlabRequestMockProvider {
         doReturn(userExists ? userToReturn : null).when(userApi).getUser(user.getLogin());
         if (!userExists) {
             mockImportUser(user, shouldFail);
+            mockAccessTokenCreation(userApi, 1);
         }
         return userToReturn.getId();
     }

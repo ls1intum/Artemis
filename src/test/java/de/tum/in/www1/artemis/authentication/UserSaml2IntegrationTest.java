@@ -90,6 +90,20 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
         assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
     }
 
+    @Test
+    void testSaml2RegistrationNewGitlabUser() throws Exception {
+        assertStudentNotExists();
+
+        mockSAMLAuthenticationCreateNewGitLabUser(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+        request.postWithoutResponseBody("/api/public/saml2", Boolean.FALSE, HttpStatus.OK);
+
+        assertStudentExists();
+        assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+
+        final User student = userRepository.getUserByLoginElseThrow(STUDENT_NAME);
+        assertThat(student.getVcsAccessToken()).isNotNull().startsWith("glpat-");
+    }
+
     /**
      * This test checks that a new SAMl2 user is created with the extracted registration number.
      *
@@ -216,6 +230,13 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
 
     private void mockSAMLAuthentication(Saml2AuthenticatedPrincipal principal) throws Exception {
         gitlabRequestMockProvider.mockGetUserID(STUDENT_NAME, new org.gitlab4j.api.models.User().withId(1L));
+
+        Authentication authentication = new Saml2Authentication(principal, "Secret Credentials", null);
+        TestSecurityContextHolder.setAuthentication(authentication);
+    }
+
+    private void mockSAMLAuthenticationCreateNewGitLabUser(Saml2AuthenticatedPrincipal principal) throws Exception {
+        gitlabRequestMockProvider.mockCreationOfUser(STUDENT_NAME);
 
         Authentication authentication = new Saml2Authentication(principal, "Secret Credentials", null);
         TestSecurityContextHolder.setAuthentication(authentication);

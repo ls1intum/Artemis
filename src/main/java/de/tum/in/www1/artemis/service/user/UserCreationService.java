@@ -139,7 +139,7 @@ public class UserCreationService {
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
-        saveUser(newUser);
+        newUser = saveUser(newUser);
         log.debug("Created user: {}", newUser);
         return newUser;
     }
@@ -186,15 +186,26 @@ public class UserCreationService {
         user.setActivated(true);
         user.setInternal(true);
         user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
-        saveUser(user);
+        user = saveUser(user);
+
+        user = createUserInConnectedSystems(user, password);
+        user = addUserToGroupsInternal(user, userDTO.getGroups());
+
+        log.debug("Created Information for User: {}", user);
+        return user;
+    }
+
+    private User createUserInConnectedSystems(final User user, final String password) {
+        if (optionalVcsUserManagementService.isEmpty() && optionalCIUserManagementService.isEmpty()) {
+            return user;
+        }
 
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, password));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
 
-        addUserToGroupsInternal(user, userDTO.getGroups());
-
-        log.debug("Created Information for User: {}", user);
-        return user;
+        // we have to reload here to make sure we have the latest state of the user after the user services have made
+        // changes to it, potentially directly in the database
+        return userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(user.getId());
     }
 
     /**
@@ -326,10 +337,11 @@ public class UserCreationService {
      * @param user   the user who should be added to the given groups
      * @param groups the groups in which the user should be added
      */
-    private void addUserToGroupsInternal(User user, @Nullable Set<String> groups) {
+    private User addUserToGroupsInternal(User user, @Nullable Set<String> groups) {
         if (groups == null) {
-            return;
+            return user;
         }
+
         boolean userChanged = false;
         for (String group : groups) {
             if (!user.getGroups().contains(group)) {
@@ -340,7 +352,10 @@ public class UserCreationService {
 
         if (userChanged) {
             // we only save if this is needed
-            saveUser(user);
+            return saveUser(user);
+        }
+        else {
+            return user;
         }
     }
 
