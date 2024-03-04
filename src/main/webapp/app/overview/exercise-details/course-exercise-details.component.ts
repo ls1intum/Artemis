@@ -254,7 +254,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.discussionComponent.exercise = this.exercise;
         }
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
-        this.teamBaseResource = `/course-management/${this.course.id!}/exercises/${this.exercise.id}/`;
+        this.teamBaseResource = `/course-management/${this.courseId}/exercises/${this.exercise.id}/`;
     }
 
     /**
