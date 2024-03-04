@@ -516,6 +516,9 @@ public class ParticipationResource {
         if (exercise.getExerciseType() == ExerciseType.QUIZ) {
             return studentParticipationRepository.findByExerciseIdWithLatestAndManualRatedResults(exercise.getId());
         }
+        if (exercise.isTeamMode()) {
+            return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
+        }
         return studentParticipationRepository.findByExerciseIdWithLatestAndManualResults(exercise.getId());
     }
 
@@ -535,6 +538,7 @@ public class ParticipationResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         Set<StudentParticipation> participations;
         if (withLatestResults) {
+            // Look here
             participations = findParticipationWithLatestResults(exercise);
             participations.forEach(participation -> {
                 participation.setSubmissionCount(participation.getSubmissions().size());
