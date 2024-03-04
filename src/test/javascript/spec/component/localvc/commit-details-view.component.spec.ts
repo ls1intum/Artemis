@@ -185,30 +185,6 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.repoFilesSubscription?.closed).toBeTrue();
     });
 
-    it('should handle error when fetching commits', () => {
-        setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(
-            new Observable((subscriber) => {
-                subscriber.error('Error');
-            }),
-        );
-
-        fixture.detectChanges();
-
-        // Trigger ngOnInit
-        component.ngOnInit();
-
-        expect(component.rightCommitFileContentByPath).toEqual(new Map<string, string>());
-
-        // Trigger ngOnDestroy
-        component.ngOnDestroy();
-
-        // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
-    });
-
     it('should handle new report for commits', () => {
         setupComponent();
         //different commit hash than usual
@@ -250,7 +226,7 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
     });
 
-    it('should handle error when fetching repository files', () => {
+    it('should handle error when fetching left repository files', () => {
         setupComponent();
         activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
         jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(
@@ -265,6 +241,45 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnInit();
 
         expect(component.leftCommitFileContentByPath).toEqual(new Map<string, string>());
+        expect(component.rightCommitFileContentByPath).toEqual(new Map<string, string>());
+        expect(component.errorWhileFetchingRepos).toBeTrue();
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+        expect(component.repoFilesSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
+    });
+
+    it('should handle error when fetching right repository files', () => {
+        setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+
+        // Define a variable to track the number of calls to the method
+        let callCount = 0;
+
+        // Mock the service to return an error the second time it is called
+        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockImplementation(() => {
+            if (callCount === 0) {
+                callCount++;
+                return of(mockRepositoryFiles);
+            } else {
+                return new Observable((subscriber) => {
+                    subscriber.error('Error');
+                });
+            }
+        });
+
+        fixture.detectChanges();
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        expect(component.leftCommitFileContentByPath).toEqual(mockRepositoryFiles);
         expect(component.rightCommitFileContentByPath).toEqual(new Map<string, string>());
         expect(component.errorWhileFetchingRepos).toBeTrue();
 
