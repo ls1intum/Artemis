@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.lti;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -90,11 +91,11 @@ public record Lti13DeepLinkingResponse(@JsonProperty("aud") String aud, @JsonPro
      */
     public Map<String, Object> getClaims() {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("aud", aud());
-        claims.put("iss", iss());
-        claims.put("exp", exp());
-        claims.put("iat", iat());
-        claims.put("nonce", nonce());
+        claims.put(IdTokenClaimNames.AUD, aud());
+        claims.put(IdTokenClaimNames.ISS, iss());
+        claims.put(IdTokenClaimNames.EXP, exp());
+        claims.put(IdTokenClaimNames.IAT, iat());
+        claims.put(IdTokenClaimNames.NONCE, nonce());
         claims.put(Claims.MSG, message());
         claims.put(Claims.LTI_DEPLOYMENT_ID, deploymentId());
         claims.put(Claims.MESSAGE_TYPE, messageType());
