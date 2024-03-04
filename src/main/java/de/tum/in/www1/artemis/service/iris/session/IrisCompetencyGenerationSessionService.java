@@ -152,9 +152,9 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
                 Competency competency = new Competency();
                 competency.setTitle(node.required("title").asText());
 
-                // skip competency if IRIS only replied with a title (i.e. no further competencies exist)
-                if (node.get("description") == null) {
-                    log.error("No description found, skipping competency: " + node.toPrettyString());
+                // skip competency if IRIS only replied with a title containing the special response "!done!"
+                if (node.get("description") == null && node.get("title").asText().equals("!done!")) {
+                    log.info("Received special response \"!done!\", skipping parsing of competency.");
                     continue;
                 }
                 competency.setDescription(node.required("description").asText());
