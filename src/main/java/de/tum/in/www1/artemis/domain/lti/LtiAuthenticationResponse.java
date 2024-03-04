@@ -7,5 +7,5 @@ package de.tum.in.www1.artemis.domain.lti;
  * @param ltiIdToken           LTI service provided ID token.
  * @param clientRegistrationId Client's registration ID with LTI service.
  */
-public record LtiAuthenticationResponseDTO(String targetLinkUri, String ltiIdToken, String clientRegistrationId) {
+public record LtiAuthenticationResponse(String targetLinkUri, String ltiIdToken, String clientRegistrationId) {
 }
