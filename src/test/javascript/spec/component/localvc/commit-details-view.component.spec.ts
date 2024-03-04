@@ -164,6 +164,51 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.repoFilesSubscription?.closed).toBeTrue();
     });
 
+    it('should handle new report for template commit', () => {
+        setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit1', exerciseId: 1 });
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        expect(component.currentCommit).toEqual(commit1);
+        expect(component.previousCommit).toEqual(commit1);
+        expect(component.isTemplate).toBeTrue();
+        expect(component.leftCommitFileContentByPath).toEqual(new Map<string, string>());
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+        expect(component.repoFilesSubscription?.closed).toBeTrue();
+    });
+
+    it('should handle error when fetching commits', () => {
+        setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(
+            new Observable((subscriber) => {
+                subscriber.error('Error');
+            }),
+        );
+
+        fixture.detectChanges();
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        expect(component.rightCommitFileContentByPath).toEqual(new Map<string, string>());
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+    });
+
     it('should handle new report for commits', () => {
         setupComponent();
         //different commit hash than usual
