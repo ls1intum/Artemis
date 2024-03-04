@@ -9,7 +9,7 @@ If you are setting Artemis up for the first time, these are the steps you should
 
 - Install and run Docker: https://docs.docker.com/get-docker
 - :ref:`Start Aeolus`
-- :ref:`Configure Artemis to use Aeolus`
+- :ref:`configure artemis for aeolus`
 - :ref:`Start Artemis with Aeolus`
 
 .. _Start Aeolus:
