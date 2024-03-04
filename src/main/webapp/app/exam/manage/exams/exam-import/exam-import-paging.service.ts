@@ -2,7 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
-import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -21,7 +21,7 @@ export class ExamImportPagingService extends PagingService<Exam> {
      * @param pageable object specifying search parameters
      * @param options withExercises if only exams with exercises should be included in the results
      */
-    override search(pageable: PageableSearch, options: { withExercises: boolean }): Observable<EntityResponseType> {
+    override search(pageable: SearchTermPageableSearch, options: { withExercises: boolean }): Observable<EntityResponseType> {
         const params = this.createHttpParams(pageable);
         return this.http
             .get(`${ExamImportPagingService.resourceUrl}?withExercises=${options.withExercises}`, { params, observe: 'response' })

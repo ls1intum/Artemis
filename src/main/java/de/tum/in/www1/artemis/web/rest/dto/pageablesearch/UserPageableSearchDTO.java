@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.dto;
+package de.tum.in.www1.artemis.web.rest.dto.pageablesearch;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -6,7 +6,7 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class UserPageableSearchDTO extends PageableSearchDTO<String> {
+public class UserPageableSearchDTO extends SearchTermPageableSearchDTO<String> {
 
     /**
      * Set of authorities users need to match.
