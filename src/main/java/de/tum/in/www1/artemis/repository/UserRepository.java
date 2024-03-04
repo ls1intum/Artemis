@@ -843,4 +843,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     default User findByIdElseThrow(long userId) throws EntityNotFoundException {
         return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
+
+    @Query(value = """
+            SELECT user
+            FROM User user
+            WHERE user.vcsAccessToken IS NOT NULL
+                AND user.vcsAccessTokenExpiryDate IS NOT NULL
+                AND user.vcsAccessTokenExpiryDate <= :date
+            """)
+    List<User> getUsersWithAccessTokenExpirationDateBefore(@Param("date") ZonedDateTime expirationDate);
+
 }

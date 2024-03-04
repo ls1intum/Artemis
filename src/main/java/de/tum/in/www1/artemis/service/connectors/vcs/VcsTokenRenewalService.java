@@ -31,10 +31,8 @@ public class VcsTokenRenewalService {
     @Scheduled(cron = "0  0  4 * * SUN") // Every sunday at 4 am
     public void renewAllPersonalAccessTokens() {
         if (vcsTokenManagementService.isPresent()) {
-            for (User user : userRepository.findAll()) {
-                if (user.getVcsAccessToken() != null && Duration.between(ZonedDateTime.now(), user.getVcsAccessTokenExpiryDate()).compareTo(MINIMAL_LIFETIME) < 0) {
-                    vcsTokenManagementService.get().renewAccessToken(user);
-                }
+            for (User user : userRepository.getUsersWithAccessTokenExpirationDateBefore(ZonedDateTime.now().plus(MINIMAL_LIFETIME))) {
+                vcsTokenManagementService.get().renewAccessToken(user);
             }
         }
     }
