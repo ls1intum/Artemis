@@ -213,7 +213,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
-
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
                         this.feedbackItemNodes = this.feedbackItemService.group(feedbackItems, this.exercise!);
                         if (this.isExamReviewPage) {

@@ -21,12 +21,12 @@ import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
-class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
+class AthenaGradedFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     private static final String TEST_PREFIX = "athenafeedbacksuggestionsservicetest";
 
     @Autowired
-    private AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
+    private AthenaGradedFeedbackSuggestionsService athenaGradedFeedbackSuggestionsService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -59,10 +59,10 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFeedbackSuggestionsText() throws NetworkingException {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
+        athenaRequestMockProvider.mockGetGradedFeedbackSuggestionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
                 jsonPath("$.submission.text").value(textSubmission.getText()));
-        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission);
+        List<TextFeedbackDTO> suggestions = athenaGradedFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission);
         assertThat(suggestions.get(0).title()).isEqualTo("Not so good");
         assertThat(suggestions.get(0).indexStart()).isEqualTo(3);
         athenaRequestMockProvider.verify();
@@ -71,11 +71,11 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFeedbackSuggestionsProgramming() throws NetworkingException {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
+        athenaRequestMockProvider.mockGetGradedFeedbackSuggestionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.submission.id").value(programmingSubmission.getId()),
                 jsonPath("$.submission.repositoryUri")
                         .value("https://artemislocal.ase.in.tum.de/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"));
-        List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission);
+        List<ProgrammingFeedbackDTO> suggestions = athenaGradedFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission);
         assertThat(suggestions.get(0).title()).isEqualTo("Not so good");
         assertThat(suggestions.get(0).lineStart()).isEqualTo(3);
         athenaRequestMockProvider.verify();
@@ -83,9 +83,9 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     @Test
     void testFeedbackSuggestionsIdConflict() {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+        athenaRequestMockProvider.mockGetGradedFeedbackSuggestionsAndExpect("text");
         var otherExercise = new TextExercise();
         textSubmission.setParticipation(new StudentParticipation().exercise(otherExercise)); // Add submission to wrong exercise
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> athenaGradedFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission));
     }
 }

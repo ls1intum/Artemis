@@ -141,14 +141,14 @@ public class AthenaRequestMockProvider {
     }
 
     /**
-     * Mocks the /feedbacks API from Athena used to submit feedbacks for a submission
+     * Mocks the /graded_feedbacks API from Athena used to submit feedbacks for a submission
      *
      * @param moduleType       The type of the module: "text" or "programming"
      * @param expectedContents The expected contents of the request
      */
     public void mockSendFeedbackAndExpect(String moduleType, RequestMatcher... expectedContents) {
         ResponseActions responseActions = mockServer
-                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/feedbacks"))
+                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/graded_feedbacks"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
@@ -162,7 +162,42 @@ public class AthenaRequestMockProvider {
     }
 
     /**
-     * Mocks the /feedback_suggestions API from Athena used to retrieve feedback suggestions for a submission
+     * Mocks the /graded_feedback_suggestions API from Athena used to retrieve feedback suggestions for a submission
+     * Makes the endpoint return one example feedback suggestion.
+     *
+     * @param moduleType       The type of the module: "text" or "programming"
+     * @param expectedContents The expected contents of the request
+     */
+    public void mockGetGradedFeedbackSuggestionsAndExpect(String moduleType, RequestMatcher... expectedContents) {
+        ResponseActions responseActions = mockServer
+                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/graded_feedback_suggestions"))
+                .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        for (RequestMatcher matcher : expectedContents) {
+            responseActions.andExpect(matcher);
+        }
+
+        ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("title", "Not so good")
+                .put("description", "This needs to be improved").put("credits", -1.0);
+        if (moduleType.equals("text")) {
+            suggestion = suggestion.put("indexStart", 3).put("indexEnd", 9);
+        }
+        else if (moduleType.equals("programming")) {
+            suggestion = suggestion.put("lineStart", 3).put("lineEnd", 4);
+        }
+        else {
+            throw new IllegalArgumentException("Unknown module type: " + moduleType);
+        }
+
+        final ObjectNode node = mapper.createObjectNode().put("module_name", getTestModuleName(moduleType)).put("status", 200).set("data",
+                mapper.createArrayNode().add(suggestion));
+
+        responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
+    }
+
+    // todo
+    /**
+     * Mocks the /non_graded_feedback_suggestions API from Athena used to retrieve feedback suggestions for a submission
      * Makes the endpoint return one example feedback suggestion.
      *
      * @param moduleType       The type of the module: "text" or "programming"
@@ -177,8 +212,8 @@ public class AthenaRequestMockProvider {
             responseActions.andExpect(matcher);
         }
 
-        ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("title", "Not so good")
-                .put("description", "This needs to be improved").put("credits", -1.0);
+        ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("title", "Consider revising")
+                .put("description", "This could be improved for better clarity").put("credits", 0); // Notice credits is set to 0 for non-graded feedback
         if (moduleType.equals("text")) {
             suggestion = suggestion.put("indexStart", 3).put("indexEnd", 9);
         }

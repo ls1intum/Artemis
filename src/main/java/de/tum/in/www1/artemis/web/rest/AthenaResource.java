@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaGradedFeedbackSuggestionsService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaRepositoryExportService;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
@@ -53,7 +53,7 @@ public class AthenaResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
+    private final AthenaGradedFeedbackSuggestionsService athenaGradedFeedbackSuggestionsService;
 
     private final AthenaRepositoryExportService athenaRepositoryExportService;
 
@@ -62,14 +62,14 @@ public class AthenaResource {
      */
     public AthenaResource(TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService,
+            AuthorizationCheckService authCheckService, AthenaGradedFeedbackSuggestionsService athenaGradedFeedbackSuggestionsService,
             AthenaRepositoryExportService athenaRepositoryExportService) {
         this.textExerciseRepository = textExerciseRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.authCheckService = authCheckService;
-        this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
+        this.athenaGradedFeedbackSuggestionsService = athenaGradedFeedbackSuggestionsService;
         this.athenaRepositoryExportService = athenaRepositoryExportService;
     }
 
@@ -112,7 +112,7 @@ public class AthenaResource {
     @EnforceAtLeastTutor
     public ResponseEntity<List<TextFeedbackDTO>> getTextFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         return getFeedbackSuggestions(exerciseId, submissionId, textExerciseRepository::findByIdElseThrow, textSubmissionRepository::findByIdElseThrow,
-                athenaFeedbackSuggestionsService::getTextFeedbackSuggestions);
+                athenaGradedFeedbackSuggestionsService::getTextFeedbackSuggestions);
     }
 
     /**
@@ -126,7 +126,7 @@ public class AthenaResource {
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingFeedbackDTO>> getProgrammingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         return getFeedbackSuggestions(exerciseId, submissionId, programmingExerciseRepository::findByIdElseThrow, programmingSubmissionRepository::findByIdElseThrow,
-                athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
+                athenaGradedFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
     }
 
     /**

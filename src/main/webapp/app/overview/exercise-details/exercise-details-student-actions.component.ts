@@ -212,13 +212,32 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         return !allHiddenTestsPassed || requestAlreadySent || this.feedbackSent;
     }
 
-    requestFeedback() {
+    requestManualFeedback() {
         const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
         if (!window.confirm(confirmLockRepository)) {
             return;
         }
 
         this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
+            next: (participation: StudentParticipation) => {
+                if (participation) {
+                    this.feedbackSent = true;
+                    this.alertService.success('artemisApp.exercise.feedbackRequestSent');
+                }
+            },
+            error: (error) => {
+                this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+            },
+        });
+    }
+
+    requestAutomaticFeedback() {
+        const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
+        if (!window.confirm(confirmLockRepository)) {
+            return;
+        }
+
+        this.courseExerciseService.requestAutomaticFeedback(this.exercise.id!).subscribe({
             next: (participation: StudentParticipation) => {
                 if (participation) {
                     this.feedbackSent = true;

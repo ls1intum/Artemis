@@ -35,12 +35,15 @@ import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaGradedFeedbackSuggestionsService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaNonGradedFeedbackSuggestionsService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -121,6 +124,14 @@ public class ParticipationResource {
 
     private final GradingScaleService gradingScaleService;
 
+    private final AthenaGradedFeedbackSuggestionsService athenaGradedFeedbackSuggestionsService;
+
+    private final AthenaNonGradedFeedbackSuggestionsService athenaNonradedFeedbackSuggestionsService;
+
+    private final FeedbackRepository feedbackRepository;
+
+    private final SubmissionService submissionService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
@@ -130,7 +141,8 @@ public class ParticipationResource {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService,
-            QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService) {
+            QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService, AthenaGradedFeedbackSuggestionsService athenaGradedFeedbackSuggestionsService,
+            AthenaNonGradedFeedbackSuggestionsService athenaNonradedFeedbackSuggestionsService, FeedbackRepository feedbackRepository, SubmissionService submissionService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -157,6 +169,10 @@ public class ParticipationResource {
         this.groupNotificationService = groupNotificationService;
         this.quizSubmissionService = quizSubmissionService;
         this.gradingScaleService = gradingScaleService;
+        this.athenaGradedFeedbackSuggestionsService = athenaGradedFeedbackSuggestionsService;
+        this.athenaNonradedFeedbackSuggestionsService = athenaNonradedFeedbackSuggestionsService;
+        this.feedbackRepository = feedbackRepository;
+        this.submissionService = submissionService;
     }
 
     /**
@@ -968,5 +984,97 @@ public class ParticipationResource {
         participation.setExercise(quizExercise);
         participation.addResult(result);
         return participation;
+    }
+
+    /**
+     * PUT exercises/:exerciseId/request-automatic-feedback: Requests automatic feedback for the latest participation
+     *
+     * @param exerciseId of the exercise for which to resume participation
+     * @param principal  current user principal
+     * @return ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("exercises/{exerciseId}/request-automatic-feedback")
+    @EnforceAtLeastStudent
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<ProgrammingExerciseStudentParticipation> requestAutomaticFeedback(@PathVariable Long exerciseId, Principal principal) {
+        log.debug("REST request for automatic feedback request: {}", exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, principal.getName());
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        checkAccessPermissionOwner(participation, user);
+        // todo decide what do to with the old manual feedback setting
+        // programmingExercise.validateManualFeedbackSettings();
+
+        var studentParticipation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
+        var result = studentParticipation.findLatestLegalResult();
+        if (result == null || result.getScore() < 100) {
+            throw new BadRequestAlertException("User has not reached the conditions to submit a feedback request", "participation", "preconditions not met");
+        }
+
+        var currentDate = now();
+        var participationIndividualDueDate = participation.getIndividualDueDate();
+        if (participationIndividualDueDate != null && currentDate.isAfter(participationIndividualDueDate)) {
+            throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
+        }
+
+        // The participations due date is a flag showing that a feedback request is sent
+        participation.setIndividualDueDate(currentDate);
+
+        participation = programmingExerciseStudentParticipationRepository.save(participation);
+        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
+
+        // reset all prior assessments
+        var participationResults = studentParticipation.getResults();
+        participationResults.forEach(participationResult -> {
+            participationResult.setAssessmentType(AssessmentType.AUTOMATIC);
+            participationResult.setAssessor(null);
+            participationResult.setRated(false);
+        });
+        resultRepository.saveAll(participationResults);
+
+        // athena takes over the control here
+        var submission = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participation.getId()).findLatestSubmission()
+                .get();
+        log.debug("Submission id: ", submission.getId());
+
+        try {
+            var athenaResponse = this.athenaNonradedFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission);
+            // todo same table feedback?
+            var automaticResult = this.submissionService.saveNewEmptyResult(submission);
+
+            var feedbacks = athenaResponse.stream().map(individualFeedbackItem -> {
+                var feedback = new Feedback();
+                // todo proper formatting for single line, multilines, no lines etc
+                feedback.setText(String.format("NonGradedFeedbackSuggestion:File %s at lines %d-%d", individualFeedbackItem.filePath(), individualFeedbackItem.lineStart(),
+                        individualFeedbackItem.lineEnd()));
+                feedback.setDetailText(individualFeedbackItem.description());
+                feedback.setHasLongFeedbackText(false);
+                feedback.setType(FeedbackType.AUTOMATIC);
+                feedback.setReference(String.format("file:%s_line:%d", individualFeedbackItem.filePath(), individualFeedbackItem.lineStart()));
+                feedback.setResult(automaticResult);
+                feedback.setCredits(100.0);
+                return feedback;
+            }).toList();
+            this.feedbackRepository.saveFeedbacks(feedbacks);
+
+            automaticResult.setFeedbacks(feedbacks);
+            automaticResult.setAssessmentType(AssessmentType.AUTOMATIC);
+            automaticResult.setRated(false);
+            automaticResult.setSuccessful(true);
+            automaticResult.setScore(0.0);
+            this.resultRepository.submitManualAssessment(automaticResult);
+        }
+        catch (NetworkingException e) {
+            // todo what the error key should be
+            throw new BadRequestAlertException("Network error while attempting to get response from Athena", "submission", "already sent");
+        }
+        finally {
+            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
+            participation.setIndividualDueDate(null);
+            participation = programmingExerciseStudentParticipationRepository.save(participation);
+        }
+
+        return ResponseEntity.ok().body(participation);
     }
 }

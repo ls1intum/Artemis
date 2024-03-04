@@ -12,6 +12,8 @@
             "resumeExercise": "Aufgabe fortführen",
             "requestFeedback": "Feedback anfragen",
             "requestFeedbackTooltip": "Sendet eine Feedbackanfrage vor der Einreichungsfrist. Diese Option ist erst möglich wenn 100% in den öffentlichen Tests erreicht wurden.",
+            "requestAutomaticFeedback": "Automatisches Feedback anfordern",
+            "requestAutomaticFeedbackTooltip": "Sendet eine automatische Feedbackanfrage vor dem Abgabetermin zur Überprüfung. Diese Option steht nur zur Verfügung, wenn du eine 100%ige Punktzahl in den öffentlichen Tests erreicht hast. Das automatisch generierte Feedback kann falsch, unvollständig, irrelevant oder nicht anwendbar für die gegebene Aufgabe oder Lösung sein.",
             "resumeExercisePractice": "Üben von Aufgabe fortführen",
             "resumeExerciseError": "Fehler beim Versuch die Aufgabe fortzuführen",
             "openCodeEditor": "Programmiereditor öffnen",

@@ -12,6 +12,8 @@
             "resumeExercise": "Resume exercise",
             "requestFeedback": "Request feedback",
             "requestFeedbackTooltip": "Send a manual feedback request before the due date for review. This option is only possible if you reached 100% in the public tests.",
+            "requestAutomaticFeedback": "Request automatic feedback",
+            "requestAutomaticFeedbackTooltip": "Send an automatic feedback request before the due date for review. This option is available only if you have achieved a 100% score in the public tests. The auto-generated feedback might be incorrect, incomplete, irrelevant, or not applicable to the given exercise or solution.",
             "resumeExercisePractice": "Resume practice in exercise",
             "resumeExerciseError": "Error trying to resume the exercise",
             "openCodeEditor": "Open code editor",

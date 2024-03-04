@@ -1,7 +1,7 @@
 import { FeedbackColor, FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { Feedback } from 'app/entities/feedback.model';
 
-export type FeedbackItemType = 'Test' | 'Static Code Analysis' | 'Reviewer' | 'Subsequent' | 'Submission Policy';
+export type FeedbackItemType = 'Test' | 'Static Code Analysis' | 'Reviewer' | 'Subsequent' | 'Submission Policy' | 'AI Reviewer';
 
 export class FeedbackItem implements FeedbackNode {
     name: string;

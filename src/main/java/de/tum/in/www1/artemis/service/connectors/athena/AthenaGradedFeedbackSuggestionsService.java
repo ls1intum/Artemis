@@ -16,14 +16,14 @@ import de.tum.in.www1.artemis.service.dto.athena.*;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
- * Service for receiving feedback suggestions from the Athena service.
+ * Service for receiving graded feedback suggestions from the Athena service.
  * Assumes that submissions and already given feedback have already been sent to Athena.
  */
 @Service
 @Profile("athena")
-public class AthenaFeedbackSuggestionsService {
+public class AthenaGradedFeedbackSuggestionsService {
 
-    private static final Logger log = LoggerFactory.getLogger(AthenaFeedbackSuggestionsService.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaGradedFeedbackSuggestionsService.class);
 
     private final AthenaConnector<RequestDTO, ResponseDTOText> textAthenaConnector;
 
@@ -34,9 +34,9 @@ public class AthenaFeedbackSuggestionsService {
     private final AthenaDTOConverter athenaDTOConverter;
 
     /**
-     * Creates a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
+     * Creates a new AthenaGradedFeedbackSuggestionsService to receive graded feedback suggestions from the Athena service.
      */
-    public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleUrlHelper athenaModuleUrlHelper,
+    public AthenaGradedFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleUrlHelper athenaModuleUrlHelper,
             AthenaDTOConverter athenaDTOConverter) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
@@ -54,14 +54,14 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Calls the remote Athena service to get feedback suggestions for a given submission.
+     * Calls the remote Athena service to get graded feedback suggestions for a given submission.
      *
      * @param exercise   the {@link TextExercise} the suggestions are fetched for
      * @param submission the {@link TextSubmission} the suggestions are fetched for
      * @return a list of feedback suggestions
      */
     public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission) throws NetworkingException {
-        log.debug("Start Athena Feedback Suggestions Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+        log.debug("Start Athena Graded Feedback Suggestions Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         if (!Objects.equals(submission.getParticipation().getExercise().getId(), exercise.getId())) {
             log.error("Exercise id {} does not match submission's exercise id {}", exercise.getId(), submission.getParticipation().getExercise().getId());
@@ -70,13 +70,14 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
-        ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions", request, 0);
-        log.info("Athena responded to feedback suggestions request: {}", response.data);
+        ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/graded_feedback_suggestions",
+                request, 0);
+        log.info("Athena responded to graded feedback suggestions request: {}", response.data);
         return response.data.stream().toList();
     }
 
     /**
-     * Calls the remote Athena service to get feedback suggestions for a given programming submission.
+     * Calls the remote Athena service to get graded feedback suggestions for a given programming submission.
      *
      * @param exercise   the {@link ProgrammingExercise} the suggestions are fetched for
      * @param submission the {@link ProgrammingSubmission} the suggestions are fetched for
@@ -86,8 +87,8 @@ public class AthenaFeedbackSuggestionsService {
         log.debug("Start Athena Feedback Suggestions Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
-        ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions",
-                request, 0);
+        ResponseDTOProgramming response = programmingAthenaConnector
+                .invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/graded_feedback_suggestions", request, 0);
         log.info("Athena responded to feedback suggestions request: {}", response.data);
         return response.data.stream().toList();
     }

@@ -34,7 +34,7 @@ public class AthenaModuleUrlHelper {
                 return athenaUrl + "/modules/text/" + textModuleName;
             }
             case PROGRAMMING -> {
-                return athenaUrl + "/modules/programming/" + programmingModuleName;
+                return athenaUrl + "/";
             }
             default -> throw new IllegalArgumentException("Exercise type not supported: " + exerciseType);
         }

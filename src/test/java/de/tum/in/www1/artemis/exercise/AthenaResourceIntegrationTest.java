@@ -105,7 +105,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbackSuggestionsSuccessText() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+        athenaRequestMockProvider.mockGetGradedFeedbackSuggestionsAndExpect("text");
         List<Feedback> response = request.getList("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions",
                 HttpStatus.OK, Feedback.class);
         assertThat(response).as("response is not empty").isNotEmpty();
@@ -114,7 +114,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbackSuggestionsSuccessProgramming() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+        athenaRequestMockProvider.mockGetGradedFeedbackSuggestionsAndExpect("programming");
         List<Feedback> response = request.getList(
                 "/api/athena/programming-exercises/" + programmingExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/feedback-suggestions", HttpStatus.OK,
                 Feedback.class);
@@ -130,21 +130,21 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetProgrammingFeedbackSuggestionsNotFound() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+        athenaRequestMockProvider.mockGetGradedFeedbackSuggestionsAndExpect("programming");
         request.get("/api/athena/programming-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetTextFeedbackSuggestionsAccessForbidden() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+        athenaRequestMockProvider.mockGetGradedFeedbackSuggestionsAndExpect("text");
         request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetProgrammingFeedbackSuggestionsAccessForbidden() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+        athenaRequestMockProvider.mockGetGradedFeedbackSuggestionsAndExpect("programming");
         request.get("/api/athena/programming-exercises/" + textExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN,
                 List.class);
     }
