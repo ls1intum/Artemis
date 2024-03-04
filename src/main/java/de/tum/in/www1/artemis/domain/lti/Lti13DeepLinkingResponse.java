@@ -33,10 +33,11 @@ import com.google.gson.JsonObject;
  * @param clientRegistrationId The client registration ID.
  * @param returnUrl            The URL to return to after deep linking is completed.
  */
-public record Lti13DeepLinkingResponse(@JsonProperty("aud") String aud, @JsonProperty("iss") String iss, @JsonProperty("exp") String exp, @JsonProperty("iat") String iat,
-        @JsonProperty("nonce") String nonce, @JsonProperty(Claims.MSG) String message, @JsonProperty(Claims.LTI_DEPLOYMENT_ID) String deploymentId,
-        @JsonProperty(Claims.MESSAGE_TYPE) String messageType, @JsonProperty(Claims.LTI_VERSION) String ltiVersion, @JsonProperty(Claims.CONTENT_ITEMS) String contentItems,
-        JsonObject deepLinkingSettings, String clientRegistrationId, String returnUrl) {
+public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) String aud, @JsonProperty(IdTokenClaimNames.ISS) String iss,
+        @JsonProperty(IdTokenClaimNames.EXP) String exp, @JsonProperty(IdTokenClaimNames.IAT) String iat, @JsonProperty(IdTokenClaimNames.NONCE) String nonce,
+        @JsonProperty(Claims.MSG) String message, @JsonProperty(Claims.LTI_DEPLOYMENT_ID) String deploymentId, @JsonProperty(Claims.MESSAGE_TYPE) String messageType,
+        @JsonProperty(Claims.LTI_VERSION) String ltiVersion, @JsonProperty(Claims.CONTENT_ITEMS) String contentItems, JsonObject deepLinkingSettings, String clientRegistrationId,
+        String returnUrl) {
 
     /**
      * Constructs an Lti13DeepLinkingResponse from an OIDC ID token and client registration ID.
@@ -51,10 +52,10 @@ public record Lti13DeepLinkingResponse(@JsonProperty("aud") String aud, @JsonPro
     public static Lti13DeepLinkingResponse from(OidcIdToken ltiIdToken, String clientRegistrationId) {
         validateClaims(ltiIdToken);
         JsonObject deepLinkingSettingsJson = new Gson().toJsonTree(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS)).getAsJsonObject();
-        String returnUrl = deepLinkingSettingsJson.get("deep_link_return_url").getAsString();
+        String returnUrl = deepLinkingSettingsJson.get(Claims.DEEPLINK_RETURN_URL_CLAIM).getAsString();
 
         return new Lti13DeepLinkingResponse(ltiIdToken.getIssuer().toString(), ltiIdToken.getAudience().toString().replace("[", "").replace("]", ""),
-                ltiIdToken.getExpiresAt().toString(), ltiIdToken.getIssuedAt().toString(), ltiIdToken.getClaimAsString("nonce"), "Content successfully linked",
+                ltiIdToken.getExpiresAt().toString(), ltiIdToken.getIssuedAt().toString(), ltiIdToken.getClaimAsString(IdTokenClaimNames.NONCE), "Content successfully linked",
                 ltiIdToken.getClaimAsString(Claims.LTI_DEPLOYMENT_ID), "LtiDeepLinkingResponse", "1.3.0", null, // ContentItems needs to be set separately
                 deepLinkingSettingsJson, clientRegistrationId, returnUrl);
     }
@@ -69,11 +70,11 @@ public record Lti13DeepLinkingResponse(@JsonProperty("aud") String aud, @JsonPro
             throw new IllegalArgumentException("Missing or invalid deep linking settings in ID token.");
         }
 
-        ensureClaimPresent(ltiIdToken, "iss");
-        ensureClaimPresent(ltiIdToken, "aud");
-        ensureClaimPresent(ltiIdToken, "exp");
-        ensureClaimPresent(ltiIdToken, "iat");
-        ensureClaimPresent(ltiIdToken, "nonce");
+        ensureClaimPresent(ltiIdToken, IdTokenClaimNames.ISS);
+        ensureClaimPresent(ltiIdToken, IdTokenClaimNames.AUD);
+        ensureClaimPresent(ltiIdToken, IdTokenClaimNames.EXP);
+        ensureClaimPresent(ltiIdToken, IdTokenClaimNames.IAT);
+        ensureClaimPresent(ltiIdToken, IdTokenClaimNames.NONCE);
         ensureClaimPresent(ltiIdToken, Claims.LTI_DEPLOYMENT_ID);
     }
 
