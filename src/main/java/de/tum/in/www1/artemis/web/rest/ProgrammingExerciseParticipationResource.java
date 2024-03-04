@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
@@ -335,9 +336,4 @@ public class ProgrammingExerciseParticipationResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
     }
-
-    public enum RepositoryType {
-        TEMPLATE, SOLUTION, TESTS
-    }
-
 }
