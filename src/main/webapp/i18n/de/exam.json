@@ -197,6 +197,10 @@
                     },
                     "examAttendanceCheck": {
                         "description": "Eine Klausur-Aufsicht hat die Anwesenheitskontrolle für dich ausgelöst. Bitte folge den Anweisungen der Aufsicht."
+                    },
+                    "problemStatementUpdate": {
+                        "description": "Die Aufgabenstellung einer Übung wurde aktualisiert. Bitte öffnen Sie die entsprechende Übung, um die Änderungen zu sehen.",
+                        "instructorMessage": "Lehrkraft Nachricht:"
                     }
                 }
             }

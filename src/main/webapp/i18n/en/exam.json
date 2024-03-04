@@ -199,7 +199,8 @@
                         "description": "An exam supervisor has triggered the attendance check for you. Please follow the instructions of the supervisor."
                     },
                     "problemStatementUpdate": {
-                        "description": "The problem statement of the exercise was updated. Please open the corresponding exercise to see the changes"
+                        "description": "The problem statement of an exercise was updated. Please open the corresponding exercise to see the changes.",
+                        "instructorMessage": "Instructor's message:"
                     }
                 }
             }
