@@ -320,7 +320,7 @@ public class LearningPathService {
         Map<Long, LectureUnitCompletion> completions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, userId).stream()
                 .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), cp -> cp));
         Set<Long> exerciseIds = learningPath.getCompetencies().stream().flatMap(competency -> competency.getExercises().stream()).map(Exercise::getId).collect(Collectors.toSet());
-        Map<Long, StudentParticipation> studentParticipations = studentParticipationRepository.findAllByExerciseIdInAndStudentId(exerciseIds, userId).stream()
+        Map<Long, StudentParticipation> studentParticipations = studentParticipationRepository.findDistinctAllByExerciseIdInAndStudentId(exerciseIds, userId).stream()
                 .collect(Collectors.toMap(participation -> participation.getExercise().getId(), sp -> sp));
         learningPath.getCompetencies().forEach(competency -> {
             if (competencyProgresses.containsKey(competency.getId())) {
