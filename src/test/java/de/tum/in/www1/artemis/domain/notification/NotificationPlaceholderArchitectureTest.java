@@ -16,6 +16,9 @@ import de.tum.in.www1.artemis.AbstractArchitectureTest;
 
 public class NotificationPlaceholderArchitectureTest extends AbstractArchitectureTest {
 
+    /**
+     * Test that all NotificationPlaceholderCreator methods return a String array and only have Strings as arguments.
+     */
     @Test
     void testPlaceholderCreatorMethodSignature() {
         methods().that().areAnnotatedWith(NotificationPlaceholderCreator.class).should().haveRawReturnType(String[].class)
@@ -28,8 +31,11 @@ public class NotificationPlaceholderArchitectureTest extends AbstractArchitectur
                 }).check(productionClasses);
     }
 
+    /**
+     * Test that all NotificationPlaceholderCreator methods return a String array exactly contains its arguments in the specified order.
+     */
     @Test
-    void ba() {
+    void testNotificationPlaceholderCreatorStringArrayCreation() {
         methods().that().areAnnotatedWith(NotificationPlaceholderCreator.class).should(new ArchCondition<>("returns an array of its input parameters in the order of declaration") {
 
             @Override

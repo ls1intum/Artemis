@@ -75,11 +75,6 @@ public class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrat
         }
     }
 
-    private record FieldDescription(String fieldName, String fieldType) implements Comparable<FieldDescription> {
-
-        @Override
-        public int compareTo(FieldDescription fieldDescription) {
-            return fieldName.compareTo(fieldDescription.fieldName);
-        }
+    private record FieldDescription(String fieldName, String fieldType) {
     }
 }
