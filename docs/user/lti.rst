@@ -30,6 +30,7 @@ Additionally, we outline the capabilities available to different user roles with
 
 .. list-table::
    :widths: 30 10 10 10
+   :align: center
    :header-rows: 1
 
    * - Action
@@ -369,8 +370,9 @@ Below, we explain both methods to assist instructors in choosing the best approa
 Link creation via Deep Linking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The following process, recommended for instructors, assumes completion of the tool-platform registration.
-Deep Linking launches require an existing instructor role account in Artemis. Platform users without an account in Artemis cannot use this feature.
+.. warning::
+    The following process, recommended for instructors, assumes completion of the tool-platform registration.
+    Deep Linking launches require an existing instructor role account in Artemis. Platform users without an account in Artemis cannot use this feature.
 
 Deep Linking for Moodle
 """""""""""""""""""""""
