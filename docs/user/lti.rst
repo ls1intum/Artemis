@@ -144,8 +144,8 @@ The exact steps of using a registration URL to register Artemis as a tool are pl
     LMS administrators must also possess administrative privileges on the Artemis site to effectively utilize the Dynamic Registration Service.
     Please get in touch with your Artemis administrator, providing your full name and email address, to ensure successful completion of this step.
 
-Dynamically Register Artemis to Moodle
-""""""""""""""""""""""""""""""""""""""
+Dynamically Register Artemis and Moodle
+"""""""""""""""""""""""""""""""""""""""
 
 With the Dynamic Registration URL provided by the Artemis administrator, Moodle Admins can configure the LTI 1.3 integration in Moodle:
 Please note that Moodle admins also need admin privileges on the Artemis site.
@@ -177,6 +177,16 @@ Please note that Moodle admins also need admin privileges on the Artemis site.
 #. Click on *Show more...* link to see further configuration settings. Set *Secure icon URL* field to Artemis icon URL.
 #. Save the recent changes.
 
+This video describes how to configure Artemis and Moodle using Dynamic Registration Service:
+
+.. raw:: html
+
+    <div style="text-align: center;">
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/42765?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
+            Watch this video on TUM-Live.
+        </iframe>
+    </div>
+
 Manual Registration
 ^^^^^^^^^^^^^^^^^^^
 
@@ -196,8 +206,8 @@ Starting in the Artemis:
 
 The exact setup steps for manually configuring are dependent on the platform. This guide provides steps for manually configuring Artemis into Moodle in the `Manually Register Artemis to Moodle`_ section and edX in the section `Manually Register Artemis to edX`_.
 
-Manually Register Artemis to Moodle
-"""""""""""""""""""""""""""""""""""
+Manually Register Artemis and Moodle
+""""""""""""""""""""""""""""""""""""
 
 Please follow the below steps for manual configuration:
 
@@ -244,8 +254,8 @@ Now we are back on the Artemis again. Please follow the below steps to manually 
 
 The registration process is now complete.
 
-Manually Register Artemis to edX
-""""""""""""""""""""""""""""""""
+Manually Register Artemis and edX
+"""""""""""""""""""""""""""""""""
 
 EdX course admins must enable the LTI tool in Studio before an instructor can add LTI components to their course. To allow the LTI tool in Studio, add *lti_consumer* to the Advanced Module List on the Advanced Settings page.
 For more information, please see the official `edX documentation <https://edx.readthedocs.io/projects/edx-partner-course-staff/en/latest/exercises_tools/lti_component.html>`_.
@@ -304,6 +314,16 @@ Please follow below steps on edX to conclude registration process:
     :align: center
     :scale: 20%
     :alt: Edx LTI Consumer Settings
+
+This video describes how to manually configure Artemis and edX in practice:
+
+.. raw:: html
+
+    <div style="text-align: center;">
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/42766?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
+            Watch this video on TUM-Live.
+        </iframe>
+    </div>
 
 Sharing access to a course
 --------------------------
@@ -378,6 +398,16 @@ Deep Linking for Moodle
 
 #. Save and return the course.
 
+This video describes how to use LTI Deep Linking Service to link exercises from an Artemis course into an Moodle course:
+
+.. raw:: html
+
+    <div style="text-align: center;">
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/42767?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
+            Watch this video on TUM-Live.
+        </iframe>
+    </div>
+
 Deep Linking for edX
 """""""""""""""""""""
 
@@ -446,6 +476,16 @@ With the LTI 1.3 Launch URL copied, you can now link the exercise in Moodle:
     :width: 700
     :alt: Moodle - Add External Tool Page
 
+This video describes how to use manually link exercises from an Artemis course into a Moodle course:
+
+.. raw:: html
+
+    <div style="text-align: center;">
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/42768?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
+            Watch this video on TUM-Live.
+        </iframe>
+    </div>
+
 Link exercise to edX
 """"""""""""""""""""
 
@@ -459,6 +499,16 @@ Link exercise to edX
     :align: center
     :width: 700
     :alt: edX - Add Tool URL
+
+This video describes how to use manually link exercises from an Artemis course into an edX course:
+
+.. raw:: html
+
+    <div style="text-align: center;">
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/42769?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
+            Watch this video on TUM-Live.
+        </iframe>
+    </div>
 
 Common Issues
 -------------
