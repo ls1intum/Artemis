@@ -30,10 +30,6 @@
                     </div>
                 </div>
             }
-            <div class="form-group" [hidden]="isImport || !quizExercise.id">
-                <label for="id" jhiTranslate="global.field.id">ID</label>
-                <input type="text" class="form-control" id="id" name="id" [(ngModel)]="quizExercise.id" readonly />
-            </div>
             <div class="edit-quiz">
                 <form name="editForm" role="form" novalidate>
                     <jhi-exercise-title-channel-name

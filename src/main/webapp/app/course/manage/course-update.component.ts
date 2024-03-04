@@ -162,10 +162,13 @@ export class CourseUpdateComponent implements OnInit {
             {
                 id: new FormControl(this.course.id),
                 title: new FormControl(this.course.title, [Validators.required]),
-                shortName: new FormControl(this.course.shortName, {
-                    validators: [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)],
-                    updateOn: 'blur',
-                }),
+                shortName: new FormControl(
+                    { value: this.course.shortName, disabled: !!this.course.id },
+                    {
+                        validators: [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)],
+                        updateOn: 'blur',
+                    },
+                ),
                 // note: we still reference them here so that they are used in the update method when the course is retrieved from the course form
                 customizeGroupNames: new FormControl(this.customizeGroupNames),
                 studentGroupName: new FormControl(this.course.studentGroupName),
