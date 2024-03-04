@@ -17,11 +17,11 @@
                     {{ 'artemisApp.competency.manageCompetencies.import' | artemisTranslate }}
                 </button>
                 <div ngbDropdownMenu aria-labelledby="importDropdown">
-                    <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'import']" ngbDropdownItem>
+                    <a class="btn" [routerLink]="['/course-management', courseId, 'competency-management', 'import']" ngbDropdownItem>
                         <fa-icon [icon]="faFileImport" />
                         <span>{{ 'artemisApp.competency.manageCompetencies.import' | artemisTranslate }}</span>
                     </a>
-                    <button class="btn btn-primary" id="competencyImportAllButton" (click)="openImportAllModal()" ngbDropdownItem>
+                    <button class="btn" id="competencyImportAllButton" (click)="openImportAllModal()" ngbDropdownItem>
                         <fa-icon [icon]="faFileImport" />
                         <span>{{ 'artemisApp.competency.manageCompetencies.importAll' | artemisTranslate }}</span>
                     </button>
@@ -42,31 +42,31 @@
     }
     <jhi-competency-relation-graph [competencies]="competencies" [relations]="relations" (onCreateRelation)="createRelation($event)" (onRemoveRelation)="removeRelation($event)" />
     <h2>{{ 'artemisApp.competency.competencies' | artemisTranslate }}</h2>
-    <div class="container-fluid">
+    <div class="container-fluid overflow-auto">
         @if (competencies.length) {
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th class="col">
-                            <span>{{ 'global.field.id' | artemisTranslate }}</span>
+                            <span jhiTranslate="global.field.id"></span>
                         </th>
                         <th class="col">
-                            <span>{{ 'artemisApp.competency.title' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.competency.title"></span>
                         </th>
                         <th class="col">
-                            <span>{{ 'artemisApp.competency.description' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.competency.description"></span>
                         </th>
                         <th class="col">
-                            <span>{{ 'artemisApp.competency.taxonomy' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.competency.taxonomy"></span>
                         </th>
                         <th class="d-none col-lg d-lg-table-cell">
-                            <span>{{ 'artemisApp.competency.softDueDate' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.competency.softDueDate"></span>
                         </th>
                         <th class="d-none col-lg d-lg-table-cell">
-                            <span>{{ 'artemisApp.competency.masteredStudents' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.competency.masteredStudents"></span>
                         </th>
                         <th class="col">
-                            <span>{{ 'artemisApp.competency.optional' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.competency.optional"></span>
                         </th>
                         <th class="col"></th>
                     </tr>
@@ -124,37 +124,37 @@
                 </tbody>
             </table>
         } @else {
-            <span>{{ 'artemisApp.competency.manageCompetencies.empty' | artemisTranslate }}</span>
+            <span jhiTranslate="artemisApp.competency.manageCompetencies.empty"></span>
         }
     </div>
     <div class="d-flex flex-wrap mt-4">
-        <h2>{{ 'artemisApp.competency.prerequisite.title' | artemisTranslate }}</h2>
+        <h2 jhiTranslate="artemisApp.competency.prerequisite.title"></h2>
         <div class="ms-auto text-truncate justify-content-end">
             <button id="prerequisiteImportButton" class="btn btn-primary" (click)="openPrerequisiteSelectionModal()">
                 <fa-icon [icon]="faPlus" />
-                <span>{{ 'artemisApp.competency.prerequisite.select' | artemisTranslate }}</span>
+                <span jhiTranslate="artemisApp.competency.prerequisite.select"></span>
             </button>
         </div>
     </div>
-    <div class="container-fluid">
+    <div class="container-fluid overflow-auto">
         @if (prerequisites.length) {
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th class="col">
-                            <span>{{ 'global.field.id' | artemisTranslate }}</span>
+                            <span jhiTranslate="global.field.id"></span>
                         </th>
                         <th class="col">
-                            <span>{{ 'artemisApp.competency.title' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.competency.title"></span>
                         </th>
                         <th class="col">
-                            <span>{{ 'artemisApp.competency.description' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.competency.description"></span>
                         </th>
                         <th class="col">
-                            <span>{{ 'artemisApp.competency.taxonomy' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.competency.taxonomy"></span>
                         </th>
                         <th class="col">
-                            <span>{{ 'artemisApp.competency.course' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.competency.course"></span>
                         </th>
                         <th class="col"></th>
                     </tr>
