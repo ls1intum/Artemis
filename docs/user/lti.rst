@@ -183,7 +183,7 @@ This video describes how to configure Artemis and Moodle using Dynamic Registrat
 .. raw:: html
 
     <div style="text-align: center;">
-        <iframe src="https://live.rbg.tum.de/w/artemisintro/42765?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/42797?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
             Watch this video on TUM-Live.
         </iframe>
     </div>
@@ -321,7 +321,7 @@ This video describes how to manually configure Artemis and edX in practice:
 .. raw:: html
 
     <div style="text-align: center;">
-        <iframe src="https://live.rbg.tum.de/w/artemisintro/42766?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/42794?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
             Watch this video on TUM-Live.
         </iframe>
     </div>
@@ -405,7 +405,7 @@ This video describes how to use LTI Deep Linking Service to link exercises from 
 .. raw:: html
 
     <div style="text-align: center;">
-        <iframe src="https://live.rbg.tum.de/w/artemisintro/42767?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/42795?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
             Watch this video on TUM-Live.
         </iframe>
     </div>
@@ -483,7 +483,7 @@ This video describes how to use manually link exercises from an Artemis course i
 .. raw:: html
 
     <div style="text-align: center;">
-        <iframe src="https://live.rbg.tum.de/w/artemisintro/42768?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/42796?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
             Watch this video on TUM-Live.
         </iframe>
     </div>
