@@ -180,6 +180,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param {SimpleChanges} changes
      */
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
+        console.log('onchanges');
         if (
             (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) ||
             (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN)
@@ -188,7 +189,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             if (this.annotationChange) {
                 this.annotationChange.unsubscribe();
             }
-            this.editor.getEditor().getSession().setValue('');
+            console.log('first time calling this');
+            this.editor.getSession(this.selectedFile);
         }
         if (
             (changes.selectedFile && this.selectedFile) ||
@@ -218,7 +220,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      **/
     async initEditor() {
         // Set up editorSession for inline feedback using lineWidgets
-        this.editorSession = this.editor.getEditor().getSession();
+        console.log('init editor');
+        this.editorSession = this.editor.getSession(this.selectedFile);
 
         if (!this.editorSession.widgetManager) {
             this.editorSession.widgetManager = new this.LineWidgets(this.editorSession);
@@ -229,7 +232,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.annotationChange.unsubscribe();
         }
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
-            this.editor.getEditor().getSession().setValue(this.fileSession[this.selectedFile].code);
+            this.editor.getSession(this.selectedFile).setValue(this.fileSession[this.selectedFile].code);
             this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => {
                 this.updateAnnotations(change);
             });
@@ -240,10 +243,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.editor.setMode(this.editorMode);
             this.editor.getEditor().resize();
             this.editor.getEditor().focus();
-            // always scroll to the top, otherwise inline annotations might be placed incorrectly
-            this.editor.getEditor().getSession().setScrollTop(0);
+
             // Reset the undo stack after file change, otherwise the user can undo back to the old file
-            this.editor.getEditor().getSession().setUndoManager(new UndoManager());
+            this.editor.getSession(this.selectedFile).setUndoManager(new UndoManager());
             this.displayAnnotations();
 
             if (this.markerIds.length > 0) {
@@ -488,10 +490,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * Updates the annotations in the editor
      */
     displayAnnotations() {
-        this.editor
-            .getEditor()
-            .getSession()
-            .setAnnotations(this.annotationsArray.filter((a) => a.fileName === this.selectedFile));
+        this.editor.getSession(this.selectedFile).setAnnotations(this.annotationsArray.filter((a) => a.fileName === this.selectedFile));
     }
 
     /**

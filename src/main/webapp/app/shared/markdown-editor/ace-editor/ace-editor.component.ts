@@ -7,6 +7,7 @@ import 'brace/theme/dreamweaver';
 import 'brace/theme/dracula';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { Subscription } from 'rxjs';
+import { IEditSession } from 'brace';
 
 declare let ace: any;
 
@@ -28,6 +29,7 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
     @Output() textChanged = new EventEmitter();
     @Output() textChange = new EventEmitter();
     @Input() style: any = {};
+    editorSessions: { [fileName: string]: IEditSession } = {};
 
     /**
      * Sets the size in spaces of newly inserted tabs and the display size of existing true tabs.
@@ -49,7 +51,7 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
     private _theme = 'dreamweaver';
     private _mode = 'java';
     private _autoUpdateContent = true;
-    private _editor: any; // TODO: use Editor (defined in brace) or Editor (defined in ace-builds) and make sure to use typings consistently
+    private _editor: any;
     private _durationBeforeCallback = 0;
     private _text = '';
 
@@ -228,5 +230,17 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
 
     getEditor() {
         return this._editor;
+    }
+
+    getSession(filename: string) {
+        if (!this.editorSessions[filename]) {
+            console.log('new session: ' + filename);
+            this.editorSessions[filename] = ace.createEditSession('');
+        }
+        if (this._editor.getSession() != this.editorSessions[filename]) {
+            console.log('set session: ' + filename);
+            this._editor.setSession(this.editorSessions[filename]);
+        }
+        return this._editor.getSession();
     }
 }
