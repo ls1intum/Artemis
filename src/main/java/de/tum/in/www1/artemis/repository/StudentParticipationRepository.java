@@ -500,7 +500,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") long exerciseId,
             @Param("correctionRound") long correctionRound);
 
-    List<StudentParticipation> findAllByExerciseIdInAndStudentId(Set<Long> exerciseIds, Long studentId);
+    Set<StudentParticipation> findAllByExerciseIdInAndStudentId(Set<Long> exerciseIds, Long studentId);
 
     @Query("""
             SELECT DISTINCT p
