@@ -56,7 +56,8 @@ public class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrat
 
             // Signature as json
             var actualSignature = new GsonBuilder().setPrettyPrinting().create().toJson(signatures);
-            var expectedSignature = readPlaceholderText(Objects.requireNonNull(Class.class.getClassLoader().getResource("placeholder-signatures.json")));
+            var expectedSignature = readPlaceholderText(
+                    Objects.requireNonNull(NotificationPlaceholderSignatureTest.class.getClassLoader().getResource("placeholder-signatures.json")));
 
             Assertions.assertEquals(expectedSignature, actualSignature);
         }
