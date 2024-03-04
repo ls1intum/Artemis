@@ -138,7 +138,7 @@ To retrieve the Dynamic Registration URL from Artemis, follow the steps outlined
     :width: 700
     :alt: Server LTI 1.3 Configuration
 
-The exact steps of using a registration URL to register Artemis as a tool are platform-dependent. We provide steps to configure Artemis into Moodle via Dynamic Registration URL in `Dynamically Register Artemis to Moodle`_.
+The exact steps of using a registration URL to register Artemis as a tool are platform-dependent. We provide steps to configure Artemis into Moodle via Dynamic Registration URL in `Dynamically Register Artemis and Moodle`_.
 
 .. warning::
     LMS administrators must also possess administrative privileges on the Artemis site to effectively utilize the Dynamic Registration Service.
@@ -204,7 +204,7 @@ Starting in the Artemis:
     :width: 700
     :alt: Server LTI 1.3 Configuration - Service URLs
 
-The exact setup steps for manually configuring are dependent on the platform. This guide provides steps for manually configuring Artemis into Moodle in the `Manually Register Artemis to Moodle`_ section and edX in the section `Manually Register Artemis to edX`_.
+The exact setup steps for manually configuring are dependent on the platform. This guide provides steps for manually configuring Artemis into Moodle in the `Manually Register Artemis and Moodle`_ section and edX in the section `Manually Register Artemis and edX`_.
 
 Manually Register Artemis and Moodle
 """"""""""""""""""""""""""""""""""""
