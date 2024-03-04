@@ -12,10 +12,6 @@
     <jhi-form-status-bar [formStatusSections]="formSectionStatus" />
     <div>
         <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general">General Information</h3>
-        <div class="form-group" [hidden]="isImport || !textExercise.id">
-            <label for="id" jhiTranslate="global.field.id">ID</label>
-            <input type="text" class="form-control" id="id" name="id" [(ngModel)]="textExercise.id" readonly />
-        </div>
         <jhi-exercise-title-channel-name [exercise]="textExercise" [course]="textExercise.course" [minTitleLength]="3" [isImport]="isImport" [isExamMode]="isExamMode" />
         @if (!isExamMode) {
             <div class="form-group position-relative">
@@ -44,6 +40,17 @@
                 (markdownChange)="calculateFormSectionStatus()"
             />
         </div>
+        @if (!isExamMode) {
+            <div class="form-group">
+                <jhi-competency-selection
+                    id="competencies"
+                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                    [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+                    [(ngModel)]="textExercise.competencies"
+                    name="competencies"
+                />
+            </div>
+        }
         <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution">Example Solution</h3>
         <div class="form-group">
             <label jhiTranslate="artemisApp.exercise.exampleSolution" for="exampleSolution">Example Solution</label>
@@ -210,42 +217,18 @@
             <jhi-exercise-update-plagiarism [exercise]="textExercise" />
         }
         <jhi-presentation-score-checkbox [exercise]="textExercise" />
-        @if (!isExamMode) {
-            <div class="form-group">
-                <jhi-competency-selection
-                    id="competencies"
-                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
-                    [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
-                    [(ngModel)]="textExercise.competencies"
-                    name="competencies"
-                />
-            </div>
-        }
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="textExercise" />
         </div>
-        <jhi-exercise-update-notification [exercise]="textExercise" [isImport]="isImport" [(notificationText)]="notificationText" />
     </div>
-    <div>
-        <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span></button>
-        <button
-            type="submit"
-            (click)="save()"
-            class="btn btn-primary"
-            id="submit-entity"
-            [disabled]="editForm.form.invalid || isSaving || textExercise.dueDateError || textExercise.assessmentDueDateError || textExercise.exampleSolutionPublicationDateError"
-        >
-            <fa-icon [icon]="faSave" />
-            @if (isImport) {
-                <span jhiTranslate="artemisApp.textExercise.submitButton.import">Import</span>
-            }
-            @if (!isImport && textExercise.id) {
-                <span jhiTranslate="artemisApp.textExercise.submitButton.save">Save</span>
-            }
-            @if (!isImport && !textExercise.id) {
-                <span jhiTranslate="artemisApp.textExercise.submitButton.create">Create</span>
-            }
-        </button>
-    </div>
+    <jhi-form-footer
+        [isCreation]="!textExercise.id"
+        [isImport]="isImport"
+        [isSaving]="isSaving"
+        [isDisabled]="!!(editForm.form.invalid || textExercise.dueDateError || textExercise.assessmentDueDateError || textExercise.exampleSolutionPublicationDateError)"
+        (cancel)="previousState()"
+        (save)="save()"
+        [(notificationText)]="notificationText"
+    />
 </form>

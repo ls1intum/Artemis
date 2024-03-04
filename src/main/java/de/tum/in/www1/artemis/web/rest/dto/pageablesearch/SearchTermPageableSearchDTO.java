@@ -1,8 +1,8 @@
-package de.tum.in.www1.artemis.web.rest.dto;
+package de.tum.in.www1.artemis.web.rest.dto.pageablesearch;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.BasePageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 /**
  * Wrapper for a generic search for any list of entities matching a given search term. The result should be paged,
@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.BasePageableSearchDTO;
  * @see SearchResultPageDTO
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PageableSearchDTO<T> extends BasePageableSearchDTO<T> {
+public class SearchTermPageableSearchDTO<T> extends PageableSearchDTO<T> {
 
     /**
      * The string to search for

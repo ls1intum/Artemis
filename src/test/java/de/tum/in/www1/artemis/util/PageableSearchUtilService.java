@@ -9,9 +9,9 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.BasePageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 
 /**
  * Service responsible for initializing the database with specific testdata related to searches for use in integration tests.
@@ -25,8 +25,8 @@ public class PageableSearchUtilService {
      * @param searchTerm The searchTerm to use
      * @return The generated PageableSearchDTO
      */
-    public PageableSearchDTO<String> configureSearch(String searchTerm) {
-        final var search = new PageableSearchDTO<String>();
+    public SearchTermPageableSearchDTO<String> configureSearch(String searchTerm) {
+        final var search = new SearchTermPageableSearchDTO<String>();
         search.setPage(1);
         search.setPageSize(10);
         search.setSearchTerm(searchTerm);
@@ -46,8 +46,8 @@ public class PageableSearchUtilService {
      * @param searchTerm The searchTerm to use
      * @return The generated PageableSearchDTO
      */
-    public PageableSearchDTO<String> configureStudentParticipationSearch(String searchTerm) {
-        final var search = new PageableSearchDTO<String>();
+    public SearchTermPageableSearchDTO<String> configureStudentParticipationSearch(String searchTerm) {
+        final var search = new SearchTermPageableSearchDTO<String>();
         search.setPage(1);
         search.setPageSize(10);
         search.setSearchTerm(searchTerm);
@@ -67,8 +67,8 @@ public class PageableSearchUtilService {
      * @param searchTerm The searchTerm to use
      * @return The generated PageableSearchDTO
      */
-    public PageableSearchDTO<String> configureLectureSearch(String searchTerm) {
-        final var search = new PageableSearchDTO<String>();
+    public SearchTermPageableSearchDTO<String> configureLectureSearch(String searchTerm) {
+        final var search = new SearchTermPageableSearchDTO<String>();
         search.setPage(1);
         search.setPageSize(10);
         search.setSearchTerm(searchTerm);
@@ -105,7 +105,7 @@ public class PageableSearchUtilService {
      * @param search The PageableSearchDTO to use
      * @return The generated LinkedMultiValueMap
      */
-    public LinkedMultiValueMap<String, String> searchMapping(BasePageableSearchDTO<String> search) {
+    public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search) {
         final var mapType = new TypeToken<Map<String, String>>() {
         }.getType();
         final var gson = new Gson();
