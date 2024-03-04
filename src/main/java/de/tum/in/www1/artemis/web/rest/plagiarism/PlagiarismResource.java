@@ -89,8 +89,13 @@ public class PlagiarismResource {
 
         // TODO: this check can take up to a few seconds in the worst case, we should do it directly in the database
         var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparisonId);
-        if (!Objects.equals(comparison.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+        var exercise = comparison.getPlagiarismResult().getExercise();
+        if (!Objects.equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
             throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
+        }
+
+        if (exercise.isTeamMode()) {
+            throw new BadRequestAlertException("Updating the plagiarism status is not allowed for team exercises.", "PlagiarismComparison", "noTeamExercise");
         }
 
         plagiarismService.updatePlagiarismComparisonStatus(comparisonId, statusDTO.status());

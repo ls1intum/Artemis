@@ -18,18 +18,6 @@
             <div>
                 <hr />
                 <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.configuration">Exam Configuration</h5>
-                @if (exam.course) {
-                    <div class="form-group">
-                        <label class="form-control-label" for="course" jhiTranslate="artemisApp.examManagement.courseTitle">Course Title</label>
-                        <input id="course" name="course" readonly type="text" class="form-control" [value]="exam.course.title" />
-                    </div>
-                }
-                @if (exam.id) {
-                    <div class="form-group">
-                        <label class="form-check-label" for="id" jhiTranslate="artemisApp.examManagement.examId">Exam ID</label>
-                        <input class="form-control" type="text" id="id" name="id" [value]="exam.id" readonly />
-                    </div>
-                }
                 <label class="form-check-label" jhiTranslate="artemisApp.examManagement.examTitle">Exam Title</label>
                 <jhi-title-channel-name
                     [(title)]="exam.title"
@@ -123,7 +111,7 @@
                     <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime">Working Time</label>
                     <jhi-help-icon [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'" />
                     @if (!exam.testExam) {
-                        <input readonly type="text" class="form-control" [value]="workingTimeInMinutes" />
+                        <input readonly disabled type="text" class="form-control" [value]="workingTimeInMinutes" />
                     }
                     @if (exam.testExam) {
                         <input

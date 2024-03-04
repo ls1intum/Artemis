@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.util.Collections;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -82,9 +83,13 @@ public class ConversationMessageResource {
         }
         CreatedConversationMessage createdMessageData = conversationMessagingService.createMessage(courseId, post);
         conversationMessagingService.notifyAboutMessageCreation(createdMessageData);
+
+        Post sendToUserPost = createdMessageData.messageWithHiddenDetails();
+        sendToUserPost.setConversation(sendToUserPost.getConversation().copy());
+        sendToUserPost.getConversation().setConversationParticipants(Collections.emptySet());
+
         log.info("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessageData.messageWithHiddenDetails().getId()))
-                .body(createdMessageData.messageWithHiddenDetails());
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(sendToUserPost);
     }
 
     /**
