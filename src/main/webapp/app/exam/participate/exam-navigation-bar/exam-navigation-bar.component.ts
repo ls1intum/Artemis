@@ -13,7 +13,7 @@ import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/co
 import { map } from 'rxjs/operators';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { ExamSession } from 'app/entities/exam-session.model';
-import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faCheck, faEdit, faFlag } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
@@ -47,6 +47,8 @@ export class ExamNavigationBarComponent implements OnInit {
     icon: IconProp;
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
+
+    flags: boolean[] = [];
 
     // Icons
     faBars = faBars;
@@ -104,6 +106,9 @@ export class ExamNavigationBarComponent implements OnInit {
                         }
                     });
             });
+
+        // dummy for now
+        this.flags = new Array(this.exercises?.length).fill(false);
     }
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
@@ -169,6 +174,10 @@ export class ExamNavigationBarComponent implements OnInit {
         }
     }
 
+    flagExercise() {
+        this.flags[this.exerciseIndex] = !this.flags[this.exerciseIndex];
+    }
+
     isProgrammingExercise() {
         return this.exercises[this.exerciseIndex].type === ExerciseType.PROGRAMMING;
     }
@@ -204,6 +213,12 @@ export class ExamNavigationBarComponent implements OnInit {
         this.icon = faEdit;
         const exercise = this.exercises[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
+
+        if (this.flags[exerciseIndex]) {
+            this.icon = faFlag;
+            return 'synced';
+        }
+
         if (!submission) {
             // in case no participation/submission yet exists -> display synced
             // this should only occur for programming exercises

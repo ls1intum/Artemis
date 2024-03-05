@@ -293,6 +293,7 @@
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
+            "flagExercise": "Flag Exercise",
             "uploadFile": "Upload",
             "greeting": "Welcome to {{ title }}.",
             "finish": "This is the end of {{ title }}.",
