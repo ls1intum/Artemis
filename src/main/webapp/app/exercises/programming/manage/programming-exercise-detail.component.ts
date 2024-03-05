@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
-import { Subject, firstValueFrom } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -60,6 +60,7 @@ import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/deta
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
+import { Competency } from 'app/entities/competency.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -79,6 +80,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly documentationType: DocumentationType = 'Programming';
 
     programmingExercise: ProgrammingExercise;
+    competencies: Competency[];
     isExamExercise: boolean;
     supportsAuxiliaryRepositories: boolean;
     baseResource: string;
@@ -157,6 +159,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            this.competencies = programmingExercise.competencies;
             const exerciseId = this.programmingExercise.id!;
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
             this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
@@ -177,7 +180,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             }
 
-            this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!).subscribe(async (updatedProgrammingExercise) => {
+            this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!).subscribe((updatedProgrammingExercise) => {
                 this.programmingExercise = updatedProgrammingExercise.body!;
 
                 this.setLatestCoveredLineRatio();
@@ -218,11 +221,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.exerciseDetailSections = this.getExerciseDetails();
                 });
 
-                await this.loadGitDiffReport();
+                this.loadGitDiffReport();
 
                 // the build logs endpoint requires at least editor privileges
                 if (this.programmingExercise.isAtLeastEditor) {
-                    this.programmingExercise.buildLogStatistics = await firstValueFrom(this.programmingExerciseService.getBuildLogStatistics(exerciseId!));
+                    this.programmingExerciseService
+                        .getBuildLogStatistics(exerciseId!)
+                        .subscribe((buildLogStatistics) => (this.programmingExercise.buildLogStatistics = buildLogStatistics));
+                    this.exerciseDetailSections = this.getExerciseDetails();
                 }
 
                 this.setLatestCoveredLineRatio();
@@ -399,7 +405,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         participation: exercise.templateParticipation,
                         loading: this.loadingTemplateParticipationResults,
                         submissionRouterLink: exercise.templateParticipation && this.getParticipationSubmissionLink(exercise.templateParticipation.id!),
-                        onParticipationChange: this.onParticipationChange,
+                        onParticipationChange: () => this.onParticipationChange(),
                         type: ProgrammingExerciseParticipationType.TEMPLATE,
                     },
                 },
@@ -411,7 +417,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         participation: exercise.solutionParticipation,
                         loading: this.loadingSolutionParticipationResults,
                         submissionRouterLink: exercise.solutionParticipation && this.getParticipationSubmissionLink(exercise.solutionParticipation.id!),
-                        onParticipationChange: this.onParticipationChange,
+                        onParticipationChange: () => this.onParticipationChange(),
                         type: ProgrammingExerciseParticipationType.SOLUTION,
                     },
                 },
@@ -446,14 +452,26 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     getExerciseDetailsProblemSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        const hasCompetencies = !!this.competencies?.length;
+        const details: Detail[] = [
+            {
+                title: hasCompetencies ? 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle' : undefined,
+                type: DetailType.ProgrammingProblemStatement,
+                data: { exercise: exercise },
+            },
+        ];
+
+        if (hasCompetencies) {
+            details.push({
+                title: 'artemisApp.competency.link.title',
+                type: DetailType.Text,
+                data: { text: this.competencies?.map((competency) => competency.title).join(', ') },
+            });
+        }
+
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
-            details: [
-                {
-                    type: DetailType.ProgrammingProblemStatement,
-                    data: { exercise: exercise },
-                },
-            ],
+            details: details,
         };
     }
 
@@ -707,24 +725,30 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return link;
     }
 
-    async loadGitDiffReport(): Promise<void> {
-        const gitDiffReport = await firstValueFrom(this.programmingExerciseService.getDiffReport(this.programmingExercise.id!));
-        if (gitDiffReport) {
-            this.programmingExercise.gitDiffReport = gitDiffReport;
-            gitDiffReport.programmingExercise = this.programmingExercise;
-            this.addedLineCount =
-                gitDiffReport.entries
-                    ?.map((entry) => entry.lineCount)
-                    .filter((lineCount) => lineCount)
-                    .map((lineCount) => lineCount!)
-                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
-            this.removedLineCount =
-                gitDiffReport.entries
-                    ?.map((entry) => entry.previousLineCount)
-                    .filter((lineCount) => lineCount)
-                    .map((lineCount) => lineCount!)
-                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
-        }
+    loadGitDiffReport() {
+        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
+            if (
+                gitDiffReport &&
+                (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
+                    this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash)
+            ) {
+                this.programmingExercise.gitDiffReport = gitDiffReport;
+                gitDiffReport.programmingExercise = this.programmingExercise;
+                this.addedLineCount =
+                    gitDiffReport.entries
+                        ?.map((entry) => entry.lineCount)
+                        .filter((lineCount) => lineCount)
+                        .map((lineCount) => lineCount!)
+                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+                this.removedLineCount =
+                    gitDiffReport.entries
+                        ?.map((entry) => entry.previousLineCount)
+                        .filter((lineCount) => lineCount)
+                        .map((lineCount) => lineCount!)
+                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+                this.exerciseDetailSections = this.getExerciseDetails();
+            }
+        });
     }
 
     createStructuralSolutionEntries() {

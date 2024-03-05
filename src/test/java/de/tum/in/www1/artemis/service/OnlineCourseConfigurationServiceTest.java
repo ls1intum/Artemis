@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -133,8 +132,6 @@ class OnlineCourseConfigurationServiceTest {
     private OnlineCourseConfiguration getMockOnlineCourseConfiguration(LtiPlatformConfiguration ltiPlatformConfiguration) {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setCourse(null);
-        onlineCourseConfiguration.setLtiKey(RandomStringUtils.random(12, true, true));
-        onlineCourseConfiguration.setLtiSecret(RandomStringUtils.random(12, true, true));
         onlineCourseConfiguration.setUserPrefix("ltiCourse");
         onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
         return onlineCourseConfiguration;

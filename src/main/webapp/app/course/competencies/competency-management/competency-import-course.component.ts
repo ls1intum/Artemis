@@ -34,7 +34,7 @@ export type ImportAllFromCourseResult = {
 };
 
 @Component({
-    selector: 'jhi-competency-import',
+    selector: 'jhi-competency-import-course',
     templateUrl: './competency-import-course.component.html',
 })
 export class CompetencyImportCourseComponent extends ImportComponent<CourseForImportDTO> {

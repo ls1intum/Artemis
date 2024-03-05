@@ -15,10 +15,16 @@
                     <span>{{ getDynamicRegistrationUrl() }}</span>
                     <jhi-copy-icon-button [copyText]="getDynamicRegistrationUrl()" />
                 </dd>
-                <dt style="display: flex; align-items: center">
+                <dt style="display: flex; align-items: center; justify-content: space-between; width: 100%">
                     <div class="modal-header" style="margin-bottom: 20px">
                         <h4 class="modal-title" style="margin-right: 2px">{{ 'artemisApp.lti.configuredPlatforms' | artemisTranslate }}</h4>
                         <jhi-help-icon text="artemisApp.lti.configuredPlatformsTooltip" />
+                    </div>
+                    <div class="modal-header" style="margin-bottom: 20px">
+                        <a [routerLink]="['/admin', 'lti-configuration', 'new']" class="btn btn-primary">
+                            <fa-icon [icon]="faPlus" />
+                            <span jhiTranslate="artemisApp.lti13.addNewPlatform">Add New Platform Configuration</span>
+                        </a>
                     </div>
                 </dt>
                 <div class="row">
