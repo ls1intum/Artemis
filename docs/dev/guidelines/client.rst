@@ -107,7 +107,7 @@ Use JSDoc style comments for functions, interfaces, enums, and classes.
 8. Localization
 ===============
 
-1. Make an entry in the corresponding ``i18n/{language}/{area}.json`` files for all languages Artemis supports (currently english and german).
+1. Make an entry in the corresponding ``i18n/{language}/{area}.json`` files for all languages Artemis supports (currently English and German).
 2. To display the string in HTML files, use the ``jhiTranslate`` directive or the ``artemisTranslate`` pipe.
 3. To ensure consistency, always choose the directive over the pipe whenever possible.
 
