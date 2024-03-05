@@ -34,7 +34,7 @@ import { Complaint } from 'app/entities/complaint.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
@@ -96,7 +96,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     public gradingCriteria: GradingCriterion[];
     private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
-    teamBaseResource: string;
     isExamExercise: boolean;
     submissionPolicy?: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
@@ -125,7 +124,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     faFileSignature = faFileSignature;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
-    faUsers = faUsers;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -254,7 +252,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.discussionComponent.exercise = this.exercise;
         }
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
-        this.teamBaseResource = `/course-management/${this.courseId}/exercises/${this.exercise.id}/`;
     }
 
     /**
