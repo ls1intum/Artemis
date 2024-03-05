@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Competency, CompetencyProgress, CompetencyRelation, CompetencyWithTailRelationDTO, CourseCompetencyProgress } from 'app/entities/competency.model';
+import { Competency, CompetencyProgress, CompetencyRelation, CompetencyRelationDTO, CompetencyWithTailRelationDTO, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { map, tap } from 'rxjs/operators';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
@@ -126,23 +126,20 @@ export class CompetencyService {
 
     //relations
 
-    createCompetencyRelation(tailCompetencyId: number, headCompetencyId: number, type: string, courseId: number): Observable<EntityResponseType> {
-        let params = new HttpParams();
-        params = params.set('type', type);
-        return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/competencies/${tailCompetencyId}/relations/${headCompetencyId}`, null, {
-            observe: 'response',
-            params,
-        });
-    }
-
-    getCompetencyRelations(competencyId: number, courseId: number) {
-        return this.httpClient.get<CompetencyRelation[]>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/relations`, {
+    createCompetencyRelation(relation: CompetencyRelation, courseId: number) {
+        return this.httpClient.post<CompetencyRelation>(`${this.resourceURL}/courses/${courseId}/competencies/relations`, relation, {
             observe: 'response',
         });
     }
 
-    removeCompetencyRelation(competencyId: number, competencyRelationId: number, courseId: number) {
-        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/relations/${competencyRelationId}`, {
+    getCompetencyRelations(courseId: number) {
+        return this.httpClient.get<CompetencyRelationDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies/relations`, {
+            observe: 'response',
+        });
+    }
+
+    removeCompetencyRelation(competencyRelationId: number, courseId: number) {
+        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/competencies/relations/${competencyRelationId}`, {
             observe: 'response',
         });
     }
