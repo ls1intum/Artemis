@@ -18,11 +18,17 @@ export enum CompetencyTaxonomy {
     CREATE = 'CREATE',
 }
 
+export enum CompetencyRelationType {
+    RELATES = 'RELATES',
+    ASSUMES = 'ASSUMES',
+    EXTENDS = 'EXTENDS',
+    MATCHES = 'MATCHES',
+}
+
 export enum CompetencyRelationError {
     CIRCULAR = 'CIRCULAR',
     SELF = 'SELF',
     EXISTING = 'EXISTING',
-    NONE = 'NONE',
 }
 
 export enum CompetencyValidators {
@@ -67,7 +73,7 @@ export class CompetencyRelation implements BaseEntity {
     public id?: number;
     public tailCompetency?: Competency;
     public headCompetency?: Competency;
-    public type?: string;
+    public type?: CompetencyRelationType;
 
     constructor() {}
 }
@@ -76,7 +82,7 @@ export class CompetencyRelationDTO implements BaseEntity {
     id?: number;
     tailCompetencyId?: number;
     headCompetencyId?: number;
-    relationType?: string;
+    relationType?: CompetencyRelationType;
 
     constructor() {}
 }
@@ -85,13 +91,14 @@ export class CompetencyRelationDTO implements BaseEntity {
  * Converts a CompetencyRelationDTO to a CompetencyRelation
  * @param competencyRelationDTO
  */
-export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelationDTO): CompetencyRelation {
-    return {
+export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelationDTO) {
+    const relation: CompetencyRelation = {
         id: competencyRelationDTO.id,
         tailCompetency: { id: competencyRelationDTO.tailCompetencyId },
         headCompetency: { id: competencyRelationDTO.headCompetencyId },
         type: competencyRelationDTO.relationType,
     };
+    return relation;
 }
 
 export class CompetencyWithTailRelationDTO {
