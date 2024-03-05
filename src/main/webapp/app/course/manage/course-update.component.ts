@@ -1,5 +1,5 @@
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -44,6 +44,7 @@ export class CourseUpdateComponent implements OnInit {
     timeZones: string[] = [];
     originalTimeZone?: string;
 
+    @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     courseForm: FormGroup;
@@ -616,6 +617,10 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     protected readonly FeatureToggle = FeatureToggle;
+
+    triggerFileInput() {
+        this.fileInput.nativeElement.click();
+    }
 }
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
