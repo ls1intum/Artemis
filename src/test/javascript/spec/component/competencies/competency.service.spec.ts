@@ -6,7 +6,7 @@ import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency, CompetencyProgress, CompetencyRelation, CompetencyWithTailRelationDTO, CourseCompetencyProgress } from 'app/entities/competency.model';
+import { Competency, CompetencyProgress, CompetencyRelation, CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { CompetencyPageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
@@ -167,10 +167,11 @@ describe('CompetencyService', () => {
     }));
 
     it('should add a Competency relation', fakeAsync(() => {
-        const returnedFromService = { tailCompetency: 1, headCompetency: 2, type: 'assumes' } as CompetencyRelation;
+        const returnedFromService: CompetencyRelation = { tailCompetency: { id: 1 }, headCompetency: { id: 2 }, type: CompetencyRelationType.ASSUMES };
+        const expected: CompetencyRelation = { ...returnedFromService };
         let result: any;
         competencyService
-            .createCompetencyRelation(1, 2, 'assumes', 1)
+            .createCompetencyRelation(expected, 1)
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
@@ -178,12 +179,12 @@ describe('CompetencyService', () => {
         req.flush(returnedFromService);
         tick();
 
-        expect(result.body).toEqual(returnedFromService);
+        expect(result.body).toEqual(expected);
     }));
 
     it('should remove a Competency relation', fakeAsync(() => {
         let result: any;
-        competencyService.removeCompetencyRelation(1, 1, 1).subscribe((resp) => (result = resp.ok));
+        competencyService.removeCompetencyRelation(1, 1).subscribe((resp) => (result = resp.ok));
         const req = httpTestingController.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
         tick();
@@ -284,13 +285,13 @@ describe('CompetencyService', () => {
     it('should get competency relations', fakeAsync(() => {
         const relation: CompetencyRelation = {
             id: 1,
-            type: 'RELATES',
+            type: CompetencyRelationType.RELATES,
         };
         const returnedFromService = [relation];
         const expected = [...returnedFromService];
 
         competencyService
-            .getCompetencyRelations(1, 1)
+            .getCompetencyRelations(1)
             .pipe(take(1))
             .subscribe((resp) => (resultGetRelations = resp));
 
