@@ -144,6 +144,9 @@ public class ConversationService {
 
     /**
      * In certain use cases, we need the conversation participants to generate the human-readable name for a group chat.
+     *
+     * @param conversationId the id of the conversation
+     * @return the conversation that has been loaded
      */
     public Conversation loadConversationWithParticipantsIfGroupChat(Long conversationId) {
         var conversation = conversationRepository.findByIdElseThrow(conversationId);
