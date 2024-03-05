@@ -7,8 +7,7 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFacto
 
 import java.util.Set;
 
-import org.jetbrains.annotations.NotNull;
-import org.springframework.stereotype.Component;
+import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -21,7 +20,6 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
-@Component
 public class SingleUserNotificationFactory {
 
     /**

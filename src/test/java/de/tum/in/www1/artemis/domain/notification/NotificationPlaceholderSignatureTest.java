@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -8,9 +10,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.google.gson.GsonBuilder;
@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import io.github.classgraph.AnnotationEnumValue;
 import io.github.classgraph.ClassGraph;
 
-public class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationIndependentTest {
+class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationIndependentTest {
 
     /**
      * If this test fails you have changed the notification placeholder files. This may have dramatic consequences on the mobile applications (iOS & Android) and the database.
@@ -36,7 +36,7 @@ public class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrat
      * 5. Execute the Gradle task generatePlaceholderRevisionSignatures to make this test pass again.
      */
     @Test
-    public void testSignatureHasNotChanged() throws URISyntaxException, IOException {
+    void testSignatureHasNotChanged() throws URISyntaxException, IOException {
         try (var scanResult = new ClassGraph().acceptPackages("de.tum.in.www1.artemis").enableAllInfo().scan()) {
             // Find the classes that are annotated as a notification placeholder file.
             var classes = scanResult.getClassesWithMethodAnnotation(NotificationPlaceholderCreator.class);
@@ -45,7 +45,7 @@ public class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrat
             var signatures = classes.stream().flatMap(x -> x.getDeclaredMethodInfo().stream()).filter(method -> method.hasAnnotation(NotificationPlaceholderCreator.class))
                     .flatMap(placeholderCreatorMethod -> {
                         var fieldDescriptions = Arrays.stream(placeholderCreatorMethod.getParameterInfo())
-                                .map(param -> new FieldDescription(param.getName(), param.getTypeDescriptor().toString())).collect(Collectors.toList());
+                                .map(param -> new FieldDescription(param.getName(), param.getTypeDescriptor().toString())).toList();
 
                         var notificationTypes = (Object[]) placeholderCreatorMethod.getAnnotationInfo(NotificationPlaceholderCreator.class).getParameterValues().get("values")
                                 .getValue();
@@ -59,7 +59,7 @@ public class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrat
             var expectedSignature = readPlaceholderText(
                     Objects.requireNonNull(NotificationPlaceholderSignatureTest.class.getClassLoader().getResource("placeholder-signatures.json")));
 
-            Assertions.assertEquals(expectedSignature, actualSignature);
+            assertThat(expectedSignature).isEqualTo(actualSignature);
         }
     }
 

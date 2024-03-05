@@ -15,7 +15,7 @@ import com.tngtech.archunit.lang.ConditionEvents;
 
 import de.tum.in.www1.artemis.AbstractArchitectureTest;
 
-public class NotificationPlaceholderArchitectureTest extends AbstractArchitectureTest {
+class NotificationPlaceholderArchitectureTest extends AbstractArchitectureTest {
 
     /**
      * Test that all NotificationPlaceholderCreator methods return a String array and only have Strings as arguments.
