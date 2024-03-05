@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -489,9 +488,9 @@ public class ProgrammingExerciseParticipationService {
     public List<CommitInfoDTO> getCommitInfosTestRepo(ProgrammingExerciseParticipation participation) {
         ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
         try {
-            return gitService.getCommitInfos(new VcsRepositoryUri(exercise.getTestRepositoryUri()));
+            return gitService.getCommitInfos(exercise.getVcsTestRepositoryUri());
         }
-        catch (GitAPIException | URISyntaxException e) {
+        catch (GitAPIException e) {
             log.error("Could not get commit infos for test repository with participation id {}", participation.getId());
             return List.of();
         }

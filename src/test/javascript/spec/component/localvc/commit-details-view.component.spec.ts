@@ -118,7 +118,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnInit();
 
         // Expectations
-        expect(component.studentParticipation).toEqual(mockParticipation);
+        expect(component.participation).toEqual(mockParticipation);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();

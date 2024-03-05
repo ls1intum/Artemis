@@ -321,19 +321,35 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * GET /programming-exercise-participations/{participationId}/files-content-commit-details/{commitId} : Get the content of the files of a programming exercise participation.
+     * GET /programming-exercise/{exerciseId}/participation/{participationId}/files-content-commit-details/{commitId} : Get the content of the files of a programming exercise
      * This method is specifically for the commit details view, where not only Instructors and Admins should have access to the files content as in
      * redirectGetParticipationRepositoryFiles but also students and tutors that have access to the participation.
      *
+     * @param exerciseId      the id of the exercise for which to retrieve the files content
      * @param participationId the id of the participation for which to retrieve the files content
      * @param commitId        the id of the commit for which to retrieve the files content
+     * @param repositoryType  the type of the repository for which to retrieve the files content
      * @return a redirect to the endpoint returning the files with content
      */
-    @GetMapping("programming-exercise-participations/{participationId}/files-content-commit-details/{commitId}")
+    @GetMapping("programming-exercise/{exerciseId}/participation/{participationId}/files-content-commit-details/{commitId}")
     @EnforceAtLeastStudent
-    public ModelAndView redirectGetParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long participationId, @PathVariable String commitId) {
-        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+    public ModelAndView redirectGetParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @PathVariable long participationId,
+            @PathVariable String commitId, @RequestParam RepositoryType repositoryType) {
+        ProgrammingExerciseParticipation participation;
+        if (repositoryType == RepositoryType.USER) {
+            participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        }
+        else {
+            if (repositoryType == RepositoryType.TEMPLATE) {
+                participation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exerciseId);
+            }
+            else {
+                // if the repository is TESTS we also want to get the solution participation check to see if the user
+                // has access to the participation, as the TESTS repository doesn't have a participation
+                participation = programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(exerciseId);
+            }
+        }
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId).addObject("repositoryType", repositoryType);
     }
 }

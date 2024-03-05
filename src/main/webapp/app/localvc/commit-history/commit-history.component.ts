@@ -53,10 +53,10 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             this.participationId = Number(params['participationId']);
             this.exerciseId = Number(params['exerciseId']);
             this.repositoryType = params['repositoryType'];
-            if (this.participationId) {
-                this.loadStudentParticipation();
-            } else {
+            if (this.repositoryType) {
                 this.loadDifferentParticipation();
+            } else {
+                this.loadStudentParticipation();
             }
         });
     }
