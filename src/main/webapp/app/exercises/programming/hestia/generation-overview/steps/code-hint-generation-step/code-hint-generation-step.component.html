@@ -12,9 +12,7 @@
                 jhiTranslate="artemisApp.codeHint.management.step4.updateHintsButton.label"
                 [ngbTooltip]="'artemisApp.codeHint.management.step4.updateHintsButton.tooltip' | artemisTranslate"
                 (click)="generateCodeHints(false, 'updateHintsButton')"
-            >
-                Recreate code hints
-            </button>
+            ></button>
         }
         @if (codeHints?.length === 0) {
             <button
@@ -23,9 +21,7 @@
                 jhiTranslate="artemisApp.codeHint.management.step4.createHintsButton.label"
                 [ngbTooltip]="'artemisApp.codeHint.management.step4.createHintsButton.tooltip' | artemisTranslate"
                 (click)="generateCodeHints(true, 'createHintsButton')"
-            >
-                Create code hints
-            </button>
+            ></button>
         }
         @if (codeHints?.length) {
             <button
@@ -34,9 +30,7 @@
                 jhiTranslate="artemisApp.codeHint.management.step4.recreateHintsButton.label"
                 [ngbTooltip]="'artemisApp.codeHint.management.step4.recreateHintsButton.tooltip' | artemisTranslate"
                 (click)="generateCodeHints(true, 'recreateHintsButton')"
-            >
-                Update code hints
-            </button>
+            ></button>
         }
     </div>
 }
@@ -70,7 +64,7 @@
                             class="btn btn-warning btn-sm me-1"
                         >
                             <fa-icon [icon]="faWrench" />
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                         </a>
                     </div>
                 </div>
@@ -80,6 +74,6 @@
 }
 @if (!codeHints?.length) {
     <div class="text-center mt-2">
-        <span jhiTranslate="artemisApp.codeHint.management.step4.notGenerated">No code hints have been generated yet.</span>
+        <span jhiTranslate="artemisApp.codeHint.management.step4.notGenerated"></span>
     </div>
 }
