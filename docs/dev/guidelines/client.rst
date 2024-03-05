@@ -112,6 +112,7 @@ Use JSDoc style comments for functions, interfaces, enums, and classes.
 3. To ensure consistency, always choose the directive over the pipe whenever possible.
 
 Do:
+
 .. code-block:: html+ng2
 
     <span jhiTranslate="global.title"></span>
@@ -123,7 +124,9 @@ Do:
     </span>
 
 Don't do:
+
 .. code-block:: html+ng2
+
     <!-- use the directive instead -->
     <span>{{ 'global.title' | artemisTranslate }}</span>
 
