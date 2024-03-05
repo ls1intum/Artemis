@@ -539,7 +539,6 @@ public class ParticipationResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         Set<StudentParticipation> participations;
         if (withLatestResults) {
-            // Look here
             participations = findParticipationWithLatestResults(exercise);
             participations.forEach(participation -> {
                 participation.setSubmissionCount(participation.getSubmissions().size());
