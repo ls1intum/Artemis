@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.stream.IntStream;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.tngtech.archunit.core.domain.JavaMethod;
@@ -26,7 +27,11 @@ public class NotificationPlaceholderArchitectureTest extends AbstractArchitectur
 
                     @Override
                     public void check(JavaMethod item, ConditionEvents events) {
-                        item.getParameters().forEach(param -> Assertions.assertEquals(String.class, param.getRawType().reflect()));
+                        item.getParameters().forEach(param -> {
+                            if (param.getRawType().reflect() != String.class) {
+                                events.add(violated(item, String.format("Method %s has parameter violating that is not a String", item.getFullName())));
+                            }
+                        });
                     }
                 }).check(productionClasses);
     }
@@ -53,8 +58,10 @@ public class NotificationPlaceholderArchitectureTest extends AbstractArchitectur
                         throw new RuntimeException("Method " + description + " does not return a string array.");
                     }
 
-                    Assertions.assertArrayEquals(params, (String[]) result,
-                            "All @NotificationPlaceholderCreator methods must return all their arguments in exactly that specified order");
+                    if (!Arrays.equals(params, (String[]) result)) {
+                        conditionEvents.add(violated(javaMethod,
+                                String.format("Method %s does not return an array of its input parameters in the order of declaration", javaMethod.getFullName())));
+                    }
                 }
                 catch (IllegalAccessException e) {
                     throw new RuntimeException("Could not access " + description, e);
