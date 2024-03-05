@@ -172,10 +172,8 @@ public class Lti13Service {
     public void onNewResult(StudentParticipation participation) {
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
 
-        LtiPlatformConfiguration ltiPlatformConfiguration = course.getOnlineCourseConfiguration().getLtiPlatformConfiguration();
-        ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(ltiPlatformConfiguration);
-        if (clientRegistration == null) {
-            log.error("Could not transmit score to external LMS for course {}: client registration not found", course.getTitle());
+        if (!course.isOnlineCourse()) {
+            log.error("Could not transmit score to external LMS for course {}:", course.getTitle());
             return;
         }
 
@@ -197,7 +195,12 @@ public class Lti13Service {
 
             String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
 
-            launches.forEach(launch -> submitScore(launch, clientRegistration, concatenatedFeedbacks, result.get().getScore()));
+            launches.forEach(launch -> {
+                LtiPlatformConfiguration returnPlatform = launch.getLtiPlatformConfiguration();
+                ClientRegistration returnClient = onlineCourseConfigurationService.getClientRegistration(returnPlatform);
+                submitScore(launch, returnClient, concatenatedFeedbacks, result.get().getScore());
+
+            });
         });
     }
 
@@ -303,6 +306,12 @@ public class Lti13Service {
 
         launch.setExercise(exercise);
         launch.setUser(user);
+
+        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(launchRequest.getClientRegistrationId());
+        if (ltiPlatformConfiguration.isPresent()) {
+            launch.setLtiPlatformConfiguration(ltiPlatformConfiguration.get());
+        }
+
         launchRepository.save(launch);
     }
 

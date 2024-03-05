@@ -25,7 +25,7 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationCircle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -68,11 +68,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     auxiliaryRepositoryDuplicateNames: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
     auxiliaryRepositoryNamedCorrectly: boolean;
-    submitButtonTitle: string;
     isImportFromExistingExercise: boolean;
     isImportFromFile: boolean;
     isEdit: boolean;
     isExamMode: boolean;
+    isLocal: boolean;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     backupExercise: ProgrammingExercise;
@@ -150,9 +150,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public modePickerOptions: ModePickerOption<ProjectType>[] = [];
 
     // Icons
-    faSave = faSave;
-    faBan = faBan;
-    faHandShakeAngle = faHandshakeAngle;
     faQuestionCircle = faQuestionCircle;
     faExclamationCircle = faExclamationCircle;
 
@@ -376,6 +373,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            if (this.programmingExercise.buildPlanConfiguration) {
+                this.programmingExercise.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
+            }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
@@ -429,16 +429,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                             });
                         }
                     }
-
-                    // Set submit button text depending on component state
-                    if (this.isImportFromExistingExercise || this.isImportFromFile) {
-                        this.submitButtonTitle = 'entity.action.import';
-                    } else if (this.programmingExercise.id) {
-                        this.isEdit = true;
-                        this.submitButtonTitle = 'entity.action.save';
-                    } else {
-                        this.submitButtonTitle = 'entity.action.generate';
-                    }
                 }),
             )
             .subscribe();
@@ -461,6 +451,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo?.activeProfiles.includes(PROFILE_LOCALCI)) {
                 this.customBuildPlansSupported = PROFILE_LOCALCI;
+                this.isLocal = true;
             }
             if (profileInfo?.activeProfiles.includes(PROFILE_AEOLUS)) {
                 this.customBuildPlansSupported = PROFILE_AEOLUS;

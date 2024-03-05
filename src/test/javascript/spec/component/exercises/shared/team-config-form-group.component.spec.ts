@@ -50,16 +50,15 @@ describe('Team Config Form Group Component', () => {
         component.maxTeamsizeField = { valueChanges: new Subject() } as any as NgModel;
         component.exercise.mode = ExerciseMode.TEAM;
         component.ngAfterViewChecked();
-        expect(component.maxTeamSizeSubscription).toBeDefined();
-        expect(component.minTeamSizeSubscription).toBeDefined();
-        expect(component.maxTeamSizeSubscription?.closed).toBeFalse();
-        expect(component.minTeamSizeSubscription?.closed).toBeFalse();
+        expect(component.inputFieldSubscriptions).not.toBeEmpty();
+        expect(component.inputFieldSubscriptions).toHaveLength(2);
         (component.minTeamSizeField.valueChanges as Subject<boolean>).next(false);
         expect(calculateValidSpy).toHaveBeenCalledOnce();
         expect(formValidChangesSpy).toHaveBeenCalledOnce();
         component.ngOnDestroy();
-        expect(component.maxTeamSizeSubscription?.closed).toBeTrue();
-        expect(component.minTeamSizeSubscription?.closed).toBeTrue();
+        for (const subscription of component.inputFieldSubscriptions) {
+            expect(subscription?.closed).toBeTrue();
+        }
     });
 
     it('should set config to undefined when exercise mode changed to INDIVIDUAL', () => {

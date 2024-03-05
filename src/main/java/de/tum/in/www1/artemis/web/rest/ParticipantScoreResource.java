@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,8 +23,9 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipantScoreService;
 import de.tum.in.www1.artemis.web.rest.dto.score.ScoreDTO;
 
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ParticipantScoreResource {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipantScoreResource.class);
@@ -56,7 +60,7 @@ public class ParticipantScoreResource {
      * @param courseId the id of the course for which to calculate the course scores
      * @return list of scores for every member of the course
      */
-    @GetMapping("/courses/{courseId}/course-scores")
+    @GetMapping("courses/{courseId}/course-scores")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<ScoreDTO>> getScoresOfCourse(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();
@@ -82,7 +86,7 @@ public class ParticipantScoreResource {
      * @param examId the id of the exam for which to calculate the exam scores
      * @return list of scores for every registered user in the exam or 404 not found if scores are empty
      */
-    @GetMapping("/exams/{examId}/exam-scores")
+    @GetMapping("exams/{examId}/exam-scores")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<ScoreDTO>> getScoresOfExam(@PathVariable Long examId) {
         long start = System.currentTimeMillis();

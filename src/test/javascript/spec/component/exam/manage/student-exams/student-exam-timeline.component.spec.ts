@@ -30,7 +30,7 @@ import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { QueryList } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { ChangeContext, SliderComponent } from 'ngx-slider-v2';
+import { ChangeContext, SliderComponent } from '@angular-slider/ngx-slider';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

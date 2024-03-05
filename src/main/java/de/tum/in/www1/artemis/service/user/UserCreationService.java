@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.user;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import tech.jhipster.security.RandomUtil;
 
+@Profile(PROFILE_CORE)
 @Service
 public class UserCreationService {
 

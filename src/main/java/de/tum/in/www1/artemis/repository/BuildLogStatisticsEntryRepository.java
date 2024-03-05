@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -11,12 +13,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 
 /**
  * Spring Data JPA repository for the BuildLogStatisticsEntry entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLogStatisticsEntry, Long> {
 
@@ -32,12 +37,17 @@ public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLo
             FROM BuildLogStatisticsEntry b
                 LEFT JOIN b.programmingSubmission s
                 LEFT JOIN s.participation p
-                LEFT JOIN TREAT (p.exercise as ProgrammingExercise ) e
-            WHERE e = :exercise
-                OR e.solutionParticipation = p
-                OR e.templateParticipation = p
+            WHERE p.exercise = :exercise
+                OR p = :templateParticipation
+                OR p = :solutionParticipation
             """)
-    BuildLogStatisticsDTO findAverageBuildLogStatisticsEntryForExercise(@Param("exercise") ProgrammingExercise exercise);
+    BuildLogStatisticsDTO findAverageBuildLogStatistics(@Param("exercise") ProgrammingExercise exercise,
+            @Param("templateParticipation") TemplateProgrammingExerciseParticipation templateParticipation,
+            @Param("solutionParticipation") SolutionProgrammingExerciseParticipation solutionParticipation);
+
+    default BuildLogStatisticsDTO findAverageBuildLogStatistics(ProgrammingExercise exercise) {
+        return findAverageBuildLogStatistics(exercise, exercise.getTemplateParticipation(), exercise.getSolutionParticipation());
+    }
 
     @Transactional // ok because of delete
     @Modifying

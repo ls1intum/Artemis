@@ -9,6 +9,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 })
 export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
     @Input() programmingExercise: ProgrammingExercise | null;
+    @Input() isLocal: boolean;
 
     getCourseShortName(): string | undefined {
         if (!this.programmingExercise) {

@@ -21,6 +21,7 @@
             "masteryDescription": "A weighted metric of your progress and confidence, which shows your overall advancement towards competency mastery.",
             "masteredStudents": "Mastered students",
             "mastered": "Mastered",
+            "competencies": "Competencies",
             "taxonomies": {
                 "REMEMBER": "Remember",
                 "UNDERSTAND": "Understand",
@@ -43,21 +44,35 @@
             },
             "manageCompetencies": {
                 "title": "Competency Management",
-                "import": "Import competency",
+                "import": "Import competencies",
+                "importAll": "Import all competencies of a course",
                 "create": "Create competency",
-                "generate": "Generate Competency Recommendations",
-                "importAll": "Import all competencies from another course"
+                "generate": "Generate Competencies",
+                "empty": "No competencies exist for this course"
             },
             "import": {
-                "label": "Import a Competency",
-                "search": "Search for a competency:",
-                "loading": "Loading...",
+                "title": "Import Competencies",
+                "searchTableHeader": "Search Competencies",
+                "searchTableEmpty": "Found no competencies matching your search",
+                "selectedTableHeader": "Selected Competencies",
+                "selectedTableEmpty": "No competencies selected",
+                "importRelations": "Import Relations?",
+                "search": {
+                    "title": "Competency Search",
+                    "labelCompetencyTitle": "Competency Title",
+                    "labelCompetencyDescription": "Competency Description",
+                    "labelCourseTitle": "Course title",
+                    "labelCourseSemester": "Semester",
+                    "showAdvancedSearch": "Show advanced search",
+                    "hideAdvancedSearch": "Hide advanced search"
+                },
                 "table": {
                     "TITLE": "Title",
-                    "COURSE_TITLE": "Course",
-                    "SEMESTER": "Semester",
-                    "doImport": "Select"
-                }
+                    "DESCRIPTION": "Description",
+                    "COURSE_TITLE": "Course Title",
+                    "SEMESTER": "Semester"
+                },
+                "success": "Imported {{ noOfCompetencies }} competencies."
             },
             "generate": {
                 "title": "Generate Competency Recommendations",
@@ -77,13 +92,14 @@
                     "maxlengthValidationError": "Course description is limited to {{max}} characters",
                     "regenerate": "Generate again",
                     "regenerateTooltip": "Generate additional Competency Recommendations",
-                    "infoTooltip": "Enter a course description, focusing on the theoretical/practical content and learning objectives. Iris will then use it to generate recommendations for competencies you could add to your course."
+                    "infoTooltip": "Enter a course description, focusing on the theoretical/practical content and learning objectives. Iris will then use it to generate recommendations for competencies you could add to your course.",
+                    "success": "Generated {{ noOfCompetencies }} competency recommendations.",
+                    "warning": "No competency recommendations could be generated. Try using a more detailed course description. If the issue persists, contact the administrators."
                 }
             },
             "importAll": {
                 "title": "Import all Competencies from another course",
                 "search": "Search for a course:",
-                "importRelations": "Import Relations?",
                 "table": {
                     "TITLE": "Title",
                     "SEMESTER": "Semester",
@@ -154,10 +170,8 @@
             },
             "prerequisite": {
                 "title": "Prerequisites",
-                "managePrerequisites": {
-                    "title": "Prerequisite Management",
-                    "select": "Select Prerequisite"
-                },
+                "select": "Select prerequisite",
+                "empty": "No prerequisites exist for this course",
                 "import": {
                     "label": "Add prerequisites",
                     "table": {
@@ -175,15 +189,20 @@
                 "tailCompetency": "Tail Competency",
                 "relationType": "Relation Type",
                 "headCompetency": "Head Competency",
-                "relates": "Relates",
-                "assumes": "Assumes",
-                "extends": "Extends",
-                "matches": "Matches",
                 "createRelation": "Create Relation",
                 "createsCircularRelation": "You can not create circular relations between competencies.",
                 "selfRelation": "You can not create a relation between a competency and itself.",
-                "relationAlreadyExists": "This relation already exists."
+                "relationAlreadyExists": "This relation already exists.",
+                "type": {
+                    "RELATES": "Relates",
+                    "ASSUMES": "Assumes",
+                    "EXTENDS": "Extends",
+                    "MATCHES": "Matches"
+                }
             }
+        },
+        "prerequisite": {
+            "deleted": "Prerequisite removed"
         },
         "learningPath": {
             "learningPathButton": "Learning Paths",

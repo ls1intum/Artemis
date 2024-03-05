@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +17,7 @@ import de.tum.in.www1.artemis.web.rest.open.PublicResultResource;
  * TODO: Remove this class in June 2024
  * Together with the lines from {@link SecurityConfiguration#configure(HttpSecurity)}
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 @Deprecated(forRemoval = true)

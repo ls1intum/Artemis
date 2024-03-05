@@ -15,7 +15,7 @@ const DocumentationLinks = {
     Text: 'exercises/textual/',
     FileUpload: 'exercises/file-upload/',
     Notifications: 'notifications/',
-    Competencies: 'learning-analytics/#id3',
+    Competencies: 'adaptive-learning/',
     Communications: 'communication/',
     Exams: 'exam_mode/',
     PlagiarismChecks: 'plagiarism-check/',

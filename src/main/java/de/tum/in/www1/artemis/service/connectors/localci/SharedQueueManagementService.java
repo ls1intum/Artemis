@@ -67,7 +67,6 @@ public class SharedQueueManagementService {
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
         this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
-        this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
     }
 
     /**

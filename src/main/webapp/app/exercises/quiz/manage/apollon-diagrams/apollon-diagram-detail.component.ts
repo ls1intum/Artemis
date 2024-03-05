@@ -15,6 +15,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
+import { lastValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -154,9 +155,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     /**
      * Saves the diagram
      */
-    saveDiagram() {
+    async saveDiagram(): Promise<boolean> {
         if (!this.apollonDiagram) {
-            return;
+            return false;
         }
         const umlModel = this.apollonEditor!.model;
         const updatedDiagram: ApollonDiagram = {
@@ -164,14 +165,16 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             jsonRepresentation: JSON.stringify(umlModel),
         };
 
-        this.apollonDiagramService.update(updatedDiagram, this.courseId).subscribe({
-            next: () => {
-                this.alertService.success('artemisApp.apollonDiagram.updated', { title: this.apollonDiagram?.title });
-                this.isSaved = true;
-                this.setAutoSaveTimer();
-            },
-            error: () => this.alertService.error('artemisApp.apollonDiagram.update.error'),
-        });
+        const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.courseId));
+        if (result?.ok) {
+            this.alertService.success('artemisApp.apollonDiagram.updated', { title: this.apollonDiagram?.title });
+            this.isSaved = true;
+            this.setAutoSaveTimer();
+            return true;
+        } else {
+            this.alertService.error('artemisApp.apollonDiagram.update.error');
+            return false;
+        }
     }
 
     /**
@@ -229,8 +232,11 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
 
         if (this.apollonEditor && this.apollonDiagram) {
-            const question = await generateDragAndDropQuizExercise(this.course, this.apollonDiagram.title!, this.apollonEditor.model!);
-            this.closeEdit.emit(question);
+            const isSaved = await this.saveDiagram();
+            if (isSaved) {
+                const question = await generateDragAndDropQuizExercise(this.course, this.apollonDiagram.title!, this.apollonEditor.model!);
+                this.closeEdit.emit(question);
+            }
         }
     }
 

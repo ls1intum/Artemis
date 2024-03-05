@@ -3,10 +3,6 @@
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
             <h2 jhiTranslate="artemisApp.organizationManagement.addOrEditLabel">Add or edit a Organization</h2>
             <div>
-                <div class="form-group" [hidden]="!organization.id">
-                    <label for="id" jhiTranslate="global.field.id">ID</label>
-                    <input id="id" type="text" class="form-control" name="id" [(ngModel)]="organization.id" readonly />
-                </div>
                 <div class="form-group">
                     <label for="name" class="form-control-label" jhiTranslate="artemisApp.organizationManagement.name">Name</label>
                     <input id="name" type="text" class="form-control" name="name" #nameInput="ngModel" [(ngModel)]="organization.name" required minlength="1" maxlength="100" />

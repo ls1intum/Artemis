@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -9,6 +10,7 @@ import java.util.*;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,6 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Exercise entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
@@ -295,7 +298,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingAssessmentDueDate(@Param("now") ZonedDateTime now);
 
     /**
-     * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
+     * Select Exercise for Course ID WHERE there does exist an LtiResourceLaunch for the current user (-> user has started exercise once using LTI)
      *
      * @param courseId the id of the course
      * @param login    the login of the corresponding user
@@ -306,13 +309,13 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
             WHERE e.course.id = :courseId
                 AND EXISTS (
-                    SELECT l
-                    FROM LtiOutcomeUrl l
-                    WHERE e = l.exercise
-                        AND l.user.login = :login
+            	    SELECT l
+                    FROM LtiResourceLaunch l
+            	    WHERE e = l.exercise
+            	        AND l.user.login = :login
                 )
             """)
-    Set<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("login") String login);
+    Set<Exercise> findByCourseIdWhereLtiResourceLaunchExists(@Param("courseId") Long courseId, @Param("login") String login);
 
     @Query("""
             SELECT DISTINCT c

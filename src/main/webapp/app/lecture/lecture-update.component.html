@@ -27,10 +27,6 @@
                     </div>
                 </div>
                 <div>
-                    <div class="form-group" [hidden]="!lecture.id">
-                        <label for="id" jhiTranslate="global.field.id">ID</label>
-                        <input type="text" class="form-control" id="id" name="id" [(ngModel)]="lecture.id" readonly />
-                    </div>
                     <jhi-lecture-title-channel-name [lecture]="lecture" />
                     <div class="form-group" id="field_description">
                         <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>

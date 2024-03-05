@@ -5,10 +5,6 @@
                 Create or edit a Exercise Hint
             </h2>
             <div>
-                <div class="form-group" [hidden]="!exerciseHint?.id">
-                    <label for="id" jhiTranslate="global.field.id">ID</label>
-                    <input type="text" class="form-control" id="id" name="id" readonly [(ngModel)]="exerciseHint.id" />
-                </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.title" for="field_title">Title</label>
                     <input type="text" required minlength="3" class="form-control" name="title" id="field_title" [(ngModel)]="exerciseHint.title" />

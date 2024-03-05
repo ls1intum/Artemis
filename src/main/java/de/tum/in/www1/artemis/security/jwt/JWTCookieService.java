@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.security.jwt;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.security.jwt.JWTFilter.JWT_COOKIE_NAME;
 
 import java.time.Duration;
@@ -7,11 +8,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+@Profile(PROFILE_CORE)
 @Component
 public class JWTCookieService {
 

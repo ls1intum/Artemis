@@ -59,6 +59,20 @@ public abstract class Conversation extends DomainObject {
     @Column(name = "last_message_date")
     private ZonedDateTime lastMessageDate;
 
+    public Conversation(Long id, User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,
+            ZonedDateTime lastMessageDate) {
+        this.setId(id);
+        this.creator = creator;
+        this.conversationParticipants = conversationParticipants;
+        this.posts = posts;
+        this.course = course;
+        this.creationDate = creationDate;
+        this.lastMessageDate = lastMessageDate;
+    }
+
+    public Conversation() {
+    }
+
     public Set<ConversationParticipant> getConversationParticipants() {
         return conversationParticipants;
     }
@@ -106,6 +120,8 @@ public abstract class Conversation extends DomainObject {
     public void setPosts(Set<Post> posts) {
         this.posts = posts;
     }
+
+    public abstract Conversation copy();
 
     /**
      * @param sender the sender of the message

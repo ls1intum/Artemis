@@ -61,6 +61,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -1496,7 +1497,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var exam = ExamFactory.generateExam(course1);
         exam.setTitle(title);
         examRepository.save(exam);
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
         final var result = request.getSearchResult("/api/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1).containsExactly(exam);
     }
@@ -1508,7 +1509,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var searchTerm = "A very distinct title that should only ever exist once in the database";
         newExam.setTitle(searchTerm);
         examRepository.save(newExam);
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(searchTerm);
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(searchTerm);
         final var result = request.getSearchResult("/api/exams?withExercises=true", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         List<Exam> foundExams = result.getResultsOnPage();
         assertThat(foundExams).hasSize(1).containsExactly(newExam);
@@ -1524,7 +1525,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setTitle(title);
         examRepository.save(exam);
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
         final var result = request.getSearchResult("/api/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(0);
     }
@@ -1539,7 +1540,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setTitle(title);
         examRepository.save(exam);
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
         final var result = request.getSearchResult("/api/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1).contains(exam);
     }
@@ -1547,14 +1548,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
     void testGetAllExamsOnPage_asTutor_failsWithForbidden() throws Exception {
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllExamsOnPage_asStudent_failsWithForbidden() throws Exception {
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
     }
     // </editor-fold>

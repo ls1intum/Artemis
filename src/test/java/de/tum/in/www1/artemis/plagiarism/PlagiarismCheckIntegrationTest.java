@@ -5,74 +5,100 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 
 import org.assertj.core.data.Offset;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 
 class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "plagiarismcheck";
 
+    private static final String TEXT_SUBMISSION = "Lorem ipsum dolor sit amet, consectetur adipiscing elit";
+
     @Autowired
     private PlagiarismUtilService plagiarismUtilService;
 
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
+    private final int submissionsAmount = 5;
 
-    private Course course;
+    private static String modelingSubmission;
 
-    @BeforeEach
-    void initTestCase() throws IOException {
-        String submissionText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit";
-        String submissionModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        int studentAmount = 5;
-
-        course = plagiarismUtilService.addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(TEST_PREFIX, submissionText, studentAmount);
-        plagiarismUtilService.addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(TEST_PREFIX, submissionModel, studentAmount, course);
+    @BeforeAll
+    static void initTestCase() throws IOException {
+        modelingSubmission = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testCheckPlagiarismResultForTextExercise() throws Exception {
-        var textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
-        String path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        createAndTestPlagiarismResult(path);
+        // given
+        var exerciseId = plagiarismUtilService.createTextExerciseAndSimilarSubmissions(TEST_PREFIX, TEXT_SUBMISSION, submissionsAmount);
+
+        // when
+        var result = createPlagiarismResult("/api/text-exercises/" + exerciseId + "/check-plagiarism");
+
+        // then
+        verifyPlagiarismResult(result);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testCheckPlagiarismResultForTeamTextExercise() throws Exception {
+        // given
+        var exerciseId = plagiarismUtilService.createTeamTextExerciseAndSimilarSubmissions(TEST_PREFIX, TEXT_SUBMISSION, submissionsAmount);
+
+        // when
+        var result = createPlagiarismResult("/api/text-exercises/" + exerciseId + "/check-plagiarism");
+
+        // then
+        verifyPlagiarismResult(result);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismResultForModelingExercise() throws Exception {
-        var modelingExercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
-        String path = "/api/modeling-exercises/" + modelingExercise.getId() + "/check-plagiarism";
-        createAndTestPlagiarismResult(path);
+        // given
+        var exerciseId = plagiarismUtilService.createModelingExerciseAndSimilarSubmissionsToTheCourse(TEST_PREFIX, modelingSubmission, submissionsAmount);
+
+        // when
+        var result = createPlagiarismResult("/api/modeling-exercises/" + exerciseId + "/check-plagiarism");
+
+        // then
+        verifyPlagiarismResult(result);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCheckPlagiarismResultForTeamModelingExercise() throws Exception {
+        // given
+        var exerciseId = plagiarismUtilService.createTeamModelingExerciseAndSimilarSubmissionsToTheCourse(TEST_PREFIX, modelingSubmission, submissionsAmount);
+
+        // when
+        var result = createPlagiarismResult("/api/modeling-exercises/" + exerciseId + "/check-plagiarism");
+
+        // then
+        verifyPlagiarismResult(result);
     }
 
     /***
-     * Create the plagiarism result response based on the provided path
+     * Create the plagiarism result response based on the provided path.
      *
      * @param path The provided path to the rest endpoint
+     * @return plagiarism result DTO
      */
-    private void createAndTestPlagiarismResult(String path) throws Exception {
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("similarityThreshold", "50");
-        params.add("minimumScore", "0");
-        params.add("minimumSize", "0");
+    private PlagiarismResultDTO createPlagiarismResult(String path) throws Exception {
+        var plagiarismOptions = plagiarismUtilService.getDefaultPlagiarismOptions();
+        return request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismOptions);
+    }
 
-        var result = (PlagiarismResultDTO<?>) request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, params);
-
-        for (PlagiarismComparison<?> comparison : result.plagiarismResult().getComparisons()) {
+    private static void verifyPlagiarismResult(PlagiarismResultDTO<?> result) {
+        // verify comparisons
+        for (var comparison : result.plagiarismResult().getComparisons()) {
             var submissionA = comparison.getSubmissionA();
             var submissionB = comparison.getSubmissionB();
 
@@ -89,5 +115,4 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(stats.averageSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
         assertThat(stats.maximalSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
     }
-
 }

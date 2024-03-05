@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.ZonedDateTime;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -30,9 +32,11 @@ import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.TeamScoreRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.score.ScoreDTO;
-import de.tum.in.www1.artemis.web.rest.dto.score.StudentScoreSumDTO;
+import de.tum.in.www1.artemis.web.rest.dto.score.StudentScoreSum;
+import de.tum.in.www1.artemis.web.rest.dto.score.TeamScoreSum;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ParticipantScoreService {
 
@@ -138,23 +142,20 @@ public class ParticipantScoreService {
                 .getCourseViaExerciseGroupOrCourseMember();
 
         // individual exercises
-        final var studentAndAchievedPoints = studentScoreRepository.getAchievedPointsOfStudents(individualExercises);
-        Map<Long, Double> pointsAchieved = studentAndAchievedPoints.stream().collect(Collectors.toMap(StudentScoreSumDTO::userId, StudentScoreSumDTO::sumPointsAchieved));
+        final Set<StudentScoreSum> studentAndAchievedPoints = studentScoreRepository.getAchievedPointsOfStudents(individualExercises);
+        Map<Long, Double> pointsAchieved = studentAndAchievedPoints.stream().collect(Collectors.toMap(StudentScoreSum::userId, StudentScoreSum::sumPointsAchieved));
 
-        // team exercises
-        // [0] -> Team ID
-        // [1] -> sum of achieved points in exercises
         // We have to retrieve this separately because the students are not directly retrievable due to the taxonomy structure
-        List<Object[]> teamAndAchievedPoints = teamScoreRepository.getAchievedPointsOfTeams(teamExercises);
-        List<Long> teamIds = teamAndAchievedPoints.stream().map(rawData -> ((Long) rawData[0])).toList();
-        Map<Long, Team> teamIdToTeam = teamRepository.findAllWithStudentsByIdIn(teamIds).stream().collect(Collectors.toMap(Team::getId, Function.identity()));
+        Set<TeamScoreSum> teamScoreSums = teamScoreRepository.getAchievedPointsOfTeams(teamExercises);
+        Set<Long> teamIds = teamScoreSums.stream().map(TeamScoreSum::teamId).collect(Collectors.toSet());
+        var teamList = teamRepository.findAllWithStudentsByIdIn(teamIds);
+        var teamMap = teamList.stream().collect(Collectors.toMap(Team::getId, Function.identity()));
         final Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
-        for (Object[] rawData : teamAndAchievedPoints) {
-            Team team = teamIdToTeam.get((Long) rawData[0]);
-            double achievedPoints = rawData[1] != null ? ((Number) rawData[1]).doubleValue() : 0.0;
+        for (TeamScoreSum teamScoreSum : teamScoreSums) {
+            Team team = teamMap.get(teamScoreSum.teamId());
             for (User student : team.getStudents()) {
                 if (userIds.contains(student.getId())) {
-                    pointsAchieved.put(student.getId(), pointsAchieved.getOrDefault(student.getId(), 0.0) + achievedPoints);
+                    pointsAchieved.merge(student.getId(), teamScoreSum.sumPointsAchieved(), Double::sum);
                 }
             }
         }

@@ -12,7 +12,7 @@ import { Observable, Subscription, forkJoin, map, mergeMap, toArray } from 'rxjs
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ChangeContext, Options, SliderComponent } from 'ngx-slider-v2';
+import { ChangeContext, Options, SliderComponent } from '@angular-slider/ngx-slider';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
@@ -33,7 +33,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     // this is an array because the exam-timeline uses a page component for each exercise
     pageComponentVisited: boolean[];
     selectedTimestamp: number;
-    // Options for the ngx-slider
+    // Options for the @angular-slider/ngx-slider
     options: Options = {
         showTicks: true,
         stepsArray: [{ value: 0 }],

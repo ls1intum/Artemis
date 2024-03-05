@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 
+@Profile(PROFILE_CORE)
 @Repository
 public interface CompetencyProgressRepository extends JpaRepository<CompetencyProgress, Long> {
 
@@ -41,7 +45,7 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             SELECT cp
             FROM CompetencyProgress cp
                 LEFT JOIN cp.competency
-            WHERE cp.competency in :competencies
+            WHERE cp.competency IN :competencies
                 AND cp.user.id = :userId
             """)
     Set<CompetencyProgress> findByCompetenciesAndUser(@Param("competencies") Collection<Competency> competencies, @Param("userId") long userId);

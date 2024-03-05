@@ -23,9 +23,6 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
-import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.*;
 
 @Component
@@ -90,22 +87,6 @@ public class IrisRequestMockProvider {
     }
 
     /**
-     * Mocks a message response from the Pyris message endpoint
-     *
-     * @param responseMessage The content of the response
-     */
-    public void mockMessageV1Response(String responseMessage) throws JsonProcessingException {
-        var irisMessage = new IrisMessage();
-        irisMessage.setSender(IrisMessageSender.LLM);
-        irisMessage.addContent(new IrisTextMessageContent(responseMessage));
-
-        var response = new IrisMessageResponseDTO(null, irisMessage);
-        var json = mapper.writeValueAsString(response);
-
-        mockCustomJsonResponse(messagesApiV1URL, json);
-    }
-
-    /**
      * Mocks a message response from the Pyris V2 message endpoint
      *
      * @param responseContent The content of the response
@@ -116,15 +97,6 @@ public class IrisRequestMockProvider {
         var json = mapper.writeValueAsString(dto);
 
         mockCustomJsonResponse(messagesApiV2URL, json);
-    }
-
-    /**
-     * Mocks a custom message response from the Pyris message endpoint
-     *
-     * @param json The content of the response
-     */
-    public void mockCustomV1Response(String json) {
-        mockCustomJsonResponse(messagesApiV1URL, json);
     }
 
     public void mockCustomJsonResponse(URL requestUrl, String responseJson) {

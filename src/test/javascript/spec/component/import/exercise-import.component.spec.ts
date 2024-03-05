@@ -19,7 +19,7 @@ import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.
 import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -36,7 +36,7 @@ describe('ExerciseImportComponent', () => {
     let searchStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
     let searchResult: SearchResult<Exercise>;
-    let state: PageableSearch;
+    let state: SearchTermPageableSearch;
     let quizExercise: QuizExercise;
 
     beforeEach(() => {

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.exercise.modelingexercise.compass.controller;
 
+import static de.tum.in.www1.artemis.util.TestResourceUtils.loadFileFromResources;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -13,7 +14,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.service.compass.controller.ModelClusterFactory;
-import de.tum.in.www1.artemis.util.FileUtils;
 
 class ModelClusterFactoryTest {
 
@@ -26,16 +26,15 @@ class ModelClusterFactoryTest {
 
     @Test
     void testBuildingClustersWithSimilarElements() throws Exception {
-        ModelingSubmission submission1 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        ModelingSubmission submission1 = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         submission1.setId(1L);
-        ModelingSubmission submission2 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
+        ModelingSubmission submission2 = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
         submission2.setId(2L);
-        ModelingSubmission submission3 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
+        ModelingSubmission submission3 = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
         submission3.setId(3L);
-        ModelingSubmission submission4 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
+        ModelingSubmission submission4 = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
         submission4.setId(4L);
-        ModelingSubmission submission5 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.one-element.json"),
-                true);
+        ModelingSubmission submission5 = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.one-element.json"), true);
         submission5.setId(5L);
 
         ModelingExercise exercise = new ModelingExercise();
@@ -51,19 +50,15 @@ class ModelClusterFactoryTest {
 
     @Test
     void testBuildingClustersWithSimilarV3Elements() throws Exception {
-        ModelingSubmission submission1 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/v3/model.54727.json"), true);
+        ModelingSubmission submission1 = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/v3/model.54727.json"), true);
         submission1.setId(1L);
-        ModelingSubmission submission2 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/v3/model.54727.cpy.json"),
-                true);
+        ModelingSubmission submission2 = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/v3/model.54727.cpy.json"), true);
         submission2.setId(2L);
-        ModelingSubmission submission3 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/v3/model.54727.cpy.json"),
-                true);
+        ModelingSubmission submission3 = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/v3/model.54727.cpy.json"), true);
         submission3.setId(3L);
-        ModelingSubmission submission4 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/v3/model.54727.cpy.json"),
-                true);
+        ModelingSubmission submission4 = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/v3/model.54727.cpy.json"), true);
         submission4.setId(4L);
-        ModelingSubmission submission5 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/v3/model.one-element.json"),
-                true);
+        ModelingSubmission submission5 = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/v3/model.one-element.json"), true);
         submission5.setId(5L);
 
         ModelingExercise exercise = new ModelingExercise();

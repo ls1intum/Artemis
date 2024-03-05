@@ -73,13 +73,13 @@ public interface ProgrammingSubmissionTestRepository extends JpaRepository<Progr
             SELECT s
             FROM ProgrammingSubmission s
                 LEFT JOIN FETCH s.results
-            WHERE (s.type <> 'ILLEGAL' or s.type is null)
+            WHERE (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND s.participation.id = :participationId
                 AND s.id = (
                     SELECT MAX(s2.id)
                     FROM ProgrammingSubmission s2
                     WHERE s2.participation.id = :participationId
-                        AND (s2.type <> 'ILLEGAL' or s2.type is null))
+                        AND (s2.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s2.type IS NULL))
             """)
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") Long participationId);
 }

@@ -6,7 +6,7 @@ import { debounceTime, finalize, switchMap, tap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { LearningPathPagingService } from 'app/course/learning-paths/learning-path-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
@@ -34,7 +34,7 @@ export class LearningPathManagementComponent implements OnInit {
 
     searchLoading = false;
     readonly column = TableColumn;
-    state: PageableSearch = {
+    state: SearchTermPageableSearch = {
         page: 1,
         pageSize: 50,
         searchTerm: '',
@@ -192,7 +192,7 @@ export class LearningPathManagementComponent implements OnInit {
         this.sortService.sortByProperty(this.content.resultsOnPage, this.sortedColumn, this.listSorting);
     }
 
-    private setSearchParam(patch: Partial<PageableSearch>): void {
+    private setSearchParam(patch: Partial<SearchTermPageableSearch>): void {
         Object.assign(this.state, patch);
         this.sort.next();
     }

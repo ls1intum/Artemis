@@ -33,17 +33,6 @@
         <label class="form-control-label" jhiTranslate="artemisApp.lti.requireExistingUser" for="field_requireExistingUser">Require Existing User</label>
         <jhi-help-icon text="artemisApp.lti.edit.requireExistingUserTooltip" />
     </div>
-    <h4 class="modal-title mt-4" id="lti10" jhiTranslate="artemisApp.lti.version10">LTI 1.0</h4>
-    <div class="form-group mt-2">
-        <label class="form-control-label" jhiTranslate="artemisApp.lti.ltiKey" for="field_ltiKey">LTI Key</label>
-        <jhi-help-icon text="artemisApp.lti.edit.ltiKeyTooltip" />
-        <input required type="text" class="form-control" name="ltiKey" id="field_ltiKey" formControlName="ltiKey" />
-    </div>
-    <div class="form-group">
-        <label class="form-control-label" jhiTranslate="artemisApp.lti.ltiSecret" for="field_ltiSecret">LTI Secret</label>
-        <jhi-help-icon text="artemisApp.lti.edit.ltiSecretTooltip" />
-        <input required type="text" class="form-control" name="ltiSecret" id="field_ltiSecret" formControlName="ltiSecret" />
-    </div>
     <div *jhiHasAnyAuthority="'ROLE_ADMIN'">
         <h4 class="modal-title mt-4" id="lti13" jhiTranslate="artemisApp.lti.version13">LTI 1.3</h4>
         <div class="form-group mt-2">

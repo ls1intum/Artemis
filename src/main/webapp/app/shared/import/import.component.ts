@@ -5,7 +5,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { SortService } from 'app/shared/service/sort.service';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { Subject, debounceTime, switchMap, tap } from 'rxjs';
 
 /**
@@ -24,7 +24,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     loading = false;
     content: SearchResult<T>;
     total = 0;
-    state: PageableSearch = {
+    state: SearchTermPageableSearch = {
         page: 1,
         pageSize: 10,
         searchTerm: '',
@@ -175,7 +175,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
      */
     protected onSearchResult(): void {}
 
-    protected setSearchParam(patch: Partial<PageableSearch>) {
+    protected setSearchParam(patch: Partial<SearchTermPageableSearch>) {
         Object.assign(this.state, patch);
         this.sort.next();
     }

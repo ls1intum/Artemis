@@ -102,7 +102,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         const exercise = this.modelingExercise;
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
-        const problemSection = getExerciseProblemDetailSection(this.problemStatement);
+        const problemSection = getExerciseProblemDetailSection(this.problemStatement, this.modelingExercise);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
         const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.gradingInstructions);
         return [

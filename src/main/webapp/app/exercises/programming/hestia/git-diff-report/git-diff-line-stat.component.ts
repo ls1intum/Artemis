@@ -7,13 +7,11 @@ import { Component, Input, OnInit } from '@angular/core';
 })
 export class GitDiffLineStatComponent implements OnInit {
     @Input()
-    addedLineCount: number;
+    addedLineCount: number = 0;
     @Input()
-    removedLineCount: number;
+    removedLineCount: number = 0;
     addedSquareCount: number;
     removedSquareCount: number;
-
-    constructor() {}
 
     ngOnInit(): void {
         if (!this.addedLineCount && !this.removedLineCount) {

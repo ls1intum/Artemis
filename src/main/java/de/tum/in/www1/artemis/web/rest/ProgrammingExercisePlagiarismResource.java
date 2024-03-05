@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static de.tum.in.www1.artemis.web.rest.plagiarism.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
 
@@ -8,6 +9,7 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -34,6 +36,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 /**
  * REST controller for managing ProgrammingExercise.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping(ROOT)
 public class ProgrammingExercisePlagiarismResource {

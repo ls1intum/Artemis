@@ -411,6 +411,7 @@ class Lti13ServiceTest {
         Exercise exercise = state.exercise();
         StudentParticipation participation = state.participation();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setOnlineCourse(true);
         ClientRegistration clientRegistration = state.clientRegistration();
 
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
