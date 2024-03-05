@@ -42,7 +42,10 @@
            `url-box-remove-line-right`: Remove round edges and edge on the right side (not available for LocalVC) -->
             <pre
                 class="clone-url"
-                [ngClass]="{'url-box-remove-line-left': sshEnabled && ((useSsh && !localVCEnabled) || !useSsh), 'url-box-remove-line-right': !localVCEnabled && !(sshEnabled && ((useSsh && !localVCEnabled) || !useSsh))}"
+                [ngClass]="{
+                    'url-box-remove-line-left': sshEnabled && ((useSsh && !localVCEnabled) || !useSsh),
+                    'url-box-remove-line-right': !localVCEnabled && !(sshEnabled && ((useSsh && !localVCEnabled) || !useSsh))
+                }"
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUri() }} </pre
