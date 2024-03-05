@@ -26,6 +26,22 @@ describe('LtiConfigurationService', () => {
                 id: 1,
                 customName: 'Platform A',
                 clientId: 'client-id-a',
+                authorizationUri: 'http://lms.com/api/lti_consumer/v1/auth-login',
+                jwkSetUri: 'http://lms.com/api/lti_consumer/v1/public_keysets',
+                tokenUri: 'http://lms.com/api/lti_consumer/v1/token/4d4faae2-65e4-400f-91d7-9cc22d0489a9',
+            },
+            {
+                id: 2,
+                customName: 'Platform B',
+                clientId: 'client-id-b',
+                authorizationUri: 'http://lms.com/api/lti_consumer/v1/auth-login',
+                jwkSetUri: 'http://lms.com/api/lti_consumer/v1/public_keysets',
+                tokenUri: 'http://lms.com/api/lti_consumer/v1/token/4d4faae2-65e4-400f-91d7-9cc22d0489a9',
+            },
+            {
+                id: 1,
+                customName: 'Platform A',
+                clientId: 'client-id-a',
                 authorizationUri: 'platformA.com/auth-login',
                 jwkSetUri: 'platformA.com/jwk',
                 tokenUri: 'platformA.com/token',
@@ -80,6 +96,25 @@ describe('LtiConfigurationService', () => {
 
         const req = httpMock.expectOne(`api/admin/lti-platform/${platformId}`);
         expect(req.request.method).toBe('DELETE');
+        req.flush(dummyResponse);
+    });
+
+    it('should add new lti platform', () => {
+        const dummyResponse = { status: 200, statusText: 'OK' };
+        const dummyConfig: LtiPlatformConfiguration = {
+            customName: 'New Platform',
+            clientId: 'created-client-id',
+            authorizationUri: 'http://lms.com/api/lti_consumer/v1/auth-login',
+            jwkSetUri: 'http://lms.com/api/lti_consumer/v1/public_keysets',
+            tokenUri: 'http://lms.com/api/lti_consumer/v1/token/4d4faae2-65e4-400f-91d7-9cc22d0489a9',
+        };
+
+        service.addLtiPlatformConfiguration(dummyConfig).subscribe((response) => {
+            expect(response.status).toBe(200);
+        });
+
+        const req = httpMock.expectOne(`api/admin/lti-platform`);
+        expect(req.request.method).toBe('POST');
         req.flush(dummyResponse);
     });
 });

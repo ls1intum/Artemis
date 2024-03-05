@@ -16,7 +16,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
-import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { switchMap, tap } from 'rxjs/operators';
@@ -72,8 +72,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
 
     // Icons
     faQuestionCircle = faQuestionCircle;
-    faBan = faBan;
-    faSave = faSave;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
