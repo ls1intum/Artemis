@@ -517,7 +517,7 @@ public class ParticipationResource {
             return studentParticipationRepository.findByExerciseIdWithLatestAndManualRatedResults(exercise.getId());
         }
         if (exercise.isTeamMode()) {
-            // For team exercises, the students forming a teams need to be fetched as well
+            // For team exercises the students need to be eagerly fetched
             return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
         }
         return studentParticipationRepository.findByExerciseIdWithLatestAndManualResults(exercise.getId());

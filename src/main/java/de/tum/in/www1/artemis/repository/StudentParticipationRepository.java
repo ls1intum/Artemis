@@ -233,8 +233,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     /**
      * Get all participations for a team exercise with each manual and latest results (determined by id).
+     * As the students of a team are lazy loaded, they are explicitly included into the query
      * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
-     * Additionally, the students forming the team is eagerly loaded.
      *
      * @param exerciseId Exercise id.
      * @return participations for exercise.
@@ -245,7 +245,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.results r
                 LEFT JOIN FETCH r.submission s
                 LEFT JOIN FETCH p.submissions
-                LEFT JOIN FETCH p.team.students
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
             WHERE p.exercise.id = :exerciseId
                 AND (
                     r.id = (SELECT MAX(p_r.id) FROM p.results p_r)
