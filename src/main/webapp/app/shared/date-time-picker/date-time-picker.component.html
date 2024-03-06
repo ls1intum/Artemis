@@ -19,7 +19,7 @@
         #dateInput="ngModel"
         class="form-control position-relative ps-5"
         id="date-input-field"
-        [ngClass]="{ 'is-invalid': error || notValid }"
+        [ngClass]="{ 'is-invalid': error }"
         [ngModel]="value"
         [disabled]="disabled"
         [min]="minDate"
@@ -41,12 +41,3 @@
 
     <owl-date-time [startAt]="startDate" #dt />
 </div>
-@if (error) {
-    <div class="invalid-feedback">{{ 'entity.dateRequiredError' | artemisTranslate: { labelName } }}</div>
-} @else if (!error && notValid) {
-    @if (id === 'startDate') {
-        <div class="invalid-feedback">{{ 'entity.startDateError' | artemisTranslate }}</div>
-    } @else if (id === 'endDate') {
-        <div class="invalid-feedback">{{ 'entity.endDateError' | artemisTranslate }}</div>
-    }
-}

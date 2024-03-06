@@ -81,6 +81,9 @@
                         name="visibleDate"
                         id="visibleDate"
                     />
+                    @if (!isValidVisibleDate) {
+                        <div class="invalid-feedback">{{ 'entity.dateRequiredError' | artemisTranslate: { labelName: 'Visible from' } }}</div>
+                    }
                 </div>
                 <div class="col-sm-4">
                     <jhi-date-time-picker
@@ -89,12 +92,16 @@
                         [(ngModel)]="exam.startDate"
                         (valueChange)="updateExamWorkingTime()"
                         (ngModelChange)="updateExamStartDate($event)"
-                        [error]="!isStartDate"
-                        [notValid]="!isValidStartDate"
+                        [error]="!isStartDate || !isValidStartDate"
                         [startAt]="exam.startDate || exam.visibleDate"
                         name="startDate"
                         id="startDate"
                     />
+                    @if (!isStartDate) {
+                        <div class="invalid-feedback">{{ 'entity.dateRequiredError' | artemisTranslate: { labelName: 'Start of working time' } }}</div>
+                    } @else if (isStartDate && !isValidStartDate) {
+                        <span class="invalid-feedback"> {{ 'entity.startDateError' | artemisTranslate }}</span>
+                    }
                 </div>
                 <div class="col-sm-4">
                     <jhi-date-time-picker
@@ -103,12 +110,16 @@
                         [(ngModel)]="exam.endDate"
                         (valueChange)="updateExamWorkingTime()"
                         (ngModelChange)="updateExamEndDate($event)"
-                        [error]="!isEndDate"
-                        [notValid]="!isValidEndDate"
+                        [error]="!isEndDate || !isValidEndDate"
                         [startAt]="exam.endDate || exam.startDate"
                         name="endDate"
                         id="endDate"
                     />
+                    @if (!isEndDate) {
+                        <div class="invalid-feedback">{{ 'entity.dateRequiredError' | artemisTranslate: { labelName: 'End of working time' } }}</div>
+                    } @else if (isEndDate && !isValidEndDate) {
+                        <span class="invalid-feedback"> {{ 'entity.endDateError' | artemisTranslate }}</span>
+                    }
                 </div>
             </div>
             <div class="row mb-3">
