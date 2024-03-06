@@ -19,7 +19,7 @@
         #dateInput="ngModel"
         class="form-control position-relative ps-5"
         id="date-input-field"
-        [ngClass]="{ 'is-invalid': error }"
+        [ngClass]="{ 'is-invalid': error || notValid }"
         [ngModel]="value"
         [disabled]="disabled"
         [min]="minDate"
@@ -27,9 +27,26 @@
         (ngModelChange)="updateField($event)"
         [owlDateTime]="dt"
         name="datePicker"
+        style="pointer-events: none"
     />
+
     <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
         <fa-icon [icon]="faCalendarAlt" />
     </button>
+    <div class="position-relative">
+        <button class="btn position-absolute" type="button" style="right: 0" [disabled]="!value" (click)="clearDate()">
+            <fa-icon [icon]="faCircleXmark" />
+        </button>
+    </div>
+
     <owl-date-time [startAt]="startDate" #dt />
 </div>
+@if (error) {
+    <div class="invalid-feedback">{{ labelName }} is required</div>
+} @else if (!error && notValid) {
+    @if (id === 'startDate') {
+        <div class="invalid-feedback">Start date should be between Visible from and End of working time</div>
+    } @else if (id === 'endDate') {
+        <div class="invalid-feedback">End date should be later than Start date</div>
+    }
+}

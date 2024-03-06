@@ -2,3 +2,11 @@
     height: 1rem;
     width: 1rem;
 }
+
+#date-input-field {
+    cursor: not-allowed;
+}
+
+.form-control.is-invalid {
+    background-image: none;
+}

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
-import { faCalendarAlt, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
 @Component({
@@ -18,10 +18,12 @@ import dayjs from 'dayjs/esm';
 export class FormDateTimePickerComponent implements ControlValueAccessor {
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;
     @Input() labelName: string;
+    @Input() id: string;
     @Input() labelTooltip: string;
     @Input() value: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
+    @Input() notValid: boolean;
     @Input() startAt?: dayjs.Dayjs; // Default selected date. By default this sets it to the current time without seconds or milliseconds;
     @Input() min: dayjs.Dayjs; // Dates before this date are not selectable.
     @Input() max: dayjs.Dayjs; // Dates after this date are not selectable.
@@ -33,6 +35,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     faGlobe = faGlobe;
     faClock = faClock;
     faQuestionCircle = faQuestionCircle;
+    faCircleXmark = faCircleXmark;
 
     private onChange?: (val?: dayjs.Dayjs) => void;
 
@@ -75,7 +78,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      *
      * @param newValue
      */
-    updateField(newValue: dayjs.Dayjs) {
+    updateField(newValue: dayjs.Dayjs | undefined) {
         this.value = newValue;
         this.onChange?.(dayjs(this.value));
         this.valueChanged();
@@ -107,5 +110,12 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     convertToDate(value?: dayjs.Dayjs) {
         return value != undefined && value.isValid() ? value.toDate() : null;
+    }
+
+    /**
+     * Clear the datepicker value.
+     */
+    clearDate() {
+        this.dateInput.reset(undefined);
     }
 }

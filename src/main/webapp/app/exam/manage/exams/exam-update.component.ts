@@ -134,6 +134,42 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Updates the visibleDate based on the value of date time picker.
+     * @param date
+     */
+    updateExamVisibleData(date: dayjs.Dayjs) {
+        if (dayjs(date).isValid()) {
+            this.exam.visibleDate = date;
+        } else {
+            this.exam.visibleDate = undefined;
+        }
+    }
+
+    /**
+     * Updates the startDate based on the value of date time picker.
+     * @param date
+     */
+    updateExamStartDate(date: dayjs.Dayjs) {
+        if (dayjs(date).isValid()) {
+            this.exam.startDate = date;
+        } else {
+            this.exam.startDate = undefined;
+        }
+    }
+
+    /**
+     * Updates the endDate based on the value of date time picker.
+     * @param date
+     */
+    updateExamEndDate(date: dayjs.Dayjs) {
+        if (dayjs(date).isValid()) {
+            this.exam.endDate = date;
+        } else {
+            this.exam.endDate = undefined;
+        }
+    }
+
+    /**
      * Returns the maximum working time in minutes for test exams.
      */
     get maxWorkingTimeInMinutes(): number {
@@ -250,7 +286,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     get isValidConfiguration(): boolean {
-        const examConductionDatesValid = this.isValidVisibleDate && this.isValidStartDate && this.isValidEndDate;
+        const examConductionDatesValid = this.isValidVisibleDate && this.isStartDate && this.isValidStartDate && this.isEndDate && this.isValidEndDate;
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;
@@ -284,13 +320,18 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Checks StartDate is set or not.
+     */
+    get isStartDate(): boolean {
+        return !!this.exam.startDate;
+    }
+
+    /**
      * Validates the given StartDate.
      * For real exams, the visibleDate has to be strictly prior the startDate.
      * For test exams, the visibleDate has to be prior or equal to the startDate.
      */
     get isValidStartDate(): boolean {
-        if (!this.exam.startDate) return false;
-
         if (this.exam.testExam) {
             return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
         } else {
@@ -299,10 +340,17 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Checks EndDate is set or not.
+     */
+    get isEndDate(): boolean {
+        return !!this.exam.endDate;
+    }
+
+    /**
      * Validates the EndDate inputted by the user.
      */
     get isValidEndDate(): boolean {
-        return !!this.exam.endDate && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
+        return dayjs(this.exam.endDate).isAfter(this.exam.startDate);
     }
 
     /**
