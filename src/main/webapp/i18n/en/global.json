@@ -315,7 +315,10 @@
             "patternLogin": "This field may only contain letters, digits and e-mail addresses.",
             "invalidPattern": "This field contains an invalid e-mail pattern."
         },
-        "timeZoneWarning": "You are currently in the {{ timeZone }} time zone."
+        "timeZoneWarning": "You are currently in the {{ timeZone }} time zone.",
+        "dateRequiredError": "{{ labelName }} is required",
+        "startDateError": "Start date should be between Visible from and End of working time",
+        "endDateError": "End date should be later than Start date"
     },
     "aboutUs": "About",
     "contact": "Contact us",

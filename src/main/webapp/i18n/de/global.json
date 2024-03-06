@@ -313,7 +313,10 @@
             "patternLogin": "Dieses Feld darf nur Buchstaben, Ziffern und E-Mail-Adressen enthalten.",
             "invalidPattern": "Dieses Feld beinhaltet ein ungültiges E-Mail Muster."
         },
-        "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone."
+        "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone.",
+        "dateRequiredError": "{{ labelName }} ist erforderlich",
+        "startDateError": "Das Startdatum sollte zwischen Sichtbar von und Ende der Arbeitszeit liegen",
+        "endDateError": "Das Enddatum sollte nach dem Startdatum liegen"
     },
     "aboutUs": "Über",
     "contact": "Kontaktiere uns",

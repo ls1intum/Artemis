@@ -42,11 +42,11 @@
     <owl-date-time [startAt]="startDate" #dt />
 </div>
 @if (error) {
-    <div class="invalid-feedback">{{ labelName }} is required</div>
+    <div class="invalid-feedback">{{ 'entity.dateRequiredError' | artemisTranslate: { labelName } }}</div>
 } @else if (!error && notValid) {
     @if (id === 'startDate') {
-        <div class="invalid-feedback">Start date should be between Visible from and End of working time</div>
+        <div class="invalid-feedback">{{ 'entity.startDateError' | artemisTranslate }}</div>
     } @else if (id === 'endDate') {
-        <div class="invalid-feedback">End date should be later than Start date</div>
+        <div class="invalid-feedback">{{ 'entity.endDateError' | artemisTranslate }}</div>
     }
 }
