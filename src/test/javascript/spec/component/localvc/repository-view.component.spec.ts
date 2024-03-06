@@ -167,6 +167,34 @@ describe('RepositoryViewComponent', () => {
         expect(component.paramSub?.closed).toBeTrue();
     });
 
+    it('should handle unknown repository type', () => {
+        // route to an unknown repository type
+        activatedRoute.setParameters({ exerciseId: 8, repositoryType: 'UNKNOWN' });
+
+        // Mock the service to return an error
+        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            new Observable((subscriber) => {
+                subscriber.error('Error');
+            }),
+        );
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        // Expect loadingParticipation to be false after loading
+        expect(component.loadingParticipation).toBeFalse();
+
+        // Expect participationCouldNotBeFetched to be true
+        expect(component.participationCouldNotBeFetched).toBeTrue();
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.differentParticipationSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBeTrue();
+    });
+
     it('should load student participation', () => {
         // Mock participation data
         const mockParticipation: ProgrammingExerciseStudentParticipation = {
@@ -258,6 +286,41 @@ describe('RepositoryViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.differentParticipationSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBeTrue();
+    });
+
+    it('should participation even if it doesnt have results', () => {
+        // Mock participation data
+        const mockParticipation: ProgrammingExerciseStudentParticipation = {
+            id: 2,
+            repositoryUri: 'student-repo-uri',
+            exercise: { id: 1, numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()], studentAssignedTeamIdComputed: true, secondCorrectionEnabled: true },
+            results: [],
+        };
+        const participationId = 2;
+
+        activatedRoute.setParameters({ participationId: participationId });
+        jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(mockParticipation));
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        // Expect loadingParticipation to be false after loading
+        expect(component.loadingParticipation).toBeFalse();
+
+        // Expect exercise and participation to be set correctly
+        expect(component.exercise).toEqual(mockParticipation.exercise);
+        expect(component.participation).toEqual(mockParticipation);
+
+        // Expect domainService method to be called with the correct arguments
+        expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.PARTICIPATION, mockParticipation]);
+        expect(component.repositoryUri).toBe('student-repo-uri');
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.participationWithLatestResultSub?.closed).toBeTrue();
         expect(component.paramSub?.closed).toBeTrue();
     });
 });
