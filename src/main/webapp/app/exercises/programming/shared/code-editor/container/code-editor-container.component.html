@@ -39,7 +39,31 @@
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
     />
-    <jhi-code-editor-monaco [selectedFile]="selectedFile" editorCenter />
+    <!--
+    For my reference
+        <jhi-code-editor-ace
+        editorCenter
+        [selectedFile]="selectedFile!"
+        [sessionId]="participation?.id ?? 'test'"
+        [annotations]="annotations"
+        [commitState]="commitState"
+        [editorState]="editorState"
+        [feedbacks]="participation?.results?.[0]?.feedbacks ?? []"
+        [feedbackSuggestions]="feedbackSuggestions"
+        [readOnlyManualFeedback]="readOnlyManualFeedback"
+        [isTutorAssessment]="isTutorAssessment"
+        [highlightDifferences]="highlightDifferences"
+        [course]="course"
+        [disableActions]="!editable"
+        (onFileContentChange)="onFileContentChange($event)"
+        (onUpdateFeedback)="onUpdateFeedback.emit($event)"
+        (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"
+        (onDiscardSuggestion)="onDiscardSuggestion.emit($event)"
+        (onError)="onError($event)"
+        (onFileLoad)="fileLoad($event)"
+    />
+    !-->
+    <jhi-code-editor-monaco [selectedFile]="selectedFile" (onFileContentChange)="onFileContentChange($event)" editorCenter />
     <ng-container editorSidebarRight>
         @if (showEditorInstructions) {
             <jhi-code-editor-instructions
