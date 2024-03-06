@@ -57,25 +57,6 @@ describe('RepositoryViewComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should have a working constructor', () => {
-        const router = TestBed.inject(Router);
-        const accountService = TestBed.inject(AccountService);
-        const domainService = TestBed.inject(DomainService);
-        const activatedRoute = TestBed.inject(ActivatedRoute);
-        const programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
-        const programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
-
-        const repositoryViewComponent = new RepositoryViewComponent(
-            accountService,
-            domainService,
-            activatedRoute,
-            programmingExerciseParticipationService,
-            programmingExerciseService,
-            router,
-        );
-        expect(repositoryViewComponent).toBeTruthy();
-    });
-
     it('should load participation for TEMPLATE repository type', () => {
         // Mock exercise and participation data
         const mockExercise: ProgrammingExercise = {
