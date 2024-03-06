@@ -21,12 +21,12 @@ public class IrisJsonMessageContent extends IrisMessageContent {
     @Column(name = "json_content")
     @JsonRawValue
     @JsonProperty(value = "attributes", required = true)
-    private String jsonContent;
+    private String jsonContent = "{}";
 
     @NotNull
     @Transient
     @JsonIgnore
-    private JsonNode jsonNode;
+    private JsonNode jsonNode = new ObjectMapper().createObjectNode();
 
     // Required by JPA
     public IrisJsonMessageContent() {
