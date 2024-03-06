@@ -35,7 +35,7 @@ public class CommitHistoryService {
 
     private final GitService gitService;
 
-    private final GitDiffReportParser gitDiffDeporParser = new GitDiffReportParser();
+    private final GitDiffReportParser gitDiffReportParser = new GitDiffReportParser();
 
     public CommitHistoryService(GitService gitService) {
         this.gitService = gitService;
@@ -97,7 +97,7 @@ public class CommitHistoryService {
 
             diffs.append(out.toString(StandardCharsets.UTF_8));
         }
-        var programmingExerciseGitDiffEntries = gitDiffDeporParser.extractDiffEntries(diffs.toString(), false);
+        var programmingExerciseGitDiffEntries = gitDiffReportParser.extractDiffEntries(diffs.toString(), false);
         var report = new ProgrammingExerciseGitDiffReport();
         for (ProgrammingExerciseGitDiffEntry gitDiffEntry : programmingExerciseGitDiffEntries) {
             gitDiffEntry.setGitDiffReport(report);
