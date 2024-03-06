@@ -272,8 +272,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         request.post("/api/courses/" + course.getId() + "/prerequisites/1", null, HttpStatus.FORBIDDEN);
         request.delete("/api/courses/" + course.getId() + "/prerequisites/1", HttpStatus.FORBIDDEN);
         // relations
-        request.post("/api/courses/" + course.getId() + "/competencies/relations/", new CompetencyRelation(), HttpStatus.FORBIDDEN);
-        request.getSet("/api/courses/" + course.getId() + "/competencies/relations/", HttpStatus.FORBIDDEN, CompetencyRelationDTO.class);
+        request.post("/api/courses/" + course.getId() + "/competencies/relations", new CompetencyRelation(), HttpStatus.FORBIDDEN);
+        request.getSet("/api/courses/" + course.getId() + "/competencies/relations", HttpStatus.FORBIDDEN, CompetencyRelationDTO.class);
         request.delete("/api/courses/" + course.getId() + "/competencies/relations/1", HttpStatus.FORBIDDEN);
     }
 
@@ -463,7 +463,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         // relation type must be set
         relationToCreate.setType(null);
 
-        request.post("/api/courses/" + course.getId() + "/competencies/relations/", relationToCreate, HttpStatus.BAD_REQUEST);
+        request.post("/api/courses/" + course.getId() + "/competencies/relations", relationToCreate, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -480,7 +480,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         relation.setHeadCompetency(competency);
         relation.setType(RelationType.ASSUMES);
 
-        request.post("/api/courses/" + course.getId() + "/competencies/relations/", relation, HttpStatus.BAD_REQUEST);
+        request.post("/api/courses/" + course.getId() + "/competencies/relations", relation, HttpStatus.BAD_REQUEST);
     }
 
     @Test
