@@ -255,7 +255,14 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
         return individualStudentEndDate.add(this.exam.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
 
+    /**
+     * Returns whether student's attendance was checked.
+     * Attendance is considered checked if:
+     * 1. Exam is a test exam
+     * 2. Exam is an exam without attendance check
+     * 3. Exam is not a test exam and an exam with attendance check and attendance was checked by the tutors
+     */
     isAttendanceChecked() {
-        return (!this.exam.testExam && this.exam.examWithAttendanceCheck && this.attendanceChecked) || this.exam.testExam || !this.exam.examWithAttendanceCheck;
+        return this.exam.testExam || !this.exam.examWithAttendanceCheck || (!this.exam.testExam && this.exam.examWithAttendanceCheck && this.attendanceChecked);
     }
 }
