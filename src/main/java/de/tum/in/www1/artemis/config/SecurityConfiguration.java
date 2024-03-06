@@ -149,6 +149,7 @@ public class SecurityConfiguration {
                     new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
                 .requestMatchers(new AntPathRequestMatcher("/")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/index.html")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/**")).authenticated()
             )
             .apply(securityConfigurerAdapter());
         // @formatter:on
