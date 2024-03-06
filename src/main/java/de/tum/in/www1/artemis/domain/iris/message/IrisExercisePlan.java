@@ -19,6 +19,7 @@ public class IrisExercisePlan extends IrisMessageContent {
 
     @OrderColumn(name = "exercise_plan_step_order")
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties(value = "plan")
     private List<IrisExercisePlanStep> steps;
 
     public List<IrisExercisePlanStep> getSteps() {
