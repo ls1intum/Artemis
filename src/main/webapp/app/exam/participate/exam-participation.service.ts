@@ -234,6 +234,34 @@ export class ExamParticipationService {
     }
 
     /**
+     * save the indexes of flagged Exercises to the local Storage
+     *
+     * @param courseId
+     * @param examId
+     * @param flags
+     */
+    public saveStudentFlagsToLocalStorage(courseId: number, examId: number, flags: boolean[]): void {
+        const prefix = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId);
+        this.localStorageService.store(`${prefix}_flags`, JSON.stringify(flags));
+        this.exerciseFlags = flags;
+        console.log('examId service: ' + examId);
+        console.log('courseId service: ' + courseId);
+    }
+
+    /**
+     * load the indexes of flagged Exercises from the local Storage
+     *
+     * @param courseId
+     * @param examId
+     */
+    public loadStudentFlagsFromLocalStorage(courseId: number, examId: number): Observable<boolean[]> {
+        const prefix = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId);
+        const localStoredFlags: boolean[] = JSON.parse(this.localStorageService.retrieve(`${prefix}_flags`));
+        this.exerciseFlags = localStoredFlags;
+        return of(localStoredFlags);
+    }
+
+    /**
      * saves latest examSessionToken to sessionStorage
      * @param examSessionToken latest examSessionToken
      */
