@@ -214,17 +214,14 @@ export class ExamNavigationBarComponent implements OnInit {
         const exercise = this.exercises[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
 
-        if (this.flags[exerciseIndex]) {
-            this.icon = faFlag;
-            return 'synced';
-        }
-
         if (!submission) {
             // in case no participation/submission yet exists -> display synced
             // this should only occur for programming exercises
             return 'synced';
         }
-        if (submission.submitted) {
+        if (this.flags[exerciseIndex]) {
+            this.icon = faFlag;
+        } else if (submission.submitted) {
             this.icon = faCheck;
         }
         if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {
