@@ -323,4 +323,9 @@ describe('RepositoryViewComponent', () => {
         expect(component.participationWithLatestResultSub?.closed).toBeTrue();
         expect(component.paramSub?.closed).toBeTrue();
     });
+
+    it('should handle ngOnDestroy when subscriptions are undefined', () => {
+        // Trigger ngOnDestroy and expect no errors
+        component.ngOnDestroy();
+    });
 });
