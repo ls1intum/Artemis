@@ -26,10 +26,14 @@ export class MonacoEditorComponent implements OnInit {
         this._editor = monaco.editor.create(this.monacoEditorContainer.nativeElement, {
             value: program,
             theme: 'vs-dark',
-            language: 'java',
             glyphMargin: true,
             minimap: { enabled: false },
-            lineNumbersMinChars: 3,
+            lineNumbersMinChars: 5,
         });
+
+        const resizeObserver = new ResizeObserver(() => {
+            this._editor.layout();
+        });
+        resizeObserver.observe(this.monacoEditorContainer.nativeElement);
     }
 }
