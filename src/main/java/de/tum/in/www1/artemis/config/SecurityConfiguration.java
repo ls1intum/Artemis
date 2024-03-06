@@ -147,7 +147,8 @@ public class SecurityConfiguration {
                 .requestMatchers(new AntPathRequestMatcher("/git/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/management/prometheus/**")).access((authentication, context) ->
                     new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
-                .requestMatchers(new AntPathRequestMatcher("/**")).authenticated()
+                .requestMatchers(new AntPathRequestMatcher("/")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/index.html")).permitAll()
             )
             .apply(securityConfigurerAdapter());
         // @formatter:on

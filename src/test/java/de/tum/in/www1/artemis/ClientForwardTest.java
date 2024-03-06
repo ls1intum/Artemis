@@ -11,14 +11,16 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.ResultActions;
 
+import de.tum.in.www1.artemis.config.SecurityConfiguration;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
-import de.tum.in.www1.artemis.web.rest.ClientForwardResource;
+import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
 
 /**
  * Test class for the ClientForwardController REST controller.
  *
- * @see ClientForwardResource
+ * @see SpaWebFilter
+ * @see SecurityConfiguration
  */
 class ClientForwardTest extends AbstractSpringIntegrationIndependentTest {
 
