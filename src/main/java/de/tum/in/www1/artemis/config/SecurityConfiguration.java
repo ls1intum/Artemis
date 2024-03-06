@@ -151,12 +151,12 @@ public class SecurityConfiguration {
                 .requestMatchers(new AntPathRequestMatcher("/index.html")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/**")).authenticated()
             )
-            .apply(securityConfigurerAdapter());
+            .with(securityConfigurerAdapter(), (c) -> c.configure(http));
         // @formatter:on
 
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains("lti")) {
-            http.apply(new CustomLti13Configurer());
+            http.with(new CustomLti13Configurer(), (c) -> c.configure(http));
         }
 
         return http.build();
