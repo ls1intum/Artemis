@@ -317,6 +317,8 @@
             "handInEarlyNotice": "You are about to hand in your submission before the end of the exam.\nAfter finishing the exam you cannot participate any longer.",
             "handInEarlyNoticeFirstSentence": "You are about to hand in your submission before the end of the exam.",
             "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
+            "attendanceNotVerifiedWarningFirstSentence": "Warning: Your attendance has not been checked yet.",
+            "attendanceNotVerifiedWarningSecondSentence": "Please contact an instructor after the examination to have your attendance verified.",
             "namePlaceholder": "Enter your full name here",
             "submissionSuccessful": {
                 "title": "Your exam has been submitted successfully!",
@@ -464,6 +466,7 @@
             "numberOfExercisesInExam": "Number of exercises in exam",
             "numberOfCorrectionRoundsInExam": "Number of correction rounds in exam",
             "randomizeQuestionOrder": "Randomize order of exercise groups",
+            "examWithAttendanceCheck": "Exam with attendance check",
             "startText": "Exam start text",
             "endText": "Exam end text",
             "confirmationStartText": "Exam start confirmation text",

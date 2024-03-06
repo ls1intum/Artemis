@@ -315,6 +315,8 @@
             "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",
             "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
             "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
+            "attendanceNotVerifiedWarningFirstSentence": "Warnung: Ihre Anwesenheit wurde noch nicht kontrolliert.",
+            "attendanceNotVerifiedWarningSecondSentence": "Bitte kontaktieren Sie einen/eine Tutor:in nach der Prüfung, um Ihre Anwesenheit zu kontrolliert.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein",
             "submissionSuccessful": {
                 "title": "Deine Klausur wurde erfolgreich abgegeben!",
@@ -463,6 +465,7 @@
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
+            "examWithAttendanceCheck": "Klausur mit der Anwesenheitskontrolle",
             "startText": "Information zu Klausurbeginn",
             "endText": "Information zum Klausurende",
             "confirmationStartText": "Bestätigungstext bei Klausurbeginn",

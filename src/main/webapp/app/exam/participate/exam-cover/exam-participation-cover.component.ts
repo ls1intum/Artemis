@@ -30,6 +30,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
     @Input() handInEarly = false;
     @Input() handInPossible = true;
     @Input() submitInProgress = false;
+    @Input() attendanceChecked = false;
     @Input() testRunStartTime: dayjs.Dayjs | undefined;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
@@ -252,5 +253,9 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
             individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
         }
         return individualStudentEndDate.add(this.exam.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
+    }
+
+    isAttendanceChecked() {
+        return (!this.exam.testExam && this.exam.examWithAttendanceCheck && this.attendanceChecked) || this.exam.testExam || !this.exam.examWithAttendanceCheck;
     }
 }

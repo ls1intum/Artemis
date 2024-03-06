@@ -58,4 +58,21 @@ public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
                 )
             """)
     Set<ExamUserAttendanceCheckDTO> findAllExamUsersWhoDidNotSign(@Param("examId") long examId);
+
+    @Query("""
+            SELECT COUNT(examUser) > 0
+            FROM ExamUser examUser
+                LEFT JOIN examUser.exam exam
+                LEFT JOIN exam.studentExams studentExams ON studentExams.user.id = examUser.user.id
+            WHERE exam.id = :examId
+                AND examUser.user.id = :userId
+                AND studentExams.started IS TRUE
+                AND examUser.signingImagePath != NULL
+                AND examUser.signingImagePath != ''
+                AND examUser.didCheckImage = TRUE
+                AND examUser.didCheckLogin = TRUE
+                AND examUser.didCheckRegistrationNumber = TRUE
+                AND examUser.didCheckName = TRUE
+            """)
+    boolean isAttendanceChecked(@Param("examId") long examId, @Param("userId") long userId);
 }

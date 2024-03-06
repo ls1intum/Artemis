@@ -125,6 +125,16 @@
                         <br />
                         <span jhiTranslate="artemisApp.examParticipation.handInEarlyNoticeSecondSentence"></span>
                     </div>
+                    @if (!isAttendanceChecked) {
+                        <div class="mb-2 font-weight-bold text-warning">
+                            <span jhiTranslate="artemisApp.examParticipation.attendanceNotVerifiedWarningFirstSentence">Warning: Your attendance has not been checked yet.</span>
+                            <br />
+                            <span jhiTranslate="artemisApp.examParticipation.attendanceNotVerifiedWarningSecondSentence"
+                                >Please contact an instructor after the examination to have your attendance verified.</span
+                            >
+                            <br />
+                        </div>
+                    }
                 }
                 <button id="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
                     @if (submitInProgress) {
