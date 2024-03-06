@@ -67,6 +67,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     highlightDifferences: boolean;
     @Input()
     disableAutoSave = false;
+    @Input()
+    useMonacoEditor = false;
 
     @Output()
     onResizeEditorInstructions = new EventEmitter<void>();
@@ -281,7 +283,9 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
             this.onResizeEditorInstructions.emit();
         }
         if (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
-            //this.aceEditor.editor.getEditor().resize();
+            if (!this.useMonacoEditor) {
+                this.aceEditor.editor.getEditor().resize();
+            }
         }
     }
 
