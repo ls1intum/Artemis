@@ -122,6 +122,20 @@ describe('ProgrammingExerciseParticipation Service', () => {
             tick();
         }));
 
+        it('retrieveCommitHistoryForTemplateSolutionOrTests', fakeAsync(() => {
+            const participationId = 42;
+            const repositoryType = 'SOLUTION';
+            const commitHistory = [{ hash: '123', author: 'author', timestamp: dayjs('2021-01-01'), message: 'commit message' }];
+            service.retrieveCommitHistoryForTemplateSolutionOrTests(participationId, repositoryType).subscribe((resp) => {
+                expect(resp).toEqual(commitHistory);
+            });
+
+            const expectedURL = `${resourceUrl}${participationId}/commit-history/${repositoryType}`;
+            const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
+            req.flush(commitHistory);
+            tick();
+        }));
+
         it('getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView', fakeAsync(() => {
             const participationId = 42;
             const exerciseId = 123;
