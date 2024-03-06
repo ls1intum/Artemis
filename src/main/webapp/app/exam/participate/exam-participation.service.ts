@@ -244,8 +244,6 @@ export class ExamParticipationService {
         const prefix = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId);
         this.localStorageService.store(`${prefix}_flags`, JSON.stringify(flags));
         this.exerciseFlags = flags;
-        console.log('examId service: ' + examId);
-        console.log('courseId service: ' + courseId);
     }
 
     /**
