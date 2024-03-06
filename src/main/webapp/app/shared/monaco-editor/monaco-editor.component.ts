@@ -36,4 +36,18 @@ export class MonacoEditorComponent implements OnInit {
         });
         resizeObserver.observe(this.monacoEditorContainer.nativeElement);
     }
+
+    setText(text: string): void {
+        this._editor.setValue(text);
+    }
+
+    changeModel(fileName: string, newFileContent?: string) {
+        const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
+        const model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(newFileContent ?? '', undefined, uri);
+        if (newFileContent !== undefined) {
+            model.setValue(newFileContent);
+        }
+        this._editor.setModel(model);
+        monaco.editor.setModelLanguage(model, model.getLanguageId());
+    }
 }

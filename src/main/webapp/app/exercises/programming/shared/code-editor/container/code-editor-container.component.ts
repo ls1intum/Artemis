@@ -281,7 +281,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
             this.onResizeEditorInstructions.emit();
         }
         if (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
-            this.aceEditor.editor.getEditor().resize();
+            //this.aceEditor.editor.getEditor().resize();
         }
     }
 
