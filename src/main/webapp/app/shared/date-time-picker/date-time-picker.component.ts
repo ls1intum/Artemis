@@ -78,7 +78,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      *
      * @param newValue
      */
-    updateField(newValue: dayjs.Dayjs | undefined) {
+    updateField(newValue: dayjs.Dayjs) {
         this.value = newValue;
         this.onChange?.(dayjs(this.value));
         this.valueChanged();
