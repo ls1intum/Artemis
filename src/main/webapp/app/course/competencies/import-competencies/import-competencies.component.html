@@ -3,21 +3,21 @@
     <jhi-competency-search [search]="filter" (searchChange)="filterChange($event)" />
     <h3 class="mt-2">{{ 'artemisApp.competency.import.searchTableHeader' | artemisTranslate }}</h3>
     @if (searchedCompetencies.resultsOnPage?.length) {
-        <jhi-competency-table [content]="searchedCompetencies" [search]="search" (searchChange)="searchChange($event)">
+        <jhi-import-competencies-table [content]="searchedCompetencies" [search]="search" (searchChange)="searchChange($event)">
             <ng-template let-competency="competency">
                 <jhi-button title="entity.action.select" (onClick)="selectCompetency(competency)" [disabled]="disabledIds.includes(competency.id!)" />
             </ng-template>
-        </jhi-competency-table>
+        </jhi-import-competencies-table>
     } @else {
         <span>{{ 'artemisApp.competency.import.searchTableEmpty' | artemisTranslate }}</span>
     }
     <h3 class="mt-2">{{ 'artemisApp.competency.import.selectedTableHeader' | artemisTranslate }}</h3>
     @if (selectedCompetencies.resultsOnPage?.length) {
-        <jhi-competency-table [content]="selectedCompetencies" [search]="selectedCompetenciesSearch" (searchChange)="sortSelected($event)" [displayPagination]="false">
+        <jhi-import-competencies-table [content]="selectedCompetencies" [search]="selectedCompetenciesSearch" (searchChange)="sortSelected($event)" [displayPagination]="false">
             <ng-template let-competency="competency">
                 <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTrash" (onClick)="removeCompetency(competency)" />
             </ng-template>
-        </jhi-competency-table>
+        </jhi-import-competencies-table>
     } @else {
         <span>{{ 'artemisApp.competency.import.selectedTableEmpty' | artemisTranslate }}</span>
     }
