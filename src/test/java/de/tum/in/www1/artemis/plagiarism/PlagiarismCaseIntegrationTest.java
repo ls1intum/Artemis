@@ -12,6 +12,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -309,8 +312,11 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetMultiplePlagiarismCaseInfosForStudent() throws Exception {
-        var emptyPlagiarismCaseInfosResponse = request.get(
-                "/api/courses/" + course.getId() + "/plagiarism-case?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, String.class);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("exerciseId", textExercise.getId().toString());
+        params.add("exerciseId", examTextExercise.getId().toString());
+
+        var emptyPlagiarismCaseInfosResponse = request.get("/api/courses/" + course.getId() + "/plagiarism-cases", HttpStatus.OK, ObjectNode.class, params);
 
         assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isNullOrEmpty();
 
@@ -319,9 +325,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         // It should give error when no exercise id is specified
         request.get("/api/courses/" + course.getId() + "/plagiarism-cases", HttpStatus.BAD_REQUEST, String.class);
 
-        var plagiarismCaseInfosResponse = request.getMap(
-                "/api/courses/" + course.getId() + "/plagiarism-cases?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, Long.class,
-                PlagiarismCaseInfoDTO.class);
+        var plagiarismCaseInfosResponse = request.getMap("/api/courses/" + course.getId() + "/plagiarism-cases", HttpStatus.OK, Long.class, PlagiarismCaseInfoDTO.class, params);
 
         assertThat(plagiarismCaseInfosResponse).hasSize(1);
         assertThat(plagiarismCaseInfosResponse.get(textExercise.getId()).id()).as("should only return plagiarism cases with post").isEqualTo(plagiarismCase1.getId());
@@ -331,16 +335,18 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetMultiplePlagiarismCaseInfosForStudent_conflict() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("exerciseId", textExercise.getId().toString());
+        params.add("exerciseId", examTextExercise.getId().toString());
+
         long wrongCourseId = course.getId() + 1;
-        var emptyPlagiarismCaseInfosResponse = request.get(
-                "/api/courses/" + wrongCourseId + "/plagiarism-case?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, String.class);
+        var emptyPlagiarismCaseInfosResponse = request.get("/api/courses/" + wrongCourseId + "/plagiarism-cases", HttpStatus.OK, ObjectNode.class, params);
 
         assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isNullOrEmpty();
 
         addPost();
 
-        request.getMap("/api/courses/" + wrongCourseId + "/plagiarism-cases?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.CONFLICT,
-                Long.class, PlagiarismCaseInfoDTO.class);
+        request.getMap("/api/courses/" + wrongCourseId + "/plagiarism-cases", HttpStatus.CONFLICT, Long.class, PlagiarismCaseInfoDTO.class, params);
 
     }
 
