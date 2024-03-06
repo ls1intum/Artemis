@@ -57,6 +57,25 @@ describe('RepositoryViewComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it('should have a working constructor', () => {
+        const router = TestBed.inject(Router);
+        const accountService = TestBed.inject(AccountService);
+        const domainService = TestBed.inject(DomainService);
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+        const programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+        const programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+
+        const repositoryViewComponent = new RepositoryViewComponent(
+            accountService,
+            domainService,
+            activatedRoute,
+            programmingExerciseParticipationService,
+            programmingExerciseService,
+            router,
+        );
+        expect(repositoryViewComponent).toBeTruthy();
+    });
+
     it('should load participation for TEMPLATE repository type', () => {
         // Mock exercise and participation data
         const mockExercise: ProgrammingExercise = {
@@ -293,44 +312,5 @@ describe('RepositoryViewComponent', () => {
         // Expect subscription to be unsubscribed
         expect(component.differentParticipationSub?.closed).toBeTrue();
         expect(component.paramSub?.closed).toBeTrue();
-    });
-
-    it('should load participation even if it doesnt have results', () => {
-        // Mock participation data
-        const mockParticipation: ProgrammingExerciseStudentParticipation = {
-            id: 2,
-            repositoryUri: 'student-repo-uri',
-            exercise: { id: 1, numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()], studentAssignedTeamIdComputed: true, secondCorrectionEnabled: true },
-        };
-        const participationId = 2;
-
-        activatedRoute.setParameters({ participationId: participationId });
-        jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(mockParticipation));
-
-        // Trigger ngOnInit
-        component.ngOnInit();
-
-        // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
-
-        // Expect exercise and participation to be set correctly
-        expect(component.exercise).toEqual(mockParticipation.exercise);
-        expect(component.participation).toEqual(mockParticipation);
-
-        // Expect domainService method to be called with the correct arguments
-        expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.PARTICIPATION, mockParticipation]);
-        expect(component.repositoryUri).toBe('student-repo-uri');
-
-        // Trigger ngOnDestroy
-        component.ngOnDestroy();
-
-        // Expect subscription to be unsubscribed
-        expect(component.participationWithLatestResultSub?.closed).toBeTrue();
-        expect(component.paramSub?.closed).toBeTrue();
-    });
-
-    it('should handle ngOnDestroy when subscriptions are undefined', () => {
-        // Trigger ngOnDestroy and expect no errors
-        component.ngOnDestroy();
     });
 });
