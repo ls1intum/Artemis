@@ -4,7 +4,7 @@ import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.comp
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-item.model';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faEdit, faFlag } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
@@ -19,6 +19,8 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
 
+    flags: boolean[] = [];
+
     constructor(
         protected changeDetectorReference: ChangeDetectorRef,
         private examParticipationService: ExamParticipationService,
@@ -27,12 +29,22 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     }
 
     ngOnInit() {
+        this.examParticipationService.loadStudentFlagsFromLocalStorage(this.studentExam.exam?.course?.id!, this.studentExam.exam?.id!).subscribe((flags: boolean[]) => {
+            this.flags = flags;
+        });
         this.studentExam.exercises?.forEach((exercise) => {
             const item = new ExamExerciseOverviewItem();
             item.exercise = exercise;
             item.icon = faEdit;
             this.examExerciseOverviewItems.push(item);
         });
+
+        for (let i = 0; i < this.flags.length; i++) {
+            if (this.flags[i]) {
+                this.examExerciseOverviewItems[i].isFlagged = true;
+                this.examExerciseOverviewItems[i].icon = faFlag;
+            }
+        }
     }
 
     ngOnChanges() {
@@ -66,7 +78,9 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
             // in case no participation/submission yet exists -> display synced
             return 'synced';
         }
-        if (submission.submitted) {
+        if (item.isFlagged) {
+            item.icon = faFlag;
+        } else if (submission.submitted) {
             item.icon = faCheck;
         }
         if (submission.isSynced) {

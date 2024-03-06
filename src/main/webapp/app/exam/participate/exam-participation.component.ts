@@ -67,6 +67,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
     studentExam: StudentExam;
+    flags: boolean[];
 
     individualStudentEndDate: dayjs.Dayjs;
     individualStudentEndDateWithGracePeriod: dayjs.Dayjs;
@@ -163,6 +164,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 }
             }
             this.loadingExam = true;
+            this.examParticipationService.loadStudentFlagsFromLocalStorage(this.courseId, this.examId).subscribe((flags: boolean[]) => {
+                this.flags = flags;
+            });
             if (this.testRunId) {
                 this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
                     next: (studentExam) => {
@@ -247,6 +251,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const exercises: Exercise[] = this.studentExam.exercises!;
             const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
             this.examParticipationService.setExamExerciseIds(exerciseIds);
+            this.examParticipationService.loadStudentFlagsFromLocalStorage(this.courseId, this.examId).subscribe((flags: boolean[]) => {
+                this.flags = flags;
+            });
             // set endDate with workingTime
             if (!!this.testRunId || this.testExam) {
                 this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
@@ -525,6 +532,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     this.loadingExam = false;
                     this.examStarted(this.studentExam);
                 });
+                this.examParticipationService.loadStudentFlagsFromLocalStorage(this.courseId, this.examId).subscribe((flags: boolean[]) => {
+                    this.flags = flags;
+                });
             } else {
                 this.loadingExam = false;
             }
@@ -731,6 +741,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
         // save the studentExam in localStorage, so that we would be able to retrieve it later on, in case the student needs to reload the page while being offline
         this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
+        this.examParticipationService.saveStudentFlagsToLocalStorage(this.courseId, this.examId, this.flags);
 
         // if no connection available -> don't try to sync, except it is forced
         // based on the submissions that need to be saved and the exercise, we perform different actions

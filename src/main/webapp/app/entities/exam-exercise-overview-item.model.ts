@@ -4,4 +4,5 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 export class ExamExerciseOverviewItem {
     public exercise: Exercise;
     public icon: IconProp;
+    public isFlagged: boolean;
 }

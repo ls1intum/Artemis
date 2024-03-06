@@ -28,6 +28,8 @@ export class ExamNavigationBarComponent implements OnInit {
     @Input() exerciseIndex = 0;
     @Input() endDate: dayjs.Dayjs;
     @Input() overviewPageOpen: boolean;
+    @Input() examId = 0;
+    @Input() courseId = 0;
     @Input() examSessions?: ExamSession[] = [];
     @Input() examTimeLineView = false;
     @Output() onPageChanged = new EventEmitter<{
@@ -107,12 +109,17 @@ export class ExamNavigationBarComponent implements OnInit {
                     });
             });
 
-        // dummy for now
-        this.flags = new Array(this.exercises?.length).fill(false);
+        this.examParticipationService.loadStudentFlagsFromLocalStorage(this.getCourseId(), this.examId).subscribe((flags: boolean[]) => {
+            this.flags = flags;
+        });
     }
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         return this.examParticipationService.getExerciseButtonTooltip(exercise);
+    }
+
+    getCourseId(): number {
+        return this.exercises[this.exerciseIndex].course?.id!;
     }
 
     triggerExamAboutToEnd() {
@@ -176,6 +183,8 @@ export class ExamNavigationBarComponent implements OnInit {
 
     flagExercise() {
         this.flags[this.exerciseIndex] = !this.flags[this.exerciseIndex];
+        this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: false });
+        this.setExerciseButtonStatus(this.exerciseIndex);
     }
 
     isProgrammingExercise() {

@@ -24,6 +24,8 @@ export class ExamParticipationService {
 
     private examExerciseIds: number[];
 
+    private exerciseFlags: boolean[];
+
     public getResourceURL(courseId: number, examId: number): string {
         return `api/courses/${courseId}/exams/${examId}`;
     }
@@ -363,5 +365,13 @@ export class ExamParticipationService {
 
     public setExamExerciseIds(examExerciseIds: number[]) {
         this.examExerciseIds = examExerciseIds;
+    }
+
+    public getExamExerciseFlags(): boolean[] {
+        return this.exerciseFlags;
+    }
+
+    public setExamExerciseFlags(exerciseFlags: boolean[]) {
+        this.exerciseFlags = exerciseFlags;
     }
 }

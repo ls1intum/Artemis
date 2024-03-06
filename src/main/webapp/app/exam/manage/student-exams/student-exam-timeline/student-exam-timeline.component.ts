@@ -100,6 +100,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             this.exerciseIndex = this.findExerciseIndex(firstSubmission!);
             this.examNavigationBarComponent.changePage(false, this.exerciseIndex, false, firstSubmission);
         });
+        this.examNavigationBarComponent.examId = this.studentExam.exam?.id!;
+        this.examNavigationBarComponent.courseId = this.studentExam.exam?.course?.id!;
     }
 
     ngAfterViewInit(): void {
