@@ -112,8 +112,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("""
             SELECT DISTINCT user
             FROM User user
-                LEFT JOIN FETCH user.groups
-                LEFT JOIN FETCH user.authorities
             WHERE user.isDeleted = FALSE
                 AND (
                     LOWER(user.email) = LOWER(:searchInput)
