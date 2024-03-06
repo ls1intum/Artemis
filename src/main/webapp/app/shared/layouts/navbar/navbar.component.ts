@@ -853,7 +853,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             ? this.translateService.instant(this.breadcrumbs[this.breadcrumbs.length - 1].label)
             : undefined;
         const titles = [generalTitle, this.exerciseTitle, this.examTitle, this.lectureTitle, this.courseTitle].filter((title) => title !== undefined).join(' | ');
-        if (titles) {
+        // No need have a dynamic title on the start page -> use the title defined in the Router modules.
+        if (titles && this.breadcrumbs.length > 1) {
             this.titleService.setTitle(titles);
         }
     }
@@ -862,7 +863,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * Initialize the attributes for the tab titles to undefined, as they are defined during the building of the breadcrumbs
      */
     initTabTitles() {
-        this.courseTitle = undefined;
+        // The course title is not set to undefined, as there is a change detection in the setTabTitle Method
         this.exerciseTitle = undefined;
         this.lectureTitle = undefined;
         this.examTitle = undefined;
@@ -876,7 +877,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     setTabTitles(type: EntityType, title: string) {
         switch (type) {
             case EntityType.COURSE:
-                this.courseTitle = title;
+                if (this.courseTitle != title) {
+                    this.courseTitle = title;
+                    // If the courseTitle changes, we need to rebuild the tab titles
+                    this.buildTabTitles();
+                }
                 break;
             case EntityType.EXERCISE:
                 this.exerciseTitle = title;
