@@ -58,6 +58,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { onError } from 'app/shared/util/global.utils';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { Title } from '@angular/platform-browser';
 
 @Component({
     selector: 'jhi-navbar',
@@ -90,6 +91,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     irisEnabled: boolean;
     localCIActive: boolean = false;
     ltiEnabled: boolean;
+
+    courseTitle?: string;
+    exerciseTitle?: string;
+    lectureTitle?: string;
+    examTitle?: string;
 
     // Icons
     faBars = faBars;
@@ -148,6 +154,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private organisationService: OrganizationManagementService,
         public themeService: ThemeService,
         private entityTitleService: EntityTitleService,
+        private titleService: Title,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
@@ -378,6 +385,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.breadcrumbs = [];
         this.breadcrumbSubscriptions?.forEach((subscription) => subscription.unsubscribe());
         this.breadcrumbSubscriptions = [];
+        this.initTabTitles();
 
         if (!fullURI) {
             return;
@@ -416,6 +424,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         } catch (e) {
             /* empty */
         }
+        this.buildTabTitles();
     }
 
     /**
@@ -661,6 +670,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.entityTitleService.getTitle(type, ids).subscribe({
                 next: (title: string) => {
                     crumb = this.setBreadcrumb(uri, title, false, this.breadcrumbs.indexOf(crumb));
+                    this.setTabTitles(type, title);
                 },
             }),
         );
@@ -829,6 +839,54 @@ export class NavbarComponent implements OnInit, OnDestroy {
             }
         } else {
             this.isExamActive = false;
+        }
+    }
+
+    /**
+     * Method to build the tab titles based on the breadcrumbs.
+     * The tab titles are build from the most specific to the most general title.
+     * If the tab title is not defined, the titles in the Router Modules are used instead.
+     */
+    buildTabTitles() {
+        // Include the most specific title into the tab title, but only if the title is meant to be displayed to the user, i.e. should be translated.
+        const generalTitle = this.breadcrumbs[this.breadcrumbs.length - 1].translate
+            ? this.translateService.instant(this.breadcrumbs[this.breadcrumbs.length - 1].label)
+            : undefined;
+        const titles = [generalTitle, this.exerciseTitle, this.examTitle, this.lectureTitle, this.courseTitle].filter((title) => title !== undefined).join(' | ');
+        if (titles) {
+            this.titleService.setTitle(titles);
+        }
+    }
+
+    /**
+     * Initialize the attributes for the tab titles to undefined, as they are defined during the building of the breadcrumbs
+     */
+    initTabTitles() {
+        this.courseTitle = undefined;
+        this.exerciseTitle = undefined;
+        this.lectureTitle = undefined;
+        this.examTitle = undefined;
+    }
+
+    /**
+     * Set the title of the respective attribute based on the response from the entityTitleService
+     * @param type the type of the entity
+     * @param title the title of the entity
+     */
+    setTabTitles(type: EntityType, title: string) {
+        switch (type) {
+            case EntityType.COURSE:
+                this.courseTitle = title;
+                break;
+            case EntityType.EXERCISE:
+                this.exerciseTitle = title;
+                break;
+            case EntityType.EXAM:
+                this.examTitle = title;
+                break;
+            case EntityType.LECTURE:
+                this.lectureTitle = title;
+                break;
         }
     }
 }
