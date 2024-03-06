@@ -168,15 +168,21 @@ describe('RepositoryViewComponent', () => {
     });
 
     it('should handle unknown repository type', () => {
+        // Mock exercise and participation data
+        const mockExercise: ProgrammingExercise = {
+            id: 1,
+            numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+            studentAssignedTeamIdComputed: true,
+            secondCorrectionEnabled: true,
+        };
+        const mockExerciseResponse: HttpResponse<ProgrammingExercise> = new HttpResponse({ body: mockExercise });
+        const exerciseId = 1;
+
         // route to an unknown repository type
-        activatedRoute.setParameters({ exerciseId: 8, repositoryType: 'UNKNOWN' });
+        activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'UNKNOWN' });
 
         // Mock the service to return an error
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
-            new Observable((subscriber) => {
-                subscriber.error('Error');
-            }),
-        );
+        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -289,13 +295,12 @@ describe('RepositoryViewComponent', () => {
         expect(component.paramSub?.closed).toBeTrue();
     });
 
-    it('should participation even if it doesnt have results', () => {
+    it('should load participation even if it doesnt have results', () => {
         // Mock participation data
         const mockParticipation: ProgrammingExerciseStudentParticipation = {
             id: 2,
             repositoryUri: 'student-repo-uri',
             exercise: { id: 1, numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()], studentAssignedTeamIdComputed: true, secondCorrectionEnabled: true },
-            results: [],
         };
         const participationId = 2;
 
