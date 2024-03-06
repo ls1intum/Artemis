@@ -63,4 +63,8 @@ public abstract class IrisSession extends DomainObject {
         return messages;
     }
 
+    public void setMessages(List<IrisMessage> messages) {
+        this.messages = messages;
+    }
+
 }

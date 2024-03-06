@@ -30,6 +30,7 @@ public abstract class IrisMessageContent extends DomainObject {
 
     @ManyToOne
     @JsonIgnore
+    @JoinColumn(name = "message_id")
     IrisMessage message;
 
     public IrisMessage getMessage() {

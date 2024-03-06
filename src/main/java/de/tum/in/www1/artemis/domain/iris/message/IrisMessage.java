@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 public class IrisMessage extends DomainObject {
 
     @ManyToOne(optional = false)
+    @JoinColumn(name = "session_id")
     @JsonIgnore
     private IrisSession session;
 
