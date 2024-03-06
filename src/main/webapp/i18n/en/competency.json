@@ -21,6 +21,7 @@
             "masteryDescription": "A weighted metric of your progress and confidence, which shows your overall advancement towards competency mastery.",
             "masteredStudents": "Mastered students",
             "mastered": "Mastered",
+            "competencies": "Competencies",
             "taxonomies": {
                 "REMEMBER": "Remember",
                 "UNDERSTAND": "Understand",
@@ -44,9 +45,10 @@
             "manageCompetencies": {
                 "title": "Competency Management",
                 "import": "Import competencies",
-                "importAll": "Import all competencies from another course",
+                "importAll": "Import all competencies of a course",
                 "create": "Create competency",
-                "generate": "Generate Competency Recommendations"
+                "generate": "Generate Competencies",
+                "empty": "No competencies exist for this course"
             },
             "import": {
                 "title": "Import Competencies",
@@ -168,10 +170,8 @@
             },
             "prerequisite": {
                 "title": "Prerequisites",
-                "managePrerequisites": {
-                    "title": "Prerequisite Management",
-                    "select": "Select Prerequisite"
-                },
+                "select": "Select prerequisite",
+                "empty": "No prerequisites exist for this course",
                 "import": {
                     "label": "Add prerequisites",
                     "table": {
@@ -189,15 +189,20 @@
                 "tailCompetency": "Tail Competency",
                 "relationType": "Relation Type",
                 "headCompetency": "Head Competency",
-                "relates": "Relates",
-                "assumes": "Assumes",
-                "extends": "Extends",
-                "matches": "Matches",
                 "createRelation": "Create Relation",
                 "createsCircularRelation": "You can not create circular relations between competencies.",
                 "selfRelation": "You can not create a relation between a competency and itself.",
-                "relationAlreadyExists": "This relation already exists."
+                "relationAlreadyExists": "This relation already exists.",
+                "type": {
+                    "RELATES": "Relates",
+                    "ASSUMES": "Assumes",
+                    "EXTENDS": "Extends",
+                    "MATCHES": "Matches"
+                }
             }
+        },
+        "prerequisite": {
+            "deleted": "Prerequisite removed"
         },
         "learningPath": {
             "learningPathButton": "Learning Paths",

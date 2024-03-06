@@ -6,7 +6,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
 
 describe('PrerequisiteImportComponent', () => {
