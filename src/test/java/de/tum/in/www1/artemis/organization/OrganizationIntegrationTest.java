@@ -186,7 +186,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         assertThat(organization.getCourses()).contains(course1);
 
-        request.delete("/api/admin/organizations/course/" + course1.getId() + "/organization/" + organization.getId(), HttpStatus.OK);
+        request.delete("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), HttpStatus.OK);
         Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
 
         assertThat(updatedOrganization.getCourses()).doesNotContain(course1);

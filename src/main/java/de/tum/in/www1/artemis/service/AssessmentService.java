@@ -248,7 +248,7 @@ public class AssessmentService {
      * @return the saved result
      */
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId) {
-        Result result = submission.getResults().stream().filter(res -> res.getId().equals(resultId)).findAny().orElse(null);
+        Result result = submission.getResults().stream().filter(res -> res != null && res.getId().equals(resultId)).findAny().orElse(null);
 
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission);
