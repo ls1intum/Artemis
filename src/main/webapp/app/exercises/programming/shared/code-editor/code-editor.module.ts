@@ -24,6 +24,7 @@ import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/tre
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-badge.component';
 import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
+import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 @NgModule({
     imports: [
@@ -54,6 +55,7 @@ import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.modul
         CodeEditorConfirmRefreshModalComponent,
         CodeEditorContainerComponent,
         CodeEditorHeaderComponent,
+        CodeEditorMonacoComponent,
     ],
     exports: [
         CodeEditorGridComponent,
@@ -65,6 +67,7 @@ import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.modul
         CodeEditorBuildOutputComponent,
         CodeEditorContainerComponent,
         CodeEditorHeaderComponent,
+        CodeEditorMonacoComponent,
     ],
     providers: [],
 })
