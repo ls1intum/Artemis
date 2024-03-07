@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.web.rest.GitDiffReportParser;
+import de.tum.in.www1.artemis.web.rest.GitDiffReportParserService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
@@ -59,12 +59,13 @@ public class ProgrammingExerciseGitDiffReportService {
 
     private final FileService fileService;
 
-    private final GitDiffReportParser gitDiffReportParser = new GitDiffReportParser();
+    private final GitDiffReportParserService gitDiffReportParserService;
 
     public ProgrammingExerciseGitDiffReportService(GitService gitService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, FileService fileService) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, FileService fileService,
+            GitDiffReportParserService gitDiffReportParserService) {
         this.gitService = gitService;
         this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -72,6 +73,7 @@ public class ProgrammingExerciseGitDiffReportService {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.fileService = fileService;
+        this.gitDiffReportParserService = gitDiffReportParserService;
     }
 
     /**
@@ -209,7 +211,7 @@ public class ProgrammingExerciseGitDiffReportService {
         try (var diffOutputStream = new ByteArrayOutputStream(); var git = Git.wrap(repoB)) {
             git.diff().setOldTree(treeParserRepoB).setNewTree(treeParserRepoA).setOutputStream(diffOutputStream).call();
             var diff = diffOutputStream.toString();
-            return gitDiffReportParser.extractDiffEntries(diff, true).stream().mapToInt(ProgrammingExerciseGitDiffEntry::getLineCount).sum();
+            return gitDiffReportParserService.extractDiffEntries(diff, true).stream().mapToInt(ProgrammingExerciseGitDiffEntry::getLineCount).sum();
         }
         catch (IOException | GitAPIException e) {
             log.error("Error calculating number of diff lines between repositories: urlRepoA={}, urlRepoB={}.", urlRepoA, urlRepoB, e);
@@ -312,7 +314,7 @@ public class ProgrammingExerciseGitDiffReportService {
         try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(repo1)) {
             git.diff().setOldTree(oldTreeParser).setNewTree(newTreeParser).setOutputStream(diffOutputStream).call();
             var diff = diffOutputStream.toString();
-            var programmingExerciseGitDiffEntries = gitDiffReportParser.extractDiffEntries(diff, false);
+            var programmingExerciseGitDiffEntries = gitDiffReportParserService.extractDiffEntries(diff, false);
             var report = new ProgrammingExerciseGitDiffReport();
             for (ProgrammingExerciseGitDiffEntry gitDiffEntry : programmingExerciseGitDiffEntries) {
                 gitDiffEntry.setGitDiffReport(report);
