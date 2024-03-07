@@ -1,15 +1,21 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.jgit.diff.DiffEntry;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 
-public class GitDiffReportParser {
+@Profile(PROFILE_CORE)
+@Service
+public class GitDiffReportParserService {
 
     private final Pattern gitDiffLinePattern = Pattern.compile("@@ -(?<previousLine>\\d+)(,(?<previousLineCount>\\d+))? \\+(?<newLine>\\d+)(,(?<newLineCount>\\d+))? @@");
 

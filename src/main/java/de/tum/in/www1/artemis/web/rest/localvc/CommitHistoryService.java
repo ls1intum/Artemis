@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.web.rest.GitDiffReportParser;
+import de.tum.in.www1.artemis.web.rest.GitDiffReportParserService;
 
 @Profile(PROFILE_CORE)
 @RestController
@@ -35,10 +35,11 @@ public class CommitHistoryService {
 
     private final GitService gitService;
 
-    private final GitDiffReportParser gitDiffReportParser = new GitDiffReportParser();
+    private final GitDiffReportParserService gitDiffReportParserService;
 
-    public CommitHistoryService(GitService gitService) {
+    public CommitHistoryService(GitService gitService, GitDiffReportParserService gitDiffReportParserService) {
         this.gitService = gitService;
+        this.gitDiffReportParserService = gitDiffReportParserService;
     }
 
     /**
@@ -97,7 +98,7 @@ public class CommitHistoryService {
 
             diffs.append(out.toString(StandardCharsets.UTF_8));
         }
-        var programmingExerciseGitDiffEntries = gitDiffReportParser.extractDiffEntries(diffs.toString(), false);
+        var programmingExerciseGitDiffEntries = gitDiffReportParserService.extractDiffEntries(diffs.toString(), false);
         var report = new ProgrammingExerciseGitDiffReport();
         for (ProgrammingExerciseGitDiffEntry gitDiffEntry : programmingExerciseGitDiffEntries) {
             gitDiffEntry.setGitDiffReport(report);
