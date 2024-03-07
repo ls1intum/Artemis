@@ -316,9 +316,11 @@
             "invalidPattern": "This field contains an invalid e-mail pattern."
         },
         "timeZoneWarning": "You are currently in the {{ timeZone }} time zone.",
-        "dateRequiredError": "{{ labelName }} is required",
-        "startDateError": "Start date should be between 'Visible from' and 'End of working time'",
-        "endDateError": "End date should be later than Start date"
+        "dateRequiredErrorVisibleFrom": "'Visible from' is required",
+        "dateRequiredErrorStartDate": "'Start of working time' is required",
+        "dateRequiredErrorEndDate": "'End of working time' is required",
+        "startDateError": "'Start of working time' should be between 'Visible from' and 'End of working time'",
+        "endDateError": "'End of working time' should be later than 'Start of working time'"
     },
     "aboutUs": "About",
     "contact": "Contact us",

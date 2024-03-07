@@ -314,9 +314,11 @@
             "invalidPattern": "Dieses Feld beinhaltet ein ungültiges E-Mail Muster."
         },
         "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone.",
-        "dateRequiredError": "{{ labelName }} ist erforderlich",
-        "startDateError": "Das Startdatum sollte zwischen 'Sichtbar von' und 'Ende der Arbeitszeit' liegen",
-        "endDateError": "Das Enddatum sollte nach dem Startdatum liegen"
+        "dateRequiredErrorVisibleFrom": "'Sichtbar ab' ist erforderlich",
+        "dateRequiredErrorStartDate": "'Bearbeitungszeit ab' ist erforderlich",
+        "dateRequiredErrorEndDate": "'Bearbeitungszeit bis' ist erforderlich",
+        "startDateError": "Das 'Bearbeitungszeit ab' sollte zwischen 'Sichtbar ab' und 'Bearbeitungszeit bis' liegen",
+        "endDateError": "Das 'Bearbeitungszeit bis' sollte nach dem 'Bearbeitungszeit ab' liegen"
     },
     "aboutUs": "Über",
     "contact": "Kontaktiere uns",
