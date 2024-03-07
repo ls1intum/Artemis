@@ -183,6 +183,10 @@ public class GitlabRequestMockProvider {
         doReturn(user).when(userApi).getUser(user.getUsername());
     }
 
+    public void mockGetUserID(List<User> users) throws GitLabApiException {
+        doAnswer(invocation -> users.stream().filter(u -> u.getUsername().equals(invocation.getArgument(0))).findFirst().orElseThrow()).when(userApi).getUser(anyString());
+    }
+
     public void mockUpdateUser() throws GitLabApiException {
         doReturn(new org.gitlab4j.api.models.User()).when(userApi).updateUser(any(), any());
     }
@@ -300,45 +304,49 @@ public class GitlabRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
-    public void mockCreatePersonalAccessToken(Map<Object, String> userIdOrUsernameToTokenMap) throws GitLabApiException {
-        when(userApi.createPersonalAccessToken(any(), anyString(), any(), any())).thenAnswer(invocation -> {
-            Object userIdOrUsername = invocation.getArgument(0);
-            String name = invocation.getArgument(1);
-            Date expiresAt = invocation.getArgument(2);
-            ImpersonationToken.Scope[] scopes = invocation.getArgument(3);
+    public void mockCreatePersonalAccessToken(long expectedRequestCount, Map<Object, String> userIdOrUsernameToTokenMap) throws GitLabApiException {
+        for (int i = 0; i < expectedRequestCount; ++i) {
+            when(userApi.createPersonalAccessToken(any(), anyString(), any(), any())).thenAnswer(invocation -> {
+                Object userIdOrUsername = invocation.getArgument(0);
+                String name = invocation.getArgument(1);
+                Date expiresAt = invocation.getArgument(2);
+                ImpersonationToken.Scope[] scopes = invocation.getArgument(3);
 
-            ImpersonationToken result = new ImpersonationToken();
-            result.setName(name);
-            result.setExpiresAt(expiresAt);
-            result.setScopes(Arrays.asList(scopes));
-            result.setToken(userIdOrUsernameToTokenMap.get(userIdOrUsername));
+                ImpersonationToken result = new ImpersonationToken();
+                result.setName(name);
+                result.setExpiresAt(expiresAt);
+                result.setScopes(scopes == null ? null : Arrays.asList(scopes));
+                result.setToken(userIdOrUsernameToTokenMap.get(userIdOrUsername));
 
-            return result;
-        });
+                return result;
+            });
+        }
     }
 
-    public void mockListPersonalAccessTokens(Map<Long, GitLabPersonalAccessTokenListResponseDTO> responseMap) {
-        mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens")).andExpect(method(HttpMethod.GET)).andRespond(request -> {
-            final Map<String, String> parameters = getParametersFromHttpRequest(Objects.requireNonNull(request));
-            if (parameters.containsKey("user_id")) {
-                Long userId = Long.parseLong(parameters.get("user_id"));
-                if (responseMap.containsKey(userId)) {
-                    var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(List.of(responseMap.get(userId))).getBytes(StandardCharsets.UTF_8),
+    public void mockListPersonalAccessTokens(long expectedRequestCount, Map<Long, GitLabPersonalAccessTokenListResponseDTO> responseMap) {
+        for (int i = 0; i < expectedRequestCount; ++i) {
+            mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens")).andExpect(method(HttpMethod.GET)).andRespond(request -> {
+                final Map<String, String> parameters = getParametersFromHttpRequest(Objects.requireNonNull(request));
+                if (parameters.containsKey("user_id")) {
+                    Long userId = Long.parseLong(parameters.get("user_id"));
+                    if (responseMap.containsKey(userId)) {
+                        var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(List.of(responseMap.get(userId))).getBytes(StandardCharsets.UTF_8),
+                                HttpStatus.OK);
+                        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                        return response;
+                    }
+                    else {
+                        return new MockClientHttpResponse(new byte[0], HttpStatus.BAD_REQUEST);
+                    }
+                }
+                else {
+                    var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(responseMap.values().stream().toList()).getBytes(StandardCharsets.UTF_8),
                             HttpStatus.OK);
                     response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
                     return response;
                 }
-                else {
-                    return new MockClientHttpResponse(new byte[0], HttpStatus.BAD_REQUEST);
-                }
-            }
-            else {
-                var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(responseMap.values().stream().toList()).getBytes(StandardCharsets.UTF_8),
-                        HttpStatus.OK);
-                response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                return response;
-            }
-        });
+            });
+        }
     }
 
     public Map<String, String> getParametersFromHttpRequest(ClientHttpRequest request) {

@@ -58,7 +58,7 @@ class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringInteg
 
         gitlabRequestMockProvider.mockGetUserApi();
         gitlabRequestMockProvider.mockGetUserID(gitlabUser);
-        gitlabRequestMockProvider.mockCreatePersonalAccessToken(new HashMap<>() {
+        gitlabRequestMockProvider.mockCreatePersonalAccessToken(1, new HashMap<>() {
 
             {
                 put(gitlabUser.getUsername(), token);
@@ -93,14 +93,14 @@ class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringInteg
 
         gitlabRequestMockProvider.mockGetUserApi();
         gitlabRequestMockProvider.mockGetUserID(gitlabUser);
-        gitlabRequestMockProvider.mockCreatePersonalAccessToken(new HashMap<>() {
+        gitlabRequestMockProvider.mockCreatePersonalAccessToken(1, new HashMap<>() {
 
             {
                 put(gitlabUser.getUsername(), newToken);
                 put(gitlabUser.getId(), newToken);
             }
         });
-        gitlabRequestMockProvider.mockListPersonalAccessTokens(new HashMap<>() {
+        gitlabRequestMockProvider.mockListPersonalAccessTokens(1, new HashMap<>() {
 
             {
                 put(gitlabUser.getId(),

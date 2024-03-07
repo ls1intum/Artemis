@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.domain.User;
 
 public abstract class VcsTokenManagementService {
 
-    private static final Duration MAX_LIFETIME = Duration.ofDays(365);
+    protected static final Duration MAX_LIFETIME = Duration.ofDays(365);
 
     public void createAccessToken(User user) {
         createAccessToken(user, MAX_LIFETIME);
