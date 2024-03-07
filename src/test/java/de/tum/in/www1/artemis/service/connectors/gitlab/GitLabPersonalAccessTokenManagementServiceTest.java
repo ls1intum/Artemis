@@ -4,12 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.HashMap;
 
 import org.gitlab4j.api.GitLabApiException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -42,19 +45,52 @@ class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringInteg
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
     }
 
-    @Test
+    @ParameterizedTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenewAccessToken() throws GitLabApiException {
-        final long initialTokenId = 46732L;
-        final String initialToken = "ihdsf89w73rshefi8se892340f";
-        final String newToken = "987z459hrf89w4r9z438rtweo84";
-        final Duration newLifetime = Duration.ofDays(365);
+    @CsvSource({ "ihdsf89w73rshefi8se892340f, 365, 596423", "erh8er9fhsrzg8ezfhergrifhr, 333, 6920", "io8949weisjdhfzgr7uejdirri, 94, 345", })
+    void testCreateAccessToken(String token, int lifetimeDays, long gitlabUserId) throws GitLabApiException {
+        final Duration lifetime = Duration.ofDays(lifetimeDays);
+
+        final User user = userRepository.getUser();
+        assertThat(user.getVcsAccessToken()).isNull();
+        assertThat(user.getVcsAccessTokenExpiryDate()).isNull();
+
+        var gitlabUser = new org.gitlab4j.api.models.User().withId(gitlabUserId).withUsername(user.getLogin());
+
+        gitlabRequestMockProvider.mockGetUserApi();
+        gitlabRequestMockProvider.mockGetUserID(gitlabUser);
+        gitlabRequestMockProvider.mockCreatePersonalAccessToken(new HashMap<>() {
+
+            {
+                put(gitlabUser.getUsername(), token);
+                put(gitlabUser.getId(), token);
+            }
+        });
+
+        gitLabPersonalAccessTokenManagementService.createAccessToken(user, lifetime);
+
+        gitlabRequestMockProvider.verifyMocks();
+
+        final User updatedUser = userRepository.getUser();
+        assertThat(updatedUser.getVcsAccessToken()).isEqualTo(token);
+        assertThat(updatedUser.getVcsAccessTokenExpiryDate()).isNotNull();
+        Assertions.assertTrue(updatedUser.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now().plusDays(lifetimeDays - 1)));
+    }
+
+    @ParameterizedTest
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @CsvSource({ "46732, ihdsf89w73rshefi8se892340f, 987z459hrf89w4r9z438rtweo84, 28, 365, 596423", "947, erh8er9fhsrzg8ezfhergrifhr, 8re9fsh8wewrufrhfgtguwrgr9r, -3, 333, 6920",
+            "22, io8949weisjdhfzgr7uejdirri, 94egdvfiszeu3289eoshdurfrir, -250, 94, 345", })
+    void testRenewAccessToken(long initialTokenId, String initialToken, String newToken, long initialTokenLifetimeDays, int newLifetimeDays, long gitlabUserId)
+            throws GitLabApiException {
+        final Duration newLifetime = Duration.ofDays(newLifetimeDays);
 
         final User user = userRepository.getUser();
         user.setVcsAccessToken(initialToken);
+        user.setVcsAccessTokenExpiryDate(ZonedDateTime.now().minusDays(initialTokenLifetimeDays));
         userRepository.save(user);
 
-        var gitlabUser = new org.gitlab4j.api.models.User().withId(596423L).withUsername(user.getLogin());
+        var gitlabUser = new org.gitlab4j.api.models.User().withId(gitlabUserId).withUsername(user.getLogin());
 
         gitlabRequestMockProvider.mockGetUserApi();
         gitlabRequestMockProvider.mockGetUserID(gitlabUser);
@@ -68,7 +104,8 @@ class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringInteg
         gitlabRequestMockProvider.mockListPersonalAccessTokens(new HashMap<>() {
 
             {
-                put(gitlabUser.getId(), new GitLabPersonalAccessTokenListResponseDTO(initialTokenId, Date.from(Instant.now().plusSeconds(28 * 24 * 60 * 60))));
+                put(gitlabUser.getId(),
+                        new GitLabPersonalAccessTokenListResponseDTO(initialTokenId, Date.from(Instant.now().plusSeconds(initialTokenLifetimeDays * 24 * 60 * 60))));
             }
         });
 
@@ -78,5 +115,7 @@ class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringInteg
 
         final User updatedUser = userRepository.getUser();
         assertThat(updatedUser.getVcsAccessToken()).isEqualTo(newToken);
+        assertThat(updatedUser.getVcsAccessTokenExpiryDate()).isNotNull();
+        Assertions.assertTrue(updatedUser.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now().plusDays(newLifetimeDays - 1)));
     }
 }
