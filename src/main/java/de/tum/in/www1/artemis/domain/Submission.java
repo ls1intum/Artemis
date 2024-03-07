@@ -2,17 +2,41 @@ package de.tum.in.www1.artemis.domain;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderColumn;
+import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -165,10 +189,10 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     /**
      * removes all elements from the results list, which are null.
-     *
+     * <p>
      * This can be used to prepare a submission before sending it to the client. In some cases the submission is loaded from the database
      * with a results list which contains undesired null values. To get rid of them this function can be used.
-     *
+     * <p>
      * When a submission with results is fetched for a specific assessor, hibernate wants to keep the order of the results list,
      * as it is in the ordered column in the database.
      * To maintain the index of the result with the assessor within the results list, null elements are used as padding.
@@ -255,6 +279,14 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     public void setParticipation(Participation participation) {
         this.participation = participation;
+    }
+
+    public Set<SubmissionVersion> getVersions() {
+        return versions;
+    }
+
+    public void setVersions(Set<SubmissionVersion> submissionVersions) {
+        this.versions = submissionVersions;
     }
 
     public Submission submissionDate(ZonedDateTime submissionDate) {
