@@ -40,11 +40,11 @@ To invoke a deployment, you need to be part of the `@ls1intum/artemis-developers
 
 Start the deployment by reviewing the `Build & Deploy` action.
 (Refer to the `GitHub documentation "Reviewing deployments"`_.)
-TS5 is locked to a pull request using the `lock:artemistest5`_ label.
+TS5 is locked to a pull request using the `lock:artemis-test5`_ label.
 The workflow applies the lock label automatically on deployment.
 Remove the label from the PR once the test server is free to use by other developers.
 
 
-.. _TS5: https://artemistest5.ase.in.tum.de
+.. _TS5: https://artemis-test5.artemis.cit.tum.de/
 .. _`GitHub documentation "Reviewing deployments"`: https://docs.github.com/en/actions/managing-workflow-runs/reviewing-deployments
-.. _`lock:artemistest5`: https://github.com/ls1intum/Artemis/pulls?q=is%3Aopen+is%3Apr+label%3Alock%3Aartemistest5
+.. _`lock:artemis-test5`: https://github.com/ls1intum/Artemis/pulls?q=is%3Aopen+is%3Apr+label%3Alock%3Aartemis-test5
