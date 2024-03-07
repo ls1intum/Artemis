@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.HashMap;
 
 import org.gitlab4j.api.GitLabApiException;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -74,7 +73,7 @@ class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringInteg
         final User updatedUser = userRepository.getUser();
         assertThat(updatedUser.getVcsAccessToken()).isEqualTo(token);
         assertThat(updatedUser.getVcsAccessTokenExpiryDate()).isNotNull();
-        Assertions.assertTrue(updatedUser.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now().plusDays(lifetimeDays - 1)));
+        assertThat(updatedUser.getVcsAccessTokenExpiryDate()).isAfter(ZonedDateTime.now().plusDays(lifetimeDays - 1));
     }
 
     @ParameterizedTest
@@ -116,6 +115,6 @@ class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringInteg
         final User updatedUser = userRepository.getUser();
         assertThat(updatedUser.getVcsAccessToken()).isEqualTo(newToken);
         assertThat(updatedUser.getVcsAccessTokenExpiryDate()).isNotNull();
-        Assertions.assertTrue(updatedUser.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now().plusDays(newLifetimeDays - 1)));
+        assertThat(updatedUser.getVcsAccessTokenExpiryDate()).isAfter(ZonedDateTime.now().plusDays(newLifetimeDays - 1));
     }
 }
