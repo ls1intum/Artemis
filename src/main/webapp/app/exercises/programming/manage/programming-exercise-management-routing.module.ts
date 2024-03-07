@@ -163,7 +163,7 @@ export const routes: Routes = [
         path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType',
         component: RepositoryViewComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -175,7 +175,7 @@ export const routes: Routes = [
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository',
         component: RepositoryViewComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -187,7 +187,7 @@ export const routes: Routes = [
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history',
         component: CommitHistoryComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -199,7 +199,7 @@ export const routes: Routes = [
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history/:commitHash',
         component: CommitDetailsViewComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
