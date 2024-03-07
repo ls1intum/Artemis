@@ -47,7 +47,7 @@ class EnforceRoleInExerciseTest extends AbstractEnforceRoleInResourceTest {
     @Override
     void setupOnce() {
         course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
         // create users of course
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
