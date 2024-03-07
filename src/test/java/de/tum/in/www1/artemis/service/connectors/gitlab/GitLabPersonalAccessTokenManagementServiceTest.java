@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.util.HashMap;
 
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,21 +49,28 @@ class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringInteg
         final String newToken = "987z459hrf89w4r9z438rtweo84";
         final Duration newLifetime = Duration.ofDays(365);
 
-        User user = userRepository.getUser();
+        final User user = userRepository.getUser();
         user.setVcsAccessToken(initialToken);
         userRepository.save(user);
 
-        var gitlabUser = new org.gitlab4j.api.models.User().withId(596423L);
+        var gitlabUser = new org.gitlab4j.api.models.User().withId(596423L).withUsername(user.getLogin());
 
-        gitlabRequestMockProvider.mockGetUserID(user.getLogin(), gitlabUser);
-        gitlabRequestMockProvider.mockListPersonalAccessTokens(user.getLogin(), gitlabUser, initialTokenId);
-        gitlabRequestMockProvider.mockRotatePersonalAccessTokens(initialTokenId, newToken, newLifetime);
+        gitlabRequestMockProvider.mockGetUserApi();
+        gitlabRequestMockProvider.mockGetUserID(gitlabUser);
+        gitlabRequestMockProvider.mockCreatePersonalAccessToken(new HashMap<>() {
+
+            {
+                put(gitlabUser.getUsername(), newToken);
+                put(gitlabUser.getId(), newToken);
+            }
+        });
+        gitlabRequestMockProvider.mockListPersonalAccessTokens(initialTokenId);
 
         gitLabPersonalAccessTokenManagementService.renewAccessToken(user, newLifetime);
 
         gitlabRequestMockProvider.verifyMocks();
 
-        user = userRepository.getUser();
-        assertThat(user.getVcsAccessToken()).isEqualTo(newToken);
+        final User updatedUser = userRepository.getUser();
+        assertThat(updatedUser.getVcsAccessToken()).isEqualTo(newToken);
     }
 }

@@ -8,8 +8,6 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -49,7 +47,6 @@ import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistEx
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
-import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRotateResponseDTO;
 
 @Component
 @Profile("gitlab")
@@ -154,6 +151,10 @@ public class GitlabRequestMockProvider {
         mockAddUserToGroup(exercise.getProjectKey(), GUEST, "tutor1", 3L);
     }
 
+    public void mockGetUserApi() {
+        doReturn(userApi).when(gitLabApi).getUserApi();
+    }
+
     /**
      * Method to mock the getUser method to return mocked users with their id's
      *
@@ -174,6 +175,10 @@ public class GitlabRequestMockProvider {
      */
     public void mockGetUserID(String username, User user) throws GitLabApiException {
         doReturn(user).when(userApi).getUser(username);
+    }
+
+    public void mockGetUserID(User user) throws GitLabApiException {
+        doReturn(user).when(userApi).getUser(user.getUsername());
     }
 
     public void mockUpdateUser() throws GitLabApiException {
@@ -293,27 +298,30 @@ public class GitlabRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
-    public void mockListPersonalAccessTokens(String login, User gitlabUser, long tokenId) throws GitLabApiException, JsonProcessingException {
-        UserApi userApi = mock(UserApi.class);
-        doReturn(userApi).when(gitLabApi).getUserApi();
-        doReturn(gitlabUser).when(userApi).getUser(eq(login));
+    public void mockCreatePersonalAccessToken(Map<Object, String> userIdOrUsernameToTokenMap) throws GitLabApiException {
+        when(userApi.createPersonalAccessToken(any(), anyString(), any(), any())).thenAnswer(invocation -> {
+            Object userIdOrUsername = invocation.getArgument(0);
+            String name = invocation.getArgument(1);
+            Date expiresAt = invocation.getArgument(2);
+            ImpersonationToken.Scope[] scopes = invocation.getArgument(3);
 
+            ImpersonationToken result = new ImpersonationToken();
+            result.setName(name);
+            result.setExpiresAt(expiresAt);
+            result.setScopes(Arrays.asList(scopes));
+            result.setToken(userIdOrUsernameToTokenMap.get(userIdOrUsername));
+
+            return result;
+        });
+    }
+
+    public void mockListPersonalAccessTokens(long tokenId) throws JsonProcessingException {
         var responseDTO = new GitLabPersonalAccessTokenListResponseDTO();
         responseDTO.setId(tokenId);
         responseDTO.setExpiresAt(Date.from(LocalDateTime.now().plusDays(28).atZone(ZoneId.systemDefault()).toInstant()));
         final var response = new ObjectMapper().writeValueAsString(List.of(responseDTO));
 
         mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens")).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
-    }
-
-    public void mockRotatePersonalAccessTokens(long personalAccessTokenId, String newPersonalAccessToken, Duration newLifetime) throws JsonProcessingException {
-        var responseDTO = new GitLabPersonalAccessTokenRotateResponseDTO();
-        responseDTO.setToken(newPersonalAccessToken);
-        responseDTO.setExpiresAt(Date.from(Instant.now().plus(newLifetime)));
-        final var response = new ObjectMapper().writeValueAsString(responseDTO);
-
-        mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens/" + personalAccessTokenId + "/rotate")).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 

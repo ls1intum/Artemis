@@ -25,8 +25,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListRequestDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
-import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRotateRequestDTO;
-import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRotateResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsTokenManagementService;
 
 @Component
@@ -104,13 +102,20 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
     }
 
     private void renewVersionControlAccessToken(org.gitlab4j.api.models.User gitlabUser, User user, Duration newLifetime) {
-        ImpersonationToken renewedPersonalAccessToken = retrieveRenewedPersonalAccessToken(gitlabUser.getId(), newLifetime);
-        savePersonalAccessTokenOfUser(renewedPersonalAccessToken, user);
-    }
+        GitLabPersonalAccessTokenListResponseDTO response = fetchPersonalAccessTokenId(gitlabUser.getId());
 
-    private ImpersonationToken retrieveRenewedPersonalAccessToken(Long userId, Duration newLifetime) {
-        GitLabPersonalAccessTokenListResponseDTO response = fetchPersonalAccessTokenId(userId);
-        return rotatePersonalAccessToken(response.getId(), userId, getExpiryDateFromLifetime(newLifetime));
+        try {
+            gitlabApi.getUserApi().revokeImpersonationToken(gitlabUser.getId(), response.getId());
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Error while revoking personal access token", e);
+        }
+
+        // Set access token to null for local user object, otherwise createAccessToken does nothing.
+        user.setVcsAccessToken(null);
+        user.setVcsAccessTokenExpiryDate(null);
+
+        createAccessToken(user, newLifetime);
     }
 
     private GitLabPersonalAccessTokenListResponseDTO fetchPersonalAccessTokenId(Long userId) {
@@ -132,33 +137,6 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
             log.error("Could not fetch personal access token id for user with id {}, response is null", userId);
             throw new GitLabException("Error while fetching personal access token id");
         }
-    }
-
-    private ImpersonationToken rotatePersonalAccessToken(Long personalAccessTokenId, Long userId, Date newExpiryDate) {
-        var body = new GitLabPersonalAccessTokenRotateRequestDTO(personalAccessTokenId, newExpiryDate);
-        var entity = new HttpEntity<>(body);
-
-        GitLabPersonalAccessTokenRotateResponseDTO responseBody;
-        try {
-            var response = restTemplate.exchange(gitlabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens/" + personalAccessTokenId + "/rotate", HttpMethod.POST, entity,
-                    GitLabPersonalAccessTokenRotateResponseDTO.class);
-            responseBody = response.getBody();
-            if (responseBody == null || responseBody.getToken() == null) {
-                log.error("Could not rotate Gitlab personal access token for user with id {}, response is null", userId);
-                throw new GitLabException("Error while creating personal access token");
-            }
-        }
-        catch (HttpClientErrorException e) {
-            log.error("Could not rotate Gitlab personal access token for user with id {}, response is null", userId);
-            throw new GitLabException("Error while creating personal access token");
-        }
-
-        ImpersonationToken result = new ImpersonationToken();
-        // Todo: more attributes necessary?
-        result.setId(responseBody.getId());
-        result.setToken(responseBody.getToken());
-        result.setExpiresAt(responseBody.getExpiresAt());
-        return result;
     }
 
     private org.gitlab4j.api.models.User getGitLabUserFromUser(User user) {
