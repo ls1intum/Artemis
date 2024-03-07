@@ -9,22 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class EnforceRoleInExerciseTest extends AbstractEnforceRoleInResourceTest {
 
-    private static final String TEST_PREFIX = "enforceroleinexercise";
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    private static final String TEST_PREFIX = "enforceroleinexercise";
 
     private static final String OTHER_PREFIX = "other" + TEST_PREFIX;
 
@@ -45,18 +37,19 @@ class EnforceRoleInExerciseTest extends AbstractEnforceRoleInResourceTest {
     private static final String INSTRUCTOR_OF_OTHER_COURSE = OTHER_PREFIX + "instructor1";
 
     @Override
+    String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
+    @Override
+    String getOtherPrefix() {
+        return OTHER_PREFIX;
+    }
+
+    @Override
     void setupOnce() {
-        course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        // Add a programming exercise to the course
         programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-
-        // create users of course
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-
-        // create users of other course
-        userUtilService.addStudent(OTHER_PREFIX + "students", STUDENT_OF_OTHER_COURSE);
-        userUtilService.addTeachingAssistant(OTHER_PREFIX + "tutors", TUTOR_OF_OTHER_COURSE);
-        userUtilService.addEditor(OTHER_PREFIX + "editors", EDITOR_OF_OTHER_COURSE);
-        userUtilService.addInstructor(OTHER_PREFIX + "instructors", INSTRUCTOR_OF_OTHER_COURSE);
     }
 
     private void callEndpoint(String endpoint, HttpStatus expectedStatus) throws Exception {
