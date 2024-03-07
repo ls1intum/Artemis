@@ -53,7 +53,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     beforeDueDate: boolean;
     editorLabel?: string;
     localVCEnabled = false;
-    routerLink: string;
+    repositoryLink: string;
 
     // Icons
     faComment = faComment;
@@ -76,9 +76,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     ) {}
 
     ngOnInit(): void {
-        this.routerLink = this.router.url;
-        if (this.routerLink.endsWith('exercises')) {
-            this.routerLink += `/${this.exercise.id}`;
+        this.repositoryLink = this.router.url;
+        if (this.repositoryLink.endsWith('exercises')) {
+            this.repositoryLink += `/${this.exercise.id}`;
+        }
+        if (this.repositoryLink.includes('exams')) {
+            this.repositoryLink += `/exercises/${this.exercise.id}`;
         }
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
