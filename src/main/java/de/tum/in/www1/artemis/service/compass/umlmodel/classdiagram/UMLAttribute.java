@@ -23,9 +23,8 @@ public class UMLAttribute extends UMLElement implements Serializable {
     /**
      * empty constructor used to make mockito happy
      */
-
     public UMLAttribute() {
-        super();
+        // default empty constructor
     }
 
     public UMLAttribute(String name, String attributeType, String jsonElementID) {

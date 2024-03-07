@@ -10,7 +10,7 @@ public class UMLObjectAttribute extends UMLAttribute {
      * empty constructor used to make mockito happy
      */
     public UMLObjectAttribute() {
-        super();
+        // default empty constructor
     }
 
     public UMLObjectAttribute(String name, String attributeType, String jsonElementID) {

@@ -30,7 +30,7 @@ public class UMLMethod extends UMLElement implements Serializable {
      * empty constructor used to make mockito happy
      */
     public UMLMethod() {
-        super();
+        // default empty constructor
     }
 
     public UMLMethod(String completeName, String name, String returnType, List<String> parameters, String jsonElementID) {
