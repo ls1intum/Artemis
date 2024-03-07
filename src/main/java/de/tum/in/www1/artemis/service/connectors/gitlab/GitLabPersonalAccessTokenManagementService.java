@@ -131,7 +131,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
                 log.error("Could not fetch personal access token id for user with id {}, response is null", userId);
                 throw new GitLabException("Error while fetching personal access token id");
             }
-            return responseBody.get(0);
+            return responseBody.get(0); // We assume that there exists no other personal access token with name from PERSONAL_ACCESS_TOKEN_NAME.
         }
         catch (HttpClientErrorException e) {
             log.error("Could not fetch personal access token id for user with id {}, response is null", userId);
