@@ -317,7 +317,7 @@
         },
         "timeZoneWarning": "You are currently in the {{ timeZone }} time zone.",
         "dateRequiredError": "{{ labelName }} is required",
-        "startDateError": "Start date should be between Visible from and End of working time",
+        "startDateError": "Start date should be between 'Visible from' and 'End of working time'",
         "endDateError": "End date should be later than Start date"
     },
     "aboutUs": "About",

@@ -315,7 +315,7 @@
         },
         "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone.",
         "dateRequiredError": "{{ labelName }} ist erforderlich",
-        "startDateError": "Das Startdatum sollte zwischen Sichtbar von und Ende der Arbeitszeit liegen",
+        "startDateError": "Das Startdatum sollte zwischen 'Sichtbar von' und 'Ende der Arbeitszeit' liegen",
         "endDateError": "Das Enddatum sollte nach dem Startdatum liegen"
     },
     "aboutUs": "Über",
