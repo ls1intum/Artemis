@@ -137,7 +137,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * Updates the visibleDate based on the value of date time picker.
      * @param date
      */
-    updateExamVisibleData(date: dayjs.Dayjs) {
+    updateExamVisibleDate(date: dayjs.Dayjs) {
         if (dayjs(date).isValid()) {
             this.exam.visibleDate = date;
         } else {

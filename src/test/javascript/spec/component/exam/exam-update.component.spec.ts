@@ -371,6 +371,69 @@ describe('ExamUpdateComponent', () => {
             expect(component.isValidEndDate).toBeTrue();
         });
 
+        it('updates the visible date for real exams correctly', () => {
+            examWithoutExercises.visibleDate = undefined;
+
+            const day = dayjs();
+            fixture.detectChanges();
+            component.updateExamVisibleDate(day);
+
+            expect(examWithoutExercises.visibleDate).toBe(day);
+        });
+
+        it('updates the invalid visible date for real exams correctly', () => {
+            examWithoutExercises.visibleDate = dayjs().subtract(3, 'hours');
+
+            const invalidDate = dayjs('this is not a date');
+
+            fixture.detectChanges();
+            component.updateExamVisibleDate(invalidDate);
+
+            expect(examWithoutExercises.visibleDate).toBeUndefined();
+        });
+
+        it('updates the start date for real exams correctly', () => {
+            examWithoutExercises.startDate = undefined;
+
+            const day = dayjs();
+            fixture.detectChanges();
+            component.updateExamStartDate(day);
+
+            expect(examWithoutExercises.startDate).toBe(day);
+        });
+
+        it('updates the invalid start date for real exams correctly', () => {
+            examWithoutExercises.startDate = dayjs().subtract(3, 'hours');
+
+            const invalidDate = dayjs('this is not a date');
+
+            fixture.detectChanges();
+            component.updateExamStartDate(invalidDate);
+
+            expect(examWithoutExercises.startDate).toBeUndefined();
+        });
+
+        it('updates the end date for real exams correctly', () => {
+            examWithoutExercises.endDate = undefined;
+
+            const day = dayjs();
+            fixture.detectChanges();
+            component.updateExamEndDate(day);
+
+            expect(examWithoutExercises.endDate).toBe(day);
+        });
+
+        it('updates the invalid end date for real exams correctly', () => {
+            examWithoutExercises.endDate = dayjs().subtract(3, 'hours');
+
+            const invalidDate = dayjs('this is not a date');
+
+            fixture.detectChanges();
+            component.updateExamEndDate(invalidDate);
+
+            expect(examWithoutExercises.endDate).toBeUndefined();
+        });
+
         it('should correctly catch HTTPError when updating the examWithoutExercises', fakeAsync(() => {
             const alertService = TestBed.inject(AlertService);
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });

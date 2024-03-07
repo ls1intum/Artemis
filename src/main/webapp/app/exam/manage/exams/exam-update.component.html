@@ -75,7 +75,7 @@
                         labelName="{{ 'artemisApp.examManagement.visibleDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.visibleDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.visibleDate"
-                        (ngModelChange)="updateExamVisibleData($event)"
+                        (ngModelChange)="updateExamVisibleDate($event)"
                         [error]="!isValidVisibleDate"
                         [startAt]="exam.visibleDate"
                         name="visibleDate"
