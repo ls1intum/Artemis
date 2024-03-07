@@ -12,7 +12,7 @@ import { Observable, Subscription, forkJoin, map, mergeMap, toArray } from 'rxjs
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ChangeContext, Options, SliderComponent } from '@angular-slider/ngx-slider';
+import { Options } from '@angular-slider/ngx-slider';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
@@ -42,6 +42,11 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         },
     };
 
+    translate = (value: number): string => {
+        return this.datePipe.transform(value, 'time', true);
+    };
+
+    stepsArray: [{ value: 0 }];
     studentExam: StudentExam;
     exerciseIndex: number;
     activeExamPage = new ExamPage();
@@ -57,7 +62,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
 
     @ViewChildren(ExamSubmissionComponent) currentPageComponents: QueryList<ExamSubmissionComponent>;
     @ViewChild('examNavigationBar') examNavigationBarComponent: ExamNavigationBarComponent;
-    @ViewChild('slider') slider: SliderComponent;
 
     private activatedRouteSubscription: Subscription;
 
@@ -323,9 +327,9 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
      * This method is called when the user clicks on the slider
      * @param changeContext the change context of the slider
      */
-    onSliderInputChange(changeContext: ChangeContext) {
-        this.selectedTimestamp = changeContext.value;
-        const submission = this.findCorrespondingSubmissionForTimestamp(changeContext.value);
+    onSliderInputChange(changeContext: Event) {
+        this.selectedTimestamp = parseInt((changeContext.target as HTMLInputElement).value);
+        const submission = this.findCorrespondingSubmissionForTimestamp(this.selectedTimestamp);
         if (this.isSubmissionVersion(submission)) {
             const submissionVersion = submission as SubmissionVersion;
             this.currentExercise = submissionVersion.submission.participation?.exercise;

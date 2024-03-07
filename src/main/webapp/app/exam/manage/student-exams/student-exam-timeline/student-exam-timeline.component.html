@@ -1,7 +1,7 @@
 <h4 class="mb-4" jhiTranslate="artemisApp.examTimeline.title" [translateValues]="{ username: studentExam.user!.login! }">Exam timeline</h4>
 @if (studentExam) {
     <div>
-        <ngx-slider class="mb-5" #slider [(value)]="selectedTimestamp" [options]="options" (userChange)="onSliderInputChange($event)" />
+        <mat-slider showTickMarks class="mb-5" [(ngModel)]="selectedTimestamp" (input)="onSliderInputChange($event)" [displayWith]="translate(value)" />
         <jhi-exam-navigation-bar
             #examNavigationBar
             id="exam-navigation-bar"
