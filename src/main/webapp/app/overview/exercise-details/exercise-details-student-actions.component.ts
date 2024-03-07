@@ -77,6 +77,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
     ngOnInit(): void {
         this.routerLink = this.router.url;
+        if (this.routerLink.endsWith('exercises')) {
+            this.routerLink += `/${this.exercise.id}`;
+        }
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
