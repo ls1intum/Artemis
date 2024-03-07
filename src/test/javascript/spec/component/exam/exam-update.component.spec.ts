@@ -321,6 +321,56 @@ describe('ExamUpdateComponent', () => {
             expect(component.validateWorkingTime).toBeTrue();
         });
 
+        it('validates the visible from for real exams correctly', () => {
+            examWithoutExercises.testExam = false;
+
+            examWithoutExercises.visibleDate = undefined;
+            fixture.detectChanges();
+
+            expect(component.isValidVisibleDate).toBeFalse();
+
+            examWithoutExercises.visibleDate = dayjs().add(2, 'hours');
+            expect(component.isValidVisibleDate).toBeTrue();
+        });
+
+        it('validates the start of working time for real exams correctly', () => {
+            examWithoutExercises.testExam = false;
+
+            examWithoutExercises.startDate = undefined;
+            examWithoutExercises.visibleDate = undefined;
+            fixture.detectChanges();
+
+            expect(component.isStartDate).toBeFalse();
+
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            expect(component.isStartDate).toBeTrue();
+
+            examWithoutExercises.visibleDate = dayjs().add(3, 'hours');
+            expect(component.isValidStartDate).toBeFalse();
+
+            examWithoutExercises.visibleDate = dayjs().subtract(3, 'hours');
+            expect(component.isValidStartDate).toBeTrue();
+        });
+
+        it('validates the end of working time for real exams correctly', () => {
+            examWithoutExercises.testExam = false;
+
+            examWithoutExercises.startDate = undefined;
+            examWithoutExercises.endDate = undefined;
+            fixture.detectChanges();
+
+            expect(component.isEndDate).toBeFalse();
+
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
+            expect(component.isEndDate).toBeTrue();
+
+            examWithoutExercises.startDate = dayjs().add(3, 'hours');
+            expect(component.isValidEndDate).toBeFalse();
+
+            examWithoutExercises.startDate = dayjs().subtract(3, 'hours');
+            expect(component.isValidEndDate).toBeTrue();
+        });
+
         it('should correctly catch HTTPError when updating the examWithoutExercises', fakeAsync(() => {
             const alertService = TestBed.inject(AlertService);
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
