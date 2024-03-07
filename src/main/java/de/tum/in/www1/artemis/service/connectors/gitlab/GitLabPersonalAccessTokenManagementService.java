@@ -27,10 +27,16 @@ import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccess
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsTokenManagementService;
 
+/**
+ * Provides VCS access token services for GitLab via means of personal access tokens.
+ */
 @Component
 @Profile("gitlab")
 public class GitLabPersonalAccessTokenManagementService extends VcsTokenManagementService {
 
+    /**
+     * The name of the personal access token used in GitLab.
+     */
     private static final String PERSONAL_ACCESS_TOKEN_NAME = "Artemis-Automatic-Access-Token";
 
     private static final Logger log = LoggerFactory.getLogger(GitLabPersonalAccessTokenManagementService.class);
@@ -39,7 +45,10 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
 
     private final GitLabApi gitlabApi;
 
-    protected final RestTemplate restTemplate;
+    /**
+     * Used to send and receive HTTP requests. This is necessary because the {@link GitLabApi} does not currently implement all necessary request types.
+     */
+    private final RestTemplate restTemplate;
 
     public GitLabPersonalAccessTokenManagementService(UserRepository userRepository, GitLabApi gitlabApi, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
         this.userRepository = userRepository;
@@ -66,13 +75,6 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
         }
     }
 
-    /**
-     * Create a personal access token for the user with the given id.
-     * The token has scopes "read_repository" and "write_repository".
-     *
-     * @param userId the id of the user in Gitlab
-     * @return the personal access token created for that user
-     */
     private ImpersonationToken createPersonalAccessToken(Long userId, Duration lifetime) {
         try {
             return gitlabApi.getUserApi().createPersonalAccessToken(userId, PERSONAL_ACCESS_TOKEN_NAME, getExpiryDateFromLifetime(lifetime),

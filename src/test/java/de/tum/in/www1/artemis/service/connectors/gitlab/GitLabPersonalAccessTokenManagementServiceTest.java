@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.Date;
 import java.util.HashMap;
 
 import org.gitlab4j.api.GitLabApiException;
@@ -103,8 +101,7 @@ class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringInteg
         gitlabRequestMockProvider.mockListPersonalAccessTokens(1, new HashMap<>() {
 
             {
-                put(gitlabUser.getId(),
-                        new GitLabPersonalAccessTokenListResponseDTO(initialTokenId, Date.from(Instant.now().plusSeconds(initialTokenLifetimeDays * 24 * 60 * 60))));
+                put(gitlabUser.getId(), new GitLabPersonalAccessTokenListResponseDTO(initialTokenId));
             }
         });
 

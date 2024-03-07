@@ -132,6 +132,9 @@ public class User extends AbstractAuditingEntity implements Participant {
     /**
      * The expiry date of the VCS access token.
      * This is used for checking if a access token needs to be renewed.
+     *
+     * @see de.tum.in.www1.artemis.service.connectors.vcs.VcsTokenRenewalService
+     * @see de.tum.in.www1.artemis.repository.UserRepository#getUsersWithAccessTokenExpirationDateBefore
      */
     @Nullable
     @JsonIgnore

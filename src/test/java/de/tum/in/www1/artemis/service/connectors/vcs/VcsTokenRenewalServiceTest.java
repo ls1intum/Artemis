@@ -3,10 +3,8 @@ package de.tum.in.www1.artemis.service.connectors.vcs;
 import static de.tum.in.www1.artemis.service.connectors.vcs.VcsTokenManagementService.MAX_LIFETIME;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Stream;
@@ -104,8 +102,7 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
 
             {
                 for (int i = 0; i < users.size(); ++i) {
-                    put(gitlabUsers.get(i).getId(),
-                            new GitLabPersonalAccessTokenListResponseDTO(null, Date.from(Instant.now().plusSeconds(userData.get(i).initialLifetimeDays() * 24 * 60 * 60))));
+                    put(gitlabUsers.get(i).getId(), new GitLabPersonalAccessTokenListResponseDTO(null));
                 }
             }
         });
