@@ -56,12 +56,12 @@ public class LtiDynamicRegistrationService {
 
             String clientRegistrationId = "artemis-" + UUID.randomUUID();
 
-            if (platformConfiguration.getAuthorizationEndpoint() == null || platformConfiguration.getTokenEndpoint() == null || platformConfiguration.getJwksUri() == null
-                    || platformConfiguration.getRegistrationEndpoint() == null) {
+            if (platformConfiguration.authorizationEndpoint() == null || platformConfiguration.tokenEndpoint() == null || platformConfiguration.jwksUri() == null
+                    || platformConfiguration.registrationEndpoint() == null) {
                 throw new BadRequestAlertException("Invalid platform configuration", "LTI", "invalidPlatformConfiguration");
             }
 
-            Lti13ClientRegistration clientRegistrationResponse = postClientRegistrationToPlatform(platformConfiguration.getRegistrationEndpoint(), clientRegistrationId,
+            Lti13ClientRegistration clientRegistrationResponse = postClientRegistrationToPlatform(platformConfiguration.registrationEndpoint(), clientRegistrationId,
                     registrationToken);
 
             LtiPlatformConfiguration ltiPlatformConfiguration = updateLtiPlatformConfiguration(clientRegistrationId, platformConfiguration, clientRegistrationResponse);
@@ -123,10 +123,10 @@ public class LtiDynamicRegistrationService {
         LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
         ltiPlatformConfiguration.setRegistrationId(registrationId);
         ltiPlatformConfiguration.setClientId(clientRegistrationResponse.getClientId());
-        ltiPlatformConfiguration.setAuthorizationUri(platformConfiguration.getAuthorizationEndpoint());
-        ltiPlatformConfiguration.setJwkSetUri(platformConfiguration.getJwksUri());
-        ltiPlatformConfiguration.setTokenUri(platformConfiguration.getTokenEndpoint());
-        ltiPlatformConfiguration.setOriginalUrl(platformConfiguration.getIssuer());
+        ltiPlatformConfiguration.setAuthorizationUri(platformConfiguration.authorizationEndpoint());
+        ltiPlatformConfiguration.setJwkSetUri(platformConfiguration.jwksUri());
+        ltiPlatformConfiguration.setTokenUri(platformConfiguration.tokenEndpoint());
+        ltiPlatformConfiguration.setOriginalUrl(platformConfiguration.issuer());
         return ltiPlatformConfiguration;
     }
 }

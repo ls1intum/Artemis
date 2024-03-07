@@ -54,8 +54,8 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
         JsonObject deepLinkingSettingsJson = new Gson().toJsonTree(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS)).getAsJsonObject();
         String returnUrl = deepLinkingSettingsJson.get(Claims.DEEPLINK_RETURN_URL_CLAIM).getAsString();
 
-        return new Lti13DeepLinkingResponse(ltiIdToken.getIssuer().toString(), ltiIdToken.getAudience().get(0), ltiIdToken.getExpiresAt().toString(),
-                ltiIdToken.getIssuedAt().toString(), ltiIdToken.getClaimAsString(IdTokenClaimNames.NONCE), "Content successfully linked",
+        return new Lti13DeepLinkingResponse(ltiIdToken.getIssuer().toString(), ltiIdToken.getAudience().get(0), String.valueOf(ltiIdToken.getExpiresAt()),
+                String.valueOf(ltiIdToken.getIssuedAt()), ltiIdToken.getClaimAsString(IdTokenClaimNames.NONCE), "Content successfully linked",
                 ltiIdToken.getClaimAsString(Claims.LTI_DEPLOYMENT_ID), "LtiDeepLinkingResponse", "1.3.0", null, // ContentItems needs to be set separately
                 deepLinkingSettingsJson, clientRegistrationId, returnUrl);
     }
