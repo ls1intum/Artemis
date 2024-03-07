@@ -12,7 +12,6 @@ import { Observable, Subscription, forkJoin, map, mergeMap, toArray } from 'rxjs
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { Options } from '@angular-slider/ngx-slider';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
@@ -33,20 +32,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     // this is an array because the exam-timeline uses a page component for each exercise
     pageComponentVisited: boolean[];
     selectedTimestamp: number;
-    // Options for the @angular-slider/ngx-slider
-    options: Options = {
-        showTicks: true,
-        stepsArray: [{ value: 0 }],
-        translate: (value: number): string => {
-            return this.datePipe.transform(value, 'time', true);
-        },
-    };
 
-    translate = (value: number): string => {
-        return this.datePipe.transform(value, 'time', true);
-    };
-
-    stepsArray: [{ value: 0 }];
+    stepsArray: { value: number }[] = [{ value: 0 }];
     studentExam: StudentExam;
     exerciseIndex: number;
     activeExamPage = new ExamPage();
@@ -164,15 +151,13 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         }
     }
 
+    translate = (value: number): string => {
+        return this.datePipe.transform(value, 'time', true);
+    };
+
     private setupRangeSlider() {
         this.selectedTimestamp = this.submissionTimeStamps[0]?.toDate().getTime() ?? 0;
-        // we need to create a new options object and assign it in the end to the old because otherwise, the new options are not properly recognized.
-        const newOptions: Options = Object.assign({}, this.options);
-        newOptions.stepsArray = this.submissionTimeStamps.map((date) => ({ value: date?.toDate().getTime() }));
-        newOptions.ticksTooltip = (value: number): string => {
-            return this.datePipe.transform(this.options.stepsArray?.at(value)?.value, 'time', true);
-        };
-        this.options = newOptions;
+        this.stepsArray = this.submissionTimeStamps.map((date) => ({ value: date?.toDate().getTime() }));
     }
 
     /**

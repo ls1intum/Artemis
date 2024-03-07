@@ -30,7 +30,6 @@ import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { QueryList } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { ChangeContext, SliderComponent } from '@angular-slider/ngx-slider';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -72,7 +71,6 @@ describe('Student Exam Timeline Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockTranslateValuesDirective,
                 MockComponent(ExamNavigationBarComponent),
-                MockComponent(SliderComponent),
             ],
             providers: [
                 {
@@ -208,20 +206,21 @@ describe('Student Exam Timeline Component', () => {
 
     it.each([{ value: dayjs('2023-01-07').valueOf() }, { value: dayjs('2023-02-07').valueOf() }, { value: dayjs('2023-05-07').valueOf() }])(
         'should correctly set the values onInputChange',
-        fakeAsync((changeContext: ChangeContext) => {
+        fakeAsync((changeContext: Event) => {
             component.submissionVersions = [submissionVersion];
             component.fileUploadSubmissions = [fileUploadSubmission1];
             component.programmingSubmissions = [programmingSubmission1];
             component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
             //when
-            component.onSliderInputChange(changeContext as unknown as ChangeContext);
+            component.onSliderInputChange(changeContext as unknown as Event);
             fixture.detectChanges();
             //then
-            if (changeContext.value === dayjs('2023-01-07').valueOf()) {
+            if (parseInt((changeContext.target as HTMLInputElement).value) === dayjs('2023-01-07').valueOf()) {
+                // TODO: extract input and transform
                 expect(component.currentSubmission).toEqual(submissionVersion);
                 expect(component.exerciseIndex).toBe(0);
                 expect(component.currentExercise).toEqual(textExercise);
-            } else if (changeContext.value === dayjs('2023-02-07').valueOf()) {
+            } else if (parseInt((changeContext.target as HTMLInputElement).value) === dayjs('2023-02-07').valueOf()) {
                 expect(component.currentSubmission).toEqual(programmingSubmission1);
                 expect(component.exerciseIndex).toBe(1);
                 expect(component.currentExercise).toEqual(programmingExercise);
@@ -230,7 +229,7 @@ describe('Student Exam Timeline Component', () => {
                 expect(component.exerciseIndex).toBe(2);
                 expect(component.currentExercise).toEqual(fileUploadExercise);
             }
-            expect(component.selectedTimestamp).toEqual(changeContext.value);
+            expect(component.selectedTimestamp).toEqual(parseInt((changeContext.target as HTMLInputElement).value));
         }),
     );
     it.each([programmingSubmission1, programmingSubmission2, programmingSubmission3])(
