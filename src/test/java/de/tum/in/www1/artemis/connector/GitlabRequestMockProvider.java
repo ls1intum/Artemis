@@ -8,8 +8,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Stream;
@@ -27,6 +27,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
@@ -315,14 +317,43 @@ public class GitlabRequestMockProvider {
         });
     }
 
-    public void mockListPersonalAccessTokens(long tokenId) throws JsonProcessingException {
-        var responseDTO = new GitLabPersonalAccessTokenListResponseDTO();
-        responseDTO.setId(tokenId);
-        responseDTO.setExpiresAt(Date.from(LocalDateTime.now().plusDays(28).atZone(ZoneId.systemDefault()).toInstant()));
-        final var response = new ObjectMapper().writeValueAsString(List.of(responseDTO));
+    public void mockListPersonalAccessTokens(Map<Long, GitLabPersonalAccessTokenListResponseDTO> responseMap) {
+        mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens")).andExpect(method(HttpMethod.GET)).andRespond(request -> {
+            final Map<String, String> parameters = getParametersFromHttpRequest(Objects.requireNonNull(request));
+            if (parameters.containsKey("user_id")) {
+                Long userId = Long.parseLong(parameters.get("user_id"));
+                if (responseMap.containsKey(userId)) {
+                    var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(List.of(responseMap.get(userId))).getBytes(StandardCharsets.UTF_8),
+                            HttpStatus.OK);
+                    response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                    return response;
+                }
+                else {
+                    return new MockClientHttpResponse(new byte[0], HttpStatus.BAD_REQUEST);
+                }
+            }
+            else {
+                var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(responseMap.values().stream().toList()).getBytes(StandardCharsets.UTF_8),
+                        HttpStatus.OK);
+                response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                return response;
+            }
+        });
+    }
 
-        mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens")).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
+    public Map<String, String> getParametersFromHttpRequest(ClientHttpRequest request) {
+        final String queryString = request.getURI().getQuery();
+        final Map<String, String> parameters = new HashMap<>();
+        if (queryString != null) {
+            String[] parameterStrings = queryString.split("&");
+            for (String parameterString : parameterStrings) {
+                int index = parameterString.indexOf("=");
+                String key = URLDecoder.decode(parameterString.substring(0, index), StandardCharsets.UTF_8);
+                String value = URLDecoder.decode(parameterString.substring(index + 1), StandardCharsets.UTF_8);
+                parameters.put(key, value);
+            }
+        }
+        return parameters;
     }
 
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws GitLabApiException {
