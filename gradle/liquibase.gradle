@@ -8,7 +8,7 @@ dependencies {
     liquibase "org.liquibase.ext:liquibase-hibernate6:${liquibase_version}"
 }
 
-def isWindows = OperatingSystem.current().isWindows()
+ext.isWindows = OperatingSystem.current().isWindows()
 
 if (isWindows) {
     tasks.register('pathingLiquibaseJar', Jar) {
