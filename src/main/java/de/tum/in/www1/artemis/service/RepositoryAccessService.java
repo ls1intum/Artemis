@@ -66,7 +66,7 @@ public class RepositoryAccessService {
         if (!hasPermissions && !hasAccessToSubmission) {
             throw new AccessForbiddenException();
         }
-
+        System.err.println("hasPermissions: " + hasPermissions + " hasAccessToSubmission: " + hasAccessToSubmission);
         boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isStudent = authorizationCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isTeachingAssistant = !isStudent && !isAtLeastEditor;
@@ -112,6 +112,8 @@ public class RepositoryAccessService {
         // But the student should still be able to access if they are notified for a related plagiarism case.
         if ((isStudent || (isTeachingAssistant && repositoryActionType != RepositoryActionType.READ))
                 && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && !hasAccessToSubmission) {
+            System.err
+                    .println("User " + user.getLogin() + " tried to access the repository of participation " + programmingParticipation.getId() + " after the exam working time.");
             throw new AccessForbiddenException();
         }
     }
