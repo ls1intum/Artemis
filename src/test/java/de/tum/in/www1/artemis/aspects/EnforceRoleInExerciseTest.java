@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.aspects;
 
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -10,13 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class EnforceRoleInExerciseTest extends AbstractSpringIntegrationIndependentTest {
+class EnforceRoleInExerciseTest extends AbstractEnforceRoleInResourceTest {
 
     private static final String TEST_PREFIX = "enforceroleinexercise";
 
@@ -28,8 +25,6 @@ class EnforceRoleInExerciseTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    private static Course course;
 
     private static final String OTHER_PREFIX = "other" + TEST_PREFIX;
 
@@ -49,8 +44,8 @@ class EnforceRoleInExerciseTest extends AbstractSpringIntegrationIndependentTest
 
     private static final String INSTRUCTOR_OF_OTHER_COURSE = OTHER_PREFIX + "instructor1";
 
-    @BeforeEach
-    void setup() {
+    @Override
+    void setupOnce() {
         course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
         programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
 

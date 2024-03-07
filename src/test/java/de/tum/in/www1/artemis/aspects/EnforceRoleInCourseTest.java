@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.aspects;
 
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -10,12 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class EnforceRoleInCourseTest extends AbstractSpringIntegrationIndependentTest {
+class EnforceRoleInCourseTest extends AbstractEnforceRoleInResourceTest {
 
     private static final String TEST_PREFIX = "enforceroleincourse";
 
@@ -24,8 +21,6 @@ class EnforceRoleInCourseTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private CourseUtilService courseUtilService;
-
-    private static Course course;
 
     private static final String OTHER_PREFIX = "other" + TEST_PREFIX;
 
@@ -45,8 +40,8 @@ class EnforceRoleInCourseTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String INSTRUCTOR_OF_OTHER_COURSE = OTHER_PREFIX + "instructor1";
 
-    @BeforeEach
-    void setup() {
+    @Override
+    void setupOnce() {
         course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
 
         // create users of course
@@ -59,7 +54,7 @@ class EnforceRoleInCourseTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addInstructor(OTHER_PREFIX + "instructors", INSTRUCTOR_OF_OTHER_COURSE);
     }
 
-    private void callEndpoint(String endpoint, HttpStatus expectedStatus) throws Exception {
+    void callEndpoint(String endpoint, HttpStatus expectedStatus) throws Exception {
         request.get("/api/test/" + endpoint + "/" + course.getId(), expectedStatus, Void.class);
     }
 
