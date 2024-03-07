@@ -216,7 +216,6 @@ describe('Student Exam Timeline Component', () => {
             fixture.detectChanges();
             //then
             if (parseInt((changeContext.target as HTMLInputElement).value) === dayjs('2023-01-07').valueOf()) {
-                // TODO: extract input and transform
                 expect(component.currentSubmission).toEqual(submissionVersion);
                 expect(component.exerciseIndex).toBe(0);
                 expect(component.currentExercise).toEqual(textExercise);
