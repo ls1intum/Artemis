@@ -46,10 +46,6 @@
         border-radius: 50%;
         font-size: 14px;
         font-weight: 500;
-        box-shadow:
-            0 2px 2px rgba(0, 0, 0, 0.14),
-            0 3px 1px rgba(0, 0, 0, 0.12),
-            0 1px 5px rgba(0, 0, 0, 0.2);
     }
 
     /* Change style of thumb knob */
@@ -59,12 +55,6 @@
         height: 16px;
         width: 16px;
         border-radius: 50%;
-    }
-
-    /* Change style of focus indicator */
-    .custom-slider .mat-slider .mdc-slider__thumb-knob:focus {
-        outline: none;
-        color: #0d3cc2;
     }
 
     .custom-slider {
