@@ -863,7 +863,7 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
-    describe('toggleHandInEarly', () => {
+    describe('handleHandInEarly', () => {
         it('should reset pageComponentVisited after the hand-in-early window is closed', () => {
             // Create exercises
             const exercise1 = new ProgrammingExercise(new Course(), undefined);
@@ -892,7 +892,7 @@ describe('ExamParticipationComponent', () => {
             const resetPageComponentVisitedSpy = jest.spyOn<any, any>(comp, 'resetPageComponentVisited');
 
             // Call toggleHandInEarly to change the handInEarly state
-            comp.toggleHandInEarly();
+            comp.handleHandInEarly();
 
             // Verify that resetPageComponentVisited has been called with the correct index
             expect(resetPageComponentVisitedSpy).toHaveBeenCalledExactlyOnceWith(1);
@@ -905,7 +905,7 @@ describe('ExamParticipationComponent', () => {
         it('should trigger save', () => {
             const triggerSaveSpy = jest.spyOn(comp, 'triggerSave').mockImplementation(() => {});
             comp.handInEarly = false;
-            comp.toggleHandInEarly();
+            comp.handleHandInEarly();
 
             expect(triggerSaveSpy).toHaveBeenCalledOnce();
         });

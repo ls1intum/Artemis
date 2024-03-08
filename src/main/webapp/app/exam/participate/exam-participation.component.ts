@@ -430,16 +430,22 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * Called when a user wants to hand in early or decides to continue.
      */
     toggleHandInEarly() {
+        console.log('toggle');
+        console.log(this.exam.testExam);
+        console.log(this.exam.examWithAttendanceCheck);
+        console.log(this.handInEarly);
         // no need to fetch attendance check status from the server if it is a test exam or an exam without attendance check or when clicking continue
         if (this.exam.testExam || !this.exam.examWithAttendanceCheck || this.handInEarly) {
+            this.handleHandInEarly();
+            console.log('not fetching');
+        } else {
+            console.log('fetching');
             this.examManagementService.isAttendanceChecked(this.courseId, this.examId).subscribe((res) => {
                 if (res.body) {
                     this.attendanceChecked = res.body;
                 }
                 this.handleHandInEarly();
             });
-        } else {
-            this.handleHandInEarly();
         }
     }
 

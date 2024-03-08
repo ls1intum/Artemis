@@ -313,11 +313,12 @@
             "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?",
             "handInEarly": "Hand in early",
             "continueAfterHandInEarly": "Continue",
+            "attendanceCheck": "Attendance check",
             "continueAfterHandInEarlyDescription": "You don't want to hand in yet?",
             "handInEarlyNotice": "You are about to hand in your submission before the end of the exam.\nAfter finishing the exam you cannot participate any longer.",
             "handInEarlyNoticeFirstSentence": "You are about to hand in your submission before the end of the exam.",
             "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
-            "attendanceNotVerifiedWarningFirstSentence": "Warning: Your attendance has not been checked yet.",
+            "attendanceNotVerifiedWarningFirstSentence": "Your attendance has not been checked yet.",
             "attendanceNotVerifiedWarningSecondSentence": "Please contact an instructor after the examination to have your attendance verified.",
             "namePlaceholder": "Enter your full name here",
             "submissionSuccessful": {

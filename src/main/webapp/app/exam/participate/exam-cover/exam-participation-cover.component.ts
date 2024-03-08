@@ -262,7 +262,10 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
      * 2. Exam is an exam without attendance check
      * 3. Exam is not a test exam and an exam with attendance check and attendance was checked by the tutors
      */
-    isAttendanceChecked() {
-        return this.exam.testExam || !this.exam.examWithAttendanceCheck || (!this.exam.testExam && this.exam.examWithAttendanceCheck && this.attendanceChecked);
+    get isAttendanceChecked(): boolean {
+        console.log(this.exam.testExam);
+        console.log(this.exam.examWithAttendanceCheck);
+        console.log(this.attendanceChecked);
+        return this.exam.testExam || !this.exam.examWithAttendanceCheck || this.attendanceChecked;
     }
 }
