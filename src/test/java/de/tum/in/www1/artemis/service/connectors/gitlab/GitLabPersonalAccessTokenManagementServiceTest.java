@@ -100,7 +100,7 @@ class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringInteg
                 put(gitlabUser.getId(), newToken);
             }
         });
-        gitlabRequestMockProvider.mockListPersonalAccessTokens(1, new HashMap<>() {
+        gitlabRequestMockProvider.mockListAndRevokePersonalAccessTokens(1, new HashMap<>() {
 
             {
                 put(gitlabUser.getId(), new GitLabPersonalAccessTokenListResponseDTO(initialTokenId));

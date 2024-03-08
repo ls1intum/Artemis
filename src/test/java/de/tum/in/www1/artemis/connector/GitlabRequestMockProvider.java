@@ -31,6 +31,7 @@ import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.client.RequestMatcher;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -323,29 +324,50 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockListPersonalAccessTokens(long expectedRequestCount, Map<Long, GitLabPersonalAccessTokenListResponseDTO> responseMap) {
-        for (int i = 0; i < expectedRequestCount; ++i) {
-            mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens")).andExpect(method(HttpMethod.GET)).andRespond(request -> {
-                final Map<String, String> parameters = getParametersFromHttpRequest(Objects.requireNonNull(request));
-                if (parameters.containsKey("user_id")) {
-                    Long userId = Long.parseLong(parameters.get("user_id"));
-                    if (responseMap.containsKey(userId)) {
-                        var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(List.of(responseMap.get(userId))).getBytes(StandardCharsets.UTF_8),
-                                HttpStatus.OK);
-                        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                        return response;
-                    }
-                    else {
-                        return new MockClientHttpResponse(new byte[0], HttpStatus.BAD_REQUEST);
-                    }
+    public void mockListAndRevokePersonalAccessTokens(long expectedRequestCount, Map<Long, GitLabPersonalAccessTokenListResponseDTO> responseMap) {
+        final String urlPrefix = gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens";
+        RequestMatcher requestMatcher = request -> {
+            final String url = request.getURI().toString();
+            if (!url.startsWith(urlPrefix)) {
+                throw new AssertionError("URL prefix not matched");
+            }
+        };
+
+        for (int i = 0; i < 2 * expectedRequestCount; ++i) {
+            mockServer.expect(requestMatcher).andRespond(request -> {
+                if (request != null && request.getMethod() == HttpMethod.GET) {
+                    return handleListPersonalAccessTokenRequest(responseMap, request);
+                }
+                else if (request != null && request.getMethod() == HttpMethod.DELETE) {
+                    // Revoking an access token only returns the status code 204 (No Content).
+                    return withStatus(HttpStatus.NO_CONTENT).createResponse(request);
                 }
                 else {
-                    var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(responseMap.values().stream().toList()).getBytes(StandardCharsets.UTF_8),
-                            HttpStatus.OK);
-                    response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                    return response;
+                    return withStatus(HttpStatus.BAD_REQUEST).createResponse(request);
                 }
             });
+        }
+    }
+
+    public MockClientHttpResponse handleListPersonalAccessTokenRequest(Map<Long, GitLabPersonalAccessTokenListResponseDTO> responseMap, ClientHttpRequest request)
+            throws JsonProcessingException {
+        final Map<String, String> parameters = getParametersFromHttpRequest(Objects.requireNonNull(request));
+        if (parameters.containsKey("user_id")) {
+            Long userId = Long.parseLong(parameters.get("user_id"));
+            if (responseMap.containsKey(userId)) {
+                var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(List.of(responseMap.get(userId))).getBytes(StandardCharsets.UTF_8), HttpStatus.OK);
+                response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                return response;
+            }
+            else {
+                return new MockClientHttpResponse(new byte[0], HttpStatus.BAD_REQUEST);
+            }
+        }
+        else {
+            var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(responseMap.values().stream().toList()).getBytes(StandardCharsets.UTF_8),
+                    HttpStatus.OK);
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return response;
         }
     }
 

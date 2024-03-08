@@ -100,7 +100,7 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
                 }
             }
         });
-        gitlabRequestMockProvider.mockListPersonalAccessTokens(expectedRenewalCount, new HashMap<>() {
+        gitlabRequestMockProvider.mockListAndRevokePersonalAccessTokens(expectedRenewalCount, new HashMap<>() {
 
             {
                 for (int i = 0; i < users.size(); ++i) {

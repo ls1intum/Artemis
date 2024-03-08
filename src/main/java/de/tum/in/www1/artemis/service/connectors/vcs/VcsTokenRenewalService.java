@@ -45,7 +45,7 @@ public class VcsTokenRenewalService {
     /**
      * Periodically renews all VCS access tokens that have expired or that are about to expire.
      */
-    @Scheduled(cron = "0  0  4 * * SUN") // Every sunday at 4 am
+    @Scheduled(cron = "0 * * * * *") // Every minute
     public void renewAllVcsAccessTokens() {
         if (vcsTokenManagementService.isPresent()) {
             log.debug("Started scheduled access token renewal");
