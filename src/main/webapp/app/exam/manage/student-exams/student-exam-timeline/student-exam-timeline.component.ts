@@ -154,9 +154,9 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         }
     }
 
-    translate = (value: number): string => {
-        return this.datePipe.transform(value, 'time', true);
-    };
+    displayCurrentTimestamp(): string {
+        return dayjs(this.selectedTimestamp).format('HH:mm:ss');
+    }
 
     private setupRangeSlider() {
         this.selectedTimestamp = this.submissionTimeStamps[0]?.toDate().getTime() ?? 0;

@@ -2,6 +2,7 @@
 @if (studentExam) {
     <div>
         <div class="custom-slider">
+            <h5>Selected Timestamp: {{ displayCurrentTimestamp() }}</h5>
             <mat-slider class="mat-slider mb-5" [min]="0" [max]="timestampsArray.length - 1" [step]="1" (change)="onSliderInputChange()" [showTickMarks]="true">
                 <input matSliderThumb [(ngModel)]="timestampIndex" #slider />
             </mat-slider>
