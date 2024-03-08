@@ -1,15 +1,11 @@
 <h4 class="mb-4" jhiTranslate="artemisApp.examTimeline.title" [translateValues]="{ username: studentExam.user!.login! }">Exam timeline</h4>
 @if (studentExam) {
     <div>
-        <mat-slider
-            showTickMarks
-            class="mb-5"
-            [(ngModel)]="selectedTimestamp"
-            (input)="onSliderInputChange($event)"
-            (min)="(stepsArray[0])"
-            (max)="(stepsArray[stepsArray.length - 1])"
-            [displayWith]="translate"
-        />
+        <div class="custom-slider">
+            <mat-slider class="mat-slider mb-5" [min]="0" [max]="timestampsArray.length - 1" [step]="1" (change)="onSliderInputChange()" [showTickMarks]="true">
+                <input matSliderThumb [(ngModel)]="timestampIndex" #slider />
+            </mat-slider>
+        </div>
         <jhi-exam-navigation-bar
             #examNavigationBar
             id="exam-navigation-bar"

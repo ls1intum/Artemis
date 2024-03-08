@@ -23,6 +23,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 @Component({
     selector: 'jhi-student-exam-timeline',
     templateUrl: './student-exam-timeline.component.html',
+    styleUrls: ['./student-exam-timeline.component.scss'],
 })
 export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
@@ -33,7 +34,9 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     pageComponentVisited: boolean[];
     selectedTimestamp: number;
 
-    stepsArray: { value: number }[] = [{ value: 0 }];
+    timestampIndex = 0;
+    timestampsArray: number[] = [];
+
     studentExam: StudentExam;
     exerciseIndex: number;
     activeExamPage = new ExamPage();
@@ -157,7 +160,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
 
     private setupRangeSlider() {
         this.selectedTimestamp = this.submissionTimeStamps[0]?.toDate().getTime() ?? 0;
-        this.stepsArray = this.submissionTimeStamps.map((date) => ({ value: date?.toDate().getTime() }));
+        this.timestampsArray = this.submissionTimeStamps.map((date) => date?.toDate().getTime());
     }
 
     /**
@@ -310,10 +313,9 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
 
     /**
      * This method is called when the user clicks on the slider
-     * @param changeContext the change context of the slider
      */
-    onSliderInputChange(changeContext: Event) {
-        this.selectedTimestamp = parseInt((changeContext.target as HTMLInputElement).value);
+    onSliderInputChange() {
+        this.selectedTimestamp = this.timestampsArray[this.timestampIndex];
         const submission = this.findCorrespondingSubmissionForTimestamp(this.selectedTimestamp);
         if (this.isSubmissionVersion(submission)) {
             const submissionVersion = submission as SubmissionVersion;
