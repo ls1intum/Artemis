@@ -33,11 +33,12 @@ public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmis
     @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results" })
     Set<ExampleSubmission> findAllWithResultByExerciseId(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results" })
     @Query("""
             SELECT DISTINCT exampleSubmission
             FROM ExampleSubmission exampleSubmission
                 LEFT JOIN FETCH exampleSubmission.tutorParticipations
+                LEFT JOIN FETCH exampleSubmission.submission s
+                LEFT JOIN FETCH s.results r
             WHERE exampleSubmission.id = :exampleSubmissionId
             """)
     Optional<ExampleSubmission> findByIdWithResultsAndTutorParticipations(@Param("exampleSubmissionId") long exampleSubmissionId);
