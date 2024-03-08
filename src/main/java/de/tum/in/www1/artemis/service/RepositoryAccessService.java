@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -66,7 +68,6 @@ public class RepositoryAccessService {
         if (!hasPermissions && !hasAccessToSubmission) {
             throw new AccessForbiddenException();
         }
-        System.err.println("hasPermissions: " + hasPermissions + " hasAccessToSubmission: " + hasAccessToSubmission);
         boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isStudent = authorizationCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isTeachingAssistant = !isStudent && !isAtLeastEditor;
@@ -107,13 +108,13 @@ public class RepositoryAccessService {
             checkAccessRepositoryForReset(programmingParticipation, isStudent, programmingExercise);
         }
 
-        // Error case 5: Before or after exam working time, students are not allowed to read or submit to the repository for an exam exercise. Teaching assistants are only allowed
-        // to read the student's repository.
+        // Error case 5: Before exam working time, students are not allowed to read or submit to the repository for an exam exercise.
+        // After exam working time they should be able to read the repository.
+        // Teaching assistants are only allowed to read the student's repository.
         // But the student should still be able to access if they are notified for a related plagiarism case.
-        if ((isStudent || (isTeachingAssistant && repositoryActionType != RepositoryActionType.READ))
+        if (((isStudent && repositoryActionType != RepositoryActionType.READ && exerciseDueDate.isBefore(ZonedDateTime.now()))
+                || (isTeachingAssistant && repositoryActionType != RepositoryActionType.READ))
                 && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && !hasAccessToSubmission) {
-            System.err
-                    .println("User " + user.getLogin() + " tried to access the repository of participation " + programmingParticipation.getId() + " after the exam working time.");
             throw new AccessForbiddenException();
         }
     }
