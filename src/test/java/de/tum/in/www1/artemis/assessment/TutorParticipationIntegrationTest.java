@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 
 class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -237,7 +237,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @NotNull
     private ExampleSubmission prepareModelingExampleSubmission(boolean usedForTutorial) throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         ExampleSubmission exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);
         exampleSubmissionService.save(exampleSubmission);
         if (usedForTutorial) {

@@ -50,7 +50,7 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest
         Course course = new Course();
         course.setId(1L);
         courseRepository.save(course);
-        OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "key", "secret", "prefix", "url");
+        OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", "url");
         LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
         ltiPlatformConfiguration.setRegistrationId("registrationId");
         ltiPlatformConfiguration.setClientId("clientId");

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -9,6 +10,7 @@ import java.util.*;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,6 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Exercise entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
@@ -70,7 +73,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 LEFT JOIN FETCH e.competencies
             WHERE e.id = :exerciseId
             """)
-    Optional<Exercise> findByIdWithCompetencies(@Param("exerciseId") Long exerciseId);
+    Optional<Exercise> findWithCompetenciesById(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT e
@@ -103,7 +106,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 COUNT(e.id)
             )
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND (e.dueDate >= :now OR e.dueDate IS NULL)
             	AND (e.releaseDate <= :now OR e.releaseDate IS NULL)
             GROUP BY TYPE(e)
@@ -122,7 +125,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 COUNT(e.id)
             )
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countExercisesGroupByExerciseType();
@@ -141,7 +144,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 COUNT(e.id)
             )
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
             	AND e.dueDate <= :maxDate
             GROUP BY TYPE(e)
@@ -163,7 +166,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             )
             FROM Exercise e
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
             	AND e.dueDate <= :maxDate
             GROUP BY TYPE(e)
@@ -186,7 +189,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             )
             FROM Exercise e
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
             	AND e.dueDate <= :maxDate
                 AND user.login IN :activeUserLogins
@@ -209,7 +212,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 COUNT(e.id)
             )
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
             	AND e.releaseDate <= :maxDate
             GROUP BY TYPE(e)
@@ -231,7 +234,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             )
             FROM Exercise e
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
             	AND e.releaseDate <= :maxDate
             GROUP BY TYPE(e)
@@ -255,7 +258,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             )
             FROM Exercise e
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
             	AND e.releaseDate <= :maxDate
                 AND user.login IN :activeUserLogins
@@ -272,14 +275,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results
             WHERE e.dueDate >= :time
-                AND c.continuousPlagiarismControlEnabled IS TRUE
+                AND c.continuousPlagiarismControlEnabled = TRUE
             """)
     Set<Exercise> findAllExercisesWithDueDateOnOrAfterAndContinuousPlagiarismControlEnabledIsTrue(@Param("time") ZonedDateTime time);
 
     @Query("""
             SELECT e
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :now
             ORDER BY e.dueDate ASC
             """)
@@ -288,14 +291,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT e
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.assessmentDueDate >= :now
             ORDER BY e.dueDate ASC
             """)
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingAssessmentDueDate(@Param("now") ZonedDateTime now);
 
     /**
-     * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
+     * Select Exercise for Course ID WHERE there does exist an LtiResourceLaunch for the current user (-> user has started exercise once using LTI)
      *
      * @param courseId the id of the course
      * @param login    the login of the corresponding user
@@ -306,13 +309,13 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
             WHERE e.course.id = :courseId
                 AND EXISTS (
-                    SELECT l
-                    FROM LtiOutcomeUrl l
-                    WHERE e = l.exercise
-                        AND l.user.login = :login
+            	    SELECT l
+                    FROM LtiResourceLaunch l
+            	    WHERE e = l.exercise
+            	        AND l.user.login = :login
                 )
             """)
-    Set<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("login") String login);
+    Set<Exercise> findByCourseIdWhereLtiResourceLaunchExists(@Param("courseId") Long courseId, @Param("login") String login);
 
     @Query("""
             SELECT DISTINCT c
@@ -488,8 +491,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     }
 
     @NotNull
-    default Exercise findByIdWithCompetenciesElseThrow(Long exerciseId) throws EntityNotFoundException {
-        return findByIdWithCompetencies(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+    default Exercise findWithCompetenciesByIdElseThrow(long exerciseId) throws EntityNotFoundException {
+        return findWithCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
     /**

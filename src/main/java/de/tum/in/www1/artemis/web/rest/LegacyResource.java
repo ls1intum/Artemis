@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +17,10 @@ import de.tum.in.www1.artemis.web.rest.open.PublicResultResource;
  * TODO: Remove this class in June 2024
  * Together with the lines from {@link SecurityConfiguration#configure(HttpSecurity)}
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
-@Deprecated(forRemoval = true)
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class LegacyResource {
 
     private final PublicProgrammingSubmissionResource publicProgrammingSubmissionResource;
@@ -40,7 +44,7 @@ public class LegacyResource {
     @PostMapping("programming-submissions/{participationId}")
     @EnforceNothing
     @ManualConfig
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true) // will be removed in 7.0.0
     public ResponseEntity<?> legacyProcessNewProgrammingSubmission(@PathVariable Long participationId, @RequestBody Object requestBody) {
         return publicProgrammingSubmissionResource.processNewProgrammingSubmission(participationId, requestBody);
     }
@@ -57,7 +61,7 @@ public class LegacyResource {
     @PostMapping("programming-exercises/test-cases-changed/{exerciseId}")
     @EnforceNothing
     @ManualConfig
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true) // will be removed in 7.0.0
     public ResponseEntity<Void> legacyTestCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
         return publicProgrammingSubmissionResource.testCaseChanged(exerciseId, requestBody);
     }
@@ -73,7 +77,7 @@ public class LegacyResource {
     @PostMapping("programming-exercises/new-result")
     @EnforceNothing
     @ManualConfig
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true) // will be removed in 7.0.0
     public ResponseEntity<?> legacyProcessNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         return publicResultResource.processNewProgrammingExerciseResult(token, requestBody);
     }

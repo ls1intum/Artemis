@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -11,6 +13,7 @@ import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -37,6 +40,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 /**
  * Service used to check whether user is authorized to perform actions on the entity.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class AuthorizationCheckService {
 
@@ -47,7 +51,7 @@ public class AuthorizationCheckService {
     private final ExamDateService examDateService;
 
     // TODO: we should move this into some kind of EnrollmentService
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true) // will be removed in 7.0.0
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseRegistrationUsernamePattern;
 

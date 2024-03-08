@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 /**
  * Spring Data JPA repository for the ComplaintResponse entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ComplaintResponseRepository extends JpaRepository<ComplaintResponse, Long> {
 
@@ -73,7 +77,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
             WHERE cr.complaint.result.participation.exercise.id IN :exerciseIds
                 AND cr.submittedTime IS NOT NULL
                 AND cr.complaint.complaintType = :complaintType
-                AND cr.complaint.result.participation.testRun IS FALSE
+                AND cr.complaint.result.participation.testRun = FALSE
             GROUP BY cr.complaint.result.participation.exercise.id
             """)
     List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,

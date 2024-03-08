@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +35,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 /**
  * REST controller for managing Exercise.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ExerciseResource {
@@ -145,7 +149,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with the body of the exercise with its example solution after filtering sensitive data, or with
      *         status 404 (Not Found) if the exercise is not found, or with status 403 (Forbidden) if the current user does not have access to the example solution.
      */
-    @GetMapping("/exercises/{exerciseId}/example-solution")
+    @GetMapping("exercises/{exerciseId}/example-solution")
     @EnforceAtLeastStudent
     public ResponseEntity<Exercise> getExerciseForExampleSolution(@PathVariable Long exerciseId) {
 

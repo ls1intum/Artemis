@@ -15,14 +15,20 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.slf4j.Logger;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.stereotype.*;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -30,6 +36,7 @@ import com.tngtech.archunit.core.domain.*;
 import com.tngtech.archunit.lang.*;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.in.www1.artemis.config.ApplicationConfiguration;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
@@ -65,6 +72,14 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule noJunitJupiterAssertions = noClasses().should().dependOnClassesThat().haveNameMatching("org.junit.jupiter.api.Assertions");
 
         noJunitJupiterAssertions.check(testClasses);
+    }
+
+    @Test
+    void testNoEntityGraphsOnQueries() {
+        ArchRule noEntityGraphsOnQueries = noMethods().that().areAnnotatedWith(Query.class).and().areDeclaredInClassesThat().areInterfaces().and().areDeclaredInClassesThat()
+                .areAnnotatedWith(Repository.class).should().beAnnotatedWith(EntityGraph.class)
+                .because("Spring Boot 3 ignores EntityGraphs on JPQL queries. You need to integrate a JOIN FETCH into the query.");
+        noEntityGraphsOnQueries.check(productionClasses);
     }
 
     @Test
@@ -171,6 +186,22 @@ class ArchitectureTest extends AbstractArchitectureTest {
         notUseHazelcastInConstructor.check(allClasses);
     }
 
+    @Test
+    void ensureSpringComponentsAreProfileAnnotated() {
+        ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
+                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).and()
+                .doNotBelongToAnyOf(ApplicationConfiguration.class).should(beProfileAnnotated())
+                .because("we want to be able to exclude these classes from application startup by specifying profiles");
+
+        rule.check(productionClasses);
+    }
+
+    @Test
+    void testJPQLStyle() {
+        var queryRule = methods().that().areAnnotatedWith(Query.class).should(useUpperCaseSQLStyle()).because("@Query content should follow the style guide");
+        queryRule.check(allClasses);
+    }
+
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
 
     private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {
@@ -212,6 +243,49 @@ class ArchitectureTest extends AbstractArchitectureTest {
                         .allMatch(annotations -> annotations.stream().anyMatch(annotationPredicate));
                 if (!satisfied) {
                     events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                }
+            }
+        };
+    }
+
+    private static ArchCondition<JavaClass> beProfileAnnotated() {
+        return new ArchCondition<>("be annotated with @Profile") {
+
+            @Override
+            public void check(JavaClass item, ConditionEvents events) {
+                boolean hasProfileAnnotation = item.isAnnotatedWith(Profile.class);
+                if (!hasProfileAnnotation) {
+                    String message = String.format("Class %s is not annotated with @Profile", item.getFullName());
+                    events.add(SimpleConditionEvent.violated(item, message));
+                }
+            }
+        };
+    }
+
+    // See https://openjpa.apache.org/builds/1.2.3/apache-openjpa/docs/jpa_langref.html#jpa_langref_from_identifiers
+    private static final Set<String> SQL_KEYWORDS = Set.of("SELECT", "UPDATE", "SET", "DELETE", "DISTINCT", "EXISTS", "FROM", "WHERE", "LEFT", "OUTER", "INNER", "JOIN", "FETCH",
+            "TREAT", "AND", "OR", "AS", "ON", "ORDER", "BY", "ASC", "DSC", "GROUP", "COUNT", "SUM", "AVG", "MAX", "MIN", "IS", "NOT", "FALSE", "TRUE", "NULL", "LIKE", "IN",
+            "BETWEEN", "HAVING", "EMPTY", "MEMBER", "OF", "UPPER", "LOWER", "TRIM");
+
+    private ArchCondition<JavaMethod> useUpperCaseSQLStyle() {
+        return new ArchCondition<>("have keywords in upper case") {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                var queryAnnotation = item.getAnnotations().stream().filter(simpleNameAnnotation("Query")).findAny();
+                if (queryAnnotation.isEmpty()) {
+                    return;
+                }
+                Object valueProperty = queryAnnotation.get().getExplicitlyDeclaredProperty("value");
+                if (!(valueProperty instanceof String query)) {
+                    return;
+                }
+                String[] queryWords = query.split("[\\r\\n ]+");
+
+                for (var word : queryWords) {
+                    if (SQL_KEYWORDS.contains(word.toUpperCase()) && !StringUtils.isAllUpperCase(word)) {
+                        events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), word)));
+                    }
                 }
             }
         };
