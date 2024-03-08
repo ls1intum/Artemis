@@ -1,6 +1,5 @@
-<div class="card code-editor-ace">
-    <jhi-code-editor-header [filename]="'foo'" [isLoading]="isLoading" (tabSizeChanged)="updateTabSize()" />
-    <div class="card-body code-editor-ace__content">
+<div class="card">
+    <div class="card-body card-body-monaco">
         <jhi-monaco-editor (textChanged)="onFileTextChanged($event)" [textChangedEmitDelay]="200" #editor id="monaco-editor" class="code-editor-ace__content__editor" />
 
         @if (!selectedFile && !isLoading) {

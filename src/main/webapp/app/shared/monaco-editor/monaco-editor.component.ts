@@ -1,5 +1,7 @@
-import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import * as monaco from 'monaco-editor';
+import { Subscription } from 'rxjs';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 export type EditorPosition = { lineNumber: number; column: number };
 
@@ -8,9 +10,12 @@ export type EditorPosition = { lineNumber: number; column: number };
     templateUrl: 'monaco-editor.component.html',
     styleUrls: ['monaco-editor.component.scss'],
 })
-export class MonacoEditorComponent implements OnInit {
+export class MonacoEditorComponent implements OnInit, OnDestroy {
     @ViewChild('monacoEditorContainer', { static: true }) private monacoEditorContainer: ElementRef;
     private _editor: monaco.editor.IStandaloneCodeEditor;
+    private themeSubscription?: Subscription;
+
+    constructor(private themeService: ThemeService) {}
 
     @Input()
     textChangedEmitDelay: number | undefined;
@@ -52,6 +57,14 @@ export class MonacoEditorComponent implements OnInit {
         this._editor.onDidChangeModelContent(() => {
             this.emitTextChangeEvent();
         }, this);
+
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
+    }
+
+    ngOnDestroy() {
+        this._editor.dispose();
+        this.themeSubscription?.unsubscribe();
+        // TODO: Models may remain -> destroy them
     }
 
     private emitTextChangeEvent() {
@@ -93,5 +106,11 @@ export class MonacoEditorComponent implements OnInit {
         }
         this._editor.setModel(model);
         monaco.editor.setModelLanguage(model, model.getLanguageId());
+    }
+
+    changeTheme(artemisTheme: Theme): void {
+        this._editor.updateOptions({
+            theme: artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light',
+        });
     }
 }
