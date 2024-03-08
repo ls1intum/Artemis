@@ -1,4 +1,4 @@
-import { BASE_API, MODELING_EDITOR_CANVAS, PUT } from '../../../constants';
+import { EXERCISE_BASE, MODELING_EDITOR_CANVAS, PUT } from '../../../constants';
 import { getExercise } from '../../../utils';
 
 import scrollBehaviorOptions = Cypress.scrollBehaviorOptions;
@@ -31,7 +31,7 @@ export class ModelingEditor {
     }
 
     submit() {
-        cy.intercept(PUT, BASE_API + 'exercises/*/modeling-submissions').as('createModelingSubmission');
+        cy.intercept(PUT, `${EXERCISE_BASE}/*/modeling-submissions`).as('createModelingSubmission');
         cy.get('#submit-modeling-submission').first().click();
         return cy.wait('@createModelingSubmission');
     }
