@@ -58,7 +58,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
 
     /**
      * Generates a VCS access token for a given user with a specific lifetime, required that the user does not yet have a VCS access token.
-     * This implementation for GitLab requires that there is a GitLab user associated with the user.
+     * This method has no effect if there exists no GitLab user that is associated with the user.
      *
      * @param user     the user to create an access token for
      * @param lifetime the lifetime of the created access token
@@ -70,12 +70,10 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
         }
 
         var gitlabUser = getGitLabUserFromUser(user);
-        if (gitlabUser == null) {
-            throw new IllegalStateException("There is no GitLab user associated with the user");
+        if (gitlabUser != null) {
+            ImpersonationToken personalAccessToken = createPersonalAccessToken(gitlabUser.getId(), lifetime);
+            savePersonalAccessTokenOfUser(personalAccessToken, user);
         }
-
-        ImpersonationToken personalAccessToken = createPersonalAccessToken(gitlabUser.getId(), lifetime);
-        savePersonalAccessTokenOfUser(personalAccessToken, user);
     }
 
     private ImpersonationToken createPersonalAccessToken(Long userId, Duration lifetime) {
@@ -96,7 +94,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
 
     /**
      * Generates a new VCS access token for a given user with a given lifetime, required that the user already has a VCS access token, which may or may not be valid.
-     * This implementation for GitLab requires that there is a GitLab user associated with the user.
+     * This implementation for GitLab requires that there exists a GitLab user that is associated with the user.
      *
      * @param user        the user whose access token is to be renewed
      * @param newLifetime the lifetime for the newly crated access token
