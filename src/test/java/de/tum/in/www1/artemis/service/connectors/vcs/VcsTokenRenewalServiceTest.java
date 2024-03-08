@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.gitlab4j.api.GitLabApiException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -18,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
@@ -37,13 +37,15 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
     @Autowired
     private UserUtilService userUtilService;
 
-    @Autowired
-    private GitlabRequestMockProvider gitlabRequestMockProvider;
-
     @BeforeEach
-    void initTestCase() {
+    void setUp() {
         gitlabRequestMockProvider.enableMockingOfRequests();
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 1, 1);
+    }
+
+    @AfterEach
+    void teardown() throws Exception {
+        gitlabRequestMockProvider.reset();
     }
 
     private record UserData(String initialToken, Long initialLifetimeDays, String updatedToken) {
