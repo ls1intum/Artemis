@@ -480,7 +480,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(getUsersName(user)).withCanCreateGroup(false)
                     .withCanCreateProject(false).withSkipConfirmation(true);
             gitlabUser = gitlabApi.getUserApi().createUser(gitlabUser, password, false);
-            vcsTokenManagementService.createAccessToken(user);
+            generateVersionControlAccessTokenIfNecessary(user);
             return gitlabUser;
         }
         catch (GitLabApiException e) {
