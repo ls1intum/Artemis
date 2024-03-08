@@ -60,6 +60,11 @@ public class Competency extends BaseCompetency {
     @JsonIgnoreProperties({ "competencies", "course" })
     private Set<LearningPath> learningPaths = new HashSet<>();
 
+    @ManyToOne
+    @JoinColumn(name = "linked_standardized_competency_id")
+    @JsonIgnoreProperties({ "competencies" })
+    private StandardizedCompetency linkedStandardizedCompetency;
+
     public Competency() {
     }
 
@@ -180,6 +185,14 @@ public class Competency extends BaseCompetency {
 
     public void setLearningPaths(Set<LearningPath> learningPaths) {
         this.learningPaths = learningPaths;
+    }
+
+    public StandardizedCompetency getLinkedStandardizedCompetency() {
+        return linkedStandardizedCompetency;
+    }
+
+    public void setLinkedStandardizedCompetency(StandardizedCompetency linkedStandardizedCompetency) {
+        this.linkedStandardizedCompetency = linkedStandardizedCompetency;
     }
 
     /**
