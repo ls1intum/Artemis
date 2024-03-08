@@ -516,12 +516,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                         .filter(([value]) => value),
                 ),
             ),
-            catchError((e) =>
-                throwError(() => {
-                    console.error(e);
-                    new Error('couldNotBeRetrieved');
-                }),
-            ),
+            catchError(() => throwError(() => new Error('couldNotBeRetrieved'))),
         );
     };
 

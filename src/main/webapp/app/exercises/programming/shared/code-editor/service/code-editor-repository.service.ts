@@ -67,7 +67,6 @@ const checkIfSubmissionIsError = (toBeDetermined: FileSubmission | FileSubmissio
 const handleErrorResponse = <T>(conflictService: CodeEditorConflictStateService): UnaryFunction<Observable<T>, Observable<T>> =>
     pipe(
         catchError((err: HttpErrorResponse) => {
-            console.error(err);
             if (err.status === 409) {
                 conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
             }
