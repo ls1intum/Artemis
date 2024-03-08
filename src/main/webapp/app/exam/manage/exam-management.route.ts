@@ -307,7 +307,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/student-exams/:studentExamId/summary/exercises/:exerciseId/repository/:participationId',
         component: RepositoryViewComponent,
         data: {
-            authorities: [Authority.USER],
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.repository.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -319,7 +319,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/student-exams/:studentExamId/summary/exercises/:exerciseId/repository/:participationId/commit-history',
         component: CommitHistoryComponent,
         data: {
-            authorities: [Authority.USER],
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.repository.commitHistory.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -331,7 +331,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/student-exams/:studentExamId/summary/exercises/:exerciseId/repository/:participationId/commit-history/:commitHash',
         component: CommitDetailsViewComponent,
         data: {
-            authorities: [Authority.USER],
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.repository.commitHistory.commitDetails.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},

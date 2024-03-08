@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
+
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -101,7 +103,8 @@ public class ParticipationAuthorizationCheckService {
      */
     private boolean canAccessProgrammingParticipation(final ProgrammingExerciseParticipation participation, final User user) {
         // If the current user is owner of the participation, they are allowed to access it
-        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user)) {
+        boolean canParticipate = participation.getExercise().getParticipationStartDate().isBefore(ZonedDateTime.now());
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user) && canParticipate) {
             return true;
         }
 
