@@ -352,8 +352,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             FROM ProgrammingExerciseStudentParticipation p
                 JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
-                AND p.testRun IS FALSE
-                AND s.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             GROUP BY p.exercise.id
             """)
@@ -372,8 +372,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             FROM ProgrammingExerciseStudentParticipation p
                 LEFT JOIN p.results r
             WHERE p.exercise.id = :exerciseId
-                AND p.testRun IS FALSE
-                AND r.submission.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND r.submission.submitted = TRUE
                 AND (r.submission.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR r.submission.type IS NULL)
                 AND r.assessor IS NOT NULL
                 AND r.completionDate IS NOT NULL

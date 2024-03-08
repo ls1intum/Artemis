@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Service
 @Profile("bamboo")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BambooService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(BambooService.class);
