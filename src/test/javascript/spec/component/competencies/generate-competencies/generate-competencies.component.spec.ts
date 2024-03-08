@@ -1,22 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { CompetencyFormControlsWithViewed, GenerateCompetenciesComponent } from 'app/course/competencies/generate-competencies/generate-competencies.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
-import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { CourseDescriptionFormStubComponent } from './course-description-form-stub.component';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
@@ -100,7 +100,7 @@ describe('GenerateCompetenciesComponent', () => {
         expect(getSpy).toHaveBeenCalledOnce();
     });
 
-    it('should opem modal to remove competency recommendations', () => {
+    it('should open modal to remove competency recommendations', () => {
         const modalService: NgbModal = TestBed.inject(NgbModal);
         const openSpy = jest.spyOn(modalService, 'open');
         generateCompetenciesComponent.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
@@ -179,6 +179,29 @@ describe('GenerateCompetenciesComponent', () => {
             expect(createBulkSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledOnce();
         });
+    });
+
+    it('should display alerts after generating', () => {
+        const alertService = TestBed.inject(AlertService);
+        const competencyService = TestBed.inject(CompetencyService);
+        const generateCompetenciesMock = jest.spyOn(competencyService, 'generateCompetenciesFromCourseDescription');
+
+        generateCompetenciesMock.mockReturnValue(of({ body: [{ id: 1 }] } as HttpResponse<Competency[]>));
+        const successMock = jest.spyOn(alertService, 'success');
+        generateCompetenciesComponent.getCompetencyRecommendations('');
+        expect(successMock).toHaveBeenCalledOnce();
+
+        generateCompetenciesMock.mockReturnValue(of({} as HttpResponse<Competency[]>));
+        const warnMock = jest.spyOn(alertService, 'warning');
+        generateCompetenciesComponent.getCompetencyRecommendations('');
+        expect(warnMock).toHaveBeenCalled();
+    });
+
+    it('should send a warning when trying to reload', () => {
+        generateCompetenciesComponent.isLoading = true;
+        const event = { returnValue: undefined };
+        generateCompetenciesComponent.unloadNotification(event);
+        expect(event.returnValue).toBe(generateCompetenciesComponent.canDeactivateWarning);
     });
 
     function createCompetencyFormGroup(title?: string, description?: string, taxonomy?: CompetencyTaxonomy, viewed = false): FormGroup<CompetencyFormControlsWithViewed> {

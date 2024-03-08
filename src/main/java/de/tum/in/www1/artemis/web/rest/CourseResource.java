@@ -61,6 +61,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineCourseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import tech.jhipster.web.util.PaginationUtil;
@@ -233,7 +234,7 @@ public class CourseResource {
 
         if (file != null) {
             Path basePath = FilePathService.getCourseIconFilePath();
-            Path savePath = fileService.saveFile(file, basePath);
+            Path savePath = fileService.saveFile(file, basePath, false);
             courseUpdate.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
             if (existingCourse.getCourseIcon() != null) {
                 // delete old course icon
@@ -417,7 +418,7 @@ public class CourseResource {
      */
     @GetMapping("courses/for-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<CourseForImportDTO>> getCoursesForImport(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<CourseForImportDTO>> getCoursesForImport(SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get a list of courses for import.");
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var coursePage = courseService.getAllOnPageWithSize(search, user);

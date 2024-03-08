@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 import { Competency } from 'app/entities/competency.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
+import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
 
-describe('CompetencyImportComponent', () => {
-    let fixture: ComponentFixture<CompetencyImportComponent>;
-    let comp: CompetencyImportComponent;
+describe('PrerequisiteImportComponent', () => {
+    let fixture: ComponentFixture<PrerequisiteImportComponent>;
+    let comp: PrerequisiteImportComponent;
     const competency: Competency = {
         title: 'Competency title',
         course: {
@@ -23,11 +23,11 @@ describe('CompetencyImportComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
-            declarations: [CompetencyImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
+            declarations: [PrerequisiteImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CompetencyImportComponent);
+                fixture = TestBed.createComponent(PrerequisiteImportComponent);
                 comp = fixture.componentInstance;
             });
     });

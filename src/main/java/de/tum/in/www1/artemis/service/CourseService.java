@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
@@ -57,9 +58,11 @@ import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
@@ -69,6 +72,8 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Profile(PROFILE_CORE)
 @Service
 public class CourseService {
+
+    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
@@ -149,6 +154,8 @@ public class CourseService {
 
     private final LectureRepository lectureRepository;
 
+    private final TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
@@ -159,7 +166,8 @@ public class CourseService {
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
-            LearningPathService learningPathService, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository) {
+            LearningPathService learningPathService, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
+            TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -197,16 +205,18 @@ public class CourseService {
         this.learningPathService = learningPathService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepository = lectureRepository;
+        this.tutorialGroupNotificationRepository = tutorialGroupNotificationRepository;
+        this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
     }
 
     /**
-     * Search for all courses fitting a {@link PageableSearchDTO search query}. The result is paged.
+     * Search for all courses fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
      *
      * @param search The search query defining the search term and the size of the returned page
      * @param user   The user for whom to fetch all available lectures
      * @return A wrapper object containing a list of all found courses and the total number of pages
      */
-    public SearchResultPageDTO<Course> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+    public SearchResultPageDTO<Course> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COURSE);
 
         final var searchTerm = search.getSearchTerm();
@@ -408,28 +418,30 @@ public class CourseService {
         deleteExercisesOfCourse(course);
         deleteLecturesOfCourse(course);
         deleteCompetenciesOfCourse(course);
+        deleteTutorialGroupsOfCourse(course);
         deleteConversationsOfCourse(course);
         deleteNotificationsOfCourse(course);
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
-        deleteTutorialGroupsOfCourse(course);
         irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
+        log.debug("Successfully deleted course {}.", course.getTitle());
     }
 
     private void deleteTutorialGroupsOfCourse(Course course) {
         var tutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId());
+        // we first need to delete notifications and channels, only then we can delete the tutorial group
         tutorialGroups.forEach(tutorialGroup -> {
-            if (tutorialGroup.getTutorialGroupChannel() != null) {
-                tutorialGroup.setTutorialGroupChannel(null);
-            }
+            tutorialGroupNotificationRepository.deleteAllByTutorialGroupId(tutorialGroup.getId());
+            tutorialGroupChannelManagementService.deleteTutorialGroupChannel(tutorialGroup);
+            tutorialGroupRepository.deleteById(tutorialGroup.getId());
         });
-        tutorialGroupRepository.saveAll(tutorialGroups);
-        tutorialGroupRepository.deleteAllByCourse(course);
     }
 
     private void deleteConversationsOfCourse(Course course) {
+        // We cannot delete tutorial group channels here because the tutorial group references the channel.
+        // These are deleted on deleteTutorialGroupsOfCourse().
         // Posts and Conversation Participants should be automatically deleted due to cascade
         conversationRepository.deleteAllByCourseId(course.getId());
     }

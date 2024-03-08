@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
+import static de.tum.in.www1.artemis.config.Constants.CHECKED_OUT_REPOS_TEMP_DIR;
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
@@ -13,6 +14,7 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -20,6 +22,7 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -71,9 +74,6 @@ public class BuildJobExecutionService {
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
-    @Value("${artemis.repo-clone-path}")
-    private String repoClonePath;
-
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
@@ -97,43 +97,12 @@ public class BuildJobExecutionService {
      */
     public LocalCIBuildResult runBuildJob(LocalCIBuildJobQueueItem buildJob, String containerName) {
 
-        // Todo: Check if we want to use local repositories here or clone from the URI
-        // get the local repository paths for assignment, tests, auxiliary and solution
-        LocalVCRepositoryUri assignmentRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().assignmentRepositoryUri(), localVCBaseUrl);
-        Path assignmentRepositoryPath = assignmentRepoUri.getRepoClonePath(repoClonePath).toAbsolutePath();
-
-        LocalVCRepositoryUri testsRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().testRepositoryUri(), localVCBaseUrl);
-        Path testsRepositoryPath = testsRepoUri.getRepoClonePath(repoClonePath).toAbsolutePath();
-
-        LocalVCRepositoryUri solutionRepoUri;
-        Path solutionRepositoryPath = null;
-        if (buildJob.repositoryInfo().solutionRepositoryUri() != null) {
-            solutionRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().solutionRepositoryUri(), localVCBaseUrl);
-            solutionRepositoryPath = solutionRepoUri.getRepoClonePath(repoClonePath).toAbsolutePath();
-        }
-
-        String[] auxiliaryRepositoryUriList = buildJob.repositoryInfo().auxiliaryRepositoryUris();
-        Path[] auxiliaryRepositoriesPaths = new Path[auxiliaryRepositoryUriList.length];
-
-        int index = 0;
-        for (String auxiliaryRepositoryUri : auxiliaryRepositoryUriList) {
-            LocalVCRepositoryUri auxiliaryRepoUri = new LocalVCRepositoryUri(auxiliaryRepositoryUri, localVCBaseUrl);
-            auxiliaryRepositoriesPaths[index] = auxiliaryRepoUri.getRepoClonePath(repoClonePath).toAbsolutePath();
-            index++;
-        }
-
         boolean isPushToTestOrAuxRepository = buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.TESTS
                 || buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.AUXILIARY;
 
-        /*
-         * If the commit hash is null, this means that the latest commit of the default branch should be built.
-         * If this build job is triggered by a push to the test repository, the commit hash reflects changes to the test repository.
-         * Thus, we do not checkout the commit hash of the test repository in the assignment repository.
-         */
-        if (buildJob.buildConfig().commitHash() != null && !isPushToTestOrAuxRepository) {
-            // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
-            assignmentRepositoryPath = cloneAndCheckoutRepository(assignmentRepoUri, buildJob.buildConfig().commitHash());
-        }
+        // get the local repository paths for assignment, tests, auxiliary and solution
+        LocalVCRepositoryUri assignmentRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().assignmentRepositoryUri(), localVCBaseUrl);
+        LocalVCRepositoryUri testsRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().testRepositoryUri(), localVCBaseUrl);
 
         // retrieve last commit hash from repositories
         String assignmentCommitHash = buildJob.buildConfig().commitHash();
@@ -142,7 +111,7 @@ public class BuildJobExecutionService {
                 assignmentCommitHash = gitService.getLastCommitHash(assignmentRepoUri).getName();
             }
             catch (EntityNotFoundException e) {
-                throw new LocalCIException("Could not find last commit hash for assignment repository with absolute path " + assignmentRepositoryPath, e);
+                throw new LocalCIException("Could not find last commit hash for assignment repository " + assignmentRepoUri.repositorySlug(), e);
             }
         }
         String testCommitHash;
@@ -153,10 +122,51 @@ public class BuildJobExecutionService {
             throw new LocalCIException("Could not find last commit hash for test repository " + testsRepoUri.repositorySlug(), e);
         }
 
+        Path assignmentRepositoryPath;
+        /*
+         * If the commit hash is null, this means that the latest commit of the default branch should be built.
+         * If this build job is triggered by a push to the test repository, the commit hash reflects changes to the test repository.
+         * Thus, we do not checkout the commit hash of the test repository in the assignment repository.
+         */
+        if (buildJob.buildConfig().commitHash() != null && !isPushToTestOrAuxRepository) {
+            // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
+            assignmentRepositoryPath = cloneRepository(assignmentRepoUri, assignmentCommitHash, true);
+        }
+        else {
+            // Clone the assignment to use the latest commit of the default branch
+            assignmentRepositoryPath = cloneRepository(assignmentRepoUri, assignmentCommitHash, false);
+        }
+
+        Path testsRepositoryPath = cloneRepository(testsRepoUri, assignmentCommitHash, false);
+
+        LocalVCRepositoryUri solutionRepoUri = null;
+        Path solutionRepositoryPath = null;
+        if (buildJob.repositoryInfo().solutionRepositoryUri() != null) {
+            solutionRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().solutionRepositoryUri(), localVCBaseUrl);
+            // In case we have the same repository for assignment and solution, we can use the same path
+            if (Objects.equals(solutionRepoUri.repositorySlug(), assignmentRepoUri.repositorySlug())) {
+                solutionRepositoryPath = assignmentRepositoryPath;
+            }
+            else {
+                solutionRepositoryPath = cloneRepository(solutionRepoUri, assignmentCommitHash, false);
+            }
+        }
+
+        String[] auxiliaryRepositoryUriList = buildJob.repositoryInfo().auxiliaryRepositoryUris();
+        Path[] auxiliaryRepositoriesPaths = new Path[auxiliaryRepositoryUriList.length];
+        LocalVCRepositoryUri[] auxiliaryRepositoriesUris = new LocalVCRepositoryUri[auxiliaryRepositoryUriList.length];
+
+        int index = 0;
+        for (String auxiliaryRepositoryUri : auxiliaryRepositoryUriList) {
+            auxiliaryRepositoriesUris[index] = new LocalVCRepositoryUri(auxiliaryRepositoryUri, localVCBaseUrl);
+            auxiliaryRepositoriesPaths[index] = cloneRepository(auxiliaryRepositoriesUris[index], assignmentCommitHash, false);
+            index++;
+        }
+
         CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript());
 
-        return runScriptAndParseResults(buildJob, containerName, container.getId(), assignmentRepoUri, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath,
-                auxiliaryRepositoriesPaths, isPushToTestOrAuxRepository, assignmentCommitHash, testCommitHash);
+        return runScriptAndParseResults(buildJob, containerName, container.getId(), assignmentRepoUri, testsRepoUri, solutionRepoUri, auxiliaryRepositoriesUris,
+                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash);
     }
 
     /**
@@ -169,8 +179,8 @@ public class BuildJobExecutionService {
      * @throws LocalCIException if something went wrong while running the build job.
      */
     private LocalCIBuildResult runScriptAndParseResults(LocalCIBuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
-            Path assignmentRepositoryPath, Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, boolean isPushToTestRepository,
-            String assignmentRepoCommitHash, String testRepoCommitHash) {
+            VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
+            Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, String assignmentRepoCommitHash, String testRepoCommitHash) {
 
         long timeNanoStart = System.nanoTime();
 
@@ -203,9 +213,22 @@ public class BuildJobExecutionService {
         finally {
             buildJobContainerService.stopContainer(containerName);
 
-            // Delete cloned repository
-            if (buildJob.buildConfig().commitHash() != null && !isPushToTestRepository) {
-                deleteCloneRepo(assignmentRepositoryUri, buildJob.buildConfig().commitHash());
+            // Delete the cloned repositories
+            deleteCloneRepo(assignmentRepositoryUri, assignmentRepoCommitHash);
+            deleteCloneRepo(testRepositoryUri, assignmentRepoCommitHash);
+            // do not try to delete the temp repository if it does not exist or is the same as the assignment reposity
+            if (solutionRepositoryUri != null && !Objects.equals(assignmentRepositoryUri.repositorySlug(), solutionRepositoryUri.repositorySlug())) {
+                deleteCloneRepo(solutionRepositoryUri, assignmentRepoCommitHash);
+            }
+            for (VcsRepositoryUri auxiliaryRepositoryUri : auxiliaryRepositoriesUris) {
+                deleteCloneRepo(auxiliaryRepositoryUri, assignmentRepoCommitHash);
+            }
+
+            try {
+                FileUtils.deleteDirectory(Path.of(CHECKED_OUT_REPOS_TEMP_DIR, assignmentRepoCommitHash).toFile());
+            }
+            catch (IOException e) {
+                log.error("Could not delete " + CHECKED_OUT_REPOS_TEMP_DIR + " directory", e);
             }
         }
 
@@ -418,11 +441,15 @@ public class BuildJobExecutionService {
                 staticCodeAnalysisReports);
     }
 
-    private Path cloneAndCheckoutRepository(VcsRepositoryUri repositoryUri, String commitHash) {
+    private Path cloneRepository(VcsRepositoryUri repositoryUri, String commitHash, boolean checkout) {
         try {
-            // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
-            Repository repository = gitService.getOrCheckoutRepository(repositoryUri, Paths.get("checked-out-repos", commitHash), false);
-            gitService.checkoutRepositoryAtCommit(repository, commitHash);
+            // Clone the assignment repository into a temporary directory
+            Repository repository = gitService.getOrCheckoutRepository(repositoryUri, Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()),
+                    false);
+            if (checkout) {
+                // Checkout the commit hash
+                gitService.checkoutRepositoryAtCommit(repository, commitHash);
+            }
             return repository.getLocalPath();
         }
         catch (GitAPIException e) {
@@ -432,7 +459,8 @@ public class BuildJobExecutionService {
 
     private void deleteCloneRepo(VcsRepositoryUri repositoryUri, String commitHash) {
         try {
-            Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(Paths.get("checked-out-repos", commitHash), repositoryUri, defaultBranch);
+            Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(
+                    Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()), repositoryUri, defaultBranch);
             if (repository == null) {
                 throw new EntityNotFoundException("Repository with commit hash " + commitHash + " not found");
             }
@@ -442,7 +470,7 @@ public class BuildJobExecutionService {
             throw new LocalCIException("Error while checking out repository", e);
         }
         catch (IOException e) {
-            throw new RuntimeException("Error while deleting repository", e);
+            throw new LocalCIException("Error while deleting repository", e);
         }
     }
 }
