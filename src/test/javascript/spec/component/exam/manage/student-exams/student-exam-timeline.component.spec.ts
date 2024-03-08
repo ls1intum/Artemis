@@ -206,20 +206,20 @@ describe('Student Exam Timeline Component', () => {
 
     it.each([{ value: dayjs('2023-01-07').valueOf() }, { value: dayjs('2023-02-07').valueOf() }, { value: dayjs('2023-05-07').valueOf() }])(
         'should correctly set the values onInputChange',
-        fakeAsync((changeContext: Event) => {
+        fakeAsync(() => {
             component.submissionVersions = [submissionVersion];
             component.fileUploadSubmissions = [fileUploadSubmission1];
             component.programmingSubmissions = [programmingSubmission1];
             component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
             //when
-            component.onSliderInputChange(changeContext as unknown as Event);
+            component.onSliderInputChange();
             fixture.detectChanges();
             //then
-            if (parseInt((changeContext.target as HTMLInputElement).value) === dayjs('2023-01-07').valueOf()) {
+            if (component.timestampsArray[component.timestampIndex] === dayjs('2023-01-07').valueOf()) {
                 expect(component.currentSubmission).toEqual(submissionVersion);
                 expect(component.exerciseIndex).toBe(0);
                 expect(component.currentExercise).toEqual(textExercise);
-            } else if (parseInt((changeContext.target as HTMLInputElement).value) === dayjs('2023-02-07').valueOf()) {
+            } else if (component.timestampsArray[component.timestampIndex] === dayjs('2023-02-07').valueOf()) {
                 expect(component.currentSubmission).toEqual(programmingSubmission1);
                 expect(component.exerciseIndex).toBe(1);
                 expect(component.currentExercise).toEqual(programmingExercise);
@@ -228,7 +228,7 @@ describe('Student Exam Timeline Component', () => {
                 expect(component.exerciseIndex).toBe(2);
                 expect(component.currentExercise).toEqual(fileUploadExercise);
             }
-            expect(component.selectedTimestamp).toEqual(parseInt((changeContext.target as HTMLInputElement).value));
+            expect(component.selectedTimestamp).toEqual(component.timestampsArray[component.timestampIndex]);
         }),
     );
     it.each([programmingSubmission1, programmingSubmission2, programmingSubmission3])(
