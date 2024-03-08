@@ -78,7 +78,7 @@ export const examParticipationRoute: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: 'exercises/:exerciseId/repository/:participationId/commit-history',
@@ -90,7 +90,7 @@ export const examParticipationRoute: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: 'exercises/:exerciseId/repository/:participationId/commit-history/:commitHash',
@@ -102,7 +102,7 @@ export const examParticipationRoute: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
 ];
 
