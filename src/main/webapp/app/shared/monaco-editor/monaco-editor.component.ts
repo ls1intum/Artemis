@@ -14,6 +14,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @ViewChild('monacoEditorContainer', { static: true }) private monacoEditorContainer: ElementRef;
     private _editor: monaco.editor.IStandaloneCodeEditor;
     private themeSubscription?: Subscription;
+    private models: monaco.editor.IModel[] = [];
 
     constructor(private themeService: ThemeService) {}
 
@@ -64,7 +65,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this._editor.dispose();
         this.themeSubscription?.unsubscribe();
-        // TODO: Models may remain -> destroy them
+        this.models.forEach((m) => m.dispose());
     }
 
     private emitTextChangeEvent() {
@@ -101,6 +102,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     changeModel(fileName: string, newFileContent?: string) {
         const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
         const model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(newFileContent ?? '', undefined, uri);
+        if (!this.models.includes(model)) {
+            this.models.push(model);
+        }
         if (newFileContent !== undefined) {
             model.setValue(newFileContent);
         }
