@@ -3,7 +3,7 @@
 Aeolus Setup
 ------------
 
-This section describes how to set up the external service Aeolus for custom build plans for Bamboo, Jenkins and Integrated code lifecycle, in Artemis.
+This section describes how to set up the external service Aeolus for custom build plans for Jenkins and Integrated code lifecycle, in Artemis.
 
 If you are setting Artemis up for the first time, these are the steps you should follow:
 
@@ -66,11 +66,6 @@ Furthermore, add the following environment variables to your Aeolus deployment:
    JENKINS_URL=<jenkins-url>
    JENKINS_USERNAME=<jenkins-username>
    JENKINS_TOKEN=<jenkins-password-of-the-user>
-
-   # if you want to use bamboo as ci system
-   BAMBOO_URL=<bamboo-url>
-   BAMBOO_USERNAME=<bamboo-username>
-   BAMBOO_TOKEN=<token-of-the-user>
 
 .. _Start Artemis with Aeolus:
 
