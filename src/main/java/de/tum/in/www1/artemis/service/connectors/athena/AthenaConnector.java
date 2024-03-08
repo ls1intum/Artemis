@@ -55,9 +55,6 @@ class AthenaConnector<RequestType, ResponseType> {
 
         var headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        // TODO
-        headers.add("X-Repository-Authorization-Secret",
-                "ppaja5xRg731utKmx4h0l2FdZkXHLqRJjUAKBiSSWXwitPuQZfppaja5xRg731utKmx4h0l2FdZkXHLqRJjUAKBiSSWXwitPuQZfppaja5xRg731utKmx4h0witPuQZf");
 
         final HttpEntity<RequestType> httpRequestEntity = new HttpEntity<>(requestObject, headers);
 

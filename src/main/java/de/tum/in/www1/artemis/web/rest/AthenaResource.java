@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.athena.AthenaGradedFeedbackSuggestionsService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaRepositoryExportService;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
@@ -53,7 +53,7 @@ public class AthenaResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final AthenaGradedFeedbackSuggestionsService athenaGradedFeedbackSuggestionsService;
+    private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
 
     private final AthenaRepositoryExportService athenaRepositoryExportService;
 
@@ -62,29 +62,29 @@ public class AthenaResource {
      */
     public AthenaResource(TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuthorizationCheckService authCheckService, AthenaGradedFeedbackSuggestionsService athenaGradedFeedbackSuggestionsService,
+            AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService,
             AthenaRepositoryExportService athenaRepositoryExportService) {
         this.textExerciseRepository = textExerciseRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.authCheckService = authCheckService;
-        this.athenaGradedFeedbackSuggestionsService = athenaGradedFeedbackSuggestionsService;
+        this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.athenaRepositoryExportService = athenaRepositoryExportService;
     }
 
     @FunctionalInterface
-    private interface FeedbackProvider<ExerciseType, SubmissionType, OutputType> {
+    private interface FeedbackProvider<ExerciseType, SubmissionType, Boolean, OutputType> {
 
         /**
-         * Method to apply the feedback provider. Examples: AthenaFeedbackSuggestionsService::getTextFeedbackSuggestions,
+         * Method to apply the (graded) feedback provider. Examples: AthenaFeedbackSuggestionsService::getTextFeedbackSuggestions,
          * AthenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions
          */
-        List<OutputType> apply(ExerciseType exercise, SubmissionType submission) throws NetworkingException;
+        List<OutputType> apply(ExerciseType exercise, SubmissionType submission, Boolean isGraded) throws NetworkingException;
     }
 
     private <ExerciseT extends Exercise, SubmissionT extends Submission, OutputT> ResponseEntity<List<OutputT>> getFeedbackSuggestions(long exerciseId, long submissionId,
-            Function<Long, ExerciseT> exerciseFetcher, Function<Long, SubmissionT> submissionFetcher, FeedbackProvider<ExerciseT, SubmissionT, OutputT> feedbackProvider) {
+            Function<Long, ExerciseT> exerciseFetcher, Function<Long, SubmissionT> submissionFetcher, FeedbackProvider<ExerciseT, SubmissionT, Boolean, OutputT> feedbackProvider) {
 
         log.debug("REST call to get feedback suggestions for exercise {}, submission {}", exerciseId, submissionId);
 
@@ -94,7 +94,7 @@ public class AthenaResource {
         final var submission = submissionFetcher.apply(submissionId);
 
         try {
-            return ResponseEntity.ok(feedbackProvider.apply(exercise, submission));
+            return ResponseEntity.ok(feedbackProvider.apply(exercise, submission, true));
         }
         catch (NetworkingException e) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
@@ -112,7 +112,7 @@ public class AthenaResource {
     @EnforceAtLeastTutor
     public ResponseEntity<List<TextFeedbackDTO>> getTextFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         return getFeedbackSuggestions(exerciseId, submissionId, textExerciseRepository::findByIdElseThrow, textSubmissionRepository::findByIdElseThrow,
-                athenaGradedFeedbackSuggestionsService::getTextFeedbackSuggestions);
+                athenaFeedbackSuggestionsService::getTextFeedbackSuggestions);
     }
 
     /**
@@ -126,7 +126,7 @@ public class AthenaResource {
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingFeedbackDTO>> getProgrammingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         return getFeedbackSuggestions(exerciseId, submissionId, programmingExerciseRepository::findByIdElseThrow, programmingSubmissionRepository::findByIdElseThrow,
-                athenaGradedFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
+                athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
     }
 
     /**

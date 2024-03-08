@@ -16,14 +16,14 @@ import de.tum.in.www1.artemis.service.dto.athena.*;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
- * Service for receiving graded feedback suggestions from the Athena service.
- * Assumes that submissions and already given feedback have already been sent to Athena.
+ * Service for receiving feedback suggestions from the Athena service.
+ * Assumes that submissions and already given feedback have already been sent to Athena or that the feedback is non-graded.
  */
 @Service
 @Profile("athena")
-public class AthenaGradedFeedbackSuggestionsService {
+public class AthenaFeedbackSuggestionsService {
 
-    private static final Logger log = LoggerFactory.getLogger(AthenaGradedFeedbackSuggestionsService.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaFeedbackSuggestionsService.class);
 
     private final AthenaConnector<RequestDTO, ResponseDTOText> textAthenaConnector;
 
@@ -34,9 +34,9 @@ public class AthenaGradedFeedbackSuggestionsService {
     private final AthenaDTOConverter athenaDTOConverter;
 
     /**
-     * Creates a new AthenaGradedFeedbackSuggestionsService to receive graded feedback suggestions from the Athena service.
+     * Creates a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
      */
-    public AthenaGradedFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleUrlHelper athenaModuleUrlHelper,
+    public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleUrlHelper athenaModuleUrlHelper,
             AthenaDTOConverter athenaDTOConverter) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
@@ -44,7 +44,7 @@ public class AthenaGradedFeedbackSuggestionsService {
         this.athenaModuleUrlHelper = athenaModuleUrlHelper;
     }
 
-    private record RequestDTO(ExerciseDTO exercise, SubmissionDTO submission) {
+    private record RequestDTO(ExerciseDTO exercise, SubmissionDTO submission, boolean isGraded) {
     }
 
     private record ResponseDTOText(List<TextFeedbackDTO> data) {
@@ -54,14 +54,14 @@ public class AthenaGradedFeedbackSuggestionsService {
     }
 
     /**
-     * Calls the remote Athena service to get graded feedback suggestions for a given submission.
+     * Calls the remote Athena service to get feedback suggestions for a given submission.
      *
      * @param exercise   the {@link TextExercise} the suggestions are fetched for
      * @param submission the {@link TextSubmission} the suggestions are fetched for
      * @return a list of feedback suggestions
      */
-    public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission) throws NetworkingException {
-        log.debug("Start Athena Graded Feedback Suggestions Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+    public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded) throws NetworkingException {
+        log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
         if (!Objects.equals(submission.getParticipation().getExercise().getId(), exercise.getId())) {
             log.error("Exercise id {} does not match submission's exercise id {}", exercise.getId(), submission.getParticipation().getExercise().getId());
@@ -69,27 +69,27 @@ public class AthenaGradedFeedbackSuggestionsService {
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
-        final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
-        ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/graded_feedback_suggestions",
-                request, 0);
-        log.info("Athena responded to graded feedback suggestions request: {}", response.data);
+        final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission), isGraded);
+        ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions", request, 0);
+        log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         return response.data.stream().toList();
     }
 
     /**
-     * Calls the remote Athena service to get graded feedback suggestions for a given programming submission.
+     * Calls the remote Athena service to get feedback suggestions for a given programming submission.
      *
      * @param exercise   the {@link ProgrammingExercise} the suggestions are fetched for
      * @param submission the {@link ProgrammingSubmission} the suggestions are fetched for
      * @return a list of feedback suggestions
      */
-    public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission) throws NetworkingException {
-        log.debug("Start Athena Feedback Suggestions Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+    public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isGraded)
+            throws NetworkingException {
+        log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
-        ResponseDTOProgramming response = programmingAthenaConnector
-                .invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/graded_feedback_suggestions", request, 0);
-        log.info("Athena responded to feedback suggestions request: {}", response.data);
+        final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission), isGraded);
+        ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions",
+                request, 0);
+        log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         return response.data.stream().toList();
     }
 }

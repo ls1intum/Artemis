@@ -12,14 +12,14 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
-import { faCodeBranch, faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch, faComment, faExternalLinkAlt, faEye, faFolderOpen, faPenSquare, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_ATHENA, PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -53,6 +53,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     beforeDueDate: boolean;
     editorLabel?: string;
     localVCEnabled = false;
+    athenaEnabled = false;
     routerLink: string;
 
     // Icons
@@ -64,6 +65,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     faRedo = faRedo;
     faExternalLinkAlt = faExternalLinkAlt;
     faCodeBranch = faCodeBranch;
+    faPenSquare = faPenSquare;
 
     constructor(
         private alertService: AlertService,
@@ -85,6 +87,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.programmingExercise = this.exercise as ProgrammingExercise;
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
+                this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
@@ -212,32 +215,16 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         return !allHiddenTestsPassed || requestAlreadySent || this.feedbackSent;
     }
 
-    requestManualFeedback() {
+    requestFeedback() {
+        // todo: do not send preferences at first
+        // if athena was set to true but server reported it is unavailable - ask student: wait or send manual feedback request
+        // allow manual feedback only if athena previously unavailable
         const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
         if (!window.confirm(confirmLockRepository)) {
             return;
         }
 
         this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
-            next: (participation: StudentParticipation) => {
-                if (participation) {
-                    this.feedbackSent = true;
-                    this.alertService.success('artemisApp.exercise.feedbackRequestSent');
-                }
-            },
-            error: (error) => {
-                this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
-            },
-        });
-    }
-
-    requestAutomaticFeedback() {
-        const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
-        if (!window.confirm(confirmLockRepository)) {
-            return;
-        }
-
-        this.courseExerciseService.requestAutomaticFeedback(this.exercise.id!).subscribe({
             next: (participation: StudentParticipation) => {
                 if (participation) {
                     this.feedbackSent = true;

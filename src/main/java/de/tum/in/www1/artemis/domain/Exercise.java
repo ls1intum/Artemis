@@ -58,6 +58,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
 
+    // TODO: rename in a follow up
     @Column(name = "allow_manual_feedback_requests")
     private boolean allowManualFeedbackRequests;
 
