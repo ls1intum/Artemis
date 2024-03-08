@@ -313,7 +313,7 @@ export const examManagementRoute: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':examId/student-exams/:studentExamId/summary/exercises/:exerciseId/repository/:participationId/commit-history',
@@ -325,7 +325,7 @@ export const examManagementRoute: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':examId/student-exams/:studentExamId/summary/exercises/:exerciseId/repository/:participationId/commit-history/:commitHash',
@@ -337,7 +337,7 @@ export const examManagementRoute: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':examId/student-exams/:studentExamId/exam-timeline',
@@ -650,7 +650,7 @@ export const examManagementRoute: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/participations/:participationId/repository',
@@ -662,7 +662,7 @@ export const examManagementRoute: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history',
@@ -674,7 +674,7 @@ export const examManagementRoute: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history/:commitHash',
@@ -686,7 +686,7 @@ export const examManagementRoute: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId',

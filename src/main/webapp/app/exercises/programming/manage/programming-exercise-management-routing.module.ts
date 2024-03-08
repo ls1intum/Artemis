@@ -169,7 +169,7 @@ export const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository',
@@ -181,7 +181,7 @@ export const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history',
@@ -193,7 +193,7 @@ export const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history/:commitHash',
@@ -205,7 +205,7 @@ export const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
 ];
 
