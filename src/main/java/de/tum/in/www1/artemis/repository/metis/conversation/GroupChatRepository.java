@@ -24,7 +24,7 @@ public interface GroupChatRepository extends JpaRepository<GroupChat, Long> {
                 LEFT JOIN FETCH conversationParticipant.user user
                 LEFT JOIN FETCH user.groups
             WHERE groupChat.course.id = :courseId
-                AND conversationParticipant.user.id = :userId
+                AND user.id = :userId
             ORDER BY groupChat.lastMessageDate DESC
             """)
     List<GroupChat> findGroupChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);

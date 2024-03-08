@@ -149,7 +149,7 @@ public class CompetencyResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        final var competencies = competencyRepository.findWithUserSpecificProgressByCourseId(courseId, user.getId());
+        final var competencies = competencyService.findCompetenciesWithProgressForUserByCourseId(courseId, user.getId());
         return ResponseEntity.ok(competencies);
     }
 
@@ -168,7 +168,7 @@ public class CompetencyResource {
         long start = System.nanoTime();
         var currentUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(competencyId, currentUser.getId());
+        var competency = competencyService.findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(competencyId, currentUser.getId());
         checkAuthorizationForCompetency(Role.STUDENT, course, competency);
 
         competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, currentUser))

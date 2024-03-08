@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationUpdateS
 
 @Service
 @Profile("bamboo")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdateService {
 
     @Value("${artemis.continuous-integration.url}")

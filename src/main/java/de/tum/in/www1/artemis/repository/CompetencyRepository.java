@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,7 +10,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -41,26 +42,14 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
             """)
     Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "exercises", "lectureUnits", "lectureUnits.completedUsers", "lectureUnits.lecture" })
-    Optional<Competency> findCompetencyWithUserProgressAndExercisesAndCompletedUsersAndLecturesById(Long id);
-
-    /**
-     * Fetches a competency with all linked exercises, lecture units, the associated progress, and completion of the specified user.
-     * <p>
-     * As JPQL doesn't support conditional JOIN FETCH statements, we have to filter the fetched results manually.
-     *
-     * @param competencyId the id of the competency that should be fetched
-     * @param userId       the id of the user whose progress should be fetched
-     * @return the competency
-     */
-    default Optional<Competency> findByIdWithExercisesAndLectureUnitsAndProgressForUser(Long competencyId, Long userId) {
-        Optional<Competency> competency = findCompetencyWithUserProgressAndExercisesAndCompletedUsersAndLecturesById(competencyId);
-        return competency.map(c -> {
-            c.getUserProgress().removeIf(p -> !p.getUser().getId().equals(userId));
-            c.getLectureUnits().forEach(unit -> unit.getCompletedUsers().removeIf(u -> !u.getUser().getId().equals(userId)));
-            return c;
-        });
-    }
+    @Query("""
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH c.exercises
+            WHERE c.id = :competencyId
+            """)
+    Optional<Competency> findWithLectureUnitsAndExercisesById(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT c
@@ -214,34 +203,16 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
         return findById(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
+    default Competency findWithLectureUnitsAndExercisesByIdElseThrow(long competencyId) {
+        return findWithLectureUnitsAndExercisesById(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+    }
+
     default Competency findByIdWithLectureUnitsElseThrow(long competencyId) {
         return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
-    default Competency findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(long competencyId, long userId) {
-        return findByIdWithExercisesAndLectureUnitsAndProgressForUser(competencyId, userId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
-    }
-
     long countByCourse(Course course);
 
-    @EntityGraph(type = LOAD, attributePaths = { "userProgress" })
-    List<Competency> findWithUserProgressByCourseId(long courseId);
-
-    /**
-     * Gets all competencies for the given course with the progress of the specified user.
-     * <p>
-     * The query only fetches data related to specified user. Participations for other users are not included.
-     * IMPORTANT: JPA doesn't support JOIN-FETCH-ON statements. To fetch the relevant data we have to filter the retrieved data.
-     *
-     * @param courseId the id of the course
-     * @param userId   the id of the user
-     * @return the competencies with the progress of the user
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "userProgress" })
-    default List<Competency> findWithUserSpecificProgressByCourseId(long courseId, long userId) {
-        List<Competency> competencies = findWithUserProgressByCourseId(courseId);
-        competencies.forEach(competency -> competency.getUserProgress().removeIf(progress -> progress.getUser().getId() != userId));
-        return competencies;
-    }
+    List<Competency> findByCourseId(long courseId);
 
 }
