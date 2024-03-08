@@ -21,6 +21,7 @@
             "masteryDescription": "Ein gewichteter Leistungsindex aus Fortschritt und Konfidenz, der Deine Entwicklung auf dem Weg zur Beherrschung der Kompetenz veranschaulicht.",
             "masteredStudents": "Studierende mit Kompetenz",
             "mastered": "Abgeschlossen",
+            "competencies": "Kompetenzen",
             "taxonomies": {
                 "REMEMBER": "Erinnern",
                 "UNDERSTAND": "Verstehen",
@@ -46,7 +47,8 @@
                 "import": "Kompetenzen importieren",
                 "importAll": "Alle Kompetenzen eines Kurses importieren",
                 "create": "Kompetenz erstellen",
-                "generate": "Kompetenzvorschläge generieren"
+                "generate": "Kompetenzen generieren",
+                "empty": "Es existieren keine Kompetenzen für diesen Kurs"
             },
             "import": {
                 "title": "Kompetenzen importieren",
@@ -168,10 +170,8 @@
             },
             "prerequisite": {
                 "title": "Voraussetzungen",
-                "managePrerequisites": {
-                    "title": "Voraussetzungen verwalten",
-                    "select": "Voraussetzung auswählen"
-                },
+                "select": "Voraussetzung auswählen",
+                "empty": "Es existieren keine Voraussetzungen für diesen Kurs",
                 "import": {
                     "label": "Voraussetzungen hinzufügen",
                     "table": {
@@ -189,15 +189,20 @@
                 "tailCompetency": "Kompetenz Schluss",
                 "relationType": "Beziehungstyp",
                 "headCompetency": "Kompetenz Start",
-                "relates": "Bezieht sich auf",
-                "assumes": "Setzt voraus",
-                "extends": "Erweitert",
-                "matches": "Stimmt überein mit",
                 "createRelation": "Beziehung erstellen",
                 "createsCircularRelation": "Du kannst keine kreisförmigen Beziehungen zwischen Kompetenzen erstellen.",
                 "selfRelation": "Du kannst keine Beziehung zwischen einer Kompetenz und sich selbst erstellen.",
-                "relationAlreadyExists": "Diese Beziehung existiert bereits."
+                "relationAlreadyExists": "Diese Beziehung existiert bereits.",
+                "type": {
+                    "RELATES": "Bezieht sich auf",
+                    "ASSUMES": "Setzt voraus",
+                    "EXTENDS": "Erweitert",
+                    "MATCHES": "Stimmt überein mit"
+                }
             }
+        },
+        "prerequisite": {
+            "deleted": "Voraussetzung entfernt"
         },
         "learningPath": {
             "learningPathButton": "Lernpfade",
