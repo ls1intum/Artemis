@@ -62,7 +62,12 @@
                 (onFileLoad)="fileLoad($event)"
             />
         } @else {
-            <jhi-code-editor-monaco [selectedFile]="selectedFile" (onFileContentChange)="onFileContentChange($event)" />
+            <jhi-code-editor-monaco
+                [selectedFile]="selectedFile"
+                [buildAnnotations]="annotations"
+                [sessionId]="participation?.id ?? 'test'"
+                (onFileContentChange)="onFileContentChange($event)"
+            />
         }
     </ng-container>
     <ng-container editorSidebarRight>

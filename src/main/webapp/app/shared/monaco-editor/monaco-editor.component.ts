@@ -1,14 +1,16 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 export type EditorPosition = { lineNumber: number; column: number };
-
+export type MarkdownString = monaco.IMarkdownString;
+export type GlyphDecoration = { lineNumber: number; glyphMarginClassName: string; hoverMessage: MarkdownString };
 @Component({
     selector: 'jhi-monaco-editor',
     templateUrl: 'monaco-editor.component.html',
     styleUrls: ['monaco-editor.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class MonacoEditorComponent implements OnInit, OnDestroy {
     @ViewChild('monacoEditorContainer', { static: true }) private monacoEditorContainer: ElementRef;
@@ -47,7 +49,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             theme: 'vs-dark',
             glyphMargin: true,
             minimap: { enabled: false },
-            lineNumbersMinChars: 5,
+            lineNumbersMinChars: 4,
         });
 
         const resizeObserver = new ResizeObserver(() => {
@@ -116,5 +118,23 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.updateOptions({
             theme: artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light',
         });
+    }
+
+    addGlyphDecorations(decorations: GlyphDecoration[]) {
+        this.addDecorations(
+            decorations.map((d) => ({
+                range: new monaco.Range(d.lineNumber, 0, d.lineNumber, 0),
+                options: {
+                    glyphMarginClassName: d.glyphMarginClassName,
+                    glyphMargin: { position: monaco.editor.GlyphMarginLane.Left },
+                    glyphMarginHoverMessage: d.hoverMessage,
+                },
+            })),
+        );
+    }
+
+    // TODO: Return value
+    private addDecorations(decorations: monaco.editor.IModelDeltaDecoration[]) {
+        return this._editor?.createDecorationsCollection(decorations);
     }
 }

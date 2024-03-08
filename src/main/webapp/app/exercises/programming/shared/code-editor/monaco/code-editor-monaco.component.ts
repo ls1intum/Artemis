@@ -5,6 +5,7 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { LocalStorageService } from 'ngx-webstorage';
 import { EditorPosition, MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { firstValueFrom } from 'rxjs';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 
 export type FileSession = { [fileName: string]: { code: string; cursorPosition: EditorPosition; loadingError: boolean } };
 
@@ -20,6 +21,14 @@ export class CodeEditorMonacoComponent implements OnChanges {
     editor: MonacoEditorComponent;
     @Input()
     selectedFile: string | undefined = undefined;
+    @Input()
+    sessionId: number | string;
+    @Input()
+    set buildAnnotations(buildAnnotations: Array<Annotation>) {
+        this.setBuildAnnotations(buildAnnotations);
+    }
+
+    private annotationsArray: Array<Annotation> = [];
 
     @Output()
     onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
@@ -38,6 +47,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
         if (changes.selectedFile) {
             await this.selectFileInEditor(changes.selectedFile.currentValue);
+            this.setBuildAnnotations(this.annotationsArray);
         }
     }
 
@@ -66,5 +76,21 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
     }
 
-    updateTabSize() {}
+    private loadBuildAnnotationsFromLocalStorage() {
+        return JSON.parse(this.localStorageService.retrieve('annotations-' + this.sessionId) || '{}');
+    }
+
+    private setBuildAnnotations(buildAnnotations: Array<Annotation>): void {
+        this.annotationsArray = buildAnnotations;
+        // TODO: Load them from local storage here.
+        this.editor.addGlyphDecorations(
+            buildAnnotations
+                .filter((a) => a.fileName === this.selectedFile)
+                .map((a) => ({
+                    lineNumber: a.row,
+                    hoverMessage: { value: '**' + a.type + ': ' + a.text + '**' },
+                    glyphMarginClassName: 'codicon-error monaco-error-glyph',
+                })),
+        );
+    }
 }
