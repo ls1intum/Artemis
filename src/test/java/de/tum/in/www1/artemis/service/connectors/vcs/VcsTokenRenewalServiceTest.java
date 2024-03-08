@@ -109,7 +109,7 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
             }
         });
 
-        vcsTokenRenewalService.renewAllPersonalAccessTokens();
+        vcsTokenRenewalService.renewAllVcsAccessTokens();
 
         gitlabRequestMockProvider.verifyMocks();
 
