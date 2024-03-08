@@ -198,40 +198,47 @@ In this screen, users can choose which notification types they want to receive.
 
 Modeling Exercises
 ^^^^^^^^^^^^^^^^^^
-Users can participate in modeling exercises, view their submissions and also view the feedback they received in the Artemis iOS app.
 
-- Participate in modeling exercise:
-    #. Add UML elements to the canvas
-    #. Edit attributes and methods of elements
-    #. Draw UML relationships between elements
-    #. Edit relationship properties
-    #. Submit the diagram
+Users can participate in modeling exercises, view their submissions, and view the feedback they received in the Artemis iOS app.
 
-.. raw:: html
+Participate in Modeling Exercise
+""""""""""""""""""""""""""""""""
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/42870?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
-        Video tutorial for participating in a modeling exercise on TUM-Live.
-    </iframe>
+    - Add UML elements to the canvas
+    - Edit attributes and methods of UML elements
+    - Draw UML relationships between UML elements
+    - Edit UML relationship properties
+    - Submit the diagram
 
-- View modeling exercise submission:
-    #. Interact with the submitted diagram
-    #. No modification to the submitted diagram is possible
+        .. raw:: html
 
-.. raw:: html
+            <iframe src="https://live.rbg.tum.de/w/artemisintro/42870?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+                Video tutorial for participating in a modeling exercise on TUM-Live.
+            </iframe>
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/42871?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
-        Video tutorial for viewing a modeling exercise submission on TUM-Live.
-    </iframe>
+View Modeling Exercise Submission
+"""""""""""""""""""""""""""""""""
 
-- View modeling exercise results:
-    #. Click on elements and relationships to view feedback and grading
-    #. See all feedback and grading in a list view
+    - Interact with the submitted diagram
+    - No modification to the submitted diagram is possible
 
-.. raw:: html
+        .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/42872?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
-        Video tutorial for viewing modeling exercise results on TUM-Live.
-    </iframe>
+            <iframe src="https://live.rbg.tum.de/w/artemisintro/42871?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+                Video tutorial for viewing a modeling exercise submission on TUM-Live.
+            </iframe>
+
+View Modeling Exercise Result
+"""""""""""""""""""""""""""""
+
+    - Click on UML elements and UML relationships to view feedback and grading
+    - See all feedback and grading in a list view
+
+        .. raw:: html
+
+            <iframe src="https://live.rbg.tum.de/w/artemisintro/42872?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+                Video tutorial for viewing modeling exercise results on TUM-Live.
+            </iframe>
 
 Problems
 ^^^^^^^^
