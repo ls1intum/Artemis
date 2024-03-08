@@ -15,33 +15,33 @@
         <tbody>
             @for (freePeriod of tutorialGroupFreePeriods; track freePeriod) {
                 <tr [ngClass]="{ 'opacity-50': isInThePast(freePeriod) }" class="free-period-row">
-                    <td>
+                    <td class="col-1">
                         {{ freePeriod.id }}
                     </td>
-                    <td>
+                    <td class="col-2">
                         {{ freePeriod.start | artemisDate: 'long-date' : false : course.timeZone : true }}
                     </td>
-                    <td>
+                    <td class="col-2">
                         {{ freePeriod.end | artemisDate: 'long-date' : false : course.timeZone : true }}
                     </td>
-                    <td>
+                    <td class="col-2">
                         {{
                             TutorialGroupFreePeriodsManagementComponent.isFreeDay(freePeriod) || TutorialGroupFreePeriodsManagementComponent.isFreePeriod(freePeriod)
                                 ? '-'
                                 : (freePeriod.start | artemisDate: 'time' : false : course.timeZone : false)
                         }}
                     </td>
-                    <td>
+                    <td class="col-2">
                         {{
                             TutorialGroupFreePeriodsManagementComponent.isFreeDay(freePeriod) || TutorialGroupFreePeriodsManagementComponent.isFreePeriod(freePeriod)
                                 ? '-'
                                 : (freePeriod.end | artemisDate: 'time' : false : course.timeZone : false)
                         }}
                     </td>
-                    <td>
-                        <span class="d-inline-block text-truncate long-text"> {{ freePeriod.reason }} </span>
+                    <td class="col-2">
+                        <span class="free-period-reason-overflow"> {{ freePeriod.reason ? freePeriod.reason : '-' }} </span>
                     </td>
-                    <td>
+                    <td class="col-1">
                         <div class="extra-buttons">
                             <jhi-tutorial-group-free-period-row-buttons
                                 [course]="course"
