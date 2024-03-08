@@ -73,10 +73,6 @@ public class RepositoryAccessService {
         boolean isStudent = authorizationCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isTeachingAssistant = !isStudent && !isAtLeastEditor;
 
-        if (isStudent && exerciseStartDate.isAfter(ZonedDateTime.now())) {
-            throw new AccessForbiddenException("submitBeforeStartDate");
-        }
-
         // Error case 2: The user's participation is locked.
         // Editors and up are able to push to any repository even if the participation is locked for the student.
         // Teaching assistants trying to push to a student assignment repository will be blocked by the next check.
@@ -117,7 +113,8 @@ public class RepositoryAccessService {
         // After exam working time they should be able to read the repository.
         // Teaching assistants are only allowed to read the student's repository.
         // But the student should still be able to access if they are notified for a related plagiarism case.
-        if (((isStudent && repositoryActionType != RepositoryActionType.READ) || (isTeachingAssistant && repositoryActionType != RepositoryActionType.READ))
+        if (((isStudent && (repositoryActionType != RepositoryActionType.READ || exerciseStartDate.isAfter(ZonedDateTime.now())))
+                || (isTeachingAssistant && repositoryActionType != RepositoryActionType.READ))
                 && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && !hasAccessToSubmission) {
             throw new AccessForbiddenException();
         }
