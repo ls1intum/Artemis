@@ -4,10 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Field;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -20,13 +25,22 @@ import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.competency.LearningPathUtilService;
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.competency.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.LearningObject;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathNgxService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathRecommendationService;
@@ -180,7 +194,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             final var lectureUnit = lectureUtilService.createTextUnit();
             lectureUtilService.addLectureUnitsToLecture(lecture, List.of(lectureUnit));
             competencyUtilService.linkLectureUnitToCompetency(competency, lectureUnit);
-            final var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+            final var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
             competencyUtilService.linkExerciseToCompetency(competency, exercise);
             final var startNodeId = LearningPathNgxService.getCompetencyStartNodeId(competency.getId());
             final var endNodeId = LearningPathNgxService.getCompetencyEndNodeId(competency.getId());
@@ -575,7 +589,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             exerciseRepository.saveAll(List.of(exercises));
 
             LearningPath learningPath = learningPathUtilService.createLearningPathInCourseForUser(course, user);
-            learningPath = learningPathRepository.findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPath.getId());
+            learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPath.getId());
             NgxLearningPathDTO actual = learningPathService.generateNgxPathRepresentation(learningPath);
             // competency start & end, lecture unit, and one exercise per difficulty level
             assertThat(actual.nodes()).hasSize(6);
@@ -593,7 +607,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
         private void generateExercises(int numberOfExercises) {
             exercises = new Exercise[numberOfExercises];
             for (int i = 0; i < exercises.length; i++) {
-                exercises[i] = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+                exercises[i] = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
                 exercises[i] = competencyUtilService.linkExerciseToCompetency(competency, exercises[i]);
             }
         }
@@ -646,7 +660,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private void generateAndAssert(NgxLearningPathDTO expected, LearningPathResource.NgxRequestType type) {
         LearningPath learningPath = learningPathUtilService.createLearningPathInCourseForUser(course, user);
-        learningPath = learningPathRepository.findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPath.getId());
+        learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPath.getId());
         NgxLearningPathDTO actual = switch (type) {
             case GRAPH -> learningPathService.generateNgxGraphRepresentation(learningPath);
             case PATH -> learningPathService.generateNgxPathRepresentation(learningPath);

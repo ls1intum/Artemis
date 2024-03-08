@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 
 @Service
 @Profile("bitbucket")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BitbucketUserManagementService implements VcsUserManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(BitbucketUserManagementService.class);

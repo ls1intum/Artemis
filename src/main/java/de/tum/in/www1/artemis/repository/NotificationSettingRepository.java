@@ -1,14 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -40,12 +38,14 @@ public interface NotificationSettingRepository extends JpaRepository<Notificatio
             """)
     Set<NotificationSetting> findAllNotificationSettingsForRecipientsWithId(@Param("userIds") List<Long> userIds);
 
-    @EntityGraph(type = LOAD, attributePaths = { "user.groups", "user.authorities" })
     @Query("""
             SELECT setting
             FROM NotificationSetting setting
+                LEFT JOIN FETCH setting.user user
+                LEFT JOIN FETCH user.groups
+                LEFT JOIN FETCH user.authorities
             WHERE setting.settingId = :settingId
-                AND setting.email IS TRUE
+                AND setting.email = TRUE
             """)
     Set<NotificationSetting> findAllNotificationSettingsForUsersWhoEnabledSpecifiedEmailSettingWithEagerGroupsAndAuthorities(@Param("settingId") String settingId);
 
@@ -67,7 +67,7 @@ public interface NotificationSettingRepository extends JpaRepository<Notificatio
     @Query("""
             SELECT cp.conversation.id
             FROM ConversationParticipant cp
-            WHERE cp.user.id = :userId AND (cp.isMuted IS TRUE OR cp.isHidden IS TRUE)
+            WHERE cp.user.id = :userId AND (cp.isMuted = TRUE OR cp.isHidden = TRUE)
             """)
     Set<Long> findMutedConversations(@Param("userId") long userId);
 }
