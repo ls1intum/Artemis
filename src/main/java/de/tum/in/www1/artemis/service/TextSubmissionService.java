@@ -145,8 +145,4 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmission findOneWithEagerResultFeedbackAndTextBlocks(Long submissionId) {
         return textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(submissionId).orElseThrow();
     }
-
-    public TextSubmission findOneWithEagerResultFeedbackAndTextBlocksAndAssessmentNote(Long submissionId) {
-        return textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksAndAssessmentNoteById(submissionId).orElseThrow();
-    }
 }
