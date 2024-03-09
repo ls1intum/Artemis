@@ -11,7 +11,6 @@ import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { Observable, Subscription, forkJoin, map, mergeMap, toArray } from 'rxjs';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
@@ -33,9 +32,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     // this is an array because the exam-timeline uses a page component for each exercise
     pageComponentVisited: boolean[];
     selectedTimestamp: number;
-
     timestampIndex = 0;
-    timestampsArray: number[] = [];
 
     studentExam: StudentExam;
     exerciseIndex: number;
@@ -60,7 +57,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         private submissionService: SubmissionService,
         private submissionVersionService: SubmissionVersionService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private datePipe: ArtemisDatePipe,
     ) {}
 
     ngOnInit(): void {
@@ -88,7 +84,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
                 }
             });
             this.sortTimeStamps();
-            this.setupRangeSlider();
+            this.selectedTimestamp = this.submissionTimeStamps[0]?.toDate().getTime() ?? 0;
             const firstSubmission = this.findFirstSubmission();
             this.currentSubmission = firstSubmission;
             this.exerciseIndex = this.findExerciseIndex(firstSubmission!);
@@ -156,11 +152,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
 
     displayCurrentTimestamp(): string {
         return dayjs(this.selectedTimestamp).format('HH:mm:ss');
-    }
-
-    private setupRangeSlider() {
-        this.selectedTimestamp = this.submissionTimeStamps[0]?.toDate().getTime() ?? 0;
-        this.timestampsArray = this.submissionTimeStamps.map((date) => date?.toDate().getTime());
     }
 
     /**
@@ -315,7 +306,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
      * This method is called when the user clicks on the slider
      */
     onSliderInputChange() {
-        this.selectedTimestamp = this.timestampsArray[this.timestampIndex];
+        this.selectedTimestamp = this.submissionTimeStamps[this.timestampIndex].toDate().getTime();
         const submission = this.findCorrespondingSubmissionForTimestamp(this.selectedTimestamp);
         if (this.isSubmissionVersion(submission)) {
             const submissionVersion = submission as SubmissionVersion;
