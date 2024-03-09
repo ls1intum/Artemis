@@ -44,6 +44,13 @@ public interface TutorialGroupFreePeriodRepository extends JpaRepository<Tutoria
         return findById(tutorialGroupFreePeriodId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupFreePeriod", tutorialGroupFreePeriodId));
     }
 
+    /**
+     * Finds the first overlapping tutorial group free period in the same course.
+     *
+     * @param course      The course to check for overlapping periods. * @param fromInclusive The start date and time of the period to check.
+     * @param toInclusive The end date and time of the period to check.
+     * @return An Optional containing the first overlapping TutorialGroupFreePeriod, if any.
+     */
     default Optional<TutorialGroupFreePeriod> findFirstOverlappingInSameCourse(Course course, ZonedDateTime fromInclusive, ZonedDateTime toInclusive) {
         return findOverlappingInSameCourse(course, fromInclusive, toInclusive).stream().findFirst();
     }
