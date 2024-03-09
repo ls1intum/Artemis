@@ -63,6 +63,8 @@
             />
         } @else {
             <jhi-code-editor-monaco
+                [course]="course"
+                [feedbacks]="participation?.results?.[0]?.feedbacks ?? []"
                 [selectedFile]="selectedFile"
                 [buildAnnotations]="annotations"
                 [sessionId]="participation?.id ?? 'test'"
