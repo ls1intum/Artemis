@@ -93,7 +93,7 @@ public class ProgrammingExerciseParticipationResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         if (participation.getExercise().getParticipationStartDate().isAfter(ZonedDateTime.now())
-                && !authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null)) {
+                && authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null)) {
             throw new AccessForbiddenException("Participation not yet started");
         }
 
@@ -116,7 +116,7 @@ public class ProgrammingExerciseParticipationResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         if (participation.getExercise().getParticipationStartDate().isAfter(ZonedDateTime.now())
-                && !authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null)) {
+                && authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null)) {
             throw new AccessForbiddenException("Participation not yet started");
         }
 
