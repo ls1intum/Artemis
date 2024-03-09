@@ -92,24 +92,34 @@ public class RepositoryAccessService {
             checkAccessRepositoryForReset(programmingParticipation, isStudent, programmingExercise);
         }
 
-        // The user is allowed to read the repository if the exercise has started and the user is a student.
-        // The other users are allowed to read the repository at any time.
+        // Error case 5: Check if the user is allowed to access the repository concerning the dates
         if (isStudent) {
             checkIsStudentAllowedToAccessRepositoryConcerningDates(programmingParticipation, repositoryActionType, exerciseStartDate);
         }
 
-        // Error case 5: Check if the user is allowed to submit for the exam
-        if (!examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && repositoryActionType == RepositoryActionType.WRITE) {
+        // Error case 6: Check if the user is allowed to submit for the exam
+        if (repositoryActionType == RepositoryActionType.WRITE && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false)) {
             throw new AccessForbiddenException();
         }
     }
 
+    /**
+     * Checks if the user has access to repository concerning the dates.
+     *
+     * @param programmingParticipation The participation for which the repository should be accessed.
+     * @param repositoryActionType     The type of action that the user wants to perform on the repository (i.e. WRITE, READ or RESET).
+     * @param exerciseStartDate        The start date of the exercise.
+     */
     private void checkIsStudentAllowedToAccessRepositoryConcerningDates(ProgrammingExerciseParticipation programmingParticipation, RepositoryActionType repositoryActionType,
             ZonedDateTime exerciseStartDate) {
+        // if the exercise has not started yet, the student is not allowed to access the repository
         if (exerciseStartDate.isAfter(ZonedDateTime.now())) {
             throw new AccessForbiddenException();
         }
         else {
+            // if the exercise has started, the student is allowed to access the repository for read actions
+            // for the other actions, the student is only allowed to access the repository if the due date has not passed yet
+            // or the student is in practice mode
             if (repositoryActionType != RepositoryActionType.READ && exerciseDateService.isAfterDueDate(programmingParticipation)
                     && !((StudentParticipation) programmingParticipation).isPracticeMode()) {
                 throw new AccessForbiddenException();
