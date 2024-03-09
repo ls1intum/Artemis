@@ -69,6 +69,6 @@ import { FormsModule } from 'app/forms/forms.module';
         AddAuxiliaryRepositoryButtonComponent,
         RemoveAuxiliaryRepositoryButtonComponent,
     ],
-    exports: [ProgrammingExerciseUpdateComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent],
+    exports: [ProgrammingExerciseUpdateComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent, ProgrammingExerciseCustomBuildPlanComponent],
 })
 export class ArtemisProgrammingExerciseUpdateModule {}

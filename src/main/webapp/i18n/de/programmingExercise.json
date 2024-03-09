@@ -100,6 +100,7 @@
             "openRepository": "Repository Öffnen",
             "buildplans": "Build-Pläne",
             "buildplan": "Build-Plan",
+            "buildscript": "Buildscript",
             "buildPlanEditor": "Build-Plan-Editor",
             "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
             "publishBuildPlanUrl": "Build-Plan veröffentlichen",
@@ -565,7 +566,8 @@
             "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
             "recordTestwiseCoverage": "Testbasierte Code-Abdeckung aufzeichnen",
             "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testbasierte Code-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java/Kotlin-Aufgaben mit nicht-sequentiellen Testläufen verfügbar.",
-            "customizeBuildPlansWithAeolusTooltip": "Aktivieren Sie diese Option, um die Build-Pläne mit Aeolus anzupassen. Diese Option ist nur während der Übungserstellung verfügbar.",
+            "customizeBuildPlansWithAeolusTooltip": "Aktivieren Sie diese Option, um die Build-Pläne mit Aeolus anzupassen.",
+            "customizeBuildPlansTooltip": "Aktivieren Sie diese Option, um die Build-Pläne für diese Aufgabe anzupassen.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
             "testwiseCoverageReport": {
                 "button": "Testbasierte Code-Abdeckung anzeigen",

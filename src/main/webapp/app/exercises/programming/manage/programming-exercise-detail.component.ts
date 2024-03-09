@@ -6,7 +6,6 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programmi
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -21,17 +20,14 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { SortService } from 'app/shared/service/sort.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
-import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import {
     faBook,
     faChartBar,
     faCheckDouble,
-    faEraser,
     faExclamationTriangle,
     faEye,
     faFileSignature,
@@ -47,8 +43,6 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
-import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -118,7 +112,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
     faTable = faTable;
-    faEraser = faEraser;
     faExclamationTriangle = faExclamationTriangle;
     faFileSignature = faFileSignature;
     faListAlt = faListAlt;
@@ -137,17 +130,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         public exerciseService: ExerciseService,
         private artemisMarkdown: ArtemisMarkdownService,
         private alertService: AlertService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
-        private repositoryFileService: CodeEditorRepositoryFileService,
         private eventManager: EventManager,
         public modalService: NgbModal,
         private translateService: TranslateService,
         private profileService: ProfileService,
         private statisticsService: StatisticsService,
-        private sortService: SortService,
-        private programmingExerciseGradingService: ProgrammingExerciseGradingService,
-        private codeHintService: CodeHintService,
         private router: Router,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private consistencyCheckService: ConsistencyCheckService,
@@ -429,6 +417,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         removedLineCount: this.removedLineCount,
                         isLoadingDiffReport: this.isLoadingDiffReport,
                         gitDiffReport: exercise.gitDiffReport,
+                    },
+                },
+                !!exercise.buildScript && {
+                    type: DetailType.ProgrammingBuildScriptDetail,
+                    title: 'artemisApp.programmingExercise.buildscript',
+                    data: {
+                        buildScript: exercise.buildScript,
                     },
                 },
                 {

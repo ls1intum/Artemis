@@ -31,6 +31,7 @@ type ShownDetail =
     | ProgrammingAuxiliaryRepositoryButtonsDetail
     | ProgrammingTestStatusDetail
     | ProgrammingDiffReportDetail
+    | ProgrammingBuildScriptDetail
     | ProgrammingProblemStatementDetail
     | ProgrammingTimelineDetail
     | ProgrammingBuildStatisticsDetail;
@@ -108,10 +109,14 @@ interface ProgrammingTestStatusDetail extends DetailBase {
         submissionRouterLink?: (string | number | undefined)[];
     };
 }
-
 interface ProgrammingDiffReportDetail extends DetailBase {
     type: DetailType.ProgrammingDiffReport;
     data: { addedLineCount: number; removedLineCount: number; isLoadingDiffReport?: boolean; gitDiffReport?: ProgrammingExerciseGitDiffReport };
+}
+
+interface ProgrammingBuildScriptDetail extends DetailBase {
+    type: DetailType.ProgrammingBuildScriptDetail;
+    data: { buildScript: string };
 }
 
 interface ProgrammingProblemStatementDetail extends DetailBase {

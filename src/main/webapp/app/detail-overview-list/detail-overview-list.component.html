@@ -186,6 +186,13 @@
                             </div>
                         </dd>
                     }
+                    @case (DetailType.ProgrammingBuildScriptDetail) {
+                        <dd id="detail-value-{{ detail.title }}">
+                            <div class="fw-bold">
+                                <jhi-programming-exercise-detail-buildscript [script]="detail.data.buildScript" />
+                            </div>
+                        </dd>
+                    }
                     @case (DetailType.ProgrammingProblemStatement) {
                         @if (detail.data.exercise?.templateParticipation) {
                             <dd class="p-3 border" id="detail-value-{{ detail.title }}">
