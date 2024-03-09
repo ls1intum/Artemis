@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -6,6 +6,9 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { EditorPosition, MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { firstValueFrom } from 'rxjs';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { Feedback } from 'app/entities/feedback.model';
+import { Course } from 'app/entities/course.model';
+import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 
 export type FileSession = { [fileName: string]: { code: string; cursorPosition: EditorPosition; loadingError: boolean } };
 
@@ -19,6 +22,12 @@ export type FileSession = { [fileName: string]: { code: string; cursorPosition: 
 export class CodeEditorMonacoComponent implements OnChanges {
     @ViewChild('editor', { static: true })
     editor: MonacoEditorComponent;
+    @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
+    inlineFeedbackComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackComponent>;
+    @Input()
+    course?: Course;
+    @Input()
+    feedbacks: Feedback[] = [];
     @Input()
     selectedFile: string | undefined = undefined;
     @Input()
@@ -48,6 +57,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         if (changes.selectedFile) {
             await this.selectFileInEditor(changes.selectedFile.currentValue);
             this.setBuildAnnotations(this.annotationsArray);
+            this.renderFeedbackWidgets();
         }
     }
 
@@ -76,6 +86,30 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
     }
 
+    protected renderFeedbackWidgets() {
+        for (const feedback of this.filterFeedbackForFile([...this.feedbacks])) {
+            this.addLineWidgetWithFeedback(feedback);
+        }
+    }
+
+    private addLineWidgetWithFeedback(feedback: Feedback): void {
+        const line = Feedback.getReferenceLine(feedback);
+        if (!line) {
+            throw new Error('No line found for feedback ' + feedback.id);
+        }
+        // TODO: Maybe there can be more than one feedback item per line.
+        const feedbackNode = [...this.inlineFeedbackComponents].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
+        // TODO: The lines don't align with monaco (off by 1)
+        this.editor.addViewZoneWithWidget(line + 1, 'foo-' + feedback.id, feedbackNode);
+    }
+
+    protected filterFeedbackForFile(feedbacks: Feedback[]): Feedback[] {
+        if (!this.selectedFile) {
+            return [];
+        }
+        return feedbacks.filter((feedback) => feedback.reference && Feedback.getReferenceFilePath(feedback) === this.selectedFile);
+    }
+
     private loadBuildAnnotationsFromLocalStorage() {
         return JSON.parse(this.localStorageService.retrieve('annotations-' + this.sessionId) || '{}');
     }
@@ -93,4 +127,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
                 })),
         );
     }
+
+    protected readonly Feedback = Feedback;
 }

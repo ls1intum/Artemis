@@ -1,5 +1,18 @@
 <div class="card">
     <div class="card-body card-body-monaco">
+        @if (selectedFile) {
+            @for (feedback of filterFeedbackForFile(feedbacks); track feedback) {
+                <jhi-code-editor-tutor-assessment-inline-feedback
+                    style="display: none"
+                    [selectedFile]="selectedFile"
+                    [codeLine]="Feedback.getReferenceLine(feedback)!"
+                    [feedback]="feedback"
+                    [readOnly]="true"
+                    [highlightDifferences]="false"
+                    [course]="course"
+                />
+            }
+        }
         <jhi-monaco-editor (textChanged)="onFileTextChanged($event)" [textChangedEmitDelay]="200" #editor id="monaco-editor" class="code-editor-ace__content__editor" />
 
         @if (!selectedFile && !isLoading) {
