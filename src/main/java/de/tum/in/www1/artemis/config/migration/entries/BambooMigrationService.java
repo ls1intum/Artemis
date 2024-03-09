@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
  */
 @Service
 @Profile("bamboo")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BambooMigrationService implements CIVCSMigrationService {
 
     private final RestTemplate restTemplate;
