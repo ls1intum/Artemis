@@ -90,12 +90,8 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository
                 .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        if (participation.getExercise().getParticipationStartDate().isAfter(ZonedDateTime.now())
-                && authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null)) {
-            throw new AccessForbiddenException("Participation not yet started");
-        }
+        hasAccessToParticipationElseThrow(participation);
 
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
@@ -113,12 +109,8 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithAllResultsForStudentParticipation(@PathVariable Long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdWithAllResultsAndRelatedSubmissions(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        if (participation.getExercise().getParticipationStartDate().isAfter(ZonedDateTime.now())
-                && authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null)) {
-            throw new AccessForbiddenException("Participation not yet started");
-        }
+        hasAccessToParticipationElseThrow(participation);
 
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
@@ -311,6 +303,21 @@ public class ProgrammingExerciseParticipationResource {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
+    }
+
+    /**
+     * Checks if the user has access to the participation.
+     * If the exercise has not started yet and the user is a student access is denied.
+     *
+     * @param participation the participation to check
+     */
+    private void hasAccessToParticipationElseThrow(ProgrammingExerciseStudentParticipation participation) {
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        boolean exerciseHasStarted = participation.getExercise().getParticipationStartDate().isBefore(ZonedDateTime.now());
+        boolean isStudent = authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null);
+        if (!exerciseHasStarted && isStudent) {
+            throw new AccessForbiddenException("Participation not yet started");
+        }
     }
 
 }

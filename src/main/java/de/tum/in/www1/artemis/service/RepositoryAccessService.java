@@ -63,7 +63,6 @@ public class RepositoryAccessService {
 
         // Error case 1: The user does not have permissions to push into the repository and the user is not notified for a related plagiarism case.
         boolean hasPermissions = participationAuthCheckService.canAccessParticipation(programmingParticipation, user);
-        var exerciseStartDate = programmingExercise.getParticipationStartDate();
         var exerciseDueDate = programmingExercise.isExamExercise() ? programmingExercise.getExerciseGroup().getExam().getEndDate() : programmingExercise.getDueDate();
         boolean hasAccessToSubmission = plagiarismService.hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), exerciseDueDate);
         boolean hasPlagiarismComparison = plagiarismService.hasPlagiarismComparison(programmingParticipation.getId());
@@ -121,6 +120,7 @@ public class RepositoryAccessService {
             checkAccessRepositoryForReset(programmingParticipation, isStudent, programmingExercise);
         }
 
+        var exerciseStartDate = programmingExercise.getParticipationStartDate();
         if (isStudent && repositoryActionType == RepositoryActionType.READ && exerciseStartDate.isBefore(ZonedDateTime.now())) {
             return;
         }
