@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -61,7 +62,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationBambooB
     void shouldExportRepository() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(course.getId()).stream().iterator().next();
-        programmingExercise.setFeedbackSuggestionsEnabled(true);
+        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
@@ -85,7 +86,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationBambooB
     @Test
     void shouldThrowServiceUnavailableWhenFeedbackSuggestionsNotEnabled() {
         var programmingExercise = new ProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionsEnabled(false);
+        programmingExercise.setFeedbackSuggestionModule(null);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         assertThatExceptionOfType(ServiceUnavailableException.class)
