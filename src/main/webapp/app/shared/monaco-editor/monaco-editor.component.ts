@@ -17,6 +17,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private _editor: monaco.editor.IStandaloneCodeEditor;
     private themeSubscription?: Subscription;
     private models: monaco.editor.IModel[] = [];
+    private overlayWidgets: monaco.editor.IOverlayWidget[] = [];
 
     constructor(private themeService: ThemeService) {}
 
@@ -117,8 +118,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         if (newFileContent !== undefined) {
             model.setValue(newFileContent);
         }
-        this._editor.setModel(model);
+        // Although viewzones are removed automatically when the model changes, overlay widgets are not.
+        this.overlayWidgets.forEach((o) => this._editor.removeOverlayWidget(o));
+        this.overlayWidgets = [];
         monaco.editor.setModelLanguage(model, model.getLanguageId());
+        this._editor.setModel(model);
     }
 
     changeTheme(artemisTheme: Theme): void {
@@ -190,7 +194,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
 
         resizeObserver.observe(overlayWidget.getDomNode());
-
+        this.overlayWidgets.push(overlayWidget);
         return viewZoneId;
     }
     // TODO: Return value
