@@ -1033,14 +1033,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.programmingExercise.exampleSolutionPublicationDate).toBeUndefined();
         expect(comp.programmingExercise.zipFileForImport?.name).toBe('test.zip');
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
-        expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
+        expect(comp.programmingExercise.allowFeedbackRequests).toBeFalse();
         expect(comp.programmingExercise.allowOfflineIde).toBeTrue();
         expect(comp.programmingExercise.allowOnlineEditor).toBeTrue();
         expect(comp.programmingExercise.publishBuildPlanUrl).toBeFalse();
         expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
         expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
         // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
-        expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
+        expect(comp.programmingExercise.allowFeedbackRequests).toBeFalse();
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
         // name and short name should also be imported
         expect(comp.programmingExercise.title).toEqual(importedProgrammingExercise.title);
@@ -1065,7 +1065,7 @@ const getProgrammingExerciseForImport = () => {
     programmingExercise.allowOnlineEditor = true;
     programmingExercise.publishBuildPlanUrl = true;
     programmingExercise.allowComplaintsForAutomaticAssessments = true;
-    programmingExercise.allowManualFeedbackRequests = true;
+    programmingExercise.allowFeedbackRequests = true;
     programmingExercise.publishBuildPlanUrl = false;
 
     history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');

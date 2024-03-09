@@ -253,7 +253,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             individualDueDate: undefined,
         };
 
-        comp.exercise = { ...exercise, allowManualFeedbackRequests: true };
+        comp.exercise = { ...exercise, allowFeedbackRequests: true };
         comp.gradedParticipation = participation;
 
         expect(comp.isFeedbackRequestButtonDisabled()).toBeTrue();
@@ -266,7 +266,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             individualDueDate: undefined,
         };
 
-        comp.exercise = { ...exercise, allowManualFeedbackRequests: true };
+        comp.exercise = { ...exercise, allowFeedbackRequests: true };
         comp.gradedParticipation = participation;
 
         expect(comp.isFeedbackRequestButtonDisabled()).toBeFalse();

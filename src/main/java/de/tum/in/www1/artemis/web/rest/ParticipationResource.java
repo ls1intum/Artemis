@@ -138,7 +138,7 @@ public class ParticipationResource {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService,
-            QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService,
+            QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService, Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService,
             FeedbackRepository feedbackRepository, SubmissionService submissionService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -166,7 +166,7 @@ public class ParticipationResource {
         this.groupNotificationService = groupNotificationService;
         this.quizSubmissionService = quizSubmissionService;
         this.gradingScaleService = gradingScaleService;
-        this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
+        this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService.orElse(null);
         this.feedbackRepository = feedbackRepository;
         this.submissionService = submissionService;
     }
