@@ -229,10 +229,11 @@ public class SingleUserNotificationFactory {
         placeholders.add(answerPost.getContent());
         placeholders.add(answerPost.getCreationDate().toString());
         placeholders.add(answerPost.getAuthor().getName());
+        placeholders.add(conversation.getHumanReadableNameForReceiver(answerPost.getAuthor()));
+
         String messageReplyTextType = MESSAGE_REPLY_IN_CONVERSATION_TEXT;
 
-        if (conversation instanceof Channel channel) {
-            placeholders.add(channel.getName());
+        if (conversation instanceof Channel) {
             messageReplyTextType = MESSAGE_REPLY_IN_CHANNEL_TEXT;
         }
 

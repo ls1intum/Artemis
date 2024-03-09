@@ -14,9 +14,7 @@ export class CreateModelingExercisePage {
 
     addCategories(categories: string[]) {
         categories.forEach((category) => {
-            cy.get('#field_categories').type(category);
-            // this line is a hack so the category ends
-            cy.get('#id').click({ force: true });
+            cy.get('#field_categories').type(category).type('{enter}');
         });
     }
 
@@ -26,13 +24,13 @@ export class CreateModelingExercisePage {
 
     save() {
         cy.intercept(MODELING_EXERCISE_BASE).as('createModelingExercise');
-        cy.get('#modeling-exercise-creation-save').click();
+        cy.get('#save-entity').click();
         return cy.wait('@createModelingExercise');
     }
 
     import() {
         cy.intercept(POST, BASE_API + 'modeling-exercises/import/*').as('modelingExerciseImport');
-        cy.get('#modeling-exercise-creation-save').click();
+        cy.get('#save-entity').click();
         return cy.wait('@modelingExerciseImport');
     }
 

@@ -22,14 +22,6 @@ import de.tum.in.www1.artemis.domain.competency.RelationType;
 @Repository
 public interface CompetencyRelationRepository extends JpaRepository<CompetencyRelation, Long> {
 
-    @Query("""
-            SELECT relation
-            FROM CompetencyRelation relation
-            WHERE relation.headCompetency.id = :competencyId
-                OR relation.tailCompetency.id = :competencyId
-            """)
-    Set<CompetencyRelation> findAllByCompetencyId(@Param("competencyId") long competencyId);
-
     @Transactional
     @Modifying
     @Query("""
@@ -105,4 +97,6 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
             SELECT * FROM transitive_closure
             """, nativeQuery = true)
     Set<Long> getMatchingCompetenciesByCompetencyId(@Param("competencyId") long competencyId);
+
+    Set<CompetencyRelation> findAllByHeadCompetencyIdInAndTailCompetencyIdIn(Set<Long> headCompetencyIds, Set<Long> tailCompetencyIds);
 }
