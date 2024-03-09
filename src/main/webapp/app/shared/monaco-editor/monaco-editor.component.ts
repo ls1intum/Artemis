@@ -133,6 +133,55 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         );
     }
 
+    addViewZoneWithWidget(lineNumber: number, id: string, domNode: HTMLElement): string {
+        domNode.style.display = 'unset';
+        domNode.style.width = '100%';
+        const overlayWidget: monaco.editor.IOverlayWidget = {
+            getId(): string {
+                return id;
+            },
+            getPosition(): monaco.editor.IOverlayWidgetPosition | null {
+                return null;
+            },
+            getDomNode(): HTMLElement {
+                return domNode;
+            },
+        };
+
+        const viewZoneDom = document.createElement('div');
+        const viewZone: monaco.editor.IViewZone = {
+            afterLineNumber: lineNumber,
+            domNode: viewZoneDom,
+            onDomNodeTop: (top: number) => {
+                // This links the position of the viewZone and the overlayWidget together.
+                overlayWidget.getDomNode().style.top = top + 'px';
+            },
+            get heightInPx() {
+                // Forces the height of the viewZone to fit the overlayWidget.
+                return overlayWidget.getDomNode().offsetHeight + 2;
+            },
+        };
+
+        let viewZoneId: string | undefined = undefined;
+        this._editor.addOverlayWidget(overlayWidget);
+        this._editor.changeViewZones((changeAccessor) => {
+            viewZoneId = changeAccessor.addZone(viewZone);
+        });
+
+        if (!viewZoneId) {
+            throw new Error('A ViewZone could not be added to the editor.');
+        }
+
+        const resizeObserver = new ResizeObserver(() => {
+            this._editor.changeViewZones((changeAccessor) => {
+                changeAccessor.layoutZone(viewZoneId!);
+            });
+        });
+
+        resizeObserver.observe(overlayWidget.getDomNode());
+
+        return viewZoneId;
+    }
     // TODO: Return value
     private addDecorations(decorations: monaco.editor.IModelDeltaDecoration[]) {
         return this._editor?.createDecorationsCollection(decorations);
