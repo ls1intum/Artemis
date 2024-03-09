@@ -2,12 +2,17 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -255,5 +260,36 @@ public class BuildLogEntryService {
         programmingSubmission.setBuildLogEntries(Collections.emptyList());
         programmingSubmissionRepository.save(programmingSubmission);
         buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
+    }
+
+    public Path saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String submissionId) {
+
+        Path buildLogsPath = Path.of("buildLogs");
+
+        if (!Files.exists(buildLogsPath)) {
+            try {
+                Files.createDirectory(buildLogsPath);
+            }
+            catch (Exception e) {
+                throw new IllegalStateException("Could not create directory for build logs", e);
+            }
+        }
+
+        Path logPath = buildLogsPath.resolve(submissionId + ".log");
+
+        StringBuilder logsStringBuilder = new StringBuilder();
+        for (BuildLogEntry buildLogEntry : buildLogEntries) {
+            logsStringBuilder.append(buildLogEntry.getTime()).append("\n").append(buildLogEntry.getLog());
+        }
+
+        try {
+            FileUtils.writeStringToFile(logPath.toFile(), logsStringBuilder.toString(), StandardCharsets.UTF_8);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return logPath;
+
     }
 }
