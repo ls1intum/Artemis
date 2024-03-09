@@ -204,22 +204,24 @@ describe('Student Exam Timeline Component', () => {
         }
     });
 
-    it.each([{ value: dayjs('2023-01-07').valueOf() }, { value: dayjs('2023-02-07').valueOf() }, { value: dayjs('2023-05-07').valueOf() }])(
+    it.each([0, 1, 2])(
         'should correctly set the values onInputChange',
-        fakeAsync(() => {
+        fakeAsync((index: number) => {
             component.submissionVersions = [submissionVersion];
             component.fileUploadSubmissions = [fileUploadSubmission1];
             component.programmingSubmissions = [programmingSubmission1];
             component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
+            component.timestampIndex = index;
+
             //when
             component.onSliderInputChange();
             fixture.detectChanges();
             //then
-            if (component.timestampsArray[component.timestampIndex] === dayjs('2023-01-07').valueOf()) {
+            if (component.submissionTimeStamps[component.timestampIndex] === dayjs('2023-01-07')) {
                 expect(component.currentSubmission).toEqual(submissionVersion);
                 expect(component.exerciseIndex).toBe(0);
                 expect(component.currentExercise).toEqual(textExercise);
-            } else if (component.timestampsArray[component.timestampIndex] === dayjs('2023-02-07').valueOf()) {
+            } else if (component.submissionTimeStamps[component.timestampIndex] === dayjs('2023-02-07')) {
                 expect(component.currentSubmission).toEqual(programmingSubmission1);
                 expect(component.exerciseIndex).toBe(1);
                 expect(component.currentExercise).toEqual(programmingExercise);
@@ -228,7 +230,7 @@ describe('Student Exam Timeline Component', () => {
                 expect(component.exerciseIndex).toBe(2);
                 expect(component.currentExercise).toEqual(fileUploadExercise);
             }
-            expect(component.selectedTimestamp).toEqual(component.timestampsArray[component.timestampIndex]);
+            expect(component.selectedTimestamp).toEqual(component.submissionTimeStamps[component.timestampIndex].valueOf());
         }),
     );
     it.each([programmingSubmission1, programmingSubmission2, programmingSubmission3])(
