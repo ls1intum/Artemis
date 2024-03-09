@@ -204,41 +204,41 @@ Users can participate in modeling exercises, view their submissions, and view th
 Participate in Modeling Exercise
 """"""""""""""""""""""""""""""""
 
-    - Add UML elements to the canvas
-    - Edit attributes and methods of UML elements
-    - Draw UML relationships between UML elements
-    - Edit UML relationship properties
-    - Submit the diagram
+- Add UML elements to the canvas
+- Edit attributes and methods of UML elements
+- Draw UML relationships between UML elements
+- Edit UML relationship properties
+- Submit the diagram
 
-        .. raw:: html
+.. raw:: html
 
-            <iframe src="https://live.rbg.tum.de/w/artemisintro/42870?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
-                Video tutorial for participating in a modeling exercise on TUM-Live.
-            </iframe>
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/42870?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial for participating in a modeling exercise on TUM-Live.
+    </iframe>
 
 View Modeling Exercise Submission
 """""""""""""""""""""""""""""""""
 
-    - Interact with the submitted diagram
-    - No modification to the submitted diagram is possible
+- Interact with the submitted diagram
+- No modification to the submitted diagram is possible
 
-        .. raw:: html
+.. raw:: html
 
-            <iframe src="https://live.rbg.tum.de/w/artemisintro/42871?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
-                Video tutorial for viewing a modeling exercise submission on TUM-Live.
-            </iframe>
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/42871?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial for viewing a modeling exercise submission on TUM-Live.
+    </iframe>
 
 View Modeling Exercise Result
 """""""""""""""""""""""""""""
 
-    - Click on UML elements and UML relationships to view feedback and grading
-    - See all feedback and grading in a list view
+- Click on UML elements and UML relationships to view feedback and grading
+- See all feedback and grading in a list view
 
-        .. raw:: html
+.. raw:: html
 
-            <iframe src="https://live.rbg.tum.de/w/artemisintro/42872?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
-                Video tutorial for viewing modeling exercise results on TUM-Live.
-            </iframe>
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/42872?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial for viewing modeling exercise results on TUM-Live.
+    </iframe>
 
 Problems
 ^^^^^^^^
