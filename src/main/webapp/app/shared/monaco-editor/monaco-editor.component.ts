@@ -101,6 +101,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.setValue(text);
     }
 
+    setReadOnly(readOnly: boolean, domReadOnly: boolean = false): void {
+        this._editor.updateOptions({
+            readOnly,
+            domReadOnly,
+        });
+    }
+
     changeModel(fileName: string, newFileContent?: string) {
         const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
         const model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(newFileContent ?? '', undefined, uri);
