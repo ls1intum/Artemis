@@ -73,7 +73,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 LEFT JOIN FETCH e.competencies
             WHERE e.id = :exerciseId
             """)
-    Optional<Exercise> findByIdWithCompetencies(@Param("exerciseId") Long exerciseId);
+    Optional<Exercise> findWithCompetenciesById(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT e
@@ -106,7 +106,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 COUNT(e.id)
             )
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND (e.dueDate >= :now OR e.dueDate IS NULL)
             	AND (e.releaseDate <= :now OR e.releaseDate IS NULL)
             GROUP BY TYPE(e)
@@ -125,7 +125,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 COUNT(e.id)
             )
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countExercisesGroupByExerciseType();
@@ -144,7 +144,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 COUNT(e.id)
             )
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
             	AND e.dueDate <= :maxDate
             GROUP BY TYPE(e)
@@ -166,7 +166,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             )
             FROM Exercise e
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
             	AND e.dueDate <= :maxDate
             GROUP BY TYPE(e)
@@ -189,7 +189,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             )
             FROM Exercise e
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
             	AND e.dueDate <= :maxDate
                 AND user.login IN :activeUserLogins
@@ -212,7 +212,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 COUNT(e.id)
             )
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
             	AND e.releaseDate <= :maxDate
             GROUP BY TYPE(e)
@@ -234,7 +234,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             )
             FROM Exercise e
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
             	AND e.releaseDate <= :maxDate
             GROUP BY TYPE(e)
@@ -258,7 +258,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             )
             FROM Exercise e
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
             	AND e.releaseDate <= :maxDate
                 AND user.login IN :activeUserLogins
@@ -275,14 +275,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results
             WHERE e.dueDate >= :time
-                AND c.continuousPlagiarismControlEnabled IS TRUE
+                AND c.continuousPlagiarismControlEnabled = TRUE
             """)
     Set<Exercise> findAllExercisesWithDueDateOnOrAfterAndContinuousPlagiarismControlEnabledIsTrue(@Param("time") ZonedDateTime time);
 
     @Query("""
             SELECT e
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :now
             ORDER BY e.dueDate ASC
             """)
@@ -291,7 +291,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT e
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.assessmentDueDate >= :now
             ORDER BY e.dueDate ASC
             """)
@@ -491,8 +491,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     }
 
     @NotNull
-    default Exercise findByIdWithCompetenciesElseThrow(Long exerciseId) throws EntityNotFoundException {
-        return findByIdWithCompetencies(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+    default Exercise findWithCompetenciesByIdElseThrow(long exerciseId) throws EntityNotFoundException {
+        return findWithCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
     /**
