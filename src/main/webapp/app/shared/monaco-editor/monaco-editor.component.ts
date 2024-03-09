@@ -133,8 +133,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 range: new monaco.Range(d.lineNumber, 0, d.lineNumber, 0),
                 options: {
                     glyphMarginClassName: d.glyphMarginClassName,
-                    glyphMargin: { position: monaco.editor.GlyphMarginLane.Left },
+                    glyphMargin: { position: monaco.editor.GlyphMarginLane.Right },
                     glyphMarginHoverMessage: d.hoverMessage,
+                    marginClassName: 'monaco-error-line',
+                    className: 'monaco-error-line',
+                    isWholeLine: true,
+                    hoverMessage: d.hoverMessage,
                 },
             })),
         );
