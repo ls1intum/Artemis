@@ -220,11 +220,11 @@ describe('Student Exam Timeline Component', () => {
             component.onSliderInputChange();
             fixture.detectChanges();
             //then
-            if (component.submissionTimeStamps[component.timestampIndex] === dayjs('2023-01-07')) {
+            if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-01-07'))) {
                 expect(component.currentSubmission).toEqual(submissionVersion);
                 expect(component.exerciseIndex).toBe(0);
                 expect(component.currentExercise).toEqual(textExercise);
-            } else if (component.submissionTimeStamps[component.timestampIndex] === dayjs('2023-02-07')) {
+            } else if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-02-07'))) {
                 expect(component.currentSubmission).toEqual(programmingSubmission1);
                 expect(component.exerciseIndex).toBe(1);
                 expect(component.currentExercise).toEqual(programmingExercise);
