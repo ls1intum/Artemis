@@ -26,7 +26,7 @@ export class ProgrammingExerciseDetailBuildConfigurationComponent {
         if (!this._editor) {
             return;
         }
-        const lines = this.script.split('\n').length;
+        const lines = this.script?.split('\n').length ?? 0;
         this._editor.getEditor().setOptions({
             animatedScroll: true,
             maxLines: Math.max(30, lines),
