@@ -187,6 +187,10 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         });
     }
 
+    /**
+     * Sets the time frame for the form based on the provided form data.
+     * @param {TutorialGroupFreePeriodFormData} formData - The form data to set the time frame based on.
+     */
     private setFirstTimeFrameInEditMode(formData: TutorialGroupFreePeriodFormData) {
         if (!formData.endDate && !formData.startTime && !formData.endTime) {
             this.setTimeFrame(TimeFrame.Day);
