@@ -10,16 +10,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.google.gson.Gson;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
@@ -35,9 +39,16 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
+    private final BuildScriptGenerationService buildScriptProvider;
+
+    private final AeolusTemplateService aeolusTemplateService;
+
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, BuildScriptGenerationService buildScriptProvider,
+            AeolusTemplateService aeolusTemplateService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+        this.buildScriptProvider = buildScriptProvider;
+        this.aeolusTemplateService = aeolusTemplateService;
     }
 
     @Override
@@ -47,10 +58,17 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         // a submission and running tests is contained in the participation.
     }
 
+    /**
+     * Fetches the default build plan configuration for the given exercise and the windfile for its metadata (docker image etc.).
+     *
+     * @param exercise for which the build plans should be recreated
+     */
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
-        // Not implemented for local CI. no build plans must be (re)created, because all the information for building a submission and running tests is contained in the
-        // participation.
+        String script = buildScriptProvider.getScript(exercise);
+        Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
+        exercise.setBuildScript(script);
+        exercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
     }
 
     @Override
@@ -130,7 +148,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key or null if it can't be found.
-     * @throws BambooException is thrown on casting errors.
+     * @throws LocalCIException is thrown on casting errors.
      */
     @Override
     public String getPlanKey(Object requestBody) throws LocalCIException {

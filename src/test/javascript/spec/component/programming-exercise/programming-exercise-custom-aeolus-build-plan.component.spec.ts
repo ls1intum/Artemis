@@ -14,6 +14,7 @@ import { programmingExerciseCreationConfigMock } from './update-components/progr
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { PROFILE_AEOLUS } from 'app/app.constants';
 import { Observable } from 'rxjs';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     let mockThemeService: ThemeService;
@@ -52,7 +53,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         programmingExercise.windFile = windFile;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, ArtemisTranslatePipe],
             declarations: [ProgrammingExerciseCustomAeolusBuildPlanComponent, MockComponent(FaIconComponent), MockComponent(HelpIconComponent), MockComponent(AceEditorComponent)],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })

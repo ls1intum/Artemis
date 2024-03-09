@@ -55,6 +55,7 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
+import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -140,6 +141,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private consistencyCheckService: ConsistencyCheckService,
         private irisSettingsService: IrisSettingsService,
+        private aeolusService: AeolusService,
     ) {}
 
     ngOnInit() {
@@ -322,6 +324,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        this.checkAndSetWindFile(exercise);
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
             details: [
@@ -419,13 +422,15 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         gitDiffReport: exercise.gitDiffReport,
                     },
                 },
-                !!exercise.buildScript && {
-                    type: DetailType.ProgrammingBuildScriptDetail,
-                    title: 'artemisApp.programmingExercise.buildscript',
-                    data: {
-                        buildScript: exercise.buildScript,
+                !!exercise.buildScript &&
+                    !!exercise.windFile?.metadata?.docker?.image && {
+                        type: DetailType.ProgrammingBuildConfigurationDetail,
+                        title: 'artemisApp.programmingExercise.buildConfiguration',
+                        data: {
+                            buildScript: exercise.buildScript,
+                            dockerImage: exercise.windFile?.metadata?.docker?.image,
+                        },
                     },
-                },
                 {
                     type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.recordTestwiseCoverage',
@@ -701,6 +706,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.alertService.warning('artemisApp.consistencyCheck.inconsistenciesFoundAlert');
                 }
             });
+        }
+    }
+
+    /**
+     * Checks if the build configuration is available and sets the windfile if it is, helpful for reliably displaying
+     * the build configuration in the UI
+     * @param exercise the programming exercise to check
+     */
+    checkAndSetWindFile(exercise: ProgrammingExercise) {
+        if (exercise.buildPlanConfiguration && !exercise.windFile) {
+            exercise.windFile = this.aeolusService.parseWindFile(exercise.buildPlanConfiguration);
         }
     }
 

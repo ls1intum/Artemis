@@ -31,7 +31,7 @@ type ShownDetail =
     | ProgrammingAuxiliaryRepositoryButtonsDetail
     | ProgrammingTestStatusDetail
     | ProgrammingDiffReportDetail
-    | ProgrammingBuildScriptDetail
+    | ProgrammingBuildConfigurationDetail
     | ProgrammingProblemStatementDetail
     | ProgrammingTimelineDetail
     | ProgrammingBuildStatisticsDetail;
@@ -114,9 +114,9 @@ interface ProgrammingDiffReportDetail extends DetailBase {
     data: { addedLineCount: number; removedLineCount: number; isLoadingDiffReport?: boolean; gitDiffReport?: ProgrammingExerciseGitDiffReport };
 }
 
-interface ProgrammingBuildScriptDetail extends DetailBase {
-    type: DetailType.ProgrammingBuildScriptDetail;
-    data: { buildScript: string };
+interface ProgrammingBuildConfigurationDetail extends DetailBase {
+    type: DetailType.ProgrammingBuildConfigurationDetail;
+    data: { buildScript: string; dockerImage: string };
 }
 
 interface ProgrammingProblemStatementDetail extends DetailBase {

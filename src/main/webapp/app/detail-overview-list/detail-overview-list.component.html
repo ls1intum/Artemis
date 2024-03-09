@@ -186,11 +186,9 @@
                             </div>
                         </dd>
                     }
-                    @case (DetailType.ProgrammingBuildScriptDetail) {
+                    @case (DetailType.ProgrammingBuildConfigurationDetail) {
                         <dd id="detail-value-{{ detail.title }}">
-                            <div class="fw-bold">
-                                <jhi-programming-exercise-detail-buildscript [script]="detail.data.buildScript" />
-                            </div>
+                            <jhi-programming-exercise-detail-build-configuration [script]="detail.data.buildScript" [dockerImage]="detail.data.dockerImage" />
                         </dd>
                     }
                     @case (DetailType.ProgrammingProblemStatement) {

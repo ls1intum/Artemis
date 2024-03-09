@@ -2,11 +2,12 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 
 @Component({
-    selector: 'jhi-programming-exercise-detail-buildscript',
-    templateUrl: './programming-exercise-detail-buildscript.component.html',
+    selector: 'jhi-programming-exercise-detail-build-configuration',
+    templateUrl: './programming-exercise-detail-build-configuration.component.html',
 })
-export class ProgrammingExerciseDetailBuildscriptComponent {
+export class ProgrammingExerciseDetailBuildConfigurationComponent {
     @Input() private script: string;
+    @Input() dockerImage: string;
     private _editor?: AceEditorComponent;
 
     @ViewChild('editor', { static: false }) set editor(value: AceEditorComponent) {

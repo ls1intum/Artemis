@@ -35,7 +35,7 @@ export enum DetailType {
     ProgrammingAuxiliaryRepositoryButtons = 'detail-auxiliary-repository-buttons',
     ProgrammingTestStatus = 'detail-test-status',
     ProgrammingDiffReport = 'detail-diff-report',
-    ProgrammingBuildScriptDetail = 'detail-build-script',
+    ProgrammingBuildConfigurationDetail = 'detail-build-configuration',
     ProgrammingProblemStatement = 'detail-problem-statement',
     ProgrammingTimeline = 'detail-timeline',
     ProgrammingBuildStatistics = 'detail-build-statistics',
