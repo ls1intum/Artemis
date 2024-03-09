@@ -33,6 +33,8 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { MatSlider } from '@angular/material/slider';
+import { FormsModule } from 'app/forms/forms.module';
 
 describe('Student Exam Timeline Component', () => {
     let fixture: ComponentFixture<StudentExamTimelineComponent>;
@@ -60,7 +62,7 @@ describe('Student Exam Timeline Component', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FormsModule],
             declarations: [
                 StudentExamTimelineComponent,
                 MockComponent(ProgrammingExerciseExamDiffComponent),
@@ -71,6 +73,7 @@ describe('Student Exam Timeline Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockTranslateValuesDirective,
                 MockComponent(ExamNavigationBarComponent),
+                MockComponent(MatSlider),
             ],
             providers: [
                 {
