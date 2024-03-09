@@ -94,13 +94,26 @@ public class RepositoryAccessService {
 
         // The user is allowed to read the repository if the exercise has started and the user is a student.
         // The other users are allowed to read the repository at any time.
-        if (isStudent && repositoryActionType == RepositoryActionType.READ && exerciseStartDate.isBefore(ZonedDateTime.now())) {
-            return;
+        if (isStudent) {
+            checkIsStudentAllowedToAccessRepositoryConcerningDates(programmingParticipation, repositoryActionType, exerciseStartDate);
         }
 
         // Error case 5: Check if the user is allowed to submit for the exam
-        if (!examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false)) {
+        if (!examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && repositoryActionType == RepositoryActionType.WRITE) {
             throw new AccessForbiddenException();
+        }
+    }
+
+    private void checkIsStudentAllowedToAccessRepositoryConcerningDates(ProgrammingExerciseParticipation programmingParticipation, RepositoryActionType repositoryActionType,
+            ZonedDateTime exerciseStartDate) {
+        if (exerciseStartDate.isAfter(ZonedDateTime.now())) {
+            throw new AccessForbiddenException();
+        }
+        else {
+            if (repositoryActionType != RepositoryActionType.READ && exerciseDateService.isAfterDueDate(programmingParticipation)
+                    && !((StudentParticipation) programmingParticipation).isPracticeMode()) {
+                throw new AccessForbiddenException();
+            }
         }
     }
 

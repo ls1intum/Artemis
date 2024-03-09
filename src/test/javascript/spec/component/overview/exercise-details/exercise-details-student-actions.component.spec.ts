@@ -135,7 +135,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         }),
     );
 
-    it('should create the correct repository URL for missing exerciseID', () => {
+    it('should create the correct repository URL for missing exerciseID in URL', () => {
         // Set up necessary data for the test
         const courseId = 123; // Example course ID
         const exerciseId = 456; // Example exercise ID
