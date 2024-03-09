@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import org.jetbrains.annotations.NotNull;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -25,7 +23,7 @@ public abstract class SubmissionPatch extends DomainObject implements Comparable
     public abstract String getSubmissionExerciseType();
 
     @Override
-    public int compareTo(@NotNull SubmissionPatch o) {
+    public int compareTo(SubmissionPatch o) {
         return this.getId().compareTo(o.getId());
     }
 }

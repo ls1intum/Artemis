@@ -142,9 +142,8 @@ public class ParticipationTeamWebsocketService {
      */
     @MessageMapping("/topic/participations/{participationId}/team/modeling-submissions/update")
     public void updateModelingSubmission(@DestinationVariable Long participationId, @Payload ModelingSubmission modelingSubmission, Principal principal) {
-        // TODO: add a similar method for handling patches
         long start = System.currentTimeMillis();
-        updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions");
+        updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions", false);
         log.info("Websocket endpoint updateModelingSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, modelingSubmission.getId());
     }
 
@@ -172,7 +171,7 @@ public class ParticipationTeamWebsocketService {
     @MessageMapping("/topic/participations/{participationId}/team/text-submissions/update")
     public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
         long start = System.currentTimeMillis();
-        updateSubmission(participationId, textSubmission, principal, "/text-submissions");
+        updateSubmission(participationId, textSubmission, principal, "/text-submissions", true);
         log.info("Websocket endpoint updateTextSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, textSubmission.getId());
     }
 
@@ -183,8 +182,9 @@ public class ParticipationTeamWebsocketService {
      * @param submission      updated modeling text submission
      * @param principal       principal of user who wants to update the submission
      * @param topicPath       path of websocket destination topic where to send the new submission
+     * @param syncTeammates   flag whether to send the updated submission to all teammates
      */
-    private void updateSubmission(@DestinationVariable Long participationId, @Payload Submission submission, Principal principal, String topicPath) {
+    private void updateSubmission(@DestinationVariable Long participationId, @Payload Submission submission, Principal principal, String topicPath, boolean syncTeammates) {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
 
@@ -210,15 +210,16 @@ public class ParticipationTeamWebsocketService {
             throw new IllegalArgumentException("Submission type '" + submission.getType() + "' not allowed.");
         }
 
-        // update the last action date for the user and send out list of team members
-        updateValue(lastActionTracker, participationId, principal.getName());
-        sendOnlineTeamStudents(participationId);
+        if (syncTeammates) {
+            // update the last action date for the user and send out list of team members
+            updateValue(lastActionTracker, participationId, principal.getName());
+            sendOnlineTeamStudents(participationId);
 
-        SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
-        websocketMessagingService.sendMessage(getDestination(participationId, topicPath), payload);
+            SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
+            websocketMessagingService.sendMessage(getDestination(participationId, topicPath), payload);
+        }
     }
 
-    // TODO: should this apply the patch to the state or just relay?
     private void patchSubmission(@DestinationVariable Long participationId, @Payload SubmissionPatch submissionPatch, Principal principal, String topicPath) {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();

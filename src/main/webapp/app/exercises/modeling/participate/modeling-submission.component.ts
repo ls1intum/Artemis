@@ -138,7 +138,7 @@ export class ModelingSubmissionComponent implements OnInit, AfterViewChecked, On
                         next: (modelingSubmission) => {
                             this.updateModelingSubmission(modelingSubmission);
                             if (this.modelingExercise.teamMode) {
-                                // this.setupSubmissionStreamForTeam();
+                                this.setupSubmissionStreamForTeam();
                                 this.setupSubmissionPatchStreamForTeam();
                             } else {
                                 this.setAutoSaveTimer();
@@ -495,10 +495,6 @@ export class ModelingSubmissionComponent implements OnInit, AfterViewChecked, On
     }
 
     onReceiveSubmissionPatchFromTeam(submissionPatch: ModelingSubmissionPatch) {
-        // FIXME: this suppresses stuttering prevention. otherwise the clients
-        //        seem to not get confirmation from the server and keep locks
-        //        on their local model.
-        // submissionPatch.patch.forEach(p => { delete p['hash']});
         this.modelingEditor?.apollonEditor?.importPatch(submissionPatch.patch);
     }
 
