@@ -142,7 +142,8 @@ export class CodeEditorMonacoComponent implements AfterViewInit, OnChanges {
             buildAnnotations
                 .filter((a) => a.fileName === this.selectedFile)
                 .map((a) => ({
-                    lineNumber: a.row,
+                    // TODO: Lines don't align
+                    lineNumber: a.row + 1,
                     hoverMessage: { value: '**' + a.type + ': ' + a.text + '**' },
                     glyphMarginClassName: 'codicon-error monaco-error-glyph',
                 })),
