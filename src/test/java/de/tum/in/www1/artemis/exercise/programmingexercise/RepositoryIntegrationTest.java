@@ -269,6 +269,21 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetFileBeforeExamExerciseStartForbidden() throws Exception {
+        programmingExercise = createProgrammingExerciseForExam();
+        programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
+        programmingExercise.setStartDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        Exam exam = programmingExercise.getExerciseGroup().getExam();
+        examRepository.save(exam);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+        request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.FORBIDDEN, byte[].class, params);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithContent() throws Exception {
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content", HttpStatus.OK, String.class, String.class);
