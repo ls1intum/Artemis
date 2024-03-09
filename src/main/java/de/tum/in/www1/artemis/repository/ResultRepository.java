@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.util.Arrays.asList;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
@@ -13,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -39,6 +41,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Result entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ResultRepository extends JpaRepository<Result, Long> {
 
@@ -184,10 +187,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 JOIN p.results r
                 JOIN p.exercise e
             WHERE e.id = :exerciseId
-                AND p.testRun IS FALSE
+                AND p.testRun = FALSE
                 AND r.assessor IS NOT NULL
-                AND r.rated IS TRUE
-                AND r.submission.submitted IS TRUE
+                AND r.rated = TRUE
+                AND r.submission.submitted = TRUE
                 AND r.completionDate IS NOT NULL
                 AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
             """)
@@ -203,10 +206,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 JOIN p.submissions s
                 JOIN s.results r
             WHERE p.exercise.id = :exerciseId
-                AND p.testRun IS FALSE
-                AND s.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
-                AND r.rated IS TRUE
+                AND r.rated = TRUE
                 AND r.assessor IS NOT NULL
             GROUP BY p.id
             """)
@@ -218,8 +221,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 JOIN p.submissions s
                 JOIN s.results r
             WHERE p.exercise.id = :exerciseId
-                AND p.testRun IS FALSE
-                AND s.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
                 AND r.completionDate IS NULL
                 AND r.assessor.id <> :tutorId
             """)
@@ -237,10 +240,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 JOIN p.submissions s
                 JOIN s.results r
             WHERE p.exercise.exerciseGroup.exam.id = :examId
-                AND p.testRun IS FALSE
-                AND s.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
-                AND r.rated IS TRUE
+                AND r.rated = TRUE
                 AND r.assessor IS NOT NULL
             GROUP BY p.id
             """)
@@ -256,7 +259,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             WHERE p.exercise.id = :exerciseId
                 AND r.assessor IS NOT NULL
                 AND r.assessmentType IN :types
-                AND r.rated IS TRUE
+                AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
               """)
@@ -269,7 +272,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             WHERE p.exercise.id = :exerciseId
                 AND r.assessor IS NOT NULL
                 AND r.assessmentType IN :types
-                AND r.rated IS FALSE
+                AND r.rated = FALSE
                 AND r.completionDate IS NOT NULL
                 AND p.exercise.dueDate IS NOT NULL
                 AND r.submission.submissionDate > p.exercise.dueDate
@@ -316,7 +319,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND p.student.id = :studentId
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
-                AND r.rated IS TRUE
+                AND r.rated = TRUE
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
@@ -332,7 +335,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND p.team.id = :teamId
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
-                AND r.rated IS TRUE
+                AND r.rated = TRUE
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
@@ -494,7 +497,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -517,7 +520,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -537,7 +540,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -546,7 +549,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 JOIN e.exerciseGroup eg
                 JOIN eg.exam ex
                 JOIN r.assessor a
-                LEFT JOIN FETCH Rating rating on rating.result = r
+                LEFT JOIN FETCH Rating rating ON rating.result = r
             WHERE r.completionDate IS NOT NULL
                 AND ex.id = :examId
             GROUP BY r.assessor.id

@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.repository.metis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.*;
 
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -22,6 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the Message (Post) entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ConversationMessageRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
 
@@ -90,7 +93,7 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
                 LEFT JOIN post.tags tag
                 LEFT JOIN Channel channel ON channel.id = post.conversation.id
             WHERE channel.course.id = :courseId
-                AND channel.isCourseWide IS TRUE
+                AND channel.isCourseWide = TRUE
             """)
     List<String> findPostTagsForCourse(@Param("courseId") Long courseId);
 }

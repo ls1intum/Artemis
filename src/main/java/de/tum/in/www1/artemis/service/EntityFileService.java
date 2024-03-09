@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
@@ -8,15 +10,17 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Service for handling file operations for entities.
  */
+@Profile(PROFILE_CORE)
 @Service
+@Deprecated(forRemoval = true)
 public class EntityFileService {
 
     private static final Logger log = LoggerFactory.getLogger(EntityFileService.class);
@@ -37,6 +41,7 @@ public class EntityFileService {
      * @return the new file path as string
      */
     @Nonnull
+    @Deprecated(forRemoval = true)
     public String moveTempFileBeforeEntityPersistence(@Nonnull String entityFilePath, @Nonnull Path targetFolder, boolean keepFilename) {
         return moveFileBeforeEntityPersistenceWithIdIfIsTemp(entityFilePath, targetFolder, keepFilename, null);
     }
@@ -51,23 +56,18 @@ public class EntityFileService {
      * @return the new file path as string
      */
     @Nonnull
+    @Deprecated(forRemoval = true)
     public String moveFileBeforeEntityPersistenceWithIdIfIsTemp(@Nonnull String entityFilePath, @Nonnull Path targetFolder, boolean keepFilename, @Nullable Long entityId) {
         URI filePath = URI.create(entityFilePath);
         String filename = Path.of(entityFilePath).getFileName().toString();
-        String extension = FilenameUtils.getExtension(filename);
         try {
             Path source = FilePathService.actualPathForPublicPathOrThrow(filePath);
             if (!source.startsWith(FilePathService.getTempFilePath())) {
                 return entityFilePath;
             }
             Path target;
-            if (keepFilename) {
-                target = targetFolder.resolve(filename);
-            }
-            else {
-                String generatedFilename = fileService.generateFilename(fileService.generateTargetFilenameBase(targetFolder), extension);
-                target = targetFolder.resolve(generatedFilename);
-            }
+            String generatedFilename = fileService.generateFilename(fileService.generateTargetFilenameBase(targetFolder), filename, keepFilename);
+            target = targetFolder.resolve(generatedFilename);
             // remove target file before copying, because moveFile() ignores CopyOptions
             if (target.toFile().exists()) {
                 FileUtils.delete(target.toFile());
@@ -96,6 +96,7 @@ public class EntityFileService {
      * @return the new file path as string, null if no file exists
      */
     @Nullable
+    @Deprecated(forRemoval = true)
     public String handlePotentialFileUpdateBeforeEntityPersistence(@Nonnull Long entityId, @Nullable String oldEntityFilePath, @Nullable String newEntityFilePath,
             @Nonnull Path targetFolder, boolean keepFilename) {
         String resultingPath = newEntityFilePath;
