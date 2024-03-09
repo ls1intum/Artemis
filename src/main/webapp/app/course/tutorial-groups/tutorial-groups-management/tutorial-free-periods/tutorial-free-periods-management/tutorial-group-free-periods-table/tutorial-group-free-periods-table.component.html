@@ -14,7 +14,7 @@
         </thead>
         <tbody>
             @for (freePeriod of tutorialGroupFreePeriods; track freePeriod) {
-                <tr [ngClass]="{ 'opacity-50': isInThePast(freePeriod) }" class="free-period-row">
+                <tr [ngClass]="{ 'text-past': isInThePast(freePeriod) }" class="free-period-row">
                     <td class="col-1">
                         {{ freePeriod.id }}
                     </td>

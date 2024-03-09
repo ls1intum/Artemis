@@ -5,13 +5,18 @@
 .free-period-row {
     .extra-buttons {
         visibility: hidden;
-        //opacity: 1 !important;
     }
 
     &:hover {
         .extra-buttons {
             visibility: visible;
         }
+    }
+}
+
+tr.text-past {
+    td {
+        color: gray;
     }
 }
 
