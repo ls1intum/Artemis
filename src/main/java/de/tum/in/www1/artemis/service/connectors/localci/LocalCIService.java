@@ -65,6 +65,9 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
+        if (exercise == null) {
+            return;
+        }
         String script = buildScriptProvider.getScript(exercise);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
         exercise.setBuildScript(script);

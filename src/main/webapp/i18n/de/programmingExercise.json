@@ -106,6 +106,7 @@
             "publishBuildPlanUrl": "Build-Plan veröffentlichen",
             "customizeBuildPlan": "Build-Plan anpassen",
             "customizeBuildPlanWithAeolus": "Build-Plan mit Aeolus anpassen",
+            "revertToTemplateBuildPlan": "Falls Sie mit ihrem Build Plan nicht zufrieden sind, können Sie ihn mit dem Zurücksetzen Knopf auf die Vorlage des Build Plans zurücksetzen.",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
             "script": "Script",
             "parameters": "Parameter",

@@ -6,7 +6,7 @@ import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-ed
     templateUrl: './programming-exercise-detail-build-configuration.component.html',
 })
 export class ProgrammingExerciseDetailBuildConfigurationComponent {
-    @Input() private script: string;
+    @Input() script: string;
     @Input() dockerImage: string;
     private _editor?: AceEditorComponent;
 
