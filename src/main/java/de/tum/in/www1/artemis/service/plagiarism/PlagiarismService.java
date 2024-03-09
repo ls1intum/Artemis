@@ -68,6 +68,11 @@ public class PlagiarismService {
         submission.setSubmissionDate(null);
     }
 
+    public boolean hasPlagiarismComparison(long submissionId) {
+        var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
+        return comparisonOptional.filter(not(Set::isEmpty)).isPresent();
+    }
+
     /**
      * A student should not see both answers from both students for the comparison before the due date
      *

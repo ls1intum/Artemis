@@ -66,9 +66,17 @@ public class RepositoryAccessService {
         var exerciseStartDate = programmingExercise.getParticipationStartDate();
         var exerciseDueDate = programmingExercise.isExamExercise() ? programmingExercise.getExerciseGroup().getExam().getEndDate() : programmingExercise.getDueDate();
         boolean hasAccessToSubmission = plagiarismService.hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), exerciseDueDate);
-        if (!hasPermissions || !hasAccessToSubmission) {
+        boolean hasPlagiarismComparison = plagiarismService.hasPlagiarismComparison(programmingParticipation.getId());
+
+        if (!hasPermissions) {
+            if (!(hasAccessToSubmission && hasPlagiarismComparison)) {
+                throw new AccessForbiddenException();
+            }
+        }
+        else if (!hasAccessToSubmission && hasPlagiarismComparison) {
             throw new AccessForbiddenException();
         }
+
         boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isStudent = authorizationCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isTeachingAssistant = !isStudent && !isAtLeastEditor;
@@ -113,8 +121,8 @@ public class RepositoryAccessService {
             checkAccessRepositoryForReset(programmingParticipation, isStudent, programmingExercise);
         }
 
-        if (isStudent && (repositoryActionType != RepositoryActionType.READ || exerciseStartDate.isAfter(ZonedDateTime.now()))) {
-            throw new AccessForbiddenException();
+        if (isStudent && repositoryActionType == RepositoryActionType.READ && exerciseStartDate.isBefore(ZonedDateTime.now())) {
+            return;
         }
 
         // Error case 5: Before exam working time, students are not allowed to read or submit to the repository for an exam exercise.
