@@ -307,7 +307,7 @@ public class ProgrammingExerciseParticipationResource {
 
     /**
      * Checks if the user has access to the participation.
-     * If the exercise has not started yet and the user is a student access is denied.
+     * If the exercise has not started yet and the user is a student, access is denied.
      *
      * @param participation the participation to check
      */

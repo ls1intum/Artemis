@@ -324,8 +324,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student2Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
         localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student2Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
 
-        // Before the start date of the exercise, students aren't able to access their repositories. This is consistent with the behaviour of
-        // Bitbucket and GitLab. Usually, the exercise will be configured with a start date in the future and students will not be able to create a repository before that.
+        // Before the start date of the exercise, students aren't able to access their repositories. Usually, the exercise will be configured with a start date in the future and
+        // students will not be able to create a repository before that.
         // Teaching assistants should be able to fetch and instructors should be able to fetch and push.
         programmingExercise.setStartDate(ZonedDateTime.now().plusHours(1));
         request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);

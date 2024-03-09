@@ -87,17 +87,17 @@ public class RepositoryAccessService {
             throw new AccessUnauthorizedException();
         }
 
-        // Error case 4: The student can reset the repository only before and a tutor/instructor only after the due date has passed
+        // Error case 5: The student can reset the repository only before and a tutor/instructor only after the due date has passed
         if (repositoryActionType == RepositoryActionType.RESET) {
             checkAccessRepositoryForReset(programmingParticipation, isStudent, programmingExercise);
         }
 
-        // Error case 5: Check if the user is allowed to access the repository concerning the dates
+        // Error case 6: Check if the user is allowed to access the repository concerning the dates
         if (isStudent) {
             checkIsStudentAllowedToAccessRepositoryConcerningDates(programmingParticipation, repositoryActionType, exerciseStartDate);
         }
 
-        // Error case 6: Check if the user is allowed to submit for the exam
+        // Error case 7: Check if the user is allowed to submit for the exam
         if (repositoryActionType == RepositoryActionType.WRITE && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false)) {
             throw new AccessForbiddenException();
         }
