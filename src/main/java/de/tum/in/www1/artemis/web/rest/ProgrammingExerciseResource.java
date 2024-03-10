@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaModuleService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -44,9 +45,9 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionConfigHelper;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -116,6 +117,8 @@ public class ProgrammingExerciseResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final Optional<AthenaModuleService> athenaModuleService;
+
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
@@ -125,7 +128,8 @@ public class ProgrammingExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProfileService profileService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, InstanceMessageSendService instanceMessageSendService) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, InstanceMessageSendService instanceMessageSendService,
+            Optional<AthenaModuleService> athenaModuleService) {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.profileService = profileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -150,6 +154,7 @@ public class ProgrammingExerciseResource {
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.channelRepository = channelRepository;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.athenaModuleService = athenaModuleService;
     }
 
     /**
@@ -203,6 +208,10 @@ public class ProgrammingExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExercise, course);
+
+        // Check that only allowed athena modules are used
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME),
+                () -> programmingExercise.setFeedbackSuggestionModule(null));
 
         try {
             // Setup all repositories etc
@@ -274,6 +283,12 @@ public class ProgrammingExerciseResource {
         }
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
+
+        // Check that only allowed Athena modules are used
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
+                () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
+        // Changing Athena module after the due date has passed is not allowed
+        athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
 
         // Ignore changes to the default branch
         updatedProgrammingExercise.setBranch(programmingExerciseBeforeUpdate.getBranch());
@@ -590,7 +605,7 @@ public class ProgrammingExerciseResource {
      */
     @GetMapping(PROGRAMMING_EXERCISES)
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
+    public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
@@ -608,7 +623,7 @@ public class ProgrammingExerciseResource {
      */
     @GetMapping(PROGRAMMING_EXERCISES + "/with-sca")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesWithSCAOnPage(PageableSearchDTO<String> search,
+    public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesWithSCAOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter,
             @RequestParam ProgrammingLanguage programmingLanguage) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -849,7 +864,8 @@ public class ProgrammingExerciseResource {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId).orElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
-        var buildLogStatistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(programmingExercise);
+        var buildLogStatistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(programmingExercise);
         return ResponseEntity.ok(buildLogStatistics);
     }
+
 }

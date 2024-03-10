@@ -1,18 +1,18 @@
 import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
-import { BasePageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { Competency } from 'app/entities/competency.model';
 
 @Component({
-    selector: 'jhi-competency-table',
-    templateUrl: './competency-table.component.html',
+    selector: 'jhi-import-competencies-table',
+    templateUrl: './import-competencies-table.component.html',
 })
-export class CompetencyTableComponent implements OnInit {
+export class ImportCompetenciesTableComponent implements OnInit {
     @Input() content: SearchResult<Competency>;
-    @Input() search: BasePageableSearch;
+    @Input() search: PageableSearch;
     @Input() displayPagination = true;
 
-    @Output() searchChange = new EventEmitter<BasePageableSearch>();
+    @Output() searchChange = new EventEmitter<PageableSearch>();
 
     @ContentChild(TemplateRef) buttonsTemplate: TemplateRef<any>;
 

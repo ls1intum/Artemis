@@ -379,13 +379,13 @@ class ProgrammingExerciseIntegrationTestService {
         // Create the eclipse .project file which will be modified.
         Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
         File projectFile = new File(projectFilePath.toString());
-        String projectFileContents = de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources("test-data/repository-export/sample.project");
+        String projectFileContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/sample.project");
         FileUtils.writeStringToFile(projectFile, projectFileContents, StandardCharsets.UTF_8);
 
         // Create the maven .pom file
         Path pomPath = Path.of(repository1.getLocalPath().toString(), "pom.xml");
         File pomFile = new File(pomPath.toString());
-        String pomContents = de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources("test-data/repository-export/pom.xml");
+        String pomContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/pom.xml");
         FileUtils.writeStringToFile(pomFile, pomContents, StandardCharsets.UTF_8);
 
         var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), userPrefix + "student1");

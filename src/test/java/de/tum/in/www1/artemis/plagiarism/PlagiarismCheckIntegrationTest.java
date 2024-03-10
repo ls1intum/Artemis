@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 
 class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -30,7 +30,7 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @BeforeAll
     static void initTestCase() throws IOException {
-        modelingSubmission = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        modelingSubmission = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
     }
 
     @Test
