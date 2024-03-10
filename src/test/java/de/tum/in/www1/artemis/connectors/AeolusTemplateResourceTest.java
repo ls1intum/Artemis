@@ -64,7 +64,6 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
             String template = request.get("/api/aeolus/templates/" + entry.getKey(), HttpStatus.OK, String.class);
             assertThat(template).isNotEmpty();
             Windfile windfile = Windfile.deserialize(template);
-            System.out.println(entry.getKey());
             this.assertWindfileIsCorrect(windfile, entry.getValue());
         }
     }
