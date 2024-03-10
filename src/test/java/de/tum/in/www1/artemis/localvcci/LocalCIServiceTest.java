@@ -2,11 +2,16 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.Course;
@@ -15,6 +20,9 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.BuildStatus;
 
 class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -30,6 +38,12 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private BuildScriptProvider buildScriptProvider;
+
+    @Autowired
+    private AeolusTemplateService aeolusTemplateService;
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testReturnCorrectBuildStatus() {
@@ -44,6 +58,23 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     void testHealth() {
         var health = continuousIntegrationService.health();
         assertThat(health.isUp()).isTrue();
+    }
+
+    @Test
+    void testRecreateBuildPlanForExercise() throws IOException {
+        String script = "echo 'Hello, World!'";
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise.setBuildScript(script);
+        exercise.setBuildPlanConfiguration(null);
+        continuousIntegrationService.recreateBuildPlansForExercise(exercise);
+        script = buildScriptProvider.getScriptFor(exercise.getProgrammingLanguage(), Optional.of(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
+                exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
+        Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
+        assertThat(exercise.getBuildPlanConfiguration()).isEqualTo(new Gson().toJson(windfile));
+        assertThat(exercise.getBuildScript()).isEqualTo(script);
+        // test that the method does not throw an exception when the exercise is null
+        continuousIntegrationService.recreateBuildPlansForExercise(null);
     }
 
     @Test
