@@ -121,7 +121,7 @@ export class CodeEditorMonacoComponent implements AfterViewInit, OnChanges {
         // TODO: Maybe there can be more than one feedback item per line.
         const feedbackNode = [...this.inlineFeedbackComponents].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
         // TODO: The lines don't align with monaco (off by 1)
-        this.editor.addViewZoneWithWidget(line + 1, 'foo-' + feedback.id, feedbackNode);
+        this.editor.addLineWidget(line + 1, 'feedback-' + feedback.id, feedbackNode);
     }
 
     protected filterFeedbackForFile(feedbacks: Feedback[]): Feedback[] {

@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { MonacoEditorAnnotation, MonacoEditorAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-annotation.model';
+import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-line-widget.model';
 
 export type EditorPosition = { lineNumber: number; column: number };
 export type MarkdownString = monaco.IMarkdownString;
@@ -20,7 +21,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private _editor: monaco.editor.IStandaloneCodeEditor;
     private themeSubscription?: Subscription;
     private models: monaco.editor.IModel[] = [];
-    private overlayWidgets: monaco.editor.IOverlayWidget[] = [];
+    private editorLineWidgets: MonacoEditorLineWidget[] = [];
     private editorAnnotations: MonacoEditorAnnotation[] = [];
 
     constructor(private themeService: ThemeService) {}
@@ -129,8 +130,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     private disposeWidgets() {
-        this.overlayWidgets.forEach((o) => this._editor.removeOverlayWidget(o));
-        this.overlayWidgets = [];
+        this.editorLineWidgets.forEach((o) => {
+            o.dispose();
+            this._editor.removeOverlayWidget(o);
+        });
+        this.editorLineWidgets = [];
         this.editorAnnotations.forEach((o) => {
             o.dispose();
             this._editor.removeGlyphMarginWidget(o);
@@ -183,54 +187,28 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    addViewZoneWithWidget(lineNumber: number, id: string, domNode: HTMLElement): string {
-        domNode.style.display = 'unset';
-        domNode.style.width = '100%';
-        const overlayWidget: monaco.editor.IOverlayWidget = {
-            getId(): string {
-                return id;
+    addLineWidget(lineNumber: number, id: string, domNode: HTMLElement) {
+        const lineWidget = new MonacoEditorLineWidget(
+            id,
+            domNode,
+            lineNumber,
+            (viewZone) => {
+                let viewZoneId: string | undefined;
+                this._editor.changeViewZones((changeAccessor) => {
+                    viewZoneId = changeAccessor.addZone(viewZone);
+                });
+                if (!viewZoneId) throw new Error('Could not add a ViewZone to the editor.');
+                return viewZoneId;
             },
-            getPosition(): monaco.editor.IOverlayWidgetPosition | null {
-                return null;
+            (viewZoneId: string) => {
+                this._editor.changeViewZones((changeAccessor) => {
+                    changeAccessor.layoutZone(viewZoneId);
+                });
             },
-            getDomNode(): HTMLElement {
-                return domNode;
-            },
-        };
+        );
 
-        const viewZoneDom = document.createElement('div');
-        const viewZone: monaco.editor.IViewZone = {
-            afterLineNumber: lineNumber,
-            domNode: viewZoneDom,
-            onDomNodeTop: (top: number) => {
-                // This links the position of the viewZone and the overlayWidget together.
-                overlayWidget.getDomNode().style.top = top + 'px';
-            },
-            get heightInPx() {
-                // Forces the height of the viewZone to fit the overlayWidget.
-                return overlayWidget.getDomNode().offsetHeight + 2;
-            },
-        };
-
-        let viewZoneId: string | undefined = undefined;
-        this._editor.addOverlayWidget(overlayWidget);
-        this._editor.changeViewZones((changeAccessor) => {
-            viewZoneId = changeAccessor.addZone(viewZone);
-        });
-
-        if (!viewZoneId) {
-            throw new Error('A ViewZone could not be added to the editor.');
-        }
-
-        const resizeObserver = new ResizeObserver(() => {
-            this._editor.changeViewZones((changeAccessor) => {
-                changeAccessor.layoutZone(viewZoneId!);
-            });
-        });
-
-        resizeObserver.observe(overlayWidget.getDomNode());
-        this.overlayWidgets.push(overlayWidget);
-        return viewZoneId;
+        this._editor.addOverlayWidget(lineWidget);
+        this.editorLineWidgets.push(lineWidget);
     }
 
     private addDecorations(decorations: monaco.editor.IModelDeltaDecoration[]): monaco.editor.IEditorDecorationsCollection {
