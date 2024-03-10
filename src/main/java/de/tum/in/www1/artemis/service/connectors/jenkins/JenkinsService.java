@@ -62,7 +62,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    private Optional<AeolusTemplateService> aeolusTemplateService;
+    private final Optional<AeolusTemplateService> aeolusTemplateService;
 
     public JenkinsService(JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
             @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
@@ -94,15 +94,27 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         deleteBuildPlan(projectKey, exercise.getTemplateBuildPlanId());
         deleteBuildPlan(projectKey, exercise.getSolutionBuildPlanId());
 
-        if (!exercise.getBuildPlanConfiguration().isEmpty() && aeolusTemplateService.isPresent()) {
-            Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(exercise);
-            if (windfile != null) {
-                exercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
-            }
+        if (exercise.getBuildPlanConfiguration() != null) {
+            resetCustomBuildPlanToTemplate(exercise);
         }
 
         jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURL(RepositoryType.TEMPLATE));
         jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURL(RepositoryType.SOLUTION));
+    }
+
+    /**
+     * Reset the custom build plan to the template build plan configuration provided by the Aeolus template service.
+     *
+     * @param exercise the programming exercise for which the build plan should be reset
+     */
+    private void resetCustomBuildPlanToTemplate(ProgrammingExercise exercise) {
+        if (aeolusTemplateService.isEmpty()) {
+            return;
+        }
+        Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(exercise);
+        if (windfile != null) {
+            exercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
+        }
     }
 
     @Override
