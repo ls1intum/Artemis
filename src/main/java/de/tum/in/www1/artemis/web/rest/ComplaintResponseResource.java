@@ -16,6 +16,8 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.ComplaintResponseService;
+import de.tum.in.www1.artemis.service.dto.Action;
+import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -43,12 +45,12 @@ public class ComplaintResponseResource {
     }
 
     /**
-     * POST /complaint-responses/complaint/:complaintId/create-lock: locks the complaint by creating an empty complaint response
+     * POST /complaint/{complaintId}/response: locks the complaint by creating an empty complaint response
      *
      * @param complaintId - id of the complaint to lock
      * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
-    @PostMapping("complaint-responses/complaint/{complaintId}/create-lock")
+    @PostMapping("complaint/{complaintId}/response")
     @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> lockComplaint(@PathVariable long complaintId) {
         log.debug("REST request to create empty complaint response for complaint with id: {}", complaintId);
@@ -60,29 +62,12 @@ public class ComplaintResponseResource {
     }
 
     /**
-     * POST /complaint-responses/complaint/:complaintId/refresh-lock: locks the complaint again by replace the empty complaint response
-     *
-     * @param complaintId - id of the complaint to lock again
-     * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
-     */
-    @PostMapping("complaint-responses/complaint/{complaintId}/refresh-lock")
-    @EnforceAtLeastTutor
-    public ResponseEntity<ComplaintResponse> refreshLockOnComplaint(@PathVariable long complaintId) {
-        log.debug("REST request to refresh empty complaint response for complaint with id: {}", complaintId);
-        Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
-        ComplaintResponse savedComplaintResponse = complaintResponseService.refreshComplaintResponseRepresentingLock(complaint);
-        // always remove the student from the complaint as we don't need it in the corresponding client use case
-        savedComplaintResponse.getComplaint().filterSensitiveInformation();
-        return new ResponseEntity<>(savedComplaintResponse, HttpStatus.CREATED);
-    }
-
-    /**
-     * DELETE /complaint-responses/complaint/:complaintId/remove-lock: removes the lock on a complaint by removing the empty complaint response
+     * DELETE /complaint/{complaintId}/response: removes the lock on a complaint by removing the empty complaint response
      *
      * @param complaintId - id of the complaint to remove the lock for
      * @return the ResponseEntity with status 200 (Ok)
      */
-    @DeleteMapping("complaint-responses/complaint/{complaintId}/remove-lock")
+    @DeleteMapping("complaint/{complaintId}/response")
     @EnforceAtLeastTutor
     public ResponseEntity<Void> removeLockFromComplaint(@PathVariable long complaintId) {
         log.debug("REST request to remove the lock on the complaint with the id: {}", complaintId);
@@ -92,21 +77,47 @@ public class ComplaintResponseResource {
     }
 
     /**
-     * PUT /complaint-responses/complaint/:complaintId/resolve: resolve a complaint by updating the complaint and the associated empty complaint response
+     * PUT /complaint/{complaintId}/response: resolve a complaint by updating the complaint and the associated empty complaint response
      *
-     * @param complaintId       - id of the complaint to resolve
-     * @param complaintResponse the complaint response used for resolving the complaint
-     * @return the ResponseEntity with status 200 (Ok) and with body the complaint response used for resolving the complaint
+     * @param complaintId             - id of the complaint to resolve
+     * @param complaintResponseUpdate the complaint response used for resolving the complaint
+     * @return if action is REFRESH_LOCK: status 201 (Created) and with body the empty complaint response
+     *         if action is RESOLVE_COMPLAINT: the ResponseEntity with status 200 (Ok) and with body the complaint response used for resolving the complaint
      */
-    @PutMapping("complaint-responses/complaint/{complaintId}/resolve")
+    @PatchMapping("complaint/{complaintId}/response")
     @EnforceAtLeastTutor
-    public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponse complaintResponse, @PathVariable long complaintId) {
+    public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponseUpdateDTO complaintResponseUpdate, @PathVariable long complaintId) {
+        Action action = complaintResponseUpdate.getAction();
+
+        switch (action) {
+            case REFRESH_LOCK:
+                return refreshComplaintResponse(complaintId);
+            case RESOLVE_COMPLAINT:
+                return resolveComplaintResponse(complaintResponseUpdate, complaintId);
+            default:
+                return ResponseEntity.badRequest().build();
+        }
+    }
+
+    private ResponseEntity<ComplaintResponse> refreshComplaintResponse(long complaintId) {
+        log.debug("REST request to refresh empty complaint response for complaint with id: {}", complaintId);
+        Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
+        ComplaintResponse savedComplaintResponse = complaintResponseService.refreshComplaintResponseRepresentingLock(complaint);
+        removeSensitiveInformation(savedComplaintResponse);
+        return new ResponseEntity<>(savedComplaintResponse, HttpStatus.CREATED);
+    }
+
+    private ResponseEntity<ComplaintResponse> resolveComplaintResponse(ComplaintResponseUpdateDTO complaintResponseUpdate, long complaintId) {
         log.debug("REST request to resolve the complaint with id: {}", complaintId);
         getComplaintFromDatabaseAndCheckAccessRights(complaintId);
-        ComplaintResponse updatedComplaintResponse = complaintResponseService.resolveComplaint(complaintResponse);
-        // always remove the student from the complaint as we don't need it in the corresponding client use case
-        updatedComplaintResponse.getComplaint().filterSensitiveInformation();
+        ComplaintResponse updatedComplaintResponse = complaintResponseService.resolveComplaint(new ComplaintResponse(complaintResponseUpdate));
+        removeSensitiveInformation(updatedComplaintResponse);
         return ResponseEntity.ok().body(updatedComplaintResponse);
+    }
+
+    private void removeSensitiveInformation(ComplaintResponse complaintResponse) {
+        // Always remove the student from the complaint as we don't need it in the corresponding client use case
+        complaintResponse.getComplaint().filterSensitiveInformation();
     }
 
     private Complaint getComplaintFromDatabaseAndCheckAccessRights(long complaintId) {

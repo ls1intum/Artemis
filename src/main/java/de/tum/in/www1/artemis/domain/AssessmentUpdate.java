@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
+
 /**
  * A helper object that aggregates a feedback list and a complaint response which is used to update an assessment after a complaint.
  */
@@ -16,7 +18,7 @@ public class AssessmentUpdate {
     /**
      * The corresponding complaint response
      */
-    private ComplaintResponse complaintResponse;
+    private ComplaintResponseUpdateDTO complaintResponse;
 
     public List<Feedback> getFeedbacks() {
         return feedbacks;
@@ -31,15 +33,15 @@ public class AssessmentUpdate {
         return this;
     }
 
-    public ComplaintResponse getComplaintResponse() {
+    public ComplaintResponseUpdateDTO getComplaintResponse() {
         return complaintResponse;
     }
 
-    public void setComplaintResponse(ComplaintResponse complaintResponse) {
+    public void setComplaintResponse(ComplaintResponseUpdateDTO complaintResponse) {
         this.complaintResponse = complaintResponse;
     }
 
-    public AssessmentUpdate complaintResponse(ComplaintResponse complaintResponse) {
+    public AssessmentUpdate complaintResponse(ComplaintResponseUpdateDTO complaintResponse) {
         this.complaintResponse = complaintResponse;
         return this;
     }

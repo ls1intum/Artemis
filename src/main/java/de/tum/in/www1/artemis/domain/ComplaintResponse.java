@@ -16,6 +16,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
+
 /**
  * A ComplaintResponse.
  *
@@ -75,6 +77,16 @@ public class ComplaintResponse extends AbstractAuditingEntity {
         }
         ZonedDateTime createdDateInUTC = ZonedDateTime.ofInstant(getCreatedDate(), ZoneOffset.UTC);
         return createdDateInUTC.plusMinutes(COMPLAINT_LOCK_DURATION_IN_MINUTES);
+    }
+
+    public ComplaintResponse() {
+
+    }
+
+    public ComplaintResponse(ComplaintResponseUpdateDTO dto) {
+        this.setId(dto.getId());
+        this.responseText = dto.getResponseText();
+        this.complaint = dto.getComplaint();
     }
 
     public String getResponseText() {

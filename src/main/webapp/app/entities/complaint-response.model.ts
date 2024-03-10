@@ -3,6 +3,11 @@ import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Complaint } from 'app/entities/complaint.model';
 
+export enum Action {
+    REFRESH_LOCK = 'REFRESH_LOCK',
+    RESOLVE_COMPLAINT = 'RESOLVE_COMPLAINT',
+}
+
 export class ComplaintResponse implements BaseEntity {
     public id?: number;
 
@@ -14,6 +19,7 @@ export class ComplaintResponse implements BaseEntity {
     public isCurrentlyLocked?: boolean;
     // transient property that will be calculated on the server
     public lockEndDate?: dayjs.Dayjs;
+    public action?: Action;
 
     constructor() {}
 }
