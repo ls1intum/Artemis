@@ -1,3 +1,5 @@
+@import 'node_modules/@vscode/codicons/dist/codicon.css';
+
 .monaco-editor-container {
     width: 100%;
     height: 100%;
@@ -13,6 +15,13 @@
     max-height: 99%;
 }
 
+/*
+ * Adjusts the font size to better match the glyph margin
+ */
+[class*='codicon-']::before {
+    font-size: 19px;
+}
+
 .monaco-error-glyph {
     color: red;
 }
@@ -20,4 +29,19 @@
 .monaco-error-line {
     background: red;
     opacity: 5%;
+}
+
+.monaco-annotation-error {
+    background: red;
+    opacity: 20%;
+}
+
+.monaco-annotation-warning {
+    background: yellow;
+    opacity: 20%;
+}
+
+.monaco-annotation-outdated {
+    background: gray;
+    opacity: 10%;
 }

@@ -2,10 +2,13 @@ import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, 
 import * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { MonacoEditorAnnotation, MonacoEditorAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-annotation.model';
 
 export type EditorPosition = { lineNumber: number; column: number };
 export type MarkdownString = monaco.IMarkdownString;
 export type GlyphDecoration = { lineNumber: number; glyphMarginClassName: string; hoverMessage: MarkdownString };
+export type EditorRange = monaco.Range;
 @Component({
     selector: 'jhi-monaco-editor',
     templateUrl: 'monaco-editor.component.html',
@@ -18,6 +21,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private themeSubscription?: Subscription;
     private models: monaco.editor.IModel[] = [];
     private overlayWidgets: monaco.editor.IOverlayWidget[] = [];
+    private editorAnnotations: MonacoEditorAnnotation[] = [];
 
     constructor(private themeService: ThemeService) {}
 
@@ -50,7 +54,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             theme: 'vs-dark',
             glyphMargin: true,
             minimap: { enabled: false },
-            lineNumbersMinChars: 4,
         });
 
         const resizeObserver = new ResizeObserver(() => {
@@ -118,11 +121,21 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         if (newFileContent !== undefined) {
             model.setValue(newFileContent);
         }
-        // Although viewzones are removed automatically when the model changes, overlay widgets are not.
-        this.overlayWidgets.forEach((o) => this._editor.removeOverlayWidget(o));
-        this.overlayWidgets = [];
+
+        this.disposeWidgets();
+
         monaco.editor.setModelLanguage(model, model.getLanguageId());
         this._editor.setModel(model);
+    }
+
+    private disposeWidgets() {
+        this.overlayWidgets.forEach((o) => this._editor.removeOverlayWidget(o));
+        this.overlayWidgets = [];
+        this.editorAnnotations.forEach((o) => {
+            o.dispose();
+            this._editor.removeGlyphMarginWidget(o);
+        });
+        this.editorAnnotations = [];
     }
 
     changeTheme(artemisTheme: Theme): void {
@@ -131,8 +144,29 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
     }
 
-    addGlyphDecorations(decorations: GlyphDecoration[]) {
-        this.addDecorations(
+    addAnnotations(annotations: Array<Annotation>) {
+        if (!this._editor) return;
+        for (const annotation of annotations) {
+            const lineNumber = annotation.row + 1;
+            const editorAnnotation = new MonacoEditorAnnotation(
+                `${annotation.fileName}:${lineNumber}:${annotation.text}`,
+                lineNumber,
+                undefined,
+                { value: annotation.text },
+                annotation.type.toLowerCase() === 'error' ? MonacoEditorAnnotationType.ERROR : MonacoEditorAnnotationType.WARNING,
+                this._editor.createDecorationsCollection([]),
+            );
+            this._editor.addGlyphMarginWidget(editorAnnotation);
+            const updateListener = this._editor.onDidChangeModelContent(() => {
+                editorAnnotation.updateDecoration(this._editor.getModel()?.getLineCount() ?? 0);
+            });
+            editorAnnotation.setUpdateListener(updateListener);
+            this.editorAnnotations.push(editorAnnotation);
+        }
+    }
+
+    addGlyphDecorations(decorations: GlyphDecoration[]): { clear(): void } {
+        return this.addDecorations(
             decorations.map((d) => ({
                 range: new monaco.Range(d.lineNumber, 0, d.lineNumber, 0),
                 options: {
@@ -140,9 +174,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                     glyphMargin: { position: monaco.editor.GlyphMarginLane.Right },
                     glyphMarginHoverMessage: d.hoverMessage,
                     marginClassName: 'monaco-error-line',
-                    className: 'monaco-error-line',
                     isWholeLine: true,
                     hoverMessage: d.hoverMessage,
+                    lineNumberHoverMessage: d.hoverMessage,
+                    stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
                 },
             })),
         );
@@ -197,8 +232,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.overlayWidgets.push(overlayWidget);
         return viewZoneId;
     }
-    // TODO: Return value
-    private addDecorations(decorations: monaco.editor.IModelDeltaDecoration[]) {
+
+    private addDecorations(decorations: monaco.editor.IModelDeltaDecoration[]): monaco.editor.IEditorDecorationsCollection {
         return this._editor?.createDecorationsCollection(decorations);
     }
 }

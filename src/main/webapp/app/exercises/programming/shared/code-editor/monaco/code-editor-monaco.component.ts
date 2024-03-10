@@ -138,16 +138,7 @@ export class CodeEditorMonacoComponent implements AfterViewInit, OnChanges {
     private setBuildAnnotations(buildAnnotations: Array<Annotation>): void {
         this.annotationsArray = buildAnnotations;
         // TODO: Load them from local storage here.
-        this.editor.addGlyphDecorations(
-            buildAnnotations
-                .filter((a) => a.fileName === this.selectedFile)
-                .map((a) => ({
-                    // TODO: Lines don't align
-                    lineNumber: a.row + 1,
-                    hoverMessage: { value: '**' + a.type + ': ' + a.text + '**' },
-                    glyphMarginClassName: 'codicon-error monaco-error-glyph',
-                })),
-        );
+        this.editor.addAnnotations(buildAnnotations.filter((buildAnnotation) => buildAnnotation.fileName === this.selectedFile));
     }
 
     protected readonly Feedback = Feedback;
