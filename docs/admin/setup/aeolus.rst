@@ -3,7 +3,7 @@ Aeolus Service
 
 Aeolus is a service that provides a REST API for the Artemis platform to generate custom build plans for
 programming exercises. It is designed to be used in combination with the Artemis platform to provide
-build plans in multiple CI systems, currently Bamboo, Jenkins, and LocalCI.
+build plans in multiple CI systems, currently Jenkins and LocalCI.
 
 Aeolus can also translate existing build plans from Bamboo into its own platform independent format.
 
