@@ -25,6 +25,6 @@ Enable the ``aeolus`` Spring profile
 Configure the Aeolus Endpoint
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Aeolus service can run on a dedicated machine and is talked to via REST API call. We need to extend the configuration in the file
+The Aeolus service can run on a dedicated machine since Artemis accesses it via a REST API call. We need to extend the configuration in the file
 ``src/main/resources/config/application-artemis.yml`` to include the Aeolus endpoint. How to do this is described in :ref:`configure artemis for aeolus`.
 
