@@ -40,7 +40,7 @@ Append the following lines to your file ``src/main/resources/config/application-
            url: http://localhost:8090
 
 
-The server URL is the URL of the Aeolus server. The default port is 8090. And is enough for Aeolus to work with Artemis in a local environment.
+The server URL is the URL of the Aeolus server. The default port is 8090. This is enough for Aeolus to work with Artemis in a local environment.
 
 API Key
 +++++++
