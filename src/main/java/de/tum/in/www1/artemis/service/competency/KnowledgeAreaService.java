@@ -46,7 +46,7 @@ public class KnowledgeAreaService {
      *
      * @param knowledgeArea the knowledge area to verify
      */
-    public void KnowledgeAreaIsValidOrElseThrow(KnowledgeArea knowledgeArea) throws BadRequestException {
+    public void knowledgeAreaIsValidOrElseThrow(KnowledgeArea knowledgeArea) throws BadRequestException {
         if (knowledgeArea.getId() != null || knowledgeArea.getTitle() == null || knowledgeArea.getTitle().trim().isEmpty()) {
             throw new BadRequestException();
         }

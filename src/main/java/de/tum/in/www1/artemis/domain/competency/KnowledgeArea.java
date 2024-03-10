@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class KnowledgeArea extends DomainObject {
 
-    @Column(name = "title")
+    @Column(name = "title", nullable = false)
     private String title;
 
     @Column(name = "description")

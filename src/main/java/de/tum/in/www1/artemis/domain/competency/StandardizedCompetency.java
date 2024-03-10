@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class StandardizedCompetency extends BaseCompetency {
 
-    @Column(name = "version")
+    @Column(name = "version", nullable = false)
     private String version;
 
     @ManyToOne
