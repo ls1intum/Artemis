@@ -54,7 +54,7 @@
         <!-- add foreign keys -->
         <addForeignKeyConstraint baseColumnNames="first_version_id" baseTableName="standardized_competency"
                                  constraintName="fk_standardized_competency_first_version" referencedColumnNames="id"
-                                 referencedTableName="standardized_competency"/>
+                                 referencedTableName="standardized_competency" onDelete="CASCADE"/>
         <addForeignKeyConstraint baseColumnNames="knowledge_area_id" baseTableName="standardized_competency"
                                  constraintName="fk_standardized_competency_knowledge_area" referencedColumnNames="id"
                                  referencedTableName="knowledge_area"/>

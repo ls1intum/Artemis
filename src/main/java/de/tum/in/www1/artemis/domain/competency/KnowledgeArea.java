@@ -29,13 +29,13 @@ public class KnowledgeArea extends DomainObject {
     @Column(name = "description")
     private String description;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
-    @JsonIgnoreProperties("children")
+    @JsonIgnoreProperties({ "parent", "children" })
     private KnowledgeArea parent;
 
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("parent")
+    @JsonIgnoreProperties({ "parent", "children" })
     private Set<KnowledgeArea> children = new HashSet<>();
 
     @OneToMany(mappedBy = "knowledgeArea", fetch = FetchType.LAZY)

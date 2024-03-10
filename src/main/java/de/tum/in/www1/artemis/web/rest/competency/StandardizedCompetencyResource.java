@@ -53,12 +53,18 @@ public class StandardizedCompetencyResource {
         return ResponseEntity.ok().body(competency);
     }
 
+    /**
+     * GET api/standardized-competencies/knowledge-areas/{knowledgeAreaId} : Gets a knowledge area with its children and competencies
+     *
+     * @param knowledgeAreaId the id of the knowledge area to get
+     * @return the ResponseEntity with status 200 (OK) and with body containing the knowledge area, or with status 404 (Not Found)
+     */
     @GetMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<KnowledgeArea> getKnowledgeArea(@PathVariable long knowledgeAreaId) {
         log.debug("REST request to get knowledge area with id : {}", knowledgeAreaId);
 
-        var knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(knowledgeAreaId);
+        var knowledgeArea = knowledgeAreaRepository.findByIdWithChildrenAndCompetenciesElseThrow(knowledgeAreaId);
 
         return ResponseEntity.ok().body(knowledgeArea);
     }

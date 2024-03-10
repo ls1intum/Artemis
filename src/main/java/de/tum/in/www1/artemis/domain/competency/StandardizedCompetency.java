@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.competency;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -14,7 +15,9 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "standardized_competency")
@@ -36,11 +39,11 @@ public class StandardizedCompetency extends BaseCompetency {
 
     @ManyToOne
     @JoinColumn(name = "first_version_id")
-    @JsonIgnoreProperties("childVersions")
+    @JsonBackReference
     private StandardizedCompetency firstVersion;
 
-    @OneToMany(mappedBy = "firstVersion", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("firstVersion")
+    @OneToMany(mappedBy = "firstVersion", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private Set<StandardizedCompetency> childVersions = new HashSet<>();
 
     @OneToMany(mappedBy = "linkedStandardizedCompetency", fetch = FetchType.LAZY)
