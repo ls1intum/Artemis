@@ -29,7 +29,7 @@ public class KnowledgeArea extends DomainObject {
     @Column(name = "description")
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "parent_id")
     @JsonIgnoreProperties({ "parent", "children" })
     private KnowledgeArea parent;
@@ -46,10 +46,9 @@ public class KnowledgeArea extends DomainObject {
 
     }
 
-    public KnowledgeArea(String title, String description, KnowledgeArea parent) {
+    public KnowledgeArea(String title, String description) {
         this.title = title;
         this.description = description;
-        this.parent = parent;
     }
 
     public String getTitle() {

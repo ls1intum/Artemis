@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.competency;
 
-import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,11 +28,21 @@ public class Source extends DomainObject {
     private String author;
 
     @Column(name = "uri")
-    private URI uri;
+    private String uri;
 
     @OneToMany(mappedBy = "source", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("source")
     private Set<StandardizedCompetency> competencies = new HashSet<>();
+
+    public Source() {
+
+    }
+
+    public Source(String title, String author, String uri) {
+        this.title = title;
+        this.author = author;
+        this.uri = uri;
+    }
 
     public String getTitle() {
         return title;
@@ -51,11 +60,11 @@ public class Source extends DomainObject {
         this.author = author;
     }
 
-    public URI getUri() {
+    public String getUri() {
         return uri;
     }
 
-    public void setUri(URI uri) {
+    public void setUri(String uri) {
         this.uri = uri;
     }
 
