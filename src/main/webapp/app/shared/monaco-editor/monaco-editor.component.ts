@@ -6,7 +6,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { MonacoEditorAnnotation, MonacoEditorAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-annotation.model';
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-line-widget.model';
 
-export type EditorPosition = { lineNumber: number; column: number };
+export type EditorPosition = { row: number; column: number };
 export type MarkdownString = monaco.IMarkdownString;
 export type GlyphDecoration = { lineNumber: number; glyphMarginClassName: string; hoverMessage: MarkdownString };
 export type EditorRange = monaco.Range;
@@ -38,20 +38,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private textChangedEmitTimeout: NodeJS.Timeout | undefined = undefined;
 
     ngOnInit(): void {
-        const program: string = `
-        public class ExampleProgram() {
-          public static void main(String[] args) {
-            System.out.println("Hello!");
-            foo();
-          }
-
-          static void foo() {
-            System.out.println("bar");
-          }
-        }
-        `;
         this._editor = monaco.editor.create(this.monacoEditorContainer.nativeElement, {
-            value: program,
+            value: '',
             theme: 'vs-dark',
             glyphMargin: true,
             minimap: { enabled: false },
@@ -90,12 +78,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
     }
 
+    // The rest of the code uses { row, column }... Will have to refactor
+    toEditorPosition(position: monaco.Position | null): EditorPosition {
+        if (!position) return { row: 0, column: 0 };
+        return { row: position.lineNumber, column: position.column };
+    }
+
     getPosition(): EditorPosition {
-        return this._editor.getPosition() ?? { column: 0, lineNumber: 0 };
+        return this.toEditorPosition(this._editor.getPosition());
     }
 
     setPosition(position: EditorPosition) {
-        this._editor.setPosition(position);
+        this._editor.setPosition({ lineNumber: position.row, column: position.column });
     }
 
     getText(): string {
@@ -113,16 +107,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
     }
 
-    changeModel(fileName: string, newFileContent?: string) {
+    changeModel(fileName: string, newFileContent: string) {
         const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
         const model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(newFileContent ?? '', undefined, uri);
         if (!this.models.includes(model)) {
             this.models.push(model);
         }
-        if (newFileContent !== undefined) {
-            model.setValue(newFileContent);
-        }
+        model.setValue(newFileContent);
 
+        // Some elements remain when the model is changed - dispose of them.
         this.disposeWidgets();
 
         monaco.editor.setModelLanguage(model, model.getLanguageId());

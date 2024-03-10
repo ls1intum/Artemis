@@ -26,6 +26,7 @@ import { CodeEditorInstructionsComponent } from 'app/exercises/programming/share
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -47,6 +48,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
     @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
+    @ViewChild('codeEditorMonaco', { static: false }) monacoEditor?: CodeEditorMonacoComponent;
     @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
 
     @Input()
@@ -198,7 +200,9 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
             this.editorState = EditorState.CLEAN;
         }
-        this.aceEditor.onFileChange(fileChange);
+        this.monacoEditor?.onFileChange(fileChange);
+        this.aceEditor?.onFileChange(fileChange);
+
         this.onFileChanged.emit();
     }
 

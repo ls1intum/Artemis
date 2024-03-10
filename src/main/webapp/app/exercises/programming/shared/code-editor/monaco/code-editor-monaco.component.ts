@@ -22,8 +22,9 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
+import { CreateFileChange, DeleteFileChange, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
-export type FileSession = { [fileName: string]: { code: string; cursorPosition: EditorPosition; loadingError: boolean } };
+export type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; loadingError: boolean } };
 
 @Component({
     selector: 'jhi-code-editor-monaco',
@@ -86,14 +87,14 @@ export class CodeEditorMonacoComponent implements AfterViewInit, OnChanges {
         if (!this.fileSession[fileName]) {
             this.isLoading = true;
             const fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName)).then((fileObj) => fileObj.fileContent);
-            this.fileSession[fileName] = { code: fileContent, loadingError: false, cursorPosition: { column: 0, lineNumber: 0 } };
+            this.fileSession[fileName] = { code: fileContent, loadingError: false, cursor: { column: 0, row: 0 } };
             this.isLoading = false;
         }
 
         if (this.selectedFile === fileName) {
             //this.editor.setText(this.fileSession[fileName].code);
             this.editor.changeModel(fileName, this.fileSession[fileName].code);
-            this.editor.setPosition(this.fileSession[fileName].cursorPosition);
+            this.editor.setPosition(this.fileSession[fileName].cursor);
         }
     }
 
@@ -101,7 +102,7 @@ export class CodeEditorMonacoComponent implements AfterViewInit, OnChanges {
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
             const previousText = this.fileSession[this.selectedFile].code;
             if (previousText !== text) {
-                this.fileSession[this.selectedFile] = { code: text, loadingError: false, cursorPosition: this.editor.getPosition() };
+                this.fileSession[this.selectedFile] = { code: text, loadingError: false, cursor: this.editor.getPosition() };
                 this.onFileContentChange.emit({ file: this.selectedFile, fileContent: text });
             }
         }
@@ -129,6 +130,23 @@ export class CodeEditorMonacoComponent implements AfterViewInit, OnChanges {
             return [];
         }
         return feedbacks.filter((feedback) => feedback.reference && Feedback.getReferenceFilePath(feedback) === this.selectedFile);
+    }
+
+    async onFileChange(fileChange: FileChange) {
+        if (fileChange instanceof RenameFileChange) {
+            this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
+            for (const annotation of this.annotationsArray) {
+                if (annotation.fileName === fileChange.oldFileName) {
+                    annotation.fileName = fileChange.newFileName;
+                }
+                // TODO: store annotations
+            }
+        } else if (fileChange instanceof DeleteFileChange) {
+            this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
+        } else if (fileChange instanceof CreateFileChange && this.selectedFile === fileChange.fileName) {
+            this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 }, loadingError: false } };
+        }
+        this.setBuildAnnotations(this.annotationsArray);
     }
 
     private loadBuildAnnotationsFromLocalStorage() {
