@@ -87,6 +87,9 @@ artemis:
         artemis-authentication-token-value: <token>
         build-timeout: 30 # Does cancel jenkins builds after 30 minutes to remove build that get stuck
         notification-plugin: "ls1tum/artemis-notification-plugin:1.0.0" # Docker image for the generic notification plugin. This value is set in an CI variable in GitLab CI.
+        build-log:
+          file-expiry-days: 30 # The amount of days until build log files can be deleted
+          cleanup-schedule: 0 0 3 1 * ? # Cron expression for schedule to delete old build log files
     git:
         name: Artemis
         email: artemis@xcit.tum.de

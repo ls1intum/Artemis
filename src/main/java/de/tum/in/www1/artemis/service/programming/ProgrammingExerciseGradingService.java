@@ -154,7 +154,10 @@ public class ProgrammingExerciseGradingService {
 
                 ciResultService.extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
-                buildLogService.saveBuildLogsToFile(buildLogs, latestSubmission.getId().toString());
+                // Save the build logs to the file system for template and solution participations for debugging purposes
+                if (participation instanceof SolutionProgrammingExerciseParticipation || participation instanceof TemplateProgrammingExerciseParticipation) {
+                    buildLogService.saveBuildLogsToFile(buildLogs, latestSubmission.getId().toString());
+                }
 
                 if (latestSubmission.isBuildFailed()) {
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);

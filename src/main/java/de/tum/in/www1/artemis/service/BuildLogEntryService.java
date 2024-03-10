@@ -4,8 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,7 +15,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
@@ -27,13 +33,21 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 @Service
 public class BuildLogEntryService {
 
+    private static final Logger log = LoggerFactory.getLogger(BuildLogEntryService.class);
+
     private final BuildLogEntryRepository buildLogEntryRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository) {
+    private final FileService fileService;
+
+    @Value("${artemis.continuous-integration.build-log.file-expiry-days:30}")
+    private int expiryDays;
+
+    public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository, FileService fileService) {
         this.buildLogEntryRepository = buildLogEntryRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.fileService = fileService;
     }
 
     /**
@@ -262,7 +276,13 @@ public class BuildLogEntryService {
         buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
     }
 
-    public Path saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String submissionId) {
+    /**
+     * Save the build logs for a given submission to a file
+     *
+     * @param buildLogEntries the build logs to save
+     * @param submissionId    the id of the submission for which to save the build logs
+     */
+    public void saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String submissionId) {
 
         Path buildLogsPath = Path.of("buildLogs");
 
@@ -284,12 +304,54 @@ public class BuildLogEntryService {
 
         try {
             FileUtils.writeStringToFile(logPath.toFile(), logsStringBuilder.toString(), StandardCharsets.UTF_8);
+            log.debug("Saved build logs for submission {} to file {}", submissionId, logPath);
         }
         catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        return logPath;
-
     }
+
+    /**
+     * Retrieves the build logs for a given submission from a file.
+     *
+     * @param submissionId the id of the submission for which to retrieve the build logs
+     * @return the build logs as a string or null if the file could not be found (e.g. if the build logs have been deleted)
+     */
+    public String retrieveBuildLogsFromFileForSubmission(String submissionId) {
+        Path buildLogsPath = Path.of("buildLogs");
+        Path logPath = buildLogsPath.resolve(submissionId + ".log");
+
+        try {
+            byte[] fileContent = fileService.getFileForPath(logPath);
+            return new String(fileContent, StandardCharsets.UTF_8);
+        }
+        catch (IOException e) {
+            log.warn("Build log file for submission {} could not be found", submissionId, e);
+            return null;
+        }
+    }
+
+    /**
+     * Deletes all build log files that are older than {@link #expiryDays} days on a schedule
+     */
+    @Scheduled(cron = "${artemis.continuous-integration.build-log.cleanup-schedule:0 0 3 1 * ?}")
+    public void deleteOldBuildLogsFiles() {
+        log.info("Deleting old build log files");
+        ZonedDateTime now = ZonedDateTime.now();
+        Path buildLogsPath = Path.of("buildLogs");
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(buildLogsPath)) {
+            for (Path file : stream) {
+                ZonedDateTime lastModified = ZonedDateTime.ofInstant(Files.getLastModifiedTime(file).toInstant(), now.getZone());
+                if (lastModified.isBefore(now.minusDays(expiryDays))) {
+                    Files.deleteIfExists(file);
+                    log.info("Deleted old build log file {}", file);
+                }
+            }
+        }
+        catch (IOException e) {
+            log.error("Error occurred while trying to delete old build log files", e);
+        }
+    }
+
 }
