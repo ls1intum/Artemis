@@ -54,6 +54,7 @@ import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/s
 import { ExamPage } from 'app/entities/exam-page.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -69,6 +70,7 @@ describe('ExamParticipationComponent', () => {
     let translateService: TranslateService;
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
+    let examManagementService: ExamManagementService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -110,6 +112,7 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(CourseExerciseService),
                 MockProvider(ArtemisDatePipe),
+                MockProvider(ExamManagementService),
             ],
         })
             .compileComponents()
@@ -127,6 +130,7 @@ describe('ExamParticipationComponent', () => {
                 translateService = TestBed.inject(TranslateService);
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
+                examManagementService = TestBed.inject(ExamManagementService);
                 fixture.detectChanges();
                 comp.exam = new Exam();
             });
@@ -908,6 +912,64 @@ describe('ExamParticipationComponent', () => {
             comp.handleHandInEarly();
 
             expect(triggerSaveSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('toggleHandInEarly', () => {
+        it('should not fetch attendance check status if exam is a test exam', () => {
+            comp.exam = new Exam();
+            comp.exam.testExam = true;
+
+            // Spy on the method isAttendanceChecked
+            const attendanceCheckSpy = jest.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
+
+            // Call toggleHandInEarly to change the handInEarly state
+            comp.toggleHandInEarly();
+
+            // Verify that isAttendanceChecked has not been called
+            expect(attendanceCheckSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not fetch attendance check status if exam is not an exam with attendance check', () => {
+            comp.exam = new Exam();
+            comp.exam.examWithAttendanceCheck = false;
+
+            // Spy on the method isAttendanceChecked
+            const attendanceCheckSpy = jest.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
+
+            // Call toggleHandInEarly to change the handInEarly state
+            comp.toggleHandInEarly();
+
+            // Verify that isAttendanceChecked has not been called
+            expect(attendanceCheckSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not fetch attendance check status if user clicks continue', () => {
+            comp.handInEarly = true;
+
+            // Spy on the method isAttendanceChecked
+            const attendanceCheckSpy = jest.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
+
+            // Call toggleHandInEarly to change the handInEarly state
+            comp.toggleHandInEarly();
+
+            // Verify that isAttendanceChecked has not been called
+            expect(attendanceCheckSpy).not.toHaveBeenCalled();
+        });
+
+        it('should fetch attendance check status if exam is an exam with attendance check', () => {
+            comp.exam = new Exam();
+            comp.exam.examWithAttendanceCheck = true;
+
+            // Spy on the method isAttendanceChecked
+            const attendanceCheckSpy = jest.spyOn<any, any>(examManagementService, 'isAttendanceChecked').mockReturnValue(of(new HttpResponse({ body: true })));
+
+            // Call toggleHandInEarly to change the handInEarly state
+            comp.toggleHandInEarly();
+
+            // Verify that isAttendanceChecked has not been called
+            expect(attendanceCheckSpy).toHaveBeenCalledOnce();
+            expect(comp.attendanceChecked).toBeTrue();
         });
     });
 
