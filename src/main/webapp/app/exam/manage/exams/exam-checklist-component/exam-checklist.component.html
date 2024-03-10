@@ -486,7 +486,7 @@
                                                         <div class="card-body question-card-body" [ngbCollapse]="isAssessmentsCollapsed">
                                                             @for (assessment of unfinishedAssessments; track assessment) {
                                                                 <ng-container>
-                                                                    {{ assessment.id }}
+                                                                    {{ getAssessmentDetails(assessment).title }} by {{ getAssessmentDetails(assessment).student }}
                                                                 </ng-container>
                                                             }
                                                         </div>

@@ -80,4 +80,14 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
         this.websocketService.unsubscribe(startedTopic);
     }
+
+    getAssessmentDetails(submission: Submission): {
+        title: string | undefined;
+        student: string | undefined;
+    } {
+        return {
+            title: submission.participation?.exercise?.title,
+            student: submission.participation?.participantName,
+        };
+    }
 }
