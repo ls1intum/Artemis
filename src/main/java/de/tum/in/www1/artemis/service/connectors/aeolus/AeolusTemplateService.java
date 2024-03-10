@@ -63,7 +63,7 @@ public class AeolusTemplateService {
                 }
                 String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
                 Optional<ProjectType> optionalProjectType = extractProjectType(filename);
-                String uniqueKey = directory + "_" + filename.replace("plain_", "");
+                String uniqueKey = directory + "_" + filename;
                 byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
                 String script = new String(fileContent, StandardCharsets.UTF_8);
                 Windfile windfile = readWindfile(script);
