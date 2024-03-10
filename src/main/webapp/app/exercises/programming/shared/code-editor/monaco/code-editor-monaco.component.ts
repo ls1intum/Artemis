@@ -75,7 +75,7 @@ export class CodeEditorMonacoComponent implements AfterViewInit, OnChanges {
     }
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
-        if (changes.selectedFile) {
+        if (changes.selectedFile && this.selectedFile) {
             await this.selectFileInEditor(changes.selectedFile.currentValue);
             this.setBuildAnnotations(this.annotationsArray);
             this.renderFeedbackWidgets();

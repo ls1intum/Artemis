@@ -13,7 +13,14 @@
                 />
             }
         }
-        <jhi-monaco-editor (textChanged)="onFileTextChanged($event)" [textChangedEmitDelay]="200" #editor id="monaco-editor" class="code-editor-ace__content__editor" />
+        <jhi-monaco-editor
+            (textChanged)="onFileTextChanged($event)"
+            [hidden]="!selectedFile || isLoading"
+            [textChangedEmitDelay]="200"
+            #editor
+            id="monaco-editor"
+            class="code-editor-ace__content__editor"
+        />
 
         @if (!selectedFile && !isLoading) {
             <p id="no-file-selected" class="code-editor-ace__content__no-selected text-center lead text-body-secondary pt-5" jhiTranslate="artemisApp.editor.selectFile">
