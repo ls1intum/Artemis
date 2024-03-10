@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
 
 /**
  * Factory for creating Lectures and related objects.
@@ -43,14 +42,14 @@ public class LectureFactory {
     }
 
     /**
-     * Generates an AttachmentUnit with an Attachment. The Attachment can be created with or without a link to an image file.
+     * Generates an AttachmentUnit with an Attachment. The attachment can't be generated with a file. Use {@link #generateAttachmentWithFile(ZonedDateTime, Long, boolean)} to
+     * replace the attachment for this use case.
      *
-     * @param withFile True, if the Attachment should link to a file
      * @return The generated AttachmentUnit
      */
-    public static AttachmentUnit generateAttachmentUnit(boolean withFile) {
+    public static AttachmentUnit generateAttachmentUnit() {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        Attachment attachmentOfAttachmentUnit = withFile ? generateAttachmentWithFile(started) : generateAttachment(started);
+        Attachment attachmentOfAttachmentUnit = generateAttachment(started);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
@@ -82,17 +81,17 @@ public class LectureFactory {
      * @param startDate The optional upload and release date of the Attachment
      * @return The generated Attachment
      */
-    public static Attachment generateAttachmentWithFile(ZonedDateTime startDate) {
+    public static Attachment generateAttachmentWithFile(ZonedDateTime startDate, Long entityId, boolean forUnit) {
         Attachment attachment = generateAttachment(startDate);
         String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
+        Path savePath = (forUnit ? FilePathService.getAttachmentUnitFilePath() : FilePathService.getLectureAttachmentFilePath()).resolve(entityId.toString()).resolve(testFileName);
         try {
-            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathService.getTempFilePath().resolve(testFileName).toFile());
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), savePath.toFile());
         }
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        // Path.toString() uses platform dependant path separators. Since we want to use this as a URL later, we need to replace \ with /.
-        attachment.setLink(Path.of(FileService.DEFAULT_FILE_SUBPATH, testFileName).toString().replace('\\', '/'));
+        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId).toString());
         return attachment;
     }
 }
