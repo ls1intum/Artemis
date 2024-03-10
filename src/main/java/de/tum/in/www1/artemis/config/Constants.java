@@ -310,6 +310,11 @@ public final class Constants {
     public static final String PROFILE_CORE = "core";
 
     /**
+     * The name of the Spring profile used for the Aeolus external system.
+     */
+    public static final String PROFILE_AEOLUS = "aeolus";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;

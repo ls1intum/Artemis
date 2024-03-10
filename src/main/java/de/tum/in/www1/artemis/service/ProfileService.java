@@ -56,6 +56,10 @@ public class ProfileService {
         return isProfileActive(Constants.PROFILE_LOCALVC);
     }
 
+    public boolean isAeolus() {
+        return isProfileActive(Constants.PROFILE_AEOLUS);
+    }
+
     /**
      * Checks if the jenkins profile is active
      *
