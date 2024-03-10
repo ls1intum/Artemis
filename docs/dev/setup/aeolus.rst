@@ -32,7 +32,7 @@ display the Aeolus API documentation.
 Configure Artemis to use Aeolus
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Append the following lines to your file ``src/main/resources/config/application-local.yml``:
+Append the following lines to your configuration file ``src/main/resources/config/application-local.yml``:
 
 .. code-block:: yaml
 
