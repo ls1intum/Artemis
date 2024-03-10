@@ -15,15 +15,15 @@ Prerequisites
 - Ensure you have a running instance of Artemis.
 - Set up a running instance of Aeolus. See the `Aeolus documentation <https://ls1intum.github.io/Aeolus/>`_ for more information.
 
-Enable the ``aeolus`` Spring profile:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Enable the ``aeolus`` Spring profile
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
    --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,aeolus
 
-Configure the Aeolus Endpoint:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Configure the Aeolus Endpoint
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Aeolus service can run on a dedicated machine and is talked to via REST API call. We need to extend the configuration in the file
 ``src/main/resources/config/application-artemis.yml`` to include the Aeolus endpoint. How to do this is described in :ref:`configure artemis for aeolus`.
