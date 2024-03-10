@@ -23,6 +23,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { CreateFileChange, DeleteFileChange, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { fromPairs, pickBy } from 'lodash-es';
 
 export type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; loadingError: boolean } };
 
@@ -139,23 +140,59 @@ export class CodeEditorMonacoComponent implements AfterViewInit, OnChanges {
                 if (annotation.fileName === fileChange.oldFileName) {
                     annotation.fileName = fileChange.newFileName;
                 }
-                // TODO: store annotations
             }
+            this.storeAnnotations([fileChange.newFileName]);
         } else if (fileChange instanceof DeleteFileChange) {
             this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
+            this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && this.selectedFile === fileChange.fileName) {
             this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 }, loadingError: false } };
         }
         this.setBuildAnnotations(this.annotationsArray);
     }
 
-    private loadBuildAnnotationsFromLocalStorage() {
+    /*
+     * Taken from code-editor-ace.component.ts
+     */
+    /**
+     * Saves the updated annotations to local storage
+     * @param savedFiles
+     */
+    storeAnnotations(savedFiles: Array<string>) {
+        const toUpdate = fromPairs(this.annotationsArray.filter((a) => savedFiles.includes(a.fileName)).map((a) => [a.hash, a]));
+        const toKeep = pickBy(this.loadAnnotations(), (a) => !savedFiles.includes(a.fileName));
+
+        this.localStorageService.store(
+            'annotations-' + this.sessionId,
+            JSON.stringify({
+                ...toKeep,
+                ...toUpdate,
+            }),
+        );
+    }
+
+    /**
+     * Loads annotations from local storage
+     */
+    loadAnnotations() {
         return JSON.parse(this.localStorageService.retrieve('annotations-' + this.sessionId) || '{}');
     }
 
     private setBuildAnnotations(buildAnnotations: Array<Annotation>): void {
-        this.annotationsArray = buildAnnotations;
-        // TODO: Load them from local storage here.
+        if (buildAnnotations.length > 0) {
+            const sessionAnnotations = this.loadAnnotations();
+            this.annotationsArray = buildAnnotations.map((a) => {
+                const hash = a.fileName + a.row + a.column + a.text;
+                if (sessionAnnotations[hash] == undefined || sessionAnnotations[hash].timestamp < a.timestamp) {
+                    return { ...a, hash };
+                } else {
+                    return sessionAnnotations[hash];
+                }
+            });
+        } else {
+            this.annotationsArray = buildAnnotations;
+        }
+
         this.editor.addAnnotations(buildAnnotations.filter((buildAnnotation) => buildAnnotation.fileName === this.selectedFile));
     }
 

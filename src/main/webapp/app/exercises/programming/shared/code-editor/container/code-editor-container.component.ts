@@ -224,7 +224,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (errorFiles.length) {
             this.onError('saveFailed');
         }
-        this.aceEditor.storeAnnotations(savedFiles);
+        this.aceEditor?.storeAnnotations(savedFiles);
+        this.monacoEditor?.storeAnnotations(savedFiles);
     }
 
     /**
