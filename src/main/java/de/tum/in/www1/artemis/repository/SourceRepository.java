@@ -20,6 +20,6 @@ public interface SourceRepository extends JpaRepository<Source, Long> {
 
     @NotNull
     default Source findByIdElseThrow(long sourceId) throws EntityNotFoundException {
-        return findById(sourceId).orElseThrow(() -> new EntityNotFoundException("KnowledgeArea", sourceId));
+        return findById(sourceId).orElseThrow(() -> new EntityNotFoundException("Source", sourceId));
     }
 }
