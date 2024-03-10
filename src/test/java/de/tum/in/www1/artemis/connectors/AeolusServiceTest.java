@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusRepository;
@@ -57,6 +59,9 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Autowired
     AeolusBuildScriptGenerationService aeolusBuildScriptGenerationService;
+
+    @Autowired
+    BuildScriptProvider buildScriptProvider;
 
     /**
      * Initializes aeolusRequestMockProvider
@@ -224,5 +229,14 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExercise.setTestwiseCoverageEnabled(true);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
         assertThat(windfile).isNull();
+    }
+
+    @Test
+    void testGetScriptForWithoutCache() {
+        ReflectionTestUtils.setField(buildScriptProvider, "scriptCache", new ConcurrentHashMap<>());
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
+        String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
+        assertThat(script).isNull();
     }
 }
