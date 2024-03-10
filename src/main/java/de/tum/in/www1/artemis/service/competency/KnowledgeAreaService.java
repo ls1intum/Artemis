@@ -24,7 +24,7 @@ public class KnowledgeAreaService {
     }
 
     public KnowledgeArea createKnowledgeArea(KnowledgeArea knowledgeArea) {
-        KnowledgeAreaIsValidOrElseThrow(knowledgeArea);
+        knowledgeAreaIsValidOrElseThrow(knowledgeArea);
 
         // fetch the parent from the database if it exists
         KnowledgeArea parent = knowledgeArea.getParent();
