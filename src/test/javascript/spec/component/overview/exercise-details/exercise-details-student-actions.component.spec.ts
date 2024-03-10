@@ -61,6 +61,16 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     };
     const teamExerciseWithTeamAssigned = { ...teamExerciseWithoutTeamAssigned, studentAssignedTeamId: team.id, allowOfflineIde: true } as ProgrammingExercise;
 
+    const testRunParticipation = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as ProgrammingExerciseStudentParticipation;
+
+    const testRunExercise = {
+        id: 45,
+        type: ExerciseType.PROGRAMMING,
+        allowOfflineIde: true,
+        studentParticipations: [testRunParticipation],
+        exerciseGroup: {},
+    } as ProgrammingExercise;
+
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
@@ -160,9 +170,9 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
         expect(startExerciseButton).toBeNull();
 
-        // Check that button "Clone repository" is shown
+        // Check that button "Clone repository" is not shown (repo_url is null)
         const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepositoryButton).not.toBeNull();
+        expect(cloneRepositoryButton).toBeNull();
 
         fixture.destroy();
         flush();
@@ -199,24 +209,39 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startPracticeButton).toBeNull();
 
         cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepositoryButton).not.toBeNull();
+        expect(cloneRepositoryButton).toBeNull();
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should correctly not show the clone repository button for exam test runs', fakeAsync(() => {
+        testRunParticipation.repositoryUri = undefined;
+        testRunExercise.studentParticipations = [testRunParticipation];
+
+        comp.examMode = true;
+        comp.exercise = testRunExercise;
+        comp.practiceParticipation = testRunParticipation;
+
+        fixture.detectChanges();
+        tick();
+
+        const startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
+        expect(startPracticeButton).toBeNull();
+
+        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepositoryButton).toBeNull();
 
         fixture.destroy();
         flush();
     }));
 
     it('should correctly show the clone repository button for exam test runs', fakeAsync(() => {
-        const testRunParticipation = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
-        const exercise = {
-            id: 45,
-            type: ExerciseType.PROGRAMMING,
-            allowOfflineIde: true,
-            studentParticipations: [testRunParticipation],
-            exerciseGroup: {},
-        } as ProgrammingExercise;
+        testRunParticipation.repositoryUri = 'https://clone-me.git';
+        testRunExercise.studentParticipations = [testRunParticipation];
 
         comp.examMode = true;
-        comp.exercise = exercise;
+        comp.exercise = testRunExercise;
         comp.practiceParticipation = testRunParticipation;
 
         fixture.detectChanges();
@@ -275,6 +300,38 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     it('should show correct buttons in exam mode', fakeAsync(() => {
         const exercise = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
         exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
+        comp.exercise = exercise;
+        comp.examMode = true;
+        comp.updateParticipations();
+
+        fixture.detectChanges();
+        tick();
+
+        let startExerciseButton = debugElement.query(By.css('button.start-exercise'));
+        expect(startExerciseButton).toBeNull();
+        let codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
+        expect(codeEditorButton).toBeNull();
+        let cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepoButton).toBeNull();
+
+        exercise.allowOfflineIde = true;
+
+        fixture.detectChanges();
+        tick();
+
+        startExerciseButton = debugElement.query(By.css('button.start-exercise'));
+        expect(startExerciseButton).toBeNull();
+        codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
+        expect(codeEditorButton).toBeNull();
+        cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepoButton).toBeNull();
+    }));
+
+    it('should show correct buttons in exam mode, including clone repo button', fakeAsync(() => {
+        const exercise = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
+        exercise.studentParticipations = [
+            { initializationState: InitializationState.INITIALIZED, repositoryUri: 'https://clone-me.git' } as ProgrammingExerciseStudentParticipation,
+        ];
         comp.exercise = exercise;
         comp.examMode = true;
         comp.updateParticipations();
