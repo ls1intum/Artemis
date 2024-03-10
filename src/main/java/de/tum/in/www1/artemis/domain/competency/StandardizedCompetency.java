@@ -25,15 +25,6 @@ public class StandardizedCompetency extends BaseCompetency {
     private String version;
 
     @ManyToOne
-    @JoinColumn(name = "first_version_id")
-    @JsonIgnoreProperties("childVersions")
-    private StandardizedCompetency firstVersion;
-
-    @OneToMany(mappedBy = "firstVersion", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("firstVersion")
-    private Set<StandardizedCompetency> childVersions = new HashSet<>();
-
-    @ManyToOne
     @JoinColumn(name = "knowledge_area_id")
     @JsonIgnoreProperties("competencies")
     private KnowledgeArea knowledgeArea;
@@ -42,6 +33,15 @@ public class StandardizedCompetency extends BaseCompetency {
     @JoinColumn(name = "source_id")
     @JsonIgnoreProperties("competencies")
     private Source source;
+
+    @ManyToOne
+    @JoinColumn(name = "first_version_id")
+    @JsonIgnoreProperties("childVersions")
+    private StandardizedCompetency firstVersion;
+
+    @OneToMany(mappedBy = "firstVersion", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("firstVersion")
+    private Set<StandardizedCompetency> childVersions = new HashSet<>();
 
     @OneToMany(mappedBy = "linkedStandardizedCompetency", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("linkedStandardizedCompetency")
@@ -64,24 +64,8 @@ public class StandardizedCompetency extends BaseCompetency {
         this.version = version;
     }
 
-    public StandardizedCompetency getFirstVersion() {
-        return firstVersion;
-    }
-
-    public void setFirstVersion(StandardizedCompetency firstVersion) {
-        this.firstVersion = firstVersion;
-    }
-
     public KnowledgeArea getKnowledgeArea() {
         return knowledgeArea;
-    }
-
-    public Set<StandardizedCompetency> getChildVersions() {
-        return childVersions;
-    }
-
-    public void setChildVersions(Set<StandardizedCompetency> childVersions) {
-        this.childVersions = childVersions;
     }
 
     public void setKnowledgeArea(KnowledgeArea knowledgeArea) {
@@ -94,6 +78,22 @@ public class StandardizedCompetency extends BaseCompetency {
 
     public void setSource(Source source) {
         this.source = source;
+    }
+
+    public StandardizedCompetency getFirstVersion() {
+        return firstVersion;
+    }
+
+    public void setFirstVersion(StandardizedCompetency firstVersion) {
+        this.firstVersion = firstVersion;
+    }
+
+    public Set<StandardizedCompetency> getChildVersions() {
+        return childVersions;
+    }
+
+    public void setChildVersions(Set<StandardizedCompetency> childVersions) {
+        this.childVersions = childVersions;
     }
 
     public Set<Competency> getLinkedCompetencies() {

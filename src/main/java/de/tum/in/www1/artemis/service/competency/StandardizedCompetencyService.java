@@ -7,8 +7,12 @@ import javax.ws.rs.BadRequestException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
+import de.tum.in.www1.artemis.domain.competency.Source;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
-import de.tum.in.www1.artemis.repository.StandardizedCompetencyRepository;
+import de.tum.in.www1.artemis.repository.SourceRepository;
+import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
+import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
 
 /**
  * Service for managing {@link StandardizedCompetency} entities.
@@ -21,12 +25,37 @@ public class StandardizedCompetencyService {
 
     private final StandardizedCompetencyRepository standardizedCompetencyRepository;
 
-    public StandardizedCompetencyService(StandardizedCompetencyRepository standardizedCompetencyRepository) {
+    private final KnowledgeAreaRepository knowledgeAreaRepository;
+
+    private final SourceRepository sourceRepository;
+
+    public StandardizedCompetencyService(StandardizedCompetencyRepository standardizedCompetencyRepository, KnowledgeAreaRepository knowledgeAreaRepository,
+            SourceRepository sourceRepository) {
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
+        this.knowledgeAreaRepository = knowledgeAreaRepository;
+        this.sourceRepository = sourceRepository;
     }
 
     public StandardizedCompetency createStandardizedCompetency(StandardizedCompetency competency) {
-        var competencyToCreate = getStandardizedCompetencyToCreate(competency);
+        standardizedCompetencyIsValidOrElseThrow(competency);
+
+        // fetch the knowledge area and source from the database if they exists
+        KnowledgeArea knowledgeArea = competency.getKnowledgeArea();
+        if (knowledgeArea != null) {
+            knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(knowledgeArea.getId());
+        }
+        Source source = competency.getSource();
+        if (source != null) {
+            source = sourceRepository.findByIdElseThrow(source.getId());
+        }
+
+        var competencyToCreate = new StandardizedCompetency(competency.getTitle().trim(), competency.getDescription(), competency.getTaxonomy(), FIRST_VERSION);
+        competencyToCreate.setKnowledgeArea(knowledgeArea);
+        competencyToCreate.setSource(source);
+
+        competencyToCreate = standardizedCompetencyRepository.save(competencyToCreate);
+        // set the reference to the first version of this standardized competency (itself)
+        competencyToCreate.setFirstVersion(competencyToCreate);
         return standardizedCompetencyRepository.save(competencyToCreate);
     }
 
@@ -39,17 +68,5 @@ public class StandardizedCompetencyService {
         if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
             throw new BadRequestException();
         }
-    }
-
-    /**
-     * Gets a new standardized competency from an existing one.
-     * <p>
-     * The competency is not persisted.
-     *
-     * @param competency the existing standardized competency
-     * @return the new competency
-     */
-    public StandardizedCompetency getStandardizedCompetencyToCreate(StandardizedCompetency competency) {
-        return new StandardizedCompetency(competency.getTitle().trim(), competency.getDescription(), competency.getTaxonomy(), FIRST_VERSION);
     }
 }

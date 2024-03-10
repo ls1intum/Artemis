@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
-import de.tum.in.www1.artemis.repository.StandardizedCompetencyRepository;
-import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
+import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
+import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 
 /**
  * REST controller for managing {@link StandardizedCompetency} entities.
@@ -23,12 +25,15 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 @RequestMapping("api/")
 public class StandardizedCompetencyResource {
 
-    private static final Logger log = LoggerFactory.getLogger(StandardizedCompetencyResource.class);
+    private final static Logger log = LoggerFactory.getLogger(StandardizedCompetencyResource.class);
 
     private final StandardizedCompetencyRepository standardizedCompetencyRepository;
 
-    public StandardizedCompetencyResource(StandardizedCompetencyRepository standardizedCompetencyRepository) {
+    private final KnowledgeAreaRepository knowledgeAreaRepository;
+
+    public StandardizedCompetencyResource(StandardizedCompetencyRepository standardizedCompetencyRepository, KnowledgeAreaRepository knowledgeAreaRepository) {
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
+        this.knowledgeAreaRepository = knowledgeAreaRepository;
     }
 
     /**
@@ -39,12 +44,22 @@ public class StandardizedCompetencyResource {
      */
 
     @GetMapping("standardized-competencies/{competencyId}")
-    @EnforceAdmin
+    @EnforceAtLeastInstructor
     public ResponseEntity<StandardizedCompetency> getStandardizedCompetency(@PathVariable long competencyId) {
-        log.debug("REST request to get Standardized Competency with id : {}", competencyId);
+        log.debug("REST request to get standardized competency with id : {}", competencyId);
 
         var competency = standardizedCompetencyRepository.findByIdElseThrow(competencyId);
 
         return ResponseEntity.ok().body(competency);
+    }
+
+    @GetMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<KnowledgeArea> getKnowledgeArea(@PathVariable long knowledgeAreaId) {
+        log.debug("REST request to get knowledge area with id : {}", knowledgeAreaId);
+
+        var knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(knowledgeAreaId);
+
+        return ResponseEntity.ok().body(knowledgeArea);
     }
 }

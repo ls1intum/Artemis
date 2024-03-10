@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.repository;
+package de.tum.in.www1.artemis.repository.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 

@@ -42,6 +42,16 @@ public class KnowledgeArea extends DomainObject {
     @JsonIgnoreProperties("knowledgeArea")
     private Set<StandardizedCompetency> competencies = new HashSet<>();
 
+    public KnowledgeArea() {
+
+    }
+
+    public KnowledgeArea(String title, String description, KnowledgeArea parent) {
+        this.title = title;
+        this.description = description;
+        this.parent = parent;
+    }
+
     public String getTitle() {
         return title;
     }
