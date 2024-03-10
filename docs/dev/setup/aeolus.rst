@@ -43,7 +43,7 @@ Append the following lines to your file ``src/main/resources/config/application-
 The server URL is the URL of the Aeolus server. The default port is 8090. This is enough for Aeolus to work with Artemis in a local environment.
 
 API Key
-+++++++
+"""""""
 
 Without an API key, Artemis will send the location and credentials of the CI system with each request to Aeolus, which is fine
 for a local environment. However, in a production environment, it is recommended to use an API key to authenticate the requests.
