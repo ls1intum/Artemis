@@ -93,9 +93,7 @@ artemis:
     athena:
         url: http://localhost:5000
         secret: abcdef12345
-        modules:
-            text: module_text_cofee
-            programming: module_programming_themisml
+        restricted-modules: module_text_llm,module_programming_llm
     apollon:
         conversion-service-url: http://localhost:8080
 
