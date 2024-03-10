@@ -1,6 +1,5 @@
 import * as monaco from 'monaco-editor';
 import { MarkdownString } from 'app/shared/monaco-editor/monaco-editor.component';
-import '@vscode/codicons/dist/codicon.css';
 
 export enum MonacoEditorAnnotationType {
     WARNING = 'warning',
