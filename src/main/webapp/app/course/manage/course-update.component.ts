@@ -8,7 +8,7 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, PROFILE_LTI } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, PROFILE_ATHENA, PROFILE_LTI } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
@@ -70,6 +70,7 @@ export class CourseUpdateComponent implements OnInit {
     communicationEnabled = true;
     messagingEnabled = true;
     ltiEnabled = false;
+    isAthenaEnabled = false;
 
     readonly semesters = getSemesters();
 
@@ -151,6 +152,7 @@ export class CourseUpdateComponent implements OnInit {
                     }
                 }
                 this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
+                this.isAthenaEnabled = profileInfo.activeProfiles.includes(PROFILE_ATHENA);
             }
         });
 
@@ -210,6 +212,7 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
+                restrictedAthenaModulesAccess: new FormControl(this.course.restrictedAthenaModulesAccess),
                 registrationEnabled: new FormControl(this.course.enrollmentEnabled),
                 enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
                 enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
@@ -491,6 +494,11 @@ export class CourseUpdateComponent implements OnInit {
      */
     changeTestCourseEnabled() {
         this.course.testCourse = !this.course.testCourse;
+    }
+
+    changeRestrictedAthenaModulesEnabled() {
+        this.course.restrictedAthenaModulesAccess = !this.course.restrictedAthenaModulesAccess;
+        this.courseForm.controls['restrictedAthenaModulesAccess'].setValue(this.course.restrictedAthenaModulesAccess);
     }
 
     /**

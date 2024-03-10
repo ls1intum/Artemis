@@ -5,6 +5,7 @@ import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
 import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 const routes: Routes = [
     {
         path: ':participationId',
@@ -16,7 +17,7 @@ const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':participationId/commit-history',
@@ -28,7 +29,7 @@ const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':participationId/commit-history/:commitHash',
@@ -40,7 +41,7 @@ const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':repositoryType',
@@ -52,7 +53,7 @@ const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
 ];
 
