@@ -712,6 +712,10 @@ public class ProgrammingExerciseResource {
         if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
             continuousIntegrationService.orElseThrow().recreateBuildPlansForExercise(programmingExercise);
+            if (profileService.isAeolus()) {
+                // if the build plan configuration has changed, we have to update the windfile in the database
+                programmingExerciseRepository.save(programmingExercise);
+            }
         }
 
         if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {

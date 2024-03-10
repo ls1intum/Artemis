@@ -580,10 +580,6 @@ public class ProgrammingExerciseService {
                 continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
                 continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
                 continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
-                if (profileService.isAeolus()) {
-                    // if the build plan configuration has changed, we have to update the windfile in the database
-                    programmingExerciseRepository.save(updatedProgrammingExercise);
-                }
                 resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
             }
             if (buildScriptGenerationService.isPresent()) {
