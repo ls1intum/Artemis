@@ -967,7 +967,7 @@ describe('ExamParticipationComponent', () => {
             // Call toggleHandInEarly to change the handInEarly state
             comp.toggleHandInEarly();
 
-            // Verify that isAttendanceChecked has not been called
+            // Verify that isAttendanceChecked has been called
             expect(attendanceCheckSpy).toHaveBeenCalledOnce();
             expect(comp.attendanceChecked).toBeTrue();
         });
