@@ -47,6 +47,7 @@ import org.slf4j.Logger;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -107,6 +108,14 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule noJunitJupiterAssertions = noClasses().should().dependOnClassesThat().haveNameMatching("org.junit.jupiter.api.Assertions");
 
         noJunitJupiterAssertions.check(testClasses);
+    }
+
+    @Test
+    void testNoEntityGraphsOnQueries() {
+        ArchRule noEntityGraphsOnQueries = noMethods().that().areAnnotatedWith(Query.class).and().areDeclaredInClassesThat().areInterfaces().and().areDeclaredInClassesThat()
+                .areAnnotatedWith(Repository.class).should().beAnnotatedWith(EntityGraph.class)
+                .because("Spring Boot 3 ignores EntityGraphs on JPQL queries. You need to integrate a JOIN FETCH into the query.");
+        noEntityGraphsOnQueries.check(productionClasses);
     }
 
     @Test

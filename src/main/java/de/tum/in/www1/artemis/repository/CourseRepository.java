@@ -129,7 +129,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             FROM Course c
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
-                AND c.testCourse IS FALSE
+                AND c.testCourse = FALSE
             """)
     List<Course> findAllActiveWithoutTestCourses(@Param("now") ZonedDateTime now);
 
@@ -138,7 +138,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             FROM Course c
                 LEFT JOIN FETCH c.organizations organizations
                 LEFT JOIN FETCH c.prerequisites prerequisites
-            WHERE c.enrollmentEnabled IS TRUE
+            WHERE c.enrollmentEnabled = TRUE
                 AND c.enrollmentStartDate <= :now
                 AND c.enrollmentEndDate >= :now
             """)
@@ -215,8 +215,14 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @param registrationId The LTI platform's registration ID.
      * @return Set of eagerly loaded courses.
      */
-    @EntityGraph(attributePaths = { "onlineCourseConfiguration", "onlineCourseConfiguration.ltiPlatformConfiguration" })
-    @Query("SELECT c FROM Course c WHERE c.onlineCourse = TRUE AND c.onlineCourseConfiguration.ltiPlatformConfiguration.registrationId = :registrationId")
+    @Query("""
+            SELECT c
+            FROM Course c
+                LEFT JOIN FETCH c.onlineCourseConfiguration onlineCourseConfiguration
+                LEFT JOIN FETCH onlineCourseConfiguration.ltiPlatformConfiguration ltiPlatformConfiguration
+            WHERE c.onlineCourse = TRUE
+                AND c.onlineCourseConfiguration.ltiPlatformConfiguration.registrationId = :registrationId
+            """)
     Set<Course> findOnlineCoursesWithRegistrationIdEager(@Param("registrationId") String registrationId);
 
     List<Course> findAllByShortName(String shortName);
@@ -292,7 +298,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 OR CAST(:now AS timestamp) IS NULL
                 OR c.endDate >= CAST(:now AS timestamp)
             ) AND (
-                :isAdmin IS TRUE
+                :isAdmin = TRUE
                 OR c.teachingAssistantGroupName IN :userGroups
                 OR c.editorGroupName IN :userGroups
                 OR c.instructorGroupName IN :userGroups
