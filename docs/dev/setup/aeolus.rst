@@ -3,7 +3,7 @@
 Aeolus Setup
 ------------
 
-This section describes how to set up the external service Aeolus for custom build plans for Jenkins and Integrated code lifecycle, in Artemis.
+This section describes how to set up the external service Aeolus for custom build plans for Jenkins and Integrated code lifecycle.
 
 If you are setting Artemis up for the first time, these are the steps you should follow:
 
