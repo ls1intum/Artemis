@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Competency } from 'app/entities/competency.model';
@@ -13,31 +13,25 @@ export interface VideoUnitFormData {
     competencies?: Competency[];
 }
 
-function videoUrlValidator(control: AbstractControl) {
-    if (control.value === undefined || control.value === null || control.value === '') {
-        return null;
+function videoSourceTransformUrlValidator(control: AbstractControl): ValidationErrors | null {
+    const invalidVideoUrlError = { invalidVideoUrl: true };
+    const urlValue = control.value;
+    if (!urlValue) return null;
+    try {
+        return urlParser.parse(urlValue) ? null : invalidVideoUrlError;
+    } catch {
+        return invalidVideoUrlError;
     }
-
-    const videoInfo = urlParser.parse(control.value);
-    return videoInfo ? null : { invalidVideoUrl: true };
 }
 
-function urlValidator(control: AbstractControl) {
-    let validUrl = true;
-
-    // for certain cases like embed links for vimeo
-    const regex = /^\/\/.*$/;
-    if (control.value && control.value.match(regex)) {
-        return null;
-    }
-
+function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | null {
+    const invalidVideoUrlError = { invalidVideoUrl: true };
     try {
-        new URL(control.value);
+        const url = new URL(control.value);
+        return url.host === 'live.rbg.tum.de' && !url.searchParams.has('video_only') ? invalidVideoUrlError : null;
     } catch {
-        validUrl = false;
+        return invalidVideoUrlError;
     }
-
-    return validUrl ? null : { invalidUrl: true };
 }
 
 @Component({
@@ -61,8 +55,8 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
 
     faTimes = faTimes;
 
-    urlValidator = urlValidator;
-    videoUrlValidator = videoUrlValidator;
+    urlValidator = videoSourceUrlValidator;
+    videoUrlValidator = videoSourceTransformUrlValidator;
 
     // Icons
     faArrowLeft = faArrowLeft;
