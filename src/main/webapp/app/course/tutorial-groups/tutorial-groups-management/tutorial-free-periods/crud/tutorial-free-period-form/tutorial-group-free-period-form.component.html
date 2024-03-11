@@ -8,10 +8,26 @@
         @if (form) {
             <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
                 <div class="btn-group" role="group">
-                    <input type="radio" class="btn-check" name="timeFrame" id="FreePeriod" autocomplete="off" [checked]="isFreePeriod" (click)="setTimeFrame(TimeFrame.Period)" />
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="timeFrame"
+                        id="FreePeriod"
+                        autocomplete="off"
+                        [checked]="timeFrame === TimeFrame.Period"
+                        (click)="setTimeFrame(TimeFrame.Period)"
+                    />
                     <label class="btn btn-outline-primary" for="FreePeriod">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.period' | artemisTranslate }}</label>
 
-                    <input type="radio" class="btn-check" name="timeFrame" id="FreeDay" autocomplete="off" [checked]="isFreeDay" (click)="setTimeFrame(TimeFrame.Day)" />
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="timeFrame"
+                        id="FreeDay"
+                        autocomplete="off"
+                        [checked]="timeFrame === TimeFrame.Day"
+                        (click)="setTimeFrame(TimeFrame.Day)"
+                    />
                     <label class="btn btn-outline-primary" for="FreeDay">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.day' | artemisTranslate }}</label>
 
                     <input
@@ -20,7 +36,7 @@
                         name="timeFrame"
                         id="FreePeriodWithinDay"
                         autocomplete="off"
-                        [checked]="isFreePeriodWithinDay"
+                        [checked]="timeFrame === TimeFrame.PeriodWithinDay"
                         (click)="setTimeFrame(TimeFrame.PeriodWithinDay)"
                     />
                     <label class="btn btn-outline-primary" for="FreePeriodWithinDay">{{
@@ -32,7 +48,7 @@
                 <div>
                     <label class="form-label" for="startDate">
                         {{
-                            timeFrameControl !== TimeFrame.Period
+                            timeFrame !== TimeFrame.Period
                                 ? ('artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate)
                                 : ('artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart' | artemisTranslate)
                         }}
@@ -60,7 +76,7 @@
                     }
                 </div>
 
-                @if (isFreePeriod) {
+                @if (timeFrame === TimeFrame.Period) {
                     <label class="form-label" for="endDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate }}</label>
                     <div class="input-group">
                         <input
@@ -82,12 +98,12 @@
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError' | artemisTranslate }}
                         </div>
-                    } @else if ((endDateControl?.dirty || startDateControl?.dirty) && !isStartBeforeEnd) {
+                    } @else if (endDateControl?.touched && startDateControl?.touched && !isStartBeforeEnd) {
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
                         </div>
                     }
-                } @else if (isFreePeriodWithinDay) {
+                } @else if (timeFrame === TimeFrame.PeriodWithinDay) {
                     <label class="form-label" for="startTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</label>
                     <div class="input-group">
                         <input

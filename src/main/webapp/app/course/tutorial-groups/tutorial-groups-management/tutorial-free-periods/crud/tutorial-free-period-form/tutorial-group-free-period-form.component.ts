@@ -100,18 +100,6 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         return true;
     }
 
-    get isFreeDay(): boolean {
-        return this.timeFrame === TimeFrame.Day;
-    }
-
-    get isFreePeriod(): boolean {
-        return this.timeFrame === TimeFrame.Period;
-    }
-
-    get isFreePeriodWithinDay(): boolean {
-        return this.timeFrame === TimeFrame.PeriodWithinDay;
-    }
-
     get timeFrameControl(): TimeFrame {
         return this.timeFrame;
     }
@@ -212,30 +200,6 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
             endTime: [undefined],
             reason: [undefined],
         });
-    }
-
-    markStartDateAsTouched() {
-        if (this.startDateControl) {
-            this.startDateControl.markAsTouched();
-        }
-    }
-
-    markEndDateAsTouched() {
-        if (this.endDateControl) {
-            this.endDateControl.markAsTouched();
-        }
-    }
-
-    markStartTimeAsTouched() {
-        if (this.startTimeControl) {
-            this.startTimeControl.markAsTouched();
-        }
-    }
-
-    markEndTimeAsTouched() {
-        if (this.endTimeControl) {
-            this.endTimeControl.markAsTouched();
-        }
     }
 
     get isStartDateInvalid() {
