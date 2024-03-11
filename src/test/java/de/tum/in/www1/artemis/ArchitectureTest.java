@@ -247,26 +247,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // Get annotation
                 var enforceRoleInCourseAnnotation = getAnnotation(EnforceRoleInCourse.class, method);
                 var courseIdFieldName = enforceRoleInCourseAnnotation.courseIdFieldName();
-                // Check if the method has a parameter with the given name
-                var owner = method.getOwner();
-                try {
-                    var javaClass = Class.forName(owner.getFullName());
-                    var javaMethod = javaClass.getMethod(method.getName(), method.getRawParameterTypes().stream().map(paramClass -> {
-                        try {
-                            // Using ClassUtils, as it is primitive type aware
-                            return ClassUtils.getClass(paramClass.getName());
-                        }
-                        catch (ClassNotFoundException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }).toArray(Class[]::new));
-                    var anyParamHasName = Arrays.stream(javaMethod.getParameters()).anyMatch(parameter -> parameter.getName().equals(courseIdFieldName));
-                    if (!anyParamHasName) {
-                        events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), courseIdFieldName)));
-                    }
-                }
-                catch (ClassNotFoundException | NoSuchMethodException e) {
-                    throw new RuntimeException(e);
+                if (!hasParameterWithName(method, courseIdFieldName)) {
+                    events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), courseIdFieldName)));
                 }
             }
         };
@@ -286,26 +268,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // Get annotation
                 var enforceRoleInExerciseAnnotation = getAnnotation(EnforceRoleInExercise.class, method);
                 var exerciseIdFieldName = enforceRoleInExerciseAnnotation.exerciseIdFieldName();
-                // Check if the method has a parameter with the given name
-                var owner = method.getOwner();
-                try {
-                    var javaClass = Class.forName(owner.getFullName());
-                    var javaMethod = javaClass.getMethod(method.getName(), method.getRawParameterTypes().stream().map(paramClass -> {
-                        try {
-                            // Using ClassUtils, as it is primitive type aware
-                            return ClassUtils.getClass(paramClass.getName());
-                        }
-                        catch (ClassNotFoundException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }).toArray(Class[]::new));
-                    var anyParamHasName = Arrays.stream(javaMethod.getParameters()).anyMatch(parameter -> parameter.getName().equals(exerciseIdFieldName));
-                    if (!anyParamHasName) {
-                        events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), exerciseIdFieldName)));
-                    }
-                }
-                catch (ClassNotFoundException | NoSuchMethodException e) {
-                    throw new RuntimeException(e);
+                if (!hasParameterWithName(method, exerciseIdFieldName)) {
+                    events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), exerciseIdFieldName)));
                 }
             }
         };
@@ -314,6 +278,27 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 .areDeclaredInClassesThat().areAnnotatedWith(EnforceRoleInExercise.class).and().areDeclaredInClassesThat().areNotAnnotations().should(haveParameterWithAnnotation);
 
         enforceRoleInExercise.check(productionClasses);
+    }
+
+    private boolean hasParameterWithName(JavaMethod method, String paramName) {
+        try {
+            var owner = method.getOwner();
+            var javaClass = Class.forName(owner.getFullName());
+            var javaMethod = javaClass.getMethod(method.getName(), method.getRawParameterTypes().stream().map(this::getClassForName).toArray(Class[]::new));
+            return Arrays.stream(javaMethod.getParameters()).anyMatch(parameter -> parameter.getName().equals(paramName));
+        }
+        catch (ClassNotFoundException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Class<?> getClassForName(JavaClass paramClass) {
+        try {
+            return ClassUtils.getClass(paramClass.getName());
+        }
+        catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private <T extends Annotation> T getAnnotation(Class<T> clazz, JavaMethod javaMethod) {
