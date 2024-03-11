@@ -87,16 +87,16 @@ public class ComplaintResponseResource {
     @PatchMapping("complaint/{complaintId}/response")
     @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponseUpdateDTO complaintResponseUpdate, @PathVariable long complaintId) {
+        if (complaintResponseUpdate == null || complaintResponseUpdate.getAction() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
         Action action = complaintResponseUpdate.getAction();
 
-        switch (action) {
-            case REFRESH_LOCK:
-                return refreshComplaintResponse(complaintId);
-            case RESOLVE_COMPLAINT:
-                return resolveComplaintResponse(complaintResponseUpdate, complaintId);
-            default:
-                return ResponseEntity.badRequest().build();
-        }
+        return switch (action) {
+            case REFRESH_LOCK -> refreshComplaintResponse(complaintId);
+            case RESOLVE_COMPLAINT -> resolveComplaintResponse(complaintResponseUpdate, complaintId);
+        };
     }
 
     /**
@@ -128,8 +128,8 @@ public class ComplaintResponseResource {
      */
     private ResponseEntity<ComplaintResponse> resolveComplaintResponse(ComplaintResponseUpdateDTO complaintResponseUpdate, long complaintId) {
         log.debug("REST request to resolve the complaint with id: {}", complaintId);
-        getComplaintFromDatabaseAndCheckAccessRights(complaintId);
-        ComplaintResponse updatedComplaintResponse = complaintResponseService.resolveComplaint(new ComplaintResponse(complaintResponseUpdate));
+        Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
+        ComplaintResponse updatedComplaintResponse = complaintResponseService.resolveComplaint(complaintResponseUpdate, complaint.getComplaintResponse().getId());
         removeSensitiveInformation(updatedComplaintResponse);
         return ResponseEntity.ok().body(updatedComplaintResponse);
     }

@@ -4,14 +4,11 @@ export enum Action {
 }
 
 export class ComplaintResponseUpdateDTO {
-    public complaintId?: number;
-
     public responseText?: string;
     public accepted?: boolean;
     public action?: Action;
 
-    constructor(complaintId: number | undefined, action: Action, responseText?: string, accepted?: boolean) {
-        this.complaintId = complaintId;
+    constructor(action: Action, responseText?: string, accepted?: boolean) {
         this.responseText = responseText;
         this.accepted = accepted;
         this.action = action;

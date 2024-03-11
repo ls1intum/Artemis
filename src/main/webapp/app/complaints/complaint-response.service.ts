@@ -51,24 +51,18 @@ export class ComplaintResponseService {
         );
     }
 
-    // refreshLock(complaintId: number): Observable<EntityResponseType> {
-    //     return this.http
-    //         .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/refresh-lock`, {}, { observe: 'response' })
-    //         .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
-    // }
-
     removeLock(complaintId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/complaint/${complaintId}/remove-lock`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/complaint/${complaintId}/response`, { observe: 'response' });
     }
 
     createLock(complaintId: number): Observable<EntityResponseType> {
         return this.http
-            .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/create-lock`, {}, { observe: 'response' })
+            .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/response`, {}, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
-    refreshLockOrResolveComplaint(complaintResponseUpdate: ComplaintResponseUpdateDTO): Observable<EntityResponseType> {
-        return this.http.put<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintResponseUpdate.complaintId}/resolve`, complaintResponseUpdate, { observe: 'response' });
+    refreshLockOrResolveComplaint(complaintResponseUpdate: ComplaintResponseUpdateDTO, complaintId: number | undefined): Observable<EntityResponseType> {
+        return this.http.put<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/response`, complaintResponseUpdate, { observe: 'response' });
     }
 
     public convertComplaintResponseDatesFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {

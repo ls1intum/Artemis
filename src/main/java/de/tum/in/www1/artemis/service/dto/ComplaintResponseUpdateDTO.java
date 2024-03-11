@@ -1,24 +1,12 @@
 package de.tum.in.www1.artemis.service.dto;
 
-import de.tum.in.www1.artemis.domain.Complaint;
-
 public class ComplaintResponseUpdateDTO {
-
-    private Long id;
 
     private String responseText;
 
-    private Complaint complaint;
+    private Boolean complaintIsAccepted;
 
     private Action action;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getResponseText() {
         return responseText;
@@ -28,12 +16,12 @@ public class ComplaintResponseUpdateDTO {
         this.responseText = responseText;
     }
 
-    public Complaint getComplaint() {
-        return complaint;
+    public Boolean getComplaintIsAccepted() {
+        return complaintIsAccepted;
     }
 
-    public void setComplaint(Complaint complaint) {
-        this.complaint = complaint;
+    public void setComplaintIsAccepted(boolean complaintIsAccepted) {
+        this.complaintIsAccepted = complaintIsAccepted;
     }
 
     public Action getAction() {

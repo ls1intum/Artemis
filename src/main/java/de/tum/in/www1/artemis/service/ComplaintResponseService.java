@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ComplaintResponseLockedException;
@@ -157,6 +158,72 @@ public class ComplaintResponseService {
         ComplaintResponse persistedComplaintResponse = complaintResponseRepository.save(complaintResponseRepresentingLock);
         log.debug("Created empty complaint and thus lock for complaint with id : {}", complaint.getId());
         return persistedComplaintResponse;
+    }
+
+    /**
+     * Resolves a complaint by filling in the empty complaint response attached to it
+     *
+     * The empty complaint response acts as a lock. Only the creator of the empty complaint response and instructors can resolve empty complaint response as long as the lock
+     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods fill in the initial complaint response and either accepts
+     * or denies the associated complaint, thus resolving the complaint
+     *
+     * @param updatedComplaintResponse complaint response containing the information necessary for resolving the complaint
+     * @return complaintResponse of resolved complaint
+     */
+    public ComplaintResponse resolveComplaint(ComplaintResponseUpdateDTO updatedComplaintResponse, Long complaintResponseId) {
+        if (complaintResponseId == null) {
+            throw new IllegalArgumentException("The complaint response needs to have an id");
+        }
+        Optional<ComplaintResponse> complaintResponseFromDatabaseOptional = complaintResponseRepository.findById(complaintResponseId);
+        if (complaintResponseFromDatabaseOptional.isEmpty()) {
+            throw new IllegalArgumentException("The complaint response was not found in the database");
+        }
+        ComplaintResponse emptyComplaintResponseFromDatabase = complaintResponseFromDatabaseOptional.get();
+        if (emptyComplaintResponseFromDatabase.getSubmittedTime() != null || emptyComplaintResponseFromDatabase.getResponseText() != null) {
+            throw new IllegalArgumentException("The complaint response is not empty");
+        }
+        Optional<Complaint> originalComplaintOptional = complaintRepository.findByIdWithEagerAssessor(emptyComplaintResponseFromDatabase.getComplaint().getId());
+        if (originalComplaintOptional.isEmpty()) {
+            throw new IllegalArgumentException("The complaint was not found in the database");
+        }
+        Complaint originalComplaint = originalComplaintOptional.get();
+        if (originalComplaint.isAccepted() != null) {
+            throw new IllegalArgumentException("You can not update the response to an already answered complaint");
+        }
+        if (updatedComplaintResponse.getComplaintIsAccepted() == null) {
+            throw new IllegalArgumentException("You need to either accept or reject a complaint");
+        }
+
+        if (updatedComplaintResponse.getResponseText() != null) {
+            // Retrieve course to get max complaint response limit
+            final Course course = originalComplaint.getResult().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
+
+            // Check whether the complaint text limit is exceeded
+            Exercise exercise = originalComplaint.getResult().getParticipation().getExercise();
+            int maxLength = course.getMaxComplaintResponseTextLimitForExercise(exercise);
+            if (maxLength < updatedComplaintResponse.getResponseText().length()) {
+                throw new BadRequestAlertException("You cannot submit a complaint response that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
+                        "exceededComplaintResponseTextLimit");
+            }
+        }
+
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        if (!isUserAuthorizedToRespondToComplaint(originalComplaint, user)) {
+            throw new AccessForbiddenException("Insufficient permission for resolving the complaint");
+        }
+        // only instructors and the original reviewer can ignore the lock on a complaint response
+        if (blockedByLock(emptyComplaintResponseFromDatabase, user)) {
+            throw new ComplaintResponseLockedException(emptyComplaintResponseFromDatabase);
+        }
+
+        originalComplaint.setAccepted(updatedComplaintResponse.getComplaintIsAccepted()); // accepted or denied
+        originalComplaint = complaintRepository.save(originalComplaint);
+
+        emptyComplaintResponseFromDatabase.setSubmittedTime(ZonedDateTime.now());
+        emptyComplaintResponseFromDatabase.setResponseText(updatedComplaintResponse.getResponseText());
+        emptyComplaintResponseFromDatabase.setComplaint(originalComplaint);
+        emptyComplaintResponseFromDatabase.setReviewer(user);
+        return complaintResponseRepository.save(emptyComplaintResponseFromDatabase);
     }
 
     /**

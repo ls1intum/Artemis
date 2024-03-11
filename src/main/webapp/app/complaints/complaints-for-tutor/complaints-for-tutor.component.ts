@@ -70,7 +70,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             } else {
                 if (this.isAllowedToRespond) {
                     if (this.complaint.complaintResponse) {
-                        this.complaintResponseUpdate = new ComplaintResponseUpdateDTO(this.complaint.id!, Action.REFRESH_LOCK);
+                        this.complaintResponseUpdate = new ComplaintResponseUpdateDTO(Action.REFRESH_LOCK);
                         this.refreshLock();
                     } else {
                         this.createLock();
@@ -114,7 +114,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             // update the lock
             this.isLoading = true;
             this.complaintResponseService
-                .refreshLockOrResolveComplaint(this.complaintResponseUpdate)
+                .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaint.id!)
                 .pipe(
                     finalize(() => {
                         this.isLoading = false;
@@ -189,12 +189,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             });
         } else {
             // If the complaint was rejected or it was a more feedback request, just the complaint response is updated.
-            this.complaintResponseUpdate = new ComplaintResponseUpdateDTO(
-                this.complaintResponse.complaint!.id,
-                Action.RESOLVE_COMPLAINT,
-                this.complaintResponse.responseText,
-                this.complaintResponse.complaint.accepted,
-            );
+            this.complaintResponseUpdate = new ComplaintResponseUpdateDTO(Action.RESOLVE_COMPLAINT, this.complaintResponse.responseText, this.complaintResponse.complaint.accepted);
 
             this.resolveComplaint();
         }
@@ -203,7 +198,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     private resolveComplaint() {
         this.isLoading = true;
         this.complaintResponseService
-            .refreshLockOrResolveComplaint(this.complaintResponseUpdate)
+            .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaintResponse.complaint!.id)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
