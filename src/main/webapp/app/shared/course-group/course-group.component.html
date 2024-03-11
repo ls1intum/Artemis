@@ -11,7 +11,7 @@
             @if (course?.isAtLeastInstructor && allGroupUsers.length > 0) {
                 <button class="btn btn-primary btn-sm" (click)="exportUserInformation()">
                     <fa-icon [icon]="faDownload" [fixedWidth]="true" />
-                    <span jhiTranslate="artemisApp.instructorDashboard.exportCSV">&nbsp;Export Users</span>
+                    <span jhiTranslate="artemisApp.instructorDashboard.exportCSV"></span>
                 </button>
             }
         </div>
@@ -52,7 +52,7 @@
                 <ngx-datatable-column prop="" [minWidth]="60" [width]="80" [maxWidth]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id"> ID </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('id')" />
                         </span>
                     </ng-template>
@@ -67,7 +67,7 @@
                 <ngx-datatable-column prop="login" [minWidth]="150" [width]="200" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.login"> Login </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.login"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('login')" />
                         </span>
                     </ng-template>
@@ -78,7 +78,7 @@
                 <ngx-datatable-column prop="visibleRegistrationNumber" [minWidth]="150" [width]="200" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('visibleRegistrationNumber')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.registrationNumber"> Registration Number </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.registrationNumber"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('visibleRegistrationNumber')" />
                         </span>
                     </ng-template>
@@ -89,7 +89,7 @@
                 <ngx-datatable-column prop="name" [minWidth]="150" [width]="250" [maxWidth]="250">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.name"> Name </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.name"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('name')" />
                         </span>
                     </ng-template>
@@ -100,7 +100,7 @@
                 <ngx-datatable-column prop="email" [minWidth]="150" [width]="250">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.email"> Email </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.email"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('email')" />
                         </span>
                     </ng-template>

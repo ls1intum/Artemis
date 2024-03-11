@@ -5,13 +5,13 @@
                 @if (loadingParticipation) {
                     <span>
                         <fa-icon [icon]="faCircleNotch" [spin]="true" />
-                        <p class="d-inline" jhiTranslate="artemisApp.editor.fetchingParticipation">Your participation is being loaded...</p>
+                        <p class="d-inline" jhiTranslate="artemisApp.editor.fetchingParticipation"></p>
                     </span>
                 }
                 @if (participationCouldNotBeFetched) {
                     <span>
                         <fa-icon [icon]="faTimesCircle" class="text-danger" />
-                        <p class="d-inline" jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</p>
+                        <p class="d-inline" jhiTranslate="artemisApp.editor.errors.participationNotFound"></p>
                     </span>
                 }
             </div>
@@ -19,7 +19,7 @@
     }
     @if (isIllegalSubmission) {
         <div class="row-container">
-            <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
+            <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"></span>
         </div>
     }
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
