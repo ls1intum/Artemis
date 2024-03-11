@@ -6,6 +6,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { ComplaintResponseUpdateDTO } from 'app/entities/complaint-response-dto.model';
 
 type EntityResponseType = HttpResponse<ComplaintResponse>;
 
@@ -50,11 +51,11 @@ export class ComplaintResponseService {
         );
     }
 
-    refreshLock(complaintId: number): Observable<EntityResponseType> {
-        return this.http
-            .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/refresh-lock`, {}, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
-    }
+    // refreshLock(complaintId: number): Observable<EntityResponseType> {
+    //     return this.http
+    //         .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/refresh-lock`, {}, { observe: 'response' })
+    //         .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
+    // }
 
     removeLock(complaintId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/complaint/${complaintId}/remove-lock`, { observe: 'response' });
@@ -66,11 +67,8 @@ export class ComplaintResponseService {
             .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
-    resolveComplaint(complaintResponse: ComplaintResponse): Observable<EntityResponseType> {
-        const copy = this.convertComplaintResponseDatesFromClient(complaintResponse);
-        return this.http
-            .put<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintResponse.complaint!.id}/resolve`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
+    refreshLockOrResolveComplaint(complaintResponseUpdate: ComplaintResponseUpdateDTO): Observable<EntityResponseType> {
+        return this.http.put<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintResponseUpdate.complaintId}/resolve`, complaintResponseUpdate, { observe: 'response' });
     }
 
     public convertComplaintResponseDatesFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {

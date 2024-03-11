@@ -99,6 +99,15 @@ public class ComplaintResponseResource {
         }
     }
 
+    /**
+     * Refreshes the complaint response for a specified complaint ID.
+     *
+     * This method retrieves the complaint from the database based on the provided ID, checks access rights, and then refreshes the complaint response representing
+     * the updated complaint. It removes sensitive information from the refreshed complaint response before returning it as a ResponseEntity with HTTP status CREATED.
+     *
+     * @param complaintId The ID of the complaint to refresh.
+     * @return A ResponseEntity containing the refreshed ComplaintResponse representing the updated complaint with HTTP status CREATED.
+     */
     private ResponseEntity<ComplaintResponse> refreshComplaintResponse(long complaintId) {
         log.debug("REST request to refresh empty complaint response for complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -107,6 +116,16 @@ public class ComplaintResponseResource {
         return new ResponseEntity<>(savedComplaintResponse, HttpStatus.CREATED);
     }
 
+    /**
+     * Resolves the complaint response for a specified complaint ID with the provided update DTO.
+     *
+     * This method retrieves the complaint from the database based on the provided ID, checks access rights, and then resolves the complaint response using the provided
+     * update DTO. It removes sensitive information from the resolved complaint response before returning it as a ResponseEntity with HTTP status OK.
+     *
+     * @param complaintResponseUpdate The DTO containing the update information for the complaint response.
+     * @param complaintId             The ID of the complaint to resolve.
+     * @return A ResponseEntity containing the updated ComplaintResponse representing the resolved complaint with HTTP status OK.
+     */
     private ResponseEntity<ComplaintResponse> resolveComplaintResponse(ComplaintResponseUpdateDTO complaintResponseUpdate, long complaintId) {
         log.debug("REST request to resolve the complaint with id: {}", complaintId);
         getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -115,6 +134,14 @@ public class ComplaintResponseResource {
         return ResponseEntity.ok().body(updatedComplaintResponse);
     }
 
+    /**
+     * Removes sensitive information from the provided ComplaintResponse.
+     *
+     * This method removes sensitive information, such as student details, from the provided ComplaintResponse. This information is considered
+     * unnecessary for the corresponding client use case.
+     *
+     * @param complaintResponse The ComplaintResponse from which sensitive information needs to be removed.
+     */
     private void removeSensitiveInformation(ComplaintResponse complaintResponse) {
         // Always remove the student from the complaint as we don't need it in the corresponding client use case
         complaintResponse.getComplaint().filterSensitiveInformation();
