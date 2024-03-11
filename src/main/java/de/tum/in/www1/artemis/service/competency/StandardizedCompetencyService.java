@@ -36,6 +36,12 @@ public class StandardizedCompetencyService {
         this.sourceRepository = sourceRepository;
     }
 
+    /**
+     * Verifies a standardized competency and then saves it to the database
+     *
+     * @param competency the standardized competency to create
+     * @return the created standardized competency
+     */
     public StandardizedCompetency createStandardizedCompetency(StandardizedCompetency competency) {
         standardizedCompetencyIsValidOrElseThrow(competency);
 
@@ -64,7 +70,7 @@ public class StandardizedCompetencyService {
      *
      * @param competency the standardized competency to verify
      */
-    public void standardizedCompetencyIsValidOrElseThrow(StandardizedCompetency competency) throws BadRequestException {
+    private void standardizedCompetencyIsValidOrElseThrow(StandardizedCompetency competency) throws BadRequestException {
         if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
             throw new BadRequestException();
         }

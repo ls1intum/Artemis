@@ -23,6 +23,12 @@ public class KnowledgeAreaService {
         this.knowledgeAreaRepository = knowledgeAreaRepository;
     }
 
+    /**
+     * Verifies a knowledge area and then saves it to the database
+     *
+     * @param knowledgeArea the knowledge area to create
+     * @return the created knowledge area
+     */
     public KnowledgeArea createKnowledgeArea(KnowledgeArea knowledgeArea) {
         knowledgeAreaIsValidOrElseThrow(knowledgeArea);
 
@@ -46,7 +52,7 @@ public class KnowledgeAreaService {
      *
      * @param knowledgeArea the knowledge area to verify
      */
-    public void knowledgeAreaIsValidOrElseThrow(KnowledgeArea knowledgeArea) throws BadRequestException {
+    private void knowledgeAreaIsValidOrElseThrow(KnowledgeArea knowledgeArea) throws BadRequestException {
         if (knowledgeArea.getId() != null || knowledgeArea.getTitle() == null || knowledgeArea.getTitle().trim().isEmpty()) {
             throw new BadRequestException();
         }
