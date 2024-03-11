@@ -5,7 +5,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { Patch, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
@@ -269,5 +269,28 @@ describe('ModelingEditorComponent', () => {
 
         updateSpyCallCount++;
         expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
+    });
+
+    it('should subscribe to model change patches and emit them.', () => {
+        fixture.detectChanges();
+
+        const receiver = jest.fn();
+
+        component.onModelPatch.subscribe(receiver);
+        const mockEmitter = new Subject<Patch>();
+
+        jest.spyOn(ApollonEditor.prototype, 'subscribeToModelChangePatches').mockImplementation((cb) => {
+            mockEmitter.subscribe(cb);
+            return 42;
+        });
+        const cleanupSpy = jest.spyOn(ApollonEditor.prototype, 'unsubscribeFromModelChangePatches').mockImplementation(() => {});
+
+        component.ngAfterViewInit();
+
+        mockEmitter.next([{ op: 'add', path: '/elements', value: { id: '1', type: 'class' } }]);
+        expect(receiver).toHaveBeenCalledWith([{ op: 'add', path: '/elements', value: { id: '1', type: 'class' } }]);
+
+        component.ngOnDestroy();
+        expect(cleanupSpy).toHaveBeenCalledWith(42);
     });
 });

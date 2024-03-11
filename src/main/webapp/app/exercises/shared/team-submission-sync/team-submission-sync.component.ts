@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { tap, throttleTime } from 'rxjs/operators';
+import { throttleTime } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { SubmissionSyncPayload, isSubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -53,23 +53,16 @@ export class TeamSubmissionSyncComponent implements OnInit {
      * Receives updated submissions from other team members and emits them
      */
     private setupReceiver() {
-        this.teamSubmissionWebsocketService
-            .receive(this.websocketTopic)
-            .pipe(
-                tap((payload) => {
-                    console.log('RECEIVING: ', payload);
-                }),
-            )
-            .subscribe({
-                next: (payload: SubmissionSyncPayload | SubmissionPatchPayload) => {
-                    if (isSubmissionSyncPayload(payload) && !this.isSelf(payload.sender)) {
-                        this.receiveSubmission.emit(payload.submission);
-                    } else if (isSubmissionPatchPayload(payload)) {
-                        this.receiveSubmissionPatch.emit(payload.submissionPatch);
-                    }
-                },
-                error: (error) => this.onError(error),
-            });
+        this.teamSubmissionWebsocketService.receive(this.websocketTopic).subscribe({
+            next: (payload: SubmissionSyncPayload | SubmissionPatchPayload) => {
+                if (isSubmissionSyncPayload(payload) && !this.isSelf(payload.sender)) {
+                    this.receiveSubmission.emit(payload.submission);
+                } else if (isSubmissionPatchPayload(payload)) {
+                    this.receiveSubmissionPatch.emit(payload.submissionPatch);
+                }
+            },
+            error: (error) => this.onError(error),
+        });
     }
 
     /**
@@ -89,7 +82,6 @@ export class TeamSubmissionSyncComponent implements OnInit {
 
         this.submissionPatchObservable?.subscribe({
             next: (submissionPatch: SubmissionPatch) => {
-                console.log('SENDING PATCH: ', submissionPatch);
                 this.teamSubmissionWebsocketService.send(this.buildWebsocketTopic('/patch'), submissionPatch);
             },
             error: (error) => this.onError(error),

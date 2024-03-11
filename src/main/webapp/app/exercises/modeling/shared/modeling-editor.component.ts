@@ -7,6 +7,7 @@ import { isFullScreen } from 'app/shared/util/fullscreen.util';
 import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
+import { Patch } from '@ls1intum/apollon';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -19,10 +20,12 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     @Input() savedStatus?: { isChanged?: boolean; isSaving?: boolean };
 
     @Output() private onModelChanged: EventEmitter<UMLModel> = new EventEmitter<UMLModel>();
+    @Output() onModelPatch = new EventEmitter<Patch>();
 
     @Output() explanationChange = new EventEmitter();
 
     private modelSubscription: number;
+    private modelPatchSubscription: number;
 
     // Icons
     faCheck = faCheck;
@@ -63,6 +66,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     private initializeApollonEditor(): void {
         if (this.apollonEditor) {
             this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
+            this.apollonEditor.unsubscribeFromModelChangePatches(this.modelPatchSubscription);
             this.apollonEditor.destroy();
         }
 
@@ -80,6 +84,10 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
             this.modelSubscription = this.apollonEditor.subscribeToModelChange((model: UMLModel) => {
                 this.onModelChanged.emit(model);
+            });
+
+            this.modelPatchSubscription = this.apollonEditor.subscribeToModelChangePatches((patch: Patch) => {
+                this.onModelPatch.emit(patch);
             });
         }
     }
@@ -172,17 +180,25 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * If the apollon editor is not null, destroy it and set it to null, on component destruction
      */
     ngOnDestroy(): void {
-        if (this.apollonEditor) {
-            if (this.modelSubscription) {
-                this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
+        try {
+            if (this.apollonEditor) {
+                if (this.modelSubscription) {
+                    this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
+                }
+                if (this.modelPatchSubscription) {
+                    this.apollonEditor.unsubscribeFromModelChangePatches(this.modelPatchSubscription);
+                }
+                this.apollonEditor.destroy();
+                this.apollonEditor = undefined;
             }
-            this.apollonEditor.destroy();
-            this.apollonEditor = undefined;
-        }
 
-        if (this.mouseDownListener) {
-            document.removeEventListener('mousedown', this.mouseDownListener);
-            document.removeEventListener('scroll', this.scrollListener!);
+            if (this.mouseDownListener) {
+                document.removeEventListener('mousedown', this.mouseDownListener);
+                document.removeEventListener('scroll', this.scrollListener!);
+            }
+        } catch (err) {
+            console.log(err);
+            throw err;
         }
     }
 
@@ -266,5 +282,13 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     onExplanationInput(newValue: string) {
         this.explanationChange.emit(newValue);
         this.explanation = newValue;
+    }
+
+    /**
+     * Import a patch into the Apollon editor
+     * @param patch the patch to import
+     */
+    importPatch(patch: Patch) {
+        this.apollonEditor?.importPatch(patch);
     }
 }

@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewChecked, Component, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
@@ -24,7 +24,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { ReplaySubject, Subject, Subscription, TeardownLogic } from 'rxjs';
+import { Subject, Subscription, TeardownLogic } from 'rxjs';
 import { omit } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
@@ -41,7 +41,7 @@ import { ModelingSubmissionPatch } from 'app/entities/modeling-submission-patch.
     templateUrl: './modeling-submission.component.html',
     styleUrls: ['./modeling-submission.component.scss'],
 })
-export class ModelingSubmissionComponent implements OnInit, AfterViewChecked, OnDestroy, ComponentCanDeactivate {
+export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly addParticipationToResult = addParticipationToResult;
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
@@ -102,7 +102,7 @@ export class ModelingSubmissionComponent implements OnInit, AfterViewChecked, On
     submissionObservable = this.submissionChange.asObservable();
     submissionPatchObservable = new Subject<ModelingSubmissionPatch>();
 
-    private modelingEditorInitialized = new ReplaySubject<void>();
+    // private modelingEditorInitialized = new ReplaySubject<void>();
     resizeOptions = { verticalResize: true };
 
     // Icons
@@ -139,7 +139,6 @@ export class ModelingSubmissionComponent implements OnInit, AfterViewChecked, On
                             this.updateModelingSubmission(modelingSubmission);
                             if (this.modelingExercise.teamMode) {
                                 this.setupSubmissionStreamForTeam();
-                                this.setupSubmissionPatchStreamForTeam();
                             } else {
                                 this.setAutoSaveTimer();
                             }
@@ -153,13 +152,6 @@ export class ModelingSubmissionComponent implements OnInit, AfterViewChecked, On
         const isDisplayedOnExamSummaryPage = !this.displayHeader && this.participationId !== undefined;
         if (!isDisplayedOnExamSummaryPage) {
             window.scroll(0, 0);
-        }
-    }
-
-    ngAfterViewChecked(): void {
-        if (this.modelingEditor) {
-            this.modelingEditorInitialized.next();
-            this.modelingEditorInitialized.complete();
         }
     }
 
@@ -333,7 +325,6 @@ export class ModelingSubmissionComponent implements OnInit, AfterViewChecked, On
                 // make sure this.submission includes the newest content of the apollon editor
                 this.updateSubmissionWithCurrentValues();
                 // notify the team sync component to send this.submission to the server (and all online team members)
-                // TODO: this should be debounced.
                 this.submissionChange.next(this.submission);
             }
         }, AUTOSAVE_TEAM_EXERCISE_INTERVAL);
@@ -342,27 +333,21 @@ export class ModelingSubmissionComponent implements OnInit, AfterViewChecked, On
     }
 
     /**
-     * Sets up a stream that intercepts patches emitted by Apollon editor
-     * and sends them to the server for team exercises.
-     * @private
+     * Emits submission patches when receiving patches from the modeling editor.
+     * These patches need to be synced with other team members in team exercises.
+     * The observable through which the patches are emitted is passed to the team sync
+     * component, who then sends the patches to the server and other team members.
+     * @param patch The patch to update the submission with.
      */
-    private setupSubmissionPatchStreamForTeam(): void {
-        this.modelingEditorInitialized.subscribe(() => {
-            const editor = this.modelingEditor.apollonEditor;
-
-            if (editor) {
-                const subscriber = editor.subscribeToAllModelChangePatches((patch) => {
-                    const submissionPatch = new ModelingSubmissionPatch(patch);
-                    submissionPatch.participation = this.participation;
-                    if (submissionPatch.participation?.exercise) {
-                        submissionPatch.participation.exercise.studentParticipations = [];
-                    }
-                    this.submissionPatchObservable.next(Object.assign({}, submissionPatch));
-                });
-
-                this.cleanup(() => editor.unsubscribeFromModelChangePatches(subscriber));
+    onModelPatch(patch: Patch) {
+        if (this.modelingExercise.teamMode) {
+            const submissionPatch = new ModelingSubmissionPatch(patch);
+            submissionPatch.participation = this.participation;
+            if (submissionPatch.participation?.exercise) {
+                submissionPatch.participation.exercise.studentParticipations = [];
             }
-        });
+            this.submissionPatchObservable.next(Object.assign({}, submissionPatch));
+        }
     }
 
     /**
@@ -494,8 +479,13 @@ export class ModelingSubmissionComponent implements OnInit, AfterViewChecked, On
         this.updateModelingSubmission(submission);
     }
 
+    /**
+     * This is called when the team sync component receives
+     * patches from the server. Updates the modeling editor with the received patch.
+     * @param submissionPatch
+     */
     onReceiveSubmissionPatchFromTeam(submissionPatch: ModelingSubmissionPatch) {
-        this.modelingEditor?.apollonEditor?.importPatch(submissionPatch.patch);
+        this.modelingEditor.importPatch(submissionPatch.patch);
     }
 
     private isModelEmpty(model?: string): boolean {
