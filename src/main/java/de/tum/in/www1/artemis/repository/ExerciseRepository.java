@@ -13,9 +13,11 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry;
@@ -73,7 +75,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 LEFT JOIN FETCH e.competencies
             WHERE e.id = :exerciseId
             """)
-    Optional<Exercise> findByIdWithCompetencies(@Param("exerciseId") Long exerciseId);
+    Optional<Exercise> findWithCompetenciesById(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT e
@@ -106,7 +108,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 COUNT(e.id)
             )
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND (e.dueDate >= :now OR e.dueDate IS NULL)
             	AND (e.releaseDate <= :now OR e.releaseDate IS NULL)
             GROUP BY TYPE(e)
@@ -125,7 +127,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 COUNT(e.id)
             )
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countExercisesGroupByExerciseType();
@@ -144,7 +146,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 COUNT(e.id)
             )
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
             	AND e.dueDate <= :maxDate
             GROUP BY TYPE(e)
@@ -166,7 +168,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             )
             FROM Exercise e
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
             	AND e.dueDate <= :maxDate
             GROUP BY TYPE(e)
@@ -189,7 +191,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             )
             FROM Exercise e
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
             	AND e.dueDate <= :maxDate
                 AND user.login IN :activeUserLogins
@@ -212,7 +214,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 COUNT(e.id)
             )
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
             	AND e.releaseDate <= :maxDate
             GROUP BY TYPE(e)
@@ -234,7 +236,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             )
             FROM Exercise e
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
             	AND e.releaseDate <= :maxDate
             GROUP BY TYPE(e)
@@ -258,7 +260,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             )
             FROM Exercise e
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
             	AND e.releaseDate <= :maxDate
                 AND user.login IN :activeUserLogins
@@ -275,14 +277,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results
             WHERE e.dueDate >= :time
-                AND c.continuousPlagiarismControlEnabled IS TRUE
+                AND c.continuousPlagiarismControlEnabled = TRUE
             """)
     Set<Exercise> findAllExercisesWithDueDateOnOrAfterAndContinuousPlagiarismControlEnabledIsTrue(@Param("time") ZonedDateTime time);
 
     @Query("""
             SELECT e
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :now
             ORDER BY e.dueDate ASC
             """)
@@ -291,7 +293,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT e
             FROM Exercise e
-            WHERE e.course.testCourse IS FALSE
+            WHERE e.course.testCourse = FALSE
             	AND e.assessmentDueDate >= :now
             ORDER BY e.dueDate ASC
             """)
@@ -491,8 +493,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     }
 
     @NotNull
-    default Exercise findByIdWithCompetenciesElseThrow(Long exerciseId) throws EntityNotFoundException {
-        return findByIdWithCompetencies(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+    default Exercise findWithCompetenciesByIdElseThrow(long exerciseId) throws EntityNotFoundException {
+        return findWithCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
     /**
@@ -576,13 +578,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(@Param("userId") long userId);
 
     /**
-     * Finds all exercises filtered by feedback suggestions and due date.
+     * Finds all exercises filtered by feedback suggestion modules not null and due date.
      *
-     * @param feedbackSuggestionsEnabled - filter by feedback suggestions enabled
-     * @param dueDate                    - filter by due date
+     * @param dueDate - filter by due date
      * @return Set of Exercises
      */
-    Set<Exercise> findByFeedbackSuggestionsEnabledAndDueDateIsAfter(boolean feedbackSuggestionsEnabled, ZonedDateTime dueDate);
+    Set<Exercise> findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime dueDate);
 
     /**
      * Find all exercises feedback suggestions (Athena) and with *Due Date* in the future.
@@ -590,8 +591,25 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return Set of Exercises
      */
     default Set<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
-        return findByFeedbackSuggestionsEnabledAndDueDateIsAfter(true, ZonedDateTime.now());
+        return findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime.now());
     }
+
+    /**
+     * Revokes the access by setting all exercises that currently utilize a restricted module to null.
+     *
+     * @param courseId                           The course for which the access should be revoked
+     * @param restrictedFeedbackSuggestionModule Collection of restricted modules
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Exercise e
+            SET e.feedbackSuggestionModule = NULL
+            WHERE e.course.id = :courseId
+                  AND e.feedbackSuggestionModule IN :restrictedFeedbackSuggestionModule
+            """)
+    void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
+            @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
 
     /**
      * For an explanation, see {@link de.tum.in.www1.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long,long)}

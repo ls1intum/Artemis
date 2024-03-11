@@ -33,13 +33,13 @@ describe('AthenaService', () => {
     const textExercise = {
         id: 1,
         type: 'text',
-        feedbackSuggestionsEnabled: true,
+        feedbackSuggestionModule: 'text_module',
         gradingCriteria,
     } as Exercise;
     const programmingExercise = {
         id: 2,
         type: 'programming',
-        feedbackSuggestionsEnabled: true,
+        feedbackSuggestionModule: 'programming_module',
         gradingCriteria,
     } as Exercise;
     beforeEach(() => {
@@ -102,7 +102,7 @@ describe('AthenaService', () => {
         const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
 
-        const exerciseWithoutFeedbackSuggestions = { ...textExercise, feedbackSuggestionsEnabled: false } as Exercise;
+        const exerciseWithoutFeedbackSuggestions = { ...textExercise, feedbackSuggestionModule: undefined } as Exercise;
 
         athenaService.getTextFeedbackSuggestions(exerciseWithoutFeedbackSuggestions, { id: 2, text: '' } as TextSubmission).subscribe((suggestions: TextBlockRef[]) => {
             response = suggestions;
@@ -126,5 +126,52 @@ describe('AthenaService', () => {
         tick();
 
         expect(response).toEqual([]);
+    }));
+
+    it('should return no modules when athena is disabled on the server', fakeAsync(() => {
+        let response: string[] | null = null;
+
+        const mockProfileInfo = { activeProfiles: ['something'] } as ProfileInfo;
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
+
+        athenaService.getAvailableModules(1, textExercise).subscribe((modules: string[]) => {
+            response = modules;
+        });
+
+        tick();
+
+        expect(response).toEqual([]);
+    }));
+
+    it('should get available modules when athena is enabled', fakeAsync(() => {
+        const textModules = ['module_text_1', 'module_text_2'];
+        const programmingModules = ['module_programming_1', 'module_programming_2'];
+        let textResponse: string[] | null = null;
+        let programmingResponse: string[] | null = null;
+
+        const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
+
+        athenaService.getAvailableModules(1, textExercise).subscribe((modules: string[]) => {
+            textResponse = modules;
+        });
+        const requestWrapperText = httpTestingController.expectOne({ url: 'api/athena/courses/1/text-exercises/available-modules' });
+        requestWrapperText.flush(textModules);
+
+        tick();
+
+        athenaService.getAvailableModules(1, programmingExercise).subscribe((modules: string[]) => {
+            programmingResponse = modules;
+        });
+        const requestWrapperProgramming = httpTestingController.expectOne({ url: 'api/athena/courses/1/programming-exercises/available-modules' });
+        requestWrapperProgramming.flush(programmingModules);
+
+        tick();
+
+        expect(requestWrapperText.request.method).toBe('GET');
+        expect(textResponse!).toEqual(textModules);
+
+        expect(requestWrapperProgramming.request.method).toBe('GET');
+        expect(programmingResponse!).toEqual(programmingModules);
     }));
 });

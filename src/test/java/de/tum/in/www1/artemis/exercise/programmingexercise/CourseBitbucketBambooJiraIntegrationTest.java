@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -451,7 +454,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor", TEST_PREFIX + "editor",
                 TEST_PREFIX + "instructor");
         course = courseRepo.save(course);
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         course = courseRepo.save(course);
 
         User tutor = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1").orElseThrow();

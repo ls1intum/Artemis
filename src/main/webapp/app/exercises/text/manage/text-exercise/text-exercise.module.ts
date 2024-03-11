@@ -26,6 +26,7 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
+import { ExerciseFeedbackSuggestionOptionsModule } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 import { FormsModule } from 'app/forms/forms.module';
@@ -56,6 +57,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,
         ExerciseUpdatePlagiarismModule,
+        ExerciseFeedbackSuggestionOptionsModule,
         DetailModule,
         FormsModule,
     ],

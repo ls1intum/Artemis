@@ -358,7 +358,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUserWithGroupsAlreadyExistsInGitlab() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
         User newUser = userTestService.student;
         newUser.setId(null);
@@ -375,7 +375,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUserWithGroupsAlreadyFailsInGitlab() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
         User newUser = userTestService.student;
         newUser.setId(null);

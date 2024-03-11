@@ -41,5 +41,6 @@ import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-r
         GitDiffReportModule,
     ],
     declarations: [RepositoryViewComponent, CommitHistoryComponent, CommitDetailsViewComponent],
+    exports: [RepositoryViewComponent],
 })
 export class ArtemisProgrammingRepositoryModule {}

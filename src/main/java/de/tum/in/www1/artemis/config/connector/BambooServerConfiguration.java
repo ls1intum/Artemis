@@ -13,6 +13,7 @@ import com.atlassian.bamboo.specs.util.TokenCredentials;
 
 @Configuration
 @Profile("bamboo")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BambooServerConfiguration {
 
     @Value("${artemis.continuous-integration.token}")

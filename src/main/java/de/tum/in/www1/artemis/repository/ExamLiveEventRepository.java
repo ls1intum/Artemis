@@ -56,6 +56,6 @@ public interface ExamLiveEventRepository extends JpaRepository<ExamLiveEvent, Lo
      *
      * @param examId the id of the exam
      */
-    @Transactional // delete
+    @Transactional // ok because of delete
     void deleteAllByExamId(Long examId);
 }

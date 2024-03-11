@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public record BitbucketChangeActivitiesDTO(Long size, Long limit, Long start, Boolean isLastPage, List<ValuesDTO> values) {
 
     @JsonIgnoreProperties(ignoreUnknown = true)

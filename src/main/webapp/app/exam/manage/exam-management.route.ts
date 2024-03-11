@@ -61,6 +61,10 @@ import { StudentExamTimelineComponent } from 'app/exam/manage/student-exams/stud
 import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
 import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
 import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
+import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-view.component';
+import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
+import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
+import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -298,6 +302,42 @@ export const examManagementRoute: Routes = [
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/student-exams/:studentExamId/summary/exercises/:exerciseId/repository/:participationId',
+        component: RepositoryViewComponent,
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService, LocalVCGuard],
+    },
+    {
+        path: ':examId/student-exams/:studentExamId/summary/exercises/:exerciseId/repository/:participationId/commit-history',
+        component: CommitHistoryComponent,
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.repository.commitHistory.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService, LocalVCGuard],
+    },
+    {
+        path: ':examId/student-exams/:studentExamId/summary/exercises/:exerciseId/repository/:participationId/commit-history/:commitHash',
+        component: CommitDetailsViewComponent,
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.repository.commitHistory.commitDetails.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':examId/student-exams/:studentExamId/exam-timeline',
@@ -599,6 +639,54 @@ export const examManagementRoute: Routes = [
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/repository/:repositoryType',
+        component: RepositoryViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService, LocalVCGuard],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/participations/:participationId/repository',
+        component: RepositoryViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService, LocalVCGuard],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history',
+        component: CommitHistoryComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService, LocalVCGuard],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history/:commitHash',
+        component: CommitDetailsViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId',

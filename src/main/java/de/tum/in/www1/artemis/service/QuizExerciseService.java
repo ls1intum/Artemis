@@ -16,7 +16,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -380,8 +379,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return the public path of the saved image
      */
     private URI saveDragAndDropImage(Path basePath, MultipartFile file, @Nullable Long entityId) throws IOException {
-        String clearFileExtension = FileService.sanitizeFilename(FilenameUtils.getExtension(Objects.requireNonNull(file.getOriginalFilename())));
-        Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", clearFileExtension));
+        String sanitizedFilename = fileService.checkAndSanitizeFilename(file.getOriginalFilename());
+        Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", sanitizedFilename, true));
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
         return FilePathService.publicPathForActualPathOrThrow(savePath, entityId);
     }

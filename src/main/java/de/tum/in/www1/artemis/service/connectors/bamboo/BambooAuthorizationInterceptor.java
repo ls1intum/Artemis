@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 @Profile("bamboo")
 @Component
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BambooAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.continuous-integration.user}")

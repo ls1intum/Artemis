@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
+import { PROFILE_ATHENA, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { Course } from 'app/entities/course.model';
@@ -53,6 +53,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     irisHestiaEnabled = false;
     irisCodeEditorEnabled = false;
     ltiEnabled = false;
+    isAthenaEnabled = false;
     tutorialEnabled = false;
 
     isAdmin = false;
@@ -91,6 +92,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.tutorialEnabled = await firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorialGroups));
         const profileInfo = await firstValueFrom(this.profileService.getProfileInfo());
         this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
+        this.isAthenaEnabled = profileInfo?.activeProfiles.includes(PROFILE_ATHENA);
         this.irisEnabled = profileInfo?.activeProfiles.includes(PROFILE_IRIS);
         if (this.irisEnabled) {
             const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
@@ -203,6 +205,18 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         return [];
     }
 
+    getAthenaDetails(): Detail[] {
+        const athenaDetails: Detail[] = [];
+        if (this.isAthenaEnabled) {
+            athenaDetails.push({
+                type: DetailType.Boolean,
+                title: 'artemisApp.course.restrictedAthenaModulesAccess.label',
+                data: { boolean: this.course.restrictedAthenaModulesAccess },
+            });
+        }
+        return athenaDetails;
+    }
+
     getIrisDetails(): Detail[] {
         const irisDetails: Detail[] = [];
         if (this.irisEnabled && this.irisChatEnabled) {
@@ -228,6 +242,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     getModeDetailSection(): DetailOverviewSection {
         const complaintsDetails = this.getComplaintsDetails();
+        const athenaDetails = this.getAthenaDetails();
         const irisDetails = this.getIrisDetails();
 
         const details: Detail[] = [
@@ -248,6 +263,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 data: { boolean: this.course.testCourse },
             },
             ...complaintsDetails,
+            ...athenaDetails,
             ...irisDetails,
         ];
 

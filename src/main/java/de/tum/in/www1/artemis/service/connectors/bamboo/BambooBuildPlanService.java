@@ -60,6 +60,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 
 @Service
 @Profile("bamboo")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BambooBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(BambooBuildPlanService.class);

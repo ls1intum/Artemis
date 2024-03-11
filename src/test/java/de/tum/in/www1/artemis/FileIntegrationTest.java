@@ -300,7 +300,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private AttachmentUnit uploadAttachmentUnit(Lecture lecture, MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
-        AttachmentUnit attachmentUnit = LectureFactory.generateAttachmentUnit(false);
+        AttachmentUnit attachmentUnit = LectureFactory.generateAttachmentUnit();
         Attachment attachment = attachmentUnit.getAttachment();
         attachmentUnit.setAttachment(null);
         attachment.setAttachmentUnit(null);

@@ -61,7 +61,7 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
                 LEFT JOIN FETCH submission.results r
                 LEFT JOIN FETCH r.feedbacks
             WHERE submission.participation.exercise.id = :exerciseId
-                AND submission.submitted IS TRUE
+                AND submission.submitted = TRUE
             """)
     List<ModelingSubmission> findSubmittedByExerciseIdWithEagerResultsAndFeedback(@Param("exerciseId") Long exerciseId);
 

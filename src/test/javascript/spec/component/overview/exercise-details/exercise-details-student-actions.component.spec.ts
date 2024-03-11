@@ -43,6 +43,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let startExerciseStub: jest.SpyInstance;
     let resumeStub: jest.SpyInstance;
     let getProfileInfoSub: jest.SpyInstance;
+    let router: MockRouter;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
     const exercise: Exercise = {
@@ -60,6 +61,16 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         studentAssignedTeamIdComputed: true,
     };
     const teamExerciseWithTeamAssigned = { ...teamExerciseWithoutTeamAssigned, studentAssignedTeamId: team.id, allowOfflineIde: true } as ProgrammingExercise;
+
+    const testRunParticipation = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as ProgrammingExerciseStudentParticipation;
+
+    const testRunExercise = {
+        id: 45,
+        type: ExerciseType.PROGRAMMING,
+        allowOfflineIde: true,
+        studentParticipations: [testRunParticipation],
+        exerciseGroup: {},
+    } as ProgrammingExercise;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -89,6 +100,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 debugElement = fixture.debugElement;
                 courseExerciseService = debugElement.injector.get(CourseExerciseService);
                 profileService = debugElement.injector.get(ProfileService);
+                router = debugElement.injector.get(Router) as unknown as MockRouter;
 
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
                 getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
@@ -132,6 +144,45 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             expect(startExerciseButton).not.toBeNull();
         }),
     );
+
+    it('should create the correct repository URL for missing exerciseID in URL', () => {
+        // Set up necessary data for the test
+        const courseId = 123; // Example course ID
+        const exerciseId = 456; // Example exercise ID
+        const repositoryUrl = `/courses/${courseId}/exercises`;
+        const expectedRepositoryLink = `/courses/${courseId}/exercises/${exerciseId}`;
+        router.setUrl(repositoryUrl);
+
+        // Assign the courseId and exerciseId to the component's input properties
+        comp.courseId = courseId;
+        comp.exercise = { id: exerciseId } as Exercise;
+
+        // Call the ngOnInit method to initialize the component
+        comp.ngOnInit();
+
+        // Assert that the repositoryLink property is set correctly
+        expect(comp.repositoryLink).toBe(expectedRepositoryLink);
+    });
+
+    it('should create the correct repository URL for exam exercises', () => {
+        // Set up necessary data for the test
+        const courseId = 123; // Example course ID
+        const exerciseId = 456; // Example exercise ID
+        const examId = 789; // Example exam ID
+        const repositoryUrl = `/courses/${courseId}/exams/${examId}`;
+        const expectedRepositoryLink = `/courses/${courseId}/exams/${examId}/exercises/${exerciseId}`;
+        router.setUrl(repositoryUrl);
+
+        // Assign the courseId and exerciseId to the component's input properties
+        comp.courseId = courseId;
+        comp.exercise = { id: exerciseId } as Exercise;
+
+        // Call the ngOnInit method to initialize the component
+        comp.ngOnInit();
+
+        // Assert that the repositoryLink property is set correctly
+        expect(comp.repositoryLink).toBe(expectedRepositoryLink);
+    });
 
     it('should reflect the correct participation state when team exercise was started', fakeAsync(() => {
         const inactivePart = { id: 2, initializationState: InitializationState.UNINITIALIZED } as StudentParticipation;
@@ -205,18 +256,12 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         flush();
     }));
 
-    it('should correctly show the clone repository button for exam test runs', fakeAsync(() => {
-        const testRunParticipation = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
-        const exercise = {
-            id: 45,
-            type: ExerciseType.PROGRAMMING,
-            allowOfflineIde: true,
-            studentParticipations: [testRunParticipation],
-            exerciseGroup: {},
-        } as ProgrammingExercise;
+    it('should correctly not show the clone repository button for exam test runs', fakeAsync(() => {
+        testRunParticipation.repositoryUri = undefined;
+        testRunExercise.studentParticipations = [testRunParticipation];
 
         comp.examMode = true;
-        comp.exercise = exercise;
+        comp.exercise = testRunExercise;
         comp.practiceParticipation = testRunParticipation;
 
         fixture.detectChanges();
@@ -227,6 +272,27 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
         expect(cloneRepositoryButton).toBeNull();
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should correctly show the clone repository button for exam test runs', fakeAsync(() => {
+        testRunParticipation.repositoryUri = 'https://clone-me.git';
+        testRunExercise.studentParticipations = [testRunParticipation];
+
+        comp.examMode = true;
+        comp.exercise = testRunExercise;
+        comp.practiceParticipation = testRunParticipation;
+
+        fixture.detectChanges();
+        tick();
+
+        const startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
+        expect(startPracticeButton).toBeNull();
+
+        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepositoryButton).not.toBeNull();
 
         fixture.destroy();
         flush();
@@ -300,6 +366,38 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(codeEditorButton).toBeNull();
         cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
         expect(cloneRepoButton).toBeNull();
+    }));
+
+    it('should show correct buttons in exam mode, including clone repo button', fakeAsync(() => {
+        const exercise = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
+        exercise.studentParticipations = [
+            { initializationState: InitializationState.INITIALIZED, repositoryUri: 'https://clone-me.git' } as ProgrammingExerciseStudentParticipation,
+        ];
+        comp.exercise = exercise;
+        comp.examMode = true;
+        comp.updateParticipations();
+
+        fixture.detectChanges();
+        tick();
+
+        let startExerciseButton = debugElement.query(By.css('button.start-exercise'));
+        expect(startExerciseButton).toBeNull();
+        let codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
+        expect(codeEditorButton).toBeNull();
+        let cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepoButton).toBeNull();
+
+        exercise.allowOfflineIde = true;
+
+        fixture.detectChanges();
+        tick();
+
+        startExerciseButton = debugElement.query(By.css('button.start-exercise'));
+        expect(startExerciseButton).toBeNull();
+        codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
+        expect(codeEditorButton).toBeNull();
+        cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepoButton).not.toBeNull();
     }));
 
     // Quiz not supported yet

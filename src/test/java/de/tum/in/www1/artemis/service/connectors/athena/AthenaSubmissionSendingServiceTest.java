@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 
@@ -34,7 +36,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     private SubmissionRepository submissionRepository;
 
     @Autowired
-    private AthenaModuleUrlHelper athenaModuleUrlHelper;
+    private AthenaModuleService athenaModuleService;
 
     @Autowired
     private AthenaDTOConverter athenaDTOConverter;
@@ -63,14 +65,14 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         // we need to have one student per participation, otherwise the database constraints cannot be fulfilled
         userUtilService.addUsers(TEST_PREFIX, MAX_NUMBER_OF_TOTAL_PARTICIPATIONS, 0, 0, 0);
 
-        athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), submissionRepository, athenaModuleUrlHelper,
+        athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), submissionRepository, athenaModuleService,
                 athenaDTOConverter);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
-        textExercise.setFeedbackSuggestionsEnabled(true);
+        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionsEnabled(true);
+        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
     }
 
     @AfterEach
@@ -164,7 +166,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendSubmissionsWithFeedbackSuggestionsDisabledText() {
-        textExercise.setFeedbackSuggestionsEnabled(false);
+        textExercise.setFeedbackSuggestionModule(null);
         assertThatThrownBy(() -> athenaSubmissionSendingService.sendSubmissions(textExercise)).isInstanceOf(IllegalArgumentException.class);
     }
 }

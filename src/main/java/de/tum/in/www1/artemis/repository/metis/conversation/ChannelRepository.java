@@ -53,7 +53,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
                 LEFT JOIN channel.conversationParticipants cp
             WHERE channel.course.id = :courseId
                 AND (
-                   channel.isCourseWide IS TRUE
+                   channel.isCourseWide = TRUE
                    OR (channel.id = cp.conversation.id AND cp.user.id = :userId))
             ORDER BY channel.name
             """)
@@ -63,7 +63,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
             SELECT DISTINCT channel
             FROM Channel channel
             WHERE channel.course.id = :courseId
-                AND channel.isCourseWide IS TRUE
+                AND channel.isCourseWide = TRUE
             ORDER BY channel.name
             """)
     List<Channel> findCourseWideChannelsInCourse(@Param("courseId") long courseId);

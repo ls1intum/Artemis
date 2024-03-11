@@ -77,7 +77,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
             WHERE cr.complaint.result.participation.exercise.id IN :exerciseIds
                 AND cr.submittedTime IS NOT NULL
                 AND cr.complaint.complaintType = :complaintType
-                AND cr.complaint.result.participation.testRun IS FALSE
+                AND cr.complaint.result.participation.testRun = FALSE
             GROUP BY cr.complaint.result.participation.exercise.id
             """)
     List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,

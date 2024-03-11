@@ -326,7 +326,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         competencyProgressUtilService.createCompetencyProgress(competency, student1, 0, 0);
 
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        competencyProgressUtilService.createCompetencyProgress(competency, student2, 0, 0);
+        competencyProgressUtilService.createCompetencyProgress(competency, student2, 1, 1);
 
         final var textUnit = textUnitRepository.findById(idOfTextUnitOfLectureOne).get();
         lectureUtilService.completeLectureUnitForUser(textUnit, student2);

@@ -130,7 +130,7 @@
                             <a
                                 class="btn btn-primary"
                                 [class.btn-sm]="smallButtons"
-                                [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'repository', exercise.studentParticipations![0].id]"
+                                [routerLink]="repositoryLink + '/repository/' + exercise.studentParticipations![0].id"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >

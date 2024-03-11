@@ -7,5 +7,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public record BitbucketUserDTO(String user, Set<String> groups) {
 }

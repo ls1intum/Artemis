@@ -269,6 +269,33 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetFileBeforeExamExerciseStartForbidden() throws Exception {
+        programmingExercise = createProgrammingExerciseForExam();
+        programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
+        programmingExercise.setStartDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        Exam exam = programmingExercise.getExerciseGroup().getExam();
+        examRepository.save(exam);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+        request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.FORBIDDEN, byte[].class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetFileExerciseStartForbidden() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
+        programmingExercise.setStartDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+        request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.FORBIDDEN, byte[].class, params);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithContent() throws Exception {
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content", HttpStatus.OK, String.class, String.class);
@@ -488,8 +515,11 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetFilesAsDifferentStudentWithRelevantPlagiarismCase() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+
         addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
 
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
@@ -559,6 +589,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // The calculated exam end date (startDate of exam + workingTime of studentExam (7200 seconds))
         // should be in the past for this test.
         exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
         examRepository.save(exam);
 
         // student1 is NOT notified yet.

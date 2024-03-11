@@ -41,7 +41,7 @@ public interface PushNotificationDeviceConfigurationRepository extends JpaReposi
     /**
      * Cleans up the old/expired push notifications device configurations
      */
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     @Query("""
             DELETE FROM PushNotificationDeviceConfiguration p

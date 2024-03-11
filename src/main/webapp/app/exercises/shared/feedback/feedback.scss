@@ -5,6 +5,8 @@
         &-header {
             color: $feedback-header-fg;
             background-color: var(--artemis-dark);
+            display: flex;
+            justify-content: space-between;
 
             &__close {
                 background: none;
