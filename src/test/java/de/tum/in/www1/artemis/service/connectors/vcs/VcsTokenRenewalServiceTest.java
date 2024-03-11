@@ -17,6 +17,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.User;
@@ -24,6 +25,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
+@TestPropertySource(properties = { "artemis.version-control.version-control-access-token=true" })
 class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "vcstokenrenewalservice";
@@ -50,9 +52,6 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
 
     private record UserData(String initialToken, Long initialLifetimeDays, String updatedToken) {
 
-        public UserData {
-        }
-
         public UserData(String initialToken, Long initialLifetimeDays) {
             this(initialToken, initialLifetimeDays, null);
         }
@@ -63,8 +62,9 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
     }
 
     static Stream<? extends Arguments> userDataSource() {
-        return Stream.of(Arguments.of(List.of(new UserData("uishfi", 234L), new UserData("sdfhsehfe", 2L, "oshdf"), new UserData("ofg4958", 27L, "e9h4th"),
-                new UserData("fduvhid", 29L), new UserData("e9tertr", 364L), new UserData("fduvhid", -64L, "sdhfisf"))));
+        return Stream
+                .of(Arguments.of(List.of(new UserData("ehre9", -3L, "rhfdih"), new UserData("3jrf", 2024L), new UserData("uishfi", 234L), new UserData("sdfhsehfe", 2L, "oshdf"),
+                        new UserData("ofg4958", 27L, "e9h4th"), new UserData("fduvhid", 29L), new UserData("e9tertr", 364L), new UserData("fduvhid", -64L, "sdhfisf"))));
     }
 
     @ParameterizedTest
