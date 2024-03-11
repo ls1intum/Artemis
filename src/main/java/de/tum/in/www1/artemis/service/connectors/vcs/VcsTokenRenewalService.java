@@ -51,17 +51,32 @@ public class VcsTokenRenewalService {
 
     /**
      * Periodically renews all VCS access tokens that have expired or that are about to expire.
+     * Additionally, new access tokens for users with missing access tokens are created.
      * This method has no effect if the VCS access token config option is disabled.
      */
     @Scheduled(cron = "0  0  4 * * SUN") // Every sunday at 4 am
     public void renewAllVcsAccessTokens() {
         if (versionControlAccessToken && vcsTokenManagementService.isPresent()) {
             log.debug("Started scheduled access token renewal");
-            List<User> users = userRepository.getUsersWithAccessTokenExpirationDateBefore(ZonedDateTime.now().plus(MINIMAL_LIFETIME));
-            for (User user : users) {
-                vcsTokenManagementService.get().renewAccessToken(user);
-            }
-            log.debug("Finished scheduled access token renewal for {} user" + (users.size() == 1 ? "" : "s"), users.size());
+            int renewedAccessTokenCount = renewExpiringAccessTokens();
+            int createdAccessTokenCount = createMissingAccessTokens();
+            log.debug("Finished scheduled access token renewal: renewed {} and created {}", renewedAccessTokenCount, createdAccessTokenCount);
         }
+    }
+
+    private int renewExpiringAccessTokens() {
+        List<User> users = userRepository.getUsersWithAccessTokenExpirationDateBefore(ZonedDateTime.now().plus(MINIMAL_LIFETIME));
+        for (User user : users) {
+            vcsTokenManagementService.orElseThrow().renewAccessToken(user);
+        }
+        return users.size();
+    }
+
+    private int createMissingAccessTokens() {
+        List<User> users = userRepository.getUsersWithAccessTokenNull();
+        for (User user : users) {
+            vcsTokenManagementService.orElseThrow().createAccessToken(user);
+        }
+        return users.size();
     }
 }

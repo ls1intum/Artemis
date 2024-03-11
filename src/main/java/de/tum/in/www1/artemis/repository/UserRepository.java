@@ -869,10 +869,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     /**
-     * Finds all users which a non-null vcs access token that expires before some given date.
+     * Finds all users which a non-null VCS access token that expires before some given date.
      *
      * @param expirationDate the maximal expiration date of the retrieved users
-     * @return all users with expiring vcs access tokens before the given date
+     * @return all users with expiring VCS access tokens before the given date
      */
     @Query(value = """
             SELECT user
@@ -882,4 +882,16 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND user.vcsAccessTokenExpiryDate <= :date
             """)
     List<User> getUsersWithAccessTokenExpirationDateBefore(@Param("date") ZonedDateTime expirationDate);
+
+    /**
+     * Finds all users with VCS access tokens set to null.
+     *
+     * @return all users without VCS access tokens
+     */
+    @Query(value = """
+            SELECT user
+            FROM User user
+            WHERE user.vcsAccessToken IS NULL
+            """)
+    List<User> getUsersWithAccessTokenNull();
 }
