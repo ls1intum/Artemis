@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
 
-public class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "stdcompetencyintegrationtest";
 
