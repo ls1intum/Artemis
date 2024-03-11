@@ -4,6 +4,8 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 
+import javax.annotation.Nullable;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -64,7 +66,10 @@ public class RepositoryAccessService {
         boolean isStudent = authorizationCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isTeachingAssistant = !isStudent && !isAtLeastEditor;
         boolean isStudentParticipation = programmingParticipation instanceof StudentParticipation;
-        var exerciseStartDate = programmingExercise.getParticipationStartDate();
+
+        // NOTE: the exerciseStartDate can be null, e.g. if no release and no start is defined for a course exercise
+        @Nullable
+        ZonedDateTime exerciseStartDate = programmingExercise.getParticipationStartDate();
 
         // Error case 1: The user does not have permissions to access the participation or the submission for plagiarism comparison.
         checkHasParticipationPermissionsOrCanAccessSubmissionForPlagiarismComparisonElseThrow(programmingParticipation, user, programmingExercise);
@@ -111,9 +116,9 @@ public class RepositoryAccessService {
      * @param exerciseStartDate        The start date of the exercise.
      */
     private void checkIsStudentAllowedToAccessRepositoryConcerningDates(ProgrammingExerciseParticipation programmingParticipation, RepositoryActionType repositoryActionType,
-            ZonedDateTime exerciseStartDate) {
+            @Nullable ZonedDateTime exerciseStartDate) {
         // if the exercise has not started yet, the student is not allowed to access the repository
-        if (exerciseStartDate.isAfter(ZonedDateTime.now())) {
+        if (exerciseStartDate != null && exerciseStartDate.isAfter(ZonedDateTime.now())) {
             throw new AccessForbiddenException();
         }
         else {
