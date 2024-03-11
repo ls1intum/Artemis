@@ -27,7 +27,7 @@ public abstract class AbstractEnforceRoleInResourceTest extends AbstractSpringIn
     abstract String getOtherPrefix();
 
     /**
-     * This method checks if the course is already set up and if not, calls the setupOnce method to set up the course and other required resources.
+     * Method is executed before each test to perform default and custom setup.
      */
     @BeforeEach
     void setup() {
@@ -44,7 +44,6 @@ public abstract class AbstractEnforceRoleInResourceTest extends AbstractSpringIn
      * Creates a course and 4 users (one per role) for the course and 4 users (one per role) for another course.
      */
     void defaultSetup() {
-        System.out.println("defaultSetup" + course);
         course = courseUtilService.createCourseWithUserPrefix(getTestPrefix());
 
         // create users of course
