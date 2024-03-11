@@ -47,7 +47,7 @@ class EnforceRoleInExerciseTest extends AbstractEnforceRoleInResourceTest {
     }
 
     @Override
-    void setupOnce() {
+    void customSetup() {
         // Add a programming exercise to the course
         programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
     }

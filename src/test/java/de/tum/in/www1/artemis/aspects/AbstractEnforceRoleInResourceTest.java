@@ -31,21 +31,20 @@ public abstract class AbstractEnforceRoleInResourceTest extends AbstractSpringIn
      */
     @BeforeEach
     void setup() {
-        if (course == null) {
-            defaultSetup();
-            setupOnce();
-        }
+        defaultSetup();
+        customSetup();
     }
 
     /**
      * Creates other required resources.
      */
-    abstract void setupOnce();
+    abstract void customSetup();
 
     /**
      * Creates a course and 4 users (one per role) for the course and 4 users (one per role) for another course.
      */
     void defaultSetup() {
+        System.out.println("defaultSetup" + course);
         course = courseUtilService.createCourseWithUserPrefix(getTestPrefix());
 
         // create users of course

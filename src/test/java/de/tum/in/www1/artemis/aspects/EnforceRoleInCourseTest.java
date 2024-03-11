@@ -41,7 +41,7 @@ class EnforceRoleInCourseTest extends AbstractEnforceRoleInResourceTest {
     }
 
     @Override
-    void setupOnce() {
+    void customSetup() {
         // default setup is sufficient
     }
 
