@@ -40,9 +40,6 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     @Value("${gitlab.use-pseudonyms:#{false}}")
     private boolean usePseudonyms;
 
-    @Value("${artemis.version-control.version-control-access-token:#{false}}")
-    private Boolean versionControlAccessToken;
-
     public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, GitLabApi gitlabApi, UserRepository userRepository,
             GitLabPersonalAccessTokenManagementService gitLabPersonalAccessTokenManagementService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -499,7 +496,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param user the Artemis user (where the token will be stored)
      */
     public void generateVersionControlAccessTokenIfNecessary(User user) {
-        if (versionControlAccessToken && user.getVcsAccessToken() == null) {
+        if (user.getVcsAccessToken() == null) {
             vcsTokenManagementService.createAccessToken(user);
         }
     }

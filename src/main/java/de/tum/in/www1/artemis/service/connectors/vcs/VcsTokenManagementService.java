@@ -22,6 +22,7 @@ public abstract class VcsTokenManagementService {
 
     /**
      * Generates a VCS access token for a given user with a specific lifetime, required that the user does not yet have a VCS access token.
+     * This method has no effect if the VCS access token config option is disabled.
      *
      * @param user     the user to create an access token for
      * @param lifetime the lifetime of the created access token
@@ -39,6 +40,7 @@ public abstract class VcsTokenManagementService {
 
     /**
      * Generates a new VCS access token for a given user with a given lifetime, required that the user already has a VCS access token, which may or may not be valid.
+     * This method has no effect if the VCS access token config option is disabled.
      *
      * @param user        the user whose access token is to be renewed
      * @param newLifetime the lifetime for the newly crated access token

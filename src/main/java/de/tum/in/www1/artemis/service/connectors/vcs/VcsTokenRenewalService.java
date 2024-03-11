@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,12 @@ public class VcsTokenRenewalService {
 
     private final UserRepository userRepository;
 
+    /**
+     * The config parameter for enabling VCS access tokens.
+     */
+    @Value("${artemis.version-control.version-control-access-token:#{false}}")
+    private Boolean versionControlAccessToken;
+
     public VcsTokenRenewalService(Optional<VcsTokenManagementService> vcsTokenManagementService, UserRepository userRepository) {
         this.vcsTokenManagementService = vcsTokenManagementService;
         this.userRepository = userRepository;
@@ -44,10 +51,11 @@ public class VcsTokenRenewalService {
 
     /**
      * Periodically renews all VCS access tokens that have expired or that are about to expire.
+     * This method has no effect if the VCS access token config option is disabled.
      */
     @Scheduled(cron = "0  0  4 * * SUN") // Every sunday at 4 am
     public void renewAllVcsAccessTokens() {
-        if (vcsTokenManagementService.isPresent()) {
+        if (versionControlAccessToken && vcsTokenManagementService.isPresent()) {
             log.debug("Started scheduled access token renewal");
             List<User> users = userRepository.getUsersWithAccessTokenExpirationDateBefore(ZonedDateTime.now().plus(MINIMAL_LIFETIME));
             for (User user : users) {

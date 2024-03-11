@@ -13,6 +13,7 @@ import org.gitlab4j.api.models.ImpersonationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -49,6 +50,12 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
      */
     private final RestTemplate restTemplate;
 
+    /**
+     * The config parameter for enabling VCS access tokens.
+     */
+    @Value("${artemis.version-control.version-control-access-token:#{false}}")
+    private Boolean versionControlAccessToken;
+
     public GitLabPersonalAccessTokenManagementService(UserRepository userRepository, GitLabApi gitlabApi, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
         this.userRepository = userRepository;
         this.gitlabApi = gitlabApi;
@@ -57,21 +64,23 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
 
     /**
      * Generates a VCS access token for a given user with a specific lifetime, required that the user does not yet have a VCS access token.
-     * This method has no effect if there exists no GitLab user that is associated with the user.
+     * This method has no effect if the VCS access token config option is disabled or if there exists no GitLab user that is associated with the user.
      *
      * @param user     the user to create an access token for
      * @param lifetime the lifetime of the created access token
      */
     @Override
     public void createAccessToken(User user, Duration lifetime) {
-        if (user.getVcsAccessToken() != null) {
-            throw new IllegalArgumentException("User already has an access token");
-        }
+        if (versionControlAccessToken) {
+            if (user.getVcsAccessToken() != null) {
+                throw new IllegalArgumentException("User already has an access token");
+            }
 
-        var gitlabUser = getGitLabUserFromUser(user);
-        if (gitlabUser != null) {
-            ImpersonationToken personalAccessToken = createPersonalAccessToken(gitlabUser.getId(), lifetime);
-            savePersonalAccessTokenOfUser(personalAccessToken, user);
+            var gitlabUser = getGitLabUserFromUser(user);
+            if (gitlabUser != null) {
+                ImpersonationToken personalAccessToken = createPersonalAccessToken(gitlabUser.getId(), lifetime);
+                savePersonalAccessTokenOfUser(personalAccessToken, user);
+            }
         }
     }
 
@@ -93,6 +102,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
 
     /**
      * Generates a new VCS access token for a given user with a given lifetime, required that the user already has a VCS access token, which may or may not be valid.
+     * This method has no effect if the VCS access token config option is disabled.
      * This implementation for GitLab requires that there exists a GitLab user that is associated with the user.
      *
      * @param user        the user whose access token is to be renewed
@@ -100,16 +110,18 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
      */
     @Override
     public void renewAccessToken(User user, Duration newLifetime) {
-        if (user.getVcsAccessToken() == null) {
-            throw new IllegalArgumentException("User has no VCS access token to be renewed");
-        }
+        if (versionControlAccessToken) {
+            if (user.getVcsAccessToken() == null) {
+                throw new IllegalArgumentException("User has no VCS access token to be renewed");
+            }
 
-        var gitlabUser = getGitLabUserFromUser(user);
-        if (gitlabUser == null) {
-            throw new IllegalStateException("There is no GitLab user associated with the user");
-        }
+            var gitlabUser = getGitLabUserFromUser(user);
+            if (gitlabUser == null) {
+                throw new IllegalStateException("There is no GitLab user associated with the user");
+            }
 
-        renewVersionControlAccessToken(gitlabUser, user, newLifetime);
+            renewVersionControlAccessToken(gitlabUser, user, newLifetime);
+        }
     }
 
     private void renewVersionControlAccessToken(org.gitlab4j.api.models.User gitlabUser, User user, Duration newLifetime) {
