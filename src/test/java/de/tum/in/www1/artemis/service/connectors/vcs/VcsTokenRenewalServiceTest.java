@@ -137,6 +137,8 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         vcsTokenRenewalService.renewAllVcsAccessTokens();
 
+        ReflectionTestUtils.setField(vcsTokenRenewalService, "userRepository", userRepository);
+
         gitlabRequestMockProvider.verifyMocks();
         verify(userRepositoryAdapter, times(1)).getUsersWithAccessTokenExpirationDateBefore(any());
         verify(userRepositoryAdapter, times(1)).getUsersWithAccessTokenNull();
