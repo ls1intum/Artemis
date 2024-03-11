@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.iris;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -16,6 +17,8 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisHealthIndicator;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisHealthStatusDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedSettingsDTO;
@@ -36,16 +39,19 @@ public abstract class IrisExerciseChatBasedSessionResource<E extends Exercise, S
 
     protected final IrisSettingsService irisSettingsService;
 
+    protected final PyrisHealthIndicator pyrisHealthIndicator;
+
     protected final IrisRateLimitService irisRateLimitService;
 
     protected final Function<Long, E> exerciseByIdFunction;
 
     protected IrisExerciseChatBasedSessionResource(AuthorizationCheckService authCheckService, UserRepository userRepository, IrisSessionService irisSessionService,
-            IrisSettingsService irisSettingsService, IrisRateLimitService irisRateLimitService, Function<Long, E> exerciseByIdFunction) {
+            IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService, Function<Long, E> exerciseByIdFunction) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
+        this.pyrisHealthIndicator = pyrisHealthIndicator;
         this.irisRateLimitService = irisRateLimitService;
         this.exerciseByIdFunction = exerciseByIdFunction;
     }
@@ -92,6 +98,14 @@ public abstract class IrisExerciseChatBasedSessionResource<E extends Exercise, S
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
         irisSessionService.checkIsIrisActivated(session);
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false);
+        var health = pyrisHealthIndicator.health();
+        PyrisHealthStatusDTO[] modelStatuses = (PyrisHealthStatusDTO[]) health.getDetails().get("modelStatuses");
+        var specificModelStatus = false;
+        if (modelStatuses != null) {
+            specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(subSettingsFunction.apply(settings).getPreferredModel()))
+                    .anyMatch(x -> x.status() == PyrisHealthStatusDTO.ModelStatus.UP);
+        }
 
         IrisRateLimitService.IrisRateLimitInformation rateLimitInfo = null;
 
@@ -100,7 +114,7 @@ public abstract class IrisExerciseChatBasedSessionResource<E extends Exercise, S
             rateLimitInfo = irisRateLimitService.getRateLimitInformation(user);
         }
 
-        return new IrisHealthDTO(true, rateLimitInfo);
+        return new IrisHealthDTO(specificModelStatus, rateLimitInfo);
     }
 
     public record IrisHealthDTO(boolean active, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {

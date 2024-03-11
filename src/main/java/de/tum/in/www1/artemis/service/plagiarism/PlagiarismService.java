@@ -69,6 +69,17 @@ public class PlagiarismService {
     }
 
     /**
+     * Check if there exists a plagiarism comparison for the given submission.
+     *
+     * @param submissionId the id of the submission to check.
+     * @return true if a plagiarism comparison exists for the given submission, otherwise false
+     */
+    public boolean hasPlagiarismComparison(long submissionId) {
+        var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
+        return comparisonOptional.filter(not(Set::isEmpty)).isPresent();
+    }
+
+    /**
      * A student should not see both answers from both students for the comparison before the due date
      *
      * @param submissionId    the id of the submission to check.
