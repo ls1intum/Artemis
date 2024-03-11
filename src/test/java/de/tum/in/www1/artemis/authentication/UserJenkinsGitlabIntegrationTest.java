@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
@@ -33,7 +32,6 @@ import de.tum.in.www1.artemis.user.UserTestService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
-@TestPropertySource(properties = { "artemis.version-control.version-control-access-token=true" })
 class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "userjenk"; // shorter prefix as user's name is limited to 50 chars
@@ -174,14 +172,18 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createInternalUser_asAdmin_with_vcsAccessToken_isSuccessful() throws Exception {
         gitlabRequestMockProvider.mockCreationOfUser("batman");
+        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", true);
         userTestService.createInternalUser_asAdmin_isSuccessful();
+        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", false);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createInternalUserWithoutRoles_isSuccessful() throws Exception {
         gitlabRequestMockProvider.mockCreationOfUser("batman");
+        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", true);
         userTestService.createInternalUserWithoutRoles_asAdmin_isSuccessful();
+        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", false);
     }
 
     @Test
