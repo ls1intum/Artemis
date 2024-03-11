@@ -43,12 +43,21 @@ public class PyrisPipelineService {
     public void executeTutorChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisChatSession session) {
         var jobToken = pyrisJobService.addJob(new TutorChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()));
         var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
-        var initialStages = List.of(new PyrisStageDTO("Preparing request", 10, PyrisStageStateDTO.IN_PROGRESS, "Checking out repositories and loading data"),
-                new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.NOT_STARTED, null));
-        irisChatWebsocketService.sendStatusUpdate(session, initialStages);
-        var executionDTO = new PyrisTutorChatPipelineExecutionDTO(settingsDTO, initialStages, latestSubmission.map(pyrisDTOService::toPyrisDTO).orElse(null),
+        var preparingRequestStage = new PyrisStageDTO("Preparing request", 10, PyrisStageStateDTO.IN_PROGRESS, "Checking out repositories and loading data");
+        var executingPipelineStage = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.NOT_STARTED, null);
+        var initialStagesClient = List.of(preparingRequestStage, executingPipelineStage);
+        var initialStagesPyris = List.of(preparingRequestStage);
+        irisChatWebsocketService.sendStatusUpdate(session, initialStagesClient);
+
+        var executionDTO = new PyrisTutorChatPipelineExecutionDTO(settingsDTO, initialStagesPyris, latestSubmission.map(pyrisDTOService::toPyrisDTO).orElse(null),
                 pyrisDTOService.toPyrisDTO(exercise), new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember()), pyrisDTOService.toPyrisDTO(session.getMessages()),
                 new PyrisUserDTO(session.getUser()));
+
+        preparingRequestStage.setState(PyrisStageStateDTO.DONE);
+        executingPipelineStage.setState(PyrisStageStateDTO.IN_PROGRESS);
+
+        irisChatWebsocketService.sendStatusUpdate(session, initialStagesClient);
+
         pyrisConnectorService.executePipeline("tutor-chat", variant, executionDTO);
     }
 }
