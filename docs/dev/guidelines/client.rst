@@ -117,7 +117,7 @@ Do:
 
     <span jhiTranslate="global.title"></span>
 
-    <!-- ok, because there is other content in the span aswell -->
+    <!-- ok, because there is other content in the span as well -->
     <span>
         {{ 'global.title' | artemisTranslate }}
         <fa-icon [icon]="faDelete" />
