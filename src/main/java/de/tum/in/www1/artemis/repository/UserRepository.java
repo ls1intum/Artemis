@@ -514,7 +514,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     void updateUserLanguageKey(@Param("userId") long userId, @Param("languageKey") String languageKey);
 
     @Modifying
-    @Transactional
+    @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
             SET user.irisAccepted = :acceptDatetime
