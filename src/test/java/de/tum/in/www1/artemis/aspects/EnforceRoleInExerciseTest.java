@@ -9,12 +9,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 
 class EnforceRoleInExerciseTest extends AbstractEnforceRoleInResourceTest {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    private ProgrammingExercise exercise;
 
     private static final String TEST_PREFIX = "enforceroleinexercise";
 
@@ -49,11 +52,11 @@ class EnforceRoleInExerciseTest extends AbstractEnforceRoleInResourceTest {
     @Override
     void customSetup() {
         // Add a programming exercise to the course
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
     }
 
     private void callEndpoint(String endpoint, HttpStatus expectedStatus) throws Exception {
-        request.get("/api/test/" + endpoint + "/" + course.getId(), expectedStatus, Void.class);
+        request.get("/api/test/" + endpoint + "/" + exercise.getId(), expectedStatus, Void.class);
     }
 
     private static Stream<Arguments> generateArgumentStream(HttpStatus[] expectedStatus) {
