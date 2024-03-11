@@ -12,8 +12,6 @@
                     }
                     <span jhiTranslate="artemisApp.studentExams.generateStudentExams"></span>
                 </button>
-            }
-            @if (course?.isAtLeastInstructor) {
                 <button
                     id="generateMissingStudentExamsButton"
                     class="btn btn-primary mt-1"
@@ -25,8 +23,6 @@
                     }
                     <span jhiTranslate="artemisApp.studentExams.generateMissingStudentExams"></span>
                 </button>
-            }
-            @if (course?.isAtLeastInstructor) {
                 <button id="startExercisesButton" class="btn btn-primary mt-1" (click)="startExercises()" [disabled]="isLoading || isExamStarted || exercisePreparationRunning">
                     @if (isLoading) {
                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -43,8 +39,6 @@
                 <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
                 <span jhiTranslate="artemisApp.studentExams.unlockAllRepositories"></span>
             </button>
-        }
-        @if (!localVCEnabled && course?.isAtLeastInstructor) {
             <button id="lockAllRepositoriesButton" class="btn btn-danger mt-1" (click)="handleLockAllRepositories()" [disabled]="isLoading">
                 @if (isLoading) {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>

@@ -189,8 +189,7 @@
                                     <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamShortName' | artemisTranslate }}</span>
                                     <fa-icon [icon]="controls.iconForSortPropField('team.shortName')" />
                                 </span>
-                            }
-                            @if (!exercise.teamMode) {
+                            } @else {
                                 <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.login')">
                                     <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentId' | artemisTranslate }}</span>
                                     <fa-icon [icon]="controls.iconForSortPropField('student.login')" />

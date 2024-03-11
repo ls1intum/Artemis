@@ -1,11 +1,10 @@
 <h3 class="top-container flex-wrap flex-lg-nowrap">
     <!--back button only used in assessment dashboard-->
     <div class="row-container me-2">
-        @if (!isTestRun) {
-            <span jhiTranslate="artemisApp.assessment.assessment"></span>
-        }
         @if (isTestRun) {
             <span jhiTranslate="artemisApp.assessment.testRunAssessment"></span>
+        } @else {
+            <span jhiTranslate="artemisApp.assessment.assessment"></span>
         }
         @if (isIllegalSubmission) {
             <span class="badge bg-danger ms-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"></span>
@@ -88,14 +87,14 @@
                         <span
                             ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOn' | artemisTranslate }}"
                             jhiTranslate="artemisApp.assessment.diffView.differenceActivate"
-                            >Activate Diff-View</span
+                            ></span
                         >
                     }
                     @if (highlightDifferences) {
                         <span
                             ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOff' | artemisTranslate }}"
                             jhiTranslate="artemisApp.assessment.diffView.differenceDeactivate"
-                            >Deactivate Diff-View</span
+                            ></span
                         >
                     }
                 </button>
