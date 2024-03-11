@@ -12,6 +12,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -23,7 +24,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-@TestPropertySource(properties = { "artemis.version-control.version-control-access-token=true" })
 class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "vcstokenrenewalservice";
@@ -50,11 +49,25 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
     void setUp() {
         gitlabRequestMockProvider.enableMockingOfRequests();
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 1, 2);
+        ReflectionTestUtils.setField(vcsTokenRenewalService, "versionControlAccessToken", true);
+        ReflectionTestUtils.setField(getCurrentTokenManagementService(), "versionControlAccessToken", true);
     }
 
     @AfterEach
     void teardown() throws Exception {
+        ReflectionTestUtils.setField(getCurrentTokenManagementService(), "versionControlAccessToken", false);
+        ReflectionTestUtils.setField(vcsTokenRenewalService, "versionControlAccessToken", false);
         gitlabRequestMockProvider.reset();
+    }
+
+    private VcsTokenManagementService getCurrentTokenManagementService() {
+        Object attribute = ReflectionTestUtils.getField(vcsTokenRenewalService, "vcsTokenManagementService");
+        if (attribute instanceof Optional<?> attributeOptional && attributeOptional.isPresent() && attributeOptional.get() instanceof VcsTokenManagementService service) {
+            return service;
+        }
+        else {
+            throw new Error("Attribute vcsTokenManagementService of VcsTokenRenewalService has wrong type");
+        }
     }
 
     private record UserData(String initialToken, Long initialLifetimeDays, String updatedToken) {
