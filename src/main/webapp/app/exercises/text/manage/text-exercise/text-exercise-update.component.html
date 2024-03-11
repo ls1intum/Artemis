@@ -12,10 +12,6 @@
     <jhi-form-status-bar [formStatusSections]="formSectionStatus" />
     <div>
         <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general">General Information</h3>
-        <div class="form-group" [hidden]="isImport || !textExercise.id">
-            <label for="id" jhiTranslate="global.field.id">ID</label>
-            <input type="text" class="form-control" id="id" name="id" [(ngModel)]="textExercise.id" readonly />
-        </div>
         <jhi-exercise-title-channel-name [exercise]="textExercise" [course]="textExercise.course" [minTitleLength]="3" [isImport]="isImport" [isExamMode]="isExamMode" />
         @if (!isExamMode) {
             <div class="form-group position-relative">
@@ -201,23 +197,8 @@
                 </div>
             </div>
         </div>
-        @if ((isAthenaEnabled$ | async) && !isExamMode) {
-            <div class="form-group">
-                <div class="form-check custom-control custom-checkbox">
-                    <input
-                        type="checkbox"
-                        id="feedbackSuggestionsEnabled"
-                        [ngModel]="textExercise.feedbackSuggestionsEnabled"
-                        (ngModelChange)="textExercise.feedbackSuggestionsEnabled = !!$event"
-                        class="form-check-input custom-control-input"
-                        name="feedbackSuggestionsEnabled"
-                    />
-                    <label class="form-check-label custom-control-label" for="feedbackSuggestionsEnabled" jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"></label>
-                    <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'" />
-                </div>
-            </div>
-        }
         @if (!isExamMode) {
+            <jhi-exercise-feedback-suggestion-options [exercise]="textExercise" [dueDate]="textExercise.dueDate" />
             <jhi-exercise-update-plagiarism [exercise]="textExercise" />
         }
         <jhi-presentation-score-checkbox [exercise]="textExercise" />
