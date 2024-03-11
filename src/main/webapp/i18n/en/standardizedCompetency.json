@@ -1,0 +1,33 @@
+{
+    "artemisApp": {
+        "standardizedCompetency": {
+            "title": "Standardized Competencies",
+            "manage": {
+                "title": "Standardized Competency Management",
+                "filter": "Filter competencies",
+                "knowledgeAreasButton": "Manage Knowledge Areas",
+                "createButton": "Create Standardized Competency",
+                "editButton": "Edit Standardized Competency",
+                "deleteButton": "Delete Standardized Competency"
+            },
+            "model": {
+                "title": "Title",
+                "description": "Description",
+                "knowledgeArea": "Knowledge Area",
+                "version": "Version"
+            }
+        },
+        "knowledgeArea": {
+            "manage": {
+                "competenciesButton": "Manage Standardized Competencies",
+                "createButton": "Create Knowledge Area",
+                "editButton": "Edit Knowledge Area",
+                "deleteButton": "Delete Knowledge Area"
+            },
+            "model": {
+                "title": "Title",
+                "description": "Description"
+            }
+        }
+    }
+}

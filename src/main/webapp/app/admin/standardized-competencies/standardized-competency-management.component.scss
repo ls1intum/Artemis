@@ -1,0 +1,28 @@
+.chevron-position {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.rotate-icon {
+    transition: transform 0.3s ease;
+}
+
+.rotate-icon.rotated {
+    transform: rotate(90deg);
+}
+
+.card {
+    background-color: var(--overview-light-background-color);
+}
+
+.example-tree-invisible {
+    display: none;
+}
+
+.example-tree .mat-nested-tree-node div[role='group'] {
+    padding-left: 40px;
+}
+
+.example-tree div[role='group'] > .mat-tree-node {
+    padding-left: 40px;
+}
