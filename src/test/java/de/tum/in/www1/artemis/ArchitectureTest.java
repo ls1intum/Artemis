@@ -241,6 +241,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
         var transactionalRule = methods().that().areAnnotatedWith(simpleNameAnnotation("Transactional")).should().beDeclaredInClassesThat(classesPredicated);
 
         // TODO: In the future we should reduce this number and eventually replace it by transactionalRule.check(allClasses)
+        // The following methods currently violate this rule:
+        // Method <de.tum.in.www1.artemis.service.LectureImportService.importLecture(Lecture, Course)>
+        // Method <de.tum.in.www1.artemis.service.exam.StudentExamService.generateMissingStudentExams(Exam)>
+        // Method <de.tum.in.www1.artemis.service.exam.StudentExamService.generateStudentExams(Exam)>
+        // Method <de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService.importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)>
+        // Method <de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService.onTimeZoneUpdate(Course)>
         var result = transactionalRule.evaluate(allClasses);
         Assertions.assertThat(result.getFailureReport().getDetails()).hasSize(5);
     }
