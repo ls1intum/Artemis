@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,7 +10,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -43,29 +41,14 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             """)
     Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
-    /**
-     * Fetches a competency with all linked exercises, lecture units, the associated progress, and completion of the specified user.
-     * <p>
-     * IMPORTANT: We use the entity graph to fetch the lazy loaded data. The fetched data is limited by joining on the user id.
-     *
-     * @param competencyId the id of the competency that should be fetched
-     * @param userId       the id of the user whose progress should be fetched
-     * @return the competency
-     */
     @Query("""
-            SELECT competency
-            FROM Competency competency
-                LEFT JOIN competency.userProgress progress
-                    ON competency.id = progress.competency.id AND progress.user.id = :userId
-                LEFT JOIN FETCH competency.exercises
-                LEFT JOIN FETCH competency.lectureUnits lectureUnits
-                LEFT JOIN lectureUnits.completedUsers completedUsers
-                    ON lectureUnits.id = completedUsers.lectureUnit.id AND completedUsers.user.id = :userId
-                LEFT JOIN FETCH lectureUnits.lecture
-            WHERE competency.id = :competencyId
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH c.exercises
+            WHERE c.id = :competencyId
             """)
-    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "lectureUnits.completedUsers" })
-    Optional<Competency> findByIdWithExercisesAndLectureUnitsAndProgressForUser(@Param("competencyId") long competencyId, @Param("userId") long userId);
+    Optional<Competency> findWithLectureUnitsAndExercisesById(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT c
@@ -219,34 +202,15 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
         return findById(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
+    default Competency findWithLectureUnitsAndExercisesByIdElseThrow(long competencyId) {
+        return findWithLectureUnitsAndExercisesById(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+    }
+
     default Competency findByIdWithLectureUnitsElseThrow(long competencyId) {
         return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
-    default Competency findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(long competencyId, long userId) {
-        return findByIdWithExercisesAndLectureUnitsAndProgressForUser(competencyId, userId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
-    }
-
     long countByCourse(Course course);
 
-    /**
-     * Gets all competencies for the given course with the progress of the specified user.
-     * <p>
-     * The query only fetches data related to specified user. Participations for other users are not included.
-     * IMPORTANT: JPA doesn't support JOIN-FETCH-ON statements. To fetch the relevant data we utilize the entity graph annotation.
-     * Moving the ON clauses to the WHERE clause would result in significantly different and faulty output.
-     *
-     * @param courseId the id of the course
-     * @param userId   the id of the user
-     * @return the competencies with the progress of the user
-     */
-    @Query("""
-            SELECT competency
-            FROM Competency competency
-                LEFT JOIN competency.userProgress progress
-                    ON competency.id = progress.competency.id AND progress.user.id = :userId
-            WHERE competency.course.id = :courseId
-            """)
-    @EntityGraph(type = LOAD, attributePaths = { "userProgress" })
-    List<Competency> findByCourseIdWithProgressOfUser(@Param("courseId") long courseId, @Param("userId") long userId);
+    List<Competency> findByCourseId(long courseId);
 }

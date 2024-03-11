@@ -14,9 +14,7 @@ export class CreateModelingExercisePage {
 
     addCategories(categories: string[]) {
         categories.forEach((category) => {
-            cy.get('#field_categories').type(category);
-            // this line is a hack so the category ends
-            cy.get('#id').click({ force: true });
+            cy.get('#field_categories').type(category).type('{enter}');
         });
     }
 
