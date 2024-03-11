@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaModuleService;
 import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
 import de.tum.in.www1.artemis.service.export.TextSubmissionExportService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -115,6 +116,8 @@ public class TextExerciseResource {
 
     private final ChannelRepository channelRepository;
 
+    private final Optional<AthenaModuleService> athenaModuleService;
+
     private final ExamLiveEventsService examLiveEventsService;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
@@ -124,7 +127,7 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
-            ChannelService channelService, ChannelRepository channelRepository, ExamLiveEventsService examLiveEventsService) {
+            ChannelService channelService, ChannelRepository channelRepository, ExamLiveEventsService examLiveEventsService, Optional<AthenaModuleService> athenaModuleService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -149,6 +152,7 @@ public class TextExerciseResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.examLiveEventsService = examLiveEventsService;
+        this.athenaModuleService = athenaModuleService;
     }
 
     /**
@@ -179,6 +183,9 @@ public class TextExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        // Check that only allowed athena modules are used
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
         TextExercise result = textExerciseRepository.save(textExercise);
 
@@ -225,6 +232,12 @@ public class TextExerciseResource {
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
+
+        // Check that only allowed athena modules are used
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExerciseBeforeUpdate);
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
+        // Changing Athena module after the due date has passed is not allowed
+        athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(textExerciseBeforeUpdate, textExercise, ENTITY_NAME));
 
         channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
 
@@ -459,6 +472,16 @@ public class TextExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalTextExercise, user);
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
+
+        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions for the imported exercise
+        // If Athena is disabled and the service is not present, we also disable feedback suggestions
+        try {
+            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), ENTITY_NAME),
+                    () -> importedExercise.setFeedbackSuggestionModule(null));
+        }
+        catch (BadRequestAlertException e) {
+            importedExercise.setFeedbackSuggestionModule(null);
+        }
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
         textExerciseRepository.save(newTextExercise);

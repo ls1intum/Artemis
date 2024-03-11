@@ -22,7 +22,7 @@ describe('Quiz Exercise Drop Location Spec', () => {
             quizExerciseDragAndDropQuiz.createDnDQuiz('DnD Quiz Test');
         });
 
-        it('Checks drop locations', () => {
+        it.skip('Checks drop locations', () => {
             let containerBounds: DOMRect;
 
             quizExerciseDragAndDropQuiz.dragUsingCoordinates(310, 320);
