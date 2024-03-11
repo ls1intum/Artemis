@@ -42,7 +42,7 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
     @BeforeEach
     void setUp() {
         gitlabRequestMockProvider.enableMockingOfRequests();
-        userUtilService.addUsers(TEST_PREFIX, 2, 2, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, 3, 2, 1, 2);
     }
 
     @AfterEach
@@ -57,21 +57,25 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
         }
 
         public boolean tokenRenewalNecessary() {
-            return updatedToken != null;
+            return initialToken != null && updatedToken != null;
+        }
+
+        public boolean tokenCreationNecessary() {
+            return initialToken == null;
         }
     }
 
     static Stream<? extends Arguments> userDataSource() {
-        return Stream
-                .of(Arguments.of(List.of(new UserData("ehre9", -3L, "rhfdih"), new UserData("3jrf", 2024L), new UserData("uishfi", 234L), new UserData("sdfhsehfe", 2L, "oshdf"),
-                        new UserData("ofg4958", 27L, "e9h4th"), new UserData("fduvhid", 29L), new UserData("e9tertr", 364L), new UserData("fduvhid", -64L, "sdhfisf"))));
+        return Stream.of(Arguments.of(List.of(new UserData("ehre9", -3L, "rhfdih"), new UserData("3jrf", 2024L), new UserData("uishfi", 234L),
+                new UserData("sdfhsehfe", 2L, "oshdf"), new UserData(null, null, "sdhfihs"), new UserData("ofg4958", 27L, "e9h4th"), new UserData("fduvhid", 29L),
+                new UserData("e9tertr", 364L), new UserData("fduvhid", -64L, "sdhfisf"), new UserData(null, null, "rhehofhs"))));
     }
 
     @ParameterizedTest
     @MethodSource("userDataSource")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRenewAllPersonalAccessTokens(List<UserData> userData) throws GitLabApiException {
-        final List<User> users = userRepository.findAll().stream().filter(u -> u.getLogin().startsWith(TEST_PREFIX)).toList();
+        final List<User> users = userRepository.findAll();
         assertThat(userData.size()).isEqualTo(users.size());
 
         final ArrayList<org.gitlab4j.api.models.User> gitlabUsers = new ArrayList<>();
@@ -81,17 +85,23 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
             UserData data = userData.get(i);
 
             user.setVcsAccessToken(data.initialToken());
-            user.setVcsAccessTokenExpiryDate(ZonedDateTime.now().plusDays(data.initialLifetimeDays()));
+            if (data.initialLifetimeDays() != null) {
+                user.setVcsAccessTokenExpiryDate(ZonedDateTime.now().plusDays(data.initialLifetimeDays()));
+            }
+            else {
+                user.setVcsAccessTokenExpiryDate(null);
+            }
             userRepository.save(user);
 
             gitlabUsers.add(new org.gitlab4j.api.models.User().withId(user.getId()).withUsername(user.getLogin()));
         }
 
         final long expectedRenewalCount = userData.stream().filter(UserData::tokenRenewalNecessary).count();
+        final long expectedCreationCount = userData.stream().filter(UserData::tokenCreationNecessary).count();
 
         gitlabRequestMockProvider.mockGetUserApi();
         gitlabRequestMockProvider.mockGetUserID(gitlabUsers);
-        gitlabRequestMockProvider.mockCreatePersonalAccessToken(expectedRenewalCount, new HashMap<>() {
+        gitlabRequestMockProvider.mockCreatePersonalAccessToken(expectedRenewalCount + expectedCreationCount, new HashMap<>() {
 
             {
                 for (int i = 0; i < users.size(); ++i) {
@@ -117,7 +127,7 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
             final User updatedUser = userRepository.getUserByLoginElseThrow(users.get(i).getLogin());
             final UserData data = userData.get(i);
 
-            if (userData.get(i).tokenRenewalNecessary()) {
+            if (userData.get(i).tokenRenewalNecessary() || userData.get(i).tokenCreationNecessary()) {
                 assertThat(updatedUser.getVcsAccessToken()).isEqualTo(data.updatedToken());
                 assertThat(updatedUser.getVcsAccessTokenExpiryDate()).isNotNull();
                 assertThat(updatedUser.getVcsAccessTokenExpiryDate()).isAfter(ZonedDateTime.now().plus(MAX_LIFETIME).minusDays(1));
