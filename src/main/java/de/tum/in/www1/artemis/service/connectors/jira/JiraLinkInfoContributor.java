@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.config.Constants;
 
 @Component
 @Profile("jira")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class JiraLinkInfoContributor implements InfoContributor {
 
     @Value("${artemis.user-management.external.url}")
