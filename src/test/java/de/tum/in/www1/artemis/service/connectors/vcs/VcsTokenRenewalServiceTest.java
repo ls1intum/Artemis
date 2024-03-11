@@ -2,11 +2,17 @@ package de.tum.in.www1.artemis.service.connectors.vcs;
 
 import static de.tum.in.www1.artemis.service.connectors.vcs.VcsTokenManagementService.MAX_LIFETIME;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.gitlab4j.api.GitLabApiException;
@@ -18,6 +24,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.User;
@@ -66,16 +73,18 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
     }
 
     static Stream<? extends Arguments> userDataSource() {
-        return Stream.of(Arguments.of(List.of(new UserData("ehre9", -3L, "rhfdih"), new UserData("3jrf", 2024L), new UserData("uishfi", 234L),
-                new UserData("sdfhsehfe", 2L, "oshdf"), new UserData(null, null, "sdhfihs"), new UserData("ofg4958", 27L, "e9h4th"), new UserData("fduvhid", 29L),
-                new UserData("e9tertr", 364L), new UserData("fduvhid", -64L, "sdhfisf"), new UserData(null, null, "rhehofhs"))));
+        return Stream.of(Arguments
+                .of(List.of(new UserData("uishfi", 234L), new UserData("sdfhsehfe", 2L, "oshdf"), new UserData(null, null, "sdhfihs"), new UserData("ofg4958", 27L, "e9h4th"),
+                        new UserData("fduvhid", 29L), new UserData("e9tertr", 364L), new UserData("fduvhid", -64L, "sdhfisf"), new UserData(null, null, "rhehofhs"))));
     }
 
     @ParameterizedTest
     @MethodSource("userDataSource")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRenewAllPersonalAccessTokens(List<UserData> userData) throws GitLabApiException {
-        final List<User> users = userRepository.findAll();
+        final Predicate<User> isUserOfTest = user -> user.getLogin().startsWith(TEST_PREFIX);
+
+        final List<User> users = userRepository.findAll().stream().filter(isUserOfTest).toList();
         assertThat(userData.size()).isEqualTo(users.size());
 
         final ArrayList<org.gitlab4j.api.models.User> gitlabUsers = new ArrayList<>();
@@ -119,9 +128,18 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
             }
         });
 
+        // We need to inject an adapter for UserRepository as a mock into VcsTokenRenewalService to filter out users without the TEST_PREFIX.
+        UserRepository userRepositoryAdapter = mock(UserRepository.class);
+        doAnswer(invocation -> userRepository.getUsersWithAccessTokenExpirationDateBefore(invocation.getArgument(0)).stream().filter(isUserOfTest).toList())
+                .when(userRepositoryAdapter).getUsersWithAccessTokenExpirationDateBefore(any());
+        doAnswer(invocation -> userRepository.getUsersWithAccessTokenNull().stream().filter(isUserOfTest).toList()).when(userRepositoryAdapter).getUsersWithAccessTokenNull();
+        ReflectionTestUtils.setField(vcsTokenRenewalService, "userRepository", userRepositoryAdapter);
+
         vcsTokenRenewalService.renewAllVcsAccessTokens();
 
         gitlabRequestMockProvider.verifyMocks();
+        verify(userRepositoryAdapter, times(1)).getUsersWithAccessTokenExpirationDateBefore(any());
+        verify(userRepositoryAdapter, times(1)).getUsersWithAccessTokenNull();
 
         for (int i = 0; i < users.size(); ++i) {
             final User updatedUser = userRepository.getUserByLoginElseThrow(users.get(i).getLogin());
