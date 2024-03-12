@@ -56,7 +56,7 @@ To use an API key, simply generate a random string and add it to the configurati
            url: http://localhost:8090
            token: <your-api-key>
 
-Now, aeolus will use this token to authenticate the requests. Make sure to keep this token secret and do not share it with anyone.
+Now, Aeolus will use this token to authenticate the requests. Make sure to keep this token secret and do not share it with anyone.
 Furthermore, add the following environment variables to your Aeolus deployment:
 
 .. code-block:: bash
