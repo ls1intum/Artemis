@@ -25,26 +25,26 @@ public final class AnnotationUtils {
     public static <T extends Annotation> Optional<T> getAnnotation(Class<T> clazz, ProceedingJoinPoint joinPoint) {
         final var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         T annotation = method.getAnnotation(clazz);
-        if (annotation == null) {
-            for (Annotation a : method.getDeclaredAnnotations()) {
-                annotation = a.annotationType().getAnnotation(clazz);
-                if (annotation != null) {
-                    break;
-                }
+        if (annotation != null) {
+            return Optional.of(annotation);
+        }
+        for (Annotation a : method.getDeclaredAnnotations()) {
+            annotation = a.annotationType().getAnnotation(clazz);
+            if (annotation != null) {
+                return Optional.of(annotation);
             }
         }
-        if (annotation == null) {
-            annotation = method.getDeclaringClass().getAnnotation(clazz);
+        annotation = method.getDeclaringClass().getAnnotation(clazz);
+        if (annotation != null) {
+            return Optional.of(annotation);
         }
-        if (annotation == null) {
-            for (Annotation a : method.getDeclaringClass().getDeclaredAnnotations()) {
-                annotation = a.annotationType().getAnnotation(clazz);
-                if (annotation != null) {
-                    break;
-                }
+        for (Annotation a : method.getDeclaringClass().getDeclaredAnnotations()) {
+            annotation = a.annotationType().getAnnotation(clazz);
+            if (annotation != null) {
+                return Optional.of(annotation);
             }
         }
-        return Optional.ofNullable(annotation);
+        return Optional.empty();
     }
 
     /**

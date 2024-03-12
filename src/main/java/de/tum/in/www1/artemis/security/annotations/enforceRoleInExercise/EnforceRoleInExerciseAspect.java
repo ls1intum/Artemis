@@ -45,7 +45,7 @@ public class EnforceRoleInExerciseAspect {
     @Around(value = "callAt()", argNames = "joinPoint")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         final var annotation = getAnnotation(EnforceRoleInExercise.class, joinPoint).orElseThrow();
-        final var exerciseIdFieldName = getCourseIdFieldName(annotation, joinPoint);
+        final var exerciseIdFieldName = getExerciseIdFieldName(annotation, joinPoint);
         final var exerciseId = getIdFromSignature(joinPoint, exerciseIdFieldName).orElseThrow(() -> new IllegalArgumentException(
                 "Method annotated with @EnforceRoleInExercise must have a parameter named " + annotation.exerciseIdFieldName() + " of type long/Long."));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(annotation.value(), exerciseId);
@@ -57,9 +57,9 @@ public class EnforceRoleInExerciseAspect {
      *
      * @param annotation the annotation
      * @param joinPoint  the join point
-     * @return the courseIdFieldName
+     * @return the exerciseIdFieldName
      */
-    private String getCourseIdFieldName(EnforceRoleInExercise annotation, ProceedingJoinPoint joinPoint) {
+    private String getExerciseIdFieldName(EnforceRoleInExercise annotation, ProceedingJoinPoint joinPoint) {
         final var defaultFieldName = annotation.exerciseIdFieldName();
         Optional<String> fieldNameOfSimpleAnnotation = switch (annotation.value()) {
             case INSTRUCTOR -> getAnnotation(EnforceAtLeastInstructorInExercise.class, joinPoint).map(EnforceAtLeastInstructorInExercise::exerciseIdFieldName);
