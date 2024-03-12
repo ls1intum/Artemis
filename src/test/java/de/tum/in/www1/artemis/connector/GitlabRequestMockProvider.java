@@ -119,6 +119,10 @@ public class GitlabRequestMockProvider {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
+    public RestTemplate getRestTemplate() {
+        return restTemplate;
+    }
+
     public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServerShortTimeout = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
@@ -303,6 +307,10 @@ public class GitlabRequestMockProvider {
 
         mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens")).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
+    }
+
+    public void mockCreatePersonalAccessTokenError() throws GitLabApiException {
+        when(userApi.createPersonalAccessToken(any(), anyString(), any(), any())).thenThrow(new GitLabApiException("Simulated error"));
     }
 
     public void mockCreatePersonalAccessToken(long expectedRequestCount, Map<Object, String> userIdOrUsernameToTokenMap) throws GitLabApiException {
