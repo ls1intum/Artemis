@@ -79,10 +79,14 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
 
             var gitlabUser = getGitLabUserFromUser(user);
             if (gitlabUser != null) {
-                ImpersonationToken personalAccessToken = createPersonalAccessToken(gitlabUser.getId(), lifetime);
-                savePersonalAccessTokenOfUser(personalAccessToken, user);
+                createAccessToken(gitlabUser, user, lifetime);
             }
         }
+    }
+
+    private void createAccessToken(org.gitlab4j.api.models.User gitlabUser, User user, Duration lifetime) {
+        ImpersonationToken personalAccessToken = createPersonalAccessToken(gitlabUser.getId(), lifetime);
+        savePersonalAccessTokenOfUser(personalAccessToken, user);
     }
 
     private ImpersonationToken createPersonalAccessToken(Long userId, Duration lifetime) {
@@ -126,15 +130,18 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
     }
 
     private void renewVersionControlAccessToken(org.gitlab4j.api.models.User gitlabUser, User user, Duration newLifetime) {
+        revokePersonalAccessToken(gitlabUser, user);
+        createAccessToken(gitlabUser, user, newLifetime);
+    }
+
+    private void revokePersonalAccessToken(org.gitlab4j.api.models.User gitlabUser, User user) {
         GitLabPersonalAccessTokenListResponseDTO response = fetchPersonalAccessTokenId(gitlabUser.getId());
 
         revokePersonalAccessToken(response.getId());
 
-        // Set access token to null for local user object, otherwise createAccessToken does nothing.
+        // Set access token to null for local user object to ensure consistency.
         user.setVcsAccessToken(null);
         user.setVcsAccessTokenExpiryDate(null);
-
-        createAccessToken(user, newLifetime);
     }
 
     private void revokePersonalAccessToken(Long tokenId) {
