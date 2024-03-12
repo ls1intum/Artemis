@@ -102,7 +102,7 @@
                                 </button>
                                 <mat-menu #subMenuExercise="matMenu" type="button">
                                     @if (!command.getValues() || command.getValues().length === 0) {
-                                        <button mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button">No items available</button>
+                                        <button mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
                                     }
                                     @for (item of command.getValues(); track item) {
                                         @if (item.type !== 'LECTURE') {
@@ -112,7 +112,7 @@
                                 </mat-menu>
                                 <mat-menu #subMenuLecture="matMenu" type="button">
                                     @if (!command.getValues() || command.getValues().length === 0) {
-                                        <button mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button">No items available</button>
+                                        <button mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
                                     }
                                     @for (lecture of command.getValues(); track lecture) {
                                         @if (lecture.type === 'LECTURE') {
@@ -142,7 +142,7 @@
                                                         {{ unit.value }}
                                                     </button>
                                                     @if (!unit.slides || unit.slides.length === 0) {
-                                                        <button mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button">No items available</button>
+                                                        <button mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
                                                     }
                                                     @for (slide of unit.slides; track slide) {
                                                         <button mat-menu-item (click)="command.execute(lecture.id, lecture.type, undefined, unit.id, slide.id)" type="button">
@@ -190,7 +190,7 @@
                                                 </button>
                                             }
                                             @if (!command.getValues().length) {
-                                                <button [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">No items available</button>
+                                                <button [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList"></button>
                                             }
                                         </div>
                                     </div>
