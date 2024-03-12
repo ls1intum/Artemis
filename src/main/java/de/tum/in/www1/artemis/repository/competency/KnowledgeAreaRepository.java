@@ -28,7 +28,8 @@ public interface KnowledgeAreaRepository extends JpaRepository<KnowledgeArea, Lo
     }
 
     @Query("""
-            SELECT knowledgeArea FROM KnowledgeArea knowledgeArea
+            SELECT knowledgeArea 
+            FROM KnowledgeArea knowledgeArea
                 LEFT JOIN FETCH knowledgeArea.children
                 LEFT JOIN FETCH knowledgeArea.competencies
             WHERE knowledgeArea.id = :knowledgeAreaId
