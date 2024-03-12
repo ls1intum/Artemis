@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -47,6 +48,8 @@ public class LearningPathResource {
 
     private static final Logger log = LoggerFactory.getLogger(LearningPathResource.class);
 
+    private final CourseService courseService;
+
     private final CourseRepository courseRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
@@ -59,8 +62,10 @@ public class LearningPathResource {
 
     private final CompetencyProgressService competencyProgressService;
 
-    public LearningPathResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, LearningPathService learningPathService,
-            LearningPathRepository learningPathRepository, UserRepository userRepository, CompetencyProgressService competencyProgressService) {
+    public LearningPathResource(CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
+            LearningPathService learningPathService, LearningPathRepository learningPathRepository, UserRepository userRepository,
+            CompetencyProgressService competencyProgressService) {
+        this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.learningPathService = learningPathService;
@@ -267,17 +272,6 @@ public class LearningPathResource {
      */
     private void checkLearningPathsEnabledElseThrow(@NotNull Course course) {
         if (!course.getLearningPathsEnabled()) {
-            throw new BadRequestException("Learning paths are not enabled for this course.");
-        }
-    }
-
-    /**
-     * Checks if learning paths are enabled for the given course. If not, a BadRequestException is thrown.
-     *
-     * @param courseId the id of the course to check
-     */
-    private void checkLearningPathsEnabledElseThrow(long courseId) {
-        if (!courseRepository.hasLearningPathsEnabled(courseId)) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }
     }
