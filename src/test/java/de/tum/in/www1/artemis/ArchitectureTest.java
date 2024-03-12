@@ -48,7 +48,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule noJUnit4Imports = noClasses().should().dependOnClassesThat().resideInAPackage("org.junit");
         ArchRule noPublicTests = noMethods().that().areAnnotatedWith(Test.class).or().areAnnotatedWith(ParameterizedTest.class).or().areAnnotatedWith(BeforeEach.class).or()
                 .areAnnotatedWith(BeforeAll.class).or().areAnnotatedWith(AfterEach.class).or().areAnnotatedWith(AfterAll.class).should().bePublic();
-        ArchRule classNames = methods().that().areAnnotatedWith(Test.class).should().beDeclaredInClassesThat().haveNameMatching(".*Test");
+        ArchRule classNames = methods().that().areAnnotatedWith(Test.class).should().beDeclaredInClassesThat().haveNameMatching(".*Test").orShould().beDeclaredInClassesThat()
+                .areAnnotatedWith(Nested.class);
         ArchRule noPublicTestClasses = noClasses().that().haveNameMatching(".*Test").should().bePublic();
 
         noJUnit4Imports.check(testClasses);
