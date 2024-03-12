@@ -28,12 +28,12 @@ public class BuildLogResource {
         this.buildLogEntryService = buildLogEntryService;
     }
 
-    @GetMapping("/build-log/{submissionId}")
+    @GetMapping("/build-log/{resultId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<String> getBuildLogForSubmission(@PathVariable long submissionId) {
-        log.debug("REST request to get the build log for submission {}", submissionId);
+    public ResponseEntity<String> getBuildLogForSubmission(@PathVariable long resultId) {
+        log.debug("REST request to get the build log for result {}", resultId);
         HttpHeaders responseHeaders = new HttpHeaders();
-        String buildLog = buildLogEntryService.retrieveBuildLogsFromFileForSubmission(String.valueOf(submissionId));
+        String buildLog = buildLogEntryService.retrieveBuildLogsFromFileForResult(String.valueOf(resultId));
         responseHeaders.setContentType(MediaType.TEXT_PLAIN);
         return new ResponseEntity<>(buildLog, responseHeaders, HttpStatus.OK);
     }

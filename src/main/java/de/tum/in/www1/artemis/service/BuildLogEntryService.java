@@ -280,9 +280,9 @@ public class BuildLogEntryService {
      * Save the build logs for a given submission to a file
      *
      * @param buildLogEntries the build logs to save
-     * @param submissionId    the id of the submission for which to save the build logs
+     * @param resultId        the id of the result for which to save the build logs
      */
-    public void saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String submissionId) {
+    public void saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String resultId) {
 
         Path buildLogsPath = Path.of("buildLogs");
 
@@ -295,7 +295,7 @@ public class BuildLogEntryService {
             }
         }
 
-        Path logPath = buildLogsPath.resolve(submissionId + ".log");
+        Path logPath = buildLogsPath.resolve(resultId + ".log");
 
         StringBuilder logsStringBuilder = new StringBuilder();
         for (BuildLogEntry buildLogEntry : buildLogEntries) {
@@ -304,7 +304,7 @@ public class BuildLogEntryService {
 
         try {
             FileUtils.writeStringToFile(logPath.toFile(), logsStringBuilder.toString(), StandardCharsets.UTF_8);
-            log.debug("Saved build logs for submission {} to file {}", submissionId, logPath);
+            log.debug("Saved build logs for result {} to file {}", resultId, logPath);
         }
         catch (IOException e) {
             throw new RuntimeException(e);
@@ -314,19 +314,19 @@ public class BuildLogEntryService {
     /**
      * Retrieves the build logs for a given submission from a file.
      *
-     * @param submissionId the id of the submission for which to retrieve the build logs
+     * @param resultId the id of the result for which to retrieve the build logs
      * @return the build logs as a string or null if the file could not be found (e.g. if the build logs have been deleted)
      */
-    public String retrieveBuildLogsFromFileForSubmission(String submissionId) {
+    public String retrieveBuildLogsFromFileForResult(String resultId) {
         Path buildLogsPath = Path.of("buildLogs");
-        Path logPath = buildLogsPath.resolve(submissionId + ".log");
+        Path logPath = buildLogsPath.resolve(resultId + ".log");
 
         try {
             byte[] fileContent = fileService.getFileForPath(logPath);
             return new String(fileContent, StandardCharsets.UTF_8);
         }
         catch (IOException e) {
-            log.warn("Build log file for submission {} could not be found", submissionId, e);
+            log.warn("Build log file for result {} could not be found", resultId, e);
             return null;
         }
     }
@@ -352,6 +352,12 @@ public class BuildLogEntryService {
         catch (IOException e) {
             log.error("Error occurred while trying to delete old build log files", e);
         }
+    }
+
+    public boolean resultHasLogFile(String resultId) {
+        Path buildLogsPath = Path.of("buildLogs");
+        Path logPath = buildLogsPath.resolve(resultId + ".log");
+        return Files.exists(logPath);
     }
 
 }

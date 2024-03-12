@@ -65,13 +65,16 @@ public class ResultService {
 
     private final LongFeedbackTextRepository longFeedbackTextRepository;
 
+    private final BuildLogEntryService buildLogEntryService;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
             FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
             ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
+            BuildLogEntryService buildLogEntryService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -88,6 +91,7 @@ public class ResultService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.studentExamRepository = studentExamRepository;
+        this.buildLogEntryService = buildLogEntryService;
     }
 
     /**
@@ -398,6 +402,19 @@ public class ResultService {
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
         return result;
+    }
+
+    public Map<Long, Boolean> getLogsAvailabilityForResults(List<Result> results) {
+        Map<Long, Boolean> logsAvailability = new HashMap<>();
+        for (Result result : results) {
+            if (buildLogEntryService.resultHasLogFile(result.getId().toString())) {
+                logsAvailability.put(result.getId(), true);
+            }
+            else {
+                logsAvailability.put(result.getId(), false);
+            }
+        }
+        return logsAvailability;
     }
 
     @NotNull
