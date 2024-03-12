@@ -304,26 +304,28 @@ class ArchitectureTest extends AbstractArchitectureTest {
     private <T extends Annotation> T getAnnotation(Class<T> clazz, JavaMethod javaMethod) {
         final var method = javaMethod.reflect();
         T annotation = method.getAnnotation(clazz);
-        if (annotation == null) {
-            for (Annotation a : method.getDeclaredAnnotations()) {
-                annotation = a.annotationType().getAnnotation(clazz);
-                if (annotation != null) {
-                    break;
-                }
+        if (annotation != null) {
+            return annotation;
+        }
+        for (Annotation a : method.getDeclaredAnnotations()) {
+            annotation = a.annotationType().getAnnotation(clazz);
+            if (annotation != null) {
+                return annotation;
             }
         }
-        if (annotation == null) {
-            annotation = method.getDeclaringClass().getAnnotation(clazz);
+
+        annotation = method.getDeclaringClass().getAnnotation(clazz);
+        if (annotation != null) {
+            return annotation;
         }
-        if (annotation == null) {
-            for (Annotation a : method.getDeclaringClass().getDeclaredAnnotations()) {
-                annotation = a.annotationType().getAnnotation(clazz);
-                if (annotation != null) {
-                    break;
-                }
+        for (Annotation a : method.getDeclaringClass().getDeclaredAnnotations()) {
+            annotation = a.annotationType().getAnnotation(clazz);
+            if (annotation != null) {
+                return annotation;
             }
         }
-        return annotation;
+
+        return null;
     }
 
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
