@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 
 /**
  * Uses the scheduled task {@link #renewAllVcsAccessTokens} to periodically renew all VCS access tokens that have expired or that are about to expire.
@@ -67,7 +68,12 @@ public class VcsTokenRenewalService {
     private int renewExpiringAccessTokens() {
         List<User> users = userRepository.getUsersWithAccessTokenExpirationDateBefore(ZonedDateTime.now().plus(MINIMAL_LIFETIME));
         for (User user : users) {
-            vcsTokenManagementService.orElseThrow().renewAccessToken(user);
+            try {
+                vcsTokenManagementService.orElseThrow().renewAccessToken(user);
+            }
+            catch (GitLabException | IllegalStateException e) {
+                log.warn("Failed to renew VCS access token for user {}", user.getLogin(), e);
+            }
         }
         return users.size();
     }
@@ -75,7 +81,12 @@ public class VcsTokenRenewalService {
     private int createMissingAccessTokens() {
         List<User> users = userRepository.getUsersWithAccessTokenNull();
         for (User user : users) {
-            vcsTokenManagementService.orElseThrow().createAccessToken(user);
+            try {
+                vcsTokenManagementService.orElseThrow().createAccessToken(user);
+            }
+            catch (GitLabException e) {
+                log.warn("Failed to create VCS access token for user {}", user.getLogin(), e);
+            }
         }
         return users.size();
     }
