@@ -57,10 +57,10 @@ public class VcsTokenRenewalService {
     @Scheduled(cron = "0  0  4 * * SUN") // Every sunday at 4 am
     public void renewAllVcsAccessTokens() {
         if (versionControlAccessToken && vcsTokenManagementService.isPresent()) {
-            log.debug("Started scheduled access token renewal");
+            log.info("Started scheduled access token renewal");
             int renewedAccessTokenCount = renewExpiringAccessTokens();
             int createdAccessTokenCount = createMissingAccessTokens();
-            log.debug("Finished scheduled access token renewal: renewed {} and created {}", renewedAccessTokenCount, createdAccessTokenCount);
+            log.info("Finished scheduled access token renewal: renewed {} and created {}", renewedAccessTokenCount, createdAccessTokenCount);
         }
     }
 
