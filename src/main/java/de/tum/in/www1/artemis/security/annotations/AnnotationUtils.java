@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.security.annotations;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -43,6 +45,27 @@ public final class AnnotationUtils {
             }
         }
         return Optional.ofNullable(annotation);
+    }
+
+    /**
+     * Extracts the value from the annotation
+     *
+     * @param annotation the annotation
+     * @param valueName  the value name
+     * @return the value if it is present, otherwise an exception is thrown
+     */
+    public static <T extends Annotation, V> Optional<V> getValue(T annotation, String valueName, Class<V> valueType) {
+        try {
+            Method method = annotation.annotationType().getMethod(valueName);
+            Object value = method.invoke(annotation);
+            if (method.getReturnType().equals(valueType)) {
+                return Optional.ofNullable(valueType.cast(value));
+            }
+            return Optional.empty();
+        }
+        catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            return Optional.empty();
+        }
     }
 
     /**

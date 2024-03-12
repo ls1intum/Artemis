@@ -15,5 +15,5 @@ import de.tum.in.www1.artemis.security.Role;
 @EnforceRoleInCourse(value = Role.INSTRUCTOR)
 public @interface EnforceAtLeastInstructorInCourse {
 
-    String courseIdFieldName() default "courseId";
+    String resourceIdFieldName() default "courseId";
 }

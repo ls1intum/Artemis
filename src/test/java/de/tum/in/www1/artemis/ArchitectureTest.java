@@ -246,7 +246,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
             public void check(JavaMethod method, ConditionEvents events) {
                 // Get annotation
                 var enforceRoleInCourseAnnotation = getAnnotation(EnforceRoleInCourse.class, method);
-                var courseIdFieldName = enforceRoleInCourseAnnotation.courseIdFieldName();
+                var courseIdFieldName = enforceRoleInCourseAnnotation.resourceIdFieldName();
                 if (!hasParameterWithName(method, courseIdFieldName)) {
                     events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), courseIdFieldName)));
                 }
