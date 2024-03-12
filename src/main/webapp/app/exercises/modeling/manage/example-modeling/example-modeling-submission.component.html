@@ -8,7 +8,7 @@
                 <h5 class="fw-light">{{ 'artemisApp.exampleSubmission.home.assessmentTraining' | artemisTranslate }}</h5>
             }
             @if (assessmentMode) {
-                <p jhiTranslate="artemisApp.exampleSubmission.assessmentInstruction">Double-click on a model element to view and edit the element's assessment.</p>
+                <p jhiTranslate="artemisApp.exampleSubmission.assessmentInstruction"></p>
             }
         </div>
         @if (exercise.isAtLeastEditor && !readOnly && !toComplete) {
@@ -53,7 +53,7 @@
                                 >
                             }
                             @if (!isNewSubmission) {
-                                <span jhiTranslate="artemisApp.modelingExercise.saveExampleSubmission">Save modeling submission</span>
+                                <span jhiTranslate="artemisApp.modelingExercise.saveExampleSubmission"></span>
                             }
                         </button>
                     </div>
@@ -61,7 +61,7 @@
                 @if (assessmentMode) {
                     <button (click)="saveExampleAssessment()" class="btn btn-primary button-resize">
                         <fa-icon [icon]="faSave" />
-                        <span jhiTranslate="artemisApp.modelingExercise.saveExampleAssessment">Save example assessment</span>
+                        <span jhiTranslate="artemisApp.modelingExercise.saveExampleAssessment"></span>
                     </button>
                 }
                 @if (exampleSubmission && !isNewSubmission) {
@@ -69,13 +69,13 @@
                         @if (!assessmentMode) {
                             <button class="btn btn-secondary button-resize" (click)="showAssessment()">
                                 <fa-icon [icon]="faChalkboardTeacher" />
-                                <span jhiTranslate="artemisApp.modelingExercise.showExampleAssessment" id="show-modeling-example-assessment">Show assessment</span>
+                                <span jhiTranslate="artemisApp.modelingExercise.showExampleAssessment" id="show-modeling-example-assessment"></span>
                             </button>
                         }
                         @if (assessmentMode) {
                             <button class="btn btn-secondary button-resize" (click)="showSubmission()">
                                 <fa-icon [icon]="faCodeBranch" />
-                                <span jhiTranslate="artemisApp.modelingExercise.showExampleSubmission">Show submission</span>
+                                <span jhiTranslate="artemisApp.modelingExercise.showExampleSubmission"></span>
                             </button>
                         }
                     </div>
@@ -114,7 +114,7 @@
                 <div class="col-3 text-end mb-2">
                     <button (click)="readAndUnderstood()" class="btn btn-success">
                         <fa-icon [icon]="faSave" />
-                        <span jhiTranslate="artemisApp.exampleSubmission.readAndUnderstood">I have viewed and understood the example</span>
+                        <span jhiTranslate="artemisApp.exampleSubmission.readAndUnderstood"></span>
                     </button>
                 </div>
             }
@@ -125,9 +125,7 @@
                         (click)="checkAssessment()"
                         [disabled]="!assessments || !assessmentsAreValid"
                         jhiTranslate="artemisApp.exampleSubmission.submitAssessment"
-                    >
-                        Submit Assessment
-                    </button>
+                    ></button>
                 </div>
             }
         </div>
