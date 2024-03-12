@@ -13,12 +13,20 @@ export interface VideoUnitFormData {
     competencies?: Competency[];
 }
 
+function isTumLiveUrl(url: URL): boolean {
+    return url.host === 'live.rbg.tum.de';
+}
+
+function isVideoOnlyTumUrl(url: URL): boolean {
+    return url?.searchParams.get('video_only') === '1';
+}
+
 function videoSourceTransformUrlValidator(control: AbstractControl): ValidationErrors | null {
     const invalidVideoUrlError = { invalidVideoUrl: true };
     const urlValue = control.value;
     if (!urlValue) return null;
     try {
-        return urlParser.parse(urlValue) ? null : invalidVideoUrlError;
+        return isTumLiveUrl(new URL(urlValue)) || urlParser.parse(urlValue) ? null : invalidVideoUrlError;
     } catch {
         return invalidVideoUrlError;
     }
@@ -27,8 +35,10 @@ function videoSourceTransformUrlValidator(control: AbstractControl): ValidationE
 function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | null {
     const invalidVideoUrlError = { invalidVideoUrl: true };
     try {
-        const url = new URL(control.value);
-        return url.host === 'live.rbg.tum.de' && !url.searchParams.has('video_only') ? invalidVideoUrlError : null;
+        const urlValue = control.value;
+        const url = new URL(urlValue);
+        if (isTumLiveUrl(url)) return isVideoOnlyTumUrl(url) ? null : invalidVideoUrlError;
+        return urlParser.parse(urlValue) ? invalidVideoUrlError : null;
     } catch {
         return invalidVideoUrlError;
     }
@@ -135,10 +145,17 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
     }
 
     extractEmbeddedUrl(videoUrl: string) {
-        return urlParser.create({
-            videoInfo: urlParser.parse(videoUrl)!,
-            format: 'embed',
-        });
+        const url = new URL(videoUrl);
+        const isTumUrl = isTumLiveUrl(url);
+        if (isTumUrl && !isVideoOnlyTumUrl(url)) {
+            url.searchParams.set('video_only', '1');
+        }
+        return isTumUrl
+            ? url.toString()
+            : urlParser.create({
+                  videoInfo: urlParser.parse(videoUrl)!,
+                  format: 'embed',
+              });
     }
 
     cancelForm() {
