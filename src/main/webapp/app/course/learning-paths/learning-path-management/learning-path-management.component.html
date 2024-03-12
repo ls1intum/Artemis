@@ -7,10 +7,10 @@
 }
 @if (!isLoading && health) {
     <div>
-        <h2 jhiTranslate="artemisApp.learningPath.manageLearningPaths.title">Learning Path Management</h2>
+        <h2 jhiTranslate="artemisApp.learningPath.manageLearningPaths.title"></h2>
         @if (health.status?.includes(HealthStatus.DISABLED)) {
             <div>
-                <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.isDisabled">Disabled</span>
+                <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.isDisabled"></span>
                 <div>
                     <button
                         id="enable-learning-paths-button"
@@ -19,9 +19,7 @@
                         (click)="enableLearningPaths()"
                         jhiTranslate="artemisApp.learningPath.manageLearningPaths.enable"
                         [ngbTooltip]="'artemisApp.learningPath.manageLearningPaths.enableHint' | artemisTranslate"
-                    >
-                        Enable
-                    </button>
+                    ></button>
                 </div>
             </div>
         }
@@ -37,10 +35,10 @@
         @if (!health.status?.includes(HealthStatus.DISABLED)) {
             <div>
                 <div class="form-group form-inline">
-                    <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.search">Search for Learning Path:</span>
+                    <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.search"></span>
                     <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchLearningPath" type="text" />
                     @if (searchLoading) {
-                        <span class="ms-3" jhiTranslate="loading">Loading...</span>
+                        <span class="ms-3" jhiTranslate="loading"></span>
                     }
                 </div>
                 <table class="table table-striped align-middle flex">
@@ -51,15 +49,15 @@
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th class="col-4" jhiSortBy="{{ column.USER_NAME }}">
-                                <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.name">Name</span>
+                                <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.name"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th class="col-2" jhiSortBy="{{ column.USER_LOGIN }}">
-                                <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.login">Login</span>
+                                <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.login"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th class="col-4" jhiSortBy="{{ column.PROGRESS }}">
-                                <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.progress">Progress</span>
+                                <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.progress"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th class="col-1"></th>

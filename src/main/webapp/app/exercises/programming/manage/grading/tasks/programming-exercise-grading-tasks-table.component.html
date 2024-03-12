@@ -19,22 +19,28 @@
             }
         </div>
         <div>
-            <button type="button" (click)="saveTestCases()" class="btn btn-primary" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.configureGrading.save">
-                save
-            </button>
-            <button type="button" (click)="resetTestCases()" class="btn btn-secondary" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.configureGrading.reset">
-                reset
-            </button>
+            <button
+                type="button"
+                (click)="saveTestCases()"
+                class="btn btn-primary"
+                [disabled]="isSaving"
+                jhiTranslate="artemisApp.programmingExercise.configureGrading.save"
+            ></button>
+            <button
+                type="button"
+                (click)="resetTestCases()"
+                class="btn btn-secondary"
+                [disabled]="isSaving"
+                jhiTranslate="artemisApp.programmingExercise.configureGrading.reset"
+            ></button>
         </div>
     </div>
     <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" id="grading-task-inactive-toggle" [value]="ignoreInactive" (click)="toggleShowInactiveTestsShown()" />
-        <label class="form-check-label" for="grading-task-inactive-toggle" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive"
-            >Show inactive
-        </label>
+        <label class="form-check-label" for="grading-task-inactive-toggle" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive"></label>
     </div>
     <div>
-        <label class="form-check-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.exercisePoints">Exercise Points:</label>
+        <label class="form-check-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.exercisePoints"></label>
         {{ exercise.maxPoints }} P
     </div>
 </div>

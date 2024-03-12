@@ -1,7 +1,7 @@
 <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
     <div class="modal-header">
         <h4 class="modal-title">
-            <span jhiTranslate="artemisApp.submission.createExternal">Create external submission</span>
+            <span jhiTranslate="artemisApp.submission.createExternal"></span>
             ({{ exercise.title }})
         </h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
@@ -9,20 +9,20 @@
     <div class="modal-body">
         @if (exercise.gradingInstructions) {
             <div class="form-group">
-                <h3 for="id" jhiTranslate="artemisApp.exercise.assessmentInstructions">Assessment Instructions</h3>
+                <h3 for="id" jhiTranslate="artemisApp.exercise.assessmentInstructions"></h3>
                 <span [innerHTML]="exercise.gradingInstructions | htmlForMarkdown"></span>
             </div>
         }
         <div class="form-group">
-            <h4 class="control-label" jhiTranslate="artemisApp.result.studentLogin">Student login</h4>
+            <h4 class="control-label" jhiTranslate="artemisApp.result.studentLogin"></h4>
             <input type="text" required class="form-control" name="studentLogin" id="studentLogin" [(ngModel)]="student.login" #studentLogin="ngModel" />
             @if (studentLogin?.invalid && studentLogin?.errors?.required) {
-                <span class="text-danger" jhiTranslate="artemisApp.result.studentLoginRequired"> Student login is required. </span>
+                <span class="text-danger" jhiTranslate="artemisApp.result.studentLoginRequired"></span>
             }
         </div>
         <div class="form-group row align-items-end">
             <div class="col-md-6">
-                <h4 class="control-label" jhiTranslate="artemisApp.result.scorePercentage">Score (in %)</h4>
+                <h4 class="control-label" jhiTranslate="artemisApp.result.scorePercentage"></h4>
                 <input
                     type="number"
                     [pattern]="SCORE_PATTERN"
@@ -35,19 +35,19 @@
                     #score="ngModel"
                 />
                 @if (score.dirty && score.invalid) {
-                    <span class="text-danger" jhiTranslate="artemisApp.result.invalidScore">Score is required and should be a number.</span>
+                    <span class="text-danger" jhiTranslate="artemisApp.result.invalidScore"></span>
                 }
             </div>
             <div class="checkbox col-md-6">
                 <div class="artemis-label form-check">
                     <input class="form-check-input" type="checkbox" name="successful" [(ngModel)]="result.successful" [disabled]="true" />
-                    <span class="form-check-label" jhiTranslate="artemisApp.result.successful">Successful</span>
+                    <span class="form-check-label" jhiTranslate="artemisApp.result.successful"></span>
                 </div>
             </div>
         </div>
         <div class="form-group mb-2">
             <button type="button" class="btn btn-default" [hidden]="feedbacks.length > 0" (click)="pushFeedback()">
-                <span jhiTranslate="artemisApp.result.addFeedback">Add feedback</span>
+                <span jhiTranslate="artemisApp.result.addFeedback"></span>
             </button>
         </div>
         @if (feedbacks.length > 0) {
@@ -68,7 +68,7 @@
                                 #feedbackText="ngModel"
                             />
                             @if (feedbackText?.invalid && feedbackText?.errors?.required) {
-                                <span class="text-danger" jhiTranslate="artemisApp.result.feedbackTextRequired"> Feedback text is required. </span>
+                                <span class="text-danger" jhiTranslate="artemisApp.result.feedbackTextRequired"></span>
                             }
                         </div>
                         <div class="form-group row align-items-end">
@@ -81,7 +81,7 @@
                             <div class="checkbox col-md-6">
                                 <label class="artemis-label form-check">
                                     <input class="form-check-input" type="checkbox" name="positive{{ i }}" [(ngModel)]="feedback.positive" />
-                                    <span class="form-check-label" jhiTranslate="artemisApp.result.positive">Positive</span>
+                                    <span class="form-check-label" jhiTranslate="artemisApp.result.positive"></span>
                                 </label>
                             </div>
                         </div>
@@ -92,25 +92,25 @@
         @if (feedbacks.length > 0) {
             <div class="form-group mb-2">
                 <button type="button" class="btn btn-default" (click)="pushFeedback()">
-                    <span jhiTranslate="artemisApp.result.addFeedback">More feedback</span>
+                    <span jhiTranslate="artemisApp.result.addFeedback"></span>
                 </button>
                 &nbsp;
                 <button type="button" class="btn btn-default" (click)="popFeedback()">
-                    <span jhiTranslate="artemisApp.result.deleteFeedback">Less feedback</span>
+                    <span jhiTranslate="artemisApp.result.deleteFeedback"></span>
                 </button>
             </div>
         }
         <div class="form-check mt-3">
             <input class="form-check-input" type="checkbox" name="resultRated" id="resultRated" [(ngModel)]="result.rated" #resultRated="ngModel" />
-            <label for="resultRated" class="form-check-label" jhiTranslate="artemisApp.result.rated">Rated</label>
+            <label for="resultRated" class="form-check-label" jhiTranslate="artemisApp.result.rated"></label>
         </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
-            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
         <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-primary">
-            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
         </button>
     </div>
 </form>
