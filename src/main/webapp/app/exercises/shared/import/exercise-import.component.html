@@ -1,17 +1,17 @@
 <div class="modal-body">
     <div class="form-group form-inline">
-        <span jhiTranslate="artemisApp.exercise.import.search">Search for exercise</span>:
+        <span jhiTranslate="artemisApp.exercise.import.search"></span>:
         <input class="form-control mx-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
         <div class="form-check form-check-inline">
             <input class="form-check-input" type="checkbox" id="courseFilter" [checked]="isCourseFilter" [disabled]="!isExamFilter" (change)="onCourseFilterChange()" />
-            <label class="form-check-label" for="courseFilter" jhiTranslate="artemisApp.exercise.import.searchInCourses">Search in courses?</label>
+            <label class="form-check-label" for="courseFilter" jhiTranslate="artemisApp.exercise.import.searchInCourses"></label>
         </div>
         <div class="form-check form-check-inline">
             <input class="form-check-input" type="checkbox" id="examFilter" [checked]="isExamFilter" [disabled]="!isCourseFilter" (change)="onExamFilterChange()" />
-            <label class="form-check-label" for="examFilter" jhiTranslate="artemisApp.exercise.import.searchInExams">Search in exams?</label>
+            <label class="form-check-label" for="examFilter" jhiTranslate="artemisApp.exercise.import.searchInExams"></label>
         </div>
         @if (loading) {
-            <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading">Loading...</span>
+            <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
         }
     </div>
     <table class="table table-striped flex">
@@ -22,25 +22,25 @@
                     <fa-icon [icon]="faSort" />
                 </th>
                 <th jhiSortBy="TITLE" class="col-4">
-                    <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
+                    <span jhiTranslate="artemisApp.exercise.import.table.title"></span>
                     <fa-icon [icon]="faSort" />
                 </th>
                 @if (this.exerciseType === ExerciseType.PROGRAMMING) {
                     <th jhiSortBy="PROGRAMMING_LANGUAGE" class="col-2">
-                        <span jhiTranslate="artemisApp.exercise.import.table.language">Programming Language</span>
+                        <span jhiTranslate="artemisApp.exercise.import.table.language"></span>
                         <fa-icon [icon]="faSort" />
                     </th>
                 }
                 <th jhiSortBy="COURSE_TITLE" class="col-4">
-                    <span [hidden]="!isCourseFilter" jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
+                    <span [hidden]="!isCourseFilter" jhiTranslate="artemisApp.exercise.import.table.course"></span>
                     <span [hidden]="!(isCourseFilter && isExamFilter)"> | </span>
-                    <span [hidden]="!isExamFilter" jhiTranslate="artemisApp.exercise.import.table.exam">Course</span>
+                    <span [hidden]="!isExamFilter" jhiTranslate="artemisApp.exercise.import.table.exam"></span>
                     @if (!(isCourseFilter && isExamFilter)) {
                         <fa-icon [icon]="faSort" />
                     }
                 </th>
                 <th class="col-2" [hidden]="!(isCourseFilter && isExamFilter)">
-                    <span jhiTranslate="artemisApp.exercise.import.table.examQuestion">Exam Question</span>
+                    <span jhiTranslate="artemisApp.exercise.import.table.examQuestion"></span>
                 </th>
                 <th class="col-1"></th>
             </tr>

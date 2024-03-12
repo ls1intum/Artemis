@@ -26,7 +26,7 @@
             }
             <div class="test-schedule-date px-1">
                 <div class="test-schedule-date-title test-schedule-date-title-small-button">
-                    <span jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
+                    <span jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"></span>
                     <jhi-help-icon text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip" />
                 </div>
                 <div class="btn btn-light scheduled-test btn-lifecycle" [class.btn-lifecycle--disabled]="readOnly">
@@ -62,7 +62,7 @@
                 <div>
                     <div class="test-schedule-date px-1">
                         <div class="test-schedule-date-title test-schedule-date-title-small-button">
-                            <span jhiTranslate="artemisApp.programmingExercise.timeline.assessmentType"> Assessment Type </span>
+                            <span jhiTranslate="artemisApp.programmingExercise.timeline.assessmentType"></span>
                             <jhi-help-icon
                                 [text]="
                                     'artemisApp.programmingExercise.timeline.' +
@@ -189,25 +189,8 @@
             ></label>
             <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'" />
         </div>
-        @if ((isAthenaEnabled$ | async) && !isExamMode) {
-            <div class="form-check">
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    name="feedbackSuggestionsEnabled"
-                    [checked]="exercise.feedbackSuggestionsEnabled"
-                    [disabled]="exercise.assessmentType === assessmentType.AUTOMATIC"
-                    id="feedbackSuggestionsEnabled"
-                    (change)="exercise.feedbackSuggestionsEnabled = !exercise.feedbackSuggestionsEnabled"
-                />
-                <label
-                    [ngStyle]="exercise.assessmentType === assessmentType.AUTOMATIC ? { color: 'grey' } : {}"
-                    class="form-control-label"
-                    for="feedbackSuggestionsEnabled"
-                    jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"
-                ></label>
-                <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'" />
-            </div>
+        @if (!isExamMode) {
+            <jhi-exercise-feedback-suggestion-options [exercise]="exercise" [dueDate]="exercise.dueDate" [readOnly]="readOnly" />
         }
     }
 </div>
