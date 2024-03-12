@@ -11,10 +11,10 @@
     </div>
     <div class="conflict-modal__footer">
         <button class="conflict-modal__footer__cancel" type="button" data-dismiss="modal" (click)="closeModal()">
-            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
         <button type="submit" class="conflict-modal__footer__submit" [disabled]="!deleteForm.valid">
-            <fa-icon [icon]="faTimes" /><span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Resolve Conflict</span>
+            <fa-icon [icon]="faTimes" /><span jhiTranslate="artemisApp.editor.conflict.resolveConflict"></span>
         </button>
     </div>
 </form>
