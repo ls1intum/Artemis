@@ -58,7 +58,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
         let contentSpan = fixture.debugElement.query(By.css('h2 > span'));
         expect(contentSpan).toBeTruthy();
-        expect(contentSpan.nativeElement.innerHTML).toBe('Sending announcement...');
+        expect(contentSpan.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.examManagement.announcementCreate.sending');
         expect(mockExamManagementService.createAnnouncement).toHaveBeenCalled();
 
         testingSubject.next({ id: 1, text: 'new announcement' } as any as ExamWideAnnouncementEvent);
@@ -67,7 +67,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
         contentSpan = fixture.debugElement.query(By.css('h2 > span'));
         expect(contentSpan).toBeTruthy();
-        expect(contentSpan.nativeElement.innerHTML).toBe('Announcement sent!');
+        expect(contentSpan.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.examManagement.announcementCreate.sent');
     });
 
     it('should handle failed announcement submission', () => {

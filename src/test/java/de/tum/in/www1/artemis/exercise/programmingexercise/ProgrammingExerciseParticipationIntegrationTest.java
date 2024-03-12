@@ -83,30 +83,38 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     }
 
     private static Stream<Arguments> argumentsForGetParticipationResults() {
+        ZonedDateTime startDate = ZonedDateTime.now().minusDays(3);
+        ZonedDateTime releaseDate = ZonedDateTime.now().minusDays(4);
         ZonedDateTime someDate = ZonedDateTime.now();
         ZonedDateTime futureDate = ZonedDateTime.now().plusDays(3);
         ZonedDateTime pastDate = ZonedDateTime.now().minusDays(1);
         return Stream.of(
                 // No assessmentType and no completionDate -> notFound
-                Arguments.of(null, null, null, false),
+                Arguments.of(null, null, null, null, null, false),
                 // Automatic result is always returned
-                Arguments.of(AssessmentType.AUTOMATIC, null, null, true), Arguments.of(AssessmentType.AUTOMATIC, someDate, null, true),
-                Arguments.of(AssessmentType.AUTOMATIC, someDate, futureDate, true), Arguments.of(AssessmentType.AUTOMATIC, someDate, pastDate, true),
-                Arguments.of(AssessmentType.AUTOMATIC, null, futureDate, true), Arguments.of(AssessmentType.AUTOMATIC, null, pastDate, true),
+                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, null, null, true),
+                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, someDate, null, true),
+                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, someDate, futureDate, true),
+                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, someDate, pastDate, true),
+                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, null, futureDate, true),
+                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, null, pastDate, true),
                 // Manual result without completion date (assessment was only saved but no submitted) is not returned
-                Arguments.of(AssessmentType.SEMI_AUTOMATIC, null, null, false), Arguments.of(AssessmentType.SEMI_AUTOMATIC, null, futureDate, false),
-                Arguments.of(AssessmentType.SEMI_AUTOMATIC, null, pastDate, false),
+                Arguments.of(startDate, releaseDate, AssessmentType.SEMI_AUTOMATIC, null, null, false),
+                Arguments.of(startDate, releaseDate, AssessmentType.SEMI_AUTOMATIC, null, futureDate, false),
+                Arguments.of(startDate, releaseDate, AssessmentType.SEMI_AUTOMATIC, null, pastDate, false),
                 // Manual result is not returned if completed and assessment due date has not passed
-                Arguments.of(AssessmentType.SEMI_AUTOMATIC, someDate, futureDate, false),
+                Arguments.of(startDate, releaseDate, AssessmentType.SEMI_AUTOMATIC, someDate, futureDate, false),
                 // Manual result is returned if completed and assessmentDue date has passed
-                Arguments.of(AssessmentType.SEMI_AUTOMATIC, someDate, pastDate, true));
+                Arguments.of(startDate, releaseDate, AssessmentType.SEMI_AUTOMATIC, someDate, pastDate, true));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("argumentsForGetParticipationResults")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetParticipationWithLatestResultAsAStudent(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
-            boolean expectLastCreatedResult) throws Exception {
+    void testGetParticipationWithLatestResultAsAStudent(ZonedDateTime startDate, ZonedDateTime releaseDate, AssessmentType assessmentType, ZonedDateTime completionDate,
+            ZonedDateTime assessmentDueDate, boolean expectLastCreatedResult) throws Exception {
+        programmingExercise.setStartDate(startDate);
+        programmingExercise.setReleaseDate(releaseDate);
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExerciseRepository.save(programmingExercise);
         var result = addStudentParticipationWithResult(assessmentType, completionDate);
@@ -125,8 +133,10 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("argumentsForGetParticipationResults")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetParticipationWithLatestResult_multipleResultsAvailable(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
-            boolean expectLastCreatedResult) throws Exception {
+    void testGetParticipationWithLatestResult_multipleResultsAvailable(ZonedDateTime startDate, ZonedDateTime releaseDate, AssessmentType assessmentType,
+            ZonedDateTime completionDate, ZonedDateTime assessmentDueDate, boolean expectLastCreatedResult) throws Exception {
+        programmingExercise.setStartDate(startDate);
+        programmingExercise.setReleaseDate(releaseDate);
         // Add an automatic result first
         var firstResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
@@ -177,11 +187,37 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
                 ProgrammingExerciseStudentParticipation.class);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithLatestResult_studentCannotAccessParticipationIfExerciseNotStarted() throws Exception {
+        ZonedDateTime startDate = ZonedDateTime.now().plusDays(1);
+        programmingExercise.setStartDate(startDate);
+        programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.FORBIDDEN,
+                ProgrammingExerciseStudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetParticipationWithLatestResult_canAccessParticipationIfExerciseNotStartedAndNotStudent() throws Exception {
+        ZonedDateTime startDate = ZonedDateTime.now().plusDays(1);
+        programmingExercise.setStartDate(startDate);
+        programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
+                ProgrammingExerciseStudentParticipation.class);
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("argumentsForGetParticipationResults")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetParticipationWithAllResults(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate, boolean expectLastCreatedResult)
-            throws Exception {
+    void testGetParticipationWithAllResults(ZonedDateTime startDate, ZonedDateTime releaseDate, AssessmentType assessmentType, ZonedDateTime completionDate,
+            ZonedDateTime assessmentDueDate, boolean expectLastCreatedResult) throws Exception {
+        programmingExercise.setStartDate(startDate);
+        programmingExercise.setReleaseDate(releaseDate);
         // Add an automatic result first
         var firstResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
@@ -256,6 +292,39 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
         StudentParticipation participation = (StudentParticipation) result.getParticipation();
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK, Result.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationAllResults_studentCannotAccessParticipationIfExerciseNotStarted() throws Exception {
+        ZonedDateTime startDate = ZonedDateTime.now().plusDays(1);
+        programmingExercise.setStartDate(startDate);
+        programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.FORBIDDEN, ProgrammingExerciseStudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationAllResults_studentCanAccessIfNoStartDateSet() throws Exception {
+        programmingExercise.setStartDate(null);
+        programmingExercise.setReleaseDate(null);
+        programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetParticipationAllResults_canAccessParticipationIfExerciseNotStartedAndNotStudent() throws Exception {
+        ZonedDateTime startDate = ZonedDateTime.now().plusDays(1);
+        programmingExercise.setStartDate(startDate);
+        programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
     }
 
     @Test
