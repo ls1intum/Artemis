@@ -168,6 +168,7 @@ public class ComplaintResponseService {
      * or denies the associated complaint, thus resolving the complaint
      *
      * @param updatedComplaintResponse complaint response containing the information necessary for resolving the complaint
+     * @param complaintResponseId      complaint response id
      * @return complaintResponse of resolved complaint
      */
     public ComplaintResponse resolveComplaint(ComplaintResponseUpdateDTO updatedComplaintResponse, Long complaintResponseId) {

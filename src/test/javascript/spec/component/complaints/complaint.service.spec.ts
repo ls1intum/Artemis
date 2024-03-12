@@ -210,7 +210,7 @@ describe('ComplaintService', () => {
             });
 
             const res = httpMock.expectOne({ method: 'POST' });
-            expect(res.request.url).toBe(`api/complaints/exam/${examId}`);
+            expect(res.request.url).toBe(`api/complaints?examId=${examId}`);
             expect(res.request.body).toEqual(serverComplaint1);
 
             res.flush(clone(serverComplaint1));
@@ -346,7 +346,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/complaints/submissions/${submissionId}`);
+        expect(res.request.url).toBe(`api/complaints?submissionId=${submissionId}`);
 
         res.flush(clone(serverComplaint1));
     });
@@ -358,7 +358,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/exercises/${exerciseId}/complaints-for-test-run-dashboard`);
+        expect(res.request.url).toBe(`api/complaints?exerciseId=${exerciseId}&dashboard=test-run`);
 
         res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
     });
@@ -370,7 +370,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/exercises/${exerciseId}/more-feedback-for-assessment-dashboard`);
+        expect(res.request.url).toBe(`api/complaints?exerciseId=${exerciseId}&dashboard=feedback`);
 
         res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
     });
@@ -385,7 +385,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/courses/${courseId}/allowed-complaints?teamMode=${teamMode}`);
+        expect(res.request.url).toBe(`api/complaints?courseId=${courseId}&teamMode=true`);
 
         res.flush(expectedCount);
     });
@@ -400,7 +400,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/courses/${courseId}/complaints?complaintType=${complaintType}&tutorId=${tutorId}`);
+        expect(res.request.url).toBe(`api/complaints?courseId=${courseId}&complaintType=${complaintType}&tutorId=${tutorId}`);
 
         res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
     });
@@ -415,7 +415,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/exercises/${exerciseId}/complaints?complaintType=${complaintType}&tutorId=${tutorId}`);
+        expect(res.request.url).toBe(`api/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}&tutorId=${tutorId}`);
 
         res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
     });
@@ -429,7 +429,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/courses/${courseId}/complaints?complaintType=${complaintType}`);
+        expect(res.request.url).toBe(`api/complaints?courseId=${courseId}&complaintType=${complaintType}`);
 
         res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
     });
@@ -443,7 +443,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/courses/${courseId}/exams/${examId}/complaints`);
+        expect(res.request.url).toBe(`api/complaints?courseId=${courseId}&examId=${examId}`);
 
         res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
     });
@@ -457,7 +457,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/exercises/${exerciseId}/complaints?complaintType=${complaintType}`);
+        expect(res.request.url).toBe(`api/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}`);
 
         res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
     });

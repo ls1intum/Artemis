@@ -184,7 +184,7 @@ export class ComplaintService implements IComplaintService {
      * @param examId
      */
     findAllByCourseIdAndExamId(courseId: number, examId: number): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?courseId=${courseId}&exams=${examId}`;
+        const url = `${this.resourceUrl}?courseId=${courseId}&examId=${examId}`;
         return this.requestComplaintsFromUrl(url);
     }
 
