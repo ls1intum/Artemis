@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.enforceRoleInResource.EnforceRoleInResourceAspect;
+import de.tum.in.www1.artemis.security.annotations.EnforceRoleInResourceAspect;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 @Profile(PROFILE_CORE)

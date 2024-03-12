@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.annotations.enforceRoleInResource;
+package de.tum.in.www1.artemis.security.annotations;
 
 import static de.tum.in.www1.artemis.security.annotations.AnnotationUtils.getAnnotation;
 import static de.tum.in.www1.artemis.security.annotations.AnnotationUtils.getIdFromSignature;
