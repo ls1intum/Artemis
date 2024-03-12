@@ -1138,6 +1138,19 @@ public class CourseService {
 
     /**
      * Checks if learning paths are enabled for the given course. If not, a BadRequestException is thrown.
+     * <p>
+     * If fetching the course from the database is not necessary, prefer using the method {@link #checkLearningPathsEnabledElseThrow(long)} with the course id as parameter.
+     *
+     * @param course the course to check
+     */
+    public void checkLearningPathsEnabledElseThrow(@NotNull Course course) {
+        if (!course.getLearningPathsEnabled()) {
+            throw new BadRequestException("Learning paths are not enabled for this course.");
+        }
+    }
+
+    /**
+     * Checks if learning paths are enabled for the given course. If not, a BadRequestException is thrown.
      *
      * @param courseId the id of the course to check
      */

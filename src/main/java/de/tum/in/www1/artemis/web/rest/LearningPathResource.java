@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -107,7 +106,7 @@ public class LearningPathResource {
     public ResponseEntity<Void> generateMissingLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to generate missing learning paths for course with id: {}", courseId);
         Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
-        checkLearningPathsEnabledElseThrow(course);
+        courseService.checkLearningPathsEnabledElseThrow(course);
         learningPathService.generateLearningPaths(course);
         return ResponseEntity.ok().build();
     }
@@ -124,7 +123,7 @@ public class LearningPathResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<SearchResultPageDTO<LearningPathInformationDTO>> getLearningPathsOnPage(@PathVariable long courseId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
-        checkLearningPathsEnabledElseThrow(courseId);
+        courseService.checkLearningPathsEnabledElseThrow(courseId);
         return ResponseEntity.ok(learningPathService.getAllOfCourseOnPageWithSize(search, courseId));
     }
 
@@ -193,7 +192,7 @@ public class LearningPathResource {
     private ResponseEntity<NgxLearningPathDTO> getLearningPathNgx(@PathVariable long learningPathId, NgxRequestType type) {
         LearningPath learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
         Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
-        checkLearningPathsEnabledElseThrow(course);
+        courseService.checkLearningPathsEnabledElseThrow(course);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authorizationCheckService.isAtLeastStudentInCourse(course, user) && !authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
             if (!user.getId().equals(learningPath.getUser().getId())) {
@@ -222,7 +221,7 @@ public class LearningPathResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Long> getLearningPathId(@PathVariable long courseId) {
         log.debug("REST request to get learning path id for course with id: {}", courseId);
-        checkLearningPathsEnabledElseThrow(courseId);
+        courseService.checkLearningPathsEnabledElseThrow(courseId);
 
         // generate learning path if missing
         User user = userRepository.getUser();
@@ -261,19 +260,6 @@ public class LearningPathResource {
             return new CompetencyProgressForLearningPathDTO(competency.getId(), competency.getMasteryThreshold(), progress.getProgress(), progress.getConfidence());
         }).collect(Collectors.toSet());
         return ResponseEntity.ok(progressDTOs);
-    }
-
-    /**
-     * Checks if learning paths are enabled for the given course. If not, a BadRequestException is thrown.
-     * <p>
-     * If fetching the course from the database is not necessary, prefer using the method {@link #checkLearningPathsEnabledElseThrow(long)} with the course id as parameter.
-     *
-     * @param course the course to check
-     */
-    private void checkLearningPathsEnabledElseThrow(@NotNull Course course) {
-        if (!course.getLearningPathsEnabled()) {
-            throw new BadRequestException("Learning paths are not enabled for this course.");
-        }
     }
 
     /**
