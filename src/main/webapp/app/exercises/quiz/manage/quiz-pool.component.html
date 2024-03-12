@@ -1,7 +1,7 @@
 @if (quizPool) {
     <div class="row">
         <div>
-            <h4 class="title-container" jhiTranslate="artemisApp.quizPool.editTitle">Edit Quiz Pool</h4>
+            <h4 class="title-container" jhiTranslate="artemisApp.quizPool.editTitle"></h4>
             <h4 class="max-score-container">
                 <span class="badge bg-info align-text-top float-end">
                     <span jhiTranslate="artemisApp.quizExercise.maxScore"></span>&nbsp;
@@ -29,7 +29,7 @@
                     [(ngModel)]="quizPool.randomizeQuestionOrder"
                     (ngModelChange)="handleUpdate()"
                 />
-                <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"> </label>
+                <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
             </div>
         </div>
         <div class="row mt-3">

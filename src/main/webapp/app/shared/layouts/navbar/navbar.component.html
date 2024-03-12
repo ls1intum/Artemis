@@ -19,7 +19,7 @@
                         <span>
                             <fa-icon [icon]="faUser" />
                             @if (!currAccount) {
-                                <span jhiTranslate="global.menu.account.main">Account</span>
+                                <span jhiTranslate="global.menu.account.main"></span>
                             }
                             @if (currAccount) {
                                 <span>{{ currAccount.login }}</span>
@@ -41,7 +41,7 @@
                     </li>
                     <div class="dropdown-divider"></div>
                     <li>
-                        <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.language">Language</h6>
+                        <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.language"></h6>
                     </li>
                     @if (languages && languages.length > 1) {
                         <div>
@@ -57,7 +57,7 @@
                     @if (isTourAvailable) {
                         <div class="dropdown-divider"></div>
                         <li>
-                            <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.guidedTutorial">Guided Tutorial</h6>
+                            <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.guidedTutorial"></h6>
                         </li>
                         <li>
                             <a class="dropdown-item guided-tour" [jhiTranslate]="this.guidedTourInitLabel()" (click)="this.guidedTourService.initGuidedTour()">Start tutorial</a>
@@ -68,7 +68,7 @@
                         <li>
                             <a class="dropdown-item" routerLink="/account/settings" routerLinkActive="active" (click)="collapseNavbar()">
                                 <fa-icon [icon]="faWrench" [fixedWidth]="true" />
-                                <span jhiTranslate="global.menu.account.settings">Settings</span>
+                                <span jhiTranslate="global.menu.account.settings"></span>
                             </a>
                         </li>
                     }
@@ -76,7 +76,7 @@
                         <li>
                             <a class="dropdown-item" routerLink="/account/password" routerLinkActive="active" (click)="collapseNavbar()">
                                 <fa-icon [icon]="faLock" [fixedWidth]="true" />
-                                <span jhiTranslate="global.menu.account.password">Password</span>
+                                <span jhiTranslate="global.menu.account.password"></span>
                             </a>
                         </li>
                     }
@@ -84,7 +84,7 @@
                         @if (currAccount) {
                             <a class="dropdown-item" (click)="logout()" id="logout">
                                 <fa-icon [icon]="faSignOutAlt" [fixedWidth]="true" />
-                                <span jhiTranslate="global.menu.account.logout">Sign out</span>
+                                <span jhiTranslate="global.menu.account.logout"></span>
                             </a>
                         }
                     </li>
@@ -97,7 +97,7 @@
     <div class="jh-logo-container">
         <a class="navbar-brand" routerLink="/" (click)="collapseNavbar()">
             <img [src]="'public/images/logo.png'" height="30" alt="" />
-            <div jhiTranslate="global.title" class="navbar-title">Artemis</div>
+            <div jhiTranslate="global.title" class="navbar-title"></div>
             <ng-template #gitInfo>
                 <div>
                     {{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranchName }} <br />
@@ -138,7 +138,7 @@
                     <a class="guided-tour-overview nav-link" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
                         <span>
                             <fa-icon [icon]="faThLarge" />
-                            <span jhiTranslate="global.menu.overview">Course Overview</span>
+                            <span jhiTranslate="global.menu.overview"></span>
                         </span>
                     </a>
                 </li>
@@ -154,7 +154,7 @@
                     <a class="guided-tour-course-admin nav-link" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
                         <span>
                             <fa-icon [icon]="faThList" />
-                            <span jhiTranslate="global.menu.course">Course Management</span>
+                            <span jhiTranslate="global.menu.course"></span>
                         </span>
                     </a>
                 }
@@ -171,7 +171,7 @@
                     <a class="guided-tour-admin nav-link dropdown-toggle" ngbDropdownToggle id="admin-menu">
                         <span>
                             <fa-icon [icon]="faUserPlus" />
-                            <span jhiTranslate="global.menu.admin.main">Server Administration</span>
+                            <span jhiTranslate="global.menu.admin.main"></span>
                         </span>
                     </a>
                 }
@@ -179,86 +179,86 @@
                     <li>
                         <a class="dropdown-item" routerLink="/admin/upcoming-exams-and-exercises" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faBookOpen" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.upcomingExamsAndExercises">Upcoming Exams & Exercises</span>
+                            <span jhiTranslate="global.menu.admin.upcomingExamsAndExercises"></span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/user-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faUser" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.userManagement">User management</span>
+                            <span jhiTranslate="global.menu.admin.userManagement"></span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/organization-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faUniversity" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.organizationManagement">Organization management</span>
+                            <span jhiTranslate="global.menu.admin.organizationManagement"></span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/system-notification-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faBell" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.systemNotifications">System notifications</span>
+                            <span jhiTranslate="global.menu.admin.systemNotifications"></span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/feature-toggles" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faToggleOn" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.featureToggles">Feature Toggles</span>
+                            <span jhiTranslate="global.menu.admin.featureToggles"></span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/user-statistics" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faEye" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.statistics">User statistics</span>
+                            <span jhiTranslate="global.menu.admin.statistics"></span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/metrics" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faTachometerAlt" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.metrics">Metrics</span>
+                            <span jhiTranslate="global.menu.admin.metrics"></span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/privacy-statement" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faLock" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.privacyStatement">Privacy statement</span>
+                            <span jhiTranslate="global.menu.admin.privacyStatement"></span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/imprint" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faStamp" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.imprint">Imprint</span>
+                            <span jhiTranslate="global.menu.admin.imprint"></span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/health" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faHeart" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.health">Health</span>
+                            <span jhiTranslate="global.menu.admin.health"></span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/configuration" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faList" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.configuration">Configuration</span>
+                            <span jhiTranslate="global.menu.admin.configuration"></span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/audits" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faBell" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.audits">Audits</span>
+                            <span jhiTranslate="global.menu.admin.audits"></span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/logs" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faTasks" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.logs">Logs</span>
+                            <span jhiTranslate="global.menu.admin.logs"></span>
                         </a>
                     </li>
                     @if (localCIActive) {
                         <li>
                             <a class="dropdown-item" routerLink="/admin/build-queue" routerLinkActive="active" (click)="collapseNavbar()">
                                 <fa-icon [icon]="faList" [fixedWidth]="true" />
-                                <span jhiTranslate="artemisApp.buildQueue.title">Build Queue</span>
+                                <span jhiTranslate="artemisApp.buildQueue.title"></span>
                             </a>
                         </li>
                     }
@@ -266,7 +266,7 @@
                         <li>
                             <a class="dropdown-item" routerLink="/admin/build-agents" routerLinkActive="active" (click)="collapseNavbar()">
                                 <fa-icon [icon]="faGears" [fixedWidth]="true" />
-                                <span jhiTranslate="artemisApp.buildAgents.title">Build Agents</span>
+                                <span jhiTranslate="artemisApp.buildAgents.title"></span>
                             </a>
                         </li>
                     }
@@ -274,7 +274,7 @@
                         <li>
                             <a class="dropdown-item" href="api.html" target="_blank" rel="noreferrer noopener" (click)="collapseNavbar()">
                                 <fa-icon [icon]="faBook" [fixedWidth]="true" />
-                                <span jhiTranslate="global.menu.admin.apidocs">API</span>
+                                <span jhiTranslate="global.menu.admin.apidocs"></span>
                             </a>
                         </li>
                     }
@@ -282,14 +282,14 @@
                         <li>
                             <a class="dropdown-item" routerLink="/admin/iris" routerLinkActive="active" (click)="collapseNavbar()">
                                 <fa-icon [icon]="faRobot" [fixedWidth]="true" />
-                                <span jhiTranslate="global.menu.admin.iris">Iris Settings</span>
+                                <span jhiTranslate="global.menu.admin.iris"></span>
                             </a>
                         </li>
                     }
                     @if (ltiEnabled) {
                         <a class="dropdown-item" routerLink="/admin/lti-configuration" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faPuzzlePiece" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.lti">LTI Configuration</span>
+                            <span jhiTranslate="global.menu.admin.lti"></span>
                         </a>
                     }
                     <!-- jhipster-needle-add-element-to-admin-menu - JHipster will add entities to the admin menu here -->
@@ -300,7 +300,7 @@
                     <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">
                         <span>
                             <fa-icon [icon]="faFlag" />
-                            <span jhiTranslate="global.menu.language">Language</span>
+                            <span jhiTranslate="global.menu.language"></span>
                         </span>
                     </a>
                     <ul class="dropdown-menu" ngbDropdownMenu>
