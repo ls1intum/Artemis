@@ -75,15 +75,12 @@
                         labelName="{{ 'artemisApp.examManagement.visibleDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.visibleDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.visibleDate"
-                        (ngModelChange)="updateExamVisibleDate($event)"
-                        [error]="!isValidVisibleDate"
+                        [error]="!isVisibleDate"
                         [startAt]="exam.visibleDate"
+                        [requiredField]="true"
                         name="visibleDate"
                         id="visibleDate"
                     />
-                    @if (!isValidVisibleDate) {
-                        <div class="invalid-feedback">{{ 'entity.dateRequiredErrorVisibleFrom' | artemisTranslate }}</div>
-                    }
                 </div>
                 <div class="col-sm-4">
                     <jhi-date-time-picker
@@ -91,15 +88,13 @@
                         labelTooltip="{{ 'artemisApp.examManagement.startDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.startDate"
                         (valueChange)="updateExamWorkingTime()"
-                        (ngModelChange)="updateExamStartDate($event)"
                         [error]="!isStartDate || !isValidStartDate"
                         [startAt]="exam.startDate || exam.visibleDate"
+                        [requiredField]="true"
                         name="startDate"
                         id="startDate"
                     />
-                    @if (!isStartDate) {
-                        <div class="invalid-feedback">{{ 'entity.dateRequiredErrorStartDate' | artemisTranslate }}</div>
-                    } @else if (isStartDate && !isValidStartDate) {
+                    @if (isStartDate && isValueStartDateValid && !isValidStartDate) {
                         <span class="invalid-feedback"> {{ 'entity.startDateError' | artemisTranslate }}</span>
                     }
                 </div>
@@ -109,15 +104,13 @@
                         labelTooltip="{{ 'artemisApp.examManagement.endDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.endDate"
                         (valueChange)="updateExamWorkingTime()"
-                        (ngModelChange)="updateExamEndDate($event)"
                         [error]="!isEndDate || !isValidEndDate"
                         [startAt]="exam.endDate || exam.startDate"
+                        [requiredField]="true"
                         name="endDate"
                         id="endDate"
                     />
-                    @if (!isEndDate) {
-                        <div class="invalid-feedback">{{ 'entity.dateRequiredErrorEndDate' | artemisTranslate }}</div>
-                    } @else if (isEndDate && !isValidEndDate) {
+                    @if (isEndDate && isValueEndDateValid && !isValidEndDate) {
                         <span class="invalid-feedback"> {{ 'entity.endDateError' | artemisTranslate }}</span>
                     }
                 </div>
