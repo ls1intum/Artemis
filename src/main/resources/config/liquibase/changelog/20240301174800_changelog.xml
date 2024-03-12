@@ -13,7 +13,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="description" type="varchar(2000)"/>
-            <column name="taxonomy" type="varchar(31)"/>
+            <column name="taxonomy" type="varchar(1)"/>
             <column name="version" type="varchar(30)">
                 <constraints nullable="false"/>
             </column>
