@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -81,7 +82,6 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
     void testAll_asEditor() throws Exception {
         this.testAllPreAuthorizeAdmin();
         this.testAllPreAuthorizeInstructor();
-        // do not call testAllPreAuthorizeEditor, as these methods should succeed
     }
 
     @Test
@@ -92,145 +92,158 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
     }
 
     // AdminStandardizedCompetencyResource
+    @Nested
+    class AdminStandardizedCompetencyResource {
 
-    // createStandardizedCompetency
+        @Nested
+        class CreateStandardizedCompetency {
 
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createStandardizedCompetency_shouldCreateCompetency() throws Exception {
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldCreateCompetency() throws Exception {
+                assertThat(1).isEqualTo(2);
 
-        var expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "");
-        expectedCompetency.setKnowledgeArea(knowledgeArea);
-        expectedCompetency.setSource(source);
+                var expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "");
+                expectedCompetency.setKnowledgeArea(knowledgeArea);
+                expectedCompetency.setSource(source);
 
-        var actualCompetency = request.postWithResponseBody("/api/admin/standardized-competencies/", expectedCompetency, StandardizedCompetency.class, HttpStatus.CREATED);
+                var actualCompetency = request.postWithResponseBody("/api/admin/standardized-competencies/", expectedCompetency, StandardizedCompetency.class, HttpStatus.CREATED);
 
-        assertThat(actualCompetency).usingRecursiveComparison().ignoringFields("id", "version").isEqualTo(expectedCompetency);
+                assertThat(actualCompetency).usingRecursiveComparison().ignoringFields("id", "version").isEqualTo(expectedCompetency);
+            }
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldReturn404() throws Exception {
+                // knowledge area/source that does not exist in the database is not allowed
+                var expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "");
+                var knowlegeAreaNotExisting = new KnowledgeArea();
+                knowlegeAreaNotExisting.setId(-1000L);
+                expectedCompetency.setKnowledgeArea(knowlegeAreaNotExisting);
+
+                request.post("/api/admin/standardized-competencies/", expectedCompetency, HttpStatus.NOT_FOUND);
+
+                expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, null);
+                var sourceNotExisting = new Source();
+                sourceNotExisting.setId(-1000L);
+                expectedCompetency.setSource(sourceNotExisting);
+
+                request.post("/api/admin/standardized-competencies/", expectedCompetency, HttpStatus.NOT_FOUND);
+            }
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldReturnBadRequest() throws Exception {
+                // empty title is not allowed
+                var expectedCompetency = new StandardizedCompetency("  ", "description", CompetencyTaxonomy.ANALYZE, null);
+
+                request.post("/api/admin/standardized-competencies/", expectedCompetency, HttpStatus.BAD_REQUEST);
+            }
+        }
     }
 
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createStandardizedCompetency_shouldReturn404() throws Exception {
-        // knowledge area/source that does not exist in the database is not allowed
-        var expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "");
-        var knowlegeAreaNotExisting = new KnowledgeArea();
-        knowlegeAreaNotExisting.setId(-1000L);
-        expectedCompetency.setKnowledgeArea(knowlegeAreaNotExisting);
+    @Nested
+    class CreateKnowledgeArea {
 
-        request.post("/api/admin/standardized-competencies/", expectedCompetency, HttpStatus.NOT_FOUND);
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void shouldCreateKnowledgeArea() throws Exception {
+            var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "description");
+            expectedKnowledgeArea.setParent(knowledgeArea);
 
-        expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, null);
-        var sourceNotExisting = new Source();
-        sourceNotExisting.setId(-1000L);
-        expectedCompetency.setSource(sourceNotExisting);
+            var actualKnowledgeArea = request.postWithResponseBody("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, KnowledgeArea.class,
+                    HttpStatus.CREATED);
 
-        request.post("/api/admin/standardized-competencies/", expectedCompetency, HttpStatus.NOT_FOUND);
+            assertThat(actualKnowledgeArea).usingRecursiveComparison().ignoringFields("id").isEqualTo(expectedKnowledgeArea);
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void shouldReturn404() throws Exception {
+            var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "description");
+            // parent that does not exist in the database is not allowed
+            var knowlegeAreaNotExisting = new KnowledgeArea();
+            knowlegeAreaNotExisting.setId(-1000L);
+            expectedKnowledgeArea.setParent(knowlegeAreaNotExisting);
+
+            request.post("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, HttpStatus.NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void shouldReturnBadRequest() throws Exception {
+            // empty title is not allowed
+            var expectedKnowledgeArea = new KnowledgeArea("  ", "description");
+
+            request.post("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, HttpStatus.BAD_REQUEST);
+        }
     }
 
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createStandardizedCompetency_shouldReturnBadRequest() throws Exception {
-        // empty title is not allowed
-        var expectedCompetency = new StandardizedCompetency("  ", "description", CompetencyTaxonomy.ANALYZE, null);
+    @Nested
+    class StandardizedCompetencyResource {
 
-        request.post("/api/admin/standardized-competencies/", expectedCompetency, HttpStatus.BAD_REQUEST);
+        @Nested
+        class GetStandardizedCompetency {
+
+            @Test
+            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+            void shouldReturnStandardizedCompetency() throws Exception {
+                var expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "1.0.0");
+                expectedCompetency.setKnowledgeArea(knowledgeArea);
+                expectedCompetency.setSource(source);
+                expectedCompetency = standardizedCompetencyRepository.save(expectedCompetency);
+
+                var actualCompetency = request.get("/api/standardized-competencies/" + expectedCompetency.getId(), HttpStatus.OK, StandardizedCompetency.class);
+                assertThat(actualCompetency).usingRecursiveComparison().isEqualTo(expectedCompetency);
+            }
+
+            @Test
+            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+            void shouldReturn404() throws Exception {
+                var competencyNotExisting = new StandardizedCompetency();
+                competencyNotExisting.setId(-1000L);
+
+                request.get("/api/standardized-competencies/" + competencyNotExisting.getId(), HttpStatus.NOT_FOUND, StandardizedCompetency.class);
+            }
+        }
+
+        @Nested
+        class GetKnowledgeArea {
+
+            @Test
+            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+            void shouldReturnKnowledgeArea() throws Exception {
+                var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "description");
+                expectedKnowledgeArea.setParent(knowledgeArea);
+                expectedKnowledgeArea = knowledgeAreaRepository.save(expectedKnowledgeArea);
+
+                var child1 = new KnowledgeArea("Child 1", "description");
+                child1.setParent(expectedKnowledgeArea);
+                child1 = knowledgeAreaRepository.save(child1);
+                var child2 = new KnowledgeArea("Child 2", "description");
+                child2.setParent(expectedKnowledgeArea);
+                child2 = knowledgeAreaRepository.save(child2);
+                expectedKnowledgeArea.setChildren(Set.of(child1, child2));
+
+                var competency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "");
+                competency.setKnowledgeArea(expectedKnowledgeArea);
+                competency = standardizedCompetencyRepository.save(competency);
+                expectedKnowledgeArea.setCompetencies(Set.of(competency));
+
+                var actualKnowledgeArea = request.get("/api/standardized-competencies/knowledge-areas/" + expectedKnowledgeArea.getId(), HttpStatus.OK, KnowledgeArea.class);
+                assertThat(actualKnowledgeArea).usingRecursiveComparison().ignoringFields("competencies", "children").isEqualTo(expectedKnowledgeArea);
+                assertThat(actualKnowledgeArea.getChildren()).containsAll(expectedKnowledgeArea.getChildren());
+                assertThat(actualKnowledgeArea.getCompetencies()).containsAll(expectedKnowledgeArea.getCompetencies());
+            }
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldReturn404() throws Exception {
+            var knowledgeAreaNotExisting = new KnowledgeArea();
+            knowledgeAreaNotExisting.setId(-1000L);
+
+            request.get("/api/standardized-competencies/knowledge-areas/" + knowledgeAreaNotExisting.getId(), HttpStatus.NOT_FOUND, KnowledgeArea.class);
+        }
     }
-
-    // createKnowledgeArea
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createKnowledgeArea_shouldCreateKnowledgeArea() throws Exception {
-        var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "description");
-        expectedKnowledgeArea.setParent(knowledgeArea);
-
-        var actualKnowledgeArea = request.postWithResponseBody("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, KnowledgeArea.class,
-                HttpStatus.CREATED);
-
-        assertThat(actualKnowledgeArea).usingRecursiveComparison().ignoringFields("id").isEqualTo(expectedKnowledgeArea);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createKnowledgeArea_shouldReturn404() throws Exception {
-        var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "description");
-        // parent that does not exist in the database is not allowed
-        var knowlegeAreaNotExisting = new KnowledgeArea();
-        knowlegeAreaNotExisting.setId(-1000L);
-        expectedKnowledgeArea.setParent(knowlegeAreaNotExisting);
-
-        request.post("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, HttpStatus.NOT_FOUND);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createKnowledgeArea_shouldReturnBadRequest() throws Exception {
-        // empty title is not allowed
-        var expectedKnowledgeArea = new KnowledgeArea("  ", "description");
-
-        request.post("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, HttpStatus.BAD_REQUEST);
-    }
-
-    // StandardizedCompetencyResource
-
-    // getStandardizedCompetency
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void getStandardizedCompetency_shouldReturnStandardizedCompetency() throws Exception {
-        var expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "1.0.0");
-        expectedCompetency.setKnowledgeArea(knowledgeArea);
-        expectedCompetency.setSource(source);
-        expectedCompetency = standardizedCompetencyRepository.save(expectedCompetency);
-
-        var actualCompetency = request.get("/api/standardized-competencies/" + expectedCompetency.getId(), HttpStatus.OK, StandardizedCompetency.class);
-        assertThat(actualCompetency).usingRecursiveComparison().isEqualTo(expectedCompetency);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void getStandardizedCompetency_shouldReturn404() throws Exception {
-        var competencyNotExisting = new StandardizedCompetency();
-        competencyNotExisting.setId(-1000L);
-
-        request.get("/api/standardized-competencies/" + competencyNotExisting.getId(), HttpStatus.NOT_FOUND, StandardizedCompetency.class);
-    }
-
-    // getKnowledgeArea
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void getKnowledgeArea_shouldReturn404() throws Exception {
-        var knowledgeAreaNotExisting = new KnowledgeArea();
-        knowledgeAreaNotExisting.setId(-1000L);
-
-        request.get("/api/standardized-competencies/knowledge-areas/" + knowledgeAreaNotExisting.getId(), HttpStatus.NOT_FOUND, KnowledgeArea.class);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void getKnowledgeArea_shouldReturnKnowledgeArea() throws Exception {
-        var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "description");
-        expectedKnowledgeArea.setParent(knowledgeArea);
-        expectedKnowledgeArea = knowledgeAreaRepository.save(expectedKnowledgeArea);
-
-        var child1 = new KnowledgeArea("Child 1", "description");
-        child1.setParent(expectedKnowledgeArea);
-        child1 = knowledgeAreaRepository.save(child1);
-        var child2 = new KnowledgeArea("Child 2", "description");
-        child2.setParent(expectedKnowledgeArea);
-        child2 = knowledgeAreaRepository.save(child2);
-        expectedKnowledgeArea.setChildren(Set.of(child1, child2));
-
-        var competency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "");
-        competency.setKnowledgeArea(expectedKnowledgeArea);
-        competency = standardizedCompetencyRepository.save(competency);
-        expectedKnowledgeArea.setCompetencies(Set.of(competency));
-
-        var actualKnowledgeArea = request.get("/api/standardized-competencies/knowledge-areas/" + expectedKnowledgeArea.getId(), HttpStatus.OK, KnowledgeArea.class);
-        assertThat(actualKnowledgeArea).usingRecursiveComparison().ignoringFields("competencies", "children").isEqualTo(expectedKnowledgeArea);
-        assertThat(actualKnowledgeArea.getChildren()).containsAll(expectedKnowledgeArea.getChildren());
-        assertThat(actualKnowledgeArea.getCompetencies()).containsAll(expectedKnowledgeArea.getCompetencies());
-    }
-
 }
