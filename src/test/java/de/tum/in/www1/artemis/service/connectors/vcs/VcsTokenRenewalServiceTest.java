@@ -99,9 +99,27 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         final List<User> users = userRepository.findAll().stream().filter(isUserOfTest).toList();
         assertThat(userData.size()).isEqualTo(users.size());
-
         final ArrayList<org.gitlab4j.api.models.User> gitlabUsers = new ArrayList<>();
 
+        setUpTestUsers(userData, users, gitlabUsers);
+
+        final long expectedRenewalCount = userData.stream().filter(UserData::tokenRenewalNecessary).count();
+        final long expectedCreationCount = userData.stream().filter(UserData::tokenCreationNecessary).count();
+
+        UserRepository userRepositoryAdapter = setUpMocking(userData, gitlabUsers, expectedRenewalCount, expectedCreationCount, users, isUserOfTest);
+
+        ReflectionTestUtils.setField(vcsTokenRenewalService, "userRepository", userRepositoryAdapter);
+        vcsTokenRenewalService.renewAllVcsAccessTokens();
+        ReflectionTestUtils.setField(vcsTokenRenewalService, "userRepository", userRepository);
+
+        gitlabRequestMockProvider.verifyMocks();
+        verify(userRepositoryAdapter, times(1)).getUsersWithAccessTokenExpirationDateBefore(any());
+        verify(userRepositoryAdapter, times(1)).getUsersWithAccessTokenNull();
+
+        assertUsers(userData, users);
+    }
+
+    private void setUpTestUsers(List<UserData> userData, List<User> users, ArrayList<org.gitlab4j.api.models.User> gitlabUsers) {
         for (int i = 0; i < users.size(); ++i) {
             User user = users.get(i);
             UserData data = userData.get(i);
@@ -117,10 +135,10 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
 
             gitlabUsers.add(new org.gitlab4j.api.models.User().withId(user.getId()).withUsername(user.getLogin()));
         }
+    }
 
-        final long expectedRenewalCount = userData.stream().filter(UserData::tokenRenewalNecessary).count();
-        final long expectedCreationCount = userData.stream().filter(UserData::tokenCreationNecessary).count();
-
+    private UserRepository setUpMocking(List<UserData> userData, ArrayList<org.gitlab4j.api.models.User> gitlabUsers, long expectedRenewalCount, long expectedCreationCount,
+            List<User> users, Predicate<User> isUserOfTest) throws GitLabApiException {
         gitlabRequestMockProvider.mockGetUserApi();
         gitlabRequestMockProvider.mockGetUserID(gitlabUsers);
         gitlabRequestMockProvider.mockCreatePersonalAccessToken(expectedRenewalCount + expectedCreationCount, new HashMap<>() {
@@ -146,16 +164,10 @@ class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabT
         doAnswer(invocation -> userRepository.getUsersWithAccessTokenExpirationDateBefore(invocation.getArgument(0)).stream().filter(isUserOfTest).toList())
                 .when(userRepositoryAdapter).getUsersWithAccessTokenExpirationDateBefore(any());
         doAnswer(invocation -> userRepository.getUsersWithAccessTokenNull().stream().filter(isUserOfTest).toList()).when(userRepositoryAdapter).getUsersWithAccessTokenNull();
-        ReflectionTestUtils.setField(vcsTokenRenewalService, "userRepository", userRepositoryAdapter);
+        return userRepositoryAdapter;
+    }
 
-        vcsTokenRenewalService.renewAllVcsAccessTokens();
-
-        ReflectionTestUtils.setField(vcsTokenRenewalService, "userRepository", userRepository);
-
-        gitlabRequestMockProvider.verifyMocks();
-        verify(userRepositoryAdapter, times(1)).getUsersWithAccessTokenExpirationDateBefore(any());
-        verify(userRepositoryAdapter, times(1)).getUsersWithAccessTokenNull();
-
+    private void assertUsers(List<UserData> userData, List<User> users) {
         for (int i = 0; i < users.size(); ++i) {
             final User updatedUser = userRepository.getUserByLoginElseThrow(users.get(i).getLogin());
             final UserData data = userData.get(i);
