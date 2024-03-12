@@ -314,7 +314,7 @@
             "invalidPattern": "Dieses Feld beinhaltet ein ungültiges E-Mail Muster."
         },
         "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone.",
-        "dateMissingOrNotValid": "'{{labelName}}' fehlt/ist ungültig",
+        "dateMissingOrNotValid": "'{{labelName}}' fehlt/ungültig",
         "startDateError": "Das 'Bearbeitungszeit ab' sollte zwischen 'Sichtbar ab' und 'Bearbeitungszeit bis' liegen",
         "endDateError": "Das 'Bearbeitungszeit bis' sollte nach dem 'Bearbeitungszeit ab' liegen"
     },
