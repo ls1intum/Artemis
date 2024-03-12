@@ -39,10 +39,15 @@ If the feature request is deemed feasible, the development team will create a fe
 Step 1: Amend Feature Proposal Template to Feature Request on GitHub
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The Feature Proposal Template outlines the structure of the feature proposal and provides a guideline for the development team to follow.
-It should be added to the respective GitHub Issue's description and filled with the necessary information.
 
-.. literalinclude:: ./feature-proposal-template.md
-    :caption: Feature Proposal Template
+We have written a Github Action that automatically attaches the feature proposal template to the issue description of an issue when someone is assigned.
+As a developer who is responsible for the implementation of a feature request, you do not have to do any than register as an assignee in the issue. 
+
+.. note::
+      The GitHub Action will be skipped for issues that are labeled with "bug".
+
+.. literalinclude:: ../../../.github/ISSUE_TEMPLATE/feature-proposal--developer-.md
+    :caption: Artemis/.github/ISSUE_TEMPLATE/feature-proposal--developer-.md
     :language: markdown
 
 
@@ -70,6 +75,21 @@ Furthermore it is important to include a description of the user flow that refer
     :alt: UI/UX Design Workflow - Activity Diagram
     :figclass: align-center
 
+To facilitate this process, we have introduced UICompanion, a tool that integrates seamlessly with GitHub and Figma to assist developers through the UI/UX design phase.
+
+What is UICompanion?
+^^^^^^^^^^^^^^^^^^^^
+UICompanion is a combination of a GitHub bot and a Figma plugin designed to support developers working on the Artemis project through the UI/UX design step. This tool automates several aspects of the design process, making it easier for developers to create and iterate on UI designs.
+
+How to Use UICompanion
+^^^^^^^^^^^^^^^^^^^^^^
+When an issue is labeled with "UI" on GitHub, UICompanion automatically attaches a comment to the issue prompting the developer to start the UI design process in Figma. Here's how to proceed:
+
+1. **Initiate Design Process**: Upon receiving the UICompanion comment, click on the provided Figma Project Link to access our Figma project.
+2. **Follow Guidance**: Inside Figma, use the UICompanion Figma app for step-by-step guidance through the design process. This includes creating prototypes and seeking approval from designated Artemis maintainers.
+3. **Automate Tasks**: UICompanion helps automate tasks such as adding the necessary UI components from the Artemis Design System, ensuring that designs remain consistent with the project's UI guidelines.
+
+For more details and to get started with UICompanion, visit the `UICompanion Repository on GitHub <https://github.com/ls1intum/UICompanion>`_.
 
 4. Implement the Feature
 ------------------------
