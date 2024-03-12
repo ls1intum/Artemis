@@ -144,6 +144,22 @@ describe('VideoUnitFormComponent', () => {
         });
     });
 
+    it('should correctly transform TUM-Live URL without video only into embeddable format', () => {
+        const tumLiveUrl = 'https://live.rbg.tum.de/w/test/26';
+        const expectedUrl = 'https://live.rbg.tum.de/w/test/26?video_only=1';
+
+        videoUnitFormComponentFixture.detectChanges();
+        videoUnitFormComponent.urlHelperControl!.setValue(tumLiveUrl);
+        videoUnitFormComponentFixture.detectChanges();
+
+        const transformButton = videoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#transformButton');
+        transformButton.click();
+
+        return videoUnitFormComponentFixture.whenStable().then(() => {
+            expect(videoUnitFormComponent.sourceControl?.value).toEqual(expectedUrl);
+        });
+    });
+
     it('should correctly set form values in edit mode', () => {
         videoUnitFormComponent.isEditMode = true;
         const formData: VideoUnitFormData = {
