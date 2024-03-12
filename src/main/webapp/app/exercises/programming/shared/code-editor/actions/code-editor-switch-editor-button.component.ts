@@ -4,10 +4,10 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faArrowsLeftRight } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    selector: 'jhi-programming-exercise-switch-editor-button',
-    templateUrl: 'programming-exercise-switch-editor-button.component.html',
+    selector: 'jhi-code-editor-switch-editor-button',
+    templateUrl: 'code-editor-switch-editor-button.component.html',
 })
-export class ProgrammingExerciseSwitchEditorButtonComponent {
+export class CodeEditorSwitchEditorButtonComponent {
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;

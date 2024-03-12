@@ -22,7 +22,7 @@
             <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"></span>
         </div>
     }
-    <jhi-programming-exercise-switch-editor-button (usingMonacoChange)="useMonacoEditor = $event" />
+    <jhi-code-editor-switch-editor-button (usingMonacoChange)="useMonacoEditor = $event" />
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
         <jhi-code-editor-container
             [useMonacoEditor]="useMonacoEditor"

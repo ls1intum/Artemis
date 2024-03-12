@@ -25,6 +25,8 @@ import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code
 import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-badge.component';
 import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { CodeEditorSwitchEditorButtonComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-switch-editor-button.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     imports: [
@@ -36,6 +38,7 @@ import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingManualAssessmentModule,
         MonacoEditorModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [
         CodeEditorGridComponent,
@@ -56,6 +59,7 @@ import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code
         CodeEditorContainerComponent,
         CodeEditorHeaderComponent,
         CodeEditorMonacoComponent,
+        CodeEditorSwitchEditorButtonComponent,
     ],
     exports: [
         CodeEditorGridComponent,
@@ -68,6 +72,7 @@ import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code
         CodeEditorContainerComponent,
         CodeEditorHeaderComponent,
         CodeEditorMonacoComponent,
+        CodeEditorSwitchEditorButtonComponent,
     ],
     providers: [],
 })
