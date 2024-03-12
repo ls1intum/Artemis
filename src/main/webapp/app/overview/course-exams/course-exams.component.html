@@ -1,7 +1,7 @@
 <!-- Section for no exams. Should only be displayed if no real and test exams exist -->
 @if (realExamsOfCourse.length === 0 && testExamsOfCourse.length === 0) {
     <div class="d-flex flex-column align-items-center justify-content-center mt-3">
-        <h3 jhiTranslate="artemisApp.exam.overview.noExams">No exams present</h3>
+        <h3 jhiTranslate="artemisApp.exam.overview.noExams"></h3>
         <button [routerLink]="['/courses', this.course?.id, 'exercises']" class="btn btn-primary">
             <fa-icon [icon]="faListAlt" class="pe-1" />
             {{ 'artemisApp.exam.overview.goToExercises' | artemisTranslate }}
@@ -11,7 +11,7 @@
 
 <!-- Section for real exams. Should not be displayed if no real exams exist -->
 @if (realExamsOfCourse.length > 0) {
-    <h2 class="my-2" jhiTranslate="artemisApp.exam.overview.realExamsHeading">Exams</h2>
+    <h2 class="my-2" jhiTranslate="artemisApp.exam.overview.realExamsHeading"></h2>
     <div class="row d-flex align-items-start">
         @for (exam of realExamsOfCourse; track exam) {
             <jhi-course-exam-detail [exam]="exam" [course]="course!" class="card col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-success hover-effect" id="exam-{{ exam.id }}" />
@@ -21,7 +21,7 @@
 }
 <!-- Section test exams. Should not be displayed if no test exams exist -->
 @if (testExamsOfCourse.length > 0) {
-    <h2 jhiTranslate="artemisApp.exam.overview.testExamsHeading">Test Exams</h2>
+    <h2 jhiTranslate="artemisApp.exam.overview.testExamsHeading"></h2>
     <div class="row">
         @for (exam of testExamsOfCourse; track exam) {
             <div class="row d-flex align-items-start">
