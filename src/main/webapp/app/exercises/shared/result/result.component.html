@@ -7,7 +7,7 @@
         @case (ResultTemplateStatus.IS_BUILDING) {
             <span class="text-primary">
                 <fa-icon [icon]="faCircleNotch" size="lg" [spin]="true" class="me-2" />
-                <span jhiTranslate="artemisApp.editor.building">Building...</span>
+                <span jhiTranslate="artemisApp.editor.building"></span>
             </span>
         }
         @case (ResultTemplateStatus.HAS_RESULT) {
@@ -36,7 +36,7 @@
                     <span>
                         <a (click)="downloadBuildResult(participation.id)">
                             &nbsp; <fa-icon [icon]="faFile" />
-                            <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
+                            <span jhiTranslate="artemisApp.editor.downloadBuildResult"></span>
                         </a>
                     </span>
                 }

@@ -1,10 +1,10 @@
 <form name="editForm" role="form" novalidate>
     <div class="modal-header" style="margin-bottom: 20px">
-        <h4 class="modal-title" jhiTranslate="artemisApp.lti.version13Configuration">LTI 1.3 Configuration</h4>
+        <h4 class="modal-title" jhiTranslate="artemisApp.lti.version13Configuration"></h4>
     </div>
     <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs mt-4">
         <ng-container ngbNavItem [ngbNavItem]="1">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.platformRegistration">Platform Registration</a>
+            <a ngbNavLink jhiTranslate="artemisApp.lti.platformRegistration"></a>
             <ng-template ngbNavContent>
                 <dt></dt>
                 <dt style="display: flex; align-items: center">
@@ -23,7 +23,7 @@
                     <div class="modal-header" style="margin-bottom: 20px">
                         <a [routerLink]="['/admin', 'lti-configuration', 'new']" class="btn btn-primary">
                             <fa-icon [icon]="faPlus" />
-                            <span jhiTranslate="artemisApp.lti13.addNewPlatform">Add New Platform Configuration</span>
+                            <span jhiTranslate="artemisApp.lti13.addNewPlatform"></span>
                         </a>
                     </div>
                 </dt>
@@ -34,35 +34,35 @@
                                 <thead class="thead-dark">
                                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                                         <th jhiSortBy="id">
-                                            <span jhiTranslate="global.field.id">ID</span>
+                                            <span jhiTranslate="global.field.id"></span>
                                             <fa-icon [icon]="faSort" />
                                         </th>
                                         <th jhiSortBy="customName">
-                                            <span jhiTranslate="artemisApp.lti.customName">Custom Name</span>
+                                            <span jhiTranslate="artemisApp.lti.customName"></span>
                                             <fa-icon [icon]="faSort" />
                                         </th>
                                         <th jhiSortBy="registrationId">
-                                            <span jhiTranslate="artemisApp.lti.registrationId">Registration ID</span>
+                                            <span jhiTranslate="artemisApp.lti.registrationId"></span>
                                             <fa-icon [icon]="faSort" />
                                         </th>
                                         <th jhiSortBy="clientId">
-                                            <span jhiTranslate="artemisApp.lti.clientId">Client ID</span>
+                                            <span jhiTranslate="artemisApp.lti.clientId"></span>
                                             <fa-icon [icon]="faSort" />
                                         </th>
                                         <th jhiSortBy="originalURL">
-                                            <span jhiTranslate="artemisApp.lti.toolUrl">Tool URL</span>
+                                            <span jhiTranslate="artemisApp.lti.toolUrl"></span>
                                             <fa-icon [icon]="faSort" />
                                         </th>
                                         <th jhiSortBy="authorizationUri">
-                                            <span jhiTranslate="artemisApp.lti.authorizationUri">Authorization URI</span>
+                                            <span jhiTranslate="artemisApp.lti.authorizationUri"></span>
                                             <fa-icon [icon]="faSort" />
                                         </th>
                                         <th jhiSortBy="jwkSetUri">
-                                            <span jhiTranslate="artemisApp.lti.jwkSetUri">JWK Set URI</span>
+                                            <span jhiTranslate="artemisApp.lti.jwkSetUri"></span>
                                             <fa-icon [icon]="faSort" />
                                         </th>
                                         <th jhiSortBy="tokenUri">
-                                            <span jhiTranslate="artemisApp.lti.tokenUri">Token URI</span>
+                                            <span jhiTranslate="artemisApp.lti.tokenUri"></span>
                                             <fa-icon [icon]="faSort" />
                                         </th>
                                     </tr>
@@ -83,7 +83,7 @@
                                                     <div class="d-flex gap-1 w-100">
                                                         <a [routerLink]="['/admin', 'lti-configuration', platform.id, 'edit']" class="btn btn-primary">
                                                             <fa-icon [icon]="faPencilAlt" />
-                                                            <span jhiTranslate="entity.action.edit"> Edit</span>
+                                                            <span jhiTranslate="entity.action.edit"></span>
                                                         </a>
                                                         <button
                                                             type="button"
@@ -95,7 +95,7 @@
                                                             [dialogError]="dialogError$"
                                                         >
                                                             <fa-icon [icon]="faTrash" />
-                                                            <span jhiTranslate="entity.action.delete"> Delete</span>
+                                                            <span jhiTranslate="entity.action.delete"></span>
                                                         </button>
                                                     </div>
                                                 </div>
@@ -110,7 +110,7 @@
             </ng-template>
         </ng-container>
         <ng-container ngbNavItem [ngbNavItem]="2">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.serviceUrls">Service URLs</a>
+            <a ngbNavLink jhiTranslate="artemisApp.lti.serviceUrls"></a>
             <ng-template ngbNavContent>
                 <dt>
                     <span>{{ 'artemisApp.lti.deepLinkingUrl' | artemisTranslate }}</span>
