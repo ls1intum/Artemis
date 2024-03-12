@@ -327,10 +327,10 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.visibleDate = undefined;
             fixture.detectChanges();
 
-            expect(component.isValidVisibleDate).toBeFalse();
+            expect(component.isVisibleDate).toBeFalse();
 
             examWithoutExercises.visibleDate = dayjs().add(2, 'hours');
-            expect(component.isValidVisibleDate).toBeTrue();
+            expect(component.isVisibleDate).toBeTrue();
         });
 
         it('validates the start of working time for real exams correctly', () => {
@@ -371,67 +371,40 @@ describe('ExamUpdateComponent', () => {
             expect(component.isValidEndDate).toBeTrue();
         });
 
-        it('updates the visible date for real exams correctly', () => {
-            examWithoutExercises.visibleDate = undefined;
+        it('validates the visible from value for real exams correctly', () => {
+            examWithoutExercises.testExam = false;
 
-            const day = dayjs();
+            examWithoutExercises.visibleDate = dayjs('this is not a date');
             fixture.detectChanges();
-            component.updateExamVisibleDate(day);
 
-            expect(examWithoutExercises.visibleDate).toBe(day);
+            expect(component.isValidVisibleDateValue).toBeFalse();
+
+            examWithoutExercises.visibleDate = dayjs().add(2, 'hours');
+            expect(component.isValidVisibleDateValue).toBeTrue();
         });
 
-        it('updates the invalid visible date for real exams correctly', () => {
-            examWithoutExercises.visibleDate = dayjs().subtract(3, 'hours');
+        it('validates the start of working time value for real exams correctly', () => {
+            examWithoutExercises.testExam = false;
 
-            const invalidDate = dayjs('this is not a date');
-
+            examWithoutExercises.startDate = dayjs('this is not a date');
             fixture.detectChanges();
-            component.updateExamVisibleDate(invalidDate);
 
-            expect(examWithoutExercises.visibleDate).toBeUndefined();
+            expect(component.isValidStartDateValue).toBeFalse();
+
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            expect(component.isValidStartDateValue).toBeTrue();
         });
 
-        it('updates the start date for real exams correctly', () => {
-            examWithoutExercises.startDate = undefined;
+        it('validates the end of working time value for real exams correctly', () => {
+            examWithoutExercises.testExam = false;
 
-            const day = dayjs();
+            examWithoutExercises.endDate = dayjs('this is not a date');
             fixture.detectChanges();
-            component.updateExamStartDate(day);
 
-            expect(examWithoutExercises.startDate).toBe(day);
-        });
+            expect(component.isValidEndDateValue).toBeFalse();
 
-        it('updates the invalid start date for real exams correctly', () => {
-            examWithoutExercises.startDate = dayjs().subtract(3, 'hours');
-
-            const invalidDate = dayjs('this is not a date');
-
-            fixture.detectChanges();
-            component.updateExamStartDate(invalidDate);
-
-            expect(examWithoutExercises.startDate).toBeUndefined();
-        });
-
-        it('updates the end date for real exams correctly', () => {
-            examWithoutExercises.endDate = undefined;
-
-            const day = dayjs();
-            fixture.detectChanges();
-            component.updateExamEndDate(day);
-
-            expect(examWithoutExercises.endDate).toBe(day);
-        });
-
-        it('updates the invalid end date for real exams correctly', () => {
-            examWithoutExercises.endDate = dayjs().subtract(3, 'hours');
-
-            const invalidDate = dayjs('this is not a date');
-
-            fixture.detectChanges();
-            component.updateExamEndDate(invalidDate);
-
-            expect(examWithoutExercises.endDate).toBeUndefined();
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
+            expect(component.isValidEndDateValue).toBeTrue();
         });
 
         it('should correctly catch HTTPError when updating the examWithoutExercises', fakeAsync(() => {

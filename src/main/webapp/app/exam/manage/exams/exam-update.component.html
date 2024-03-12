@@ -94,7 +94,7 @@
                         name="startDate"
                         id="startDate"
                     />
-                    @if (isStartDate && isValueStartDateValid && !isValidStartDate) {
+                    @if (isStartDate && isValidStartDateValue && !isValidStartDate) {
                         <span class="invalid-feedback"> {{ 'entity.startDateError' | artemisTranslate }}</span>
                     }
                 </div>
@@ -110,7 +110,7 @@
                         name="endDate"
                         id="endDate"
                     />
-                    @if (isEndDate && isValueEndDateValid && !isValidEndDate) {
+                    @if (isEndDate && isValidEndDateValue && !isValidEndDate) {
                         <span class="invalid-feedback"> {{ 'entity.endDateError' | artemisTranslate }}</span>
                     }
                 </div>

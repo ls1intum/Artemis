@@ -266,11 +266,21 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Returns a boolean indicating whether the exam's visible date is set.
+     *
+     * @returns {boolean} `true` if the exam's visible date is set, `false` otherwise.
+     */
     get isVisibleDate(): boolean {
         return !!this.exam.visibleDate;
     }
 
-    get isValueVisibleDateValid(): boolean {
+    /**
+     * Checks if the visible date of the exam is valid.
+     *
+     * @returns {boolean} `true` if the visible date is valid, `false` otherwise.
+     */
+    get isValidVisibleDateValue(): boolean {
         return dayjs(this.exam.visibleDate).isValid();
     }
 
@@ -288,13 +298,20 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Checks StartDate is set or not.
+     * Returns a boolean indicating whether the exam's start date is set.
+     *
+     * @returns {boolean} `true` if the exam's start date is set, `false` otherwise.
      */
     get isStartDate(): boolean {
         return !!this.exam.startDate;
     }
 
-    get isValueStartDateValid(): boolean {
+    /**
+     * Checks if the start date of the exam is valid.
+     *
+     * @returns {boolean} `true` if the start date is valid, `false` otherwise.
+     */
+    get isValidStartDateValue(): boolean {
         return dayjs(this.exam.startDate).isValid();
     }
 
@@ -307,7 +324,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         if (this.exam.testExam) {
             return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
         } else {
-            if (this.isVisibleDate && this.isValueVisibleDateValid) {
+            if (this.isVisibleDate && this.isValidVisibleDateValue) {
                 return dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
             }
         }
@@ -315,13 +332,20 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Checks EndDate is set or not.
+     * Returns a boolean indicating whether the exam's end date is set.
+     *
+     * @returns {boolean} `true` if the exam's end date is set, `false` otherwise.
      */
     get isEndDate(): boolean {
         return !!this.exam.endDate;
     }
 
-    get isValueEndDateValid(): boolean {
+    /**
+     * Checks if the end date of the exam is valid.
+     *
+     * @returns {boolean} `true` if the end date is valid, `false` otherwise.
+     */
+    get isValidEndDateValue(): boolean {
         return dayjs(this.exam.endDate).isValid();
     }
 
@@ -329,7 +353,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * Validates the EndDate inputted by the user.
      */
     get isValidEndDate(): boolean {
-        if (this.isStartDate && this.isValueStartDateValid) {
+        if (this.isStartDate && this.isValidStartDateValue) {
             return dayjs(this.exam.endDate).isAfter(this.exam.startDate);
         }
         return true;
