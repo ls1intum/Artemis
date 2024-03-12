@@ -15,5 +15,11 @@ import de.tum.in.www1.artemis.security.Role;
 @EnforceRoleInCourse(value = Role.INSTRUCTOR)
 public @interface EnforceAtLeastInstructorInCourse {
 
+    /**
+     * The name of the field in the method parameters that contains the course id.
+     * This is used to extract the course id from the method parameters
+     *
+     * @return the name of the field in the method parameters that contains the course id
+     */
     String resourceIdFieldName() default "courseId";
 }
