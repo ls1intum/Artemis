@@ -118,6 +118,7 @@
             "publishBuildPlanUrl": "Publish Build Plan",
             "customizeBuildPlan": "Customize Build Plan",
             "customizeBuildPlanWithAeolus": "Customize Build Plan with Aeolus",
+            "revertToTemplateBuildPlan": "If you are not happy with your build plan, you can reset it to its template by using the Reset button.",
             "runActionAlways": "Always run, even if other actions fail",
             "workdir": "Working Directory",
             "parameters": "Parameters",
@@ -568,7 +569,6 @@
             "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java/Kotlin-exercises with non-sequential test runs.",
             "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the build plans with Aeolus.",
             "customizeBuildPlansTooltip": "Activate this option to customize the build plan for this exercise.",
-            "revertToTemplateBuildPlan": "If you are not happy with your build plan, you can reset it to the template of the build plan by using the Reset button.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
             "testwiseCoverageReport": {
                 "button": "Show testwise coverage",
