@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
@@ -59,13 +60,24 @@ public class PlagiarismService {
      * @param userLogin       the user login of the student asking to see his plagiarism comparison.
      * @param exerciseDueDate due date of the exercise.
      */
-    public void checkAccessAndAnonymizeSubmissionForStudent(Submission submission, String userLogin, ZonedDateTime exerciseDueDate) {
+    public void checkAccessAndAnonymizeSubmissionForStudent(Submission submission, String userLogin, @Nullable ZonedDateTime exerciseDueDate) {
         if (!hasAccessToSubmission(submission.getId(), userLogin, exerciseDueDate)) {
             throw new AccessForbiddenException("This plagiarism submission is not related to the requesting user or the user has not been notified yet.");
         }
         submission.setParticipation(null);
         submission.setResults(null);
         submission.setSubmissionDate(null);
+    }
+
+    /**
+     * Check if there exists a plagiarism comparison for the given submission.
+     *
+     * @param submissionId the id of the submission to check.
+     * @return true if a plagiarism comparison exists for the given submission, otherwise false
+     */
+    public boolean hasPlagiarismComparison(long submissionId) {
+        var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
+        return comparisonOptional.filter(not(Set::isEmpty)).isPresent();
     }
 
     /**
@@ -76,17 +88,18 @@ public class PlagiarismService {
      * @param exerciseDueDate due date of the exercise.
      * @return true is the user has access to the submission
      */
-    public boolean hasAccessToSubmission(Long submissionId, String userLogin, ZonedDateTime exerciseDueDate) {
+    public boolean hasAccessToSubmission(Long submissionId, String userLogin, @Nullable ZonedDateTime exerciseDueDate) {
         var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
         return comparisonOptional.filter(not(Set::isEmpty)).isPresent()
                 && isOwnSubmissionOrIsAfterExerciseDueDate(submissionId, userLogin, comparisonOptional.get(), exerciseDueDate)
                 && wasUserNotifiedByInstructor(userLogin, comparisonOptional.get());
     }
 
-    private boolean isOwnSubmissionOrIsAfterExerciseDueDate(Long submissionId, String userLogin, Set<PlagiarismComparison<?>> comparisons, ZonedDateTime exerciseDueDate) {
+    private boolean isOwnSubmissionOrIsAfterExerciseDueDate(Long submissionId, String userLogin, Set<PlagiarismComparison<?>> comparisons,
+            @Nullable ZonedDateTime exerciseDueDate) {
         var isOwnSubmission = comparisons.stream().flatMap(it -> Stream.of(it.getSubmissionA(), it.getSubmissionB())).filter(Objects::nonNull)
                 .filter(it -> it.getSubmissionId() == submissionId).findFirst().map(PlagiarismSubmission::getStudentLogin).filter(isEqual(userLogin)).isPresent();
-        return isOwnSubmission || exerciseDueDate.isBefore(ZonedDateTime.now());
+        return isOwnSubmission || exerciseDueDate == null || exerciseDueDate.isBefore(ZonedDateTime.now());
     }
 
     /**

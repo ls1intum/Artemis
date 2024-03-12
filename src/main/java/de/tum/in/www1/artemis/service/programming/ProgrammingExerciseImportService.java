@@ -278,7 +278,7 @@ public class ProgrammingExerciseImportService {
 
         if (newExercise.isExamExercise()) {
             // Disable feedback suggestions on exam exercises (currently not supported)
-            newExercise.setFeedbackSuggestionsEnabled(false);
+            newExercise.setFeedbackSuggestionModule(null);
         }
 
         final var importedProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);

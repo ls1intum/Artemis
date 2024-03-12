@@ -305,7 +305,9 @@ public class ResultService {
             }
         }
         for (Result result : results) {
-            result.filterSensitiveFeedbacks(!shouldResultsBePublished);
+            if (Hibernate.isInitialized(result.getFeedbacks())) {
+                result.filterSensitiveFeedbacks(!shouldResultsBePublished);
+            }
         }
     }
 
