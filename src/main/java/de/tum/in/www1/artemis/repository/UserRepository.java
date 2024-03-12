@@ -874,7 +874,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param expirationDate the maximal expiration date of the retrieved users
      * @return all users with expiring VCS access tokens before the given date
      */
-    @Query(value = """
+    @Query("""
             SELECT user
             FROM User user
             WHERE user.vcsAccessToken IS NOT NULL
@@ -888,7 +888,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      *
      * @return all users without VCS access tokens
      */
-    @Query(value = """
+    @Query("""
             SELECT user
             FROM User user
             WHERE user.vcsAccessToken IS NULL
