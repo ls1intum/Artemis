@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/utils/date.utils';
 import { ComplaintResponseUpdateDTO } from 'app/entities/complaint-response-dto.model';
 
 type EntityResponseType = HttpResponse<ComplaintResponse>;
@@ -62,14 +62,7 @@ export class ComplaintResponseService {
     }
 
     refreshLockOrResolveComplaint(complaintResponseUpdate: ComplaintResponseUpdateDTO, complaintId: number | undefined): Observable<EntityResponseType> {
-        return this.http.put<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/response`, complaintResponseUpdate, { observe: 'response' });
-    }
-
-    public convertComplaintResponseDatesFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {
-        return Object.assign({}, complaintResponse, {
-            submittedTime: convertDateFromClient(complaintResponse.submittedTime),
-            lockEndDate: convertDateFromClient(complaintResponse.lockEndDate),
-        });
+        return this.http.patch<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/response`, complaintResponseUpdate, { observe: 'response' });
     }
 
     public convertComplaintResponseEntityResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
