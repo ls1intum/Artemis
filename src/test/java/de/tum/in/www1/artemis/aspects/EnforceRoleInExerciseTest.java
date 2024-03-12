@@ -163,4 +163,15 @@ class EnforceRoleInExerciseTest extends AbstractEnforceRoleInResourceTest {
     void testAsInstructorOfOtherCourse(String endpoint, HttpStatus expectedStatus) throws Exception {
         callEndpoint(endpoint, expectedStatus);
     }
+
+    private static Stream<Arguments> testAsAdminProvider() {
+        return allSameStatusProvider(HttpStatus.OK);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("testAsAdminProvider")
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAsAdmin(String endpoint, HttpStatus expectedStatus) throws Exception {
+        callEndpoint(endpoint, expectedStatus);
+    }
 }
