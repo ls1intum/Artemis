@@ -40,11 +40,7 @@ public class KnowledgeAreaService {
 
         var knowledgeAreaToCreate = new KnowledgeArea(knowledgeArea.getTitle(), knowledgeArea.getDescription());
         knowledgeAreaToCreate.setParent(parent);
-        var createdKnowledgeArea = knowledgeAreaRepository.save(knowledgeAreaToCreate);
-        // set the parent as it is lazily loaded
-        createdKnowledgeArea.setParent(parent);
-
-        return createdKnowledgeArea;
+        return knowledgeAreaRepository.save(knowledgeAreaToCreate);
     }
 
     /**
