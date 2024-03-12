@@ -6,6 +6,16 @@ import 'app/core/config/dayjs';
 import 'jest-extended';
 import failOnConsole from 'jest-fail-on-console';
 
+/*
+ * In the Jest configuration, we only import the basic features of monaco (editor.api.js) instead
+ * of the full module (editor.main.js) because of a ReferenceError in the language features of Monaco.
+ * The following import imports the core features of the monaco editor, but leaves out the language
+ * features. It contains an unchecked call to queryCommandSupported, so the function has to be set
+ * on the document.
+ */
+document.queryCommandSupported = () => false;
+import 'monaco-editor/esm/vs/editor/edcore.main';
+
 failOnConsole({
     shouldFailOnWarn: true,
 });
