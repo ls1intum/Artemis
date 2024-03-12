@@ -47,19 +47,19 @@
                         class="btn btn-warning"
                     >
                         <fa-icon [icon]="faExclamationTriangle" />
-                        <span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation">Do not re-evaluate</span>
+                        <span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation"></span>
                     </button>
                 }
                 @if (creditChanged || usageCountChanged || instructionDeleted) {
                     <button type="submit" id="reevaluate-button" (click)="reEvaluateExercise()" class="btn btn-success">
                         <fa-icon [icon]="faCheck" />
-                        <span jhiTranslate="artemisApp.exercise.update.warning.reevaluateExercise">Re-evaluate</span>
+                        <span jhiTranslate="artemisApp.exercise.update.warning.reevaluateExercise"></span>
                     </button>
                 }
             } @else {
                 <button type="submit" id="save-button" (click)="saveExerciseWithoutReevaluation()" class="btn btn-primary">
                     <fa-icon [icon]="faCheck" />
-                    <span jhiTranslate="entity.action.save">Save</span>
+                    <span jhiTranslate="entity.action.save"></span>
                 </button>
             }
         </div>
