@@ -17,8 +17,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -143,7 +144,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
         try {
             restTemplate.delete(uriBuilder.toUriString());
         }
-        catch (HttpClientErrorException e) {
+        catch (RestClientException e) {
             log.error("Could not revoke personal access token with id {}", tokenId);
             throw new GitLabException("Error while revoking personal access token", e);
         }
@@ -154,22 +155,25 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
         uriBuilder.queryParam("search", PERSONAL_ACCESS_TOKEN_NAME);
         uriBuilder.queryParam("user_id", userId);
 
-        try {
-            var response = restTemplate.exchange(uriBuilder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<List<GitLabPersonalAccessTokenListResponseDTO>>() {
-            });
-            var responseBody = response.getBody();
-            if (responseBody == null || responseBody.isEmpty()) {
-                log.error("Could not fetch personal access token id for user with id {}, response is null", userId);
-                throw new GitLabException("Error while fetching personal access token id");
-            }
+        ResponseEntity<List<GitLabPersonalAccessTokenListResponseDTO>> response;
 
-            // We assume that there exists no other personal access token with a name that contains the value of PERSONAL_ACCESS_TOKEN_NAME.
-            return responseBody.get(0);
+        try {
+            response = restTemplate.exchange(uriBuilder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+            });
         }
-        catch (HttpClientErrorException e) {
+        catch (RestClientException e) {
             log.error("Could not fetch personal access token id for user with id {}, response is null", userId);
             throw new GitLabException("Error while fetching personal access token id", e);
         }
+
+        var responseBody = response.getBody();
+        if (responseBody == null || responseBody.isEmpty()) {
+            log.error("Could not fetch personal access token id for user with id {}, response is null", userId);
+            throw new GitLabException("Error while fetching personal access token id");
+        }
+
+        // We assume that there exists no other personal access token with a name that contains the value of PERSONAL_ACCESS_TOKEN_NAME.
+        return responseBody.get(0);
     }
 
     private org.gitlab4j.api.models.User getGitLabUserFromUser(User user) {
