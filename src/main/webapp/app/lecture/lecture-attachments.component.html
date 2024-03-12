@@ -4,17 +4,17 @@
             <div>
                 @if (showHeader) {
                     <div>
-                        <h2><span jhiTranslate="artemisApp.lecture.attachments.title">Lecture</span>: {{ lecture.title }} - {{ lecture.course?.shortName }}</h2>
+                        <h2><span jhiTranslate="artemisApp.lecture.attachments.title"></span>: {{ lecture.title }} - {{ lecture.course?.shortName }}</h2>
                         <hr />
                         <div class="row">
                             <div class="col-6">
-                                <dt><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></dt>
+                                <dt><span jhiTranslate="artemisApp.lecture.startDate"></span></dt>
                                 <dd>
                                     <span>{{ lecture.startDate | artemisDate }}</span>
                                 </dd>
                             </div>
                             <div class="col-6">
-                                <dt><span jhiTranslate="artemisApp.lecture.endDate">End Date</span></dt>
+                                <dt><span jhiTranslate="artemisApp.lecture.endDate"></span></dt>
                                 <dd>
                                     <span>{{ lecture.endDate | artemisDate }}</span>
                                 </dd>
@@ -22,14 +22,14 @@
                         </div>
                         <div class="row">
                             <div class="col-12">
-                                <dt><span jhiTranslate="artemisApp.lecture.description">Description</span></dt>
+                                <dt><span jhiTranslate="artemisApp.lecture.description"></span></dt>
                                 <dd class="markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></dd>
                             </div>
                         </div>
                         <hr class="mt-2 mb-2" />
                         <div class="row">
                             <div class="col-12">
-                                <h4 jhiTranslate="artemisApp.lecture.attachments.attachments">Attachments</h4>
+                                <h4 jhiTranslate="artemisApp.lecture.attachments.attachments"></h4>
                             </div>
                         </div>
                     </div>
@@ -41,13 +41,13 @@
                                 <table class="table table-striped position-relative">
                                     <thead>
                                         <tr>
-                                            <th><span jhiTranslate="global.field.id">ID</span></th>
-                                            <th><span jhiTranslate="artemisApp.lecture.attachments.name">Title</span></th>
-                                            <th><span jhiTranslate="artemisApp.lecture.attachments.type">Type</span></th>
-                                            <th><span jhiTranslate="artemisApp.lecture.attachments.link">Link</span></th>
-                                            <th><span jhiTranslate="artemisApp.lecture.attachments.releaseDate">Release Date</span></th>
-                                            <th><span jhiTranslate="artemisApp.lecture.attachments.uploadDate">Upload Date</span></th>
-                                            <th><span jhiTranslate="artemisApp.lecture.attachments.version">Version</span></th>
+                                            <th><span jhiTranslate="global.field.id"></span></th>
+                                            <th><span jhiTranslate="artemisApp.lecture.attachments.name"></span></th>
+                                            <th><span jhiTranslate="artemisApp.lecture.attachments.type"></span></th>
+                                            <th><span jhiTranslate="artemisApp.lecture.attachments.link"></span></th>
+                                            <th><span jhiTranslate="artemisApp.lecture.attachments.releaseDate"></span></th>
+                                            <th><span jhiTranslate="artemisApp.lecture.attachments.uploadDate"></span></th>
+                                            <th><span jhiTranslate="artemisApp.lecture.attachments.version"></span></th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -86,7 +86,7 @@
                                                             class="btn btn-primary btn-sm me-1"
                                                         >
                                                             <fa-icon [icon]="faPencilAlt" />
-                                                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                                         </button>
                                                         @if (lecture.isAtLeastInstructor) {
                                                             <button
@@ -120,17 +120,17 @@
                         <div class="row">
                             <div class="col-12">
                                 @if (!attachmentToBeCreated.id) {
-                                    <h4 jhiTranslate="artemisApp.lecture.attachments.newAttachment">New Attachment</h4>
+                                    <h4 jhiTranslate="artemisApp.lecture.attachments.newAttachment"></h4>
                                 }
                                 @if (attachmentToBeCreated.id) {
-                                    <h4 jhiTranslate="artemisApp.lecture.attachments.editAttachment">Edit Attachment</h4>
+                                    <h4 jhiTranslate="artemisApp.lecture.attachments.editAttachment"></h4>
                                 }
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-12 col-md-6">
                                 <div class="form-group">
-                                    <label for="attachmentName" jhiTranslate="artemisApp.lecture.attachments.name">Name</label>
+                                    <label for="attachmentName" jhiTranslate="artemisApp.lecture.attachments.name"></label>
                                     <input type="text" class="form-control" id="attachmentName" name="attachmentName" [(ngModel)]="attachmentToBeCreated.name" />
                                 </div>
                                 <div class="form-group">
@@ -174,7 +174,7 @@
                                 </div>
                                 @if (attachmentToBeCreated.id) {
                                     <div class="form-group">
-                                        <label for="attachmentName" jhiTranslate="artemisApp.lecture.attachments.notificationText">Notification Text</label>
+                                        <label for="attachmentName" jhiTranslate="artemisApp.lecture.attachments.notificationText"></label>
                                         <input
                                             type="text"
                                             class="form-control"
@@ -194,7 +194,7 @@
                                     <span jhiTranslate="entity.action.saveAttachment"></span>
                                 </button>
                                 <button type="submit" (click)="cancel()" class="btn btn-default">
-                                    <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                                    <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                                 </button>
                             </div>
                         </div>
@@ -204,7 +204,7 @@
                     <div class="row">
                         <div class="col-12">
                             <button type="submit" (click)="addAttachment()" class="btn btn-primary" id="add-attachment">
-                                <fa-icon [icon]="faPaperclip" />&nbsp;<span jhiTranslate="entity.action.addAttachment"> Add attachment</span>
+                                <fa-icon [icon]="faPaperclip" />&nbsp;<span jhiTranslate="entity.action.addAttachment"></span>
                             </button>
                         </div>
                     </div>

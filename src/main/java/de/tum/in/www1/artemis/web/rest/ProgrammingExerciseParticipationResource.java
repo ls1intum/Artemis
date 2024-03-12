@@ -313,10 +313,13 @@ public class ProgrammingExerciseParticipationResource {
      */
     private void hasAccessToParticipationElseThrow(ProgrammingExerciseStudentParticipation participation) {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        boolean exerciseHasStarted = participation.getExercise().getParticipationStartDate().isBefore(ZonedDateTime.now());
-        boolean isStudent = authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null);
-        if (!exerciseHasStarted && isStudent) {
-            throw new AccessForbiddenException("Participation not yet started");
+        ZonedDateTime exerciseStartDate = participation.getExercise().getParticipationStartDate();
+        if (exerciseStartDate != null) {
+            boolean isStudent = authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null);
+            boolean exerciseNotStarted = exerciseStartDate.isAfter(ZonedDateTime.now());
+            if (isStudent && exerciseNotStarted) {
+                throw new AccessForbiddenException("Participation not yet started");
+            }
         }
     }
 
