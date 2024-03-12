@@ -15,7 +15,7 @@
         <span>
             <span>{{ course?.title }} - </span>
             @if (filteredUsersSize < allCourseGroupUsers.length) {
-                <span>{{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"> out of </span> </span>
+                <span>{{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"></span> </span>
             }
             {{ allCourseGroupUsers.length }}
             <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName">{{ capitalize(courseGroupEntityName) }}</span>
