@@ -24,8 +24,8 @@ Start Aeolus with the following docker compose command:
    docker compose -f docker/aeolus.yml up -d
 
 
-Check if Aeolus is running by visiting the following URL in your browser: http://localhost:8090/docs which should
-display the Aeolus API documentation.
+Check if Aeolus is running by visiting the following URL in your browser: http://localhost:8090/docs 
+It should display the Aeolus API documentation.
 
 .. _configure artemis for aeolus:
 
