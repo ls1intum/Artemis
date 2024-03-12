@@ -24,6 +24,9 @@ export class ExamLiveEventComponent {
     @Output()
     onAcknowledge = new EventEmitter<ExamLiveEvent>();
 
+    @Output()
+    onNavigate = new EventEmitter<ExamLiveEvent>();
+
     protected readonly ExamLiveEventType = ExamLiveEventType;
 
     // Icons
@@ -49,5 +52,9 @@ export class ExamLiveEventComponent {
 
     acknowledgeEvent() {
         this.onAcknowledge.emit(this.event);
+    }
+
+    navigateToExercise() {
+        this.onNavigate.emit(this.event);
     }
 }

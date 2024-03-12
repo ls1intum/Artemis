@@ -19,6 +19,15 @@ public class ProblemStatementUpdateEvent extends ExamLiveEvent {
     @Column(name = "textContent")
     private String textContent;
 
+    @Column(name = "problem_statement")
+    private String problemStatement;
+
+    @Column(name = "exercise_id")
+    private long exerciseId;
+
+    @Column(name = "exercise_name")
+    private String exerciseName;
+
     public String getTextContent() {
         return textContent;
     }
@@ -27,11 +36,38 @@ public class ProblemStatementUpdateEvent extends ExamLiveEvent {
         this.textContent = textContent;
     }
 
+    public String getProblemStatement() {
+        return problemStatement;
+    }
+
+    public void setProblemStatement(String problemStatement) {
+        this.problemStatement = problemStatement;
+    }
+
+    public Long getExerciseId() {
+        return exerciseId;
+    }
+
+    public void setExerciseId(Long exerciseId) {
+        this.exerciseId = exerciseId;
+    }
+
+    public String getExerciseName() {
+        return exerciseName;
+    }
+
+    public void setExerciseName(String exerciseName) {
+        this.exerciseName = exerciseName;
+    }
+
     @Override
     public ProblemStatementUpdateEventDTO asDTO() {
         var dto = new ProblemStatementUpdateEventDTO();
         super.populateDTO(dto);
         dto.setText(textContent);
+        dto.setProblemStatement(problemStatement);
+        dto.setExerciseId(exerciseId);
+        dto.setExerciseName(exerciseName);
         return dto;
     }
 }

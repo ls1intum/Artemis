@@ -138,23 +138,27 @@ public class ExamLiveEventsService {
         User instructor = userRepository.getUser();
         Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
         studentExamRepository.findAllWithExercisesByExamId(exam.getId()).stream().filter(studentExam -> studentExam.getExercises().contains(exercise))
-                .forEach(studentExam -> this.createAndSendProblemStatementUpdateEvent(studentExam, message, instructor));
+                .forEach(studentExam -> this.createAndSendProblemStatementUpdateEvent(studentExam, exercise, message, instructor));
     }
 
     /**
      * Send a problem statement update to the specified student.
      *
-     * @param studentExam The student exam the time was updated for
+     * @param studentExam The student exam containing the exercise with updated problem statement
+     * @param exercise    The updated exercise
      * @param message     The message to send
      * @param sentBy      The user who performed the update
      */
-    public void createAndSendProblemStatementUpdateEvent(StudentExam studentExam, String message, User sentBy) {
+    public void createAndSendProblemStatementUpdateEvent(StudentExam studentExam, Exercise exercise, String message, User sentBy) {
         var event = new ProblemStatementUpdateEvent();
 
         // Common fields
         event.setExamId(studentExam.getExam().getId());
         event.setStudentExamId(studentExam.getId());
         event.setCreatedBy(sentBy.getName());
+        event.setProblemStatement(exercise.getProblemStatement());
+        event.setExerciseId(exercise.getId());
+        event.setExerciseName(exercise.getTitle());
 
         // Specific fields
         event.setTextContent(message);

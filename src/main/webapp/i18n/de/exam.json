@@ -188,6 +188,7 @@
                 "from": "von",
                 "acknowledge": "Bestätigen",
                 "acknowledgeAll": "Alle bestätigen",
+                "navigateToExercise": "Navigiere zur Aufgabe",
                 "messages": {
                     "workingTimeUpdate": {
                         "titleEveryone": "Die Bearbeitungszeit der Klausur wurde geändert.",
@@ -199,7 +200,7 @@
                         "description": "Eine Klausur-Aufsicht hat die Anwesenheitskontrolle für dich ausgelöst. Bitte folge den Anweisungen der Aufsicht."
                     },
                     "problemStatementUpdate": {
-                        "description": "Die Aufgabenstellung einer Übung wurde aktualisiert. Bitte öffnen Sie die entsprechende Übung, um die Änderungen zu sehen.",
+                        "description": "Die Aufgabenstellung der Aufgabe '{{ exerciseName }}' wurde aktualisiert. Bitte öffnen Sie die Aufgabe, um die Änderungen zu sehen.",
                         "instructorMessage": "Lehrkraft Nachricht:"
                     }
                 }

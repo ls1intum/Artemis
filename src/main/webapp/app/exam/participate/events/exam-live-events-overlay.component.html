@@ -1,7 +1,12 @@
 <div class="overlay-wrapper">
     <div class="events-wrapper">
         @for (event of eventsToDisplay; track event) {
-            <jhi-exam-live-event [event]="event" [showAcknowledge]="unacknowledgedEvents.includes(event)" (onAcknowledge)="acknowledgeEvent(event)" />
+            <jhi-exam-live-event
+                [event]="event"
+                [showAcknowledge]="unacknowledgedEvents.includes(event)"
+                (onAcknowledge)="acknowledgeEvent(event)"
+                (onNavigate)="navigateToExercise(event)"
+            />
         }
     </div>
     @if (unacknowledgedEvents.length === 0) {

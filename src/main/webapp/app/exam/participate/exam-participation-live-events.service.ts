@@ -47,6 +47,9 @@ export type WorkingTimeUpdateEvent = ExamLiveEvent & {
 
 export type ProblemStatementUpdateEvent = ExamLiveEvent & {
     text: string;
+    problemStatement: string;
+    exerciseId: number;
+    exerciseName: string;
 };
 
 @Injectable({ providedIn: 'root' })
