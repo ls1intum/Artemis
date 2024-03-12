@@ -156,12 +156,12 @@ public class ExamLiveEventsService {
         event.setExamId(studentExam.getExam().getId());
         event.setStudentExamId(studentExam.getId());
         event.setCreatedBy(sentBy.getName());
-        event.setProblemStatement(exercise.getProblemStatement());
-        event.setExerciseId(exercise.getId());
-        event.setExerciseName(exercise.getTitle());
 
         // Specific fields
         event.setTextContent(message);
+        event.setProblemStatement(exercise.getProblemStatement());
+        event.setExerciseId(exercise.getId());
+        event.setExerciseName(exercise.getTitle());
 
         this.storeAndDistributeLiveExamEvent(event);
     }
