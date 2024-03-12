@@ -91,7 +91,6 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
         // do not call testAllPreAuthorizeInstructor, as these methods should succeed
     }
 
-    // AdminStandardizedCompetencyResource
     @Nested
     class AdminStandardizedCompetencyResource {
 
@@ -101,8 +100,6 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
             @Test
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldCreateCompetency() throws Exception {
-                assertThat(1).isEqualTo(2);
-
                 var expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "");
                 expectedCompetency.setKnowledgeArea(knowledgeArea);
                 expectedCompetency.setSource(source);
