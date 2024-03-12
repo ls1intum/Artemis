@@ -6,7 +6,6 @@ import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-ed
 import { ElementRef, NgZone } from '@angular/core';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { MockComponent } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseDetailBuildConfigurationComponent } from 'app/exercises/programming/manage/programming-exercise-detail-build-configuration.component';
 import { Course } from 'app/entities/course.model';
 
@@ -23,7 +22,7 @@ describe('ProgrammingExercise Detail Build Configuration', () => {
         programmingExercise.customizeBuildPlanWithAeolus = true;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisTranslatePipe],
+            imports: [ArtemisTestModule],
             declarations: [ProgrammingExerciseDetailBuildConfigurationComponent, MockComponent(AceEditorComponent)],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })

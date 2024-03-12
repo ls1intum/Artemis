@@ -24,7 +24,6 @@ import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.s
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Observable } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('ProgrammingExercise Custom Build Plan', () => {
     let mockThemeService: ThemeService;
@@ -65,7 +64,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         programmingExercise.windFile = windFile;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisTranslatePipe],
+            imports: [ArtemisTestModule],
             declarations: [ProgrammingExerciseCustomBuildPlanComponent, MockComponent(FaIconComponent), MockComponent(HelpIconComponent), MockComponent(AceEditorComponent)],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })
