@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.web.rest.localci;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -30,11 +32,15 @@ public class BuildLogResource {
 
     @GetMapping("/build-log/{resultId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<String> getBuildLogForSubmission(@PathVariable long resultId) {
+    public ResponseEntity<Resource> getBuildLogForSubmission(@PathVariable long resultId) {
         log.debug("REST request to get the build log for result {}", resultId);
         HttpHeaders responseHeaders = new HttpHeaders();
-        String buildLog = buildLogEntryService.retrieveBuildLogsFromFileForResult(String.valueOf(resultId));
+        FileSystemResource buildLog = buildLogEntryService.retrieveBuildLogsFromFileForResult(String.valueOf(resultId));
+        if (buildLog == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
         responseHeaders.setContentType(MediaType.TEXT_PLAIN);
+        responseHeaders.setContentDispositionFormData("attachment", "build-" + resultId + ".log");
         return new ResponseEntity<>(buildLog, responseHeaders, HttpStatus.OK);
     }
 }

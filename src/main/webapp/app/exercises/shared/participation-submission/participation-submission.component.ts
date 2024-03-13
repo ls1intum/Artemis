@@ -53,6 +53,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     eventSubscriber: Subscription;
     isLoading = true;
     commitHashURLTemplate?: string;
+    logsAvailable?: { [key: string]: boolean };
 
     // Icons
     faTrash = faTrash;
@@ -91,6 +92,9 @@ export class ParticipationSubmissionComponent implements OnInit {
             if (queryParams?.['isTmpOrSolutionProgrParticipation'] != undefined) {
                 this.isTmpOrSolutionProgrParticipation = queryParams['isTmpOrSolutionProgrParticipation'] === 'true';
             }
+            this.participationService.getLogsAvailabilityForResultsOfParticipation(this.participationId).subscribe((logsAvailable) => {
+                this.logsAvailable = logsAvailable;
+            });
             if (this.isTmpOrSolutionProgrParticipation) {
                 // Find programming exercise of template and solution programming participation
                 this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
@@ -114,6 +118,17 @@ export class ParticipationSubmissionComponent implements OnInit {
                         // Should not happen
                         alert(this.translateService.instant('artemisApp.participation.noParticipation'));
                     }
+
+                    if (this.submissions) {
+                        this.submissions.forEach((submission: ProgrammingSubmission) => {
+                            if (submission.results) {
+                                submission.results.forEach((result: Result) => {
+                                    result.logsAvailable = this.logsAvailable?.[result.id!];
+                                });
+                            }
+                        });
+                    }
+
                     this.isLoading = false;
                 });
             } else {
@@ -157,9 +172,13 @@ export class ParticipationSubmissionComponent implements OnInit {
                         this.participation.submissions = submissions;
                     }
                     // set the submission to every result so it can be accessed via the result
+                    // set the build log availability for every result
                     submissions.forEach((submission: Submission) => {
                         if (submission.results) {
-                            submission.results.forEach((result: Result) => (result.submission = submission));
+                            submission.results.forEach((result: Result) => {
+                                result.submission = submission;
+                                result.logsAvailable = this.logsAvailable?.[result.id!];
+                            });
                         }
                     });
                 }
@@ -240,6 +259,11 @@ export class ParticipationSubmissionComponent implements OnInit {
                     break;
             }
         }
+    }
+
+    viewBuildLogs(resultId: number): void {
+        const url = `/api/build-log/${resultId}`;
+        window.open(url, '_blank');
     }
 
     private updateResults(submission: Submission, result: Result) {

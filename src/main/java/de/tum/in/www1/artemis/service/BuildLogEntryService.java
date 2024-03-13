@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -38,8 +39,6 @@ public class BuildLogEntryService {
     private final BuildLogEntryRepository buildLogEntryRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
-    private final FileService fileService;
 
     @Value("${artemis.continuous-integration.build-log.file-expiry-days:30}")
     private int expiryDays;
@@ -317,16 +316,17 @@ public class BuildLogEntryService {
      * @param resultId the id of the result for which to retrieve the build logs
      * @return the build logs as a string or null if the file could not be found (e.g. if the build logs have been deleted)
      */
-    public String retrieveBuildLogsFromFileForResult(String resultId) {
+    public FileSystemResource retrieveBuildLogsFromFileForResult(String resultId) {
         Path buildLogsPath = Path.of("buildLogs");
         Path logPath = buildLogsPath.resolve(resultId + ".log");
 
-        try {
-            byte[] fileContent = fileService.getFileForPath(logPath);
-            return new String(fileContent, StandardCharsets.UTF_8);
+        FileSystemResource fileSystemResource = new FileSystemResource(logPath);
+        if (fileSystemResource.exists()) {
+            log.debug("Retrieved build logs for result {} from file {}", resultId, logPath);
+            return fileSystemResource;
         }
-        catch (IOException e) {
-            log.warn("Build log file for result {} could not be found", resultId, e);
+        else {
+            log.warn("Could not find build logs for result {} in file {}", resultId, logPath);
             return null;
         }
     }
