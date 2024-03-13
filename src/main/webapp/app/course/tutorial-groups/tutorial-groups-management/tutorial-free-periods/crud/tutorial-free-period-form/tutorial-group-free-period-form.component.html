@@ -8,14 +8,40 @@
         @if (form) {
             <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
                 <div class="btn-group" role="group">
-                    <input type="radio" class="btn-check" name="timeFrame" id="FreePeriod" autocomplete="off" [checked]="timeFrame === TimeFrame.Period" (click)="setTimeFrame(TimeFrame.Period)"/>
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="timeFrame"
+                        id="FreePeriod"
+                        autocomplete="off"
+                        [checked]="timeFrame === TimeFrame.Period"
+                        (click)="setTimeFrame(TimeFrame.Period)"
+                    />
                     <label class="btn btn-outline-primary" for="FreePeriod">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.period' | artemisTranslate }}</label>
 
-                    <input type="radio" class="btn-check" name="timeFrame" id="FreeDay" autocomplete="off" [checked]="timeFrame === TimeFrame.Day" (click)="setTimeFrame(TimeFrame.Day)"/>
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="timeFrame"
+                        id="FreeDay"
+                        autocomplete="off"
+                        [checked]="timeFrame === TimeFrame.Day"
+                        (click)="setTimeFrame(TimeFrame.Day)"
+                    />
                     <label class="btn btn-outline-primary" for="FreeDay">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.day' | artemisTranslate }}</label>
 
-                    <input type="radio" class="btn-check" name="timeFrame" id="FreePeriodWithinDay" autocomplete="off" [checked]="timeFrame === TimeFrame.PeriodWithinDay" (click)="setTimeFrame(TimeFrame.PeriodWithinDay)"/>
-                    <label class="btn btn-outline-primary" for="FreePeriodWithinDay">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay' | artemisTranslate }}</label>
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="timeFrame"
+                        id="FreePeriodWithinDay"
+                        autocomplete="off"
+                        [checked]="timeFrame === TimeFrame.PeriodWithinDay"
+                        (click)="setTimeFrame(TimeFrame.PeriodWithinDay)"
+                    />
+                    <label class="btn btn-outline-primary" for="FreePeriodWithinDay">{{
+                        'artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay' | artemisTranslate
+                    }}</label>
                 </div>
 
                 <!-- Date -->
@@ -43,8 +69,7 @@
                         <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="startDatePicker"><fa-icon [icon]="faCalendarAlt" /></button>
                         <owl-date-time [firstDayOfWeek]="1" datePickerInput [pickerType]="'calendar'" #startDatePicker [pickerMode]="'dialog'" />
                     </div>
-                    @if (form.controls.startDate?.invalid && (form.controls.startDate?.dirty || form.controls.startDate?.touched)
-                        && form.controls.startDate?.errors?.required) {
+                    @if (form.controls.startDate?.invalid && (form.controls.startDate?.dirty || form.controls.startDate?.touched) && form.controls.startDate?.errors?.required) {
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError' | artemisTranslate }}
                         </div>
@@ -73,9 +98,12 @@
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError' | artemisTranslate }}
                         </div>
-                    } @else if (form.controls.endDate?.touched && form.controls.startDate?.touched
-                        && (form.controls.endDate?.value | artemisDate: 'short-date' : false : timeZone )
-                        <= (form.controls.startDate?.value | artemisDate: 'short-date' : false : timeZone )) {
+                    } @else if (
+                        form.controls.endDate?.touched &&
+                        form.controls.startDate?.touched &&
+                        (form.controls.endDate?.value | artemisDate: 'short-date' : false : timeZone) <=
+                            (form.controls.startDate?.value | artemisDate: 'short-date' : false : timeZone)
+                    ) {
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
                         </div>
@@ -97,7 +125,7 @@
                         />
                         <owl-date-time timePickerInput [pickerType]="'timer'" #startTimePicker [pickerMode]="'dialog'" />
                     </div>
-
+                    <!--temporary comment-->
                     <label class="form-label" for="endTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</label>
                     <div class="input-group">
                         <input
@@ -114,9 +142,12 @@
                         />
                         <owl-date-time [pickerType]="'timer'" #endTimePicker [pickerMode]="'dialog'" />
                     </div>
-                    @if ((form.controls.endTime?.touched && form.controls.startTime?.touched) && form.controls.startTime &&
-                    (form.controls.endTime?.value | artemisDate: 'time' : false : timeZone )
-                    <= (form.controls.startTime?.value | artemisDate: 'time' : false : timeZone )) {
+                    @if (
+                        form.controls.endTime?.touched &&
+                        form.controls.startTime?.touched &&
+                        form.controls.startTime &&
+                        (form.controls.endTime?.value | artemisDate: 'time' : false : timeZone) <= (form.controls.startTime?.value | artemisDate: 'time' : false : timeZone)
+                    ) {
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
                         </div>
