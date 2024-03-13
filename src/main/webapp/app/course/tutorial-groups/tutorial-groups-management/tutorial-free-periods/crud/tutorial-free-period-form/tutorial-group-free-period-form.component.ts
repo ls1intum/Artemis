@@ -77,7 +77,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     /**
      * Resets the specified date-value in the form.
-     * @param {string} controlName - The name of the control to reset.
+     * @param {string} controlName - The name of the form control to reset.
      */
     private resetDateControl(controlName: string) {
         const control = this.form.get(controlName);
@@ -126,7 +126,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     /**
      * This getter method checks if the form submission is possible based on the validity of the form controls and the selected time frame.
-     * @returns {boolean} - Returns true if the form submission is possible, otherwise returns false.
+     * @returns {boolean} - Returns true if the form can be submitted, false otherwise
      */
     get isSubmitPossible(): boolean {
         if (!this.startDateControl?.valid) {
@@ -176,8 +176,8 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Sets the time frame for the form based on the provided form data.
-     * @param {TutorialGroupFreePeriodFormData} formData - The form data to set the time frame based on.
+     * Determines and sets the initial time frame when the form is in edit mode based on the provided form data.
+     * @param formData The form data used to determine the initial time frame.
      */
     private setFirstTimeFrameInEditMode(formData: TutorialGroupFreePeriodFormData) {
         if (!formData.endDate && !formData.startTime && !formData.endTime) {
