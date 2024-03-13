@@ -234,6 +234,7 @@ public class SharedQueueProcessingService {
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
+            log.info("No failure: Decrementing localProcessingJobs to {}, buildjob: {}", localProcessingJobs.get(), buildJob.id());
             addToRecentBuildJobs(finishedJob);
             updateLocalBuildAgentInformation();
 
@@ -261,6 +262,7 @@ public class SharedQueueProcessingService {
 
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
+            log.info("Yes Failure: Decrementing localProcessingJobs to {}, buildjob: {}", localProcessingJobs.get(), buildJob.id());
             addToRecentBuildJobs(job);
 
             checkAvailabilityAndProcessNextBuild();
