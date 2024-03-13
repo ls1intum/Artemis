@@ -7,21 +7,21 @@
         <div class="d-flex align-items-center text-end mb-1">
             <button class="btn me-auto" (click)="confirmExitDetailView(false)">
                 <fa-icon [icon]="faArrow" size="lg" />
-                <span class="ms-1" jhiTranslate="artemisApp.apollonDiagram.back">Back to Overview</span>
+                <span class="ms-1" jhiTranslate="artemisApp.apollonDiagram.back"></span>
             </button>
             <label class="me-1">
                 <input class="form-check-input" type="checkbox" name="keepOriginalSize" [(ngModel)]="crop" />&nbsp;
-                <span jhiTranslate="artemisApp.apollonDiagram.detail.crop">Crop</span>
+                <span jhiTranslate="artemisApp.apollonDiagram.detail.crop"></span>
             </label>
             <fa-icon class="me-1" [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.apollonDiagram.detail.help' | artemisTranslate }}" />
             <button class="btn btn-info me-1" (click)="downloadSelection()" [hidden]="!apollonDiagram">
-                <fa-icon [icon]="faDownload" />&nbsp;<span jhiTranslate="entity.action.download">Download</span>
+                <fa-icon [icon]="faDownload" />&nbsp;<span jhiTranslate="entity.action.download"></span>
             </button>
         </div>
     </div>
     @if (apollonDiagram) {
         <div class="form-group mb-3">
-            <label class="form-control-label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_title">Title</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_title"></label>
             <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram.title" />
         </div>
     }
@@ -29,9 +29,7 @@
 </div>
 <div class="modal-footer">
     <button class="btn btn-outline-primary me-auto" (click)="confirmExitDetailView(true)">Close</button>
-    <button class="btn btn-outline-primary" (click)="saveDiagram()" [hidden]="!apollonDiagram" [disabled]="isSaved" jhiTranslate="artemisApp.apollonDiagram.detail.save">
-        Save Diagram
-    </button>
+    <button class="btn btn-outline-primary" (click)="saveDiagram()" [hidden]="!apollonDiagram" [disabled]="isSaved" jhiTranslate="artemisApp.apollonDiagram.detail.save"></button>
     <button id="generate-quiz-exercise" class="btn btn-primary" (click)="generateExercise()" [hidden]="!apollonDiagram">
         {{ 'artemisApp.apollonDiagram.detail.createLabel' | artemisTranslate }}
     </button>
