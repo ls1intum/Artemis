@@ -153,6 +153,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
             // anonymize and throw exception if not authorized to view submission
             plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(textSubmission, userRepository.getUser().getLogin(),
+                    // TODO: might be better to use the individual due date here if available
                     textSubmission.getParticipation().getExercise().getDueDate());
             return ResponseEntity.ok(textSubmission);
         }

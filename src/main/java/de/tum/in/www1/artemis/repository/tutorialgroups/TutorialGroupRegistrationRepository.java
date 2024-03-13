@@ -30,17 +30,16 @@ public interface TutorialGroupRegistrationRepository extends JpaRepository<Tutor
 
     Set<TutorialGroupRegistration> findAllByTutorialGroup(TutorialGroup tutorialGroup);
 
+    @Transactional // ok because of delete
     @Modifying
-    @Transactional
-    // ok because of delete
     void deleteAllByStudent(User student);
 
-    @Transactional
+    @Transactional  // ok because of delete
     @Modifying
     void deleteById(@NotNull Long tutorialGroupRegistrationId);
 
+    @Transactional  // ok because of delete
     @Modifying
-    @Transactional
     void deleteAllByStudentIsInAndTypeAndTutorialGroupCourse(Set<User> students, TutorialGroupRegistrationType type, Course course);
 
     boolean existsByTutorialGroupTitleAndStudentAndType(String title, User student, TutorialGroupRegistrationType type);

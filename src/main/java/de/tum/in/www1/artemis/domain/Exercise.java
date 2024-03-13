@@ -842,6 +842,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @return the time from which on access to the participation is allowed, for exercises that are not part of an exam, this is just the release date or start date.
      */
     @JsonIgnore
+    @Nullable
     public ZonedDateTime getParticipationStartDate() {
         if (isExamExercise()) {
             return getExerciseGroup().getExam().getStartDate();

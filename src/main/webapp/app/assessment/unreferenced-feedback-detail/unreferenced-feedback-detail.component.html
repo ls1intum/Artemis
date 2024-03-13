@@ -26,11 +26,11 @@
             <div class="row float-end suggestion-action-buttons">
                 <button class="btn btn-success m-1 btn-sm" (click)="onAcceptSuggestion.emit(feedback)">
                     <fa-icon [icon]="faCheck" />
-                    <span jhiTranslate="artemisApp.assessment.detail.accept">Accept</span>
+                    <span jhiTranslate="artemisApp.assessment.detail.accept"></span>
                 </button>
                 <button class="btn btn-danger m-1 btn-sm" (click)="onDiscardSuggestion.emit(feedback)">
                     <fa-icon [icon]="faTrash" />
-                    <span jhiTranslate="artemisApp.assessment.detail.discard">Discard</span>
+                    <span jhiTranslate="artemisApp.assessment.detail.discard"></span>
                 </button>
             </div>
         }

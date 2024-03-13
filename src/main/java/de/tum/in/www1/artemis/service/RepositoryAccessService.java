@@ -4,6 +4,8 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 
+import jakarta.annotation.Nullable;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -62,17 +64,20 @@ public class RepositoryAccessService {
             RepositoryActionType repositoryActionType) {
         boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isStudent = authorizationCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        boolean isTeachingAssistant = !isStudent && !isAtLeastEditor;
+        boolean isTeachingAssistant = authorizationCheckService.isTeachingAssistantInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isStudentParticipation = programmingParticipation instanceof StudentParticipation;
-        var exerciseStartDate = programmingExercise.getParticipationStartDate();
 
-        // Error case 1: The user does not have permissions to access the participation or the submission for plagiarism comparison.
-        checkHasParticipationPermissionsOrCanAccessSubmissionForPlagiarismComparisonElseThrow(programmingParticipation, user, programmingExercise);
+        // NOTE: the exerciseStartDate can be null, e.g. if no release and no start is defined for a course exercise
+        @Nullable
+        ZonedDateTime exerciseStartDate = programmingExercise.getParticipationStartDate();
 
         // The user is allowed to access the repository in any way if they are at least an editor or if they are a teaching assistant and only want to read the repository.
         if (isAtLeastEditor || (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ)) {
             return;
         }
+
+        // Error case 1: The user does not have permissions to access the participation or the submission for plagiarism comparison.
+        checkHasParticipationPermissionsOrCanAccessSubmissionForPlagiarismComparisonElseThrow(programmingParticipation, user, programmingExercise);
 
         // Error case 2: The user's participation is locked.
         checkIsTryingToAccessLockedParticipation(programmingParticipation, programmingExercise, repositoryActionType);
@@ -111,9 +116,9 @@ public class RepositoryAccessService {
      * @param exerciseStartDate        The start date of the exercise.
      */
     private void checkIsStudentAllowedToAccessRepositoryConcerningDates(ProgrammingExerciseParticipation programmingParticipation, RepositoryActionType repositoryActionType,
-            ZonedDateTime exerciseStartDate) {
+            @Nullable ZonedDateTime exerciseStartDate) {
         // if the exercise has not started yet, the student is not allowed to access the repository
-        if (exerciseStartDate.isAfter(ZonedDateTime.now())) {
+        if (exerciseStartDate != null && exerciseStartDate.isAfter(ZonedDateTime.now())) {
             throw new AccessForbiddenException();
         }
         else {
