@@ -6,6 +6,9 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 
@@ -23,7 +26,8 @@ public final class AnnotationUtils {
      * @param <T>       the type of the annotation
      * @return the annotation if it is present, empty otherwise
      */
-    public static <T extends Annotation> Optional<T> getAnnotation(Class<T> clazz, ProceedingJoinPoint joinPoint) {
+    @NotNull
+    public static <T extends Annotation> Optional<T> getAnnotation(@NotNull Class<T> clazz, @NotNull ProceedingJoinPoint joinPoint) {
         final var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         T annotation = method.getAnnotation(clazz);
         if (annotation != null) {
@@ -53,11 +57,13 @@ public final class AnnotationUtils {
      *
      * @param annotation the annotation
      * @param valueName  the value name
+     * @param valueType  the value type
      * @param <T>        the type of the annotation
      * @param <V>        the type of the value
      * @return the value if it is present, otherwise an exception is thrown
      */
-    public static <T extends Annotation, V> Optional<V> getValue(T annotation, String valueName, Class<V> valueType) {
+    @NotNull
+    public static <T extends Annotation, V> Optional<V> getValue(@NotNull T annotation, @NotBlank String valueName, @NotNull Class<V> valueType) {
         try {
             Method method = annotation.annotationType().getMethod(valueName);
             Object value = method.invoke(annotation);
@@ -78,7 +84,8 @@ public final class AnnotationUtils {
      * @param fieldName the fieldName
      * @return the id if it is present, empty otherwise
      */
-    public static Optional<Long> getIdFromSignature(ProceedingJoinPoint joinPoint, String fieldName) {
+    @NotNull
+    public static Optional<Long> getIdFromSignature(@NotNull ProceedingJoinPoint joinPoint, @NotBlank String fieldName) {
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         final int indexOfId = Arrays.asList(signature.getParameterNames()).indexOf(fieldName);
         Object[] args = joinPoint.getArgs();
