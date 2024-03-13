@@ -72,6 +72,7 @@ import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.servi
 import { AthenaService } from 'app/assessment/athena.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { EntityResponseType } from 'app/exercises/shared/result/result.service';
+import dayjs from 'dayjs/esm';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -277,11 +278,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     }));
 
     it('should be able to override directly after submitting', () => {
-        jest.spyOn(comp, 'handleSaveOrSubmit').mockReturnValue(Promise.resolve());
+        jest.spyOn(comp, 'handleSaveOrSubmit').mockImplementation(() => {});
 
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.isAtLeastInstructor = true;
-        exercise.dueDate = Date.now();
+        exercise.dueDate = dayjs();
         comp.exercise = exercise;
         comp.isAssessor = true;
         comp.submit();
@@ -290,22 +291,24 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it('should validate assessments after submission is received during component init', async () => {
         // make assessment valid
-        submission!.latestResult!.feedbacks[0].detailText = 'text';
-        submission!.latestResult!.feedbacks[0].credits = 1;
-        submission!.latestResult!.feedbacks[0].type = FeedbackType.MANUAL_UNREFERENCED;
-
+        if (submission) {
+            submission.latestResult!.feedbacks[0]!.detailText = 'text';
+            submission.latestResult!.feedbacks[0]!.credits = 1;
+            submission.latestResult!.feedbacks[0]!.type = FeedbackType.MANUAL_UNREFERENCED;
+        }
         await comp['onSubmissionReceived']('123', submission);
 
         expect(comp.assessmentsAreValid).toBeTrue();
     });
 
     it('should not invalidate assessment after saving', async () => {
-        jest.spyOn(comp, 'handleSaveOrSubmit').mockReturnValue(undefined);
+        jest.spyOn(comp, 'handleSaveOrSubmit').mockImplementation(() => {});
 
-        submission.latestResult!.feedbacks[0].detailText = 'text';
-        submission.latestResult!.feedbacks[0].credits = 1;
-        submission.latestResult!.feedbacks[0].type = FeedbackType.MANUAL_UNREFERENCED;
-
+        if (submission) {
+            submission.latestResult!.feedbacks[0].detailText = 'text';
+            submission.latestResult!.feedbacks[0].credits = 1;
+            submission.latestResult!.feedbacks[0].type = FeedbackType.MANUAL_UNREFERENCED;
+        }
         await comp['onSubmissionReceived']('123', submission);
 
         comp.save();
