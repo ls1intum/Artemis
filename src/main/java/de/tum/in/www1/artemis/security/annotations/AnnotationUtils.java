@@ -53,6 +53,8 @@ public final class AnnotationUtils {
      *
      * @param annotation the annotation
      * @param valueName  the value name
+     * @param <T>        the type of the annotation
+     * @param <V>        the type of the value
      * @return the value if it is present, otherwise an exception is thrown
      */
     public static <T extends Annotation, V> Optional<V> getValue(T annotation, String valueName, Class<V> valueType) {
