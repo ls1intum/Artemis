@@ -43,7 +43,8 @@
                         <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="startDatePicker"><fa-icon [icon]="faCalendarAlt" /></button>
                         <owl-date-time [firstDayOfWeek]="1" datePickerInput [pickerType]="'calendar'" #startDatePicker [pickerMode]="'dialog'" />
                     </div>
-                    @if (startDateControl?.invalid && (startDateControl?.dirty || startDateControl?.touched) && startDateControl?.errors?.required) {
+                    @if (form.controls.startDate?.invalid && (form.controls.startDate?.dirty || form.controls.startDate?.touched)
+                        && form.controls.startDate?.errors?.required) {
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError' | artemisTranslate }}
                         </div>
@@ -68,11 +69,13 @@
                         <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="endDatePicker"><fa-icon [icon]="faCalendarAlt" /></button>
                         <owl-date-time [firstDayOfWeek]="1" datePickerInput [pickerType]="'calendar'" #endDatePicker [pickerMode]="'dialog'" />
                     </div>
-                    @if (endDateControl?.invalid && (endDateControl?.dirty || endDateControl?.touched) && endDateControl?.errors?.required) {
+                    @if (form.controls.endDate?.invalid && (form.controls.endDate?.dirty || form.controls.endDate?.touched) && form.controls.endDate?.errors?.required) {
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError' | artemisTranslate }}
                         </div>
-                    } @else if (endDateControl?.touched && startDateControl?.touched && !isStartBeforeEnd) {
+                    } @else if (form.controls.endDate?.touched && form.controls.startDate?.touched
+                        && (form.controls.endDate?.value | artemisDate: 'short-date' : false : timeZone )
+                        <= (form.controls.startDate?.value | artemisDate: 'short-date' : false : timeZone )) {
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
                         </div>
@@ -111,7 +114,9 @@
                         />
                         <owl-date-time [pickerType]="'timer'" #endTimePicker [pickerMode]="'dialog'" />
                     </div>
-                    @if ((endTimeControl?.dirty || startTimeControl?.dirty) && startTimeControl && !isStartBeforeEnd) {
+                    @if ((form.controls.endTime?.touched && form.controls.startTime?.touched) && form.controls.startTime &&
+                    (form.controls.endTime?.value | artemisDate: 'time' : false : timeZone )
+                    <= (form.controls.startTime?.value | artemisDate: 'time' : false : timeZone )) {
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
                         </div>
@@ -127,7 +132,7 @@
                         formControlName="reason"
                         [placeholder]="'artemisApp.forms.tutorialFreePeriodForm.reasonInput.placeholder' | artemisTranslate"
                     ></textarea>
-                    @if (reasonControl?.invalid && (reasonControl?.dirty || (reasonControl?.touched && reasonControl?.errors?.maxlength))) {
+                    @if (form.controls.reason?.invalid && (form.controls.reason?.dirty || (form.controls.reason?.touched && form.controls.reason?.errors?.maxlength))) {
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.reasonInput.maxLengthValidationError' | artemisTranslate: { max: '256' } }}
                         </div>
