@@ -934,7 +934,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND course.id = :courseId
             WHERE (course.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-
             """)
     boolean isAtLeastInstructorInCourse(@Param("login") String login, @Param("courseId") long courseId);
 
