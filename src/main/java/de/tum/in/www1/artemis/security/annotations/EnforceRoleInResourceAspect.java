@@ -73,8 +73,7 @@ public abstract class EnforceRoleInResourceAspect {
 
     /**
      * Aspect around all methods for which a role in resource has been activated. Will check if the user has the required role in the resource and only execute the underlying
-     * method if
-     * the user has the required role. Will otherwise return forbidden (as response entity)
+     * method if the user has the required role. Will otherwise return forbidden (as response entity)
      *
      * @param joinPoint Proceeding join point of the aspect
      * @return The original return value of the called method, if the authorization checks pass, a forbidden response entity otherwise
