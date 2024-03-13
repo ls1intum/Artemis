@@ -528,7 +528,7 @@ public class CourseService {
      */
     public void enrollUserForCourseOrThrow(User user, Course course) {
         authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
-        userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
+        userService.addUserToGroup(user, course.getStudentGroupName());
         if (course.getLearningPathsEnabled()) {
             learningPathService.generateLearningPathForUser(course, user);
         }
@@ -558,7 +558,7 @@ public class CourseService {
         Role courseGroupRole = Role.fromString(courseGroup);
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
-            var optionalStudent = userService.findUserAndAddToCourse(studentDto.registrationNumber(), studentDto.login(), studentDto.email(), courseGroupName, courseGroupRole);
+            var optionalStudent = userService.findUserAndAddToCourse(studentDto.registrationNumber(), studentDto.login(), studentDto.email(), courseGroupName);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
             }
@@ -919,8 +919,8 @@ public class CourseService {
         return (searchResult);
     }
 
-    public void addUserToGroup(User user, String group, Role role) {
-        userService.addUserToGroup(user, group, role);
+    public void addUserToGroup(User user, String group) {
+        userService.addUserToGroup(user, group);
     }
 
     public void removeUserFromGroup(User user, String group) {
