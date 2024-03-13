@@ -48,11 +48,11 @@ public abstract class EnforceRoleInResourceAspect {
     protected abstract void authorizationCheck(Role role, long resourceId);
 
     private static <T extends Annotation> Role getRole(T annotation) {
-        return getValue(annotation, "value", Role.class).orElseThrow();
+        return getValue(annotation, "value", Role.class).orElseThrow(() -> new IllegalStateException("Role value is missing in the annotation."));
     }
 
     private static <T extends Annotation> String getResourceIdFieldName(T annotation) {
-        return getValue(annotation, "resourceIdFieldName", String.class).orElseThrow();
+        return getValue(annotation, "resourceIdFieldName", String.class).orElseThrow(() -> new IllegalStateException("Resource ID field name is missing in the annotation."));
     }
 
     private <T extends Annotation> String getResourceIdFieldName(T genericAnnotation, Role role, ProceedingJoinPoint joinPoint) {
@@ -85,8 +85,8 @@ public abstract class EnforceRoleInResourceAspect {
         final var genericAnnotation = getAnnotation(genericAnnotationClass, joinPoint).orElseThrow();
         final var role = getRole(genericAnnotation);
         final var resourceIdFieldName = getResourceIdFieldName(genericAnnotation, role, joinPoint);
-        final var resourceId = getIdFromSignature(joinPoint, resourceIdFieldName).orElseThrow(
-                () -> new IllegalArgumentException("Method annotated with @EnforceRoleInResource must have a parameter named " + resourceIdFieldName + " of type long/Long."));
+        final var resourceId = getIdFromSignature(joinPoint, resourceIdFieldName).orElseThrow(() -> new IllegalArgumentException(
+                "Method annotated with an EnforceRoleInResource annotation must have a parameter named " + resourceIdFieldName + " of type long/Long."));
         authorizationCheck(role, resourceId);
         return joinPoint.proceed();
     }
