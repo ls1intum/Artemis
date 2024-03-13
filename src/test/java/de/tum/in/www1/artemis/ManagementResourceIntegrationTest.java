@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -31,7 +34,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "managementresource";
 
@@ -98,10 +101,8 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         doNothing().when(continuousIntegrationService).deleteProject(any());
         doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
 
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
         mockDefaultBranch(programmingExercise1);
         mockDefaultBranch(programmingExercise2);
-        bambooRequestMockProvider.enableMockingOfRequests(true);
         mockTriggerFailedBuild(participation);
         mockGrantReadAccess(participation);
 
