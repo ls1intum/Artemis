@@ -12,6 +12,9 @@ import javax.validation.constraints.NotNull;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 
+/**
+ * Utility class for annotations
+ */
 public final class AnnotationUtils {
 
     private AnnotationUtils() {
