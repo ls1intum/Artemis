@@ -1,11 +1,11 @@
 <div class="modal-header">
-    <h4 class="modal-title" jhiTranslate="artemisApp.exerciseHint.studentDialog.title">Exercise Hints</h4>
+    <h4 class="modal-title" jhiTranslate="artemisApp.exerciseHint.studentDialog.title"></h4>
     <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
 </div>
 <div class="modal-body">
     @if (availableExerciseHints?.length) {
         <div class="mb-3">
-            <h2 jhiTranslate="artemisApp.exerciseHint.studentDialog.availableHintsTitle">New available hints</h2>
+            <h2 jhiTranslate="artemisApp.exerciseHint.studentDialog.availableHintsTitle"></h2>
             <span class="mb-5">{{
                 'artemisApp.exerciseHint.studentDialog.availableHintTaskDescription'
                     | artemisTranslate: { taskName: availableExerciseHints.first()!.programmingExerciseTask!.taskName }
@@ -20,7 +20,7 @@
     }
     @if (activatedExerciseHints?.length) {
         <div class="mb-3">
-            <h2 jhiTranslate="artemisApp.exerciseHint.studentDialog.activatedHintsTitle">Already activated hints</h2>
+            <h2 jhiTranslate="artemisApp.exerciseHint.studentDialog.activatedHintsTitle"></h2>
             @for (hint of activatedExerciseHints; track hint) {
                 <div class="mb-3">
                     <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="true" />

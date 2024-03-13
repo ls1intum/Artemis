@@ -107,7 +107,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
      * @param senderId       userId of the sender of the message(Post)
      * @param conversationId conversationId id of the conversation with participants
      */
-    @Transactional
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             UPDATE ConversationParticipant conversationParticipant
