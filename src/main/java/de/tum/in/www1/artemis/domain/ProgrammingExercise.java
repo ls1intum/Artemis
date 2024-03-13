@@ -777,8 +777,8 @@ public class ProgrammingExercise extends Exercise {
 
         // Check if read-only mode is enabled correctly
         if (isAllowOnlineEditorReadOnlyMode() && (!Boolean.TRUE.equals(isAllowOnlineEditor()) || !Boolean.TRUE.equals(isAllowOfflineIde()))) {
-            throw new BadRequestAlertException("You need to allow both the online editor and the offline IDE to enable the read-only mode", "Exercise",
-                    "noParticipationModeAllowed");
+            throw new BadRequestAlertException("Read-only mode can only be enabled if both the online editor and the offline IDE are allowed", "Exercise",
+                    "readOnlyModeMisconfiguration");
         }
 
         // Check if Xcode has no online code editor enabled
