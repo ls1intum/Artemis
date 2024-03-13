@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -12,6 +11,7 @@ import java.util.Optional;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTrigger
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseImportService {
 
@@ -277,7 +278,7 @@ public class ProgrammingExerciseImportService {
 
         if (newExercise.isExamExercise()) {
             // Disable feedback suggestions on exam exercises (currently not supported)
-            newExercise.setFeedbackSuggestionsEnabled(false);
+            newExercise.setFeedbackSuggestionModule(null);
         }
 
         final var importedProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);

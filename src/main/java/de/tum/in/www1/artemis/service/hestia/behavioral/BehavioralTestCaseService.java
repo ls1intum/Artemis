@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.service.hestia.behavioral;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -21,6 +24,7 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.*;
 /**
  * Service for handling Solution Entries of behavioral Test Cases.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class BehavioralTestCaseService {
 
@@ -76,7 +80,7 @@ public class BehavioralTestCaseService {
             throw new BehavioralSolutionEntryGenerationException("Git-Diff Report has not been generated");
         }
 
-        var coverageReport = testwiseCoverageService.getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(programmingExercise).orElse(null);
+        var coverageReport = testwiseCoverageService.getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(programmingExercise.getId()).orElse(null);
         if (coverageReport == null) {
             throw new BehavioralSolutionEntryGenerationException("Testwise coverage report has not been generated");
         }

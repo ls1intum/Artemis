@@ -9,25 +9,15 @@
     }
 }
 <div class="btn-group">
-    <div
-        class="btn"
-        [ngClass]="{ 'btn-success selected': !isChatSettingsSwitchDisabled && enabled, 'btn-default': isChatSettingsSwitchDisabled || !enabled }"
-        [class.disabled]="isChatSettingsSwitchDisabled"
-        (click)="onEnable()"
-    >
+    <div class="btn" [ngClass]="{ 'btn-success selected': enabled, 'btn-default': !enabled }" [class.disabled]="isSettingsSwitchDisabled" (click)="onEnable()">
         {{ 'artemisApp.iris.settings.subSettings.enabled.on' | artemisTranslate }}
     </div>
-    <div
-        class="btn"
-        [ngClass]="{ 'btn-danger selected': isChatSettingsSwitchDisabled || !enabled, 'btn-default': !isChatSettingsSwitchDisabled && enabled }"
-        [class.disabled]="isChatSettingsSwitchDisabled"
-        (click)="onDisable()"
-    >
+    <div class="btn" [ngClass]="{ 'btn-danger selected': !enabled, 'btn-default': enabled }" [class.disabled]="isSettingsSwitchDisabled" (click)="onDisable()">
         {{ 'artemisApp.iris.settings.subSettings.enabled.off' | artemisTranslate }}
     </div>
 </div>
-<h4 class="form-label mt-3" jhiTranslate="artemisApp.iris.settings.subSettings.models.title">Models</h4>
-<span><span class="fw-bold fs-5" jhiTranslate="artemisApp.iris.settings.subSettings.models.allowedModels.title">Allowed Models</span>: </span>
+<h4 class="form-label mt-3" jhiTranslate="artemisApp.iris.settings.subSettings.models.title"></h4>
+<span><span class="fw-bold fs-5" jhiTranslate="artemisApp.iris.settings.subSettings.models.allowedModels.title"></span>: </span>
 @if (parentSubSettings) {
     <div class="form-check form-switch">
         <input
@@ -42,9 +32,7 @@
             class="form-check-label"
             for="inheritAllowedModelsSwitch{{ subSettings?.type ?? '' }}"
             jhiTranslate="artemisApp.iris.settings.subSettings.models.allowedModels.inheritSwitch"
-        >
-            Inherit
-        </label>
+        ></label>
     </div>
 }
 <div class="form-group">
@@ -64,7 +52,7 @@
         </div>
     }
 </div>
-<h5 class="mt-3"><span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.models.preferredModel.title">Preferred Model</span>:</h5>
+<h5 class="mt-3"><span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.models.preferredModel.title"></span>:</h5>
 <div class="d-flex align-items-center">
     <div ngbDropdown class="d-inline-block">
         <button class="btn btn-outline-primary w-100" id="dropdownBasic1" ngbDropdownToggle>

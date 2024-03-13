@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.interpretInTimeZone;
 
 import java.net.URI;
@@ -19,6 +20,7 @@ import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,8 +38,9 @@ import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.SessionOverlapsWithSessionException;
 
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class TutorialGroupSessionResource {
 
     private static final String ENTITY_NAME = "tutorialGroupSession";
@@ -79,7 +82,7 @@ public class TutorialGroupSessionResource {
      * @param sessionId       the id of the session to retrieve
      * @return ResponseEntity with status 200 (OK) and with body the tutorial group session
      */
-    @GetMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
+    @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> getOneOfTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
@@ -102,7 +105,7 @@ public class TutorialGroupSessionResource {
      * @param tutorialGroupSessionDTO DTO containing the updated tutorial group session
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group session
      */
-    @PutMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
+    @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
@@ -164,7 +167,7 @@ public class TutorialGroupSessionResource {
      * @param attendanceCount the new attendance count, can be null
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group session
      */
-    @PatchMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/attendance-count")
+    @PatchMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/attendance-count")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> updateAttendanceCount(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
@@ -186,7 +189,7 @@ public class TutorialGroupSessionResource {
      * @param sessionId       the id of the session to delete
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
-    @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
+    @DeleteMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> deleteSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
@@ -206,7 +209,7 @@ public class TutorialGroupSessionResource {
      * @param tutorialGroupSessionDTO DTO containing the new tutorial group session
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group session
      */
-    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
@@ -255,7 +258,7 @@ public class TutorialGroupSessionResource {
      * @param tutorialGroupStatusDTO DTO containing the explanation for the cancellation
      * @return ResponseEntity with status 200 (OK) and in the body the cancelled tutorial group session
      */
-    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> cancel(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
@@ -283,7 +286,7 @@ public class TutorialGroupSessionResource {
      * @param sessionId       the id of the session to activate
      * @return ResponseEntity with status 200 (OK) and in the body the activated tutorial group session
      */
-    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> activate(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) throws URISyntaxException {

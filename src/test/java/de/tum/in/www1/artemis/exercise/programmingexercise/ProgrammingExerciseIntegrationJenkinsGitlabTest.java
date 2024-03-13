@@ -230,7 +230,7 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults) throws Exception {
-        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(withSubmissionResults);
+        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(withSubmissionResults, false);
     }
 
     @Test
@@ -922,6 +922,12 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarism() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarism();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCheckPlagiarismForTeamExercise() throws Exception {
+        programmingExerciseIntegrationTestService.testCheckPlagiarismForTeamExercise();
     }
 
     @Test

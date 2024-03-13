@@ -1,10 +1,11 @@
 <section class="mb-5">
-    <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle">
-        Difficulty
-    </h3>
-    <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepMessage">Set difficulty.</p>
+    <h3
+        jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle"
+        id="artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle"
+    ></h3>
+    <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepMessage"></p>
     <div class="form-group">
-        <label class="label-narrow" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
+        <label class="label-narrow" jhiTranslate="artemisApp.exercise.difficulty"></label>
         <div>
             <jhi-difficulty-picker [exercise]="programmingExercise" />
         </div>
@@ -24,7 +25,7 @@
                     (change)="disableReadOnlyModeIfConditionsNotMet()"
                     checked
                 />
-                <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title">Allow Offline IDE</span>
+                <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title"></span>
                 @if (!programmingExerciseCreationConfig.validIdeSelection()) {
                     <fa-icon
                         [icon]="faQuestionCircle"
@@ -47,7 +48,7 @@
                         (change)="disableReadOnlyModeIfConditionsNotMet()"
                         checked
                     />
-                    <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title">Allow Online Editor</span>
+                    <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title"></span>
                     @if (!programmingExerciseCreationConfig.validIdeSelection()) {
                         <fa-icon
                             [icon]="faQuestionCircle"
@@ -85,7 +86,7 @@
                         [(ngModel)]="programmingExercise.publishBuildPlanUrl"
                         checked
                     />
-                    <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>
+                    <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl"></span>
                 </label>
             </div>
         }

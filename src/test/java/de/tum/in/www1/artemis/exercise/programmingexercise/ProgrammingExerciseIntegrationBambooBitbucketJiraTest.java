@@ -184,7 +184,21 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults) throws Exception {
-        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(withSubmissionResults);
+        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(withSubmissionResults, false);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndResults(boolean withGradingCriteria) throws Exception {
+        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(true, withGradingCriteria);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesWithoutResults(boolean withGradingCriteria) throws Exception {
+        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(false, withGradingCriteria);
     }
 
     @Test
@@ -808,6 +822,12 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarism() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarism();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCheckPlagiarismForTeamExercise() throws Exception {
+        programmingExerciseIntegrationTestService.testCheckPlagiarismForTeamExercise();
     }
 
     @Test

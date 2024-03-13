@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,18 +18,11 @@ import de.tum.in.www1.artemis.domain.competency.RelationType;
 /**
  * Spring Data JPA repository for the Competency Relation entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface CompetencyRelationRepository extends JpaRepository<CompetencyRelation, Long> {
 
-    @Query("""
-            SELECT relation
-            FROM CompetencyRelation relation
-            WHERE relation.headCompetency.id = :competencyId
-                OR relation.tailCompetency.id = :competencyId
-            """)
-    Set<CompetencyRelation> findAllByCompetencyId(@Param("competencyId") long competencyId);
-
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     @Query("""
             DELETE FROM CompetencyRelation relation
@@ -101,4 +97,6 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
             SELECT * FROM transitive_closure
             """, nativeQuery = true)
     Set<Long> getMatchingCompetenciesByCompetencyId(@Param("competencyId") long competencyId);
+
+    Set<CompetencyRelation> findAllByHeadCompetencyIdInAndTailCompetencyIdIn(Set<Long> headCompetencyIds, Set<Long> tailCompetencyIds);
 }

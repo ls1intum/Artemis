@@ -78,6 +78,8 @@ public class LocalVCServletService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
+    private final LocalVCService localVCService;
+
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
@@ -97,7 +99,7 @@ public class LocalVCServletService {
             ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService) {
+            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService, LocalVCService localVCService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -109,6 +111,7 @@ public class LocalVCServletService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
+        this.localVCService = localVCService;
     }
 
     /**
@@ -120,29 +123,33 @@ public class LocalVCServletService {
      * @throws RepositoryNotFoundException if the repository could not be found.
      */
     public Repository resolveRepository(String repositoryPath) throws RepositoryNotFoundException {
+
+        long timeNanoStart = System.nanoTime();
         // Find the local repository depending on the name.
         Path repositoryDir = Paths.get(localVCBasePath, repositoryPath);
 
-        log.debug("Path to resolve repository from: {}", repositoryDir);
+        log.info("Path to resolve repository from: {}", repositoryDir);
         if (!Files.exists(repositoryDir)) {
             log.info("Could not find local repository with name {}", repositoryPath);
             throw new RepositoryNotFoundException(repositoryPath);
         }
 
         if (repositories.containsKey(repositoryPath)) {
-            log.debug("Retrieving cached local repository {}", repositoryPath);
+            log.info("Retrieving cached local repository {}", repositoryPath);
             Repository repository = repositories.get(repositoryPath);
             repository.incrementOpen();
+            log.info("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
             return repository;
         }
         else {
-            log.debug("Opening local repository {}", repositoryPath);
+            log.info("Opening local repository {}", repositoryPath);
             try (Repository repository = FileRepositoryBuilder.create(repositoryDir.toFile())) {
                 // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
                 repository.getConfig().setBoolean("http", null, "receivepack", true);
 
                 this.repositories.put(repositoryPath, repository);
                 repository.incrementOpen();
+                log.info("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
                 return repository;
             }
             catch (IOException e) {
@@ -252,7 +259,7 @@ public class LocalVCServletService {
                 repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryActionType == RepositoryActionType.WRITE, exercise, user, repositoryTypeOrUserName);
             }
             catch (AccessForbiddenException e) {
-                throw new LocalVCAuthException(e);
+                throw new LocalVCForbiddenException(e);
             }
             return;
         }
@@ -501,5 +508,17 @@ public class LocalVCServletService {
 
         var author = revCommit.getAuthorIdent();
         return new Commit(commitHash, author.getName(), revCommit.getFullMessage(), author.getEmailAddress(), branch);
+    }
+
+    /**
+     * Determine the default branch of the given repository.
+     *
+     * @param repository the repository for which the default branch should be determined.
+     * @return the name of the default branch.
+     */
+    public String getDefaultBranchOfRepository(Repository repository) {
+        Path repositoryFolderPath = repository.getDirectory().toPath();
+        LocalVCRepositoryUri localVCRepositoryUri = getLocalVCRepositoryUri(repositoryFolderPath);
+        return localVCService.getDefaultBranchOfRepository(localVCRepositoryUri);
     }
 }

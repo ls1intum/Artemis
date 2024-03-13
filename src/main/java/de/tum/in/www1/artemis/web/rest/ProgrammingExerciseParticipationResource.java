@@ -1,12 +1,16 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
@@ -34,8 +38,9 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ProgrammingExerciseParticipationResource {
 
     private static final String ENTITY_NAME = "programmingExerciseParticipation";
@@ -79,13 +84,14 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId for which to retrieve the student participation with latest result and feedbacks.
      * @return the ResponseEntity with status 200 (OK) and the participation with its latest result in the body.
      */
-    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
+    @GetMapping("programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository
                 .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        hasAccessToParticipationElseThrow(participation);
 
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
@@ -103,7 +109,8 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithAllResultsForStudentParticipation(@PathVariable Long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdWithAllResultsAndRelatedSubmissions(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        hasAccessToParticipationElseThrow(participation);
 
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
@@ -124,7 +131,6 @@ public class ProgrammingExerciseParticipationResource {
             @RequestParam(defaultValue = "false") boolean withSubmission) {
         var participation = participationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
         result.ifPresent(value -> resultService.filterSensitiveInformationIfNecessary(participation, value));
 
@@ -153,7 +159,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with the last pending submission if it exists or null with status Ok (200). Will return notFound (404) if there is no participation for the given
      *         id and forbidden (403) if the user is not allowed to access the participation.
      */
-    @GetMapping("/programming-exercise-participations/{participationId}/latest-pending-submission")
+    @GetMapping("programming-exercise-participations/{participationId}/latest-pending-submission")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         Optional<ProgrammingSubmission> submissionOpt;
@@ -175,7 +181,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a
      *         pending submission exists or null if not.
      */
-    @GetMapping("/programming-exercises/{exerciseId}/latest-pending-submissions")
+    @GetMapping("programming-exercises/{exerciseId}/latest-pending-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<Map<Long, Optional<ProgrammingSubmission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
         ProgrammingExercise programmingExercise;
@@ -202,7 +208,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param gradedParticipationId optional parameter that specifies that the repository should be set to the graded participation instead of the exercise template
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("/programming-exercise-participations/{participationId}/reset-repository")
+    @PutMapping("programming-exercise-participations/{participationId}/reset-repository")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> resetRepository(@PathVariable Long participationId, @RequestParam(required = false) Long gradedParticipationId)
             throws GitAPIException, IOException {
@@ -297,6 +303,24 @@ public class ProgrammingExerciseParticipationResource {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
+    }
+
+    /**
+     * Checks if the user has access to the participation.
+     * If the exercise has not started yet and the user is a student, access is denied.
+     *
+     * @param participation the participation to check
+     */
+    private void hasAccessToParticipationElseThrow(ProgrammingExerciseStudentParticipation participation) {
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        ZonedDateTime exerciseStartDate = participation.getExercise().getParticipationStartDate();
+        if (exerciseStartDate != null) {
+            boolean isStudent = authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null);
+            boolean exerciseNotStarted = exerciseStartDate.isAfter(ZonedDateTime.now());
+            if (isStudent && exerciseNotStarted) {
+                throw new AccessForbiddenException("Participation not yet started");
+            }
+        }
     }
 
 }
