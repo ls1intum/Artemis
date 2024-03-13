@@ -248,7 +248,9 @@ public class SharedQueueProcessingService {
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
 
-        }).exceptionally(ex -> {
+        });
+
+        futureResult.exceptionally(ex -> {
             ZonedDateTime completionDate = ZonedDateTime.now();
 
             LocalCIBuildJobQueueItem job;
