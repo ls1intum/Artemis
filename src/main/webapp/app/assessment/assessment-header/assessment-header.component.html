@@ -1,22 +1,17 @@
 <h3 class="top-container flex-wrap flex-lg-nowrap">
     <!--back button only used in assessment dashboard-->
     <div class="row-container me-2">
-        @if (!isTestRun) {
-            <span jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
-        }
         @if (isTestRun) {
-            <span jhiTranslate="artemisApp.assessment.testRunAssessment">Test Run Assessment</span>
+            <span jhiTranslate="artemisApp.assessment.testRunAssessment"></span>
+        } @else {
+            <span jhiTranslate="artemisApp.assessment.assessment"></span>
         }
         @if (isIllegalSubmission) {
-            <span class="badge bg-danger ms-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission">
-                Warning: You are viewing an illegal submission.
-            </span>
+            <span class="badge bg-danger ms-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"></span>
         }
     </div>
     @if (hasAssessmentDueDatePassed && !result?.completionDate) {
-        <ngb-alert [style.fontSize]="'65%'" [type]="'warning'" (close)="hasAssessmentDueDatePassed = false" jhiTranslate="artemisApp.assessment.assessmentDueDateIsOver">
-            Assessment Due Date is over, the assessment will be published immediately after submitting
-        </ngb-alert>
+        <ngb-alert [style.fontSize]="'65%'" [type]="'warning'" (close)="hasAssessmentDueDatePassed = false" jhiTranslate="artemisApp.assessment.assessmentDueDateIsOver" />
     }
     @if (!isLoading) {
         <div class="row-container flex-wrap flex-lg-nowrap">
@@ -27,9 +22,7 @@
                     style="font-size: 65%"
                     jhiTranslate="artemisApp.assessment.assessmentLocked"
                     [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
-                >
-                    Assessment locked by: otherUser
-                </span>
+                ></span>
             }
             @if (
                 isAssessor &&
@@ -40,9 +33,7 @@
                 !complaintHandled &&
                 exercise.assessmentType !== AssessmentType.AUTOMATIC
             ) {
-                <span id="moreFeedbackRequest" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.moreFeedbackRequest">
-                    You have to respond to the feedback request.
-                </span>
+                <span id="moreFeedbackRequest" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.moreFeedbackRequest"></span>
             }
             @if (
                 isAssessor &&
@@ -54,12 +45,10 @@
                 !complaintHandled &&
                 !exercise.teamMode
             ) {
-                <span id="automaticAssessmentFeedbackRequest" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.automaticAssessmentFeedbackRequest">
-                    You may respond to the feedback request.
-                </span>
+                <span id="automaticAssessmentFeedbackRequest" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.automaticAssessmentFeedbackRequest"></span>
             }
             @if (isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintType === ComplaintType.COMPLAINT && !complaintHandled && exercise.teamMode) {
-                <span id="teamComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.teamComplaint"> You have to respond to the complaint. </span>
+                <span id="teamComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.teamComplaint"></span>
             }
             @if (
                 isAssessor &&
@@ -71,9 +60,7 @@
                 !complaintHandled &&
                 !exercise.teamMode
             ) {
-                <span id="automaticAssessmentComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.automaticAssessmentComplaint">
-                    You may respond to the complaint.
-                </span>
+                <span id="automaticAssessmentComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.automaticAssessmentComplaint"></span>
             }
             @if (
                 isAssessor &&
@@ -85,19 +72,13 @@
                 !complaintHandled &&
                 !exercise.teamMode
             ) {
-                <span id="assessmentReadOnlyUnhandledComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint">
-                    There is a complaint for this assessment. Another tutor must respond.
-                </span>
+                <span id="assessmentReadOnlyUnhandledComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint"></span>
             }
             @if (isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintHandled && !exercise.teamMode) {
-                <span id="assessmentReadOnlyHandled" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentReadOnlyHandledComplaint">
-                    The complaint about your assessment has been resolved.
-                </span>
+                <span id="assessmentReadOnlyHandled" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentReadOnlyHandledComplaint"></span>
             }
             @if (isAssessor && (!hasComplaint || exercise?.isAtLeastInstructor)) {
-                <span id="assessmentLockedCurrentUser" class="text-danger m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser">
-                    You have the lock for this assessment
-                </span>
+                <span id="assessmentLockedCurrentUser" class="text-danger m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"></span>
             }
             <!-- Highlight the difference between first and second correction -->
             @if (!isProgrammingExercise && result && correctionRound > 0) {
@@ -106,15 +87,13 @@
                         <span
                             ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOn' | artemisTranslate }}"
                             jhiTranslate="artemisApp.assessment.diffView.differenceActivate"
-                            >Activate Diff-View</span
-                        >
+                        ></span>
                     }
                     @if (highlightDifferences) {
                         <span
                             ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOff' | artemisTranslate }}"
                             jhiTranslate="artemisApp.assessment.diffView.differenceDeactivate"
-                            >Deactivate Diff-View</span
-                        >
+                        ></span>
                     }
                 </button>
             }
@@ -131,7 +110,7 @@
                             <fa-icon [icon]="faSpinner" [spin]="true" />
                         }
                         <fa-icon [icon]="faSave" />
-                        <span jhiTranslate="entity.action.save">Save</span>
+                        <span jhiTranslate="entity.action.save"></span>
                     </button>
                     <button
                         id="submit"
@@ -143,7 +122,7 @@
                         @if (submitBusy) {
                             <fa-icon [icon]="faSpinner" [spin]="true" />
                         }
-                        <span jhiTranslate="entity.action.submit">Submit</span>
+                        <span jhiTranslate="entity.action.submit"></span>
                     </button>
                     @if (!isTestRun) {
                         <button
@@ -154,7 +133,7 @@
                             @if (cancelBusy) {
                                 <fa-icon [icon]="faSpinner" [spin]="true" />
                             }
-                            <span jhiTranslate="entity.action.cancel">Cancel</span>
+                            <span jhiTranslate="entity.action.cancel"></span>
                         </button>
                     }
                 }
@@ -168,7 +147,7 @@
                         @if (submitBusy) {
                             <fa-icon [icon]="faSpinner" [spin]="true" />
                         }
-                        <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
+                        <span jhiTranslate="artemisApp.assessment.button.overrideAssessment"></span>
                     </button>
                 }
                 @if (result?.completionDate && exercise?.isAtLeastInstructor && (exercise!.type === ExerciseType.MODELING || exercise!.type === ExerciseType.TEXT)) {
@@ -176,7 +155,7 @@
                         @if (submitBusy) {
                             <fa-icon [icon]="faSpinner" [spin]="true" />
                         }
-                        <span jhiTranslate="artemisApp.assessment.button.useAsExampleSubmission">Use as Example Submission</span>
+                        <span jhiTranslate="artemisApp.assessment.button.useAsExampleSubmission"></span>
                     </button>
                 }
                 <ng-template #nextSubmissionShortcut>
@@ -193,11 +172,11 @@
                         @if (nextSubmissionBusy) {
                             <fa-icon [icon]="faSpinner" [spin]="true" />
                         }
-                        <span jhiTranslate="artemisApp.assessment.button.nextSubmission">Next Submission</span>
+                        <span jhiTranslate="artemisApp.assessment.button.nextSubmission"></span>
                     </button>
                 }
                 <a [routerLink]="exerciseDashboardLink" class="btn m-1 btn-info">
-                    <span jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                    <span jhiTranslate="entity.action.exerciseDashboard"></span>
                 </a>
             </div>
         </div>

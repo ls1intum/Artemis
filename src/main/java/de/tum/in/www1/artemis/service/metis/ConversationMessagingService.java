@@ -103,8 +103,10 @@ public class ConversationMessagingService extends PostingService {
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(newMessage.getConversation().getId(), author, Optional.empty())
-                .orElse(conversationRepository.findWithParticipantsById(newMessage.getConversation().getId()).orElseThrow());
+        var conversationId = newMessage.getConversation().getId();
+
+        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
+                .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
         log.debug("      createMessage:conversationService.isMemberOrCreateForCourseWideElseThrow DONE");
 
         var course = preCheckUserAndCourseForMessaging(author, courseId);
