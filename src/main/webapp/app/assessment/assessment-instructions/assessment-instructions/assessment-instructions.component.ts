@@ -18,11 +18,10 @@ export class AssessmentInstructionsComponent {
     exercise: Exercise;
     programmingExercise?: ProgrammingExercise;
     problemStatement: SafeHtml;
-    gradingInstructions: SafeHtml;
+    gradingInstructions?: SafeHtml;
     sampleSolutionExplanation?: SafeHtml;
     sampleSolutionModel?: UMLModel;
     sampleSolutionDiagramType?: UMLDiagramType;
-    criteria: GradingCriterion[];
 
     @Input() isAssessmentTraining = false;
     @Input() showAssessmentInstructions = true;
@@ -30,6 +29,7 @@ export class AssessmentInstructionsComponent {
     @Input() readOnly: boolean;
     // For programming exercises we hand over the participation or use the template participation
     @Input() programmingParticipation?: ProgrammingExerciseStudentParticipation;
+    @Input() gradingCriteria?: GradingCriterion[];
 
     readonly ExerciseType = ExerciseType;
 
@@ -42,9 +42,10 @@ export class AssessmentInstructionsComponent {
     @Input('exercise') set exerciseInput(exercise: Exercise) {
         this.exercise = exercise;
         this.problemStatement = this.markdownService.safeHtmlForMarkdown(exercise.problemStatement);
-        this.gradingInstructions = this.markdownService.safeHtmlForMarkdown(exercise.gradingInstructions);
-        // make sure the array is initialized
-        this.criteria = exercise.gradingCriteria || [];
+        if (exercise.gradingInstructions) {
+            this.gradingInstructions = this.markdownService.safeHtmlForMarkdown(exercise.gradingInstructions);
+        }
+        this.gradingCriteria = exercise.gradingCriteria;
 
         let sampleSolutionMarkdown: string | undefined;
         switch (exercise.type) {
