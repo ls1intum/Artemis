@@ -45,11 +45,11 @@
             }
             <div class="button-footer">
                 <button class="btn btn-danger" type="submit" [disabled]="resetForm.invalid" (click)="resetRepository()">
-                    <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToTemplate">Reset</span>
+                    <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToTemplate"></span>
                 </button>
                 @if (gradedParticipation && practiceParticipation) {
                     <button class="btn btn-danger ms-2" type="submit" [disabled]="resetForm.invalid" (click)="resetRepository(gradedParticipation?.id)">
-                        <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToGradedParticipation">Reset</span>
+                        <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToGradedParticipation"></span>
                     </button>
                 }
             </div>

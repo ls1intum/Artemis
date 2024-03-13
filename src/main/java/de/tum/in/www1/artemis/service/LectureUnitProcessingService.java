@@ -10,7 +10,6 @@ import java.util.*;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -215,7 +214,8 @@ public class LectureUnitProcessingService {
      */
     public String saveTempFileForProcessing(long lectureId, MultipartFile file, int minutesUntilDeletion) throws IOException {
         String prefix = "Temp_" + lectureId + "_";
-        Path filePath = FilePathService.getTempFilePath().resolve(fileService.generateFilename(prefix, FilenameUtils.getExtension(file.getOriginalFilename())));
+        String sanitisedFilename = fileService.checkAndSanitizeFilename(file.getOriginalFilename());
+        Path filePath = FilePathService.getTempFilePath().resolve(fileService.generateFilename(prefix, sanitisedFilename, false));
         FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
         fileService.schedulePathForDeletion(filePath, minutesUntilDeletion);
         return filePath.getFileName().toString().substring(prefix.length());
