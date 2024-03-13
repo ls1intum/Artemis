@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.connectors;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
@@ -20,7 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -37,7 +39,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.aeolus.WindfileMetadata;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
-class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private AeolusRequestMockProvider aeolusRequestMockProvider;
