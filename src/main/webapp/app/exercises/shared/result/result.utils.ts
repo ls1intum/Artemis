@@ -110,6 +110,7 @@ export const evaluateTemplateStatus = (
     isBuilding: boolean,
     missingResultInfo = MissingResultInformation.NONE,
 ): ResultTemplateStatus => {
+
     // Fallback if participation is not set
     if (!participation || !exercise) {
         if (!result) {
@@ -168,7 +169,7 @@ export const evaluateTemplateStatus = (
     if (isProgrammingOrQuiz(participation)) {
         if (isBuilding) {
             return ResultTemplateStatus.IS_BUILDING;
-        } else if (initializedResultWithScore(result)) {
+        } else if (initializedResultWithScore(result) || result?.testCaseCount == -1) {
             return ResultTemplateStatus.HAS_RESULT;
         } else {
             return ResultTemplateStatus.NO_RESULT;

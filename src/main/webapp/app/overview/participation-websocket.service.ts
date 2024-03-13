@@ -63,6 +63,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param participation
      */
     private notifyParticipationSubscribers = (participation: Participation) => {
+        console.log("Notifying participation subscribers", participation);
         if (!this.participationObservable) {
             this.participationObservable = new BehaviorSubject(participation);
         } else {
@@ -75,6 +76,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param result
      */
     private notifyResultSubscribers = (result: Result) => {
+        console.log("Notifying result subscribers", result);
         const resultObservable = this.resultObservables.get(result.participation!.id!);
         // TODO: We never convert the date strings of the result (e.g. completionDate) to a Dayjs object
         //  this could be an issue in some parts of app when a formatted date is needed.
@@ -90,6 +92,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param result
      */
     private addResultToParticipation = (result: Result) => {
+        console.log("Adding result to participation", result);
         const cachedParticipation = this.cachedParticipations.get(result.participation!.id!);
         if (cachedParticipation) {
             // update the results with the new received one by filtering the old result

@@ -41,6 +41,7 @@
                 "buildFailed": "Build gescheitert",
                 "buildSuccessfulNoTests": "Build erfolgreich, keine Tests ausgeführt",
                 "buildSuccessfulTests": "{{ numberOfTestsPassed }} von {{ numberOfTestsTotal }} bestanden",
+                "feedbackSuccessful": "Feedback Anfrage erfolgreich",
                 "nonProgramming": "{{ relativeScore }}%, {{ points }} Punkte",
                 "programming": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ points }} Punkte",
                 "programmingCodeIssues": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ numberOfIssues }} Issues, {{ points }} Punkte",

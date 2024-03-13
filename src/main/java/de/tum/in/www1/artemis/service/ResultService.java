@@ -400,6 +400,10 @@ public class ResultService {
         return result;
     }
 
+    public void notifyAboutNewResult(Result result) {
+        this.resultWebsocketService.broadcastNewResult(result.getParticipation(), result);
+    }
+
     @NotNull
     private List<Feedback> saveFeedbackWithHibernateWorkaround(@NotNull Result result, List<Feedback> feedbackList) {
         // Avoid hibernate exception

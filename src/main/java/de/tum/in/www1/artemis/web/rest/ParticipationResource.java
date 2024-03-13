@@ -35,20 +35,19 @@ import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseNonGradedFeedbackService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -117,17 +116,11 @@ public class ParticipationResource {
 
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
-    private final GroupNotificationService groupNotificationService;
-
     private final QuizSubmissionService quizSubmissionService;
 
     private final GradingScaleService gradingScaleService;
 
-    private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
-
-    private final FeedbackRepository feedbackRepository;
-
-    private final SubmissionService submissionService;
+    private final ProgrammingExerciseNonGradedFeedbackService programmingExerciseNonGradeFeedbackService;
 
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
@@ -138,8 +131,8 @@ public class ParticipationResource {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService,
-            QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService, Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService,
-            FeedbackRepository feedbackRepository, SubmissionService submissionService) {
+            QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
+            ProgrammingExerciseNonGradedFeedbackService programmingExerciseNonGradedFeedbackService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -163,12 +156,9 @@ public class ParticipationResource {
         this.quizBatchService = quizBatchService;
         this.quizScheduleService = quizScheduleService;
         this.submittedAnswerRepository = submittedAnswerRepository;
-        this.groupNotificationService = groupNotificationService;
         this.quizSubmissionService = quizSubmissionService;
         this.gradingScaleService = gradingScaleService;
-        this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService.orElse(null);
-        this.feedbackRepository = feedbackRepository;
-        this.submissionService = submissionService;
+        this.programmingExerciseNonGradeFeedbackService = programmingExerciseNonGradedFeedbackService;
     }
 
     /**
@@ -335,7 +325,7 @@ public class ParticipationResource {
         checkAccessPermissionOwner(participation, user);
         programmingExercise.validateManualFeedbackSettings();
 
-        var studentParticipation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
+        var studentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
         var result = studentParticipation.findLatestLegalResult();
         if (result == null || result.getScore() < 100) {
             throw new BadRequestAlertException("User has not reached the conditions to submit a feedback request", "participation", "preconditions not met");
@@ -362,55 +352,13 @@ public class ParticipationResource {
         });
         resultRepository.saveAll(participationResults);
 
-        if (this.athenaFeedbackSuggestionsService != null) {
-            log.debug("Using athena to generate feedback request: {}", exerciseId);
-            // athena takes over the control here
-            var submission = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participation.getId()).findLatestSubmission()
-                    .get();
-            log.debug("Submission id: ", submission.getId());
-
-            try {
-                var athenaResponse = this.athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false);
-                var automaticResult = this.submissionService.saveNewEmptyResult(submission);
-
-                var feedbacks = athenaResponse.stream().map(individualFeedbackItem -> {
-                    var feedback = new Feedback();
-                    // todo proper formatting for single line, multilines, no lines etc
-                    feedback.setText(String.format("NonGradedFeedbackSuggestion:File %s at lines %d-%d", individualFeedbackItem.filePath(), individualFeedbackItem.lineStart(),
-                            individualFeedbackItem.lineEnd()));
-                    feedback.setDetailText(individualFeedbackItem.description());
-                    feedback.setHasLongFeedbackText(false);
-                    feedback.setType(FeedbackType.AUTOMATIC);
-                    feedback.setReference(String.format("file:%s_line:%d", individualFeedbackItem.filePath(), individualFeedbackItem.lineStart()));
-                    feedback.setResult(automaticResult);
-                    feedback.setCredits(0.0);
-                    return feedback;
-                }).toList();
-                this.feedbackRepository.saveFeedbacks(feedbacks);
-
-                automaticResult.setFeedbacks(feedbacks);
-                automaticResult.setAssessmentType(AssessmentType.AUTOMATIC);
-                automaticResult.setRated(false);
-                automaticResult.setSuccessful(true);
-                automaticResult.setScore(100.0);
-                this.resultRepository.submitManualAssessment(automaticResult);
-            }
-            catch (NetworkingException e) {
-                // todo what the error key should be
-                throw new BadRequestAlertException("Network error while attempting to get response from Athena", "submission", "already sent");
-            }
-            finally {
-                programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
-                participation.setIndividualDueDate(null);
-                participation = programmingExerciseStudentParticipationRepository.save(participation);
-            }
-        }
-        else {
-            log.debug("tutor is responsible to process feedback request: {}", exerciseId);
-            groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
-        }
+        generateFeedbackSuggestionsAsync(exerciseId, participation, programmingExercise);
 
         return ResponseEntity.ok().body(participation);
+    }
+
+    public void generateFeedbackSuggestionsAsync(Long exerciseId, ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
+        this.programmingExerciseNonGradeFeedbackService.handleNonGradedFeedbackRequest(exerciseId, participation, programmingExercise);
     }
 
     /**
