@@ -92,10 +92,10 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
      * @returns {boolean} - Returns true if the start time/date is before the end time/date, otherwise returns true.
      */
     get isStartBeforeEnd(): boolean {
-        if (this.timeFrame === TimeFrame.PeriodWithinDay && this.endTimeControl && this.startTimeControl) {
-            return this.endTimeControl.value.setTime(0) > this.startTimeControl.value.setTime(0);
+        if (this.timeFrame === TimeFrame.PeriodWithinDay && this.endTimeControl?.value && this.startTimeControl?.value) {
+            return this.endTimeControl.value.setSeconds(0, 0) > this.startTimeControl.value.setSeconds(0, 0);
         } else if (this.timeFrame === TimeFrame.Period && this.endDateControl && this.startDateControl) {
-            return this.endDateControl.value.setSeconds(0, 0) > this.startDateControl.value.setSeconds(0, 0);
+            return this.endDateControl.value.setTime(0) > this.startDateControl.value.setTime(0);
         }
         return true;
     }
