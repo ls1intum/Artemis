@@ -94,8 +94,8 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     get isStartBeforeEnd(): boolean {
         if (this.timeFrame === TimeFrame.PeriodWithinDay && this.endTimeControl?.value && this.startTimeControl?.value) {
             return this.endTimeControl.value.setSeconds(0, 0) > this.startTimeControl.value.setSeconds(0, 0);
-        } else if (this.timeFrame === TimeFrame.Period && this.endDateControl && this.startDateControl) {
-            return this.endDateControl.value.setTime(0) > this.startDateControl.value.setTime(0);
+        } else if (this.timeFrame === TimeFrame.Period && this.endDateControl?.value && this.startDateControl?.value) {
+            return this.endDateControl.value.setHours(0, 0, 0, 0) > this.startDateControl.value.setHours(0, 0, 0, 0);
         }
         return true;
     }
@@ -129,15 +129,23 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
      * @returns {boolean} - Returns true if the form can be submitted, false otherwise
      */
     get isSubmitPossible(): boolean {
-        if (!this.startDateControl?.valid) {
+        if (!this.startDateControl?.value || !this.startDateControl?.valid) {
             return false;
         }
         if (this.timeFrame === TimeFrame.Day) {
             return true;
         } else if (this.timeFrame === TimeFrame.Period) {
-            return !!this.endDateControl?.valid && this.isStartBeforeEnd;
+            return !!this.endDateControl?.value && !!this.endDateControl?.valid && this.isStartBeforeEnd;
         } else if (this.timeFrame === TimeFrame.PeriodWithinDay) {
-            return !!this.startTimeControl?.valid && !!this.endTimeControl?.valid && this.isStartBeforeEnd && !this.isStartTimeInvalid && !this.isEndTimeInvalid;
+            return (
+                !!this.startTimeControl?.value &&
+                !!this.startTimeControl?.valid &&
+                !!this.endTimeControl?.value &&
+                !!this.endTimeControl?.valid &&
+                this.isStartBeforeEnd &&
+                !this.isStartTimeInvalid &&
+                !this.isEndTimeInvalid
+            );
         }
         return false;
     }
