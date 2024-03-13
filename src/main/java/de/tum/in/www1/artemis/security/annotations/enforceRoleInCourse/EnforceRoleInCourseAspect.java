@@ -1,13 +1,7 @@
 package de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.security.annotations.AnnotationUtils.getAnnotation;
-import static de.tum.in.www1.artemis.security.annotations.AnnotationUtils.getIdFromSignature;
 
-import java.util.Optional;
-
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.context.annotation.Profile;
