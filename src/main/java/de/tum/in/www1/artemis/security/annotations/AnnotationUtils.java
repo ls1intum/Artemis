@@ -18,6 +18,7 @@ public final class AnnotationUtils {
      *
      * @param clazz     the annotation class
      * @param joinPoint the join point
+     * @param <T>       the type of the annotation
      * @return the annotation if it is present, empty otherwise
      */
     public static <T extends Annotation> Optional<T> getAnnotation(Class<T> clazz, ProceedingJoinPoint joinPoint) {
