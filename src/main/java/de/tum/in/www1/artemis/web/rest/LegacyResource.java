@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.web.rest.open.PublicResultResource;
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
-@Deprecated(forRemoval = true)
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class LegacyResource {
 
     private final PublicProgrammingSubmissionResource publicProgrammingSubmissionResource;
@@ -44,7 +44,7 @@ public class LegacyResource {
     @PostMapping("programming-submissions/{participationId}")
     @EnforceNothing
     @ManualConfig
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true) // will be removed in 7.0.0
     public ResponseEntity<?> legacyProcessNewProgrammingSubmission(@PathVariable Long participationId, @RequestBody Object requestBody) {
         return publicProgrammingSubmissionResource.processNewProgrammingSubmission(participationId, requestBody);
     }
@@ -61,7 +61,7 @@ public class LegacyResource {
     @PostMapping("programming-exercises/test-cases-changed/{exerciseId}")
     @EnforceNothing
     @ManualConfig
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true) // will be removed in 7.0.0
     public ResponseEntity<Void> legacyTestCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
         return publicProgrammingSubmissionResource.testCaseChanged(exerciseId, requestBody);
     }
@@ -77,7 +77,7 @@ public class LegacyResource {
     @PostMapping("programming-exercises/new-result")
     @EnforceNothing
     @ManualConfig
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true) // will be removed in 7.0.0
     public ResponseEntity<?> legacyProcessNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         return publicResultResource.processNewProgrammingExerciseResult(token, requestBody);
     }

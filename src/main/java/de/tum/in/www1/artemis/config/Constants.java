@@ -339,6 +339,11 @@ public final class Constants {
      */
     public static final String LOCALCI_RESULTS_DIRECTORY = "/results";
 
+    /**
+     * The directory to which repositories temporarely get cloned for the build job execution
+     */
+    public static final String CHECKED_OUT_REPOS_TEMP_DIR = "checked-out-repos";
+
     private Constants() {
     }
 }
