@@ -793,10 +793,9 @@ public class UserTestService {
      * @param origins             of the users
      * @param registrationNumbers of the users
      * @param status              of the users
-     * @param courseIds           which the users are part
      * @return params for request
      */
-    private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String registrationNumbers, String status, String courseIds) {
+    private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String registrationNumbers, String status) {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "1000");
@@ -807,7 +806,6 @@ public class UserTestService {
         params.add("origins", origins);
         params.add("registrationNumbers", registrationNumbers);
         params.add("status", status);
-        params.add("courseIds", courseIds);
         return params;
     }
 
@@ -832,7 +830,7 @@ public class UserTestService {
 
     // Test
     public void testUser() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "", "", "", "-1");
+        final var params = createParamsForPagingRequest("USER", "", "", "");
 
         List<User> result;
 
@@ -849,13 +847,13 @@ public class UserTestService {
             user2.setGroups(Set.of("tumuser"));
             userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).contains(user1).doesNotContain(user2);
+            assertThat(result).contains(user1).contains(user2);
         }
     }
 
     // Test
     public void testUserWithActivatedStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "ACTIVATED", "");
+        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "ACTIVATED");
 
         List<User> result;
 
@@ -877,7 +875,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithDeactivatedStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "DEACTIVATED", "");
+        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "DEACTIVATED");
 
         List<User> result;
 
@@ -900,7 +898,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithInternalStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "INTERNAL", "WITHOUT_REG_NO", "", "");
+        final var params = createParamsForPagingRequest("USER", "INTERNAL", "WITHOUT_REG_NO", "");
 
         List<User> result;
 
@@ -924,7 +922,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithExternalStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "EXTERNAL", "WITHOUT_REG_NO", "", "");
+        final var params = createParamsForPagingRequest("USER", "EXTERNAL", "WITHOUT_REG_NO", "");
 
         List<User> result;
 
@@ -947,7 +945,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithExternalAndInternalStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITHOUT_REG_NO", "", "");
+        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITHOUT_REG_NO", "");
 
         List<User> result;
 
@@ -974,7 +972,7 @@ public class UserTestService {
      * @throws Exception if the user is not the same as the expected user
      */
     public void testUserWithRegistrationNumber() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITH_REG_NO", "", "");
+        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITH_REG_NO", "");
 
         List<User> result;
 
@@ -1001,7 +999,7 @@ public class UserTestService {
      * @throws Exception if the user is not the same as the expected user
      */
     public void testUserWithoutRegistrationNumber() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "", "");
+        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "");
 
         List<User> result;
 
