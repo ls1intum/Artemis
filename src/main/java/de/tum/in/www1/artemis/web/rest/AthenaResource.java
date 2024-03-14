@@ -71,7 +71,6 @@ public class AthenaResource {
     public AthenaResource(CourseRepository courseRepository, TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, AuthorizationCheckService authCheckService,
-            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AuthorizationCheckService authCheckService,
             AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaRepositoryExportService athenaRepositoryExportService,
             AthenaModuleService athenaModuleService) {
         this.courseRepository = courseRepository;
