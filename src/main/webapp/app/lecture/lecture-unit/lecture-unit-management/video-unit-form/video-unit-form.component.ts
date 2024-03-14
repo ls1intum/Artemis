@@ -65,8 +65,8 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
 
     faTimes = faTimes;
 
-    urlValidator = videoSourceUrlValidator;
-    videoUrlValidator = videoSourceTransformUrlValidator;
+    videoSourceUrlValidator = videoSourceUrlValidator;
+    videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
     // Icons
     faArrowLeft = faArrowLeft;
@@ -112,8 +112,8 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
             name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
             description: [undefined as string | undefined, [Validators.maxLength(1000)]],
             releaseDate: [undefined as dayjs.Dayjs | undefined],
-            source: [undefined as string | undefined, [Validators.required, this.urlValidator]],
-            urlHelper: [undefined as string | undefined, this.videoUrlValidator],
+            source: [undefined as string | undefined, [Validators.required, this.videoSourceUrlValidator]],
+            urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
             competencies: [undefined as Competency[] | undefined],
         });
     }
