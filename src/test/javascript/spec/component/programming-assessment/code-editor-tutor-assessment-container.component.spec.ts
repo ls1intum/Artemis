@@ -289,32 +289,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.canOverride).toBeTrue();
     });
 
-    it('should validate assessments after submission is received during component init', async () => {
-        // make assessment valid
-        if (submission) {
-            submission.latestResult!.feedbacks[0]!.detailText = 'text';
-            submission.latestResult!.feedbacks[0]!.credits = 1;
-            submission.latestResult!.feedbacks[0]!.type = FeedbackType.MANUAL_UNREFERENCED;
-        }
-        await comp['onSubmissionReceived']('123', submission);
-
-        expect(comp.assessmentsAreValid).toBeTrue();
-    });
-
-    it('should not invalidate assessment after saving', async () => {
-        jest.spyOn(comp, 'handleSaveOrSubmit').mockImplementation(() => {});
-
-        if (submission) {
-            submission.latestResult!.feedbacks[0].detailText = 'text';
-            submission.latestResult!.feedbacks[0].credits = 1;
-            submission.latestResult!.feedbacks[0].type = FeedbackType.MANUAL_UNREFERENCED;
-        }
-        await comp['onSubmissionReceived']('123', submission);
-
-        comp.save();
-        expect(comp.assessmentsAreValid).toBeTrue();
-    });
-
     it('should show unreferenced feedback suggestions', () => {
         comp.feedbackSuggestions = [{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }];
         expect(comp.unreferencedFeedbackSuggestions).toHaveLength(1);
@@ -662,6 +636,27 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             }
         }),
     );
+
+    it('should validate assessments after submission is received during component init', async () => {
+        // make assessment valid
+        submission.results![0].feedbacks = [
+            {
+                detailText: 'text',
+                credits: 1,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            },
+        ];
+
+        await comp['onSubmissionReceived']('123', submission);
+        expect(comp.assessmentsAreValid).toBeTrue();
+    });
+
+    it('should not invalidate assessment after saving', async () => {
+        jest.spyOn(comp, 'handleSaveOrSubmit').mockImplementation(() => {});
+        await comp['onSubmissionReceived']('123', submission);
+        comp.save();
+        expect(comp.assessmentsAreValid).toBeTrue();
+    });
 
     it('should display error when complaint resolved but assessment invalid', () => {
         let onSuccessCalled = false;
