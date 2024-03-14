@@ -43,10 +43,9 @@ public class BuildLogEntryService {
     @Value("${artemis.continuous-integration.build-log.file-expiry-days:30}")
     private int expiryDays;
 
-    public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository, FileService fileService) {
+    public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.buildLogEntryRepository = buildLogEntryRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.fileService = fileService;
     }
 
     /**
