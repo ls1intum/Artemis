@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.hestia.CoverageFileReport;
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
+import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
@@ -25,7 +26,6 @@ import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.TestwiseCoverageReportEntryRepository;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
