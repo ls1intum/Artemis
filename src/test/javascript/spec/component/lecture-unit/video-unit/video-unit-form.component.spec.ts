@@ -43,8 +43,8 @@ describe('VideoUnitFormComponent', () => {
     });
 
     it('should not submit a form when name is missing', () => {
-        jest.spyOn(videoUnitFormComponent, 'urlValidator').mockReturnValue(null);
-        jest.spyOn(videoUnitFormComponent, 'videoUrlValidator').mockReturnValue(null);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceUrlValidator').mockReturnValue(null);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceTransformUrlValidator').mockReturnValue(null);
         videoUnitFormComponentFixture.detectChanges();
         const exampleDescription = 'lorem ipsum';
         videoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
@@ -67,8 +67,8 @@ describe('VideoUnitFormComponent', () => {
     });
 
     it('should not submit a form when source is missing', () => {
-        jest.spyOn(videoUnitFormComponent, 'urlValidator').mockReturnValue(null);
-        jest.spyOn(videoUnitFormComponent, 'videoUrlValidator').mockReturnValue(null);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceUrlValidator').mockReturnValue(null);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceTransformUrlValidator').mockReturnValue(null);
         videoUnitFormComponentFixture.detectChanges();
         const exampleName = 'test';
         videoUnitFormComponent.nameControl!.setValue(exampleName);
@@ -92,8 +92,8 @@ describe('VideoUnitFormComponent', () => {
     });
 
     it('should submit valid form', () => {
-        jest.spyOn(videoUnitFormComponent, 'urlValidator').mockReturnValue(null);
-        jest.spyOn(videoUnitFormComponent, 'videoUrlValidator').mockReturnValue(null);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceUrlValidator').mockReturnValue(null);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceTransformUrlValidator').mockReturnValue(null);
         videoUnitFormComponentFixture.detectChanges();
         const exampleName = 'test';
         videoUnitFormComponent.nameControl!.setValue(exampleName);
@@ -129,8 +129,8 @@ describe('VideoUnitFormComponent', () => {
 
     it('should correctly transform YouTube URL into embeddable format', () => {
         jest.spyOn(videoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(validYouTubeUrlInEmbeddableFormat);
-        jest.spyOn(videoUnitFormComponent, 'urlValidator').mockReturnValue(null);
-        jest.spyOn(videoUnitFormComponent, 'videoUrlValidator').mockReturnValue(null);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceUrlValidator').mockReturnValue(null);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceTransformUrlValidator').mockReturnValue(null);
 
         videoUnitFormComponentFixture.detectChanges();
 
