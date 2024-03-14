@@ -1,7 +1,7 @@
 @if (course) {
     <div>
         <div class="d-flex flex-wrap align-items-center">
-            <h4 id="course-page-heading" jhiTranslate="artemisApp.examManagement.title">Exams</h4>
+            <h4 id="course-page-heading" jhiTranslate="artemisApp.examManagement.title"></h4>
             <jhi-documentation-button [type]="documentationType" />
             @if (course.isAtLeastInstructor) {
                 <div class="ms-auto text-truncate justify-content-end">
