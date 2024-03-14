@@ -277,35 +277,24 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
     }
 
+    private <T> void assertEqualOrNull(T actual, T expected, String entityName) {
+        if (expected != null) {
+            assertThat(actual).as(entityName + " was set correctly").isEqualTo(expected);
+        }
+        else {
+            assertThat(actual).as(entityName + " not present").isNull();
+        }
+    }
+
     private void assertFileUploadExercise(FileUploadExercise exercise, String filePattern, String exampleSolution) {
-        if (filePattern != null) {
-            assertThat(exercise.getFilePattern()).as("File pattern was set correctly").isEqualTo(filePattern);
-        }
-        else {
-            assertThat(exercise.getFilePattern()).as("File pattern not present").isNull();
-        }
-        if (exampleSolution != null) {
-            assertThat(exercise.getExampleSolution()).as("Sample solution was set correctly").isEqualTo(exampleSolution);
-        }
-        else {
-            assertThat(exercise.getExampleSolution()).as("Sample solution not present").isNull();
-        }
+        assertEqualOrNull(exercise.getFilePattern(), filePattern, "File pattern");
+        assertEqualOrNull(exercise.getExampleSolution(), exampleSolution, "Sample solution");
     }
 
     private void assertModelingExercise(ModelingExercise exercise, DiagramType diagramType, String exampleSolutionModel, String exampleSolutionExplanation) {
         assertThat(exercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(diagramType);
-        if (exampleSolutionModel != null) {
-            assertThat(exercise.getExampleSolutionModel()).as("Sample solution model was set correctly").isEqualTo(exampleSolutionModel);
-        }
-        else {
-            assertThat(exercise.getExampleSolutionModel()).as("Sample solution model not present").isNull();
-        }
-        if (exampleSolutionExplanation != null) {
-            assertThat(exercise.getExampleSolutionExplanation()).as("Sample solution explanation was set correctly").isEqualTo(exampleSolutionExplanation);
-        }
-        else {
-            assertThat(exercise.getExampleSolutionExplanation()).as("Sample solution explanation not present").isNull();
-        }
+        assertEqualOrNull(exercise.getExampleSolutionModel(), exampleSolutionModel, "Sample solution model");
+        assertEqualOrNull(exercise.getExampleSolutionExplanation(), exampleSolutionExplanation, "Sample solution explanation");
     }
 
     private void assertProgrammingExercise(ProgrammingExercise exercise, boolean projectKey, String templateRepositoryUri, String solutionRepositoryUri, String testRepositoryUri,
@@ -316,53 +305,18 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         else {
             assertThat(exercise.getProjectKey()).as("Project key not present").isNull();
         }
-        if (templateRepositoryUri != null) {
-            assertThat(exercise.getTemplateRepositoryUri()).as("Template repository uri was set correctly").isEqualTo(templateRepositoryUri);
-        }
-        else {
-            assertThat(exercise.getTemplateRepositoryUri()).as("Template repository uri not present").isNull();
-        }
-        if (solutionRepositoryUri != null) {
-            assertThat(exercise.getSolutionRepositoryUri()).as("Solution repository uri was set correctly").isEqualTo(solutionRepositoryUri);
-        }
-        else {
-            assertThat(exercise.getSolutionRepositoryUri()).as("Solution repository uri not present").isNull();
-        }
-        if (testRepositoryUri != null) {
-            assertThat(exercise.getTestRepositoryUri()).as("Test repository uri was set correctly").isEqualTo(testRepositoryUri);
-        }
-        else {
-            assertThat(exercise.getTestRepositoryUri()).as("Test repository uri not present").isNull();
-        }
-        if (templateBuildPlanId != null) {
-            assertThat(exercise.getTemplateBuildPlanId()).as("Template build plan was set correctly").isEqualTo(templateBuildPlanId);
-        }
-        else {
-            assertThat(exercise.getTemplateBuildPlanId()).as("Template build plan not present").isNull();
-        }
-        if (solutionBuildPlanId != null) {
-            assertThat(exercise.getSolutionBuildPlanId()).as("Solution build plan was set correctly").isEqualTo(solutionBuildPlanId);
-        }
-        else {
-            assertThat(exercise.getSolutionBuildPlanId()).as("Solution build plan not present").isNull();
-        }
+        assertEqualOrNull(exercise.getTemplateRepositoryUri(), templateRepositoryUri, "Template repository uri");
+        assertEqualOrNull(exercise.getSolutionRepositoryUri(), solutionRepositoryUri, "Solution repository uri");
+        assertEqualOrNull(exercise.getTestRepositoryUri(), testRepositoryUri, "Test repository uri");
+        assertEqualOrNull(exercise.getTemplateBuildPlanId(), templateBuildPlanId, "Template build plan id");
+        assertEqualOrNull(exercise.getSolutionBuildPlanId(), solutionBuildPlanId, "Solution build plan id");
     }
 
     private void assertQuizExercise(QuizExercise exercise, int duration, int allowedNumberOfAttempts, QuizPointStatistic quizPointStatistic, List<QuizQuestion> quizQuestions) {
         assertThat(exercise.getDuration()).as("Duration was set correctly").isEqualTo(duration);
         assertThat(exercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(allowedNumberOfAttempts);
-        if (quizPointStatistic != null) {
-            assertThat(exercise.getQuizPointStatistic()).as("Quiz point statistic was set correctly").isEqualTo(quizPointStatistic);
-        }
-        else {
-            assertThat(exercise.getQuizPointStatistic()).as("Quiz point statistic not present").isNull();
-        }
-        if (quizQuestions != null) {
-            assertThat(exercise.getQuizQuestions()).as("Quiz questions were set correctly").containsExactly(quizQuestions.toArray(new QuizQuestion[0]));
-        }
-        else {
-            assertThat(exercise.getQuizQuestions()).as("Quiz questions not present").isNull();
-        }
+        assertEqualOrNull(exercise.getQuizPointStatistic(), quizPointStatistic, "Quiz point statistic");
+        assertEqualOrNull(exercise.getQuizQuestions(), quizQuestions, "Quiz questions");
     }
 
     @Test
