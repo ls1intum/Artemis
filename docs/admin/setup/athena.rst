@@ -9,7 +9,7 @@ Enable the ``athena`` Spring profile:
 
 ::
 
-   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,core,athena
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,athena
 
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^

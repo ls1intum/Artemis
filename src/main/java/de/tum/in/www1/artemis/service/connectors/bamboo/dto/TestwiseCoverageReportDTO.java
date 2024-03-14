@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.hestia;
+package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class TestwiseCoverageReportDTO implements Serializable {
 
     @JsonProperty("uniformPath")

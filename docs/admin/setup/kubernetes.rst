@@ -275,16 +275,18 @@ e.g. it will look like this:
 Configure Artemis Resources
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 To run Artemis, you need to configure the Artemis' User Management, Version Control and Continuous Integration.
-If you want to configure Artemis with local user management and no programming exercises continue with
-``Configure Local User Management``.
-
-Alternatively, you can run it with Gitlab and Jenkins.
+You can either run it with Jira, Bitbucket, Bamboo or Jenkins, GitLab.
 Make sure to configure the ``src/main/resources/config/application-artemis.yml`` file with the proper configuration
 for User Management, Version Control and Continuous Integration.
 
 You should skip setting the passwords and token since the Docker image that we are going to build is going to include
 those secrets.
 You can refer to chapter ``Add/Edit Secrets`` for setting those values.
+
+If you want to configure Artemis with ``Bitbucket, Jira, Bamboo`` you can set a connection to existing staging or
+production deployments.
+If you want to configure Artemis with local user management and no programming exercises continue with
+``Configure Local User Management``.
 
 Configure Local User Management
 """""""""""""""""""""""""""""""
