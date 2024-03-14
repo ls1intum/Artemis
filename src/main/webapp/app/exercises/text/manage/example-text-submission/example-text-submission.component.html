@@ -108,7 +108,7 @@
     <!--region Left Panel-->
     <ng-container left-header>
         @if (state.ui === UIStates.SUBMISSION) {
-            <span jhiTranslate="artemisApp.exampleSubmission.exampleSubmission">Example submission</span>
+            <span jhiTranslate="artemisApp.exampleSubmission.exampleSubmission"></span>
         }
         @if (state.ui === UIStates.ASSESSMENT) {
             <jhi-score-display [maxPoints]="exercise?.maxPoints || 0" [score]="totalScore" [maxBonusPoints]="exercise?.bonusPoints || 0" />
@@ -138,7 +138,7 @@
     <!--endregion-->
     <!--region Right Panel-->
     <fa-icon right-header [icon]="farListAlt" />&nbsp;
-    <span right-header jhiTranslate="artemisApp.textAssessment.instructions">Instructions</span>
+    <span right-header jhiTranslate="artemisApp.textAssessment.instructions"></span>
     <ng-container right-body>
         @if (state.ui === UIStates.SUBMISSION) {
             <div class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.exampleSubmissionInstruction"></div>

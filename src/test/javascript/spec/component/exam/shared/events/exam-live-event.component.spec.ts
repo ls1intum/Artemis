@@ -80,7 +80,7 @@ describe('ExamLiveEventComponent', () => {
 
         expect(previousTimeElement.textContent).toContain('5min');
         expect(newTimeElement.textContent).toContain('10min');
-        expect(titleElement.textContent).toContain('The working time of the exam has been changed.');
+        expect(titleElement.getAttribute('jhiTranslate')).toBe('artemisApp.exam.events.messages.workingTimeUpdate.titleEveryone');
     });
 
     it('should emit event when acknowledge button is clicked', () => {

@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaModuleService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -116,6 +117,8 @@ public class ProgrammingExerciseResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final Optional<AthenaModuleService> athenaModuleService;
+
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
@@ -125,7 +128,8 @@ public class ProgrammingExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProfileService profileService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, InstanceMessageSendService instanceMessageSendService) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, InstanceMessageSendService instanceMessageSendService,
+            Optional<AthenaModuleService> athenaModuleService) {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.profileService = profileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -150,6 +154,7 @@ public class ProgrammingExerciseResource {
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.channelRepository = channelRepository;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.athenaModuleService = athenaModuleService;
     }
 
     /**
@@ -203,6 +208,10 @@ public class ProgrammingExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExercise, course);
+
+        // Check that only allowed athena modules are used
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME),
+                () -> programmingExercise.setFeedbackSuggestionModule(null));
 
         try {
             // Setup all repositories etc
@@ -274,6 +283,12 @@ public class ProgrammingExerciseResource {
         }
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
+
+        // Check that only allowed Athena modules are used
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
+                () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
+        // Changing Athena module after the due date has passed is not allowed
+        athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
 
         // Ignore changes to the default branch
         updatedProgrammingExercise.setBranch(programmingExerciseBeforeUpdate.getBranch());
@@ -444,20 +459,17 @@ public class ProgrammingExerciseResource {
      *
      * @param exerciseId            the id of the programmingExercise to retrieve
      * @param withSubmissionResults get all submission results
+     * @param withGradingCriteria   also get the grading criteria for the exercise
      * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
      */
     @GetMapping(PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION)
     @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId,
-            @RequestParam(defaultValue = "false") boolean withSubmissionResults) {
+            @RequestParam(defaultValue = "false") boolean withSubmissionResults, @RequestParam(defaultValue = "false") boolean withGradingCriteria) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
-        ProgrammingExercise programmingExercise;
-        if (withSubmissionResults) {
-            programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesElseThrow(exerciseId);
-        }
-        else {
-            programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
-        }
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationSubmissionsAndAuxiliaryRepositoriesElseThrow(exerciseId,
+                withSubmissionResults, withGradingCriteria);
+
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
         programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);

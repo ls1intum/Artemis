@@ -4,13 +4,13 @@
             @if (loadingState === LOADING_STATE.INITIALIZING) {
                 <span>
                     <fa-icon [icon]="faCircleNotch" [spin]="true" />
-                    <span jhiTranslate="artemisApp.editor.fetchingParticipation"> Your participation is being loaded... </span>
+                    <span jhiTranslate="artemisApp.editor.fetchingParticipation"></span>
                 </span>
             }
             @if (loadingState === LOADING_STATE.FETCHING_FAILED) {
                 <span>
                     <fa-icon [icon]="faTimesCircle" class="text-danger" />
-                    <span jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</span>
+                    <span jhiTranslate="artemisApp.editor.errors.participationNotFound"></span>
                 </span>
             }
         </div>
@@ -46,7 +46,7 @@
                         ngbDropdownItem
                         [style.background-color]="selectedRepository === REPOSITORY.TEMPLATE ? '#3e8acc' : 'transparent'"
                     >
-                        <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo">Template Repository</span>
+                        <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo"></span>
                     </button>
                     <button
                         [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUri"
@@ -55,7 +55,7 @@
                         [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? '#3e8acc' : 'transparent'"
                         jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"
                     >
-                        <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo">Solution Repository 2</span>
+                        <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"></span>
                     </button>
                     <button
                         [disabled]="!exercise"
@@ -63,9 +63,7 @@
                         ngbDropdownItem
                         [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
                         jhiTranslate="artemisApp.editor.repoSelect.testRepo"
-                    >
-                        Test Repository
-                    </button>
+                    ></button>
                 </div>
             </div>
             @if (selectedRepository !== REPOSITORY.TEST) {
