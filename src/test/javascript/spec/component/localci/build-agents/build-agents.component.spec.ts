@@ -184,17 +184,4 @@ describe('BuildAgentsComponent', () => {
 
         expect(mockWebsocketService.unsubscribe).toHaveBeenCalledWith('/topic/admin/build-agents');
     });
-
-    it('should get build job IDs', () => {
-        component.setBuildAgentBuildJobIds(mockBuildAgents);
-
-        expect(mockBuildAgents[0].runningBuildJobsIds).toBe('2, 4');
-    });
-
-    it('should return an empty string for no build jobs', () => {
-        mockBuildAgents[0].runningBuildJobs = [];
-        component.setBuildAgentBuildJobIds(mockBuildAgents);
-
-        expect(mockBuildAgents[0].runningBuildJobsIds).toBe('');
-    });
 });

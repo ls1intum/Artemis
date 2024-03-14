@@ -33,8 +33,8 @@
                             <fa-icon [icon]="controls.iconForSortPropField('participationId')" />
                         </span>
                     </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value }}</span>
+                    <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                        <a [routerLink]="['/course-management', row.courseId, 'programming-exercises', row.exerciseId, 'participations', value, 'submissions']">{{ value }}</a>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="repositoryInfo.repositoryName" [minWidth]="150" [width]="150">
@@ -66,8 +66,22 @@
                             <fa-icon [icon]="controls.iconForSortPropField('commitHash')" />
                         </span>
                     </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <span class="wrap-long-text">{{ value }}</span>
+                    <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                        <a
+                            class="wrap-long-text"
+                            [routerLink]="[
+                                '/course-management',
+                                row.courseId,
+                                'programming-exercises',
+                                row.exerciseId,
+                                'participations',
+                                row.participationId,
+                                'repository',
+                                'commit-history',
+                                value
+                            ]"
+                            >{{ value }}</a
+                        >
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="jobTimingInfo.submissionDate" [minWidth]="150" [width]="200">
@@ -100,7 +114,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value }}</span>
+                        <a [routerLink]="['/course-management', value]">{{ value }}</a>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="priority" [minWidth]="150" [width]="200">
@@ -170,8 +184,8 @@
                             <fa-icon [icon]="controls.iconForSortPropField('participationId')" />
                         </span>
                     </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value }}</span>
+                    <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                        <a [routerLink]="['/course-management', row.courseId, 'programming-exercises', row.exerciseId, 'participations', value, 'submissions']">{{ value }}</a>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="repositoryInfo.repositoryName" [minWidth]="150" [width]="150">
@@ -203,8 +217,22 @@
                             <fa-icon [icon]="controls.iconForSortPropField('commitHash')" />
                         </span>
                     </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <span class="wrap-long-text">{{ value }}</span>
+                    <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                        <a
+                            class="wrap-long-text"
+                            [routerLink]="[
+                                '/course-management',
+                                row.courseId,
+                                'programming-exercises',
+                                row.exerciseId,
+                                'participations',
+                                row.participationId,
+                                'repository',
+                                'commit-history',
+                                value
+                            ]"
+                            >{{ value }}</a
+                        >
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="jobTimingInfo.submissionDate" [minWidth]="150" [width]="200">
@@ -226,7 +254,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value }}</span>
+                        <a [routerLink]="['/course-management', value]">{{ value }}</a>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="priority" [minWidth]="150" [width]="200">

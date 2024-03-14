@@ -7,6 +7,6 @@ package de.tum.in.www1.artemis.domain.enumeration;
  * CANCELED: the build was canceled
  */
 
-public enum BuildJobResult {
+public enum BuildStatus {
     SUCCESSFUL, FAILED, ERROR, CANCELLED
 }

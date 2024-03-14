@@ -16,6 +16,7 @@
                 "courseId": "Course ID",
                 "priority": "Priority",
                 "buildCompletionDate": "Build Completion Date",
+                "buildDuration": "Build Duration",
                 "status": "Status"
             },
             "cancelAll": "Cancel All"
