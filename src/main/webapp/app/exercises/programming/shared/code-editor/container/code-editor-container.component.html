@@ -64,6 +64,7 @@
         } @else {
             <jhi-code-editor-monaco
                 #codeEditorMonaco
+                [commitState]="commitState"
                 [course]="course"
                 [feedbacks]="participation?.results?.[0]?.feedbacks ?? []"
                 [isTutorAssessment]="isTutorAssessment"

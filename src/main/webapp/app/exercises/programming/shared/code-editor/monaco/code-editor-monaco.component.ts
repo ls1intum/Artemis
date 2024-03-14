@@ -22,7 +22,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
-import { CreateFileChange, DeleteFileChange, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, CreateFileChange, DeleteFileChange, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { fromPairs, pickBy } from 'lodash-es';
 
 export type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; loadingError: boolean } };
@@ -39,6 +39,8 @@ export class CodeEditorMonacoComponent implements AfterViewInit, OnChanges {
     editor: MonacoEditorComponent;
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
     inlineFeedbackComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackComponent>;
+    @Input()
+    commitState: CommitState;
     @Input()
     course?: Course;
     @Input()
@@ -192,8 +194,10 @@ export class CodeEditorMonacoComponent implements AfterViewInit, OnChanges {
         } else {
             this.annotationsArray = buildAnnotations;
         }
-
-        this.editor.addAnnotations(buildAnnotations.filter((buildAnnotation) => buildAnnotation.fileName === this.selectedFile));
+        this.editor.setAnnotations(
+            buildAnnotations.filter((buildAnnotation) => buildAnnotation.fileName === this.selectedFile),
+            this.commitState === CommitState.UNCOMMITTED_CHANGES,
+        );
     }
 
     protected readonly Feedback = Feedback;

@@ -80,16 +80,16 @@ export class MonacoEditorAnnotation implements monaco.editor.IGlyphMarginWidget,
     /**
      * This method removes and subsequently recreates the decoration associated with this widget,
      * thus forcing it to remain at its intended position.
-     * If the line no longer exists in the editor, then the entire element is hidden and marked as outdated.
+     * If the line no longer exists in the editor, then the entire element is hidden.
      */
     public updateDecoration(numberOfLines: number) {
+        this.setOutdated(true);
         if (this.getLineNumber() <= numberOfLines) {
             this.domNode.style.visibility = 'visible';
             this.decorationsCollection.clear();
             this.decorationsCollection.append([this.getAssociatedDeltaDecoration()]);
         } else {
             this.domNode.style.visibility = 'hidden';
-            this.setOutdated(true);
             this.decorationsCollection.clear();
         }
     }
@@ -110,7 +110,6 @@ export class MonacoEditorAnnotation implements monaco.editor.IGlyphMarginWidget,
                 isWholeLine: true,
                 stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
                 lineNumberHoverMessage: this.hoverMessage,
-                hoverMessage: this.hoverMessage,
                 glyphMarginHoverMessage: this.hoverMessage,
             },
         };

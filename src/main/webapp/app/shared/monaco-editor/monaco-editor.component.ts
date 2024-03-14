@@ -100,6 +100,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.setValue(text);
     }
 
+    getNumberOfLines(): number {
+        return this._editor.getModel()?.getLineCount() ?? 0;
+    }
+
     setReadOnly(readOnly: boolean, domReadOnly: boolean = false): void {
         this._editor.updateOptions({
             readOnly,
@@ -128,6 +132,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             this._editor.removeOverlayWidget(o);
         });
         this.editorLineWidgets = [];
+        this.disposeAnnotations();
+    }
+
+    private disposeAnnotations() {
         this.editorAnnotations.forEach((o) => {
             o.dispose();
             this._editor.removeGlyphMarginWidget(o);
@@ -141,8 +149,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
     }
 
-    addAnnotations(annotations: Array<Annotation>) {
+    setAnnotations(annotations: Array<Annotation>, markAsOutdated: boolean = false) {
         if (!this._editor) return;
+        this.disposeAnnotations();
         for (const annotation of annotations) {
             const lineNumber = annotation.row + 1;
             const editorAnnotation = new MonacoEditorAnnotation(
@@ -153,6 +162,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 annotation.type.toLowerCase() === 'error' ? MonacoEditorAnnotationType.ERROR : MonacoEditorAnnotationType.WARNING,
                 this._editor.createDecorationsCollection([]),
             );
+            if (markAsOutdated) {
+                editorAnnotation.setOutdated(true);
+                editorAnnotation.updateDecoration(this.getNumberOfLines());
+            }
             this._editor.addGlyphMarginWidget(editorAnnotation);
             const updateListener = this._editor.onDidChangeModelContent(() => {
                 editorAnnotation.updateDecoration(this._editor.getModel()?.getLineCount() ?? 0);
