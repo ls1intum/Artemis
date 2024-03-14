@@ -229,7 +229,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         fixture.detectChanges();
 
         const result = getLatestSubmissionResult(submission);
-        result.assessmentNote = { id: 1, note: 'Note Text' };
+        result!.assessmentNote = { id: 1, note: 'Note Text' };
         const textBlockRef = component.textBlockRefs[1];
         textBlockRef.initFeedback();
         textBlockRef.feedback!.detailText = 'my feedback';
@@ -317,7 +317,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         fixture.detectChanges();
 
         const result = getLatestSubmissionResult(submission);
-        result.assessmentNote = { id: 1, note: 'Note Text' };
+        result!.assessmentNote = { id: 1, note: 'Note Text' };
         const textBlockRef = component.textBlockRefs[1];
         textBlockRef.initFeedback();
         textBlockRef.feedback!.detailText = 'my feedback';

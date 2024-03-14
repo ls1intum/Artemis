@@ -278,13 +278,15 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     }));
 
     it('should be able to override directly after submitting', () => {
-        jest.spyOn(comp, 'handleSaveOrSubmit').mockImplementation(() => {});
+        jest.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
 
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.isAtLeastInstructor = true;
         exercise.dueDate = dayjs();
         comp.exercise = exercise;
         comp.isAssessor = true;
+        comp.participation = participation;
+        comp.manualResult = result;
         comp.submit();
         expect(comp.canOverride).toBeTrue();
     });
@@ -652,7 +654,15 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should not invalidate assessment after saving', async () => {
-        jest.spyOn(comp, 'handleSaveOrSubmit').mockImplementation(() => {});
+        jest.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
+
+        submission.results![0].feedbacks = [
+            {
+                detailText: 'text',
+                credits: 1,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            },
+        ];
         await comp['onSubmissionReceived']('123', submission);
         comp.save();
         expect(comp.assessmentsAreValid).toBeTrue();
