@@ -28,11 +28,14 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noCodeUnits;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
+import java.lang.annotation.Annotation;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
 import org.eclipse.jgit.api.Git;
@@ -70,6 +73,8 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
 import de.tum.in.www1.artemis.config.ApplicationConfiguration;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceRoleInCourse;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceRoleInExercise;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
@@ -233,6 +238,96 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testJPQLStyle() {
         var queryRule = methods().that().areAnnotatedWith(Query.class).should(useUpperCaseSQLStyle()).because("@Query content should follow the style guide");
         queryRule.check(allClasses);
+    }
+
+    @Test
+    void testEnforceRoleInCourseEndpointHasCourseIdParameter() {
+        ArchCondition<JavaMethod> haveParameterWithAnnotation = new ArchCondition<>("have a parameter with EnforceRoleInCourse annotation") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                // Get annotation
+                var enforceRoleInCourseAnnotation = getAnnotation(EnforceRoleInCourse.class, method);
+                var courseIdFieldName = enforceRoleInCourseAnnotation.courseIdFieldName();
+                if (!hasParameterWithName(method, courseIdFieldName)) {
+                    events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), courseIdFieldName)));
+                }
+            }
+        };
+
+        var enforceRoleInCourse = methods().that().areAnnotatedWith(EnforceRoleInCourse.class).or().areMetaAnnotatedWith(EnforceRoleInCourse.class).or().areDeclaredInClassesThat()
+                .areAnnotatedWith(EnforceRoleInCourse.class).and().areDeclaredInClassesThat().areNotAnnotations().should(haveParameterWithAnnotation);
+
+        enforceRoleInCourse.check(productionClasses);
+    }
+
+    @Test
+    void testEnforceRoleInExerciseEndpointHasExerciseIdParameter() {
+        ArchCondition<JavaMethod> haveParameterWithAnnotation = new ArchCondition<>("have a parameter with EnforceRoleInExercise annotation") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                // Get annotation
+                var enforceRoleInExerciseAnnotation = getAnnotation(EnforceRoleInExercise.class, method);
+                var exerciseIdFieldName = enforceRoleInExerciseAnnotation.exerciseIdFieldName();
+                if (!hasParameterWithName(method, exerciseIdFieldName)) {
+                    events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), exerciseIdFieldName)));
+                }
+            }
+        };
+
+        var enforceRoleInExercise = methods().that().areAnnotatedWith(EnforceRoleInExercise.class).or().areMetaAnnotatedWith(EnforceRoleInExercise.class).or()
+                .areDeclaredInClassesThat().areAnnotatedWith(EnforceRoleInExercise.class).and().areDeclaredInClassesThat().areNotAnnotations().should(haveParameterWithAnnotation);
+
+        enforceRoleInExercise.check(productionClasses);
+    }
+
+    private boolean hasParameterWithName(JavaMethod method, String paramName) {
+        try {
+            var owner = method.getOwner();
+            var javaClass = Class.forName(owner.getFullName());
+            var javaMethod = javaClass.getMethod(method.getName(), method.getRawParameterTypes().stream().map(this::getClassForName).toArray(Class[]::new));
+            return Arrays.stream(javaMethod.getParameters()).anyMatch(parameter -> parameter.getName().equals(paramName));
+        }
+        catch (ClassNotFoundException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Class<?> getClassForName(JavaClass paramClass) {
+        try {
+            return ClassUtils.getClass(paramClass.getName());
+        }
+        catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private <T extends Annotation> T getAnnotation(Class<T> clazz, JavaMethod javaMethod) {
+        final var method = javaMethod.reflect();
+        T annotation = method.getAnnotation(clazz);
+        if (annotation != null) {
+            return annotation;
+        }
+        for (Annotation a : method.getDeclaredAnnotations()) {
+            annotation = a.annotationType().getAnnotation(clazz);
+            if (annotation != null) {
+                return annotation;
+            }
+        }
+
+        annotation = method.getDeclaringClass().getAnnotation(clazz);
+        if (annotation != null) {
+            return annotation;
+        }
+        for (Annotation a : method.getDeclaringClass().getDeclaredAnnotations()) {
+            annotation = a.annotationType().getAnnotation(clazz);
+            if (annotation != null) {
+                return annotation;
+            }
+        }
+
+        return null;
     }
 
     @Test
