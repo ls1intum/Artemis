@@ -195,6 +195,7 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, result);
             const handleFeedbackStub = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
+            const validateAssessmentStub = jest.spyOn(comp, 'validateAssessment');
 
             fixture.detectChanges();
             expect(comp.result).toEqual(result);
@@ -202,7 +203,9 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.complaint).toEqual(complaint);
             expect(comp.result!.feedbacks?.length === 0).toBeTrue();
             expect(comp.busy).toBeFalse();
-            expect(handleFeedbackStub).toHaveBeenCalledOnce();
+            // now called twice, since assessments are now also validated when they are loaded
+            expect(handleFeedbackStub).toHaveBeenCalledTimes(2);
+            expect(validateAssessmentStub).toHaveBeenCalledOnce();
         });
 
         it('should load optimal submission', () => {
@@ -646,6 +649,8 @@ describe('FileUploadAssessmentComponent', () => {
 
         it('should be able to override directly after submitting', () => {
             comp.isAssessor = true;
+            // set due date in the future, so that overriding is not disallowed because of the date
+            comp.exercise!.assessmentDueDate = dayjs().add(42);
             comp.onSubmitAssessment();
             expect(comp.canOverride).toBeTrue();
         });
