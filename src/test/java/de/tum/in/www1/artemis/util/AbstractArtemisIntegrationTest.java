@@ -4,7 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
-import java.util.*;
+import java.util.List;
 
 import javax.mail.internet.MimeMessage;
 
@@ -20,12 +20,23 @@ import org.springframework.mail.javamail.JavaMailSender;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.TextBlockService;
+import de.tum.in.www1.artemis.service.UriService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.notifications.*;
+import de.tum.in.www1.artemis.service.notifications.ConversationNotificationService;
+import de.tum.in.www1.artemis.service.notifications.GeneralInstantNotificationService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.MailService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
@@ -120,6 +131,12 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @SpyBean
     protected TextBlockService textBlockService;
+
+    @SpyBean
+    protected LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
+    @SpyBean
+    protected OAuth2JWKSService oAuth2JWKSService;
 
     @Autowired
     protected QuizScheduleService quizScheduleService;
