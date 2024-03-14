@@ -44,6 +44,7 @@ public class AthenaFeedbackSuggestionsService {
             AthenaDTOConverter athenaDTOConverter) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
+        modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
         this.athenaDTOConverter = athenaDTOConverter;
         this.athenaModuleUrlHelper = athenaModuleUrlHelper;
     }

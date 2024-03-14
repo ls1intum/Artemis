@@ -20,6 +20,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
@@ -72,6 +74,10 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     private ProgrammingSubmission programmingSubmission;
 
+    private ModelingExercise modelingExercise;
+
+    private ModelingSubmission modelingSubmission;
+
     @BeforeEach
     protected void initTestCase() {
         super.initTestCase();
@@ -119,6 +125,34 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
                 "/api/athena/programming-exercises/" + programmingExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/feedback-suggestions", HttpStatus.OK,
                 Feedback.class);
         assertThat(response).as("response is not empty").isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetTextFeedbackSuggestionsNotFound() throws Exception {
+        request.get("/api/athena/text-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetProgrammingFeedbackSuggestionsNotFound() throws Exception {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+        request.get("/api/athena/programming-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testGetTextFeedbackSuggestionsAccessForbidden() throws Exception {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+        request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testGetProgrammingFeedbackSuggestionsAccessForbidden() throws Exception {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
+        request.get("/api/athena/modeling-exercises/" + textExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN,
+                List.class);
     }
 
     @Test
