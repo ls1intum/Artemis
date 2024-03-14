@@ -164,6 +164,30 @@ public class AthenaResource {
     }
 
     /**
+     * GET athena/courses/{courseId}/text-exercises/available-modules : Get all available Athena modules for a text exercise in the course
+     *
+     * @param courseId the id of the course the text exercise belongs to
+     * @return 200 Ok if successful with the modules as body
+     */
+    @GetMapping("athena/courses/{courseId}/text-exercises/available-modules")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<String>> getAvailableModulesForTextExercises(@PathVariable long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        log.debug("REST request to get available Athena modules for text exercises in Course {}", course.getTitle());
+
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        try {
+            List<String> modules = athenaModuleService.getAthenaTextModulesForCourse(course);
+            return ResponseEntity.ok(modules);
+        }
+        catch (NetworkingException e) {
+            throw new InternalServerErrorException("Could not fetch available Athena modules for programming exercises");
+        }
+
+    }
+
+    /**
      * GET athena/courses/{courseId}/programming-exercises/available-modules : Get all available Athena modules for a programming exercise in the course
      *
      * @param courseId the id of the course the programming exercise belongs to
@@ -188,25 +212,25 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/courses/{courseId}/text-exercises/available-modules : Get all available Athena modules for a text exercise in the course
+     * GET athena/courses/{courseId}/modeling-exercises/available-modules : Get all available Athena modules for a programming exercise in the course
      *
-     * @param courseId the id of the course the text exercise belongs to
+     * @param courseId the id of the course the programming exercise belongs to
      * @return 200 Ok if successful with the modules as body
      */
-    @GetMapping("athena/courses/{courseId}/text-exercises/available-modules")
+    @GetMapping("athena/courses/{courseId}/modeling-exercises/available-modules")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<String>> getAvailableModulesForTextExercises(@PathVariable long courseId) {
+    public ResponseEntity<List<String>> getAvailableModulesForModelingExercises(@PathVariable long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        log.debug("REST request to get available Athena modules for text exercises in Course {}", course.getTitle());
+        log.debug("REST request to get available Athena modules for modeling exercises in Course {}", course.getTitle());
 
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         try {
-            List<String> modules = athenaModuleService.getAthenaTextModulesForCourse(course);
+            List<String> modules = athenaModuleService.getAthenaModelingModulesForCourse(course);
             return ResponseEntity.ok(modules);
         }
         catch (NetworkingException e) {
-            throw new InternalServerErrorException("Could not fetch available Athena modules for programming exercises");
+            throw new InternalServerErrorException("Could not fetch available Athena modules for modeling exercises");
         }
 
     }

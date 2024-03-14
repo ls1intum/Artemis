@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
@@ -44,6 +45,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
     private ExerciseUtilService exerciseUtilService;
 
     @Autowired
@@ -51,6 +55,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
+
+    @Autowired
+    private ModelingSubmissionRepository modelingSubmissionRepository;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -66,6 +73,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
     private FeedbackRepository feedbackRepository;
@@ -113,6 +123,15 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         studentParticipationRepository.save(programmingParticipation);
         programmingSubmission.setParticipation(programmingParticipation);
         programmingSubmissionRepository.save(programmingSubmission);
+
+        var modelingCourse = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        modelingExercise = exerciseUtilService.findModelingExerciseWithTitle(modelingCourse.getExercises(), "ClassDiagram");
+        modelingSubmission = ParticipationFactory.generateModelingSubmission("", true);
+        var modelingParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        studentParticipationRepository.save(modelingParticipation);
+        modelingSubmission.setParticipation(modelingParticipation);
+        modelingSubmissionRepository.save(modelingSubmission);
     }
 
     @Test
@@ -230,6 +249,12 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetModelingFeedbackSuggestionsNotFound() throws Exception {
+        request.get("/api/athena/modeling-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetTextFeedbackSuggestionsAccessForbidden() throws Exception {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
@@ -245,30 +270,10 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetTextFeedbackSuggestionsNotFound() throws Exception {
-        request.get("/api/athena/text-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetProgrammingFeedbackSuggestionsNotFound() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
-        request.get("/api/athena/programming-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetTextFeedbackSuggestionsAccessForbidden() throws Exception {
+    void testGetModelingFeedbackSuggestionsAccessForbidden() throws Exception {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
-        request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN, List.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetProgrammingFeedbackSuggestionsAccessForbidden() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
-        request.get("/api/athena/programming-exercises/" + textExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN,
+        request.get("/api/athena/modeling-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN,
                 List.class);
     }
 

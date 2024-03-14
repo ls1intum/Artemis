@@ -110,6 +110,22 @@ public class AthenaModuleService {
     }
 
     /**
+     * Get all available Athena modeling modules for a specific course.
+     *
+     * @param course The course for which the modules should be retrieved
+     * @return The list of available Athena modeling modules for the course
+     * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
+     */
+    public List<String> getAthenaModelingModulesForCourse(Course course) throws NetworkingException {
+        List<String> availableTextModules = getAthenaModules().stream().filter(module -> "modelling".equals(module.type)).map(module -> module.name).toList();
+        if (!course.getRestrictedAthenaModulesAccess()) {
+            // filter out restricted modules
+            availableTextModules = availableTextModules.stream().filter(moduleName -> !restrictedModules.contains(moduleName)).toList();
+        }
+        return availableTextModules;
+    }
+
+    /**
      * Get the URL for an Athena module, depending on the type of exercise.
      *
      * @param exercise The exercise for which the URL to Athena should be returned
@@ -122,6 +138,9 @@ public class AthenaModuleService {
             }
             case PROGRAMMING -> {
                 return athenaUrl + "/modules/programming/" + exercise.getFeedbackSuggestionModule();
+            }
+            case MODELING -> {
+                return athenaUrl + "/modules/modelling/" + exercise.getFeedbackSuggestionModule();
             }
             default -> throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
         }
