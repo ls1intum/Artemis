@@ -8,7 +8,7 @@
     />
     <div class="update-footer-content">
         @if (isSaving) {
-            <span jhiTranslate="entity.action.saving" class="badge bg-secondary"> </span>
+            <span jhiTranslate="entity.action.saving" class="badge bg-secondary"></span>
         }
         <ng-template #tooltipTranslate>
             @for (reason of invalidReasons; track reason) {
@@ -20,13 +20,13 @@
         @if (invalidReasons.length) {
             <span class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
                 <fa-icon [icon]="faExclamationCircle" />
-                <span jhiTranslate="global.form.invalidInput">Invalid Input</span>
+                <span jhiTranslate="global.form.invalidInput"></span>
                 <span>({{ invalidReasons.length }})</span>
             </span>
         }
         <button type="button" id="cancel-save" class="btn btn-secondary me-1" (click)="cancel.next()">
             <fa-icon [icon]="faBan" />
-            <span jhiTranslate="entity.action.cancel">Cancel</span>
+            <span jhiTranslate="entity.action.cancel"></span>
         </button>
         <jhi-button id="save-entity" [disabled]="!!invalidReasons.length || isDisabled" [isLoading]="isSaving" [icon]="faSave" [title]="saveTitle()" (onClick)="save.next()" />
     </div>
