@@ -33,20 +33,20 @@ public class AthenaFeedbackSuggestionsService {
 
     private final AthenaConnector<RequestDTO, ResponseDTOModeling> modelingAthenaConnector;
 
-    private final AthenaModuleUrlHelper athenaModuleUrlHelper;
+    private final AthenaModuleService athenaModuleService;
 
     private final AthenaDTOConverter athenaDTOConverter;
 
     /**
      * Creates a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
      */
-    public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleUrlHelper athenaModuleUrlHelper,
+    public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
             AthenaDTOConverter athenaDTOConverter) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
         modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
         this.athenaDTOConverter = athenaDTOConverter;
-        this.athenaModuleUrlHelper = athenaModuleUrlHelper;
+        this.athenaModuleService = athenaModuleService;
     }
 
     private record RequestDTO(ExerciseDTO exercise, SubmissionDTO submission) {
@@ -78,7 +78,7 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
-        ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions", request, 0);
+        ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to feedback suggestions request: {}", response.data);
         return response.data.stream().toList();
     }
@@ -94,8 +94,7 @@ public class AthenaFeedbackSuggestionsService {
         log.debug("Start Athena Feedback Suggestions Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
-        ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions",
-                request, 0);
+        ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to feedback suggestions request: {}", response.data);
         return response.data.stream().toList();
     }
