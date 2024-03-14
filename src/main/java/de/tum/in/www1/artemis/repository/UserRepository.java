@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.distinct;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getActivatedOrDeactivatedSpecification;
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getAuthorityAndCourseSpecification;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getAuthoritySpecification;
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getCourseSpecification;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getInternalOrExternalSpecification;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getSearchTermSpecification;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getWithOrWithoutRegistrationNumberSpecification;
@@ -567,18 +565,13 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         var activated = userSearch.getStatus().contains(FILTER_ACTIVATED);
         var deactivated = userSearch.getStatus().contains(FILTER_DEACTIVATED);
 
-        // Course Ids
-        var courseIds = userSearch.getCourseIds();
-
         // Users without registration numbers or with registration numbers
         var noRegistrationNumber = userSearch.getRegistrationNumbers().contains(FILTER_WITHOUT_REG_NO);
         var withRegistrationNumber = userSearch.getRegistrationNumbers().contains(FILTER_WITH_REG_NO);
 
         Specification<User> specification = Specification.where(distinct()).and(notSoftDeleted()).and(getSearchTermSpecification(searchTerm))
                 .and(getInternalOrExternalSpecification(internal, external)).and(getActivatedOrDeactivatedSpecification(activated, deactivated))
-                .and(getAuthoritySpecification(modifiedAuthorities, courseIds)).and(getCourseSpecification(courseIds, modifiedAuthorities))
-                .and(getAuthorityAndCourseSpecification(courseIds, modifiedAuthorities))
-                .and(getWithOrWithoutRegistrationNumberSpecification(noRegistrationNumber, withRegistrationNumber));
+                .and(getAuthoritySpecification(modifiedAuthorities)).and(getWithOrWithoutRegistrationNumberSpecification(noRegistrationNumber, withRegistrationNumber));
 
         return findAll(specification, sorted).map(user -> {
             user.setVisibleRegistrationNumber();

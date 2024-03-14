@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.user;
 
-import static de.tum.in.www1.artemis.repository.UserRepository.FILTER_WITHOUT_REG_NO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -25,7 +24,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
@@ -833,7 +831,7 @@ public class UserTestService {
     }
 
     // Test
-    public void testUserWithoutGroups() throws Exception {
+    public void testUser() throws Exception {
         final var params = createParamsForPagingRequest("USER", "", "", "", "-1");
 
         List<User> result;
@@ -852,30 +850,6 @@ public class UserTestService {
             userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).contains(user1).doesNotContain(user2);
-        }
-    }
-
-    // Test
-    public void testUserWithGroups() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
-        courseRepository.save(course);
-
-        final var params = createParamsForPagingRequest("USER", "", FILTER_WITHOUT_REG_NO, "", Long.toString(course.getId()));
-
-        List<User> result;
-
-        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (Integer[] number : numbers) {
-            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
-            final var mainUserAuthority = getMainUserAuthority(number);
-            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
-            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
-            user1.setGroups(Collections.emptySet());
-            user2.setGroups(Set.of("tumuser"));
-            userRepository.saveAll(List.of(user1, user2));
-            result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).contains(user2).doesNotContain(user1);
         }
     }
 
