@@ -7,15 +7,6 @@ jobs:
   pullequestReadyForReview:
     runs-on: ubuntu-latest
     steps:
-
-      - name: Move to "Ready for review" column
-        if: github.event.pull_request.draft == false
-        uses: alex-page/github-project-automation-plus@v0.9.0
-        with:
-          project: Artemis Development
-          column: Ready for review
-          repo-token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
-
       - name: Label "ready for review"
         uses: actions/github-script@v7
         with:
