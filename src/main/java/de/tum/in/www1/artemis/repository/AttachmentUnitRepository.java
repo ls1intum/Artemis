@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, Long> {
 
+
     @Query("""
             SELECT attachmentUnit
             FROM Lecture lecture
