@@ -7,7 +7,7 @@
         <div class="row">
             <div class="col">
                 @if (allowBehavioralEntryGeneration ? currentStep !== 0 : currentStep !== 2) {
-                    <button type="button" class="btn btn-primary" jhiTranslate="artemisApp.codeHint.management.previousButton.label" (click)="onPreviousStep()">Previous</button>
+                    <button type="button" class="btn btn-primary" jhiTranslate="artemisApp.codeHint.management.previousButton.label" (click)="onPreviousStep()"></button>
                 }
             </div>
             <div class="col text-center status-wrapper">
@@ -24,9 +24,7 @@
                         jhiTranslate="artemisApp.codeHint.management.nextButton.label"
                         [disabled]="!isNextStepAvailable()"
                         (click)="onNextStep()"
-                    >
-                        Next
-                    </button>
+                    ></button>
                 }
             </div>
         </div>

@@ -1,6 +1,6 @@
 <div>
     <h2>
-        <span jhiTranslate="artemisApp.studentExams.title">Student exams</span>
+        <span jhiTranslate="artemisApp.studentExams.title"></span>
     </h2>
     <hr />
     <div>
@@ -10,10 +10,8 @@
                     @if (isLoading) {
                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     }
-                    <span jhiTranslate="artemisApp.studentExams.generateStudentExams">Generate student exams</span>
+                    <span jhiTranslate="artemisApp.studentExams.generateStudentExams"></span>
                 </button>
-            }
-            @if (course?.isAtLeastInstructor) {
                 <button
                     id="generateMissingStudentExamsButton"
                     class="btn btn-primary mt-1"
@@ -23,15 +21,13 @@
                     @if (isLoading) {
                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     }
-                    <span jhiTranslate="artemisApp.studentExams.generateMissingStudentExams">Generate missing individual exams</span>
+                    <span jhiTranslate="artemisApp.studentExams.generateMissingStudentExams"></span>
                 </button>
-            }
-            @if (course?.isAtLeastInstructor) {
                 <button id="startExercisesButton" class="btn btn-primary mt-1" (click)="startExercises()" [disabled]="isLoading || isExamStarted || exercisePreparationRunning">
                     @if (isLoading) {
                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     }
-                    <span jhiTranslate="artemisApp.studentExams.startExercises">Start Exercises</span>
+                    <span jhiTranslate="artemisApp.studentExams.startExercises"></span>
                 </button>
             }
         }
@@ -41,16 +37,14 @@
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 }
                 <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
-                <span jhiTranslate="artemisApp.studentExams.unlockAllRepositories">Unlock all repositories</span>
+                <span jhiTranslate="artemisApp.studentExams.unlockAllRepositories"></span>
             </button>
-        }
-        @if (!localVCEnabled && course?.isAtLeastInstructor) {
             <button id="lockAllRepositoriesButton" class="btn btn-danger mt-1" (click)="handleLockAllRepositories()" [disabled]="isLoading">
                 @if (isLoading) {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 }
                 <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
-                <span jhiTranslate="artemisApp.studentExams.lockAllRepositories">Lock all repositories</span>
+                <span jhiTranslate="artemisApp.studentExams.lockAllRepositories"></span>
             </button>
         }
     </div>
@@ -60,7 +54,7 @@
         }
         @if (exercisePreparationStatus) {
             <div class="d-flex flex-wrap flex-grow-1 align-items-center gap-1">
-                <div jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.label">Exercise preparation progress:</div>
+                <div jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.label"></div>
                 <div class="flex-grow-1 flex-basis-10 position-relative">
                     <div class="position-absolute w-100 h-100 top-0">
                         <ngb-progressbar
@@ -90,10 +84,10 @@
                             <span>{{ exercisePreparationEta }} {{ 'artemisApp.studentExams.exercisePreparationProgress.remaining' | artemisTranslate }}</span>
                         }
                         @if (!exercisePreparationEta && exercisePreparationPercentage === 100) {
-                            <span jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.finished">Finished</span>
+                            <span jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.finished"></span>
                         }
                         @if (!exercisePreparationEta && exercisePreparationPercentage < 100) {
-                            <span jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.noeta">No ETA</span>
+                            <span jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.noeta"></span>
                         }
                     </div>
                 </div>
@@ -130,7 +124,7 @@
             <ngx-datatable-column prop="id" [minWidth]="60" [width]="80" [maxWidth]="100">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.id"> ID </span>
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.id"></span>
                         <fa-icon [icon]="controls.iconForSortPropField('id')" />
                     </span>
                 </ng-template>
@@ -143,7 +137,7 @@
             <ngx-datatable-column prop="user" [minWidth]="120" [width]="120">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper username" (click)="controls.onSort('user.name')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.student"> Student </span>
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.student"></span>
                         <fa-icon [icon]="controls.iconForSortPropField('user.name')" />
                     </span>
                 </ng-template>
@@ -159,10 +153,10 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('workingTime')">
                         @if (!isTestExam) {
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.workingTime"> Working time </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.workingTime"></span>
                         }
                         @if (isTestExam) {
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.usedWorkingTime"> Used Working time </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.usedWorkingTime"></span>
                         }
                         <fa-icon [icon]="controls.iconForSortPropField('workingTime')" />
                     </span>
@@ -179,7 +173,7 @@
             <ngx-datatable-column prop="started" [minWidth]="80" [width]="80">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('started')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.started"> Started </span>
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.started"></span>
                         <fa-icon [icon]="controls.iconForSortPropField('started')" />
                     </span>
                 </ng-template>
@@ -190,7 +184,7 @@
             <ngx-datatable-column prop="submitted" [minWidth]="80" [width]="80">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submitted')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submitted"> Submitted </span>
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submitted"></span>
                         <fa-icon [icon]="controls.iconForSortPropField('submitted')" />
                     </span>
                 </ng-template>
@@ -201,7 +195,7 @@
             <ngx-datatable-column prop="submissionDate" [minWidth]="130" [width]="130">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submissionDate"> Submission Date </span>
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submissionDate"></span>
                         <fa-icon [icon]="controls.iconForSortPropField('submissionDate')" />
                     </span>
                 </ng-template>
@@ -212,7 +206,7 @@
             <ngx-datatable-column prop="numberOfExamSessions" [minWidth]="100" [width]="100">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('numberOfExamSessions')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.examSessions"> Sessions </span>
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.examSessions"></span>
                         <fa-icon [icon]="controls.iconForSortPropField('numberOfExamSessions')" />
                     </span>
                 </ng-template>
@@ -229,7 +223,7 @@
                                     class="btn btn-primary btn-sm me-1 mb-1 view-submission"
                                     [routerLink]="['/course-management', courseId, 'exams', examId, 'student-exams', value?.id]"
                                 >
-                                    <span jhiTranslate="artemisApp.studentExams.view">View</span>
+                                    <span jhiTranslate="artemisApp.studentExams.view"></span>
                                 </a>
                             </div>
                         }

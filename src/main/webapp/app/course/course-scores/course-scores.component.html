@@ -11,7 +11,7 @@
             </h4>
             @if (course && course.isAtLeastInstructor) {
                 <a [routerLink]="['/course-management', course.id, 'grading-system']" class="btn btn-info btn-md">
-                    <fa-icon [icon]="faClipboard" /> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
+                    <fa-icon [icon]="faClipboard" /> <span jhitranslate="artemisApp.course.gradingSystem"></span>
                 </a>
             }
         </div>
@@ -25,7 +25,7 @@
         <div class="row d-flex align-items-center">
             <div class="col-lg-9">
                 <div class="text-center">
-                    <h4 jhiTranslate="artemisApp.instructorDashboard.courseScoreChart.scoreDistribution">Course score distribution</h4>
+                    <h4 jhiTranslate="artemisApp.instructorDashboard.courseScoreChart.scoreDistribution"></h4>
                 </div>
                 @if (scoresToDisplay) {
                     <jhi-participant-scores-distribution [gradingScale]="gradingScale" [scores]="scoresToDisplay" [scoreToHighlight]="valueToHighlight" />
@@ -37,17 +37,17 @@
                         <tr>
                             <th></th>
                             <th>
-                                <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.included">Included in score</span>
+                                <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.included"></span>
                             </th>
                             <th>
-                                <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.total">Total</span>
+                                <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.total"></span>
                             </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <th>
-                                <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.amountOfReleasedExercises"># of released exercises</span>
+                                <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.amountOfReleasedExercises"></span>
                             </th>
                             <td>{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }}</td>
                             <td>{{ this.numberOfReleasedExercises }}</td>
@@ -94,7 +94,7 @@
                         </tr>
                         <tr>
                             <th>
-                                <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.standardPointDeviation">Standard point deviation</span>
+                                <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.standardPointDeviation"></span>
                             </th>
                             <td>{{ this.standardDeviationPointsIncluded }}</td>
                             <td>{{ this.standardDeviationPointsTotal }}</td>
@@ -121,19 +121,19 @@
                     <thead>
                         <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                             <th jhiSortBy="user.name">
-                                <span jhiTranslate="artemisApp.instructorDashboard.name">Name</span>
+                                <span jhiTranslate="artemisApp.instructorDashboard.name"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="user.login">
-                                <span jhiTranslate="artemisApp.instructorDashboard.username">Username</span>
+                                <span jhiTranslate="artemisApp.instructorDashboard.username"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="numberOfParticipatedExercises">
-                                <span jhiTranslate="artemisApp.instructorDashboard.participated">Participated in Exercises (%)</span>
+                                <span jhiTranslate="artemisApp.instructorDashboard.participated"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="numberOfSuccessfulExercises">
-                                <span jhiTranslate="artemisApp.instructorDashboard.successful">Successful Exercises (%)</span>
+                                <span jhiTranslate="artemisApp.instructorDashboard.successful"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             @for (exerciseType of exerciseTypes; track exerciseType) {
@@ -145,13 +145,9 @@
                                 }
                             }
                             @if (maxNumberOfPresentationPoints > 0) {
-                                <th jhiSortBy="presentationPoints">
-                                    <span jhiTranslate="artemisApp.instructorDashboard.presentationPoints">Presentation Points (%)</span> <fa-icon [icon]="faSort" />
-                                </th>
+                                <th jhiSortBy="presentationPoints"><span jhiTranslate="artemisApp.instructorDashboard.presentationPoints"></span> <fa-icon [icon]="faSort" /></th>
                             }
-                            <th jhiSortBy="overallPoints">
-                                <span jhiTranslate="artemisApp.instructorDashboard.overallScore">Overall Points (%)</span> <fa-icon [icon]="faSort" />
-                            </th>
+                            <th jhiSortBy="overallPoints"><span jhiTranslate="artemisApp.instructorDashboard.overallScore"></span> <fa-icon [icon]="faSort" /></th>
                             @if (gradingScaleExists) {
                                 <th jhiSortBy="overallPoints">
                                     <span>
@@ -166,7 +162,7 @@
                             }
                         </tr>
                         <tr>
-                            <th><span jhiTranslate="artemisApp.instructorDashboard.max">Max</span></th>
+                            <th><span jhiTranslate="artemisApp.instructorDashboard.max"></span></th>
                             <th></th>
                             <th>{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }}</th>
                             <th>{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }}</th>
@@ -184,7 +180,7 @@
                             }
                         </tr>
                         <tr>
-                            <th><span jhiTranslate="artemisApp.instructorDashboard.average">Average</span></th>
+                            <th><span jhiTranslate="artemisApp.instructorDashboard.average"></span></th>
                             <th></th>
                             <th>
                                 {{ localize(averageNumberOfParticipatedExercises) }}

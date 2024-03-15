@@ -1,7 +1,7 @@
 <div class="legal-document-container">
     <div>
         <h2>
-            <span id="legal-document-update-heading" data-cy="legalDocumentPageHeading" jhiTranslate="{{ titleKey }}">Update legal document</span>
+            <span id="legal-document-update-heading" data-cy="legalDocumentPageHeading" jhiTranslate="{{ titleKey }}"></span>
         </h2>
         <jhi-markdown-editor
             [markdown]="legalDocument.text"
@@ -17,19 +17,19 @@
             @if (!unsavedChanges && !isSaving) {
                 <div>
                     <fa-icon [icon]="faCheckCircle" class="text-success me-1" ngbTooltip="{{ 'artemisApp.legal.savedTooltip' | artemisTranslate }}" />
-                    <span class="text-info" jhiTranslate="artemisApp.legal.saved">Saved.</span>
+                    <span class="text-info" jhiTranslate="artemisApp.legal.saved"></span>
                 </div>
             }
             @if (unsavedChanges && !isSaving) {
                 <div>
                     <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" ngbTooltip="{{ 'artemisApp.legal.unsavedTooltip' | artemisTranslate }}" />
-                    <span class="text-info" jhiTranslate="artemisApp.legal.unsaved">Unsaved.</span>
+                    <span class="text-info" jhiTranslate="artemisApp.legal.unsaved"></span>
                 </div>
             }
             @if (isSaving) {
                 <div>
                     <fa-icon [icon]="faCircleNotch" class="me-1" ngbTooltip="{{ 'artemisApp.legal.savingTooltip' | artemisTranslate }}" />
-                    <span class="text-info" jhiTranslate="artemisApp.legal.saving">Saving...</span>
+                    <span class="text-info" jhiTranslate="artemisApp.legal.saving"></span>
                 </div>
             }
         </div>
@@ -42,7 +42,7 @@
                 [disabled]="!markdownEditor?.markdown || markdownEditor?.markdown?.trim() === '' || isSaving"
             >
                 <fa-icon [icon]="faSave" />
-                <span jhiTranslate="entity.action.save">Save</span>
+                <span jhiTranslate="entity.action.save"></span>
             </button>
             <jhi-mode-picker [options]="languageOptions" [value]="currentLanguage" (valueChange)="onLanguageChange($event!)" />
         </div>

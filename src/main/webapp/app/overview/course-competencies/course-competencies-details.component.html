@@ -21,10 +21,10 @@
                         />
                         <span>{{ competency!.title }}</span>
                         @if (isMastered) {
-                            <span class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered">Mastered</span>
+                            <span class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered"></span>
                         }
                         @if (competency.optional) {
-                            <span class="badge text-white bg-warning" jhiTranslate="artemisApp.competency.optional">Optional</span>
+                            <span class="badge text-white bg-warning" jhiTranslate="artemisApp.competency.optional"></span>
                         }
                     </h3>
                     @if (competency.description) {

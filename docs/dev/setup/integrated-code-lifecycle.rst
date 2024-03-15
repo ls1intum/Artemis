@@ -12,6 +12,7 @@ If you are setting Artemis up for the first time, these are the steps you should
 - Install and run Docker: https://docs.docker.com/get-docker
 - Start the database: :ref:`Database Setup`
 - :ref:`Configure Artemis`
+- (optional) :ref:`Configure Build Management`
 - (optional) :ref:`Configure Jira`
 - :ref:`Start Artemis`
 - :ref:`Test the Setup`
@@ -57,6 +58,21 @@ Make sure that Artemis can access docker by activating the "Expose daemon on tcp
 When you start Artemis for the first time, it will automatically create an admin user called "artemis_admin". If this does not work, refer to the guide for the :ref:`Jenkins and GitLab Setup` to manually create an admin user in the database.
 You can then use that admin user to create further users in Artemis' internal user management system.
 
+.. _Configure Build Management:
+
+Configure Build Management
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Local CI subsystem of the Integrated Code Lifecycle is used to automatically build and test student submissions. By default, the number of concurrent builds that can be executed is determined by the number of available CPU cores. You can manually determine this number by adding the following property to the ``src/main/resources/config/application-local.yml`` file:
+
+.. code-block:: yaml
+
+       artemis:
+           continuous-integration:
+                specify-concurrent-builds: true
+                // The number of concurrent builds that can be executed
+                concurrent-build-size: 2
+
 
 .. _Configure Jira:
 
@@ -90,15 +106,16 @@ You also need to configure further settings in the ``src/main/resources/config/a
 Start Artemis
 ^^^^^^^^^^^^^
 
-Start Artemis with the profiles ``localci`` and ``localvc`` so that the correct adapters will be used,
+For the development environment, you can start Artemis with the following additional profiles: ``localci``, ``localvc`` and ``buildagent``.
+It is important to consider the **correct order** of the profiles, as the ``core`` profile needs to overwrite the ``buildagent`` profile,
 e.g.:
 
 ::
 
-   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,local
+   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local
 
 All of these profiles are enabled by default when using the ``Artemis (Server, LocalVC & LocalCI)`` run configuration in IntelliJ.
-Add ``jira`` to the list of profiles if you want to use Jira for user management: `dev,localci,localvc,artemis,scheduling,local,jira`
+Add ``jira`` to the list of profiles if you want to use Jira for user management: `dev,localci,localvc,artemis,scheduling,buildagent,core,local,jira`
 Please read :ref:`Server Setup` for more details.
 
 
@@ -130,7 +147,7 @@ To create a course with registered users, you can use the scripts from ``support
 - Make sure that the result of your submission is displayed in the Artemis UI.
 
 .. HINT::
-   At the moment, the local VC system only supports accessing repositories via HTTP(S) and Basic Auth. We plan to add SSH support in the future. For now, you need to enter your Artemis credentials (username and password) when accessing template, solution, test, and assignment repositories.
+   At the moment, the Local VC system only supports accessing repositories via HTTP(S) and Basic Auth. We plan to add SSH support in the future. For now, you need to enter your Artemis credentials (username and password) when accessing template, solution, test, and assignment repositories.
 
 For unauthorized access, your Git client will display the respective error message:
 

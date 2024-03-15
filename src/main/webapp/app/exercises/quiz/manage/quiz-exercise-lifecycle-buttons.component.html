@@ -9,7 +9,7 @@
 ) {
     <button id="instructor-quiz-start-{{ quizExercise.id }}" type="submit" (click)="startQuiz()" class="btn btn-warning btn-sm me-1 mb-1">
         <fa-icon [icon]="faPlayCircle" />
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz">Start Quiz</span>
+        <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
     </button>
 }
 @if ((quizExercise.status === QuizStatus.VISIBLE || quizExercise.status === QuizStatus.ACTIVE) && quizExercise.quizMode === QuizMode.BATCHED) {
@@ -28,7 +28,7 @@
             @if (!batch.started) {
                 <button id="instructor-quiz-start-{{ quizExercise.id }}-{{ batch.id }}" type="submit" (click)="startBatch(batch.id!)" class="btn btn-warning btn-sm me-1 mb-1">
                     <fa-icon [icon]="faPlayCircle" />
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz">Start Quiz</span>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
                 </button>
             }
         </div>
@@ -36,7 +36,7 @@
     <div>
         <button id="instructor-quiz-add-{{ quizExercise.id }}" type="submit" (click)="addBatch()" class="btn btn-primary btn-sm me-1 mb-1">
             <fa-icon [icon]="faPlus" />
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.addBatch">Add Batch</span>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.addBatch"></span>
         </button>
     </div>
 }
@@ -60,6 +60,6 @@
 @if (quizExercise.status === QuizStatus.INVISIBLE && quizExercise.isAtLeastEditor) {
     <button id="quiz-set-visible-{{ quizExercise.id }}" type="submit" (click)="showQuiz()" class="btn btn-warning btn-sm me-1 mb-1">
         <fa-icon [icon]="faEye" />
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.showNow">Set Visible</span>
+        <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.showNow"></span>
     </button>
 }

@@ -13,11 +13,11 @@
     <div>
         @if (settingsType === GLOBAL) {
             <div>
-                <h3 jhiTranslate="artemisApp.iris.settings.autoUpdate.title">Auto-Update Settings</h3>
+                <h3 jhiTranslate="artemisApp.iris.settings.autoUpdate.title"></h3>
                 <jhi-iris-global-autoupdate-settings-update [irisSettings]="irisSettings" (onChanges)="isDirty = true" />
             </div>
         }
-        <h3 jhiTranslate="artemisApp.iris.settings.subSettings.chatSettings">Chat Settings</h3>
+        <h3 jhiTranslate="artemisApp.iris.settings.subSettings.chatSettings"></h3>
         <div>
             <jhi-iris-common-sub-settings-update
                 [subSettings]="irisSettings?.irisChatSettings"
@@ -36,7 +36,7 @@
         @if (settingsType !== EXERCISE) {
             <div>
                 <hr class="hr" />
-                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.hestiaSettings">Hestia Settings</h3>
+                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.hestiaSettings"></h3>
                 <jhi-iris-common-sub-settings-update
                     [subSettings]="irisSettings?.irisHestiaSettings!"
                     [parentSubSettings]="parentIrisSettings?.irisHestiaSettings"
@@ -54,7 +54,7 @@
         @if (settingsType !== EXERCISE) {
             <div>
                 <hr class="hr" />
-                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.codeEditorSettings">Code Editor Settings</h3>
+                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.codeEditorSettings"></h3>
                 <jhi-iris-common-sub-settings-update
                     [subSettings]="irisSettings?.irisCodeEditorSettings"
                     [parentSubSettings]="parentIrisSettings?.irisCodeEditorSettings"
@@ -72,7 +72,7 @@
         @if (settingsType !== EXERCISE) {
             <div>
                 <hr class="hr" />
-                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.competencyGenerationSettings">Competency Generation Settings</h3>
+                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.competencyGenerationSettings"></h3>
                 <jhi-iris-common-sub-settings-update
                     [subSettings]="irisSettings?.irisCompetencyGenerationSettings!"
                     [parentSubSettings]="parentIrisSettings?.irisCompetencyGenerationSettings"

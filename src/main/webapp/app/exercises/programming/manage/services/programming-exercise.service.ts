@@ -240,10 +240,11 @@ export class ProgrammingExerciseService {
      * Finds the programming exercise for the given exerciseId with the template and solution participation
      * @param programmingExerciseId of the programming exercise to retrieve
      * @param withSubmissionResults get results attached to submissions
+     * @param withGradingCriteria also fetch the grading instructions for this exercise
      */
-    findWithTemplateAndSolutionParticipation(programmingExerciseId: number, withSubmissionResults = false): Observable<EntityResponseType> {
+    findWithTemplateAndSolutionParticipation(programmingExerciseId: number, withSubmissionResults = false, withGradingCriteria = false): Observable<EntityResponseType> {
         let params = new HttpParams();
-        params = params.set('withSubmissionResults', withSubmissionResults.toString());
+        params = params.set('withSubmissionResults', withSubmissionResults.toString()).set('withGradingCriteria', withGradingCriteria.toString());
         return this.http
             .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-template-and-solution-participation`, {
                 params,

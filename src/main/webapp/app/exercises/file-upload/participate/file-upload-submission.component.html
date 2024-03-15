@@ -27,13 +27,13 @@
                 @if ((isActive || isLate) && !result && fileUploadExercise && submission && isOwnerOfParticipation) {
                     <div class="col-12 col-md-6">
                         <div class="form-group">
-                            <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile">Please select </label>
+                            <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
                             <div class="input-group background-file">
                                 <div class="custom-file overflow-ellipsis">
                                     <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />
                                 </div>
                             </div>
-                            <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions">Supported file extensions:</p>
+                            <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></p>
                             @for (extension of fileUploadExercise.filePattern!.split(','); track extension) {
                                 <div class="d-inline-block">
                                     <span class="ms-1 badge bg-info">
@@ -76,7 +76,7 @@
             @if (result && result.feedbacks && result.feedbacks.length && result.feedbacks.length > 0) {
                 <div>
                     <br />
-                    <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your Assessment</span>:</h5>
+                    <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission"></span>:</h5>
                     <div class="row">
                         @if (unreferencedFeedback?.length && unreferencedFeedback!.length! > 0) {
                             <jhi-additional-feedback class="col-xl-8 alert unreferencedFeedback" [feedback]="unreferencedFeedback!" [additional]="false" [course]="course" />
@@ -96,7 +96,7 @@
         <!--endregion-->
         <!--region Right Panel-->
         <fa-icon right-header [icon]="farListAlt" />&nbsp;
-        <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+        <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
         <p right-body class="mb-3 markdown-preview">
             @if (fileUploadExercise!.problemStatement) {
                 <span [innerHTML]="fileUploadExercise!.problemStatement! | htmlForMarkdown"></span>

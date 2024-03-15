@@ -4,13 +4,13 @@
             @if (!collapsed) {
                 <span>
                     <fa-icon [icon]="faFolderOpen" />
-                    <span class="ms-2" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
+                    <span class="ms-2" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser"></span>
                 </span>
             }
             @if (collapsed) {
                 <span class="collapsed-file-browser">
                     <fa-icon class="top-icon" [icon]="faChevronRight" />
-                    <span class="header" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
+                    <span class="header" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser"></span>
                     <fa-icon [icon]="faFolderOpen" class="fa-rotate-270" id="panel-symbol" />
                     <fa-icon class="bottom-icon" [icon]="faChevronRight" />
                 </span>
@@ -68,7 +68,7 @@
         @if (isLoadingFiles) {
             <div class="text-center lead text-body-secondary pt-2">
                 <fa-icon [icon]="faCircleNotch" [spin]="true" />
-                <span jhiTranslate="artemisApp.editor.loadingFiles">Loading file</span>
+                <span jhiTranslate="artemisApp.editor.loadingFiles"></span>
             </div>
         }
     </div>

@@ -2,12 +2,12 @@
     @if (invalidTestCases.length + missingTestCases.length + repeatedTestCases.length > 0) {
         <div id="instruction_analysis_test-case-issues" class="editable-instruction-container__status__item">
             <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="testCasesTooltipContent" />
-            <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues">Test case issues.</span>
+            <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues"></span>
         </div>
     } @else {
         <div id="instruction_analysis_test-case-ok" class="editable-instruction-container__status__item">
             <fa-icon [icon]="faCheckCircle" class="text-success me-1" />
-            <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok">Test cases ok.</span>
+            <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok"></span>
         </div>
     }
     <ng-template #testCasesTooltipContent>

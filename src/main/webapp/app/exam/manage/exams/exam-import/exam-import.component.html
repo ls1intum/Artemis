@@ -12,10 +12,10 @@
     @if (!exam) {
         <div class="modal-body">
             <div class="form-group form-inline">
-                <span jhiTranslate="artemisApp.examManagement.import.search">Search for exercise</span>:
+                <span jhiTranslate="artemisApp.examManagement.import.search"></span>:
                 <input class="form-control ms-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
                 @if (loading) {
-                    <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading">Loading...</span>
+                    <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
                 }
             </div>
             <table class="table table-striped flex">
@@ -26,15 +26,15 @@
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="TITLE" class="col-4">
-                            <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
+                            <span jhiTranslate="artemisApp.exercise.import.table.title"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="COURSE_TITLE" class="col-4">
-                            <span jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
+                            <span jhiTranslate="artemisApp.exercise.import.table.course"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="EXAM_MODE" class="col-4">
-                            <span jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</span>
+                            <span jhiTranslate="artemisApp.examManagement.testExam.examMode"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th class="col-1"></th>
@@ -82,14 +82,10 @@
         <div class="modal-body">
             <div class="form-group form-inline">
                 @if (!isImportingExercises) {
-                    <p jhiTranslate="artemisApp.examManagement.exerciseGroup.selectExerciseGroupExplanation">
-                        Select the individual exercises, which should be imported alongside the exercise groups, by clicking on it
-                    </p>
+                    <p jhiTranslate="artemisApp.examManagement.exerciseGroup.selectExerciseGroupExplanation"></p>
                 }
                 @if (isImportingExercises) {
-                    <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.isImporting">
-                        The import of the exercise groups and the exercises is currently done on the server. This may take some time
-                    </p>
+                    <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.isImporting"></p>
                 }
             </div>
             <jhi-exam-exercise-import [exam]="exam!" [importInSameCourse]="isImportInSameCourse" />

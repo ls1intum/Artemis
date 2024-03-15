@@ -2,7 +2,7 @@
     @if (!loadingResults) {
         <div class="f-flex flex-column">
             <div>
-                <span class="me-1" jhiTranslate="artemisApp.participation.templateParticipation">Template</span>
+                <span class="me-1" jhiTranslate="artemisApp.participation.templateParticipation"></span>
                 @if (programmingExercise.templateParticipation) {
                     <jhi-updating-result
                         [exercise]="programmingExercise"
@@ -13,7 +13,7 @@
                 }
             </div>
             <div>
-                <span class="me-1" jhiTranslate="artemisApp.participation.solutionParticipation">Solution</span>
+                <span class="me-1" jhiTranslate="artemisApp.participation.solutionParticipation"></span>
                 @if (programmingExercise.solutionParticipation) {
                     <jhi-updating-result
                         [exercise]="programmingExercise"
@@ -35,7 +35,7 @@
     >
         <span>
             <fa-icon [icon]="farPlayCircle" />
-            <span jhiTranslate="artemisApp.editor.submit">Submit</span>
+            <span jhiTranslate="artemisApp.editor.submit"></span>
         </span>
     </button>
 </div>

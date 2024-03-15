@@ -1,5 +1,5 @@
 <div style="padding-bottom: 60px">
-    <h3 id="build-agents-heading" jhiTranslate="artemisApp.buildAgents.title">Build Agents</h3>
+    <h3 id="build-agents-heading" jhiTranslate="artemisApp.buildAgents.title"></h3>
     <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"></div>
     <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildAgent" [allEntities]="buildAgents!">
         <ng-template let-settings="settings" let-controls="controls">
@@ -18,7 +18,7 @@
                 <ngx-datatable-column prop="name" [minWidth]="150" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.name"> Name </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.name"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('name')" />
                         </span>
                     </ng-template>
@@ -29,9 +29,7 @@
                 <ngx-datatable-column prop="maxNumberOfConcurrentBuildJobs" [minWidth]="150" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('maxNumberOfConcurrentBuildJobs')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs">
-                                Max # of concurrent build jobs
-                            </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('maxNumberOfConcurrentBuildJobs')" />
                         </span>
                     </ng-template>
@@ -42,7 +40,7 @@
                 <ngx-datatable-column prop="numberOfCurrentBuildJobs" [minWidth]="150" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('numberOfCurrentBuildJobs')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.numberOfCurrentBuildJobs"> # of current build jobs </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.numberOfCurrentBuildJobs"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('numberOfCurrentBuildJobs')" />
                         </span>
                     </ng-template>
@@ -53,7 +51,7 @@
                 <ngx-datatable-column prop="runningBuildJobsIds" [minWidth]="150" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('runningBuildJobsIds')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"> Running build jobs </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('runningBuildJobsIds')" />
                         </span>
                     </ng-template>
@@ -64,7 +62,7 @@
                 <ngx-datatable-column prop="status" [minWidth]="150" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('status')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.status"> Status </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.status"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('status')" />
                         </span>
                     </ng-template>
@@ -77,7 +75,7 @@
     </jhi-data-table>
 </div>
 <div style="padding-bottom: 60px">
-    <h3 id="build-agents-recent-builds-heading" jhiTranslate="artemisApp.buildAgents.recentBuildJobs">"Recent Build Jobs"</h3>
+    <h3 id="build-agents-recent-builds-heading" jhiTranslate="artemisApp.buildAgents.recentBuildJobs"></h3>
     @for (agent of buildAgents; track agent.id) {
         <h5 id="build-agent-recent-builds-heading" style="padding-top: 30px">{{ agent.name }}</h5>
         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"></div>
@@ -112,7 +110,7 @@
                     <ngx-datatable-column prop="name" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.name"> Name </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.name"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('name')" />
                             </span>
                         </ng-template>
@@ -130,7 +128,7 @@
                     <ngx-datatable-column prop="status" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('status')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.status"> Status </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.status"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('status')" />
                             </span>
                         </ng-template>
@@ -148,7 +146,7 @@
                     <ngx-datatable-column prop="participationId" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participationId')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.participationId"> Participation ID </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.participationId"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('participationId')" />
                             </span>
                         </ng-template>
@@ -159,7 +157,7 @@
                     <ngx-datatable-column prop="repositoryInfo.repositoryName" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryName')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.repositoryName"> Repository Name </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.repositoryName"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('repositoryName')" />
                             </span>
                         </ng-template>
@@ -170,7 +168,7 @@
                     <ngx-datatable-column prop="repositoryInfo.repositoryType" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryType')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.repositoryType"> Repository Type </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.repositoryType"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('repositoryType')" />
                             </span>
                         </ng-template>
@@ -181,7 +179,7 @@
                     <ngx-datatable-column prop="buildConfig.commitHash" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('commitHash')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.commitHash"> Commit Hash </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.commitHash"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('commitHash')" />
                             </span>
                         </ng-template>
@@ -192,7 +190,7 @@
                     <ngx-datatable-column prop="jobTimingInfo.submissionDate" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.submissionDate"> Submission Date </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.submissionDate"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('submissionDate')" />
                             </span>
                         </ng-template>
@@ -203,7 +201,7 @@
                     <ngx-datatable-column prop="jobTimingInfo.buildStartDate" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildStartDate')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.buildStartDate"> Build Start Date </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.buildStartDate"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('buildStartDate')" />
                             </span>
                         </ng-template>
@@ -214,7 +212,7 @@
                     <ngx-datatable-column prop="courseId" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('courseId')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.courseId"> Course ID </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('courseId')" />
                             </span>
                         </ng-template>
@@ -225,7 +223,7 @@
                     <ngx-datatable-column prop="priority" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('priority')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.priority"> Priority </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.priority"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('priority')" />
                             </span>
                         </ng-template>
@@ -236,9 +234,7 @@
                     <ngx-datatable-column prop="jobTimingInfo.buildCompletionDate" [minWidth]="170">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildCompletionDate')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.buildCompletionDate">
-                                    Build Completion Date
-                                </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.buildCompletionDate"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('buildCompletionDate')" />
                             </span>
                         </ng-template>

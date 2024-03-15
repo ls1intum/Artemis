@@ -7,7 +7,7 @@
     </div>
     <div class="modal-body">
         <div class="form-group">
-            <p class="intro-text" jhiTranslate="artemisApp.importUsers.introText">This dialog can be used to import users.</p>
+            <p class="intro-text" jhiTranslate="artemisApp.importUsers.introText"></p>
             <p class="intro-text" jhiTranslate="artemisApp.importUsers.dialogText"></p>
             <p class="intro-text" jhiTranslate="artemisApp.importUsers.csvExampleText"></p>
         </div>
@@ -72,7 +72,7 @@
         <div class="form-group">
             <div class="d-flex align-items-end">
                 <div>
-                    <label for="importCSV" class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.csvFile.label">Select .csv file</label>
+                    <label for="importCSV" class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.csvFile.label"></label>
                     <jhi-help-icon text="artemisApp.importUsers.csvFile.tooltip" class="me-1" />
                 </div>
                 @if (isParsing) {
@@ -104,7 +104,7 @@
         @if (usersToImport && usersToImport.length > 0 && !examUserMode) {
             <div class="form-group mt-4">
                 <div>
-                    <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"> Users for import</label>
+                    <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
                     <jhi-help-icon text="artemisApp.importUsers.usersForImport.tooltip" class="me-1" />
                 </div>
                 <table class="table table-striped table-sm header-fixed mt-2">
@@ -136,7 +136,7 @@
         @if (examUsersToImport && examUsersToImport.length > 0 && examUserMode) {
             <div class="form-group mt-4 table-responsive">
                 <div>
-                    <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"> Users for import</label>
+                    <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
                     <jhi-help-icon text="artemisApp.importUsers.usersForImport.tooltip" class="me-1" />
                 </div>
                 <table class="table table-striped table-sm header-fixed mt-2">
@@ -216,17 +216,17 @@
         <div class="flex-grow-1 d-flex justify-content-end">
             @if (!hasImported) {
                 <button type="button" class="btn btn-default cancel me-2" data-dismiss="modal" (click)="clear()">
-                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
                 <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="importUsers()">
                     <fa-icon [icon]="faUpload" class="me-2" />
-                    <span jhiTranslate="entity.action.to-import">Import</span>
+                    <span jhiTranslate="entity.action.to-import"></span>
                     <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch" />
                 </button>
             } @else {
                 <button class="btn btn-success" id="finish-button" (click)="onFinish()">
                     <fa-icon [icon]="faCheck" class="me-2" />
-                    <span jhiTranslate="entity.action.finish">Finish</span>
+                    <span jhiTranslate="entity.action.finish"></span>
                 </button>
             }
         </div>

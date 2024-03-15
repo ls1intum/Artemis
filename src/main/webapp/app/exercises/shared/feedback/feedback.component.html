@@ -136,7 +136,7 @@
             </div>
         } @else {
             @if (buildLogs?.length) {
-                <h4 jhiTranslate="artemisApp.result.buildError">Build Error:</h4>
+                <h4 jhiTranslate="artemisApp.result.buildError"></h4>
                 <dl class="buildoutput dl-horizontal">
                     @for (logEntry of buildLogs; track logEntry; let i = $index) {
                         <!--Don't show the timestamp again if it is the same as the last entry's.-->
@@ -155,12 +155,12 @@
                 </dl>
             } @else {
                 @if (!isExamReviewPage) {
-                    <h4 jhiTranslate="artemisApp.result.noResultDetails">No result details available</h4>
+                    <h4 jhiTranslate="artemisApp.result.noResultDetails"></h4>
                 } @else {
-                    <span jhiTranslate="artemisApp.result.noResultDetails">No result details available</span>
+                    <span jhiTranslate="artemisApp.result.noResultDetails"></span>
                 }
                 @if (isOnlyCompilationTested) {
-                    <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested">Your code compiled successfully. There are currently no tests visible.</p>
+                    <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested"></p>
                 }
             }
         }
@@ -171,7 +171,7 @@
     <!-- Build logs container -->
     <ng-template #buildLogsContainer>
         @if (buildLogs?.length) {
-            <h4 jhiTranslate="artemisApp.result.buildError">Build Error:</h4>
+            <h4 jhiTranslate="artemisApp.result.buildError"></h4>
             <dl class="buildoutput dl-horizontal">
                 @for (logEntry of buildLogs; track logEntry; let i = $index) {
                     <!--Don't show the timestamp again if it is the same as the last entry's.-->
@@ -191,12 +191,12 @@
         } @else {
             <!-- No content fallback -->
             @if (!isExamReviewPage) {
-                <h4 jhiTranslate="artemisApp.result.noResultDetails">No result details available</h4>
+                <h4 jhiTranslate="artemisApp.result.noResultDetails"></h4>
             } @else {
-                <span jhiTranslate="artemisApp.result.noResultDetails">No result details available</span>
+                <span jhiTranslate="artemisApp.result.noResultDetails"></span>
             }
             @if (isOnlyCompilationTested) {
-                <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested">Your code compiled successfully. There are currently no tests visible.</p>
+                <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested"></p>
             }
         }
     </ng-template>

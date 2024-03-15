@@ -14,14 +14,14 @@
                 <div class="d-flex">
                     <div class="flex-grow-1">
                         <div class="d-flex align-items-center">
-                            <h2 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel">Create or edit a Lecture</h2>
+                            <h2 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel"></h2>
                             <jhi-documentation-button [type]="documentationType" />
                         </div>
                     </div>
                     <div class="flex-grow-1 ms-3">
                         <div class="guided-mode-button">
                             <button type="button" id="guided.mode" class="btn btn-primary" (click)="toggleWizardMode()">
-                                <fa-icon [icon]="faHandShakeAngle" />&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToGuidedModeLabel">Switch to guided mode</span>
+                                <fa-icon [icon]="faHandShakeAngle" />&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToGuidedModeLabel"></span>
                             </button>
                         </div>
                     </div>
@@ -29,7 +29,7 @@
                 <div>
                     <jhi-lecture-title-channel-name [lecture]="lecture" />
                     <div class="form-group" id="field_description">
-                        <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
+                        <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description"></label>
                         <jhi-markdown-editor
                             class="markdown-editor"
                             [domainCommands]="domainCommandsDescription"
@@ -68,7 +68,7 @@
                     </div>
                     @if (lecture.course) {
                         <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course">Course</label>
+                            <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course"></label>
                             <div class="d-flex">
                                 <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="lecture.course.title" />
                             </div>
@@ -121,10 +121,10 @@
                 <div class="d-flex">
                     <div class="flex-grow-1">
                         <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-                            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                         </button>
                         <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnitMode" class="btn btn-primary">
-                            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                         </button>
                     </div>
                     @if (processUnitMode) {
@@ -137,7 +137,7 @@
                                     class="btn btn-success"
                                     (click)="proceedToUnitSplit()"
                                 >
-                                    <fa-icon [icon]="faPuzzleProcess" />&nbsp;<span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.processUnits">Process Units</span>
+                                    <fa-icon [icon]="faPuzzleProcess" />&nbsp;<span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.processUnits"></span>
                                     @if (isProcessing) {
                                         <span class="spinner-border spinner-border-sm"></span>
                                     }

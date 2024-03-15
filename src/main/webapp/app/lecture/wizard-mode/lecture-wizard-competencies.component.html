@@ -1,5 +1,5 @@
 <div class="form-group">
-    <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.competenciesStepTitle">Competencies</span></h1>
+    <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.competenciesStepTitle"></span></h1>
     <p>
         <span jhiTranslate="artemisApp.lecture.wizardMode.steps.competenciesStepMessage"
             >Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to competencies.</span
@@ -39,11 +39,11 @@
                                         <div class="flex-btn-group-container">
                                             <button type="submit" (click)="startEditCompetency(competency)" class="btn btn-primary btn-sm me-1">
                                                 <fa-icon [icon]="faPencilAlt" />
-                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                             </button>
                                             <button type="submit" (click)="startConnectingCompetency(competency)" class="btn btn-primary btn-sm me-1">
                                                 <fa-icon [icon]="faLink" />
-                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.connect">Connect</span>
+                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.connect"></span>
                                             </button>
                                             @if (lecture.isAtLeastInstructor) {
                                                 <button

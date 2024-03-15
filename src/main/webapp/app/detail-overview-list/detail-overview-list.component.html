@@ -66,13 +66,13 @@
                                     @if (detail.data.showOpenLink) {
                                         <a [href]="detail.data.participation?.repositoryUri!" target="”_blank”" class="btn btn-sm btn-info ms-2">
                                             <fa-icon [icon]="faArrowUpRightFromSquare" />
-                                            <span jhiTranslate="artemisApp.programmingExercise.openRepository">Open Repository</span>
+                                            <span jhiTranslate="artemisApp.programmingExercise.openRepository"></span>
                                         </a>
                                     }
                                     @if (isLocalVC) {
                                         <a [href]="routerLink + '/repository/' + detail.data.type" class="btn btn-sm btn-primary ms-2">
                                             <fa-icon [icon]="faCodeBranch" />
-                                            <span jhiTranslate="artemisApp.exerciseActions.openRepository">Open Repository</span>
+                                            <span jhiTranslate="artemisApp.exerciseActions.openRepository"></span>
                                         </a>
                                     }
                                 </div>
@@ -98,7 +98,7 @@
                                             @if (detail.data.showOpenLink) {
                                                 <a [href]="auxiliaryRepository.repositoryUri" target="”_blank”" class="btn btn-sm btn-info ms-2">
                                                     <fa-icon [icon]="faArrowUpRightFromSquare" />
-                                                    <span jhiTranslate="artemisApp.programmingExercise.openRepository">Open Repository</span>
+                                                    <span jhiTranslate="artemisApp.programmingExercise.openRepository"></span>
                                                 </a>
                                             }
                                             <div class="auxiliaryRepositoryDescription">
@@ -106,7 +106,7 @@
                                                     <span>Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }} </span>
                                                 } @else {
                                                     <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip" />
-                                                    <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
+                                                    <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet"></span>
                                                 }
                                                 <ng-template #noCheckoutDirectorySetTooltip>
                                                     <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySetTooltip"></span>
@@ -151,10 +151,10 @@
                                         <a [routerLink]="detail.data.submissionRouterLink" [queryParams]="{ isTmpOrSolutionProgrParticipation: true }" class="ms-2">
                                             @switch (detail.data.type) {
                                                 @case (ProgrammingExerciseParticipationType.TEMPLATE) {
-                                                    <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions">Show Template Submissions</span>
+                                                    <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions"></span>
                                                 }
                                                 @case (ProgrammingExerciseParticipationType.SOLUTION) {
-                                                    <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Solution Submissions</span>
+                                                    <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions"></span>
                                                 }
                                             }
                                         </a>
@@ -221,12 +221,12 @@
                             <table class="table table-striped">
                                 <thead>
                                     <tr>
-                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.numberOfBuilds"># Builds</th>
-                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.agentSetupDuration">Docker Setup</th>
-                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.testDuration">Test Execution</th>
-                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.scaDuration">Static Code Analysis</th>
-                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.totalJobDuration">Total Job Duration</th>
-                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.dependenciesDownloadedCount">Number of downloaded dependencies</th>
+                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.numberOfBuilds"></th>
+                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.agentSetupDuration"></th>
+                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.testDuration"></th>
+                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.scaDuration"></th>
+                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.totalJobDuration"></th>
+                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.dependenciesDownloadedCount"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -271,9 +271,7 @@
                                     (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"
                                     class="btn btn-primary m-2"
                                     jhiTranslate="entity.action.export"
-                                >
-                                    Export
-                                </button>
+                                ></button>
                             }
                             @if (!isEmpty(detail.data.umlModel?.elements) && detail.data.diagramType && detail.data.umlModel) {
                                 <jhi-modeling-editor

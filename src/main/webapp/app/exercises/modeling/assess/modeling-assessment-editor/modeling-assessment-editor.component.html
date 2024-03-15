@@ -24,10 +24,7 @@
 >
     @if (submission) {
         @if (hasAutomaticFeedback && isAssessor && !result?.completionDate) {
-            <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable">
-                Congratulations! Parts of this model could already be assessed automatically. Please review the automatic assessment and complete the assessment afterwards. By
-                submitting the assessment you also confirm the automatic assessment. Please be aware that you are responsible for the whole assessment.
-            </div>
+            <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
         }
         <div class="editor-container flex-grow-1">
             @if (submission) {
@@ -61,17 +58,17 @@
             />
             @if ((hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate) {
                 <div class="col-md-6">
-                    <h4 jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.title">Highlighting Color(s)</h4>
+                    <h4 jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.title"></h4>
                     @if (hasAutomaticFeedback) {
                         <div class="row">
                             <div class="mx-3 mb-2 highlighting-item color-cyan"></div>
-                            <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.automaticAssessment">automatic assessment</span>
+                            <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.automaticAssessment"></span>
                         </div>
                     }
                     @if (highlightMissingFeedback) {
                         <div class="row">
                             <div class="mx-3 mb-2 highlighting-item color-red"></div>
-                            <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.missingAssessment">missing assessment</span>
+                            <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.missingAssessment"></span>
                         </div>
                     }
                 </div>
@@ -80,9 +77,9 @@
     } @else {
         @if (!loadingInitialSubmission) {
             <div class="alert alert-warning text-center mt-4" role="alert">
-                <p jhiTranslate="artemisApp.modelingAssessment.notFound">We haven't found any new submission without an assessment, please go back.</p>
+                <p jhiTranslate="artemisApp.modelingAssessment.notFound"></p>
                 <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
                 </a>
             </div>
         }
@@ -90,10 +87,7 @@
 </jhi-assessment-layout>
 <ng-template #assessment>
     @if (hasAutomaticFeedback && isAssessor && !result?.completionDate) {
-        <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable">
-            Congratulations! Parts of this model could already be assessed automatically. Please review the automatic assessment and complete the assessment afterwards. By
-            submitting the assessment you also confirm the automatic assessment. Please be aware that you are responsible for the whole assessment.
-        </div>
+        <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
     }
     <div class="editor-container flex-grow-1">
         @if (submission) {
@@ -127,17 +121,17 @@
         />
         @if ((hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate) {
             <div class="col-md-6">
-                <h4 jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.title">Highlighting Color(s)</h4>
+                <h4 jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.title"></h4>
                 @if (hasAutomaticFeedback) {
                     <div class="row">
                         <div class="mx-3 mb-2 highlighting-item color-cyan"></div>
-                        <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.automaticAssessment">automatic assessment</span>
+                        <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.automaticAssessment"></span>
                     </div>
                 }
                 @if (highlightMissingFeedback) {
                     <div class="row">
                         <div class="mx-3 mb-2 highlighting-item color-red"></div>
-                        <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.missingAssessment">missing assessment</span>
+                        <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.missingAssessment"></span>
                     </div>
                 }
             </div>

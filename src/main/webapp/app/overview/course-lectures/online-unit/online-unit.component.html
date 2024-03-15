@@ -18,7 +18,7 @@
             <div class="col-auto d-flex align-items-center gap-3 pe-2">
                 <button class="btn btn-sm btn-primary" (click)="openLink($event)" [ngbTooltip]="domainName">
                     <fa-icon [icon]="faUpRightFromSquare" />
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.onlineUnit.doOpen">Open link</span>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.onlineUnit.doOpen"></span>
                 </button>
                 @if (!isPresentationMode && onlineUnit.visibleToStudents) {
                     <div class="col-auto my-auto">

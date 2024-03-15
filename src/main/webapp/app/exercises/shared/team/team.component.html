@@ -16,7 +16,7 @@
                             <a [href]="'mailto:' + team.owner.email">{{ team.owner?.name }}</a>
                         }
                         @if (!team.owner) {
-                            <span class="font-weight-bold" jhiTranslate="artemisApp.team.detail.noOwner">No tutor</span>
+                            <span class="font-weight-bold" jhiTranslate="artemisApp.team.detail.noOwner"></span>
                         }
                     </span>
                     <span class="d-inline-block ms-2">
@@ -70,7 +70,7 @@
                 <ngx-datatable-column prop="login" [minWidth]="150" [width]="250" [maxWidth]="250">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.detail.students.login"> Login </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.detail.students.login"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('login')" />
                         </span>
                     </ng-template>
@@ -81,7 +81,7 @@
                 <ngx-datatable-column prop="name" [minWidth]="150" [width]="250" [maxWidth]="250">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.detail.students.name"> Name </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.detail.students.name"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('name')" />
                         </span>
                     </ng-template>
@@ -92,7 +92,7 @@
                 <ngx-datatable-column prop="email" [minWidth]="150" [width]="250">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.detail.students.email"> Email </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.detail.students.email"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('email')" />
                         </span>
                     </ng-template>

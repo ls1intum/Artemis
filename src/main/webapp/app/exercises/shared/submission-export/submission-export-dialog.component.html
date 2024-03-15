@@ -1,7 +1,7 @@
 @if (!isLoading) {
     <form name="exportForm" role="form" (ngSubmit)="exportSubmissions(exercise.id!)" #exportForm="ngForm">
         <div class="modal-header">
-            <h4 class="modal-title" jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.title">Confirm export operation</h4>
+            <h4 class="modal-title" jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.title"></h4>
             <button type="button" class="btn-close" data-dismiss="modal" (click)="clear()"></button>
         </div>
         <div class="modal-body">
@@ -33,7 +33,7 @@
                 <div class="checkbox">
                     <label class="control-label">
                         <input class="form-check-input" type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.submissionExportOptions.filterLateSubmissions" />
-                        <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissions">Filter late submissions</strong>
+                        <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissions"></strong>
                     </label>
                 </div>
                 <div class="form-group">
@@ -52,7 +52,7 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
-                <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
             <button
                 type="submit"
@@ -62,7 +62,7 @@
                 @if (this.exportInProgress) {
                     <span class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true" /></span>
                 }
-                <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
+                <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export"></span>
             </button>
         </div>
     </form>

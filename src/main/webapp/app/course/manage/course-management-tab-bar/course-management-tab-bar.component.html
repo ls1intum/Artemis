@@ -4,39 +4,39 @@
         <div class="tab-bar">
             <a class="tab-link" [routerLink]="['/course-management', course.id, 'exams']" routerLinkActive="active">
                 <fa-icon [icon]="faGraduationCap" />
-                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</span>
+                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exams"></span>
             </a>
             <a class="tab-link" [routerLink]="['/course-management', course.id, 'exercises']" routerLinkActive="active">
                 <fa-icon [icon]="faListAlt" />
-                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>
+                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exercises"></span>
             </a>
             @if (course.isAtLeastEditor) {
                 <a class="tab-link" [routerLink]="['/course-management', course.id, 'lectures']" id="lectures" routerLinkActive="active">
                     <fa-icon [icon]="faFilePdf" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
+                    <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.lectures"></span>
                 </a>
             }
             <a class="tab-link" [routerLink]="['/course-management', course.id, 'course-statistics']" routerLinkActive="active">
                 <fa-icon [icon]="faChartBar" />
-                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
+                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.statistics"></span>
             </a>
             @if (isCommunicationEnabled) {
                 <a class="tab-link" [routerLink]="['/courses', course.id, 'discussion']" routerLinkActive="active">
                     <fa-icon [icon]="faComment" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.metis.communication.label">Communication</span>
+                    <span class="tab-link-text" jhiTranslate="artemisApp.metis.communication.label"></span>
                     <fa-icon [icon]="faArrowUpRightFromSquare" />
                 </a>
             }
             @if (course.isAtLeastInstructor && irisEnabled) {
                 <a class="tab-link" [routerLink]="['/course-management', course.id, 'iris-settings']" id="iris-settings" routerLinkActive="active">
                     <fa-icon [icon]="faRobot" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.iris.settings.button.course.title">Iris</span>
+                    <span class="tab-link-text" jhiTranslate="artemisApp.iris.settings.button.course.title"></span>
                 </a>
             }
             @if (isMessagingOrCommunicationEnabled) {
                 <a class="tab-link" [routerLink]="['/courses', course.id, 'messages']" routerLinkActive="active">
                     <fa-icon [icon]="faComments" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</span>
+                    <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.messages"></span>
                     <fa-icon [icon]="faArrowUpRightFromSquare" />
                 </a>
             }
@@ -55,7 +55,7 @@
             @if (course.isAtLeastInstructor) {
                 <a class="tab-link" [routerLink]="['/course-management', course.id, 'competency-management']" routerLinkActive="active">
                     <fa-icon [icon]="faFlag" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.competency.competencyButton">Competencies</span>
+                    <span class="tab-link-text" jhiTranslate="artemisApp.competency.competencyButton"></span>
                 </a>
             }
             @if (course.isAtLeastInstructor) {
@@ -66,29 +66,29 @@
                     routerLinkActive="active"
                 >
                     <fa-icon [icon]="faNetworkWired" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.learningPath.learningPathButton">Learning Paths</span>
+                    <span class="tab-link-text" jhiTranslate="artemisApp.learningPath.learningPathButton"></span>
                 </a>
             }
             <a class="tab-link" [routerLink]="['/course-management', course.id, 'assessment-dashboard']" routerLinkActive="active" [class.active]="shouldHighlightAssessmentLink()">
                 <fa-icon [icon]="faUserCheck" />
-                <span class="tab-link-text" jhiTranslate="entity.action.assessmentDashboard">Assessment</span>
+                <span class="tab-link-text" jhiTranslate="entity.action.assessmentDashboard"></span>
             </a>
             @if (course.isAtLeastInstructor) {
                 <a class="tab-link" [routerLink]="['/course-management', course.id, 'scores']" routerLinkActive="active">
                     <fa-icon [icon]="faTable" />
-                    <span class="tab-link-text" jhiTranslate="entity.action.scores">Scores</span>
+                    <span class="tab-link-text" jhiTranslate="entity.action.scores"></span>
                 </a>
             }
             @if (course.isAtLeastInstructor && localCIActive) {
                 <a class="tab-link" [routerLink]="['/course-management', course.id, 'build-queue']" routerLinkActive="active">
                     <fa-icon [icon]="faList" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.buildQueue.title">Build Queue</span>
+                    <span class="tab-link-text" jhiTranslate="artemisApp.buildQueue.title"></span>
                 </a>
             }
             @if (ltiEnabled && course.onlineCourse && course.isAtLeastInstructor) {
                 <a class="tab-link" [routerLink]="['/course-management', course.id, 'lti-configuration']" id="lti-settings" routerLinkActive="active">
                     <fa-icon [icon]="faPuzzlePiece" />
-                    <span class="tab-link-text" jhiTranslate="global.menu.admin.lti">LTI Configuration</span>
+                    <span class="tab-link-text" jhiTranslate="global.menu.admin.lti"></span>
                 </a>
             }
             @if (shouldShowControlButtons()) {
@@ -96,7 +96,7 @@
                     @if (course.isAtLeastInstructor) {
                         <button id="edit-course" [routerLink]="['/course-management', course.id, 'edit']" class="btn btn-warning btn-md" routerLinkActive="active">
                             <fa-icon [icon]="faWrench" />
-                            <span class="d-none d-xl-inline" jhiTranslate="entity.action.edit">Edit</span>
+                            <span class="d-none d-xl-inline" jhiTranslate="entity.action.edit"></span>
                         </button>
                     }
                     @if (course.isAtLeastInstructor) {

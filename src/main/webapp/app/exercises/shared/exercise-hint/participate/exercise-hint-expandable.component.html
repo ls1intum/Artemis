@@ -29,8 +29,7 @@
                 <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
             </div>
         </div>
-    }
-    @if (!isLoading) {
+    } @else {
         <div>
             @if (exerciseHint?.content) {
                 <div class="p-3 mb-2 border border-1 border-secondary bg-light" [innerHTML]="exerciseHint!.content | htmlForMarkdown"></div>

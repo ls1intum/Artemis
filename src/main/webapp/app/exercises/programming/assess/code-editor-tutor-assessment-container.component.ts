@@ -193,8 +193,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         complete: () => (this.loadingParticipation = false),
                     }),
                     // The following is needed for highlighting changed code lines
-                    switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!)),
-                    tap((programmingExercise) => (this.templateParticipation = programmingExercise.body!.templateParticipation!)),
+                    switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!, false, true)),
+                    tap((response) => {
+                        const programmingExercise = response.body!;
+                        this.templateParticipation = programmingExercise.templateParticipation!;
+                        this.exercise.gradingCriteria = programmingExercise.gradingCriteria;
+                    }),
                     switchMap(() => {
                         // Get all files with content from template repository
                         this.domainService.setDomain([DomainType.PARTICIPATION, this.templateParticipation]);

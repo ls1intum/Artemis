@@ -104,7 +104,7 @@
     @if (displayDownloadArchiveButton) {
         <button [disabled]="isBeingArchived" type="button" [attr.data-mode]="archiveMode" class="btn btn-primary" (click)="downloadArchive()">
             <fa-icon [icon]="faDownload" />&nbsp;
-            <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive">Download Archive</span>
+            <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive"></span>
         </button>
     }
     @if (canCleanup() && archiveMode === 'Course') {

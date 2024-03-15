@@ -4,8 +4,7 @@
             <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
         </div>
     </div>
-}
-@if (!isLoading) {
+} @else {
     <div class="container">
         <div class="row">
             <div class="col-12 mx-auto">
@@ -19,7 +18,7 @@
             <div class="col-sm-6 mx-auto text-end">
                 @if (hasCancelButton) {
                     <button type="button" (click)="cancelForm()" class="btn btn-default">
-                        <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                        <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                     </button>
                 }
                 @if (hasCreateExerciseButton) {

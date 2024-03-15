@@ -60,7 +60,7 @@
             </div>
             <div>
                 <button type="button" class="btn btn-secondary btn-sm" (click)="cancelFeedback()">
-                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
                 @if (feedback.type === MANUAL) {
                     <button
@@ -77,7 +77,7 @@
                     </button>
                 }
                 <button id="feedback-save" type="submit" [disabled]="feedback.credits === undefined" class="btn btn-primary btn-sm" (click)="updateFeedback()">
-                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                 </button>
             </div>
             @if (highlightDifferences) {
@@ -103,14 +103,14 @@
                     </h5>
                 </div>
                 <div class="col ps-0 pt-1">
-                    <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.tutorComment">Tutor Comment:</h6>
+                    <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.tutorComment"></h6>
                     <p [innerHTML]="buildFeedbackTextForCodeEditor(feedback)" class="mt-2"></p>
                 </div>
                 @if (!readOnly) {
                     <div class="col d-flex justify-content-end align-items-start pe-0">
                         <button type="submit" (click)="editFeedback(codeLine)" class="btn btn-primary btn-sm">
                             <fa-icon [icon]="faPencilAlt" />
-                            <span jhiTranslate="entity.action.edit">Edit</span>
+                            <span jhiTranslate="entity.action.edit"></span>
                         </button>
                     </div>
                 }

@@ -459,20 +459,17 @@ public class ProgrammingExerciseResource {
      *
      * @param exerciseId            the id of the programmingExercise to retrieve
      * @param withSubmissionResults get all submission results
+     * @param withGradingCriteria   also get the grading criteria for the exercise
      * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
      */
     @GetMapping(PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION)
     @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId,
-            @RequestParam(defaultValue = "false") boolean withSubmissionResults) {
+            @RequestParam(defaultValue = "false") boolean withSubmissionResults, @RequestParam(defaultValue = "false") boolean withGradingCriteria) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
-        ProgrammingExercise programmingExercise;
-        if (withSubmissionResults) {
-            programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesElseThrow(exerciseId);
-        }
-        else {
-            programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
-        }
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationSubmissionsAndAuxiliaryRepositoriesElseThrow(exerciseId,
+                withSubmissionResults, withGradingCriteria);
+
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
         programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);

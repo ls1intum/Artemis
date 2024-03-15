@@ -64,20 +64,20 @@ public class RepositoryAccessService {
             RepositoryActionType repositoryActionType) {
         boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isStudent = authorizationCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        boolean isTeachingAssistant = !isStudent && !isAtLeastEditor;
+        boolean isTeachingAssistant = authorizationCheckService.isTeachingAssistantInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isStudentParticipation = programmingParticipation instanceof StudentParticipation;
 
         // NOTE: the exerciseStartDate can be null, e.g. if no release and no start is defined for a course exercise
         @Nullable
         ZonedDateTime exerciseStartDate = programmingExercise.getParticipationStartDate();
 
-        // Error case 1: The user does not have permissions to access the participation or the submission for plagiarism comparison.
-        checkHasParticipationPermissionsOrCanAccessSubmissionForPlagiarismComparisonElseThrow(programmingParticipation, user, programmingExercise);
-
         // The user is allowed to access the repository in any way if they are at least an editor or if they are a teaching assistant and only want to read the repository.
         if (isAtLeastEditor || (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ)) {
             return;
         }
+
+        // Error case 1: The user does not have permissions to access the participation or the submission for plagiarism comparison.
+        checkHasParticipationPermissionsOrCanAccessSubmissionForPlagiarismComparisonElseThrow(programmingParticipation, user, programmingExercise);
 
         // Error case 2: The user's participation is locked.
         checkIsTryingToAccessLockedParticipation(programmingParticipation, programmingExercise, repositoryActionType);

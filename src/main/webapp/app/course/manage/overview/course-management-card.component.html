@@ -10,10 +10,10 @@
                     <div>{{ course.startDate | artemisDate: 'long-date' }} - {{ course.endDate | artemisDate: 'long-date' }}</div>
                 }
                 @if (course.startDate && !course.endDate) {
-                    <div><span jhiTranslate="artemisApp.course.startDate">Start Date</span>: {{ course.startDate | artemisDate: 'long-date' }}</div>
+                    <div><span jhiTranslate="artemisApp.course.startDate"></span>: {{ course.startDate | artemisDate: 'long-date' }}</div>
                 }
                 @if (!course.startDate && course.endDate) {
-                    <div><span jhiTranslate="artemisApp.course.endDate">End Date</span>: {{ course.endDate | artemisDate: 'long-date' }}</div>
+                    <div><span jhiTranslate="artemisApp.course.endDate"></span>: {{ course.endDate | artemisDate: 'long-date' }}</div>
                 }
             </div>
         </div>

@@ -9,16 +9,16 @@
     <div class="course-body-container">
         <div class="d-flex">
             <button (click)="childComponent.generateDefaultGradingScale()" class="btn btn-primary me-1 mb-1" type="button">
-                <span jhiTranslate="artemisApp.gradingSystem.defaultButton">Generate Default Grading Scale</span>
+                <span jhiTranslate="artemisApp.gradingSystem.defaultButton"></span>
             </button>
             <jhi-grading-system-info-modal />
             <div class="ms-auto">
                 <label class="btn btn-primary me-1 mb-1">
-                    <span jhiTranslate="artemisApp.gradingSystem.csv.importButton">Import (.csv)</span>
+                    <span jhiTranslate="artemisApp.gradingSystem.csv.importButton"></span>
                     <input type="file" accept=".json,.csv" style="display: none" (change)="childComponent.onCSVFileSelect($event)" />
                 </label>
                 <button (click)="childComponent.exportGradingStepsToCsv()" class="btn btn-primary mb-1" type="button">
-                    <span jhiTranslate="artemisApp.gradingSystem.csv.exportButton">Export (.csv)</span>
+                    <span jhiTranslate="artemisApp.gradingSystem.csv.exportButton"></span>
                 </button>
             </div>
         </div>
@@ -36,22 +36,22 @@
                 <input type="number" class="form-control" [(ngModel)]="childComponent.maxPoints" min="1" (change)="childComponent.onChangeMaxPoints(childComponent.maxPoints)" />
             </div>
             <div class="form-group">
-                <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.gradeType.title">Grade Type</span>
+                <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.gradeType.title"></span>
                 <select class="form-select" [(ngModel)]="childComponent.gradingScale.gradeType" (change)="childComponent.deleteGradeNames()" title="grade type">
-                    <option value="GRADE" jhiTranslate="artemisApp.gradingSystem.gradeType.grade">Grade</option>
-                    <option value="BONUS" jhiTranslate="artemisApp.gradingSystem.gradeType.bonus">Bonus</option>
+                    <option value="GRADE" jhiTranslate="artemisApp.gradingSystem.gradeType.grade"></option>
+                    <option value="BONUS" jhiTranslate="artemisApp.gradingSystem.gradeType.bonus"></option>
                 </select>
             </div>
             <div class="form-group">
-                <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.inclusivity.title">Inclusivity</span>
+                <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.inclusivity.title"></span>
                 <select class="form-select" [(ngModel)]="childComponent.lowerBoundInclusivity" (ngModelChange)="childComponent.setInclusivity()" title="inclusivity">
-                    <option [ngValue]="true" jhiTranslate="artemisApp.gradingSystem.inclusivity.lower">Lower Bound Inclusive</option>
-                    <option [ngValue]="false" jhiTranslate="artemisApp.gradingSystem.inclusivity.upper">Upper Bound Inclusive</option>
+                    <option [ngValue]="true" jhiTranslate="artemisApp.gradingSystem.inclusivity.lower"></option>
+                    <option [ngValue]="false" jhiTranslate="artemisApp.gradingSystem.inclusivity.upper"></option>
                 </select>
             </div>
             <div class="form-group">
                 @if (childComponent.gradingScale.gradeType === GradeType.GRADE) {
-                    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade">First Passing Grade</span>
+                    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade"></span>
                     <select class="form-select" title="first passing grade" [(ngModel)]="childComponent.firstPassingGrade">
                         @for (gradeStep of childComponent.gradeStepsWithNonemptyNames(); track gradeStep) {
                             <option [ngValue]="gradeStep.gradeName">

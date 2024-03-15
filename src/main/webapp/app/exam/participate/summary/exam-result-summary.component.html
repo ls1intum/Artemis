@@ -5,7 +5,7 @@
         </ng-container>
         <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
             <fa-icon [icon]="faPrint" />
-            <span jhiTranslate="artemisApp.exam.examSummary.exportPDF">Export PDF</span>
+            <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
         </button>
     </h2>
 </div>
@@ -70,9 +70,7 @@
                         }
                         @if (exampleSolutionPublished) {
                             @if (exerciseInfos[exercise.id!].displayExampleSolution) {
-                                <span class="alert alert-info p-1" jhiTranslate="artemisApp.exam.examSummary.youAreViewingTheExampleSolution">
-                                    You are viewing the example solution.
-                                </span>
+                                <span class="alert alert-info p-1" jhiTranslate="artemisApp.exam.examSummary.youAreViewingTheExampleSolution"></span>
                             }
                             @if (exercise.type !== QUIZ && exercise.type !== PROGRAMMING) {
                                 <button

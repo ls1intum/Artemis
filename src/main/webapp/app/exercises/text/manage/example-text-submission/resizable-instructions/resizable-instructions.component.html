@@ -5,27 +5,27 @@
         <span class="float-end"><fa-icon [icon]="faChevronRight" /></span>
         <h3 class="card-title">
             <fa-icon [icon]="farListAlt" />
-            <span jhiTranslate="artemisApp.textAssessment.instructions"> &nbsp; Instructions &nbsp; </span>
+            <span jhiTranslate="artemisApp.textAssessment.instructions"></span>
         </h3>
     </div>
     <div class="card-body">
         @if (problemStatement) {
             <div>
-                <h4 jhiTranslate="artemisApp.exercise.problemStatement">Problem statement</h4>
+                <h4 jhiTranslate="artemisApp.exercise.problemStatement"></h4>
                 <p class="markdown-preview" [innerHTML]="problemStatement | htmlForMarkdown"></p>
                 <hr />
             </div>
         }
         @if (sampleSolution) {
             <div>
-                <h4 jhiTranslate="artemisApp.exercise.exampleSolution">Example solution</h4>
+                <h4 jhiTranslate="artemisApp.exercise.exampleSolution"></h4>
                 <p class="markdown-preview" [innerHTML]="sampleSolution | htmlForMarkdown"></p>
                 <hr />
             </div>
         }
         @if (gradingInstructions) {
             <div>
-                <h4 jhiTranslate="artemisApp.exercise.assessmentInstructions">Assessment instructions</h4>
+                <h4 jhiTranslate="artemisApp.exercise.assessmentInstructions"></h4>
                 <p class="markdown-preview" [innerHTML]="gradingInstructions | htmlForMarkdown"></p>
             </div>
         }

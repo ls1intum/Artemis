@@ -70,9 +70,7 @@
                                     [disabled]="!headCompetencyId || !tailCompetencyId || !relationType || relationError"
                                 />
                                 @if (relationError) {
-                                    <span jhiTranslate="{{ errorMessage[relationError] }}" id="relation-not-valid-text" class="invalid-feedback">
-                                        You can not create this relation.
-                                    </span>
+                                    <span jhiTranslate="{{ errorMessage[relationError] }}" id="relation-not-valid-text" class="invalid-feedback"></span>
                                 }
                             </div>
                         </form>
