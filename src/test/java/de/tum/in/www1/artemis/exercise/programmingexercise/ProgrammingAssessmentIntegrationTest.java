@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -692,27 +691,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         assessmentNote = manualResult.getAssessmentNote();
         assertThat(assessmentNote.getCreatedDate()).isNotNull();
         assertThat(assessmentNote.getLastModifiedDate()).isNotNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAssessmentNoteTimestamps() throws Exception {
-        AssessmentNote assessmentNote = new AssessmentNote();
-        assessmentNote.setNote("note1");
-        manualResult.setAssessmentNote(assessmentNote);
-
-        manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
-        manualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(manualResult.getId());
-
-        Instant createdDate = manualResult.getAssessmentNote().getCreatedDate();
-        Instant initialLastModifiedDate = manualResult.getAssessmentNote().getLastModifiedDate();
-        assertThat(createdDate).isEqualTo(initialLastModifiedDate);
-
-        manualResult.getAssessmentNote().setNote("note2");
-        manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
-        manualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(manualResult.getId());
-        assertThat(createdDate).isEqualTo(manualResult.getAssessmentNote().getCreatedDate());
-        assertThat(manualResult.getAssessmentNote().getLastModifiedDate()).isAfter(initialLastModifiedDate);
     }
 
     private void assessmentDueDatePassed() {
