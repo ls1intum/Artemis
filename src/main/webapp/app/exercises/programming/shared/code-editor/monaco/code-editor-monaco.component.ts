@@ -43,7 +43,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.setBuildAnnotations(buildAnnotations);
     }
 
-    private annotationsArray: Array<Annotation> = [];
+    annotationsArray: Array<Annotation> = [];
 
     @Output()
     onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
@@ -98,13 +98,17 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
     }
 
+    getInlineFeedbackNode(line: number) {
+        return [...this.inlineFeedbackComponents].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
+    }
+
     private addLineWidgetWithFeedback(feedback: Feedback): void {
         const line = Feedback.getReferenceLine(feedback);
         if (!line) {
             throw new Error('No line found for feedback ' + feedback.id);
         }
         // TODO: Maybe there can be more than one feedback item per line.
-        const feedbackNode = [...this.inlineFeedbackComponents].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
+        const feedbackNode = this.getInlineFeedbackNode(line);
         // TODO: The lines don't align with monaco (off by 1)
         this.editor.addLineWidget(line + 1, 'feedback-' + feedback.id, feedbackNode);
     }
@@ -161,8 +165,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
         return JSON.parse(this.localStorageService.retrieve('annotations-' + this.sessionId) || '{}');
     }
 
-    private setBuildAnnotations(buildAnnotations: Array<Annotation>): void {
-        if (buildAnnotations.length > 0) {
+    setBuildAnnotations(buildAnnotations: Array<Annotation>): void {
+        if (buildAnnotations.length > 0 && this.selectedFile) {
             const sessionAnnotations = this.loadAnnotations();
             this.annotationsArray = buildAnnotations.map((a) => {
                 const hash = a.fileName + a.row + a.column + a.text;

@@ -5,6 +5,7 @@ import 'app/shared/util/string.extension';
 import 'app/core/config/dayjs';
 import 'jest-extended';
 import failOnConsole from 'jest-fail-on-console';
+import { TextDecoder, TextEncoder } from 'util';
 
 /*
  * In the Jest configuration, we only import the basic features of monaco (editor.api.js) instead
@@ -70,3 +71,5 @@ Object.defineProperty(window, 'matchMedia', {
         dispatchEvent: jest.fn(),
     })),
 });
+
+Object.assign(global, { TextDecoder, TextEncoder });
