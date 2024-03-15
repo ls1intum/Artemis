@@ -123,7 +123,6 @@ describe('BuildAgentsComponent', () => {
             numberOfCurrentBuildJobs: 2,
             runningBuildJobs: mockRunningJobs1,
             status: true,
-            runningBuildJobsIds: '',
         },
         {
             id: 2,
@@ -132,7 +131,6 @@ describe('BuildAgentsComponent', () => {
             numberOfCurrentBuildJobs: 2,
             runningBuildJobs: mockRunningJobs2,
             status: true,
-            runningBuildJobsIds: '',
         },
     ];
 
