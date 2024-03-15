@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -503,44 +502,22 @@ public class ParticipationResource {
         if (!updatedParticipations.isEmpty() && exercise instanceof ProgrammingExercise programmingExercise) {
             log.info("Updating scheduling for exercise {} (id {}) due to changed individual due dates.", exercise.getTitle(), exercise.getId());
             instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
+            List<StudentParticipation> participationsBeforeDueDate = participations.stream().filter(exerciseDateService::isBeforeDueDate).toList();
+            List<StudentParticipation> participationsAfterDueDate = participations.stream().filter(exerciseDateService::isAfterDueDate).toList();
 
+            if (exercise.isTeamMode()) {
+                participationService.initializeTeamParticipations(participationsBeforeDueDate);
+                participationService.initializeTeamParticipations(participationsAfterDueDate);
+            }
             // when changing the individual due date after the regular due date, the repository might already have been locked
-            unlockStudentRepositoryAndParticipation(programmingExercise, updatedParticipations);
+            participationsBeforeDueDate.forEach(
+                    participation -> programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation));
             // the new due date may be in the past, students should no longer be able to make any changes
-            lockStudentRepositoryAndParticipation(programmingExercise, updatedParticipations);
+            participationsAfterDueDate.forEach(participation -> programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise,
+                    (ProgrammingExerciseStudentParticipation) participation));
         }
 
         return ResponseEntity.ok().body(updatedParticipations);
-    }
-
-    private void unlockStudentRepositoryAndParticipation(ProgrammingExercise exercise, List<StudentParticipation> participations) {
-        if (!exercise.isTeamMode()) {
-            participations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(
-                    participation -> programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation));
-            return;
-        }
-        participations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(participation -> {
-            var studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-            if (studentParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
-                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
-            }
-            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation);
-        });
-    }
-
-    private void lockStudentRepositoryAndParticipation(ProgrammingExercise exercise, List<StudentParticipation> participations) {
-        if (!exercise.isTeamMode()) {
-            participations.stream().filter(exerciseDateService::isAfterDueDate).forEach(participation -> programmingExerciseParticipationService
-                    .lockStudentRepositoryAndParticipation(exercise, (ProgrammingExerciseStudentParticipation) participation));
-            return;
-        }
-        participations.stream().filter(exerciseDateService::isAfterDueDate).forEach(participation -> {
-            var studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-            if (studentParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
-                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
-            }
-            programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(exercise, (ProgrammingExerciseStudentParticipation) participation);
-        });
     }
 
     private Set<StudentParticipation> findParticipationWithLatestResults(Exercise exercise) {
