@@ -50,7 +50,7 @@ export class TeamSubmissionSyncComponent implements OnInit {
     }
 
     /**
-     * Receives updated submissions from other team members and emits them
+     * Receives updated submissions or submission patches from other team members and emits them
      */
     private setupReceiver() {
         this.teamSubmissionWebsocketService.receive(this.websocketTopic).subscribe({
@@ -66,7 +66,8 @@ export class TeamSubmissionSyncComponent implements OnInit {
     }
 
     /**
-     * Subscribes to the submission stream and sends out updated submissions based on those own changes via websockets
+     * Subscribes to the submission and submission patch streams and sends out
+     * updated submissions or submission patches based on those own changes via websockets
      */
     private setupSender() {
         this.submissionObservable?.pipe(throttleTime(this.throttleTime, undefined, { leading: true, trailing: true })).subscribe({
