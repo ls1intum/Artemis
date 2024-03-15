@@ -10,6 +10,34 @@
                 <span jhiTranslate="artemisApp.editor.building"></span>
             </span>
         }
+        @case (ResultTemplateStatus.FEEDBACK_GENERATION_FAILED) {
+            @if (result) {
+                <span [ngClass]="textColorClass" class="guided-tour result" [class.clickable-result]="false" id="result-score">
+                    <span [ngbTooltip]="resultTooltip | artemisTranslate">
+                        {{ resultString }}
+                    </span>
+                </span>
+            }
+        }
+        @case (ResultTemplateStatus.IS_GENERATING_FEEDBACK) {
+            @if (result) {
+                <span [ngClass]="textColorClass" class="guided-tour result" [class.clickable-result]="false" id="result-score">
+                    <span [ngbTooltip]="resultTooltip | artemisTranslate">
+                        {{ resultString }}
+                    </span>
+                </span>
+            }
+        }
+        @case (ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT) {
+            @if (result) {
+                <span [ngClass]="textColorClass" class="guided-tour result" [class.clickable-result]="false" id="result-score">
+                    <span [ngbTooltip]="resultTooltip | artemisTranslate">
+                        {{ resultString }}
+                    </span>
+                    <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }} </span>
+                </span>
+            }
+        }
         @case (ResultTemplateStatus.HAS_RESULT) {
             @if (result) {
                 @if (showIcon) {
@@ -30,7 +58,7 @@
                             <fa-icon id="code-issue-warnings-icon" class="result-orange" [icon]="faExclamationTriangle" />
                         </span>
                     }
-                    <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }}) </span>
+                    <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }} ) </span>
                 </span>
                 @if (hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING) {
                     <span>

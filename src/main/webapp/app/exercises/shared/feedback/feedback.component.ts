@@ -222,6 +222,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
                     if (
+                        this.result.assessmentType !== AssessmentType.AUTOMATIC_AI &&
                         this.exerciseType === ExerciseType.PROGRAMMING &&
                         this.result.participation &&
                         (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)

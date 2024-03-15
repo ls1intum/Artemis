@@ -19,7 +19,13 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { captureException } from '@sentry/angular-ivy';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { isStudentParticipation } from 'app/exercises/shared/result/result.utils';
+import {
+    isAIResultAndFailed,
+    isAIResultAndIsBeingProcessed,
+    isAIResultAndProcessed,
+    isAIResultAndTimedOut,
+    isStudentParticipation,
+} from 'app/exercises/shared/result/result.utils';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -123,10 +129,16 @@ export class ResultService implements IResultService {
         let buildAndTestMessage: string;
         if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildFailed');
+        } else if (isAIResultAndFailed(result)) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
+        } else if (isAIResultAndIsBeingProcessed(result)) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+        } else if (isAIResultAndTimedOut(result)) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+        } else if (isAIResultAndProcessed(result)) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
         } else if (!result.testCaseCount) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulNoTests');
-        } else if (result.testCaseCount == -1) {
-            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.feedbackSuccessful');
         } else {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulTests', {
                 numberOfTestsPassed: result.passedTestCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.passedTestCaseCount,
@@ -153,7 +165,7 @@ export class ResultService implements IResultService {
      */
     private getBaseResultStringProgrammingExercise(result: Result, relativeScore: number, points: number, buildAndTestMessage: string, short: boolean | undefined): string {
         if (short) {
-            if (result.testCaseCount == -1) {
+            if (Result.isAutomaticAIResult(result)) {
                 return buildAndTestMessage;
             }
             if (!result.testCaseCount) {
