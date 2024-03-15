@@ -29,11 +29,20 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Input()
     textChangedEmitDelay: number | undefined;
 
-    @Output()
-    textChanged = new EventEmitter<string>();
+    @Input()
+    set readOnly(value: boolean) {
+        this._readOnly = value;
+        if (this._editor) {
+            this._editor.updateOptions({
+                readOnly: value,
+            });
+        }
+    }
+
+    private _readOnly: boolean = false;
 
     @Output()
-    modelChanged = new EventEmitter<string>();
+    textChanged = new EventEmitter<string>();
 
     private textChangedEmitTimeout: NodeJS.Timeout | undefined = undefined;
 
@@ -43,6 +52,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             theme: 'vs-dark',
             glyphMargin: true,
             minimap: { enabled: false },
+            readOnly: this._readOnly,
         });
 
         const resizeObserver = new ResizeObserver(() => {
@@ -104,20 +114,19 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return this._editor.getModel()?.getLineCount() ?? 0;
     }
 
-    setReadOnly(readOnly: boolean, domReadOnly: boolean = false): void {
-        this._editor.updateOptions({
-            readOnly,
-            domReadOnly,
-        });
+    isReadOnly(): boolean {
+        return this._editor.getOption(monaco.editor.EditorOption.readOnly);
     }
 
-    changeModel(fileName: string, newFileContent: string) {
+    changeModel(fileName: string, newFileContent?: string) {
         const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
         const model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(newFileContent ?? '', undefined, uri);
         if (!this.models.includes(model)) {
             this.models.push(model);
         }
-        model.setValue(newFileContent);
+        if (newFileContent !== undefined) {
+            model.setValue(newFileContent);
+        }
 
         // Some elements remain when the model is changed - dispose of them.
         this.disposeWidgets();
@@ -175,24 +184,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
     }
 
-    addGlyphDecorations(decorations: GlyphDecoration[]): { clear(): void } {
-        return this.addDecorations(
-            decorations.map((d) => ({
-                range: new monaco.Range(d.lineNumber, 0, d.lineNumber, 0),
-                options: {
-                    glyphMarginClassName: d.glyphMarginClassName,
-                    glyphMargin: { position: monaco.editor.GlyphMarginLane.Right },
-                    glyphMarginHoverMessage: d.hoverMessage,
-                    marginClassName: 'monaco-error-line',
-                    isWholeLine: true,
-                    hoverMessage: d.hoverMessage,
-                    lineNumberHoverMessage: d.hoverMessage,
-                    stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
-                },
-            })),
-        );
-    }
-
     addLineWidget(lineNumber: number, id: string, domNode: HTMLElement) {
         const lineWidget = new MonacoEditorLineWidget(
             id,
@@ -215,9 +206,5 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
         this._editor.addOverlayWidget(lineWidget);
         this.editorLineWidgets.push(lineWidget);
-    }
-
-    private addDecorations(decorations: monaco.editor.IModelDeltaDecoration[]): monaco.editor.IEditorDecorationsCollection {
-        return this._editor?.createDecorationsCollection(decorations);
     }
 }

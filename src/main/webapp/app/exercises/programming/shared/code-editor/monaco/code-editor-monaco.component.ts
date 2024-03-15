@@ -1,17 +1,4 @@
-import {
-    AfterViewInit,
-    ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    Input,
-    OnChanges,
-    Output,
-    QueryList,
-    SimpleChanges,
-    ViewChild,
-    ViewChildren,
-    ViewEncapsulation,
-} from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -34,7 +21,7 @@ export type FileSession = { [fileName: string]: { code: string; cursor: EditorPo
     encapsulation: ViewEncapsulation.None,
     providers: [RepositoryFileService],
 })
-export class CodeEditorMonacoComponent implements AfterViewInit, OnChanges {
+export class CodeEditorMonacoComponent implements OnChanges {
     @ViewChild('editor', { static: true })
     editor: MonacoEditorComponent;
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
@@ -71,12 +58,6 @@ export class CodeEditorMonacoComponent implements AfterViewInit, OnChanges {
         protected localStorageService: LocalStorageService,
         private changeDetectorRef: ChangeDetectorRef,
     ) {}
-
-    ngAfterViewInit() {
-        if (this.isTutorAssessment) {
-            this.editor.setReadOnly(true, false);
-        }
-    }
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
         if (changes.selectedFile && this.selectedFile) {

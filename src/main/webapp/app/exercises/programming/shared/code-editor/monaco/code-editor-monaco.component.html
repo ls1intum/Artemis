@@ -16,6 +16,7 @@
         <jhi-monaco-editor
             (textChanged)="onFileTextChanged($event)"
             [hidden]="!selectedFile || isLoading"
+            [readOnly]="isTutorAssessment"
             [textChangedEmitDelay]="200"
             #editor
             id="monaco-editor"
