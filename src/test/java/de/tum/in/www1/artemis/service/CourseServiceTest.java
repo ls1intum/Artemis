@@ -5,7 +5,10 @@ import static org.mockito.Mockito.doReturn;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -17,20 +20,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "courseservice";
 
@@ -275,7 +282,6 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     @ValueSource(strings = { "student", "tutor", "editor", "instructor" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterLDAPUsersInCourse(String user) throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
         Course course1 = courseUtilService.createCourse();
         course1.setStudentGroupName("student");
         courseRepository.save(course1);
@@ -283,8 +289,6 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         // setup mocks
         var ldapUser1Dto = new LdapUserDto().firstName(userName).lastName(userName).username(userName).email(userName + "@tum.de");
-        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser1Dto.getUsername(), ldapUser1Dto.getFirstName() + " " + ldapUser1Dto.getLastName(), null);
-        jiraRequestMockProvider.mockAddUserToGroup(user, false);
 
         StudentDTO dto1 = switch (user) {
             case "tutor" -> new StudentDTO(null, userName, userName, "1000001", null);
