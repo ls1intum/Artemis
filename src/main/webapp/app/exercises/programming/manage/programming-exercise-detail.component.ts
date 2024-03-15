@@ -424,12 +424,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 },
                 !!exercise.buildScript &&
                     !!exercise.windFile?.metadata?.docker?.image && {
-                        type: DetailType.ProgrammingBuildConfigurationDetail,
-                        title: 'artemisApp.programmingExercise.buildConfiguration',
-                        data: {
-                            buildScript: exercise.buildScript,
-                            dockerImage: exercise.windFile?.metadata?.docker?.image,
-                        },
+                        type: DetailType.Text,
+                        title: 'artemisApp.programmingExercise.dockerImage',
+                        data: { text: exercise.windFile?.metadata?.docker?.image },
+                    },
+                !!exercise.buildScript &&
+                    !!exercise.windFile?.metadata?.docker?.image && {
+                        type: DetailType.Markdown,
+                        title: 'artemisApp.programmingExercise.script',
+                        titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
+                        data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildScript + '\n```') },
                     },
                 {
                     type: DetailType.Boolean,

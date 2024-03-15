@@ -186,11 +186,6 @@
                             </div>
                         </dd>
                     }
-                    @case (DetailType.ProgrammingBuildConfigurationDetail) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            <jhi-programming-exercise-detail-build-configuration [script]="detail.data.buildScript" [dockerImage]="detail.data.dockerImage" />
-                        </dd>
-                    }
                     @case (DetailType.ProgrammingProblemStatement) {
                         @if (detail.data.exercise?.templateParticipation) {
                             <dd class="p-3 border" id="detail-value-{{ detail.title }}">
