@@ -43,8 +43,6 @@ public class SharedQueueProcessingService {
 
     private final BuildJobManagementService buildJobManagementService;
 
-    private final List<LocalCIBuildJobQueueItem> recentBuildJobs = new ArrayList<>();
-
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
     /**
@@ -186,6 +184,14 @@ public class SharedQueueProcessingService {
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
         boolean active = numberOfCurrentBuildJobs > 0;
+        LocalCIBuildAgentInformation agent = buildAgentInformation.get(memberAddress);
+        List<LocalCIBuildJobQueueItem> recentBuildJobs;
+        if (agent != null) {
+            recentBuildJobs = agent.recentBuildJobs();
+        }
+        else {
+            recentBuildJobs = new ArrayList<>();
+        }
         LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active,
                 recentBuildJobs);
         buildAgentInformation.put(memberAddress, info);
@@ -275,10 +281,16 @@ public class SharedQueueProcessingService {
      * @param buildJob The build job to add to the list of recent build jobs
      */
     private void addToRecentBuildJobs(LocalCIBuildJobQueueItem buildJob) {
-        if (recentBuildJobs.size() >= 20) {
-            recentBuildJobs.remove(0);
+        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        LocalCIBuildAgentInformation agent = buildAgentInformation.get(memberAddress);
+        if (agent != null) {
+            List<LocalCIBuildJobQueueItem> recentBuildJobs = agent.recentBuildJobs();
+            if (recentBuildJobs.size() >= 20) {
+                recentBuildJobs.remove(0);
+            }
+            recentBuildJobs.add(buildJob);
+            buildAgentInformation.put(memberAddress, new LocalCIBuildAgentInformation(agent, recentBuildJobs));
         }
-        recentBuildJobs.add(buildJob);
         updateLocalBuildAgentInformation();
     }
 
