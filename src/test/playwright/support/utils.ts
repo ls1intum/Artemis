@@ -3,6 +3,8 @@ import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
 import { Locator, Page, expect } from '@playwright/test';
 import { TIME_FORMAT } from './constants';
+import * as fs from 'fs';
+import { dirname } from 'path';
 
 // Add utc plugin to use the utc timezone
 dayjs.extend(utc);
@@ -116,4 +118,13 @@ export async function hasAttributeWithValue(page: Page, selector: string, value:
 
 export function parseNumber(text?: string): number | undefined {
     return text ? parseInt(text) : undefined;
+}
+
+export async function createFileWithContent(filePath: string, content: string) {
+    const directory = dirname(filePath);
+
+    if (!fs.existsSync(directory)) {
+        fs.mkdirSync(directory, { recursive: true });
+    }
+    fs.writeFileSync(filePath, content);
 }

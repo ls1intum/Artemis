@@ -6,9 +6,11 @@ import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/jav
 import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
 import { ProgrammingLanguage } from '../../../support/constants';
-import { admin, studentOne, studentThree, studentTwo } from '../../../support/users';
+import { admin, studentFour, studentOne, studentThree, studentTwo } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
+import { gitClient } from '../../../support/pageobjects/exercises/programming/GitClient';
+import * as fs from 'fs/promises';
 
 test.describe('Programming exercise participation', () => {
     let course: Course;
@@ -16,9 +18,10 @@ test.describe('Programming exercise participation', () => {
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
         await login(admin, '/');
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        courseManagementAPIRequests.addStudentToCourse(course, studentThree);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
     });
 
     test.describe('Java programming exercise', () => {
@@ -29,30 +32,87 @@ test.describe('Programming exercise participation', () => {
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.JAVA });
         });
 
-        test('Makes a failing submission', async ({ programmingExerciseEditor }) => {
-            await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
-            const submission = javaBuildErrorSubmission;
-            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
-                const resultScore = await programmingExerciseEditor.getResultScore();
-                await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+        test.describe('Make a submission using code editor', () => {
+            test('Makes a failing submission', async ({ programmingExerciseEditor }) => {
+                await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
+                await programmingExerciseEditor.openCodeEditor(exercise.id!);
+                const submission = javaBuildErrorSubmission;
+                await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
+                    const resultScore = await programmingExerciseEditor.getResultScore();
+                    await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+                });
+            });
+
+            test('Makes a partially successful submission', async ({ programmingExerciseEditor }) => {
+                await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentTwo);
+                await programmingExerciseEditor.openCodeEditor(exercise.id!);
+                const submission = javaPartiallySuccessfulSubmission;
+                await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
+                    const resultScore = await programmingExerciseEditor.getResultScore();
+                    await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+                });
+            });
+
+            test('Makes a successful submission', async ({ programmingExerciseEditor }) => {
+                await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentThree);
+                await programmingExerciseEditor.openCodeEditor(exercise.id!);
+                const submission = javaAllSuccessfulSubmission;
+                await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
+                    const resultScore = await programmingExerciseEditor.getResultScore();
+                    await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+                });
             });
         });
 
-        test('Makes a partially successful submission', async ({ programmingExerciseEditor }) => {
-            await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentTwo);
-            const submission = javaPartiallySuccessfulSubmission;
-            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
+        test.describe('Make a submission using git', () => {
+            const exerciseRepos: string[] = [];
+
+            test('Makes a failing submission', async ({ page, programmingExerciseEditor }) => {
+                await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
+                const repoUrl = await programmingExerciseEditor.getRepoUrl();
+                const urlParts = repoUrl.split('/');
+                const repoName = urlParts[urlParts.length - 1];
+                exerciseRepos.push(repoName);
+                const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
+                const submission = javaBuildErrorSubmission;
+                await programmingExerciseEditor.makeGitSubmissionAndVerifyResults(exerciseRepo, repoName, submission);
+                await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
                 const resultScore = await programmingExerciseEditor.getResultScore();
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
             });
-        });
 
-        test('Makes a successful submission', async ({ programmingExerciseEditor }) => {
-            await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentThree);
-            const submission = javaAllSuccessfulSubmission;
-            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
+            test('Makes a partially successful submission', async ({ page, programmingExerciseEditor }) => {
+                await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
+                const repoUrl = await programmingExerciseEditor.getRepoUrl();
+                const urlParts = repoUrl.split('/');
+                const repoName = urlParts[urlParts.length - 1];
+                exerciseRepos.push(repoName);
+                const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
+                const submission = javaPartiallySuccessfulSubmission;
+                await programmingExerciseEditor.makeGitSubmissionAndVerifyResults(exerciseRepo, repoName, submission);
+                await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
                 const resultScore = await programmingExerciseEditor.getResultScore();
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+            });
+
+            test('Makes a successful submission', async ({ page, programmingExerciseEditor }) => {
+                await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
+                const repoUrl = await programmingExerciseEditor.getRepoUrl();
+                const urlParts = repoUrl.split('/');
+                const repoName = urlParts[urlParts.length - 1];
+                exerciseRepos.push(repoName);
+                const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
+                const submission = javaAllSuccessfulSubmission;
+                await programmingExerciseEditor.makeGitSubmissionAndVerifyResults(exerciseRepo, repoName, submission);
+                await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
+                const resultScore = await programmingExerciseEditor.getResultScore();
+                await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+            });
+
+            test.afterAll('Clean exercise repos', async () => {
+                for (const repo of exerciseRepos) {
+                    await fs.rmdir(`./test-exercise-repos/${repo}`, { recursive: true });
+                }
             });
         });
     });
@@ -71,6 +131,7 @@ test.describe('Programming exercise participation', () => {
     //
     //         test('Makes a submission', async ({ programmingExerciseEditor }) => {
     //             await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
+    //             await programmingExerciseEditor.openCodeEditor(exercise.id!);
     //             const submission = cAllSuccessful;
     //             await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
     //                 const resultScore = await programmingExerciseEditor.getResultScore();
@@ -90,6 +151,7 @@ test.describe('Programming exercise participation', () => {
 
         test('Makes a submission', async ({ programmingExerciseEditor }) => {
             await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
+            await programmingExerciseEditor.openCodeEditor(exercise.id!);
             const submission = pythonAllSuccessful;
             await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
                 const resultScore = await programmingExerciseEditor.getResultScore();

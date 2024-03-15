@@ -1,11 +1,12 @@
 import { Page, expect } from '@playwright/test';
 import { BASE_API } from '../../../constants';
-import { getExercise } from '../../../utils';
+import { createFileWithContent, getExercise } from '../../../utils';
 import { Commands } from '../../../commands';
 import { UserCredentials } from '../../../users';
 import { CoursesPage } from '../../course/CoursesPage';
 import { CourseOverviewPage } from '../../course/CourseOverviewPage';
 import { Fixtures } from '../../../../fixtures/fixtures';
+import { SimpleGit } from 'simple-git';
 
 export class OnlineEditorPage {
     private readonly page: Page;
@@ -110,7 +111,7 @@ export class OnlineEditorPage {
     }
 
     async getResultScore() {
-        await Commands.reloadUntilFound(this.page, '#result-score');
+        await this.page.locator('#result-score').waitFor({ state: 'visible' });
         return this.page.locator('#result-score');
     }
 
@@ -138,13 +139,43 @@ export class OnlineEditorPage {
         await verifyOutput();
     }
 
+    async makeGitSubmissionAndVerifyResults(exerciseRepo: SimpleGit, exerciseRepoName: string, submission: ProgrammingExerciseSubmission) {
+        for (const fileName of submission.deleteFiles) {
+            const packagePath = submission.packageName!.replace(/\./g, '/');
+            const filePath = `./src/${packagePath}/${fileName}`;
+            await exerciseRepo.rm(filePath);
+        }
+        for (const file of submission.files) {
+            const packagePath = submission.packageName!.replace(/\./g, '/');
+            const filePath = `src/${packagePath}/${file.name}`;
+            const sourceCode = await Fixtures.get(file.path);
+            await createFileWithContent(`./test-exercise-repos/${exerciseRepoName}/${filePath}`, sourceCode!);
+            await exerciseRepo.add(`./${filePath}`);
+        }
+        await exerciseRepo.commit('Implemented the tasks');
+        await exerciseRepo.push();
+    }
+
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
         await Commands.login(this.page, credentials, '/');
         await this.page.waitForURL(/\/courses/);
         await this.courseList.openCourse(courseId!);
         await this.courseOverview.startExercise(exerciseId);
+    }
+
+    async openCodeEditor(exerciseId: number) {
         await Commands.reloadUntilFound(this.page, '#open-exercise-' + exerciseId);
         await this.courseOverview.openRunningProgrammingExercise(exerciseId);
+    }
+
+    async getRepoUrl() {
+        const cloneRepoSelector = '.clone-repository';
+        await Commands.reloadUntilFound(this.page, cloneRepoSelector);
+        await this.page.locator(cloneRepoSelector).click();
+        await this.page.locator('.popover-body').waitFor({ state: 'visible' });
+        const url = await this.page.locator('.clone-url').innerText();
+        console.log(url);
+        return url;
     }
 }
 
