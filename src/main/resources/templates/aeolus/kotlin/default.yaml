@@ -3,9 +3,6 @@ actions:
   - name: maven
     script: mvn clean test
     runAlways: false
-  - name: junit
-    script: '#empty script action, just for the results'
-    runAlways: true
     results:
       - name: junit
         path: '**/target/surefire-reports/*.xml'
