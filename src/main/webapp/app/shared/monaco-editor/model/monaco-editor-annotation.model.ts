@@ -48,6 +48,7 @@ export class MonacoEditorAnnotation implements monaco.editor.IGlyphMarginWidget,
             this.domNode = document.createElement('div');
             this.domNode.className = `codicon codicon-${type}`;
         }
+        this.domNode.id = `monaco-editor-annotation-${id}`;
         this.hoverMessage = hoverMessage;
         this.type = type;
         this.decorationsCollection = emptyDecorationsCollection;
