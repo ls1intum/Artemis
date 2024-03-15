@@ -75,6 +75,7 @@ following dependencies/tools on your machine:
    setup/jenkins-gitlab
    setup/gitlabci-gitlab
    setup/integrated-code-lifecycle
+   setup/aeolus
    setup/common-problems
    setup/docker-compose
    setup/local-database-tests
