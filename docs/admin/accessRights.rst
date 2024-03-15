@@ -139,10 +139,31 @@ Programming Exercises
 +--------------------------------+------------+--------+--------------------+
 | Cleanup                        |      ✔     |        |                    |
 +--------------------------------+------------+--------+--------------------+
-| Repository Access              |    R + W   |  R + W |          R         |
-+--------------------------------+------------+--------+--------------------+
 | Build Plan Access              |    R + W   |  R + W |          R         |
 +--------------------------------+------------+--------+--------------------+
+
+Programming Exercises - Repository Access
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Action Types:** *READ* (fetch, pull), *WRITE* (push), *RESET* (reset to origin head)
+
+| Admins, Instructors and Editors of a course are allowed to *READ*, *WRITE* and *RESET* every repository in their courses.
+| Teaching Assistants are allowed to *READ* every repository in their courses.
+
+The remaining permitted actions for Students and Teaching Assistants on their own repositories are as follows:
+
++--------------------------------------------------------------------+-------------------------------------+
+|                                                                    | Actions                             |
++--------------------------------------------------------------------+-------------------------------------+
+| Before start/ release date                                         | *READ* :sup:`TA` , *WRITE* :sup:`TA`|
++--------------------------------------------------------------------+-------------------------------------+
+| After start/ release date but before due date and not locked       | *READ*, *WRITE*, *RESET*            |
++--------------------------------------------------------------------+-------------------------------------+
+| After due date                                                     | *READ*                              |
++--------------------------------------------------------------------+-------------------------------------+
+| Locked                                                             | *READ*                              |
++--------------------------------------------------------------------+-------------------------------------+
+
+*TA* = only Teaching Assistants
 
 Quiz Exercises
 ^^^^^^^^^^^^^^
