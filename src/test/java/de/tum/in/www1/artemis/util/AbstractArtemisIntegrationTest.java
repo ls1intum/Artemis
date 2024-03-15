@@ -92,6 +92,12 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected WebsocketMessagingService websocketMessagingService;
 
     @SpyBean
+    protected ModelingSubmissionService modelingSubmissionService;
+
+    @SpyBean
+    protected TextSubmissionService textSubmissionService;
+
+    @SpyBean
     protected ProgrammingTriggerService programmingTriggerService;
 
     @SpyBean
