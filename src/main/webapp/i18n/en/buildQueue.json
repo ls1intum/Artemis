@@ -6,6 +6,8 @@
             "queuedBuildJobs": "Queued Build Jobs",
             "runningBuildJobs": "Running Build Jobs",
             "buildJob": {
+                "id": "ID",
+                "buildAgent": "Build Agent",
                 "name": "Name",
                 "participationId": "Participation ID",
                 "repositoryName": "Repository Name",

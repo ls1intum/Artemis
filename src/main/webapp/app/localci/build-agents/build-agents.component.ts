@@ -24,8 +24,6 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
     faExclamationTriangle = faExclamationTriangle;
     faTimes = faTimes;
 
-    recentBuildJobsSort = [{ prop: 'jobTimingInfo.buildCompletionDate', dir: 'asc' }];
-
     constructor(
         private websocketService: JhiWebsocketService,
         private buildAgentsService: BuildAgentsService,
