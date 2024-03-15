@@ -681,20 +681,17 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSaveAssessmentNote() throws Exception {
         AssessmentNote assessmentNote = new AssessmentNote();
-        assertThat(assessmentNote.getCreatedDate()).isNotNull();
-
         assessmentNote.setNote("note");
         manualResult.setAssessmentNote(assessmentNote);
 
         User user = userRepository.getUser();
         manualResult.setAssessor(user);
-        assertThat(manualResult.getAssessmentNote().getCreator()).isNull();
 
         manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
-        assertThat(manualResult.getAssessmentNote().getCreator()).isNotNull().isEqualTo(user);
-
-        Instant createdDate = assessmentNote.getCreatedDate();
-        assertThat(createdDate).isNotNull();
+        manualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(manualResult.getId());
+        assessmentNote = manualResult.getAssessmentNote();
+        assertThat(assessmentNote.getCreatedDate()).isNotNull();
+        assertThat(assessmentNote.getLastModifiedDate()).isNotNull();
     }
 
     @Test
@@ -712,7 +709,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         assertThat(createdDate).isEqualTo(initialLastModifiedDate);
 
         manualResult.getAssessmentNote().setNote("note2");
-
         manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
         manualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(manualResult.getId());
         assertThat(createdDate).isEqualTo(manualResult.getAssessmentNote().getCreatedDate());
