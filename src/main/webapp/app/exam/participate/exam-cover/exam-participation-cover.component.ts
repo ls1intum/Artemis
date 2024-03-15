@@ -135,6 +135,9 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
      * displays popup or start exam participation immediately
      */
     startExam() {
+        if (this.examParticipationService.loadStudentFlagsFromLocalStorage(this.exam.course!.id!, this.exam.id!) == null) {
+            this.examParticipationService.saveStudentFlagsToLocalStorage(this.exam.course!.id!, this.exam.id!, new Array(this.studentExam.exercises?.length).fill(false));
+        }
         if (this.testRun) {
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, this.studentExam);
             this.onExamStarted.emit(this.studentExam);

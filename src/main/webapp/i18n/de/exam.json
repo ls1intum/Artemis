@@ -293,6 +293,7 @@
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
+            "flagExercise": "Aufgabe Markieren",
             "uploadFile": "Upload",
             "greeting": "Willkommen zu {{ title }}.",
             "finish": "Das ist das Ende von {{ title }}.",

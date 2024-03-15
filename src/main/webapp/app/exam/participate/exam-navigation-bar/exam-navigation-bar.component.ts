@@ -13,7 +13,7 @@ import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/co
 import { map } from 'rxjs/operators';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { ExamSession } from 'app/entities/exam-session.model';
-import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faCheck, faEdit, faFlag } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
@@ -47,6 +47,11 @@ export class ExamNavigationBarComponent implements OnInit {
     icon: IconProp;
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
+
+    @Input() examId = 0;
+    @Input() courseId = 0;
+
+    flags: boolean[] = [];
 
     // Icons
     faBars = faBars;
@@ -104,6 +109,20 @@ export class ExamNavigationBarComponent implements OnInit {
                         }
                     });
             });
+
+        this.examParticipationService.loadStudentFlagsFromLocalStorage(this.getCourseId(), this.examId).subscribe((flags: boolean[]) => {
+            this.flags = flags;
+        });
+    }
+
+    getCourseId(): number {
+        return this.exercises[this.exerciseIndex].course?.id!;
+    }
+
+    flagExercise() {
+        this.flags[this.exerciseIndex] = !this.flags[this.exerciseIndex];
+        this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: false });
+        this.setExerciseButtonStatus(this.exerciseIndex);
     }
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
@@ -209,7 +228,9 @@ export class ExamNavigationBarComponent implements OnInit {
             // this should only occur for programming exercises
             return 'synced';
         }
-        if (submission.submitted) {
+        if (this.flags[exerciseIndex]) {
+            this.icon = faFlag;
+        } else if (submission.submitted) {
             this.icon = faCheck;
         }
         if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {

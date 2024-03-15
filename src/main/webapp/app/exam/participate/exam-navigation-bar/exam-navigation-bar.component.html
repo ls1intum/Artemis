@@ -82,6 +82,9 @@
                         <button id="save" [class.invisible]="isProgrammingExercise() || isFileUploadExercise()" class="btn btn-primary" (click)="saveExercise()">
                             {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | artemisTranslate }}
                         </button>
+                        <button id="flag" class="btn btn-warning ms-2" (click)="flagExercise()">
+                            {{ 'artemisApp.examParticipation.flagExercise' | artemisTranslate }}
+                        </button>
                     }
                     <button id="hand-in-early" class="btn btn-danger ms-2" (click)="handInEarly()">
                         {{ 'artemisApp.examParticipation.handInEarly' | artemisTranslate }}

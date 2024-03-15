@@ -59,6 +59,8 @@ export class ExamParticipationService {
      */
     public loadStudentExamWithExercisesForConductionFromLocalStorage(courseId: number, examId: number): Observable<StudentExam> {
         const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
+        console.log('got the exam from local storage ' + localStoredExam);
+
         return of(localStoredExam);
     }
 
@@ -231,6 +233,33 @@ export class ExamParticipationService {
         } catch (error) {
             captureException(error);
         }
+    }
+
+    /**
+     * save the indexes of flagged Exercises to the local Storage
+     *
+     * @param courseId
+     * @param examId
+     * @param flags
+     */
+    public saveStudentFlagsToLocalStorage(courseId: number, examId: number, flags: boolean[]): void {
+        const prefix = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId);
+        console.log('save to local storage called with courseId: ' + courseId + ' and examId: ' + examId);
+        this.localStorageService.store(prefix + '_flags', JSON.stringify(flags));
+    }
+
+    /**
+     * load the indexes of flagged Exercises from the local Storage
+     *
+     * @param courseId
+     * @param examId
+     */
+    public loadStudentFlagsFromLocalStorage(courseId: number, examId: number): Observable<boolean[]> {
+        const prefix = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId);
+        const localStoredFlags: boolean[] = JSON.parse(this.localStorageService.retrieve(prefix + '_flags'));
+        console.log('course id: ' + courseId + ' exam id: ' + examId);
+        console.log('loaded flags: ' + localStoredFlags);
+        return of(localStoredFlags);
     }
 
     /**
