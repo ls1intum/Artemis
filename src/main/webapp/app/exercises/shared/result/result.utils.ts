@@ -251,7 +251,7 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'text-danger';
     }
 
-    if (resultIsPreliminary(result) || isAIResultAndIsBeingProcessed(result)) {
+    if (resultIsPreliminary(result) || isAIResultAndIsBeingProcessed(result) || isAIResultAndTimedOut(result)) {
         return 'text-secondary';
     }
 

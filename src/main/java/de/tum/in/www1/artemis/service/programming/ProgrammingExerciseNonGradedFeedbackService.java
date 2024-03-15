@@ -135,12 +135,12 @@ public class ProgrammingExerciseNonGradedFeedbackService {
             automaticResult.setSuccessful(false);
             automaticResult.setCompletionDate(ZonedDateTime.now());
             this.resultRepository.save(automaticResult);
+            this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
         }
         finally {
             programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
             participation.setIndividualDueDate(null);
             this.programmingExerciseStudentParticipationRepository.save(participation);
-            this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
         }
     }
 

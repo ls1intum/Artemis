@@ -71,7 +71,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
 
-    private resultUpdateSubscription?: Subscription;
+    private resultUpdateSubscription?:  ReturnType<typeof setTimeout>;
 
     constructor(
         private participationService: ParticipationService,
@@ -148,7 +148,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.resultUpdateSubscription?.unsubscribe();
+        if (this.resultUpdateSubscription) {
+            clearTimeout(this.resultUpdateSubscription);
+        }
     }
 
     /**
@@ -201,13 +203,13 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         }
 
         if (this.templateStatus === ResultTemplateStatus.IS_GENERATING_FEEDBACK && this.result?.completionDate) {
-            const dueTime = dayjs().diff(this.result.completionDate, 'milliseconds');
-            this.resultUpdateSubscription = timer(dueTime).subscribe({
-                next: () => {
-                    this.evaluate();
-                    this.resultUpdateSubscription?.unsubscribe();
-                },
-            });
+            const dueTime = -dayjs().diff(this.result.completionDate, 'milliseconds');
+            this.resultUpdateSubscription = setTimeout(() => {
+                this.evaluate();
+                if (this.resultUpdateSubscription) {
+                    clearTimeout(this.resultUpdateSubscription);
+                }
+            }, dueTime);
         }
     }
 
