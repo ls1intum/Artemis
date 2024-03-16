@@ -95,7 +95,7 @@ describe('MonacoEditorComponent', () => {
         const subscribeStub = jest.spyOn(mockThemeService, 'getCurrentThemeObservable').mockReturnValue(themeSubject.asObservable());
         fixture.detectChanges();
         const unsubscribeStub = jest.spyOn(comp.themeSubscription!, 'unsubscribe').mockImplementation();
-        fixture.destroy();
+        comp.ngOnDestroy();
         expect(subscribeStub).toHaveBeenCalledOnce();
         expect(unsubscribeStub).toHaveBeenCalledOnce();
     });
@@ -160,7 +160,7 @@ describe('MonacoEditorComponent', () => {
         comp.addLineWidget(1, 'widget', document.createElement('div'));
         const disposeAnnotationSpy = jest.spyOn(comp.editorAnnotations[0], 'dispose');
         const disposeWidgetSpy = jest.spyOn(comp.editorLineWidgets[0], 'dispose');
-        fixture.destroy();
+        comp.ngOnDestroy();
         expect(disposeWidgetSpy).toHaveBeenCalledOnce();
         expect(disposeAnnotationSpy).toHaveBeenCalledOnce();
     });
@@ -193,7 +193,7 @@ describe('MonacoEditorComponent', () => {
     it('should dispose its models when destroyed', () => {
         fixture.detectChanges();
         comp.changeModel('file', multiLineText);
-        fixture.destroy();
+        comp.ngOnDestroy();
         expect(comp.models).toHaveLength(1);
         expect(comp.models[0].isDisposed()).toBeTrue();
     });
