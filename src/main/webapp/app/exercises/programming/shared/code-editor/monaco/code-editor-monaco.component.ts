@@ -50,7 +50,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     isLoading = false;
 
-    private fileSession: FileSession = {};
+    fileSession: FileSession = {};
 
     constructor(
         private repositoryFileService: CodeEditorRepositoryFileService,

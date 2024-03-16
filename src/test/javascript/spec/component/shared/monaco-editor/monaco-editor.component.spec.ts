@@ -90,6 +90,16 @@ describe('MonacoEditorComponent', () => {
         expect(changeThemeSpy).toHaveBeenNthCalledWith(2, Theme.DARK);
     });
 
+    it('should unsubscribe from the global theme when destroyed', () => {
+        const themeSubject = new BehaviorSubject<Theme>(Theme.LIGHT);
+        const subscribeStub = jest.spyOn(mockThemeService, 'getCurrentThemeObservable').mockReturnValue(themeSubject.asObservable());
+        fixture.detectChanges();
+        const unsubscribeStub = jest.spyOn(comp.themeSubscription!, 'unsubscribe').mockImplementation();
+        fixture.destroy();
+        expect(subscribeStub).toHaveBeenCalledOnce();
+        expect(unsubscribeStub).toHaveBeenCalledOnce();
+    });
+
     it('should display hidden line widgets', () => {
         const lineWidgetDiv = document.createElement('div');
         lineWidgetDiv.style.display = 'none';
@@ -104,10 +114,12 @@ describe('MonacoEditorComponent', () => {
         const annotation = buildAnnotationArray[0];
         const buildAnnotationId = `monaco-editor-annotation-${annotation.fileName}:${annotation.row + 1}:${annotation.text}`;
         fixture.detectChanges();
-        comp.setAnnotations(buildAnnotationArray);
+        comp.setAnnotations(buildAnnotationArray, false);
         comp.setText(multiLineText);
         const element = document.getElementById(buildAnnotationId);
+        expect(comp.editorAnnotations).toHaveLength(1);
         expect(element).not.toBeNull();
+        expect(element).toEqual(comp.editorAnnotations[0].getDomNode());
         expect(element!.style.visibility).toBe('visible');
     });
 
@@ -115,10 +127,74 @@ describe('MonacoEditorComponent', () => {
         const annotation = buildAnnotationArray[0];
         const buildAnnotationId = `monaco-editor-annotation-${annotation.fileName}:${annotation.row + 1}:${annotation.text}`;
         fixture.detectChanges();
-        comp.setAnnotations(buildAnnotationArray);
+        comp.setAnnotations(buildAnnotationArray, false);
         comp.setText(singleLineText);
         const element = document.getElementById(buildAnnotationId);
+        expect(comp.editorAnnotations).toHaveLength(1);
         expect(element).not.toBeNull();
+        expect(element).toEqual(comp.editorAnnotations[0].getDomNode());
         expect(element!.style.visibility).toBe('hidden');
+    });
+
+    it('should mark build annotations as outdated if specified', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        comp.setAnnotations(buildAnnotationArray, true);
+        expect(comp.editorAnnotations).toHaveLength(1);
+        expect(comp.editorAnnotations[0].isOutdated()).toBeTrue();
+    });
+
+    it('should mark build annotations as outdated when a keyboard input is made', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        comp.setAnnotations(buildAnnotationArray, false);
+        expect(comp.editorAnnotations).toHaveLength(1);
+        expect(comp.editorAnnotations[0].isOutdated()).toBeFalse();
+        comp.triggerKeySequence('typing');
+        expect(comp.editorAnnotations[0].isOutdated()).toBeTrue();
+    });
+
+    it('should dispose and destroy its widgets and annotations when destroyed', () => {
+        fixture.detectChanges();
+        comp.setAnnotations(buildAnnotationArray);
+        comp.addLineWidget(1, 'widget', document.createElement('div'));
+        const disposeAnnotationSpy = jest.spyOn(comp.editorAnnotations[0], 'dispose');
+        const disposeWidgetSpy = jest.spyOn(comp.editorLineWidgets[0], 'dispose');
+        fixture.destroy();
+        expect(disposeWidgetSpy).toHaveBeenCalledOnce();
+        expect(disposeAnnotationSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should switch to and update the text of a single model', () => {
+        fixture.detectChanges();
+        comp.changeModel('file', multiLineText);
+        expect(comp.getText()).toBe(multiLineText);
+        expect(comp.models).toHaveLength(1);
+        expect(comp.models[0].getValue()).toBe(multiLineText);
+        comp.changeModel('file', singleLineText);
+        expect(comp.getText()).toBe(singleLineText);
+        expect(comp.models).toHaveLength(1);
+        expect(comp.models[0].getValue()).toBe(singleLineText);
+    });
+
+    it('should switch between multiple models without changing their content', () => {
+        fixture.detectChanges();
+        // Set initial values
+        comp.changeModel('file1', singleLineText);
+        comp.changeModel('file2', multiLineText);
+        expect(comp.getText()).toBe(multiLineText);
+        // Switch without changing
+        comp.changeModel('file1');
+        expect(comp.getText()).toBe(singleLineText);
+        comp.changeModel('file2');
+        expect(comp.getText()).toBe(multiLineText);
+    });
+
+    it('should dispose its models when destroyed', () => {
+        fixture.detectChanges();
+        comp.changeModel('file', multiLineText);
+        fixture.destroy();
+        expect(comp.models).toHaveLength(1);
+        expect(comp.models[0].isDisposed()).toBeTrue();
     });
 });

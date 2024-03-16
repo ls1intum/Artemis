@@ -78,6 +78,10 @@ export class MonacoEditorAnnotation implements monaco.editor.IGlyphMarginWidget,
         this.domNode.style.opacity = outdated ? '40%' : '100%';
     }
 
+    isOutdated(): boolean {
+        return this.outdated;
+    }
+
     /**
      * This method removes and subsequently recreates the decoration associated with this widget,
      * thus forcing it to remain at its intended position.

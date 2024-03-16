@@ -19,10 +19,10 @@ export type EditorRange = monaco.Range;
 export class MonacoEditorComponent implements OnInit, OnDestroy {
     @ViewChild('monacoEditorContainer', { static: true }) private monacoEditorContainer: ElementRef;
     private _editor: monaco.editor.IStandaloneCodeEditor;
-    private themeSubscription?: Subscription;
-    private models: monaco.editor.IModel[] = [];
-    private editorLineWidgets: MonacoEditorLineWidget[] = [];
-    private editorAnnotations: MonacoEditorAnnotation[] = [];
+    themeSubscription?: Subscription;
+    models: monaco.editor.IModel[] = [];
+    editorLineWidgets: MonacoEditorLineWidget[] = [];
+    editorAnnotations: MonacoEditorAnnotation[] = [];
 
     constructor(private themeService: ThemeService) {}
 
@@ -68,6 +68,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.disposeAnnotations();
+        this.disposeWidgets();
         this._editor.dispose();
         this.themeSubscription?.unsubscribe();
         this.models.forEach((m) => m.dispose());
@@ -110,6 +112,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.setValue(text);
     }
 
+    /**
+     * Signals to the editor that the specified text was typed.
+     * @param text The text to type.
+     */
+    triggerKeySequence(text: string): void {
+        this._editor.trigger('MonacoEditorComponent::triggerKeySequence', 'type', { text });
+    }
+
     getNumberOfLines(): number {
         return this._editor.getModel()?.getLineCount() ?? 0;
     }
@@ -135,7 +145,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.setModel(model);
     }
 
-    private disposeWidgets() {
+    disposeWidgets() {
         this.editorLineWidgets.forEach((o) => {
             o.dispose();
             this._editor.removeOverlayWidget(o);
@@ -144,7 +154,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.disposeAnnotations();
     }
 
-    private disposeAnnotations() {
+    disposeAnnotations() {
         this.editorAnnotations.forEach((o) => {
             o.dispose();
             this._editor.removeGlyphMarginWidget(o);
