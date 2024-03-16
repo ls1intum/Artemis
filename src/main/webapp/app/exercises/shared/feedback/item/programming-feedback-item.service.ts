@@ -159,7 +159,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
 
     private createNonGradedFeedbackItem(feedback: Feedback): FeedbackItem {
         return {
-            type: 'AI Reviewer',
+            type: 'Reviewer',
             name: this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text?.slice(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER.length),
             text: feedback.detailText,

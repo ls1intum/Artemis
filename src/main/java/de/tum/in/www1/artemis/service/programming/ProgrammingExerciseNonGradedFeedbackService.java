@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -33,6 +34,8 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 public class ProgrammingExerciseNonGradedFeedbackService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseNonGradedFeedbackService.class);
+
+    public static final String NON_GRADED_FEEDBACK_SUGGESTION = "NonGradedFeedbackSuggestion:";
 
     private final GroupNotificationService groupNotificationService;
 
@@ -110,18 +113,31 @@ public class ProgrammingExerciseNonGradedFeedbackService {
 
             var athenaResponse = this.athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false);
 
-            var feedbacks = athenaResponse.stream().map(individualFeedbackItem -> {
-                var feedback = new Feedback();
-                // todo proper formatting for single line, multilines, no lines etc
-                feedback.setText(String.format("NonGradedFeedbackSuggestion:File %s at lines %d-%d", individualFeedbackItem.filePath(), individualFeedbackItem.lineStart(),
-                        individualFeedbackItem.lineEnd()));
-                feedback.setDetailText(individualFeedbackItem.description());
-                feedback.setHasLongFeedbackText(false);
-                feedback.setType(FeedbackType.AUTOMATIC);
-                feedback.setReference(String.format("file:%s_line:%d", individualFeedbackItem.filePath(), individualFeedbackItem.lineStart()));
-                feedback.setCredits(0.0);
-                return feedback;
-            }).toList();
+            var feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
+                    .filter(individualFeedbackItem -> individualFeedbackItem.description() != null).map(individualFeedbackItem -> {
+                        var feedback = new Feedback();
+                        String feedbackText;
+                        if (Objects.nonNull(individualFeedbackItem.lineStart())) {
+                            if (Objects.nonNull(individualFeedbackItem.lineEnd()) && !individualFeedbackItem.lineStart().equals(individualFeedbackItem.lineEnd())) {
+                                feedbackText = String.format(NON_GRADED_FEEDBACK_SUGGESTION + "File %s at lines %d-%d", individualFeedbackItem.filePath(),
+                                        individualFeedbackItem.lineStart(), individualFeedbackItem.lineEnd());
+                            }
+                            else {
+                                feedbackText = String.format(NON_GRADED_FEEDBACK_SUGGESTION + "File %s at line %d", individualFeedbackItem.filePath(),
+                                        individualFeedbackItem.lineStart());
+                            }
+                            feedback.setReference(String.format("file:%s_line:%d", individualFeedbackItem.filePath(), individualFeedbackItem.lineStart()));
+                        }
+                        else {
+                            feedbackText = String.format(NON_GRADED_FEEDBACK_SUGGESTION + "File %s", individualFeedbackItem.filePath());
+                        }
+                        feedback.setText(feedbackText);
+                        feedback.setDetailText(individualFeedbackItem.description());
+                        feedback.setHasLongFeedbackText(false);
+                        feedback.setType(FeedbackType.AUTOMATIC);
+                        feedback.setCredits(0.0);
+                        return feedback;
+                    }).toList();
 
             automaticResult.setSuccessful(true);
             automaticResult.setCompletionDate(ZonedDateTime.now());
