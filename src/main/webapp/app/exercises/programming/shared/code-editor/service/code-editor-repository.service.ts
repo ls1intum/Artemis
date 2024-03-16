@@ -186,6 +186,17 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     };
 
     /**
+     * Gets the files of the repository for the plagiarism view.
+     * @param domain the domain of the file
+     */
+    getRepositoryContentForPlagiarismView = (domain?: DomainChange) => {
+        const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
+        return this.http
+            .get<{ [fileName: string]: FileType }>(`${restResourceUrl}/files-plagiarism-view`)
+            .pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
+    };
+
+    /**
      * Gets the files of the repository and checks whether they were changed during a student participation.
      */
     getFilesWithInformationAboutChange = (domain?: DomainChange) => {
@@ -196,6 +207,19 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     getFile = (fileName: string, domain?: DomainChange) => {
         const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
         return this.http.get(`${restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
+            map((data) => ({ fileContent: data })),
+            handleErrorResponse<{ fileContent: string }>(this.conflictService),
+        );
+    };
+
+    /**
+     * Gets the file content for the plagiarism view.
+     * @param fileName the name of the file
+     * @param domain the domain of the file
+     */
+    getFileForPlagiarismView = (fileName: string, domain?: DomainChange) => {
+        const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
+        return this.http.get(`${restResourceUrl}/file-plagiarism-view`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
             map((data) => ({ fileContent: data })),
             handleErrorResponse<{ fileContent: string }>(this.conflictService),
         );

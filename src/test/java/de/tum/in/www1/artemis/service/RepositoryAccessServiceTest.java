@@ -99,7 +99,8 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
         AccessForbiddenException exception = catchThrowableOfType(
                 () -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, student, programmingExercise, RepositoryActionType.WRITE),
                 AccessForbiddenException.class);
-        assertThat(exception.getMessage()).isEqualTo("submitAfterReachingSubmissionLimit");
+
+        assertThat(exception.getMessage()).isEqualTo("You are not allowed to access the repository of this programming exercise.");
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

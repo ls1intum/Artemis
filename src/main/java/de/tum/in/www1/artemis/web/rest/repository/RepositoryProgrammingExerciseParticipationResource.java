@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipati
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -75,8 +74,18 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         this.submissionPolicyRepository = submissionPolicyRepository;
     }
 
+    /**
+     * Get the repository for the given participation.
+     *
+     * @param participationId      that serves as an abstract identifier for retrieving the repository.
+     * @param repositoryActionType the type of action that the user wants to perform on the repository (i.e. WRITE, READ or RESET).
+     * @param pullOnGet            whether to pull the repository before returning it
+     * @return the repository for the given participation
+     * @throws GitAPIException          if the repository could not be accessed
+     * @throws AccessForbiddenException if the user does not have access to the repository
+     */
     @Override
-    Repository getRepository(Long participationId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws GitAPIException {
+    Repository getRepository(Long participationId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws GitAPIException, AccessForbiddenException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
 
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
@@ -91,17 +100,41 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // Add submission policy to the programming exercise.
         programmingExercise.setSubmissionPolicy(submissionPolicyRepository.findByProgrammingExerciseId(programmingExercise.getId()));
 
-        try {
-            repositoryAccessService.checkAccessRepositoryElseThrow(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise,
-                    repositoryActionType);
-        }
-        catch (AccessUnauthorizedException e) {
-            // All methods calling this getRepository method only expect the AccessForbiddenException to determine whether a user has access to the repository.
-            // The local version control system, that also uses checkAccessRepositoryElseThrow, needs a more fine-grained check to return the correct HTTP status and thus expects
-            // both the AccessUnauthorizedException and the AccessForbiddenException.
-            throw new AccessForbiddenException(e);
+        repositoryAccessService.checkAccessRepositoryElseThrow(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise,
+                repositoryActionType);
+
+        return getRepositoryFromGitService(pullOnGet, programmingParticipation);
+    }
+
+    /**
+     * Get the repository for the plagiarism view of the given participation.
+     *
+     * @param participationId the id of the participation to retrieve the repository for
+     * @return the repository for the plagiarism view of the given participation
+     * @throws GitAPIException          if the repository could not be accessed
+     * @throws AccessForbiddenException if the user does not have access to the repository
+     */
+    Repository getRepositoryForPlagiarismView(Long participationId) throws GitAPIException, AccessForbiddenException {
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
+
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
+            throw new IllegalArgumentException();
         }
 
+        repositoryAccessService.checkHasAccessToPlagiarismSubmission(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), RepositoryActionType.READ);
+
+        return getRepositoryFromGitService(true, programmingParticipation);
+    }
+
+    /**
+     * Helper method to get the repository for the given participation from the git service.
+     *
+     * @param pullOnGet                whether to pull the repository before returning it
+     * @param programmingParticipation the participation to retrieve the repository for
+     * @return the repository for the given participation
+     * @throws GitAPIException if the repository could not be accessed
+     */
+    private Repository getRepositoryFromGitService(boolean pullOnGet, ProgrammingExerciseParticipation programmingParticipation) throws GitAPIException {
         var repositoryUri = programmingParticipation.getVcsRepositoryUri();
 
         // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
@@ -169,6 +202,18 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.getFiles(participationId);
     }
 
+    @GetMapping(value = "/repository/{participationId}/files-plagiarism-view", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    public ResponseEntity<Map<String, FileType>> getFilesForPlagiarismView(@PathVariable Long participationId) {
+        log.debug("REST request to files for plagiarism view for domainId : {}", participationId);
+
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = getRepositoryForPlagiarismView(participationId);
+            Map<String, FileType> fileList = repositoryService.getFiles(repository);
+            return new ResponseEntity<>(fileList, HttpStatus.OK);
+        });
+    }
+
     /**
      * GET /repository/{participationId}/files/{commitId} : Gets the files of the repository with the given participationId at the given commitId.
      * This enforces at least instructor access rights.
@@ -183,15 +228,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
         var participation = getProgrammingExerciseParticipation(participationId);
         var programmingExercise = programmingExerciseRepository.findByParticipationIdOrElseThrow(participationId);
-        try {
-            repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
-        }
-        catch (AccessUnauthorizedException e) {
-            // All methods calling this getRepository method only expect the AccessForbiddenException to determine whether a user has access to the repository.
-            // The local version control system, that also uses checkAccessRepositoryElseThrow, needs a more fine-grained check to return the correct HTTP status and thus expects
-            // both the AccessUnauthorizedException and the AccessForbiddenException.
-            throw new AccessForbiddenException(e);
-        }
+
+        repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
+
         return executeAndCheckForExceptions(() -> {
             Repository repository = gitService.checkoutRepositoryAtCommit(getRepositoryUri(participationId), commitId, true);
             Map<String, String> filesWithContent = super.repositoryService.getFilesWithContent(repository);
@@ -227,6 +266,17 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
         return super.getFile(participationId, filename);
+    }
+
+    @GetMapping(value = "/repository/{participationId}/file-plagiarism-view", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getFileForPlagiarismView(@PathVariable Long participationId, @RequestParam("file") String filename) {
+        log.debug("REST request to file {} for plagiarism view for domainId : {}", filename, participationId);
+
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = getRepositoryForPlagiarismView(participationId);
+            return super.getFileFromRepository(filename, repository);
+        });
     }
 
     /**

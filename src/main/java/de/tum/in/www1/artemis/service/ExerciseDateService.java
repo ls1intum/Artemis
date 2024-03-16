@@ -166,4 +166,15 @@ public class ExerciseDateService {
         }
         return exercise.getAssessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
     }
+
+    /**
+     * Checks if the exercise has started.
+     *
+     * @param exercise The programming exercise.
+     * @return True if the exercise has started, false otherwise.
+     */
+    public boolean hasExerciseStarted(Exercise exercise) {
+        ZonedDateTime exerciseStartDate = exercise.getParticipationStartDate();
+        return exerciseStartDate == null || exerciseStartDate.isBefore(ZonedDateTime.now());
+    }
 }
