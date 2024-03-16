@@ -146,7 +146,7 @@ Programming Exercises - Repository Access
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Action Types:** *READ* (fetch, pull), *WRITE* (push), *RESET* (reset to origin head)
 
-| Admins, Instructors and Editors of a course are allowed to *READ*, *WRITE* and *RESET* every repository in their courses.
+| Admins, Instructors and Editors are allowed to *READ*, *WRITE*, and *RESET* every repository in their courses.
 | Teaching Assistants are allowed to *READ* every repository in their courses.
 
 The remaining permitted actions for Students and Teaching Assistants on their own repositories are as follows:
