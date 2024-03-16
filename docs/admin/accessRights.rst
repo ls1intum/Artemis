@@ -144,7 +144,7 @@ Programming Exercises
 
 Programming Exercises - Repository Access
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**Action Types:**
+Action Types:
     **READ** (fetch, pull), **WRITE** (push), **RESET** (reset to origin head)
 
 Access to all repositories of a course:
