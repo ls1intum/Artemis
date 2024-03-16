@@ -177,6 +177,14 @@ describe('MonacoEditorComponent', () => {
         expect(comp.models[0].getValue()).toBe(singleLineText);
     });
 
+    it('should initialize an empty model if no text is specified', () => {
+        fixture.detectChanges();
+        comp.changeModel('file');
+        expect(comp.getText()).toBe('');
+        expect(comp.models).toHaveLength(1);
+        expect(comp.models[0].getValue()).toBe('');
+    });
+
     it('should switch between multiple models without changing their content', () => {
         fixture.detectChanges();
         // Set initial values
