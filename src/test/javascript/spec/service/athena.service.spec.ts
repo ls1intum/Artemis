@@ -7,7 +7,7 @@ import { MockProfileService } from '../helpers/mocks/service/mock-profile.servic
 import { of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
+import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
@@ -42,6 +42,12 @@ describe('AthenaService', () => {
         feedbackSuggestionModule: 'programming_module',
         gradingCriteria,
     } as Exercise;
+    const modelingExercise = {
+        id: 2,
+        type: 'modeling',
+        feedbackSuggestionModule: 'modeling_module',
+        gradingCriteria,
+    } as Exercise;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
@@ -60,8 +66,10 @@ describe('AthenaService', () => {
         const programmingFeedbackSuggestions: ProgrammingFeedbackSuggestion[] = [
             new ProgrammingFeedbackSuggestion(0, 2, 2, 'Test Programming', 'Test Programming Description', -1.0, 4321, 'src/Test.java', 4, undefined),
         ];
+        const modelingFeedbackSuggestions: ModelingFeedbackSuggestion[] = [new ModelingFeedbackSuggestion(0, 2, 2, 'Test Modeling', 'Test Modeling Description', 0.0, 4321, [])];
         let textResponse: TextBlockRef[] | null = null;
         let programmingResponse: Feedback[] | null = null;
+        let modelingResponse: Feedback[] | null = null;
 
         const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
@@ -82,6 +90,14 @@ describe('AthenaService', () => {
 
         tick();
 
+        athenaService.getModelingFeedbackSuggestions(modelingExercise, 2).subscribe((suggestions: Feedback[]) => {
+            modelingResponse = suggestions;
+        });
+        const requestWrapperModeling = httpTestingController.expectOne({ url: 'api/athena/modeling-exercises/2/submissions/2/feedback-suggestions' });
+        requestWrapperModeling.flush(modelingFeedbackSuggestions);
+
+        tick();
+
         expect(requestWrapperText.request.method).toBe('GET');
         expect(textResponse![0].feedback!.type).toEqual(FeedbackType.MANUAL);
         expect(textResponse![0].feedback!.text).toBe('FeedbackSuggestion:accepted:Test Text');
@@ -94,6 +110,12 @@ describe('AthenaService', () => {
         expect(programmingResponse![0].detailText).toBe('Test Programming Description');
         expect(programmingResponse![0].credits).toBe(-1.0);
         expect(programmingResponse![0].reference).toBe('file:src/Test.java_line:4');
+        expect(requestWrapperModeling.request.method).toBe('GET');
+        expect(modelingResponse![0].type).toEqual(FeedbackType.MANUAL_UNREFERENCED);
+        expect(modelingResponse![0].text).toBe('FeedbackSuggestion:Test Modeling');
+        expect(modelingResponse![0].detailText).toBe('Test Modeling Description');
+        expect(modelingResponse![0].credits).toBe(0.0);
+        expect(modelingResponse![0].reference).toBeUndefined();
     }));
 
     it('should return no feedback suggestions when feedback suggestions are disabled on the exercise', fakeAsync(() => {
@@ -146,8 +168,11 @@ describe('AthenaService', () => {
     it('should get available modules when athena is enabled', fakeAsync(() => {
         const textModules = ['module_text_1', 'module_text_2'];
         const programmingModules = ['module_programming_1', 'module_programming_2'];
+        const modelingModules = ['module_modeling_1', 'module_modeling_2'];
+
         let textResponse: string[] | null = null;
         let programmingResponse: string[] | null = null;
+        let modelingResponse: string[] | null = null;
 
         const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
@@ -168,10 +193,21 @@ describe('AthenaService', () => {
 
         tick();
 
+        athenaService.getAvailableModules(1, modelingExercise).subscribe((modules: string[]) => {
+            modelingResponse = modules;
+        });
+        const requestWrapperModeling = httpTestingController.expectOne({ url: 'api/athena/courses/1/modeling-exercises/available-modules' });
+        requestWrapperModeling.flush(modelingModules);
+
+        tick();
+
         expect(requestWrapperText.request.method).toBe('GET');
         expect(textResponse!).toEqual(textModules);
 
         expect(requestWrapperProgramming.request.method).toBe('GET');
         expect(programmingResponse!).toEqual(programmingModules);
+
+        expect(requestWrapperModeling.request.method).toBe('GET');
+        expect(modelingResponse!).toEqual(modelingModules);
     }));
 });
