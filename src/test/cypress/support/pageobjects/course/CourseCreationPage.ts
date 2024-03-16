@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 
-import { BASE_API, POST, PUT } from '../../constants';
+import { COURSE_ADMIN_BASE, COURSE_BASE, POST, PUT } from '../../constants';
 import { enterDate } from '../../utils';
 
 /**
@@ -226,7 +226,7 @@ export class CourseCreationPage {
      * @returns the query chainable if a test needs to access the response
      */
     submit() {
-        cy.intercept(POST, BASE_API + 'admin/courses').as('createCourseQuery');
+        cy.intercept(POST, COURSE_ADMIN_BASE).as('createCourseQuery');
         cy.get('#save-entity').click();
         return cy.wait('@createCourseQuery');
     }
@@ -236,7 +236,7 @@ export class CourseCreationPage {
      * @returns the query chainable if a test needs to access the response
      */
     update() {
-        cy.intercept(PUT, BASE_API + 'courses/*').as('updateCourseQuery');
+        cy.intercept(PUT, `${COURSE_BASE}/*`).as('updateCourseQuery');
         cy.get('#save-entity').click();
         return cy.wait('@updateCourseQuery');
     }
