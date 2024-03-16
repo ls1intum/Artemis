@@ -202,6 +202,12 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.getFiles(participationId);
     }
 
+    /**
+     * GET /repository/{participationId}/files-plagiarism-view : Gets the files of the repository with the given participationId for the plagiarism view.
+     *
+     * @param participationId the participationId of the repository we want to get the files from
+     * @return a map with the file path as key and the file type as value
+     */
     @GetMapping(value = "/repository/{participationId}/files-plagiarism-view", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, FileType>> getFilesForPlagiarismView(@PathVariable Long participationId) {
@@ -268,6 +274,13 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.getFile(participationId, filename);
     }
 
+    /**
+     * GET /repository/{participationId}/file-plagiarism-view : Gets the file of the repository with the given participationId for the plagiarism view.
+     *
+     * @param participationId the participationId of the repository we want to get the file from
+     * @param filename        the name of the file to retrieve
+     * @return the file with the given filename
+     */
     @GetMapping(value = "/repository/{participationId}/file-plagiarism-view", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getFileForPlagiarismView(@PathVariable Long participationId, @RequestParam("file") String filename) {
