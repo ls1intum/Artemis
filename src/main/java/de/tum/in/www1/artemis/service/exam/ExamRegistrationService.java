@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.net.URI;
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
@@ -58,11 +62,13 @@ public class ExamRegistrationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final FileService fileService;
+
     private static final boolean IS_TEST_RUN = false;
 
     public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, ParticipationService participationService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, FileService fileService) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -73,6 +79,7 @@ public class ExamRegistrationService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
+        this.fileService = fileService;
     }
 
     /**
@@ -263,6 +270,10 @@ public class ExamRegistrationService {
         examRepository.save(exam);
         examUserRepository.delete(registeredExamUser);
 
+        // Delete the signing and student image if they exist
+        Stream.of(registeredExamUser.getSigningImagePath(), registeredExamUser.getStudentImagePath()).filter(Objects::nonNull).map(URI::create)
+                .map(FilePathService::actualPathForPublicPath).forEach(path -> fileService.schedulePathForDeletion(path, 0));
+
         // The student exam might already be generated, then we need to delete it
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), IS_TEST_RUN);
         optionalStudentExam.ifPresent(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
@@ -301,6 +312,10 @@ public class ExamRegistrationService {
         registeredExamUsers.forEach(exam::removeExamUser);
         examRepository.save(exam);
         examUserRepository.deleteAllById(registeredExamUsers.stream().map(ExamUser::getId).toList());
+
+        // Delete the signing and student images if they exist
+        registeredExamUsers.stream().flatMap(examUser -> Stream.of(examUser.getSigningImagePath(), examUser.getStudentImagePath())).filter(Objects::nonNull).map(URI::create)
+                .map(FilePathService::actualPathForPublicPath).forEach(path -> fileService.schedulePathForDeletion(path, 0));
 
         // remove all students exams
         Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());
