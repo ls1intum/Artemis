@@ -144,26 +144,32 @@ Programming Exercises
 
 Programming Exercises - Repository Access
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**Action Types:** *READ* (fetch, pull), *WRITE* (push), *RESET* (reset to origin head)
+**Action Types:**
+    **READ** (fetch, pull), **WRITE** (push), **RESET** (reset to origin head)
 
-| Admins, Instructors and Editors of a course are allowed to *READ*, *WRITE* and *RESET* every repository in their courses.
-| Teaching Assistants are allowed to *READ* every repository in their courses.
+Access to all repositories of a course:
 
-The remaining permitted actions for Students and Teaching Assistants on their own repositories are as follows:
++------------------------------+---------------------+----------------+
+| Admin / Instructor / Editor  | Teaching Assistant  | Student        |
++------------------------------+---------------------+----------------+
+| *READ* , *WRITE* , *RESET*   | *READ*              | restricted     |
++------------------------------+---------------------+----------------+
 
-+--------------------------------------------------------------------+-------------------------------------+
-|                                                                    | Actions                             |
-+--------------------------------------------------------------------+-------------------------------------+
-| Before start/ release date                                         | *READ* :sup:`TA` , *WRITE* :sup:`TA`|
-+--------------------------------------------------------------------+-------------------------------------+
-| After start/ release date but before due date and not locked       | *READ*, *WRITE*, *RESET*            |
-+--------------------------------------------------------------------+-------------------------------------+
-| After due date                                                     | *READ*                              |
-+--------------------------------------------------------------------+-------------------------------------+
-| Locked                                                             | *READ*                              |
-+--------------------------------------------------------------------+-------------------------------------+
+Access for Teaching Assistants and Students on their **own** repositories:
 
-*TA* = only Teaching Assistants
++--------------------------------------------------------------+------------------------------+------------+
+|                                                              | Teaching Assistant           | Student    |
++--------------------------------------------------------------+------------------------------+------------+
+| Before start                                                 | *READ*, *WRITE*, *RESET*     | restricted |
++--------------------------------------------------------------+------------------------------+------------+
+| After start but before due date and not locked               | *READ*, *WRITE*, *RESET*                  |
++--------------------------------------------------------------+-------------------------------------------+
+| After due date and practice mode enabled                     | *READ*, *WRITE*, *RESET*                  |
++--------------------------------------------------------------+-------------------------------------------+
+| After due date                                               | *READ*                                    |
++--------------------------------------------------------------+-------------------------------------------+
+| Locked                                                       | *READ*                                    |
++--------------------------------------------------------------+-------------------------------------------+
 
 Quiz Exercises
 ^^^^^^^^^^^^^^
