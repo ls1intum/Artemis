@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
+import de.tum.in.www1.artemis.web.rest.AssessmentResource;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -187,7 +188,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     }
 
     @Override
-    String getEntityName() {
+    public String getEntityName() {
         return ENTITY_NAME;
     }
 }

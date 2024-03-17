@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.localvcci;
 
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.ROOT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.ROOT;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
@@ -52,12 +52,12 @@ class LocalVCServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
-        // Locking and unlocking repositories is not possible for the local version control system.
-        request.put(ROOT + LOCK_ALL_REPOSITORIES.replace("{exerciseId}", programmingExercise.getId().toString()), null, HttpStatus.BAD_REQUEST);
-        request.put(ROOT + UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", programmingExercise.getId().toString()), null, HttpStatus.BAD_REQUEST);
+        // Locking and unlocking repositories is not available for the local version control system.
+        request.put(ROOT + LOCK_ALL_REPOSITORIES.replace("{exerciseId}", programmingExercise.getId().toString()), null, HttpStatus.NOT_FOUND);
+        request.put(ROOT + UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", programmingExercise.getId().toString()), null, HttpStatus.NOT_FOUND);
 
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/lock-all-repositories", null, HttpStatus.BAD_REQUEST);
-        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/unlock-all-repositories", null, HttpStatus.BAD_REQUEST);
+        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/lock-all-repositories", null, HttpStatus.NOT_FOUND);
+        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/unlock-all-repositories", null, HttpStatus.NOT_FOUND);
     }
 }

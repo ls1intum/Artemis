@@ -904,46 +904,6 @@ public class ExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories : Unlock all repositories of the exam (only necessary for external version control systems)
-     * Locking and unlocking repositories is not supported when using the local version control system.
-     * Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
-     *
-     * @param courseId the course to which the exam belongs to
-     * @param examId   the id of the exam
-     * @return the number of unlocked exercises
-     */
-    @Profile("!localvc")
-    @PostMapping("courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
-        log.info("REST request to unlock all repositories of exam {}", examId);
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        Integer numOfUnlockedExercises = examService.unlockAllRepositories(examId);
-        log.info("Unlocked {} programming exercises of exam {}", numOfUnlockedExercises, examId);
-        return ResponseEntity.ok().body(numOfUnlockedExercises);
-    }
-
-    /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories : Lock all repositories of the exam (only necessary for external version control systems)
-     * Locking and unlocking repositories is not supported when using the local version control system.
-     * Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
-     *
-     * @param courseId the course to which the exam belongs to
-     * @param examId   the id of the exam
-     * @return the number of locked exercises
-     */
-    @Profile("!localvc")
-    @PostMapping("courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
-        log.info("REST request to lock all repositories of exam {}", examId);
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        Integer numOfLockedExercises = examService.lockAllRepositories(examId);
-        log.info("Locked {} programming exercises of exam {}", numOfLockedExercises, examId);
-        return ResponseEntity.ok().body(numOfLockedExercises);
-    }
-
-    /**
      * POST /courses/:courseId/exams/:examId/students : Add multiple users to the students of the exam so that they can access the exam
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
      * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported

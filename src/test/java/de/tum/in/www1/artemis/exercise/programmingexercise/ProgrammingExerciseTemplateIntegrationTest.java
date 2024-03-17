@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 import static org.mockito.ArgumentMatchers.any;

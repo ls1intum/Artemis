@@ -17,8 +17,8 @@ import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceErrorKeys;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -1,8 +1,8 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.*;
 
 import java.io.File;
 import java.io.FileInputStream;
