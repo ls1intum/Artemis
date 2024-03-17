@@ -165,7 +165,7 @@ public class ReactionService {
         answerPost.addReaction(savedReaction);
 
         // save answer post
-        AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
+        AnswerPost updatedAnswerPost = answerPostRepository.saveAndReload(answerPost);
         updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
 
         plagiarismAnswerPostService.preparePostAndBroadcast(answerPost, course, null);

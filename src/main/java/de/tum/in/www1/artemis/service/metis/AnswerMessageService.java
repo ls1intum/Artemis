@@ -102,7 +102,7 @@ public class AnswerMessageService extends PostingService {
         answerMessage.setAuthor(author);
         // on creation of an answer message, we set the resolves_post field to false per default since this feature is not used for messages
         answerMessage.setResolvesPost(false);
-        AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
+        AnswerPost savedAnswerMessage = answerPostRepository.saveAndReload(answerMessage);
         savedAnswerMessage.getPost().setConversation(conversation);
         setAuthorRoleForPosting(savedAnswerMessage, course);
         SingleUserNotification notification = singleUserNotificationService.createNotificationAboutNewMessageReply(savedAnswerMessage, author, conversation);
@@ -154,7 +154,7 @@ public class AnswerMessageService extends PostingService {
             existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
         }
 
-        updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
+        updatedAnswerMessage = answerPostRepository.saveAndReload(existingAnswerMessage);
         updatedAnswerMessage.getPost().setConversation(conversation);
 
         this.preparePostAndBroadcast(updatedAnswerMessage, course, null);

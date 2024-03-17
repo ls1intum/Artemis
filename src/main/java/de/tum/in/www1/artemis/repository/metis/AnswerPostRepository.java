@@ -34,6 +34,11 @@ public interface AnswerPostRepository extends JpaRepository<AnswerPost, Long> {
             """)
     Optional<AnswerPost> findWithPostById(@Param("answerPostId") Long answerPostId);
 
+    default AnswerPost saveAndReload(AnswerPost answerPost) {
+        Long id = save(answerPost).getId();
+        return findWithPostById(id).orElseThrow();
+    }
+
     @NotNull
     default AnswerPost findAnswerPostByIdElseThrow(Long answerPostId) {
         return findWithPostById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() == null)

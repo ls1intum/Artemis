@@ -76,7 +76,7 @@ public class PlagiarismAnswerPostService extends PostingService {
         setAuthorRoleForPosting(answerPost, course);
         // on creation of an answer post, we set the resolves_post field to false per default
         answerPost.setResolvesPost(false);
-        AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
+        AnswerPost savedAnswerPost = answerPostRepository.saveAndReload(answerPost);
         postRepository.save(post);
 
         preparePostAndBroadcast(savedAnswerPost, course, null);
@@ -123,7 +123,7 @@ public class PlagiarismAnswerPostService extends PostingService {
             existingAnswerPost.setContent(answerPost.getContent());
             existingAnswerPost.setUpdatedDate(ZonedDateTime.now());
         }
-        updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
+        updatedAnswerPost = answerPostRepository.saveAndReload(existingAnswerPost);
         this.preparePostAndBroadcast(updatedAnswerPost, course, null);
         return updatedAnswerPost;
     }
