@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -17,7 +14,7 @@ import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 
 // only available for external version control services
-@Profile({ "!" + PROFILE_LOCALVC, PROFILE_CORE })
+@Profile("!localvc & core")
 @RestController
 @RequestMapping("api/")
 public class ExamLockResource {

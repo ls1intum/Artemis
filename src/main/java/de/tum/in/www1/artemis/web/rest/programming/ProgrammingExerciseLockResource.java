@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.programming;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES;
 import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.ROOT;
 import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES;
@@ -22,7 +20,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 
 // only available for external version control services
-@Profile({ "!" + PROFILE_LOCALVC, PROFILE_CORE })
+@Profile("!localvc & core")
 @RestController
 @RequestMapping(ROOT)
 public class ProgrammingExerciseLockResource {
