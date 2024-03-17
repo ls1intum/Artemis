@@ -48,7 +48,7 @@ public abstract class Conversation extends DomainObject {
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private Set<Post> posts = new HashSet<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private Course course;
 

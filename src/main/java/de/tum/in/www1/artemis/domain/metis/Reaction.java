@@ -42,11 +42,11 @@ public class Reaction extends DomainObject {
     @Column(name = "emoji_id")
     private String emojiId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id" })
     private Post post;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id" })
     private AnswerPost answerPost;
 

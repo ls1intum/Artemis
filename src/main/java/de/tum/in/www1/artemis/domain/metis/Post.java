@@ -48,15 +48,15 @@ public class Post extends Posting {
     @Column(name = "text")
     private Set<String> tags = new HashSet<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id", "title" })
     private Exercise exercise;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id", "title" })
     private Lecture lecture;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id", "title" })
     private Course course;
 
