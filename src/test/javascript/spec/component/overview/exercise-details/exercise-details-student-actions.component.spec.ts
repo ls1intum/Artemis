@@ -11,7 +11,6 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Result } from 'app/entities/result.model';
 import { Team } from 'app/entities/team.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';

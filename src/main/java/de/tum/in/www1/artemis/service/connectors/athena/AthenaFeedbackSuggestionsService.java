@@ -58,6 +58,7 @@ public class AthenaFeedbackSuggestionsService {
      *
      * @param exercise   the {@link TextExercise} the suggestions are fetched for
      * @param submission the {@link TextSubmission} the suggestions are fetched for
+     * @param isGraded   the {@link Boolean} should Athena generate grade suggestions or not
      * @return a list of feedback suggestions
      */
     public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded) throws NetworkingException {
@@ -80,6 +81,7 @@ public class AthenaFeedbackSuggestionsService {
      *
      * @param exercise   the {@link ProgrammingExercise} the suggestions are fetched for
      * @param submission the {@link ProgrammingSubmission} the suggestions are fetched for
+     * @param isGraded   the {@link Boolean} should Athena generate grade suggestions or not
      * @return a list of feedback suggestions
      */
     public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isGraded)

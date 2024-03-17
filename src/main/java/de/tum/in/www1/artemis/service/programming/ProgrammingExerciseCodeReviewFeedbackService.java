@@ -29,6 +29,12 @@ import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestion
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+/**
+ * Service class for managing code review feedback on programming exercises.
+ * This service handles the processing of feedback requests for programming exercises,
+ * including automatic generation of feedback through integration with external services
+ * such as Athena.
+ */
 @Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseCodeReviewFeedbackService {
@@ -69,6 +75,15 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         this.programmingMessagingService = programmingMessagingService;
     }
 
+    /**
+     * Handles the request for generating feedback for a programming exercise.
+     * This method decides whether to generate feedback automatically using Athena,
+     * or notify a tutor to manually process the feedback.
+     *
+     * @param exerciseId          the id of the programming exercise.
+     * @param participation       the student participation associated with the exercise.
+     * @param programmingExercise the programming exercise object.
+     */
     @Async
     public void handleNonGradedFeedbackRequest(Long exerciseId, ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
         if (this.athenaFeedbackSuggestionsService != null) {
@@ -82,6 +97,14 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
     }
 
+    /**
+     * Generates automatic non-graded feedback for a programming exercise submission.
+     * This method leverages the Athena service to generate feedback based on the latest submission.
+     *
+     * @param exerciseId          the id of the programming exercise.
+     * @param participation       the student participation associated with the exercise.
+     * @param programmingExercise the programming exercise object.
+     */
     private void generateAutomaticNonGradedFeedback(Long exerciseId, ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
         log.debug("Using athena to generate feedback request: {}", exerciseId);
 
@@ -160,6 +183,13 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         }
     }
 
+    /**
+     * Sets an individual due date for a participation, locks the repository,
+     * and invalidates previous results to prepare for new feedback.
+     *
+     * @param participation       the programming exercise student participation.
+     * @param programmingExercise the associated programming exercise.
+     */
     private void setIndividualDueDateAndLockRepositoryAndInvalidatePreviousResults(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
         var currentDate = now();
         // The participations due date is a flag showing that a feedback request is sent
