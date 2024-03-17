@@ -76,8 +76,6 @@ public class MessageSpecs {
             answerFetch.fetch(AnswerPost_.REACTIONS, JoinType.LEFT);
             root.fetch(Post_.REACTIONS, JoinType.LEFT);
             root.fetch(Post_.TAGS, JoinType.LEFT);
-            var conversationCourseFetch = root.fetch(Post_.CONVERSATION, JoinType.LEFT);
-            conversationCourseFetch.fetch(Conversation_.COURSE, JoinType.LEFT);
 
             if (conversationIds == null || conversationIds.length == 0) {
                 return null;
@@ -86,6 +84,15 @@ public class MessageSpecs {
                 return root.get(Post_.CONVERSATION).get(Conversation_.ID).in(Arrays.stream(conversationIds).boxed().toList());
             }
         });
+    }
+
+    public static Specification<Post> getPostRelationsSpecification() {
+        return (root, query, criteriaBuilder) -> {
+            var conversationCourseFetch = root.fetch(Post_.CONVERSATION, JoinType.LEFT);
+            conversationCourseFetch.fetch(Conversation_.COURSE, JoinType.LEFT);
+
+            return null;
+        };
     }
 
     /**

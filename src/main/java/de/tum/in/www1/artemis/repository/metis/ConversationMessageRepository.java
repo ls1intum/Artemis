@@ -37,7 +37,7 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
      * @return returns a Page of Messages
      */
     default Page<Post> findMessages(PostContextFilter postContextFilter, Pageable pageable, long userId) {
-        Specification<Post> specification = Specification.where(getConversationSpecification(postContextFilter.getConversationId()))
+        Specification<Post> specification = Specification.where(getConversationSpecification(postContextFilter.getConversationId())).and(getPostRelationsSpecification())
                 .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
                 .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
                 .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
@@ -55,7 +55,7 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
      * @return returns a Page of Messages
      */
     default Page<Post> findCourseWideMessages(PostContextFilter postContextFilter, Pageable pageable, long userId) {
-        Specification<Post> specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.getCourseId()))
+        Specification<Post> specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.getCourseId())).and(getPostRelationsSpecification())
                 .and(getConversationsSpecification(postContextFilter.getCourseWideChannelIds())).and(getSearchTextSpecification(postContextFilter.getSearchText()))
                 .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
                 .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
