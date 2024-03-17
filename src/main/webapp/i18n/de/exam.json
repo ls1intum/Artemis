@@ -669,7 +669,10 @@
                     "exerciseTableSingular": "Aufgabe",
                     "points": "Punkte",
                     "numberParticipants": "Teilnehmende",
-                    "variants": "Varianten"
+                    "variants": "Varianten",
+                    "exercisesAssessed": "Alle Übungen sind bewertet",
+                    "exercisesAttention": "Übungen die Aufmerksamkeit erfordern",
+                    "exercisesConjunction": "von"
                 }
             },
             "editWorkingTime": {

@@ -670,7 +670,10 @@
                     "exerciseTableSingular": "Exercise",
                     "points": "Points",
                     "numberParticipants": "Participants",
-                    "variants": "Variants"
+                    "variants": "Variants",
+                    "exercisesAssessed": "All exercises are assessed",
+                    "exercisesAttention": "Exercises that need attention",
+                    "exercisesConjunction": "by"
                 }
             },
             "editWorkingTime": {
