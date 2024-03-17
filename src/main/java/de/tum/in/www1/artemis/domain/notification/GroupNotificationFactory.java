@@ -34,14 +34,25 @@ public class GroupNotificationFactory {
         String text;
         boolean textIsPlaceholder;
         String[] placeholderValues;
+
+        Lecture lecture;
+        // we get the lecture either from the directly connected lecture or from the attachment unit
+        if (attachment.getAttachmentUnit() != null) {
+            lecture = attachment.getAttachmentUnit().getLecture();
+        }
+        else {
+            lecture = attachment.getLecture();
+        }
+
         if (notificationType == ATTACHMENT_CHANGE) {
             title = NotificationConstants.ATTACHMENT_CHANGE_TITLE;
             text = NotificationConstants.ATTACHMENT_CHANGE_TEXT;
             textIsPlaceholder = true;
-            placeholderValues = createPlaceholders_ATTACHMENT_CHANGE(
-                    attachment.getExercise() != null ? attachment.getExercise().getCourseViaExerciseGroupOrCourseMember().getTitle()
-                            : attachment.getLecture().getCourse().getTitle(),
-                    attachment.getName(), attachment.getExercise() != null ? attachment.getExercise().getTitle() : attachment.getLecture().getTitle());
+
+            String courseTitle = attachment.getExercise() != null ? attachment.getExercise().getCourseViaExerciseGroupOrCourseMember().getTitle() : lecture.getCourse().getTitle();
+            String entityTitle = attachment.getExercise() != null ? attachment.getExercise().getTitle() : lecture.getTitle();
+
+            placeholderValues = createPlaceholders_ATTACHMENT_CHANGE(courseTitle, attachment.getName(), entityTitle);
         }
         else {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
@@ -51,15 +62,6 @@ public class GroupNotificationFactory {
             text = notificationText;
             textIsPlaceholder = false;
             placeholderValues = null;
-        }
-
-        Lecture lecture;
-        // we get the lecture either from the directly connected lecture or from the attachment unit
-        if (attachment.getAttachmentUnit() != null) {
-            lecture = attachment.getAttachmentUnit().getLecture();
-        }
-        else {
-            lecture = attachment.getLecture();
         }
         Course course = lecture.getCourse();
         GroupNotification notification = new GroupNotification(course, title, text, textIsPlaceholder, placeholderValues, author, groupNotificationType);

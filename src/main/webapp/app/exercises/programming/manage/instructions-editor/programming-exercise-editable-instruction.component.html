@@ -44,7 +44,7 @@
                 @if (!unsavedChangesValue && !savingInstructions) {
                     <div>
                         <fa-icon [icon]="faCheckCircle" class="text-success me-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savedTooltip' | artemisTranslate }}" />
-                        <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saved">Saved.</span>
+                        <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saved"></span>
                     </div>
                 }
                 @if (unsavedChangesValue && !savingInstructions) {
@@ -54,13 +54,13 @@
                             class="text-warning me-1"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.editable.unsavedTooltip' | artemisTranslate }}"
                         />
-                        <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.unsaved">Unsaved.</span>
+                        <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.unsaved"></span>
                     </div>
                 }
                 @if (savingInstructions) {
                     <div>
                         <fa-icon [icon]="faCircleNotch" class="me-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savingTooltip' | artemisTranslate }}" />
-                        <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saving">Saving...</span>
+                        <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saving"></span>
                     </div>
                 }
             </div>

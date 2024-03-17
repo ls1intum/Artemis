@@ -253,6 +253,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(assessmentLayout).toBeDefined();
     });
 
+    it('should load the grading criteria on initialisation', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+
+        expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id, false, true);
+    }));
+
     it('should update assessor correctly if the manual assessment is overridden', fakeAsync(() => {
         const user2 = <User>{ id: 100, groups: ['instructorGroup'] };
         const discardPendingSubmissionsWithConfirmationStub = jest.spyOn(comp, 'discardPendingSubmissionsWithConfirmation').mockReturnValue(Promise.resolve(true));
