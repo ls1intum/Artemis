@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository.metis.conversation;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
@@ -97,7 +98,15 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
             """)
     Set<Channel> findChannelByCourseIdAndNameAndIdNot(@Param("courseId") Long courseId, @Param("name") String name, @Param("channelId") Long channelId);
 
+    @Query("""
+                SELECT channel
+                FROM Channel channel
+                    LEFT JOIN FETCH channel.course
+                WHERE channel.id = :channelId
+            """)
+    Optional<Channel> findWithCourseById(@Param("channelId") Long channelId);
+
     default Channel findByIdElseThrow(long channelId) {
-        return this.findById(channelId).orElseThrow(() -> new EntityNotFoundException("Channel", channelId));
+        return this.findWithCourseById(channelId).orElseThrow(() -> new EntityNotFoundException("Channel", channelId));
     }
 }

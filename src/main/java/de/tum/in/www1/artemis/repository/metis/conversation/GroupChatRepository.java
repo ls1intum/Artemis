@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository.metis.conversation;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,8 +33,16 @@ public interface GroupChatRepository extends JpaRepository<GroupChat, Long> {
 
     Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
 
+    @Query("""
+                SELECT groupChat
+                FROM GroupChat groupChat
+                    LEFT JOIN FETCH groupChat.course
+                WHERE groupChat.id = :groupChatId
+            """)
+    Optional<GroupChat> findWithCourseById(@Param("groupChatId") Long groupChatId);
+
     default GroupChat findByIdElseThrow(long groupChatId) {
-        return this.findById(groupChatId).orElseThrow(() -> new EntityNotFoundException("GroupChat", groupChatId));
+        return this.findWithCourseById(groupChatId).orElseThrow(() -> new EntityNotFoundException("GroupChat", groupChatId));
     }
 
 }

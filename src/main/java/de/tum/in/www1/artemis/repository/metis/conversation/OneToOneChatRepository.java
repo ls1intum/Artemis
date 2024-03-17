@@ -29,6 +29,7 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
                 LEFT JOIN FETCH oneToOneChat.conversationParticipants conversationParticipant
                 LEFT JOIN FETCH conversationParticipant.user user
                 LEFT JOIN FETCH user.groups
+                LEFT JOIN FETCH oneToOneChat.course
             WHERE oneToOneChat.course.id = :courseId
                 AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :userId)
                 AND user.id = :userId
@@ -64,9 +65,22 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
             FROM OneToOneChat chat
                 LEFT JOIN chat.conversationParticipants participants
                 LEFT JOIN participants.user user
+                LEFT JOIN FETCH chat.course
             WHERE user = :user
             """)
     Set<OneToOneChat> findAllByParticipatingUser(@Param("user") User user);
 
     Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
+
+    @Query("""
+                SELECT oneToOneChat
+                FROM OneToOneChat oneToOneChat
+                    LEFT JOIN FETCH oneToOneChat.course
+                WHERE oneToOneChat.id = :oneToOneChatId
+            """)
+    Optional<OneToOneChat> findWithCourseById(@Param("oneToOneChatId") Long oneToOneChatId);
+
+    default OneToOneChat findByIdElseThrow(long oneToOneChatId) {
+        return this.findWithCourseById(oneToOneChatId).orElseThrow(() -> new EntityNotFoundException("OneToOneChat", oneToOneChatId));
+    }
 }
