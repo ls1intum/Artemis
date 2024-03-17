@@ -269,7 +269,8 @@ dependencies {
     implementation "xalan:xalan:2.7.3"
     implementation "xalan:serializer:2.7.3"
 
-    implementation "org.apache.santuario:xmlsec:4.0.2"
+    // NOTE: use the latest 2.x version to avoid security vulnerabilities, upgrade to 4.x not possible yet
+    implementation "org.apache.santuario:xmlsec:2.3.4"
 
     implementation "org.jsoup:jsoup:1.17.2"
     implementation "commons-codec:commons-codec:1.16.1"   // needed for spring security saml2
@@ -334,7 +335,8 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-commons:4.1.1"
     implementation "com.netflix.eureka:eureka-client-jersey3:2.0.2"
 
-    implementation "io.netty:netty-all:4.1.107.Final"
+    // TODO: updating to a later version breaks the build
+    implementation "io.netty:netty-all:4.1.101.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.17"
     implementation "org.springframework:spring-messaging:6.1.5"
     implementation "org.springframework.retry:spring-retry:2.0.5"
@@ -352,6 +354,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-saml2-service-provider:${spring_security_version}"
 
     implementation "org.opensaml:opensaml-security-api:${opensaml_version}"
+    implementation "org.opensaml:opensaml-core:${opensaml_version}"
     implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
     implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
 
