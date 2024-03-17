@@ -61,11 +61,7 @@ public final class Constants {
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
-    public static final String AUTOMATIC_FEEDBACK_REQUEST_TOPIC = "/newFeedback";
-
     public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
-
-    public static final String NEW_AUTOMATIC_FEEDBACK_TOPIC = "/topic" + AUTOMATIC_FEEDBACK_REQUEST_TOPIC;
 
     public static final String APOLLON_CONVERSION_API_PATH = "/api/apollon/convert-to-pdf";
 
