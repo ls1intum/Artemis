@@ -1,11 +1,8 @@
 <div class="form-group">
     <div class="form-check custom-checkbox">
         <input class="form-check-input" type="checkbox" name="customizeBuildPlan" id="field_customizeBuildPlan" [(ngModel)]="programmingExercise.customizeBuildPlanWithAeolus" />
-        <label class="form-check-label custom-control-label" for="field_customizeBuildPlan" jhiTranslate="artemisApp.programmingExercise.customizeBuildPlanWithAeolus"
-            >Customize Build Plan with Aeolus
-        </label>
+        <label class="form-check-label custom-control-label" for="field_customizeBuildPlan" jhiTranslate="artemisApp.programmingExercise.customizeBuildPlanWithAeolus"></label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeBuildPlansWithAeolusTooltip" />
-        <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
     </div>
     @if (programmingExercise.customizeBuildPlanWithAeolus) {
         <div class="row m-1">
@@ -48,16 +45,18 @@
                                 @if (active) {
                                     <label class="form-check-label" for="field_alwaysrun">
                                         <input class="form-check-input" type="checkbox" name="runAlways" id="field_alwaysrun" [(ngModel)]="active.runAlways" />
-                                        <label class="form-check-label custom-control-label" for="field_alwaysrun" jhiTranslate="artemisApp.programmingExercise.runActionAlways">
-                                            Always run, even if other actions fail
-                                        </label>
+                                        <label
+                                            class="form-check-label custom-control-label"
+                                            for="field_alwaysrun"
+                                            jhiTranslate="artemisApp.programmingExercise.runActionAlways"
+                                        ></label>
                                     </label>
                                 }
                             </div>
                         </div>
                     </div>
                     <div class="card-text">
-                        <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2">Script</label>
+                        <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
                         @if (isScriptAction) {
                             <jhi-ace-editor #editor (textChanged)="codeChanged($event)" />
                         }

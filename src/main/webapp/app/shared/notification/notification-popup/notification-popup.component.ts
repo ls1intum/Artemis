@@ -62,6 +62,8 @@ export class NotificationPopupComponent implements OnInit {
 
     private readonly maxNotificationLength = 150;
 
+    private examRoutePattern = /^\/courses\/\d+\/exams\/\d+$/;
+
     // Icons
     faTimes = faTimes;
     faMessage = faMessage;
@@ -162,20 +164,33 @@ export class NotificationPopupComponent implements OnInit {
     private addNotification(notification: Notification): void {
         // Only add a notification if it does not already exist.
         if (notification && !this.notifications.some(({ id }) => notification.id && id === notification.id)) {
-            if (notification.title === QUIZ_EXERCISE_STARTED_TITLE) {
-                this.addQuizNotification(notification);
-                this.setRemovalTimeout(notification);
-            }
-            if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
-                this.checkIfNotificationAffectsCurrentStudentExamExercises(notification);
-            }
-            if (notification.title && conversationMessageNotificationTitles.includes(notification.title)) {
-                if (this.notificationSettingsService.isNotificationAllowedBySettings(notification)) {
+            if (this.isExamMode()) {
+                if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
+                    this.checkIfNotificationAffectsCurrentStudentExamExercises(notification);
+                }
+            } else {
+                if (notification.title === QUIZ_EXERCISE_STARTED_TITLE) {
+                    this.addQuizNotification(notification);
+                    this.setRemovalTimeout(notification);
+                }
+
+                if (
+                    notification.title &&
+                    conversationMessageNotificationTitles.includes(notification.title) &&
+                    this.notificationSettingsService.isNotificationAllowedBySettings(notification)
+                ) {
                     this.addMessageNotification(notification);
                     this.setRemovalTimeout(notification, 15);
                 }
             }
         }
+    }
+
+    /**
+     * Checks if user is currently in the exam mode
+     */
+    isExamMode(): boolean {
+        return this.examRoutePattern.test(this.router.url);
     }
 
     /**
@@ -225,7 +240,12 @@ export class NotificationPopupComponent implements OnInit {
             const notificationWithLiveQuizTarget = {
                 target: JSON.stringify(target),
             } as GroupNotification;
-            const matchOptions = { paths: 'exact', queryParams: 'exact', fragment: 'ignored', matrixParams: 'ignored' } as IsActiveMatchOptions; // corresponds to exact = true
+            const matchOptions = {
+                paths: 'exact',
+                queryParams: 'exact',
+                fragment: 'ignored',
+                matrixParams: 'ignored',
+            } as IsActiveMatchOptions; // corresponds to exact = true
             if (
                 !this.router.isActive(this.notificationTargetRoute(notification), matchOptions) &&
                 !this.router.isActive(this.notificationTargetRoute(notificationWithLiveQuizTarget) + '/live', matchOptions)
@@ -250,7 +270,12 @@ export class NotificationPopupComponent implements OnInit {
             this.alertService.error(error);
         }
         // only show pop-up if explicit notification text was set and only inside exam mode
-        const matchOptions = { paths: 'exact', queryParams: 'exact', fragment: 'ignored', matrixParams: 'ignored' } as IsActiveMatchOptions; // corresponds to exact = true
+        const matchOptions = {
+            paths: 'exact',
+            queryParams: 'exact',
+            fragment: 'ignored',
+            matrixParams: 'ignored',
+        } as IsActiveMatchOptions; // corresponds to exact = true
         if (notification.text != undefined && this.router.isActive(this.notificationTargetRoute(notification), matchOptions)) {
             this.displayNotification(notification);
         }

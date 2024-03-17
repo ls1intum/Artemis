@@ -1,22 +1,22 @@
 <div>
     <h2>
-        <span id="organization-management-page-heading" jhiTranslate="artemisApp.organizationManagement.title">Organization management</span>
+        <span id="organization-management-page-heading" jhiTranslate="artemisApp.organizationManagement.title"></span>
         <button class="btn btn-primary float-end jh-create-entity" [routerLink]="['./new']">
-            <fa-icon [icon]="faPlus" /> <span jhiTranslate="artemisApp.organizationManagement.addLabel">Add organization</span>
+            <fa-icon [icon]="faPlus" /> <span jhiTranslate="artemisApp.organizationManagement.addLabel"></span>
         </button>
     </h2>
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th><span jhiTranslate="global.field.id">ID</span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.name">Name</span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.shortName">Short Name</span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.url">Url</span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.description">Description</span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.users">Users</span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.courses">Courses</span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.emailPattern">Email Pattern</span></th>
+                    <th><span jhiTranslate="global.field.id"></span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.name"></span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.shortName"></span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.url"></span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.description"></span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.users"></span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.courses"></span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.emailPattern"></span></th>
                 </tr>
             </thead>
             <tbody>
@@ -40,11 +40,11 @@
                             <div class="btn-group flex-btn-group-container">
                                 <button type="submit" [routerLink]="['./', organization.id]" class="btn btn-info btn-sm">
                                     <fa-icon [icon]="faEye" />
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
                                 </button>
                                 <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
                                     <fa-icon [icon]="faWrench" />
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                 </button>
                                 <button
                                     jhiDeleteButton

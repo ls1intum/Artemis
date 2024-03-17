@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.notification.TutorialGroupNotification;
 @Repository
 public interface TutorialGroupNotificationRepository extends JpaRepository<TutorialGroupNotification, Long> {
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteAllByTutorialGroupId(Long tutorialGroupId);
 }
