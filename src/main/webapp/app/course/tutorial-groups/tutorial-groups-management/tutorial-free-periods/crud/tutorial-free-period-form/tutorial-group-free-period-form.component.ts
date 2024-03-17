@@ -210,20 +210,6 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         });
     }
 
-    get isStartDateInvalid() {
-        if (this.startDateControl) {
-            return this.startDateControl.invalid && (this.startDateControl.touched || this.startDateControl.dirty);
-        }
-        return false;
-    }
-
-    get isEndDateInvalid() {
-        if (this.endDateControl) {
-            return this.endDateControl.invalid && (this.endDateControl.touched || this.endDateControl.dirty);
-        }
-        return false;
-    }
-
     get isStartTimeInvalid() {
         if (this.startTimeControl) {
             return this.startTimeControl.invalid && (this.startTimeControl.touched || this.startTimeControl.dirty);

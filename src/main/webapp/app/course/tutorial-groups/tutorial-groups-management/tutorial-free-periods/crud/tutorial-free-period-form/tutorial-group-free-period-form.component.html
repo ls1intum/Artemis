@@ -58,7 +58,7 @@
                             name="startDate"
                             id="startDate"
                             required
-                            [class.is-invalid]="isStartDateInvalid"
+                            [ngClass]="{ isInvalid: form.controls.startDate?.invalid && (form.controls.startDate?.dirty || form.controls.startDate?.touched) }"
                             [owlDateTimeTrigger]="startDatePicker"
                             formControlName="startDate"
                             [owlDateTime]="startDatePicker"
@@ -83,7 +83,7 @@
                             name="endDate"
                             id="endDate"
                             required
-                            [class.is-invalid]="isEndDateInvalid"
+                            [ngClass]="{ isInvalid: form.controls.endDate?.invalid && (form.controls.endDate?.dirty || form.controls.endDate?.touched) }"
                             [owlDateTimeTrigger]="endDatePicker"
                             formControlName="endDate"
                             [owlDateTime]="endDatePicker"
@@ -115,7 +115,7 @@
                             name="startTime"
                             id="startTime"
                             required
-                            [class.is-invalid]="isStartTimeInvalid"
+                            [ngClass]="{ isInvalid: form.controls.startTime?.invalid && (form.controls.startTime?.dirty || form.controls.startTime?.touched) }"
                             [owlDateTimeTrigger]="startTimePicker"
                             formControlName="startTime"
                             [owlDateTime]="startTimePicker"
@@ -132,7 +132,7 @@
                             name="endTime"
                             id="endTime"
                             required
-                            [class.is-invalid]="isEndTimeInvalid"
+                            [ngClass]="{ isInvalid: form.controls.endTime?.invalid && (form.controls.endTime?.dirty || form.controls.endTime?.touched) }"
                             [owlDateTimeTrigger]="endTimePicker"
                             formControlName="endTime"
                             [owlDateTime]="endTimePicker"
