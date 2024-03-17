@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs/esm';
 
-import { BASE_API } from '../../../constants';
+import { TEXT_EXERCISE_BASE } from '../../../constants';
 import { POST } from '../../../constants';
 import { enterDate } from '../../../utils';
 
@@ -44,13 +44,13 @@ export class TextExerciseCreationPage {
     }
 
     create() {
-        cy.intercept(POST, BASE_API + 'text-exercises').as('textExerciseCreation');
+        cy.intercept(POST, TEXT_EXERCISE_BASE).as('textExerciseCreation');
         cy.get('#save-entity').click();
         return cy.wait('@textExerciseCreation');
     }
 
     import() {
-        cy.intercept(POST, BASE_API + 'text-exercises/import/*').as('textExerciseImport');
+        cy.intercept(POST, `${TEXT_EXERCISE_BASE}/import/*`).as('textExerciseImport');
         cy.get('#save-entity').click();
         return cy.wait('@textExerciseImport');
     }

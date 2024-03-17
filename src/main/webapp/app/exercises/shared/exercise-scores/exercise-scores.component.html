@@ -14,9 +14,7 @@
                     <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
                     <span class="ms-1">{{ 'artemisApp.exercise.showingOnlyInRange' | artemisTranslate: { range: this.rangeFilter.toString() } }}</span>
                 </span>
-                <button type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter">
-                    Reset submission filter
-                </button>
+                <button type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter"></button>
             </h4>
         }
         <div class="d-flex flex-wrap">
@@ -66,7 +64,7 @@
                     @if (!exercise.exerciseGroup) {
                         <a [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'participations']" class="btn btn-primary btn-sm me-1">
                             <fa-icon [icon]="faListAlt" />
-                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>
                         </a>
                     }
                     @if (exercise.exerciseGroup) {
@@ -85,7 +83,7 @@
                             class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="faListAlt" />
-                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>
                         </a>
                     }
                     @if (exercise.isAtLeastInstructor) {
@@ -108,7 +106,7 @@
                         @if (exercise.isAtLeastInstructor) {
                             <button class="btn btn-info btn-sm me-1" (click)="exportNames()">
                                 <fa-icon [icon]="faDownload" />
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.export.names">Export Names</span>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.export.names"></span>
                             </button>
                         }
                         @if (exercise.isAtLeastInstructor) {
@@ -126,7 +124,7 @@
                     </ng-template>
                     <button class="btn btn-primary btn-sm" (click)="refresh()">
                         <fa-icon [icon]="faSync" />
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh"></span>
                     </button>
                 </div>
             </div>
@@ -191,8 +189,7 @@
                                     <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamShortName' | artemisTranslate }}</span>
                                     <fa-icon [icon]="controls.iconForSortPropField('team.shortName')" />
                                 </span>
-                            }
-                            @if (!exercise.teamMode) {
+                            } @else {
                                 <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.login')">
                                     <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentId' | artemisTranslate }}</span>
                                     <fa-icon [icon]="controls.iconForSortPropField('student.login')" />
@@ -250,7 +247,7 @@
                         <ngx-datatable-column prop="" [minWidth]="100" [width]="110">
                             <ng-template ngx-datatable-header-template>
                                 <span class="datatable-header-cell-wrapper" (click)="controls.onSort('testRun')">
-                                    <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.participation.practice"> Practice </span>
+                                    <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.participation.practice"></span>
                                     <fa-icon [icon]="controls.iconForSortPropField('testRun')" />
                                 </span>
                             </ng-template>

@@ -2,7 +2,7 @@
     <div class="d-flex flex-wrap">
         <div class="mr-auto flex-fill">
             <h2>
-                <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
+                <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title"></span>
             </h2>
             @if (exercise?.type === ExerciseType.PROGRAMMING) {
                 <div class="d-flex align-items-center mt-2">
@@ -39,9 +39,12 @@
         </div>
         @if (exercise?.type !== ExerciseType.QUIZ && exercise?.isAtLeastInstructor) {
             <div class="p-2">
-                <button class="btn btn-success" [disabled]="isSaving || participationsChangedDueDate.size === 0" (click)="saveChangedDueDates()" jhiTranslate="entity.action.save">
-                    Save
-                </button>
+                <button
+                    class="btn btn-success"
+                    [disabled]="isSaving || participationsChangedDueDate.size === 0"
+                    (click)="saveChangedDueDates()"
+                    jhiTranslate="entity.action.save"
+                ></button>
             </div>
         }
         @if (exercise?.isAtLeastInstructor && exercise?.type === ExerciseType.PROGRAMMING) {
@@ -52,7 +55,7 @@
                 <a class="btn btn-info" [routerLink]="getScoresRoute(exercise)">
                     <div>
                         <fa-icon [icon]="faTable" />
-                        <span class="d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                        <span class="d-md-inline" jhiTranslate="entity.action.scores"></span>
                     </div>
                 </a>
             }
@@ -88,7 +91,7 @@
                 <ngx-datatable-column prop="id" [minWidth]="60" [width]="80" [maxWidth]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id"> ID </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('id')" />
                         </span>
                     </ng-template>
@@ -115,7 +118,7 @@
                     <ngx-datatable-column prop="repositoryUri" [minWidth]="120" [width]="120">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryUri')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.repositoryUri">Repository Uri</span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.repositoryUri"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('repositoryUri')" />
                             </span>
                         </ng-template>
@@ -136,13 +139,13 @@
                     <ngx-datatable-column [minWidth]="120" [width]="150">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.repository.title">Repository</span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.repository.title"></span>
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-row="row">
                             <a [href]="routerLink + '/' + row.id + '/repository'" class="btn btn-sm btn-primary ms-2">
                                 <fa-icon [icon]="faCodeBranch" />
-                                <span jhiTranslate="artemisApp.exerciseActions.openRepository">Open Repository</span>
+                                <span jhiTranslate="artemisApp.exerciseActions.openRepository"></span>
                             </a>
                         </ng-template>
                     </ngx-datatable-column>
@@ -151,7 +154,7 @@
                     <ngx-datatable-column [minWidth]="100" [width]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildPlanId')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.buildPlanId"> Build Plan Id </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.buildPlanId"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('buildPlanId')" />
                             </span>
                         </ng-template>
@@ -173,7 +176,7 @@
                 <ngx-datatable-column prop="initializationState" [minWidth]="80" [width]="80">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('initializationState')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationState"> Initialization State </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationState"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('initializationState')" />
                         </span>
                     </ng-template>
@@ -184,7 +187,7 @@
                 <ngx-datatable-column prop="initializationDate" [width]="180">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('initializationDate')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationDate"> Initialization Date </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationDate"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('initializationDate')" />
                         </span>
                     </ng-template>
@@ -195,7 +198,7 @@
                 <ngx-datatable-column [minWidth]="100" [width]="110">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('submissionCount')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.submissionCount"> Submissions </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.submissionCount"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('submissionCount')" />
                         </span>
                     </ng-template>
@@ -224,7 +227,7 @@
                     <ngx-datatable-column prop="student" [minWidth]="120" [width]="120">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.name')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.student"> Student </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.student"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('student.name')" />
                             </span>
                         </ng-template>
@@ -241,7 +244,7 @@
                     <ngx-datatable-column prop="team" [minWidth]="120" [width]="120">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('team.name')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.team"> Team </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.team"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('team.name')" />
                             </span>
                         </ng-template>
@@ -256,7 +259,7 @@
                     <ngx-datatable-column prop="team.students" [minWidth]="350" [width]="450">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" style="cursor: text">
-                                <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.participation.students"> Students </span>
+                                <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.participation.students"></span>
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
@@ -268,7 +271,7 @@
                     <ngx-datatable-column prop="student" [minWidth]="80" [width]="80">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('testRun')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.practice"> Practice </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.practice"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('testRun')" />
                             </span>
                         </ng-template>
@@ -281,7 +284,7 @@
                     <ngx-datatable-column prop="presentationScore" [minWidth]="150" [width]="150">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('presentationScore')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.presentationScore"> Presentation Score </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.presentationScore"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('presentationScore')" />
                             </span>
                         </ng-template>
@@ -294,7 +297,7 @@
                     <ngx-datatable-column prop="presentationScore" [minWidth]="150" [width]="150">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('presentationScore')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.presentationGrade"> Presentation Grade </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.presentationGrade"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('presentationScore')" />
                             </span>
                         </ng-template>
@@ -318,7 +321,7 @@
                     <ngx-datatable-column [minWidth]="270" [width]="270">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildPlanId')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.individualDueDate">Individual DueDate</span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.individualDueDate"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('individualDueDate')" />
                             </span>
                         </ng-template>
@@ -388,7 +391,7 @@
                                 @if (this.basicPresentationEnabled && !value.testRun && value.presentationScore !== 1) {
                                     <button (click)="addBasicPresentation(value)" class="btn btn-info btn-sm me-1">
                                         <fa-icon [icon]="faFilePowerpoint" />
-                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label">Add presentation</span>
+                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label"></span>
                                     </button>
                                 }
                                 @if (
@@ -400,7 +403,7 @@
                                         class="btn btn-info btn-sm me-1"
                                     >
                                         <fa-icon [icon]="faFilePowerpoint" />
-                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.savePresentation.label">Save presentation</span>
+                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.savePresentation.label"></span>
                                     </button>
                                 }
                                 @if (
@@ -409,7 +412,7 @@
                                 ) {
                                     <button (click)="removePresentation(value)" class="btn btn-danger btn-sm me-1">
                                         <fa-icon [icon]="faFilePowerpoint" />
-                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.removePresentation.label">Remove presentation</span>
+                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.removePresentation.label"></span>
                                     </button>
                                 }
                             </div>

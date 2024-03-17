@@ -15,7 +15,7 @@
     <div class="row mt-4">
         <div class="bonus-form-step col-1"></div>
         <div class="form-group col">
-            <label class="no-flex-shrink h5" jhiTranslate="artemisApp.bonus.bonusStrategy.title">Select a bonus strategy</label>
+            <label class="no-flex-shrink h5" jhiTranslate="artemisApp.bonus.bonusStrategy.title"></label>
             <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.bonusStrategy.helpText' }" />
             <jhi-mode-picker class="d-block mt-1" [options]="bonusStrategyOptions" [(value)]="currentBonusStrategyOption" (valueChange)="onBonusStrategyInputChange()" />
         </div>
@@ -24,7 +24,7 @@
         <div class="row mt-4">
             <div class="bonus-form-step col-1"></div>
             <div class="form-group col">
-                <label class="no-flex-shrink h5" jhiTranslate="artemisApp.bonus.calculation.title">Select calculation</label>
+                <label class="no-flex-shrink h5" jhiTranslate="artemisApp.bonus.calculation.title"></label>
                 <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.calculation.helpText' }" />
                 <jhi-mode-picker class="d-block mt-1" [options]="calculationSigns" [(value)]="bonus.weight" (valueChange)="onWeightChange()" />
             </div>
@@ -34,7 +34,7 @@
         <div class="row mt-4">
             <div class="bonus-form-step col-1"></div>
             <div class="form-group col">
-                <label class="no-flex-shrink h5" jhiTranslate="artemisApp.bonus.bonusSource.title">Select bonus source</label>
+                <label class="no-flex-shrink h5" jhiTranslate="artemisApp.bonus.bonusSource.title"></label>
                 <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.bonusSource.helpText' }" />
                 <select
                     class="form-select mt-1"
@@ -227,7 +227,7 @@
             }
             <div>
                 <button (click)="save()" [disabled]="isLoading" class="btn btn-primary mr-1 mb-1" type="button">
-                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                 </button>
                 @if (bonus.id) {
                     <button
@@ -240,7 +240,7 @@
                         [dialogError]="dialogError$"
                         [disabled]="isLoading"
                     >
-                        <fa-icon [icon]="faTimes"><span jhiTranslate="entity.action.delete">Delete</span></fa-icon>
+                        <fa-icon [icon]="faTimes"><span jhiTranslate="entity.action.delete"></span></fa-icon>
                     </button>
                 }
             </div>
