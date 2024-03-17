@@ -6,7 +6,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { communicationAPIRequest, courseCommunication, courseManagementAPIRequest, exerciseAPIRequest } from '../../support/artemis';
 import { admin, instructor, studentOne, studentThree, studentTwo } from '../../support/users';
 import { convertModelAfterMultiPart, titleLowercase } from '../../support/utils';
-import { BASE_API, GET } from '../../support/constants';
+import { COURSE_BASE, GET } from '../../support/constants';
 
 const courseConfigsToTest = [
     { description: 'messaging and communication enabled', config: { allowMessaging: true, allowCommunication: true } },
@@ -90,12 +90,12 @@ courseConfigsToTest.forEach((configToTest) => {
 
             it('other students should be able to filter for message by context', () => {
                 const content = 'Test Context Filter Post Content';
-                cy.intercept(GET, BASE_API + 'courses/*/conversations').as('getConversations');
+                cy.intercept(GET, `${COURSE_BASE}/*/conversations`).as('getConversations');
                 cy.login(studentOne, `/courses/${course.id}/discussion`);
                 cy.wait('@getConversations');
                 communicationAPIRequest.createCourseWideMessage(course, courseWideRandomChannel.id!, content).then((response) => {
                     const post = response.body;
-                    cy.intercept(GET, BASE_API + 'courses/*/conversations').as('getConversations');
+                    cy.intercept(GET, `${COURSE_BASE}/*/conversations`).as('getConversations');
                     cy.reload();
                     cy.wait('@getConversations');
                     courseCommunication.filterByContext(courseWideRandomChannel.name!);
@@ -219,7 +219,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
                 communicationAPIRequest.createCourseWideMessage(course, channel.id!, content).then((response) => {
                     const post = response.body;
-                    cy.intercept(GET, BASE_API + 'courses/*/conversations').as('getConversations');
+                    cy.intercept(GET, `${COURSE_BASE}/*/conversations`).as('getConversations');
                     cy.login(studentTwo, `/courses/${course.id}/discussion`);
                     cy.wait('@getConversations');
                     courseCommunication.filterByContext(textExercise.channelName!);
@@ -322,7 +322,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
                 communicationAPIRequest.createCourseWideMessage(course, channel.id!, content).then((response) => {
                     const post = response.body;
-                    cy.intercept(GET, BASE_API + 'courses/*/conversations').as('getConversations');
+                    cy.intercept(GET, `${COURSE_BASE}/*/conversations`).as('getConversations');
                     cy.login(studentTwo, `/courses/${course.id}/discussion`);
                     cy.wait('@getConversations');
                     courseCommunication.filterByContext(lecture.channelName!);
