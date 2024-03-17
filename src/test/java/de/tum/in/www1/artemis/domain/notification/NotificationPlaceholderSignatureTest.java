@@ -22,10 +22,10 @@ import io.github.classgraph.ClassGraph;
 class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationIndependentTest {
 
     /**
-     * If this test fails you have changed the notification placeholder files. This may have dramatic consequences on the mobile applications (iOS & Android) and the database.
+     * If this test fails, you have changed the notification placeholder files. This may have dramatic consequences on the mobile applications (iOS & Android) and the database.
      * Changing the notification placeholders files changes the following things:
      * 1. Other key value pairs are sent to the clients. This may mean that the native clients no longer understand them and notifications are no longer shown to users.
-     * 2. The database becomes inconsistent. The placeholders are stored as Json in the database.
+     * 2. The database becomes inconsistent. The placeholders are stored as JSON in the database.
      * You must now do the following:
      * 1. Check if you really need to change these placeholders. If not, revert your changes.
      * 2. Write a database migration for the old placeholder JSON strings, such that they match your new signature.
