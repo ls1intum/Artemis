@@ -21,6 +21,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     @Query("""
             SELECT DISTINCT channel
             FROM Channel channel
+                LEFT JOIN FETCH channel.course
             WHERE channel.course.id = :courseId
             ORDER BY channel.name
             """)
@@ -29,6 +30,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     @Query("""
             SELECT channel
             FROM Channel channel
+                LEFT JOIN FETCH channel.course
             WHERE channel.lecture.id = :lectureId
             """)
     Channel findChannelByLectureId(@Param("lectureId") Long lectureId);
@@ -36,6 +38,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     @Query("""
             SELECT DISTINCT channel
             FROM Channel channel
+                LEFT JOIN FETCH channel.course
             WHERE channel.exam.id = :examId
             """)
     Channel findChannelByExamId(@Param("examId") Long examId);
@@ -43,6 +46,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     @Query("""
             SELECT DISTINCT channel
             FROM Channel channel
+                LEFT JOIN FETCH channel.course
             WHERE channel.exercise.id = :exerciseId
             """)
     Channel findChannelByExerciseId(@Param("exerciseId") Long exerciseId);
@@ -51,6 +55,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
             SELECT DISTINCT channel
             FROM Channel channel
                 LEFT JOIN channel.conversationParticipants cp
+                LEFT JOIN FETCH channel.course
             WHERE channel.course.id = :courseId
                 AND (
                    channel.isCourseWide = TRUE
@@ -62,6 +67,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     @Query("""
             SELECT DISTINCT channel
             FROM Channel channel
+                LEFT JOIN FETCH channel.course
             WHERE channel.course.id = :courseId
                 AND channel.isCourseWide = TRUE
             ORDER BY channel.name
@@ -71,6 +77,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     @Query("""
             SELECT DISTINCT channel
             FROM Channel channel
+                LEFT JOIN FETCH channel.course
             WHERE channel.course.id = :courseId
                 AND channel.name = :name
             ORDER BY channel.name
@@ -82,6 +89,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     @Query("""
             SELECT DISTINCT channel
             FROM Channel channel
+                 LEFT JOIN FETCH channel.course
             WHERE channel.course.id = :courseId
                 AND channel.name = :name
                 AND channel.id <> :channelId

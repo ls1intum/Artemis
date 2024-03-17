@@ -21,6 +21,7 @@ public interface GroupChatRepository extends JpaRepository<GroupChat, Long> {
             SELECT DISTINCT groupChat
             FROM GroupChat groupChat
                 LEFT JOIN FETCH groupChat.conversationParticipants conversationParticipant
+                LEFT JOIN FETCH groupChat.course
                 LEFT JOIN FETCH conversationParticipant.user user
                 LEFT JOIN FETCH user.groups
             WHERE groupChat.course.id = :courseId

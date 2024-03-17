@@ -41,6 +41,7 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
                 LEFT JOIN FETCH o.conversationParticipants p
                 LEFT JOIN FETCH p.user u
                 LEFT JOIN FETCH u.groups
+                LEFT JOIN FETCH o.course
             WHERE o.course.id = :courseId
                 AND p.conversation = o
                 AND (p.user.id = :userIdA OR p.user.id = :userIdB)
@@ -53,6 +54,7 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
                 LEFT JOIN FETCH oneToOneChat.conversationParticipants p
                 LEFT JOIN FETCH p.user u
                 LEFT JOIN FETCH u.groups
+                LEFT JOIN FETCH oneToOneChat.course
             WHERE oneToOneChat.id = :oneToOneChatId
             """)
     Optional<OneToOneChat> findByIdWithConversationParticipantsAndUserGroups(@Param("oneToOneChatId") Long oneToOneChatId) throws EntityNotFoundException;

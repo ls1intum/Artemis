@@ -39,8 +39,16 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants" })
     Optional<Conversation> findWithParticipantsById(long conversationId);
 
+    @Query("""
+                SELECT conversation
+                FROM Conversation conversation
+                    LEFT JOIN FETCH conversation.course
+                WHERE conversation.id = :conversationId
+            """)
+    Optional<Conversation> findWithCourseById(@Param("conversationId") Long conversationId);
+
     default Conversation findByIdElseThrow(long conversationId) {
-        return this.findById(conversationId).orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
+        return this.findWithCourseById(conversationId).orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
     }
 
     /**
