@@ -146,12 +146,32 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetAvailableTextModulesSuccess() throws Exception {
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+
+        athenaRequestMockProvider.mockGetAvailableModulesSuccess();
+        List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/text-exercises/available-modules", HttpStatus.OK, String.class);
+        assertThat(response).contains(ATHENA_MODULE_TEXT_TEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetAvailableProgrammingModulesSuccess() throws Exception {
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
 
         athenaRequestMockProvider.mockGetAvailableModulesSuccess();
         List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/programming-exercises/available-modules", HttpStatus.OK, String.class);
         assertThat(response).contains(ATHENA_MODULE_PROGRAMMING_TEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetAvailableModelingModulesSuccess() throws Exception {
+        var course = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
+
+        athenaRequestMockProvider.mockGetAvailableModulesSuccess();
+        List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/modeling-exercises/available-modules", HttpStatus.OK, String.class);
+        assertThat(response).contains(ATHENA_MODULE_MODELING_TEST);
     }
 
     @Test
@@ -182,12 +202,24 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetAvailableTextModulesSuccess() throws Exception {
+    void testGetAvailableModelingModulesSuccess_RestrictedModuleAccess() throws Exception {
+        // give the course access to the restricted Athena modules
+        var course = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setRestrictedAthenaModulesAccess(true);
+        courseRepository.save(course);
+
+        athenaRequestMockProvider.mockGetAvailableModulesSuccess();
+        List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/modeling-exercises/available-modules", HttpStatus.OK, String.class);
+        assertThat(response).containsExactlyInAnyOrder(ATHENA_MODULE_MODELING_TEST, ATHENA_RESTRICTED_MODULE_MODELING_TEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAvailableTextModulesAccessForbidden() throws Exception {
         var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
 
         athenaRequestMockProvider.mockGetAvailableModulesSuccess();
-        List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/text-exercises/available-modules", HttpStatus.OK, String.class);
-        assertThat(response).contains(ATHENA_MODULE_TEXT_TEST);
+        request.getList("/api/athena/courses/" + course.getId() + "/text-exercises/available-modules", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -201,11 +233,11 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetAvailableTextModulesAccessForbidden() throws Exception {
-        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+    void testGetAvailableModelingModulesAccessForbidden() throws Exception {
+        var course = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
 
         athenaRequestMockProvider.mockGetAvailableModulesSuccess();
-        request.getList("/api/athena/courses/" + course.getId() + "/text-exercises/available-modules", HttpStatus.FORBIDDEN, String.class);
+        request.getList("/api/athena/courses/" + course.getId() + "/modeling-exercises/available-modules", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -231,6 +263,20 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
         List<Feedback> response = request.getList(
                 "/api/athena/programming-exercises/" + programmingExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/feedback-suggestions", HttpStatus.OK,
+                Feedback.class);
+        assertThat(response).as("response is not empty").isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFeedbackSuggestionsSuccessModeling() throws Exception {
+        // Enable Athena for the exercise
+        modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
+        modelingExerciseRepository.save(modelingExercise);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modelling");
+        List<Feedback> response = request.getList(
+                "/api/athena/modeling-exercises/" + modelingExercise.getId() + "/submissions/" + modelingSubmission.getId() + "/feedback-suggestions", HttpStatus.OK,
                 Feedback.class);
         assertThat(response).as("response is not empty").isNotEmpty();
     }
@@ -272,7 +318,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetModelingFeedbackSuggestionsAccessForbidden() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modelling");
         request.get("/api/athena/modeling-exercises/" + textExercise.getId() + "/submissions/" + modelingSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN,
                 List.class);
     }

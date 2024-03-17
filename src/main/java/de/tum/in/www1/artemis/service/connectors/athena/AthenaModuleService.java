@@ -35,7 +35,7 @@ public class AthenaModuleService {
     private String athenaUrl;
 
     // If value is present, split the provided modules by comma; default to empty list
-    @Value("#{'${artemis.athena.restricted-modules:}'}")
+    @Value("#{'${artemis.athena.restricted-modules:},module_modelling_llm'}")
     private List<String> restrictedModules;
 
     private static final Logger log = LoggerFactory.getLogger(AthenaModuleService.class);
@@ -65,6 +65,7 @@ public class AthenaModuleService {
     private List<AthenaModuleDTO> getAthenaModules() throws NetworkingException {
         try {
             var response = shortTimeoutRestTemplate.getForEntity(athenaUrl + "/modules", JsonNode.class);
+            System.out.println(response.toString());
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
                 throw new NetworkingException("Could not fetch Athena modules");
             }

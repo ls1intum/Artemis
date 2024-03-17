@@ -149,7 +149,7 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/modeling-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a programming exercise
+     * GET athena/modeling-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a modeling exercise
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get feedback suggestions for
@@ -211,9 +211,9 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/courses/{courseId}/modeling-exercises/available-modules : Get all available Athena modules for a programming exercise in the course
+     * GET athena/courses/{courseId}/modeling-exercises/available-modules : Get all available Athena modules for a modeling exercise in the course
      *
-     * @param courseId the id of the course the programming exercise belongs to
+     * @param courseId the id of the course the modeling exercise belongs to
      * @return 200 Ok if successful with the modules as body
      */
     @GetMapping("athena/courses/{courseId}/modeling-exercises/available-modules")
