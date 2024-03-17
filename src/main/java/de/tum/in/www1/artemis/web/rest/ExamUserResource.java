@@ -11,10 +11,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamUserService;
@@ -121,4 +123,21 @@ public class ExamUserResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         return ResponseEntity.ok().body(examUserRepository.findAllExamUsersWhoDidNotSign(examId));
     }
+
+    /**
+     * GET courses/{courseId}/exams/{examId}/verify-attendance : Verifies attendance check status of the current student
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return boolean indicating if attendance was checked ResponseEntity with status 200 (OK)
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/verify-attendance")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> isAttendanceChecked(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to verify attendance of a student for exam with id: {}", examId);
+        examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
+        User user = userRepository.getUser();
+        return ResponseEntity.ok().body(examUserRepository.isAttendanceChecked(examId, user.getId()));
+    }
+
 }

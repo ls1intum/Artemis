@@ -364,6 +364,12 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)
         );
     }
+
+    onExamModeChange() {
+        if (this.exam.testExam) {
+            this.exam.examWithAttendanceCheck = false;
+        }
+    }
 }
 
 /**

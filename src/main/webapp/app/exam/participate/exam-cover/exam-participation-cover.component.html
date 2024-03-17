@@ -121,10 +121,22 @@
             } @else {
                 @if (handInEarly) {
                     <div class="mb-2 font-weight-bold text-danger">
+                        <span jhiTranslate="artemisApp.examParticipation.handInEarly" style="font-weight: 900"></span>
+                        <br />
                         <span jhiTranslate="artemisApp.examParticipation.handInEarlyNoticeFirstSentence"></span>
                         <br />
                         <span jhiTranslate="artemisApp.examParticipation.handInEarlyNoticeSecondSentence"></span>
                     </div>
+                    @if (!isAttendanceChecked) {
+                        <div class="mb-2 font-weight-bold text-danger">
+                            <span jhiTranslate="artemisApp.examParticipation.attendanceCheck" style="font-weight: 900"></span>
+                            <br />
+                            <span jhiTranslate="artemisApp.examParticipation.attendanceNotVerifiedWarningFirstSentence"></span>
+                            <br />
+                            <span jhiTranslate="artemisApp.examParticipation.attendanceNotVerifiedWarningSecondSentence"></span>
+                            <br />
+                        </div>
+                    }
                 }
                 <button id="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
                     @if (submitInProgress) {

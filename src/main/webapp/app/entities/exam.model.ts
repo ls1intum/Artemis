@@ -9,6 +9,7 @@ export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;
     public testExam?: boolean;
+    public examWithAttendanceCheck?: boolean;
     public visibleDate?: dayjs.Dayjs;
     public startDate?: dayjs.Dayjs;
     public endDate?: dayjs.Dayjs;
@@ -54,6 +55,7 @@ export class Exam implements BaseEntity {
         this.examMaxPoints = 1; // default value
         this.workingTime = 0; // will be updated during creation
         this.testExam = false; // default value
+        this.examWithAttendanceCheck = false; // default value
 
         // helper attributes (calculated by the server at the time of the last request)
         this.visible = false;

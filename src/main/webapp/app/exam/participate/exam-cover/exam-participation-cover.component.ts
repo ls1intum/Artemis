@@ -30,6 +30,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
     @Input() handInEarly = false;
     @Input() handInPossible = true;
     @Input() submitInProgress = false;
+    @Input() attendanceChecked = false;
     @Input() testRunStartTime: dayjs.Dayjs | undefined;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
@@ -252,5 +253,16 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
             individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
         }
         return individualStudentEndDate.add(this.exam.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
+    }
+
+    /**
+     * Returns whether student's attendance was checked.
+     * Attendance is considered checked if:
+     * 1. Exam is a test exam
+     * 2. Exam is an exam without attendance check
+     * 3. Exam is not a test exam and an exam with attendance check and attendance was checked by the tutors
+     */
+    get isAttendanceChecked(): boolean {
+        return this.exam.testExam || !this.exam.examWithAttendanceCheck || this.attendanceChecked;
     }
 }
