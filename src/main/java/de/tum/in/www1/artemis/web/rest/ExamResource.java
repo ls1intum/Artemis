@@ -77,8 +77,6 @@ public class ExamResource {
     @Value("${artemis.course-archives-path}")
     private String examArchivesDirPath;
 
-    private final ProfileService profileService;
-
     private final UserRepository userRepository;
 
     private final CourseRepository courseRepository;
@@ -121,14 +119,12 @@ public class ExamResource {
 
     private final StudentExamService studentExamService;
 
-    public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
-            ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
-            SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
-            TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
-            StudentExamRepository studentExamRepository, ExamImportService examImportService, CustomAuditEventRepository auditEventRepository, ChannelService channelService,
-            ChannelRepository channelRepository, ExerciseRepository exerciseRepository, ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService,
-            StudentExamService studentExamService) {
-        this.profileService = profileService;
+    public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
+            ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
+            AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
+            AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository,
+            ExamImportService examImportService, CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository,
+            ExerciseRepository exerciseRepository, ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -967,56 +963,42 @@ public class ExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories : Unlock all repositories of the exam
+     * POST /courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories : Unlock all repositories of the exam (only necessary for external version control systems)
+     * Locking and unlocking repositories is not supported when using the local version control system.
+     * Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
      *
      * @param courseId the course to which the exam belongs to
      * @param examId   the id of the exam
      * @return the number of unlocked exercises
      */
+    @Profile("!localvc")
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories")
     @EnforceAtLeastInstructor
     public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
-        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
-        // LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
-            return ResponseEntity.badRequest().build();
-        }
-
         log.info("REST request to unlock all repositories of exam {}", examId);
-
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-
         Integer numOfUnlockedExercises = examService.unlockAllRepositories(examId);
-
         log.info("Unlocked {} programming exercises of exam {}", numOfUnlockedExercises, examId);
-
         return ResponseEntity.ok().body(numOfUnlockedExercises);
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories : Lock all repositories of the exam
+     * POST /courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories : Lock all repositories of the exam (only necessary for external version control systems)
+     * Locking and unlocking repositories is not supported when using the local version control system.
+     * Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
      *
      * @param courseId the course to which the exam belongs to
      * @param examId   the id of the exam
      * @return the number of locked exercises
      */
+    @Profile("!localvc")
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories")
     @EnforceAtLeastInstructor
     public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
-        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
-        // LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
-            return ResponseEntity.badRequest().build();
-        }
-
         log.info("REST request to lock all repositories of exam {}", examId);
-
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-
         Integer numOfLockedExercises = examService.lockAllRepositories(examId);
-
         log.info("Locked {} programming exercises of exam {}", numOfLockedExercises, examId);
-
         return ResponseEntity.ok().body(numOfLockedExercises);
     }
 

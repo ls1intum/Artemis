@@ -85,7 +85,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaModuleService;
@@ -126,8 +125,6 @@ public class ProgrammingExerciseResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
-
-    private final ProfileService profileService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -183,11 +180,10 @@ public class ProgrammingExerciseResource {
             StudentParticipationRepository studentParticipationRepository, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProfileService profileService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, InstanceMessageSendService instanceMessageSendService,
             Optional<AthenaModuleService> athenaModuleService) {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
-        this.profileService = profileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
@@ -684,19 +680,17 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Unlock all repositories of the given programming exercise.
+     * Unlock all repositories of the given programming exercise (only necessary for external version control systems)
+     * Locking and unlocking repositories is not supported when using the local version control system.
+     * Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
      *
      * @param exerciseId of the exercise
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
+    @Profile("!localvc")
     @PutMapping(UNLOCK_ALL_REPOSITORIES)
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
-        // Locking and unlocking repositories is not supported when using the local version control system.
-        // Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
-            return ResponseEntity.badRequest().build();
-        }
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipations(exerciseId);
@@ -705,19 +699,17 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Lock all repositories of the given programming exercise.
+     * Lock all repositories of the given programming exercise (only necessary for external version control systems)
+     * Locking and unlocking repositories is not supported when using the local version control system.
+     * Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
      *
      * @param exerciseId of the exercise
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
+    @Profile("!localvc")
     @PutMapping(LOCK_ALL_REPOSITORIES)
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
-        // Locking and unlocking repositories is not supported when using the local version control system.
-        // Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
-            return ResponseEntity.badRequest().build();
-        }
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipations(exerciseId);
