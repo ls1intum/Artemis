@@ -54,10 +54,10 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
     private final ProgrammingMessagingService programmingMessagingService;
 
     public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService,
-                                                        Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-                                                        SubmissionService submissionService, FeedbackRepository feedbackRepository, ResultService resultService, ParticipationService participationService,
-                                                        ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ResultRepository resultRepository,
-                                                        ProgrammingExerciseParticipationService programmingExerciseParticipationService1, ProgrammingMessagingService programmingMessagingService) {
+            Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            SubmissionService submissionService, FeedbackRepository feedbackRepository, ResultService resultService, ParticipationService participationService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ResultRepository resultRepository,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService1, ProgrammingMessagingService programmingMessagingService) {
         this.groupNotificationService = groupNotificationService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService.orElse(null);
 

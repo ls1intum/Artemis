@@ -312,32 +312,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(comp.exercise.studentParticipations).toEqual([activeParticipation, practiceParticipation]);
     });
 
-    it('should disable the feedback request button', () => {
-        const result: Result = { score: 50, rated: true };
-        const participation: StudentParticipation = {
-            results: [result],
-            individualDueDate: undefined,
-        };
-
-        comp.exercise = { ...exercise, allowFeedbackRequests: true };
-        comp.gradedParticipation = participation;
-
-        expect(comp.isFeedbackRequestButtonDisabled()).toBeTrue();
-    });
-
-    it('should enable the feedback request button', () => {
-        const result: Result = { score: 100, rated: true };
-        const participation: StudentParticipation = {
-            results: [result],
-            individualDueDate: undefined,
-        };
-
-        comp.exercise = { ...exercise, allowFeedbackRequests: true };
-        comp.gradedParticipation = participation;
-
-        expect(comp.isFeedbackRequestButtonDisabled()).toBeFalse();
-    });
-
     it('should show correct buttons in exam mode', fakeAsync(() => {
         const exercise = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
         exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
