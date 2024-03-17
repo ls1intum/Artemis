@@ -97,8 +97,6 @@ public class TutorialGroupFreePeriodResource {
         if (tutorialGroupFreePeriod.endDate.isBefore(tutorialGroupFreePeriod.startDate)) {
             throw new BadRequestException("The start date must be before the end date");
         }
-        if (tutorialGroupFreePeriod.startDate.isBefore(tutorialGroupFreePeriod.endDate)) {
-        }
         var existingFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
         checkEntityIdMatchesPathIds(existingFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingFreePeriod.getTutorialGroupsConfiguration().getCourse(), null);
