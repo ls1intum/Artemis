@@ -675,7 +675,10 @@ describe('Detailed Grading System Component', () => {
 
     it('should have validation error for csv without header', async () => {
         // Csv without header
-        const invalidCsv = `4.0,10,10,TRUE`;
+        const invalidCsv = `4.0,9,10,TRUE`;
+
+        // PapaParse 5.4.1 breaks when we have duplicated headers because
+        // PapaParse might be iterating over the array properties and mistakenly treating the 'last' method as a field.
 
         const event = { target: { files: [invalidCsv] } };
         await comp.onCSVFileSelect(event);
