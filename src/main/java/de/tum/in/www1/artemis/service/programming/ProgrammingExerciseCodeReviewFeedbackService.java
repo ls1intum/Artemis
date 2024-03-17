@@ -79,6 +79,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      * @param exerciseId          the id of the programming exercise.
      * @param participation       the student participation associated with the exercise.
      * @param programmingExercise the programming exercise object.
+     * @return ProgrammingExerciseStudentParticipation updated programming exercise for a tutor assessment
      */
     public ProgrammingExerciseStudentParticipation handleNonGradedFeedbackRequest(Long exerciseId, ProgrammingExerciseStudentParticipation participation,
             ProgrammingExercise programmingExercise) {
