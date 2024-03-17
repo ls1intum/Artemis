@@ -91,7 +91,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseNonGradedFeedbackService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseCodeReviewFeedbackService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -164,7 +164,7 @@ public class ParticipationResource {
 
     private final GradingScaleService gradingScaleService;
 
-    private final ProgrammingExerciseNonGradedFeedbackService programmingExerciseNonGradeFeedbackService;
+    private final ProgrammingExerciseCodeReviewFeedbackService programmingExerciseNonGradeFeedbackService;
 
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
@@ -176,7 +176,7 @@ public class ParticipationResource {
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService,
             QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
-            ProgrammingExerciseNonGradedFeedbackService programmingExerciseNonGradedFeedbackService) {
+            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -202,7 +202,7 @@ public class ParticipationResource {
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.gradingScaleService = gradingScaleService;
-        this.programmingExerciseNonGradeFeedbackService = programmingExerciseNonGradedFeedbackService;
+        this.programmingExerciseNonGradeFeedbackService = programmingExerciseCodeReviewFeedbackService;
     }
 
     /**
@@ -351,7 +351,7 @@ public class ParticipationResource {
     }
 
     /**
-     * PUT exercises/:exerciseId/request-feedback: Requests manual feedback for the latest participation
+     * PUT exercises/:exerciseId/request-feedback: Requests feedback for the latest participation
      *
      * @param exerciseId of the exercise for which to resume participation
      * @param principal  current user principal
@@ -363,6 +363,15 @@ public class ParticipationResource {
     public ResponseEntity<ProgrammingExerciseStudentParticipation> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request for feedback request: {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+
+        if (programmingExercise.isExamExercise()) {
+            throw new BadRequestAlertException("Not intended for the use in exams", "participation", "preconditions not met");
+        }
+
+        if (now().isAfter(programmingExercise.getDueDate())) {
+            throw new BadRequestAlertException("The due date is over", "participation", "preconditions not met");
+        }
+
         var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, principal.getName());
         User user = userRepository.getUserWithGroupsAndAuthorities();
 

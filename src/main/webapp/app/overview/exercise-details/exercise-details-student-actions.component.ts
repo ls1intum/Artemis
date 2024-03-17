@@ -12,7 +12,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
-import { faCodeBranch, faComment, faExternalLinkAlt, faEye, faFolderOpen, faPenSquare, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch, faExternalLinkAlt, faEye, faFolderOpen, faPenSquare, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -58,7 +58,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     repositoryLink: string;
 
     // Icons
-    faComment = faComment;
     faFolderOpen = faFolderOpen;
     faUsers = faUsers;
     faEye = faEye;
@@ -67,6 +66,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     faExternalLinkAlt = faExternalLinkAlt;
     faCodeBranch = faCodeBranch;
     faPenSquare = faPenSquare;
+
+    private feedbackSent = false;
 
     constructor(
         private alertService: AlertService,
@@ -210,22 +211,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
     }
 
-    private feedbackSent = false;
-
-    isFeedbackRequestButtonDisabled(): boolean {
-        const showUngradedResults = true;
-        const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ rated }) => showUngradedResults || rated === true);
-        const allHiddenTestsPassed = latestResult?.score !== undefined && latestResult.score >= 100;
-
-        const requestAlreadySent = (this.gradedParticipation?.individualDueDate && this.gradedParticipation.individualDueDate.isBefore(Date.now())) ?? false;
-
-        return !allHiddenTestsPassed || requestAlreadySent || this.feedbackSent;
-    }
-
     requestFeedback() {
-        // todo: do not send preferences at first
-        // if athena was set to true but server reported it is unavailable - ask student: wait or send manual feedback request
-        // allow manual feedback only if athena previously unavailable
+        if (!this.assureConditionsSatisfied()) return;
+
         const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
         if (!window.confirm(confirmLockRepository)) {
             return;
@@ -295,5 +283,31 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
     buildPlanUrl(participation: StudentParticipation) {
         return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
+    }
+
+    private assureConditionsSatisfied(): boolean {
+        this.updateParticipations();
+        const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ rated }) => rated === true);
+        const allHiddenTestsPassed = latestResult?.score !== undefined && latestResult.score >= 100;
+        const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.notEnoughPoints');
+        if (!allHiddenTestsPassed) {
+            window.alert(testsNotPassedWarning);
+            return false;
+        }
+        const requestAlreadySent = (this.gradedParticipation?.individualDueDate && this.gradedParticipation.individualDueDate.isBefore(Date.now())) ?? false;
+        const requestAlreadySentWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAlreadySent');
+        if (requestAlreadySent) {
+            window.alert(requestAlreadySentWarning);
+            return false;
+        }
+
+        const afterDueDate = !!this.exercise.dueDate || dayjs().isSameOrAfter(this.exercise.dueDate);
+        const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
+        if (afterDueDate) {
+            window.alert(dueDateWarning);
+            return false;
+        }
+
+        return true;
     }
 }

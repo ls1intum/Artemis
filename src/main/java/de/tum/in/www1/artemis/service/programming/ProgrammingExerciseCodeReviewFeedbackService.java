@@ -31,9 +31,9 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Profile(PROFILE_CORE)
 @Service
-public class ProgrammingExerciseNonGradedFeedbackService {
+public class ProgrammingExerciseCodeReviewFeedbackService {
 
-    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseNonGradedFeedbackService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseCodeReviewFeedbackService.class);
 
     public static final String NON_GRADED_FEEDBACK_SUGGESTION = "NonGradedFeedbackSuggestion:";
 
@@ -53,11 +53,11 @@ public class ProgrammingExerciseNonGradedFeedbackService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    public ProgrammingExerciseNonGradedFeedbackService(GroupNotificationService groupNotificationService,
-            Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            SubmissionService submissionService, FeedbackRepository feedbackRepository, ResultService resultService, ParticipationService participationService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ResultRepository resultRepository,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService1, ProgrammingMessagingService programmingMessagingService) {
+    public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService,
+                                                        Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+                                                        SubmissionService submissionService, FeedbackRepository feedbackRepository, ResultService resultService, ParticipationService participationService,
+                                                        ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ResultRepository resultRepository,
+                                                        ProgrammingExerciseParticipationService programmingExerciseParticipationService1, ProgrammingMessagingService programmingMessagingService) {
         this.groupNotificationService = groupNotificationService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService.orElse(null);
 
@@ -89,7 +89,7 @@ public class ProgrammingExerciseNonGradedFeedbackService {
         var submissionOptional = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participation.getId())
                 .findLatestSubmission();
         if (submissionOptional.isEmpty()) {
-            throw new BadRequestAlertException("No legal submissions found", "submission", "no submission");
+            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmission");
         }
         var submission = submissionOptional.get();
 

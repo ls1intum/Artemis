@@ -23,7 +23,6 @@ import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cac
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
-import { Subscription, timer } from 'rxjs';
 
 @Component({
     selector: 'jhi-result',
@@ -71,7 +70,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
 
-    private resultUpdateSubscription?:  ReturnType<typeof setTimeout>;
+    private resultUpdateSubscription?: ReturnType<typeof setTimeout>;
 
     constructor(
         private participationService: ParticipationService,
