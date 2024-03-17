@@ -8,7 +8,7 @@ export class LectureCreationPage {
     }
 
     save() {
-        cy.intercept(POST, BASE_API + 'lectures').as('createLecture');
+        cy.intercept(POST, `${BASE_API}/lectures`).as('createLecture');
         cy.get('#save-entity').click();
         return cy.wait('@createLecture');
     }
