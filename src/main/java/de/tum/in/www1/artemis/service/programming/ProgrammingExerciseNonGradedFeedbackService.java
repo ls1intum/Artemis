@@ -95,7 +95,7 @@ public class ProgrammingExerciseNonGradedFeedbackService {
 
         // save result and transmit it over websockets to notify the client about the status
         var automaticResult = this.submissionService.saveNewEmptyResult(submission);
-        automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_AI);
+        automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         automaticResult.setRated(false);
         automaticResult.setScore(100.0); // requests allowed only if all autotests pass, => 100
         automaticResult.setSuccessful(null);

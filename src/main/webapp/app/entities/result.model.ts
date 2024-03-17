@@ -51,6 +51,6 @@ export class Result implements BaseEntity {
      * @return true if the result is an automatic AI result
      */
     public static isAutomaticAIResult(that: Result): boolean {
-        return that.assessmentType === AssessmentType.AUTOMATIC_AI;
+        return that.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
 }
