@@ -54,7 +54,7 @@ class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationInde
                                 .map(notificationType -> new ClassSignature(((AnnotationEnumValue) notificationType).getValueName(), fieldDescriptions));
                     }).sorted().toList();
 
-            // Signature as json
+            // Signature as JSON.
             var actualSignature = new GsonBuilder().setPrettyPrinting().create().toJson(signatures);
             var expectedSignature = readPlaceholderText(
                     Objects.requireNonNull(NotificationPlaceholderSignatureTest.class.getClassLoader().getResource("placeholder-signatures.json")));
