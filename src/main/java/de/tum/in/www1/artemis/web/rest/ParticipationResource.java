@@ -164,7 +164,7 @@ public class ParticipationResource {
 
     private final GradingScaleService gradingScaleService;
 
-    private final ProgrammingExerciseCodeReviewFeedbackService programmingExerciseNonGradeFeedbackService;
+    private final ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService;
 
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
@@ -202,7 +202,7 @@ public class ParticipationResource {
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.gradingScaleService = gradingScaleService;
-        this.programmingExerciseNonGradeFeedbackService = programmingExerciseCodeReviewFeedbackService;
+        this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
     }
 
     /**
@@ -390,13 +390,9 @@ public class ParticipationResource {
             throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
         }
 
-        generateFeedbackSuggestionsAsync(exerciseId, studentParticipation, programmingExercise);
+        participation = this.programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exerciseId, studentParticipation, programmingExercise);
 
         return ResponseEntity.ok().body(participation);
-    }
-
-    public void generateFeedbackSuggestionsAsync(Long exerciseId, ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
-        this.programmingExerciseNonGradeFeedbackService.handleNonGradedFeedbackRequest(exerciseId, participation, programmingExercise);
     }
 
     /**

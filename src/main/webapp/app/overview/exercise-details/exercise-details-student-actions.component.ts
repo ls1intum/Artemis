@@ -20,6 +20,7 @@ import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_ATHENA, PROFILE_LOCALVC } from 'app/app.constants';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -287,7 +288,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
     private assureConditionsSatisfied(): boolean {
         this.updateParticipations();
-        const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ rated }) => rated === true);
+        const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
         const allHiddenTestsPassed = latestResult?.score !== undefined && latestResult.score >= 100;
         const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.notEnoughPoints');
         if (!allHiddenTestsPassed) {
@@ -301,7 +302,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             return false;
         }
 
-        const afterDueDate = !!this.exercise.dueDate || dayjs().isSameOrAfter(this.exercise.dueDate);
+        const afterDueDate = !this.exercise.dueDate || dayjs().isSameOrAfter(this.exercise.dueDate);
         const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
         if (afterDueDate) {
             window.alert(dueDateWarning);

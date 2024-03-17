@@ -6,11 +6,11 @@ import static java.time.ZonedDateTime.now;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -19,10 +19,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
@@ -60,13 +58,11 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
     private final ProgrammingMessagingService programmingMessagingService;
 
     public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService,
-            Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            SubmissionService submissionService, FeedbackRepository feedbackRepository, ResultService resultService, ParticipationService participationService,
+            Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, SubmissionService submissionService, ResultService resultService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ResultRepository resultRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService1, ProgrammingMessagingService programmingMessagingService) {
         this.groupNotificationService = groupNotificationService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService.orElse(null);
-
         this.submissionService = submissionService;
         this.resultService = resultService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -84,17 +80,17 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      * @param participation       the student participation associated with the exercise.
      * @param programmingExercise the programming exercise object.
      */
-    @Async
-    public void handleNonGradedFeedbackRequest(Long exerciseId, ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
+    public ProgrammingExerciseStudentParticipation handleNonGradedFeedbackRequest(Long exerciseId, ProgrammingExerciseStudentParticipation participation,
+            ProgrammingExercise programmingExercise) {
         if (this.athenaFeedbackSuggestionsService != null) {
-            generateAutomaticNonGradedFeedback(exerciseId, participation, programmingExercise);
+            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(exerciseId, participation, programmingExercise));
+            return participation;
         }
         else {
             log.debug("tutor is responsible to process feedback request: {}", exerciseId);
-            setIndividualDueDateAndLockRepositoryAndInvalidatePreviousResults(participation, programmingExercise);
             groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
+            return setIndividualDueDateAndLockRepository(participation, programmingExercise, true);
         }
-
     }
 
     /**
@@ -105,7 +101,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      * @param participation       the student participation associated with the exercise.
      * @param programmingExercise the programming exercise object.
      */
-    private void generateAutomaticNonGradedFeedback(Long exerciseId, ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
+    public void generateAutomaticNonGradedFeedback(Long exerciseId, ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
         log.debug("Using athena to generate feedback request: {}", exerciseId);
 
         // athena takes over the control here
@@ -128,7 +124,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
         try {
 
-            setIndividualDueDateAndLockRepositoryAndInvalidatePreviousResults(participation, programmingExercise);
+            setIndividualDueDateAndLockRepository(participation, programmingExercise, false);
             this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
             // now the client should be able to see new result
 
@@ -190,13 +186,23 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      * @param participation       the programming exercise student participation.
      * @param programmingExercise the associated programming exercise.
      */
-    private void setIndividualDueDateAndLockRepositoryAndInvalidatePreviousResults(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
+    private ProgrammingExerciseStudentParticipation setIndividualDueDateAndLockRepository(ProgrammingExerciseStudentParticipation participation,
+            ProgrammingExercise programmingExercise, boolean invalidatePreviousResults) {
         var currentDate = now();
+
         // The participations due date is a flag showing that a feedback request is sent
         participation.setIndividualDueDate(currentDate);
 
         participation = programmingExerciseStudentParticipationRepository.save(participation);
         programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
+
+        if (invalidatePreviousResults) {
+            var participationResults = participation.getResults();
+            participationResults.forEach(participationResult -> participationResult.setRated(false));
+            this.resultRepository.saveAll(participationResults);
+        }
+
+        return participation;
     }
 
 }

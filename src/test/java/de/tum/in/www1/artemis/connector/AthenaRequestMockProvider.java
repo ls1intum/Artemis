@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.connector;
 
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.SocketTimeoutException;
 
@@ -186,8 +189,8 @@ public class AthenaRequestMockProvider {
             responseActions.andExpect(matcher);
         }
 
-        ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("title", "Consider revising")
-                .put("description", "This could be improved for better clarity").put("credits", 0); // Notice credits is set to 0 for non-graded feedback
+        ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("title", "Not so good")
+                .put("description", "This needs to be improved").put("credits", -1.0);
         if (moduleType.equals("text")) {
             suggestion = suggestion.put("indexStart", 3).put("indexEnd", 9);
         }
