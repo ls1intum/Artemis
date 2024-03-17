@@ -41,7 +41,7 @@ class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationInde
             // Find the classes that are annotated as a notification placeholder file.
             var classes = scanResult.getClassesWithMethodAnnotation(NotificationPlaceholderCreator.class);
 
-            // create a signature for each annotated file.
+            // Create a signature for each annotated file.
             var signatures = classes.stream().flatMap(x -> x.getDeclaredMethodInfo().stream()).filter(method -> method.hasAnnotation(NotificationPlaceholderCreator.class))
                     .flatMap(placeholderCreatorMethod -> {
                         var fieldDescriptions = Arrays.stream(placeholderCreatorMethod.getParameterInfo())
