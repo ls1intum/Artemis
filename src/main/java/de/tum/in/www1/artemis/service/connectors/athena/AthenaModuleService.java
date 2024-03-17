@@ -65,7 +65,6 @@ public class AthenaModuleService {
     private List<AthenaModuleDTO> getAthenaModules() throws NetworkingException {
         try {
             var response = shortTimeoutRestTemplate.getForEntity(athenaUrl + "/modules", JsonNode.class);
-            System.out.println(response.toString());
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
                 throw new NetworkingException("Could not fetch Athena modules");
             }
