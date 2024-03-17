@@ -16,7 +16,7 @@ assignees: ''
 > Describe the problem that is tackled in this issue
 
 ### Motivation 
-> Describe the motivation WHY the problem needs solving. Include the affected useres/roles here. 
+> Describe the motivation WHY the problem needs solving. Include the affected users/roles here.
 
 ## Requirements Engineering 
 
@@ -25,7 +25,7 @@ assignees: ''
 > You may include a UML Model here 
 
 ### Proposed System 
-> How should the perfect solution look like? 
+> What should the perfect solution look like? 
 
 ### Requirements 
 > Describe the Functional and Non-Functional Requirements of the feature. Stick to the INVEST methodology! 
@@ -39,7 +39,7 @@ assignees: ''
 > What are the involved Analysis Objects? 
 
 ### Dynamic Behavior 
-> Include dynamic models (Activity Diagram, State Chart diagram, Communication Diagram) here to outline the dynamic nature of the PROBLEM 
+> Include dynamic models (Activity Diagram, State Chart Diagram, Communication Diagram) here to outline the dynamic nature of the PROBLEM 
 
 
 ## System Architecture 
@@ -47,20 +47,17 @@ assignees: ''
 ### Subsystem Decomposition
 > Show the involved subsystems and their interfaces. Make sure to describe the APIs that you add/change in detail. Model the DTOs you intend to (re)use or change! 
 
-### Persistant Data Management
+### Persistent Data Management
 > Describe the Database changes you intend to make.
 > Outline new config options you will add
-> Describe all other data persistancy mechanisms you may use. 
+> Describe all other data persistence mechanisms you may use.
 
 ### Access Control / Security Aspects 
 > Describe the access control considerations for your feature
 
 ### Other Design Decisions
-> Potential candidates to discuss here: Websockets, Test stragegy 
+> Potential candidates to discuss here: WebSockets, Test strategy
 
 ## UI/UX Design
-> Describe the user flow (references to dynamic model). 
-> Screenshots of the final UI mockup
-
 > Describe the user flow (references to dynamic model). 
 > Screenshots of the final UI mockup
