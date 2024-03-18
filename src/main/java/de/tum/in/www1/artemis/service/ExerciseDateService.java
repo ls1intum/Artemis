@@ -175,6 +175,7 @@ public class ExerciseDateService {
      */
     public boolean hasExerciseStarted(Exercise exercise) {
         ZonedDateTime exerciseStartDate = exercise.getParticipationStartDate();
+        System.err.println("Exercise start date: " + exerciseStartDate);
         return exerciseStartDate == null || exerciseStartDate.isBefore(ZonedDateTime.now());
     }
 }

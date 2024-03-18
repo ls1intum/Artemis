@@ -502,7 +502,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Students should never be able to fetch and push from the teaching assistant assignment repository.
         // Instructors should alway be able to fetch and push to the teaching assistant assignment repository.
-        // Teaching assistants should always be able to fetch and push to their personal assignment repository.
+        // Teaching assistants should be able to fetch and push to their personal assignment repository before the due date of the exercise.
+        // After the due date, they should only be able to fetch.
         // They can currently only push during the working time of the exercise on Bitbucket and Bamboo (see https://github.com/ls1intum/Artemis/issues/6422).
 
         // Create teaching assistant repository.
@@ -534,7 +535,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         programmingExerciseRepository.save(programmingExercise);
 
         localVCLocalCITestService.testFetchSuccessful(taAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug);
-        localVCLocalCITestService.testPushSuccessful(taAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug);
+        localVCLocalCITestService.testPushReturnsError(taAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug, FORBIDDEN);
 
         // Cleanup
         taAssignmentRepository.resetLocalRepo();
@@ -727,7 +728,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, FORBIDDEN);
         localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, FORBIDDEN);
 
-        // Tutor should be able to fetch but not push.
+        // Tutor should be able to fetch but not push as it's not his participation.
         localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug);
         localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, FORBIDDEN);
 

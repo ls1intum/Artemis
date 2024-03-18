@@ -53,66 +53,77 @@ public class RepositoryAccessService {
         if (isAtLeastEditor || (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ)) {
             return;
         }
-        else if (atLeastStudent) {
-            boolean hasStarted = exerciseDateService.hasExerciseStarted(programmingExercise);
 
-            if (hasStarted) {
-                if (hasAccessAfterExerciseStart(programmingParticipation, repositoryActionType))
+        // The user has to be at least a student in the course to access the repository.
+        // We also check if the user is the owner of the participation and if it's a student participation.
+        if (atLeastStudent && programmingParticipation instanceof StudentParticipation studentParticipation) {
+            boolean ownerOfParticipation = authorizationCheckService.isOwnerOfParticipation(studentParticipation, user);
+            if (ownerOfParticipation) {
+                if (hasAccessToOwnStudentParticipation(programmingExercise, repositoryActionType, studentParticipation, isTeachingAssistant, programmingParticipation.isLocked()))
                     return;
             }
-            else if (isTeachingAssistant)
-                return;
         }
 
         throw new AccessForbiddenException("You are not allowed to access the repository of this programming exercise.");
     }
 
     /**
-     * Checks if the student or teaching assistant has access to the repository of the given participation after the exercise has started.
+     * Helper method to check if the student or teaching assistant has access to their own student participation.
      *
-     * @param programmingParticipation The participation for which the repository should be accessed.
-     * @param repositoryActionType     The type of action that the user wants to perform on the repository (i.e. WRITE, READ or RESET).
+     * @param programmingExercise  The programming exercise.
+     * @param repositoryActionType The type of action that the user wants to perform on the repository (i.e. WRITE, READ or RESET).
+     * @param studentParticipation The student participation.
+     * @param isTeachingAssistant  True if the user is a teaching assistant, false otherwise.
+     * @param isLocked             True if the participation is locked, false otherwise.
      * @return True if the user has access to the repository, false otherwise.
      */
-    private boolean hasAccessAfterExerciseStart(ProgrammingExerciseParticipation programmingParticipation, RepositoryActionType repositoryActionType) {
-        // The user in this case can be a student or a teaching assistant.
-        // We need to check if it is a student participation and if the user is the owner of the participation.
-        // The case READ of the teaching assistant is already handled in the checkAccessRepositoryElseThrow method.
-        if (programmingParticipation instanceof StudentParticipation studentParticipation && authorizationCheckService.isOwnerOfParticipation(studentParticipation)) {
-            // The user always has read permissions after the exercise has started.
-            if (repositoryActionType == RepositoryActionType.READ)
-                return true;
+    private boolean hasAccessToOwnStudentParticipation(ProgrammingExercise programmingExercise, RepositoryActionType repositoryActionType,
+            StudentParticipation studentParticipation, boolean isTeachingAssistant, boolean isLocked) {
+        boolean hasStarted = exerciseDateService.hasExerciseStarted(programmingExercise);
 
-            // Check if the user has write or reset permissions.
-            else
-                return hasWriteOrResetPermissions(programmingParticipation.isLocked(), studentParticipation);
-
+        if (hasStarted) {
+            return hasAccessAfterExerciseStart(studentParticipation, repositoryActionType, isLocked);
         }
-        return false;
+        // Only teaching assistants have access to the repository before the exercise has started.
+        else
+            return isTeachingAssistant;
     }
 
     /**
-     * Checks if the user has write or reset permissions for the given programming participation.
-     * The user in this case can be a student or a teaching assistant.
+     * Checks if the student or teaching assistant has access to the repository of the given participation after the exercise has started.
      *
-     * @param locked               True if the participation is locked, false otherwise.
      * @param studentParticipation The student participation.
+     * @param repositoryActionType The type of action that the user wants to perform on the repository (i.e. WRITE, READ or RESET).
+     * @return True if the user has access to the repository, false otherwise.
+     */
+    private boolean hasAccessAfterExerciseStart(StudentParticipation studentParticipation, RepositoryActionType repositoryActionType, boolean isLocked) {
+        // The user always has read permissions after the exercise has started.
+        if (repositoryActionType == RepositoryActionType.READ)
+            return true;
+
+        // Check if the user has write or reset permissions.
+        else
+            return hasWriteOrResetPermissions(studentParticipation, isLocked);
+    }
+
+    /**
+     * Helper method that checks if the student or teaching assistant has write or reset permissions
+     * for the given programming participation.
+     *
+     * @param studentParticipation The student participation.
+     * @param isLocked             True if the participation is locked, false otherwise.
      * @return True if the user has write or reset permissions, false otherwise.
      */
-    private boolean hasWriteOrResetPermissions(boolean locked, StudentParticipation studentParticipation) {
+    private boolean hasWriteOrResetPermissions(StudentParticipation studentParticipation, boolean isLocked) {
         boolean beforeDueDate = exerciseDateService.isBeforeDueDate(studentParticipation);
         boolean isPracticeMode = studentParticipation.isPracticeMode();
 
         // The user has write or reset permissions if the participation is not locked and the due date has not passed yet.
-        if (beforeDueDate && !locked)
+        if (beforeDueDate && !isLocked)
             return true;
 
         // The user has write or reset permissions if due date has passed, but the participation is in practice mode.
-        if (exerciseDateService.isAfterDueDate(studentParticipation) && isPracticeMode) {
-            return true;
-        }
-
-        return false;
+        return !beforeDueDate && isPracticeMode;
     }
 
     /**
