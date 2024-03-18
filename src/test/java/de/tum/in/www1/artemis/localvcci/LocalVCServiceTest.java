@@ -57,7 +57,9 @@ class LocalVCServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         request.put(ROOT + UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", programmingExercise.getId().toString()), null, HttpStatus.NOT_FOUND);
 
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/lock-all-repositories", null, HttpStatus.NOT_FOUND);
-        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/unlock-all-repositories", null, HttpStatus.NOT_FOUND);
+        // The endpoint GET /api/courses/{courseId}/exams/{examId}/student-exams/{studentExamId} is a match here,
+        // and since GET != POST spring exists early with a Method not allowed error.
+        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/lock-all-repositories", null, HttpStatus.METHOD_NOT_ALLOWED);
+        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/unlock-all-repositories", null, HttpStatus.METHOD_NOT_ALLOWED);
     }
 }
