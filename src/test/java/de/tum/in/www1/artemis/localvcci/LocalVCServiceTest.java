@@ -53,8 +53,8 @@ class LocalVCServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         // Locking and unlocking repositories is not available for the local version control system.
-        request.put(ROOT + LOCK_ALL_REPOSITORIES.replace("{exerciseId}", programmingExercise.getId().toString()), null, HttpStatus.NOT_FOUND);
-        request.put(ROOT + UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", programmingExercise.getId().toString()), null, HttpStatus.NOT_FOUND);
+        request.post(ROOT + LOCK_ALL_REPOSITORIES.replace("{exerciseId}", programmingExercise.getId().toString()), null, HttpStatus.NOT_FOUND);
+        request.post(ROOT + UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", programmingExercise.getId().toString()), null, HttpStatus.NOT_FOUND);
 
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
         // The endpoint GET /api/courses/{courseId}/exams/{examId}/student-exams/{studentExamId} is a match here,

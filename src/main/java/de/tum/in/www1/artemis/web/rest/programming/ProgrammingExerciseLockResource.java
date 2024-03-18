@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -49,7 +49,7 @@ public class ProgrammingExerciseLockResource {
      * @param exerciseId of the exercise
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
-    @PutMapping(UNLOCK_ALL_REPOSITORIES)
+    @PostMapping(UNLOCK_ALL_REPOSITORIES)
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -67,7 +67,7 @@ public class ProgrammingExerciseLockResource {
      * @param exerciseId of the exercise
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
-    @PutMapping(LOCK_ALL_REPOSITORIES)
+    @PostMapping(LOCK_ALL_REPOSITORIES)
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);

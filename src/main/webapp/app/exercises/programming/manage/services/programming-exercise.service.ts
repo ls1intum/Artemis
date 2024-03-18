@@ -412,7 +412,7 @@ export class ProgrammingExerciseService {
      * @param exerciseId of the particular programming exercise
      */
     unlockAllRepositories(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/unlock-all-repositories`, {}, { observe: 'response' });
+        return this.http.post<any>(`${this.resourceUrl}/${exerciseId}/unlock-all-repositories`, {}, { observe: 'response' });
     }
 
     /**
@@ -420,7 +420,7 @@ export class ProgrammingExerciseService {
      * @param exerciseId of the particular programming exercise
      */
     lockAllRepositories(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/lock-all-repositories`, {}, { observe: 'response' });
+        return this.http.post<any>(`${this.resourceUrl}/${exerciseId}/lock-all-repositories`, {}, { observe: 'response' });
     }
 
     /**

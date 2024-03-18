@@ -1741,12 +1741,12 @@ class ProgrammingExerciseIntegrationTestService {
 
     void unlockAllRepositories_asStudent_forbidden() throws Exception {
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
+        request.post(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     void unlockAllRepositories_asTutor_forbidden() throws Exception {
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
+        request.post(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     void unlockAllRepositories() throws Exception {
@@ -1761,7 +1761,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockDefaultBranch(programmingExercise);
 
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(ROOT + endpoint, null, HttpStatus.OK);
+        request.post(ROOT + endpoint, null, HttpStatus.OK);
 
         verify(versionControlService, timeout(300)).addMemberToRepository(participation1.getVcsRepositoryUri(), participation1.getStudent().orElseThrow(),
                 VersionControlRepositoryPermission.REPO_WRITE);
