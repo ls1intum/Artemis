@@ -128,7 +128,7 @@ export class ExerciseAPIRequests {
         exercise.testwiseCoverageEnabled = recordTestwiseCoverage;
 
         return cy.request({
-            url: PROGRAMMING_EXERCISE_BASE + 'setup',
+            url: `${PROGRAMMING_EXERCISE_BASE}/setup`,
             method: POST,
             body: exercise,
         });
@@ -143,7 +143,7 @@ export class ExerciseAPIRequests {
     makeProgrammingExerciseSubmission(repositoryId: number) {
         // TODO: For now it is enough to submit the one prepared json file, but in the future this method should support different package names and submissions.
         return cy.request({
-            url: `${BASE_API}repository/${repositoryId}/files?commit=yes`,
+            url: `${BASE_API}/repository/${repositoryId}/files?commit=yes`,
             method: PUT,
             body: javaAssessmentSubmission,
         });
@@ -174,7 +174,7 @@ export class ExerciseAPIRequests {
      */
     deleteTextExercise(exerciseId: number) {
         return cy.request({
-            url: TEXT_EXERCISE_BASE + exerciseId,
+            url: `${TEXT_EXERCISE_BASE}/${exerciseId}`,
             method: DELETE,
         });
     }
@@ -188,7 +188,7 @@ export class ExerciseAPIRequests {
      */
     makeTextExerciseSubmission(exerciseId: number, text: string) {
         return cy.request({
-            url: `${EXERCISE_BASE}${exerciseId}/text-submissions`,
+            url: `${EXERCISE_BASE}/${exerciseId}/text-submissions`,
             method: PUT,
             body: { submissionExerciseType: 'text', text },
         });
@@ -236,7 +236,7 @@ export class ExerciseAPIRequests {
      */
     makeFileUploadExerciseSubmission(exerciseId: number, file: string) {
         return cy.request({
-            url: `${EXERCISE_BASE}${exerciseId}/file-upload-submissions`,
+            url: `${EXERCISE_BASE}/${exerciseId}/file-upload-submissions`,
             method: POST,
             body: { submissionExerciseType: 'file-upload', file },
         });
@@ -317,7 +317,7 @@ export class ExerciseAPIRequests {
      */
     makeModelingExerciseSubmission(exerciseID: number, participation: Participation) {
         return cy.request({
-            url: `${EXERCISE_BASE}${exerciseID}/modeling-submissions`,
+            url: `${EXERCISE_BASE}/${exerciseID}/modeling-submissions`,
             method: PUT,
             body: {
                 ...modelingExerciseSubmissionTemplate,
@@ -392,7 +392,7 @@ export class ExerciseAPIRequests {
      */
     deleteQuizExercise(exerciseId: number) {
         return cy.request({
-            url: QUIZ_EXERCISE_BASE + exerciseId,
+            url: `${QUIZ_EXERCISE_BASE}/${exerciseId}`,
             method: DELETE,
         });
     }
@@ -405,7 +405,7 @@ export class ExerciseAPIRequests {
      */
     setQuizVisible(quizId: number) {
         return cy.request({
-            url: `${QUIZ_EXERCISE_BASE}${quizId}/set-visible`,
+            url: `${QUIZ_EXERCISE_BASE}/${quizId}/set-visible`,
             method: PUT,
         });
     }
@@ -418,7 +418,7 @@ export class ExerciseAPIRequests {
      */
     startQuizNow(quizId: number) {
         return cy.request({
-            url: `${QUIZ_EXERCISE_BASE}${quizId}/start-now`,
+            url: `${QUIZ_EXERCISE_BASE}/${quizId}/start-now`,
             method: PUT,
         });
     }
@@ -431,7 +431,7 @@ export class ExerciseAPIRequests {
      */
     evaluateExamQuizzes(exam: Exam) {
         return cy.request({
-            url: `${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`,
+            url: `${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`,
             method: POST,
         });
     }
@@ -456,7 +456,7 @@ export class ExerciseAPIRequests {
             submittedAnswers,
         };
         return cy.request({
-            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            url: `${EXERCISE_BASE}/${quizExercise.id}/submissions/live`,
             method: POST,
             body: multipleChoiceSubmission,
         });
@@ -493,7 +493,7 @@ export class ExerciseAPIRequests {
             submittedAnswers,
         };
         return cy.request({
-            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            url: `${EXERCISE_BASE}/${quizExercise.id}/submissions/live`,
             method: POST,
             body: shortAnswerSubmission,
         });
@@ -507,7 +507,7 @@ export class ExerciseAPIRequests {
      */
     getExerciseParticipation(exerciseId: number) {
         return cy.request({
-            url: EXERCISE_BASE + exerciseId + '/participation',
+            url: `${EXERCISE_BASE}/${exerciseId}/participation`,
             method: GET,
         });
     }
@@ -520,7 +520,7 @@ export class ExerciseAPIRequests {
      */
     startExerciseParticipation(exerciseId: number) {
         return cy.request({
-            url: EXERCISE_BASE + exerciseId + '/participations',
+            url: `${EXERCISE_BASE}/${exerciseId}/participations`,
             method: POST,
         });
     }
