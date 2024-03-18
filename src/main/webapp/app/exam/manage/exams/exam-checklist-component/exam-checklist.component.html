@@ -473,7 +473,7 @@
                                                 @if (!allAssessmentsFinished) {
                                                     <ng-container>
                                                         <button
-                                                            class="btn"
+                                                            class="btn assessment-check-button"
                                                             (click)="isAssessmentsCollapsed = !isAssessmentsCollapsed"
                                                             [attr.aria-expanded]="!isAssessmentsCollapsed"
                                                         >
@@ -482,14 +482,16 @@
                                                             }}</span>
                                                             <fa-icon size="sm" [icon]="isAssessmentsCollapsed ? faAngleDown : faAngleUp" />
                                                         </button>
-                                                        <div class="card-body question-card-body" [ngbCollapse]="isAssessmentsCollapsed">
-                                                            @for (assessment of unfinishedAssessments; track assessment) {
-                                                                <ng-container>
-                                                                    {{ getAssessmentDetails(assessment).title }}
-                                                                    {{ 'artemisApp.examManagement.checklist.textitems.exercisesConjunction' | artemisTranslate }}
-                                                                    {{ getAssessmentDetails(assessment).student }}
-                                                                </ng-container>
-                                                            }
+                                                        <div [ngbCollapse]="isAssessmentsCollapsed">
+                                                            <ul style="list-style-type: none">
+                                                                @for (assessment of assessmentsWithDetails; track assessment) {
+                                                                    <li>
+                                                                        {{ assessment.details.title }}
+                                                                        {{ 'artemisApp.examManagement.checklist.textitems.exercisesConjunction' | artemisTranslate }}
+                                                                        {{ assessment.details.student }}
+                                                                    </li>
+                                                                }
+                                                            </ul>
                                                         </div>
                                                     </ng-container>
                                                 }

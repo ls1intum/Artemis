@@ -6,9 +6,19 @@ import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-compo
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Submission } from 'app/entities/submission.model';
 
+interface AssessmentDetails {
+    title: string | undefined;
+    student: string | undefined;
+}
+
+type SubmissionWithDetails = Submission & {
+    details: AssessmentDetails;
+};
+
 @Component({
     selector: 'jhi-exam-checklist',
     templateUrl: './exam-checklist.component.html',
+    styleUrls: ['./exam-checklist.component.scss'],
 })
 export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     @Input() exam: Exam;
@@ -24,8 +34,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     countMandatoryExercises = 0;
     isTestExam: boolean;
     allAssessmentsFinished: boolean = true;
-    unfinishedAssessments: Submission[];
     isAssessmentsCollapsed = true;
+    assessmentsWithDetails: SubmissionWithDetails[];
 
     numberOfSubmitted = 0;
     numberOfStarted = 0;
@@ -69,8 +79,15 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 !!this.exam.numberOfExamUsers && this.exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist);
             this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
             this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
-            this.unfinishedAssessments = this.examChecklist.unfinishedAssessments;
-            this.allAssessmentsFinished = !(this.unfinishedAssessments && this.unfinishedAssessments.length > 0);
+            this.allAssessmentsFinished = !(this.examChecklist.unfinishedAssessments && this.examChecklist.unfinishedAssessments.length > 0);
+            setTimeout(() => {
+                if (!this.allAssessmentsFinished) {
+                    this.assessmentsWithDetails = this.examChecklist.unfinishedAssessments.map((assessment) => ({
+                        ...assessment,
+                        details: this.getAssessmentDetails(assessment),
+                    }));
+                }
+            }, 1000);
         });
     }
 
