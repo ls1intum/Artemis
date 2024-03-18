@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
 import java.util.*;
 
@@ -140,6 +141,9 @@ public class SecurityConfiguration {
                 .permissionsPolicy(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(requests -> requests
+                .requestMatchers(antMatcher("/public/**"), antMatcher("/management/info"), antMatcher("/management/health")).permitAll()
+                .requestMatchers(antMatcher("/*.js"), antMatcher("/*.css"), antMatcher("/*.webapp"), antMatcher("/*.map"), antMatcher("/*.txt"), antMatcher("/browserconfig.xml")).permitAll()
+                .requestMatchers(antMatcher("/content/**"), antMatcher("/i18n/**/*.json"), antMatcher("/logo/**"), antMatcher("/media/**"), antMatcher("/swagger-ui/axios.min.js")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/admin/**")).hasAuthority(Role.ADMIN.getAuthority())
                 .requestMatchers(new AntPathRequestMatcher("/api/public/**")).permitAll()
                 // TODO: Remove the following three lines in June 2024 together with LegacyResource
