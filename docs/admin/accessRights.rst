@@ -155,7 +155,7 @@ Access to all repositories of a course:
 | *READ* , *WRITE* , *RESET*   | *READ*              | restricted     |
 +------------------------------+---------------------+----------------+
 
-Access for Teaching Assistants and Students on their **own** repositories:
+Access for Teaching Assistants and Students on their **own** repositories (**graded** participation):
 
 +--------------------------------------------------------------+------------------------------+------------+
 |                                                              | Teaching Assistant           | Student    |
@@ -170,6 +170,8 @@ Access for Teaching Assistants and Students on their **own** repositories:
 +--------------------------------------------------------------+-------------------------------------------+
 | Locked                                                       | *READ*                                    |
 +--------------------------------------------------------------+-------------------------------------------+
+
+**Practice** repositories also allow *WRITE* and *RESET* access after the due date.
 
 Quiz Exercises
 ^^^^^^^^^^^^^^
