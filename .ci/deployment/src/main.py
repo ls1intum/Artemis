@@ -1,8 +1,8 @@
 import os
 import sys
 
-from badges import set_badge, get_badge_status
-import github_api
+from src.badges import set_badge, get_badge_status
+from src import github_api
 
 
 def fail(pr, exit_code, message):
@@ -10,6 +10,7 @@ def fail(pr, exit_code, message):
     if pr:
         print(f"Creating comment on PR {pr}")
         github_api.create_comment(pr, f"#### ⚠️ Unable to deploy to environment ⚠️\n{message}")
+    print(sys)
     sys.exit(exit_code)
 
 
@@ -33,7 +34,7 @@ def setup_ssh():
 def check_lock_status(pr, label):
     issues = github_api.get_issues_with_label(f"lock:{label}")
     if issues.__len__() == 1 and issues[0]["number"] != pr:
-        fail(pr, 400, f"Environment {label} is already in use by PR #{issues[0].number}.")
+        fail(pr, 400, f"Environment {label} is already in use by PR #{issues[0]["number"]}.")
     elif issues.__len__() > 1:
         fail(pr, 400, f'Environment {label} is already in use by multiple PRs. Check PRs with label "lock:{label}"!')
 
@@ -145,6 +146,3 @@ def __main__():
             print(f"Updating deployment status for {environment_name}")
             github_api.create_deployment_status(deployment["id"], environment_url, github_api.DeploymentStatus.ERROR)
         fail(pr, 500, f"Deployment to {label} failed for an unknown reason. Please check the logs.")
-
-
-__main__()

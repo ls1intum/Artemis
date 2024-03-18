@@ -60,7 +60,7 @@ jobs:
           GATEWAY_HOST_PUBLIC_KEYS: "[gateway.artemis.in.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
           GATEWAY_SSH_KEY: "${{ secrets.DEPLOYMENT_GATEWAY_SSH_KEY }}"
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        run: python3 .ci/deployment/main.py
+        run: python3 .ci/deployment/src/main.py
 
 
 
