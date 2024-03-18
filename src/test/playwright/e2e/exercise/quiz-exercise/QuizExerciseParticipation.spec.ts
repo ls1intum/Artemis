@@ -68,27 +68,25 @@ test.describe('Quiz Exercise Participation', () => {
         });
     });
 
-    // TODO: Fix the drag and drop
-    // describe.skip('DnD Quiz participation', () => {
-    //     before('Create DND quiz', () => {
-    //         cy.login(admin, '/course-management/' + course.id + '/exercises');
-    //         courseManagementExercises.createQuizExercise();
-    //         quizExerciseCreation.setTitle('Cypress Quiz');
-    //         quizExerciseCreation.addDragAndDropQuestion('DnD Quiz');
-    //         quizExerciseCreation.saveQuiz().then((quizResponse) => {
-    //             quizExercise = quizResponse.response?.body;
-    //             courseManagementAPIRequest.setQuizVisible(quizExercise.id!);
-    //             courseManagementAPIRequest.startQuizNow(quizExercise.id!);
-    //         });
-    //     });
+    test.describe.skip('DnD Quiz participation', () => {
+        test.beforeEach('Create DND quiz', async ({ login, courseManagementExercises, exerciseAPIRequests, quizExerciseCreation }) => {
+            await login(admin, '/course-management/' + course.id + '/exercises');
+            await courseManagementExercises.createQuizExercise();
+            await quizExerciseCreation.setTitle('Cypress Quiz');
+            await quizExerciseCreation.addDragAndDropQuestion('DnD Quiz');
+            const response = await quizExerciseCreation.saveQuiz();
+            quizExercise = await response.json();
+            await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
+            await exerciseAPIRequests.startQuizNow(quizExercise.id!);
+        });
 
-    //     it('Student can participate in DnD Quiz', () => {
-    //         cy.login(studentOne, '/courses/' + course.id);
-    //         courseOverview.startExercise(quizExercise.id!);
-    //         quizExerciseDragAndDropQuiz.dragItemIntoDragArea(0);
-    //         quizExerciseDragAndDropQuiz.submit();
-    //     });
-    // });
+        test('Student can participate in DnD Quiz', async ({ login, courseOverview, quizExerciseDragAndDropQuiz }) => {
+            await login(studentOne, '/courses/' + course.id);
+            await courseOverview.startExercise(quizExercise.id!);
+            await quizExerciseDragAndDropQuiz.dragItemIntoDragArea(0);
+            await quizExerciseDragAndDropQuiz.submit();
+        });
+    });
 
     test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
         await courseManagementAPIRequests.deleteCourse(course, admin);

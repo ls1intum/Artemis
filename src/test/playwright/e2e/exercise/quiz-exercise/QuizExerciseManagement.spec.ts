@@ -40,14 +40,14 @@ test.describe('Quiz Exercise Management', () => {
             await expect(page.getByText(title)).toBeVisible();
         });
 
-        // TODO: Fix the drag and drop
-        // it.skip('Creates a Quiz with Drag and Drop', () => {
-        //     quizExerciseCreation.addDragAndDropQuestion(quizQuestionTitle);
-        //     quizExerciseCreation.saveQuiz().then((quizResponse: Interception) => {
-        //         cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizResponse.response!.body.id + '/preview');
-        //         cy.contains(quizQuestionTitle).should('be.visible');
-        //     });
-        // });
+        test.skip('Creates a Quiz with Drag and Drop', async ({ page, quizExerciseCreation }) => {
+            const quizQuestionTitle = 'Quiz Question';
+            await quizExerciseCreation.addDragAndDropQuestion(quizQuestionTitle);
+            const response = await quizExerciseCreation.saveQuiz();
+            const quiz = await response.json();
+            await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
+            await expect(page.getByText(quizQuestionTitle)).toBeVisible();
+        });
     });
 
     test.describe('Quiz Exercise Deletion', () => {

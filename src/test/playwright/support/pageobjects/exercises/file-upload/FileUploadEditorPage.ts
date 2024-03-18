@@ -11,7 +11,6 @@ export class FileUploadEditorPage {
     }
 
     async attachFile(filePath: string) {
-        console.log('Attaching a file: ', filePath);
         await this.page.locator('#fileUploadInput').setInputFiles(Fixtures.getAbsoluteFilePath(filePath));
     }
 
@@ -22,13 +21,13 @@ export class FileUploadEditorPage {
 
     async saveAndContinue() {
         // For network requests, Playwright recommends using `waitForResponse` method.
-        const responsePromise = this.page.waitForResponse(BASE_API + 'exercises/*/file-upload-submissions');
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/exercises/*/file-upload-submissions`);
         await this.page.click('#save');
         await responsePromise;
     }
 
     async submit() {
-        const responsePromise = this.page.waitForResponse(BASE_API + 'exercises/*/file-upload-submissions');
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/exercises/*/file-upload-submissions`);
         await this.page.click('#submit');
         return await responsePromise;
     }

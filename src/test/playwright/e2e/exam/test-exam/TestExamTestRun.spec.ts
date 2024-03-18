@@ -40,20 +40,6 @@ test.describe('Test exam test run', () => {
         });
     });
 
-    test.beforeEach('Create test run instance', async ({ login, courseManagementAPIRequests }) => {
-        await login(instructor);
-        // TODO: API call used to not work. Check if it works, otherwise use UI.
-        testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
-
-        // cy.visit(`/course-management/${course.id}/exams/${exam.id}`);
-        // examManagement.openTestRun();
-        // examTestRun.createTestRun();
-        // examTestRun.setWorkingTimeMinutes(2);
-        // examTestRun.confirmTestRun().then((testRunResponse: Interception) => {
-        //     testRun = testRunResponse.response!.body;
-        // });
-    });
-
     test('Create a test run', async ({ login, page, examManagement, examTestRun }) => {
         await login(instructor);
 
@@ -79,62 +65,66 @@ test.describe('Test exam test run', () => {
         await expect(examTestRun.getSubmitted(testRunID).getByText('No')).toBeVisible();
     });
 
-    // Skip since this functionality is not yet supported
-    // TODO: Activate test as soon as editing test run working times for test exams is possible
-    // it.skip('Change test run working time', () => {
-    //     const hour = 1;
-    //     const minutes = 20;
-    //     const seconds = 45;
+    test.describe('Manage a test run', () => {
+        test.beforeEach('Create test run instance', async ({ login, courseManagementAPIRequests }) => {
+            await login(instructor);
+            testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
+        });
 
-    //     cy.login(instructor);
-    //     examTestRun.openTestRunPage(course, exam);
-    //     examTestRun.changeWorkingTime(testRun.id);
-    //     examTestRun.setWorkingTimeHours(hour);
-    //     examTestRun.setWorkingTimeMinutes(minutes);
-    //     examTestRun.setWorkingTimeSeconds(seconds);
-    //     examTestRun.saveTestRun().then((testRunResponse: Interception) => {
-    //         const testRun = testRunResponse.response!.body;
+        test('Change test run working time', async ({ login, examTestRun }) => {
+            const hour = 1;
+            const minutes = 20;
+            const seconds = 45;
 
-    //         expect(testRun.id).to.eq(testRun.id);
-    //         expect(testRunResponse.response!.statusCode).to.eq(200);
-    //         expect(testRun.workingTime).to.eq(hour * 3600 + minutes * 60 + seconds);
+            await login(instructor);
+            await examTestRun.openTestRunPage(course, exam);
+            await examTestRun.changeWorkingTime(testRun.id!);
+            await examTestRun.setWorkingTimeHours(hour);
+            await examTestRun.setWorkingTimeMinutes(minutes);
+            await examTestRun.setWorkingTimeSeconds(seconds);
+            const testRunResponse = await examTestRun.saveTestRun();
+            const updatedTestRun: StudentExam = await testRunResponse.json();
 
-    //         examTestRun.openTestRunPage(course, exam);
-    //         examTestRun.getWorkingTime(testRun.id).contains(`${hour}h ${minutes}min ${seconds}s`);
-    //         examTestRun.getStarted(testRun.id).contains('No');
-    //         examTestRun.getSubmitted(testRun.id).contains('No');
-    //     });
-    // });
+            expect(testRunResponse.status()).toBe(200);
+            expect(updatedTestRun.id).toBe(testRun.id);
+            expect(updatedTestRun.workingTime).toBe(hour * 3600 + minutes * 60 + seconds);
 
-    test('Conducts a test run', async ({ examTestRun, examNavigation, examParticipation }) => {
-        await examTestRun.startParticipation(instructor, course, exam, testRun.id!);
-        await expect(examTestRun.getTestRunRibbon().getByText('Test Run')).toBeVisible();
+            await examTestRun.openTestRunPage(course, exam);
+            await expect(examTestRun.getWorkingTime(testRun.id!).getByText(`${hour}h ${minutes}min ${seconds}s`)).toBeVisible();
+            await expect(examTestRun.getStarted(testRun.id!).getByText('No')).toBeVisible();
+            await expect(examTestRun.getSubmitted(testRun.id!).getByText('No')).toBeVisible();
+        });
 
-        for (let j = 0; j < exerciseArray.length; j++) {
-            const exercise = exerciseArray[j];
-            await examNavigation.openExerciseAtIndex(j);
-            await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-        }
-        await examParticipation.handInEarly();
-        for (let j = 0; j < exerciseArray.length; j++) {
-            const exercise = exerciseArray[j];
-            await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id!, exercise.exerciseGroup!.title!);
-            if (exercise.type === ExerciseType.TEXT) {
-                await examParticipation.verifyTextExerciseOnFinalPage(exercise.id!, exercise.additionalData!.textFixture!);
+        test('Conducts a test run', async ({ examTestRun, examNavigation, examParticipation }) => {
+            await examTestRun.startParticipation(instructor, course, exam, testRun.id!);
+            await expect(examTestRun.getTestRunRibbon().getByText('Test Run')).toBeVisible();
+
+            for (let j = 0; j < exerciseArray.length; j++) {
+                const exercise = exerciseArray[j];
+                await examNavigation.openExerciseAtIndex(j);
+                await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
             }
-        }
-        await examParticipation.checkExamTitle(examTitle);
-        await examTestRun.openTestRunPage(course, exam);
-        await expect(examTestRun.getStarted(testRun.id!).getByText('Yes')).toBeVisible();
-        await expect(examTestRun.getSubmitted(testRun.id!).getByText('Yes')).toBeVisible();
-    });
+            await examParticipation.handInEarly();
+            for (let j = 0; j < exerciseArray.length; j++) {
+                const exercise = exerciseArray[j];
+                await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id!, exercise.exerciseGroup!.title!);
+                if (exercise.type === ExerciseType.TEXT) {
+                    await examParticipation.verifyTextExerciseOnFinalPage(exercise.id!, exercise.additionalData!.textFixture!);
+                }
+            }
+            await examParticipation.checkExamTitle(examTitle);
+            await examTestRun.openTestRunPage(course, exam);
+            await expect(examTestRun.getStarted(testRun.id!).getByText('Yes')).toBeVisible();
+            await expect(examTestRun.getSubmitted(testRun.id!).getByText('Yes')).toBeVisible();
+        });
 
-    test('Deletes a test run', async ({ login, examTestRun }) => {
-        await login(instructor);
-        await examTestRun.openTestRunPage(course, exam);
-        await expect(examTestRun.getTestRunIdElement(testRun.id!)).toBeVisible();
-        await examTestRun.deleteTestRun(testRun.id!);
-        await expect(examTestRun.getTestRun(testRun.id!)).not.toBeAttached();
+        test('Deletes a test run', async ({ login, examTestRun }) => {
+            await login(instructor);
+            await examTestRun.openTestRunPage(course, exam);
+            await expect(examTestRun.getTestRunIdElement(testRun.id!)).toBeVisible();
+            await examTestRun.deleteTestRun(testRun.id!);
+            await expect(examTestRun.getTestRun(testRun.id!)).not.toBeAttached();
+        });
     });
 
     test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {

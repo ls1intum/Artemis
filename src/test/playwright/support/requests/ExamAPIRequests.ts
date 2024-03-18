@@ -98,7 +98,7 @@ export class ExamAPIRequests {
             exam.numberOfCorrectionRoundsInExam = 0;
         }
 
-        const response = await this.page.request.post(COURSE_BASE + exam.course!.id + '/exams', { data: exam });
+        const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams`, { data: exam });
         return response.json();
     }
 
@@ -107,7 +107,7 @@ export class ExamAPIRequests {
      * @param exam the exam object
      * */
     async deleteExam(exam: Exam) {
-        await this.page.request.delete(COURSE_BASE + exam.course!.id + '/exams/' + exam.id);
+        await this.page.request.delete(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}`);
     }
 
     /**
@@ -115,7 +115,7 @@ export class ExamAPIRequests {
      * @param exam the exam object
      */
     async registerStudentForExam(exam: Exam, student: UserCredentials) {
-        await this.page.request.post(`${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/students/${student.username}`);
+        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/students/${student.username}`);
     }
 
     /**
@@ -132,7 +132,7 @@ export class ExamAPIRequests {
             exerciseArray,
             workingTime,
         };
-        await this.page.request.post(`${COURSE_BASE}${courseId}/exams/${examId}/test-run`, { data });
+        await this.page.request.post(`${COURSE_BASE}/${courseId}/exams/${examId}/test-run`, { data });
     }
 
     /**
@@ -147,12 +147,12 @@ export class ExamAPIRequests {
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
         exerciseGroup.isMandatory = mandatory;
-        const response = await this.page.request.post(`${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/exerciseGroups`, { data: exerciseGroup });
+        const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exerciseGroups`, { data: exerciseGroup });
         return response.json();
     }
 
     async deleteExerciseGroupForExam(exam: Exam, exerciseGroup: ExerciseGroup) {
-        await this.page.request.delete(`${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/exerciseGroups/${exerciseGroup.id}`);
+        await this.page.request.delete(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exerciseGroups/${exerciseGroup.id}`);
     }
 
     /**
@@ -160,7 +160,7 @@ export class ExamAPIRequests {
      * @param exam the exam for which the missing exams are generated
      */
     async generateMissingIndividualExams(exam: Exam) {
-        await this.page.request.post(`${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/generate-missing-student-exams`);
+        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/generate-missing-student-exams`);
     }
 
     /**
@@ -168,6 +168,6 @@ export class ExamAPIRequests {
      * @param exam the exam for which the exercises are prepared
      */
     async prepareExerciseStartForExam(exam: Exam) {
-        await this.page.request.post(`${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/student-exams/start-exercises`);
+        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/start-exercises`);
     }
 }

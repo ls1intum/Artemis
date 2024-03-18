@@ -44,8 +44,7 @@ services:
             artemis-app:
                 condition: service_healthy
         environment:
-            CYPRESS_DB_TYPE: "Postgres"
-            SORRY_CYPRESS_PROJECT_ID: "artemis-postgres"
+            PLAYWRIGHT_DB_TYPE: "Postgres"
         command: >
             sh -c '
             chmod 777 /root &&

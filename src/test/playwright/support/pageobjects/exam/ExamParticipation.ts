@@ -13,7 +13,6 @@ import { ModelingEditor } from '../exercises/modeling/ModelingEditor';
 import { MultipleChoiceQuiz } from '../exercises/quiz/MultipleChoiceQuiz';
 import { TextEditorPage } from '../exercises/text/TextEditorPage';
 import { Commands } from '../../commands';
-import { promises as fs } from 'fs';
 import { Fixtures } from '../../../fixtures/fixtures';
 
 export class ExamParticipation {
@@ -50,7 +49,6 @@ export class ExamParticipation {
     }
 
     async makeSubmission(exerciseID: number, exerciseType: ExerciseType, additionalData?: AdditionalData) {
-        console.log('Making a submission');
         switch (exerciseType) {
             case ExerciseType.TEXT:
                 await this.makeTextExerciseSubmission(exerciseID, additionalData!.textFixture!);
@@ -68,22 +66,9 @@ export class ExamParticipation {
     }
 
     async makeTextExerciseSubmission(exerciseID: number, textFixture: string) {
-        // Assuming textFixture is already loaded or handled differently in Playwright
-        console.log('Making a text exercise submission');
         const content = await Fixtures.get(textFixture);
         await this.textExerciseEditor.typeSubmission(exerciseID, content!);
         await this.page.waitForTimeout(1000);
-    }
-
-    private async readFileContent(filePath: string): Promise<string> {
-        try {
-            const fullPath = `${__dirname}/fixtures/${filePath}`;
-            console.log('Fixture file path: ', fullPath);
-            return await fs.readFile(fullPath, 'utf-8');
-        } catch (error) {
-            console.error(`Error reading fixture file: ${error.message}`);
-            throw error;
-        }
     }
 
     private async makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false) {

@@ -20,7 +20,7 @@ test.describe('Login page tests', () => {
         await login(studentOne, '/courses');
         await page.waitForURL('**/courses**');
 
-        const responsePromise = page.waitForResponse(BASE_API + 'public/logout');
+        const responsePromise = page.waitForResponse(`${BASE_API}/public/logout`);
         await navigationBar.logout();
         await responsePromise;
 

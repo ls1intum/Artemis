@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test';
 import { clearTextField, enterDate } from '../../../utils';
 import { Dayjs } from 'dayjs';
-import { BASE_API } from '../../../constants';
+import { BASE_API, QUIZ_EXERCISE_BASE } from '../../../constants';
 import { Fixtures } from '../../../../fixtures/fixtures';
 
 export class QuizExerciseCreationPage {
@@ -19,7 +19,6 @@ export class QuizExerciseCreationPage {
         await enterDate(this.page, '#pick-releaseDate', date);
     }
 
-    // TODO: Test fixture correctness.
     async addMultipleChoiceQuestion(title: string, points = 1) {
         await this.page.locator('#quiz-add-mc-question').click();
         await this.page.locator('#mc-question-title').fill(title);
@@ -31,7 +30,6 @@ export class QuizExerciseCreationPage {
         await textInputField.pressSequentially(fileContent!);
     }
 
-    // TODO: Test fixture correctness.
     async addShortAnswerQuestion(title: string) {
         await this.page.locator('#quiz-add-short-answer-question').click();
         await this.page.locator('#short-answer-question-title').fill(title);
@@ -43,7 +41,6 @@ export class QuizExerciseCreationPage {
         await this.page.locator('#short-answer-show-visual').click();
     }
 
-    // TODO: Test fixture correctness.
     async addDragAndDropQuestion(title: string) {
         await this.page.locator('#quiz-add-dnd-question').click();
         await this.page.locator('#drag-and-drop-question-title').fill(title);
@@ -74,7 +71,7 @@ export class QuizExerciseCreationPage {
 
     async uploadDragAndDropBackground() {
         const fileChooserPromise = this.page.waitForEvent('filechooser');
-        const fileUploadPromise = this.page.waitForResponse(`${BASE_API}fileUpload*`);
+        const fileUploadPromise = this.page.waitForResponse(`${BASE_API}/fileUpload*`);
         await this.page.locator('#background-image-input-form').click();
         const fileChooser = await fileChooserPromise;
         await fileChooser.setFiles('exercise/quiz/drag_and_drop/background.jpg');
@@ -82,13 +79,13 @@ export class QuizExerciseCreationPage {
     }
 
     async saveQuiz() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}quiz-exercises`);
+        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE);
         await this.page.locator('#quiz-save').click();
         return await responsePromise;
     }
 
     async import() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}quiz-exercises/import/*`);
+        const responsePromise = this.page.waitForResponse(`${QUIZ_EXERCISE_BASE}/import/*`);
         await this.page.locator('#quiz-save').click();
         return await responsePromise;
     }

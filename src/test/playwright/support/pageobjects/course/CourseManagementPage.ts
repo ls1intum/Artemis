@@ -1,6 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { UserCredentials } from '../../users';
-import { BASE_API, COURSE_BASE } from '../../constants';
+import { COURSE_ADMIN_BASE, COURSE_BASE } from '../../constants';
 import { Course } from 'app/entities/course.model';
 
 /**
@@ -68,7 +68,7 @@ export class CourseManagementPage {
         await this.page.locator('#delete-course').click();
         await expect(this.page.locator('#delete')).toBeDisabled();
         await this.page.locator('#confirm-entity-name').fill(course.title!);
-        const responsePromise = this.page.waitForResponse(BASE_API + 'admin/courses/' + course.id);
+        const responsePromise = this.page.waitForResponse(`${COURSE_ADMIN_BASE}/${course.id}`);
         await this.page.locator('#delete').click();
         await responsePromise;
     }
@@ -78,7 +78,7 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the student group of the course
      * */
     async addStudentToCourse(credentials: UserCredentials) {
-        const responsePromise = this.page.waitForResponse(COURSE_BASE + '*/students/' + credentials.username);
+        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/students/${credentials.username}`);
         await this.page.locator('#detail-value-artemisApp\\.course\\.studentGroupName').locator('a').click();
         await this.confirmUserIntoGroup(credentials);
         await responsePromise;

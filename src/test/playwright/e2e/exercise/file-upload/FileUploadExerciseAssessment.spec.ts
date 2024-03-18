@@ -9,6 +9,7 @@ import { CourseManagementAPIRequests } from '../../../support/requests/CourseMan
 import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIRequests';
 import { CourseOverviewPage } from '../../../support/pageobjects/course/CourseOverviewPage';
 import { FileUploadEditorPage } from '../../../support/pageobjects/exercises/file-upload/FileUploadEditorPage';
+import { newBrowserPage } from '../../../support/utils';
 
 // Common primitives
 const tutorFeedback = 'Try to use some newlines next time!';
@@ -20,9 +21,7 @@ test.describe('File upload exercise assessment', () => {
     let exercise: FileUploadExercise;
 
     test.beforeAll('Creates a file upload exercise and makes a student submission', async ({ browser }) => {
-        const context = await browser.newContext();
-        const page = await context.newPage();
-
+        const page = await newBrowserPage(browser);
         const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
         const courseOverview = new CourseOverviewPage(page);

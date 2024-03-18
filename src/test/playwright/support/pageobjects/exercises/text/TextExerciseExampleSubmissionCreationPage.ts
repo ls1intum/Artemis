@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
-import { BASE_API } from '../../../constants';
 import { expect } from '@playwright/test';
+import { EXERCISE_BASE } from '../../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the text exercise example submission creation page.
@@ -21,7 +21,7 @@ export class TextExerciseExampleSubmissionCreationPage {
     }
 
     async clickCreateNewExampleSubmission() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}exercises/*/example-submissions`);
+        const responsePromise = this.page.waitForResponse(`${EXERCISE_BASE}/*/example-submissions`);
         await this.page.locator('#create-example-submission').click();
         return responsePromise;
     }

@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
-import { Locator, Page, expect } from '@playwright/test';
+import { Browser, Locator, Page, expect } from '@playwright/test';
 import { TIME_FORMAT } from './constants';
 
 // Add utc plugin to use the utc timezone
@@ -99,10 +99,8 @@ export async function clearTextField(textField: Locator) {
 export async function hasAttributeWithValue(page: Page, selector: string, value: string): Promise<boolean> {
     return page.evaluate(
         ({ selector, value }) => {
-            console.log('Getting attributes of a selector ', selector);
             const element = document.querySelector(selector);
             if (!element) return false;
-            console.log('Attributes: ', element.attributes);
             for (const attr of element.attributes) {
                 if (attr.value === value) {
                     return true;
@@ -116,4 +114,9 @@ export async function hasAttributeWithValue(page: Page, selector: string, value:
 
 export function parseNumber(text?: string): number | undefined {
     return text ? parseInt(text) : undefined;
+}
+
+export async function newBrowserPage(browser: Browser) {
+    const context = await browser.newContext();
+    return await context.newPage();
 }

@@ -24,7 +24,7 @@ export class CourseAssessmentDashboardPage {
     }
 
     async clickEvaluateQuizzes() {
-        const evaluateQuizzesPromise = this.page.waitForResponse(`${COURSE_BASE}*/exams/*/student-exams/evaluate-quiz-exercises`);
+        const evaluateQuizzesPromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/student-exams/evaluate-quiz-exercises`);
         await this.page.locator('#evaluateQuizExercisesButton').click();
         return await evaluateQuizzesPromise;
     }

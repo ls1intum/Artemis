@@ -34,7 +34,7 @@ export abstract class AbstractExerciseFeedback {
         await Commands.reloadUntilFound(this.page, this.complainButtonSelector);
         await this.page.locator(this.complainButtonSelector).click();
         await this.page.locator('#complainTextArea').fill(complaint);
-        const responsePromise = this.page.waitForResponse(BASE_API + 'complaints');
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/complaints`);
         await this.page.locator('#submit-complaint').click();
         const response = await responsePromise;
         expect(response.status()).toBe(201);

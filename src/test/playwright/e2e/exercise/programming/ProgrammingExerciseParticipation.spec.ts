@@ -5,6 +5,7 @@ import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/
 import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
 import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
+import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
 import { ProgrammingLanguage } from '../../../support/constants';
 import { admin, studentOne, studentThree, studentTwo } from '../../../support/users';
 import { test } from '../../../support/fixtures';
@@ -57,28 +58,27 @@ test.describe('Programming exercise participation', () => {
         });
     });
 
-    // TODO: Add DB_TYPE as Playwright environment variable for checking here
     // Skip C tests within Jenkins used by the Postgres setup, since C is currently not supported there
     // See https://github.com/ls1intum/Artemis/issues/6994
-    // if (Cypress.env('DB_TYPE') !== 'Postgres') {
-    //     test.describe('C programming exercise', () => {
-    //         let exercise: ProgrammingExercise;
-    //
-    //         test.beforeEach('Setup c programming exercise', async ({ login, exerciseAPIRequests }) => {
-    //             await login(admin);
-    //             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
-    //         });
-    //
-    //         test('Makes a submission', async ({ programmingExerciseEditor }) => {
-    //             await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
-    //             const submission = cAllSuccessful;
-    //             await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
-    //                 const resultScore = await programmingExerciseEditor.getResultScore();
-    //                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
-    //             });
-    //         });
-    //     });
-    // }
+    if (process.env.PLAYWRIGHT_DB_TYPE !== 'Postgres') {
+        test.describe('C programming exercise', () => {
+            let exercise: ProgrammingExercise;
+
+            test.beforeEach('Setup c programming exercise', async ({ login, exerciseAPIRequests }) => {
+                await login(admin);
+                exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+            });
+
+            test('Makes a submission', async ({ programmingExerciseEditor }) => {
+                await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
+                const submission = cAllSuccessful;
+                await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
+                    const resultScore = await programmingExerciseEditor.getResultScore();
+                    await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+                });
+            });
+        });
+    }
 
     test.describe('Python programming exercise', () => {
         let exercise: ProgrammingExercise;

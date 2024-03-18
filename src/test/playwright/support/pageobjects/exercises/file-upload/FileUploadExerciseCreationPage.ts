@@ -1,5 +1,5 @@
 import { Page } from 'playwright';
-import { BASE_API } from '../../../constants';
+import { UPLOAD_EXERCISE_BASE } from '../../../constants';
 import { Dayjs } from 'dayjs';
 import { enterDate } from '../../../utils';
 
@@ -47,7 +47,7 @@ export class FileUploadExerciseCreationPage {
     }
 
     async create() {
-        const responsePromise = this.page.waitForResponse(BASE_API + 'file-upload-exercises');
+        const responsePromise = this.page.waitForResponse(UPLOAD_EXERCISE_BASE);
         await this.page.locator('#save-entity').click();
         return await responsePromise;
     }

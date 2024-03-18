@@ -128,7 +128,7 @@ export class ExerciseAPIRequests {
         exercise.programmingLanguage = programmingLanguage;
         exercise.testwiseCoverageEnabled = recordTestwiseCoverage;
 
-        const response = await this.page.request.post(PROGRAMMING_EXERCISE_BASE + 'setup', { data: exercise });
+        const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
         return response.json();
     }
 
@@ -139,7 +139,7 @@ export class ExerciseAPIRequests {
      */
     async makeProgrammingExerciseSubmission(repositoryId: number) {
         // TODO: For now it is enough to submit the one prepared json file, but in the future this method should support different package names and submissions.
-        await this.page.request.put(`${BASE_API}repository/${repositoryId}/files?commit=yes`, {
+        await this.page.request.put(`${BASE_API}/repository/${repositoryId}/files?commit=yes`, {
             data: javaAssessmentSubmission,
         });
     }
@@ -167,7 +167,7 @@ export class ExerciseAPIRequests {
      * @param exerciseId - The ID of the text exercise to be deleted.
      */
     async deleteTextExercise(exerciseId: number) {
-        await this.page.request.delete(TEXT_EXERCISE_BASE + exerciseId);
+        await this.page.request.delete(`${TEXT_EXERCISE_BASE}/${exerciseId}`);
     }
 
     /**
@@ -177,7 +177,7 @@ export class ExerciseAPIRequests {
      * @param text - The text content of the submission.
      */
     async makeTextExerciseSubmission(exerciseId: number, text: string) {
-        await this.page.request.put(`${EXERCISE_BASE}${exerciseId}/text-submissions`, {
+        await this.page.request.put(`${EXERCISE_BASE}/${exerciseId}/text-submissions`, {
             data: { submissionExerciseType: 'text', text },
         });
     }
@@ -216,7 +216,7 @@ export class ExerciseAPIRequests {
      * @param file - The file content of the submission.
      */
     async makeFileUploadExerciseSubmission(exerciseId: number, file: string) {
-        await this.page.request.post(`${EXERCISE_BASE}${exerciseId}/file-upload-submissions`, {
+        await this.page.request.post(`${EXERCISE_BASE}/${exerciseId}/file-upload-submissions`, {
             data: { submissionExerciseType: 'file-upload', file },
         });
     }
@@ -286,7 +286,7 @@ export class ExerciseAPIRequests {
      * @param participation - The participation data for the submission.
      */
     async makeModelingExerciseSubmission(exerciseID: number, participation: Participation) {
-        return this.page.request.put(`${EXERCISE_BASE}${exerciseID}/modeling-submissions`, {
+        return this.page.request.put(`${EXERCISE_BASE}/${exerciseID}/modeling-submissions`, {
             data: {
                 ...modelingExerciseSubmissionTemplate,
                 id: participation.submissions![0].id,
@@ -356,7 +356,7 @@ export class ExerciseAPIRequests {
      * @param exerciseId - The ID of the quiz exercise to be deleted.
      */
     async deleteQuizExercise(exerciseId: number) {
-        await this.page.request.delete(QUIZ_EXERCISE_BASE + exerciseId);
+        await this.page.request.delete(`${QUIZ_EXERCISE_BASE}/${exerciseId}`);
     }
 
     /**
@@ -365,7 +365,7 @@ export class ExerciseAPIRequests {
      * @param quizId - The ID of the quiz exercise to be set as visible.
      */
     async setQuizVisible(quizId: number) {
-        await this.page.request.put(`${QUIZ_EXERCISE_BASE}${quizId}/set-visible`);
+        await this.page.request.put(`${QUIZ_EXERCISE_BASE}/${quizId}/set-visible`);
     }
 
     /**
@@ -374,7 +374,7 @@ export class ExerciseAPIRequests {
      * @param quizId - The ID of the quiz exercise to be started immediately.
      */
     async startQuizNow(quizId: number) {
-        await this.page.request.put(`${QUIZ_EXERCISE_BASE}${quizId}/start-now`);
+        await this.page.request.put(`${QUIZ_EXERCISE_BASE}/${quizId}/start-now`);
     }
 
     /**
@@ -383,7 +383,7 @@ export class ExerciseAPIRequests {
      * @param exam - The exam for which to evaluate the quiz exercises.
      */
     async evaluateExamQuizzes(exam: Exam) {
-        await this.page.request.post(`${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
+        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
     }
 
     /**
@@ -404,7 +404,7 @@ export class ExerciseAPIRequests {
             ...multipleChoiceSubmissionTemplate,
             submittedAnswers,
         };
-        await this.page.request.post(EXERCISE_BASE + quizExercise.id + '/submissions/live', { data: multipleChoiceSubmission });
+        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live`, { data: multipleChoiceSubmission });
     }
 
     /**
@@ -436,7 +436,7 @@ export class ExerciseAPIRequests {
             ...shortAnswerSubmissionTemplate,
             submittedAnswers,
         };
-        await this.page.request.post(EXERCISE_BASE + quizExercise.id + '/submissions/live', { data: shortAnswerSubmission });
+        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live`, { data: shortAnswerSubmission });
     }
 
     /**
@@ -446,7 +446,7 @@ export class ExerciseAPIRequests {
      * @returns A Promise<StudentParticipation> representing the student participation.
      */
     async getExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
-        const response = await this.page.request.get(EXERCISE_BASE + exerciseId + '/participation');
+        const response = await this.page.request.get(`${EXERCISE_BASE}/${exerciseId}/participation`);
         return response.json();
     }
 
@@ -457,7 +457,7 @@ export class ExerciseAPIRequests {
      * @returns APIResponse representing the API request response.
      */
     async startExerciseParticipation(exerciseId: number) {
-        return await this.page.request.post(`${EXERCISE_BASE + exerciseId}/participations`);
+        return await this.page.request.post(`${EXERCISE_BASE}/${exerciseId}/participations`);
     }
 
     private async updateExercise(exercise: Exercise, type: ExerciseType) {
