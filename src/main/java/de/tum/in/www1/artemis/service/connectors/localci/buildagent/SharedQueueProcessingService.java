@@ -194,7 +194,16 @@ public class SharedQueueProcessingService {
         }
         LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active,
                 recentBuildJobs);
-        buildAgentInformation.put(memberAddress, info);
+        try {
+            buildAgentInformation.lock(memberAddress);
+            buildAgentInformation.put(memberAddress, info);
+        }
+        catch (Exception e) {
+            log.error("Error while updating build agent information for agent {}", memberAddress, e);
+        }
+        finally {
+            buildAgentInformation.unlock(memberAddress);
+        }
     }
 
     private List<LocalCIBuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
@@ -241,12 +250,12 @@ public class SharedQueueProcessingService {
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
             addToRecentBuildJobs(finishedJob);
-            updateLocalBuildAgentInformation();
 
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
+        });
 
-        }).exceptionally(ex -> {
+        futureResult.exceptionally(ex -> {
             ZonedDateTime completionDate = ZonedDateTime.now();
 
             LocalCIBuildJobQueueItem job;
