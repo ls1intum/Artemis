@@ -1,4 +1,4 @@
-import { BASE_API, PUT } from '../../../constants';
+import { EXERCISE_BASE, PUT } from '../../../constants';
 import { getExercise } from '../../../utils';
 
 /**
@@ -23,13 +23,13 @@ export class TextEditorPage {
      * Saves the text submission and continues to the next exercise in the exam. This button is only available in exam mode!
      */
     saveAndContinue() {
-        cy.intercept(PUT, BASE_API + 'exercises/*/text-submissions').as('savedSubmission');
+        cy.intercept(PUT, `${EXERCISE_BASE}/*/text-submissions`).as('savedSubmission');
         cy.get('#save').click();
         return cy.wait('@savedSubmission');
     }
 
     submit() {
-        cy.intercept(PUT, BASE_API + 'exercises/*/text-submissions').as('textSubmission');
+        cy.intercept(PUT, `${EXERCISE_BASE}/*/text-submissions`).as('textSubmission');
         cy.get('#submit button').click();
         return cy.wait('@textSubmission');
     }
