@@ -3,12 +3,7 @@ set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
 build () {
   echo '⚙️ executing build'
-  additional_flags="-o "
-  if grep -- "-solution.git" assignment/.git/config >> /dev/null 2>&1; then
-    additional_flags=""
-  fi
-  mvn -B ${additional_flags}clean compile
-
+  mvn -B clean compile
 }
 
 checkers () {

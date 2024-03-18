@@ -3,12 +3,7 @@ set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
 build () {
   echo '⚙️ executing build'
-  additional_flags="-o "
-  if grep -- "-solution.git" assignment/.git/config >> /dev/null 2>&1; then
-    additional_flags=""
-  fi
-  mvn -B "${additional_flags}"clean compile
-
+  mvn -B clean compile
 }
 
 checkers () {
@@ -18,10 +13,6 @@ checkers () {
   # checks that the file exists and is not empty for non gui programs
   pipeline-helper file-exists assignment/Tests.txt
 
-}
-
-preparecustomcheckers () {
-  echo '⚙️ executing preparecustomcheckers'
   main_checker_output=$(pipeline-helper main-method -s target/classes)
 
   IFS=$'\n' read -rd '' -a main_checker_lines <<< "${main_checker_output}"
@@ -39,8 +30,8 @@ preparecustomcheckers () {
 
 }
 
-runcustomcheckers () {
-  echo '⚙️ executing runcustomcheckers'
+secrettests () {
+  echo '⚙️ executing secrettests'
   export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
   export step="secret"
   cd testsuite || exit
@@ -110,9 +101,7 @@ main () {
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; checkers"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  bash -c "source ${_script_name} aeolus_sourcing; preparecustomcheckers"
-  cd "${AEOLUS_INITIAL_DIRECTORY}"
-  bash -c "source ${_script_name} aeolus_sourcing; runcustomcheckers"
+  bash -c "source ${_script_name} aeolus_sourcing; secrettests"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; publictests"
   cd "${AEOLUS_INITIAL_DIRECTORY}"

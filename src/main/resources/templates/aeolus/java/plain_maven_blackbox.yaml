@@ -1,12 +1,7 @@
 api: v0.0.1
 actions:
   - name: build
-    script: |
-      additional_flags="-o "
-      if grep -- "-solution.git" assignment/.git/config >> /dev/null 2>&1; then
-        additional_flags=""
-      fi
-      mvn -B ${additional_flags}clean compile
+    script: mvn -B clean compile
   - name: checkers
     script: |
       # all java files in the assignment folder should have maximal line length 80
