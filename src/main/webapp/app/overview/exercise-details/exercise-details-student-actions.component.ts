@@ -286,7 +286,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
     }
 
-    private assureConditionsSatisfied(): boolean {
+    assureConditionsSatisfied(): boolean {
         this.updateParticipations();
         const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
         const allHiddenTestsPassed = latestResult?.score !== undefined && latestResult.score >= 100;

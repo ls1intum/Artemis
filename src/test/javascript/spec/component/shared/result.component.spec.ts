@@ -198,7 +198,7 @@ describe('ResultComponent', () => {
         });
 
         it('should call evaluate again after the specified due time', () => {
-            comp.result.completionDate = dayjs().add(2, 'seconds');
+            comp.result = { ...comp.result, completionDate: dayjs().add(2, 'seconds') };
             comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
             comp.evaluate();
 
@@ -211,7 +211,7 @@ describe('ResultComponent', () => {
         it('should clear the timeout if the component is destroyed before the feedback generation is complete', () => {
             comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
             comp.evaluate();
-            expect(comp.resultUpdateSubscription).toBeDefined();
+            expect(jest.getTimerCount()).toBe(1);
 
             comp.ngOnDestroy();
             expect(jest.getTimerCount()).toBe(0);
