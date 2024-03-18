@@ -14,16 +14,14 @@ export class ScaFeedbackModal {
         await expect(this.page.locator('#feedback-chart')).toBeVisible();
     }
 
-    // TODO: Check if currently used locators are necessary in Playwright
     async shouldShowCodeIssue(feedbackText: string, pointReduction: string) {
-        const feedbackTextElement = this.page.locator('.feedback-list').getByText(feedbackText);
-        await feedbackTextElement.scrollIntoViewIfNeeded();
-        await expect(feedbackTextElement).toBeVisible();
+        const feedbackItem = this.page.locator('.feedback-item', { hasText: feedbackText });
+        await feedbackItem.scrollIntoViewIfNeeded();
+        await expect(feedbackItem).toBeVisible();
 
         const creditsElement = this.page.locator('.feedback-item', { hasText: feedbackText }).locator('.feedback-item__credits');
         await creditsElement.scrollIntoViewIfNeeded();
         await expect(creditsElement).toContainText(`-${pointReduction}P`);
-        await expect(creditsElement).toBeVisible();
     }
 
     async closeModal() {
