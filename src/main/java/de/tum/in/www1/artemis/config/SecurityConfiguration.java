@@ -35,7 +35,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
@@ -144,23 +143,23 @@ public class SecurityConfiguration {
                 .requestMatchers(antMatcher("/public/**"), antMatcher("/management/info"), antMatcher("/management/health")).permitAll()
                 .requestMatchers(antMatcher("/*.js"), antMatcher("/*.css"), antMatcher("/*.webapp"), antMatcher("/*.map"), antMatcher("/*.txt"), antMatcher("/browserconfig.xml")).permitAll()
                 .requestMatchers(antMatcher("/content/**"), antMatcher("/i18n/**/*.json"), antMatcher("/logo/**"), antMatcher("/media/**"), antMatcher("/swagger-ui/axios.min.js")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/admin/**")).hasAuthority(Role.ADMIN.getAuthority())
-                .requestMatchers(new AntPathRequestMatcher("/api/public/**")).permitAll()
+                .requestMatchers(antMatcher("/api/admin/**")).hasAuthority(Role.ADMIN.getAuthority())
+                .requestMatchers(antMatcher("/api/public/**")).permitAll()
                 // TODO: Remove the following three lines in June 2024 together with LegacyResource
-                .requestMatchers(new AntPathRequestMatcher(HttpMethod.POST.name(), "/api/programming-exercises/new-result")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher(HttpMethod.POST.name(), "/api/programming-submissions/*")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher(HttpMethod.POST.name(), "/api/programming-exercises/test-cases-changed/*")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/websocket/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/.well-known/jwks.json")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/git/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/management/prometheus/**")).access((authentication, context) -> {
+                .requestMatchers(antMatcher(HttpMethod.POST, "/api/programming-exercises/new-result")).permitAll()
+                .requestMatchers(antMatcher(HttpMethod.POST, "/api/programming-submissions/*")).permitAll()
+                .requestMatchers(antMatcher(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*")).permitAll()
+                .requestMatchers(antMatcher("/websocket/**")).permitAll()
+                .requestMatchers(antMatcher("/.well-known/jwks.json")).permitAll()
+                .requestMatchers(antMatcher("/git/**")).permitAll()
+                .requestMatchers(antMatcher("/management/prometheus/**")).access((authentication, context) -> {
                     log.info("Monitoring prometheus request from IP: " + context.getRequest().getRemoteAddr());
                     log.info("Monitoring IP addresses: " + monitoringIpAddresses);
                     return new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr()));
                 })
-                .requestMatchers(new AntPathRequestMatcher("/")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/index.html")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/**")).authenticated()
+                .requestMatchers(antMatcher("/")).permitAll()
+                .requestMatchers(antMatcher("/index.html")).permitAll()
+                .requestMatchers(antMatcher("/**")).authenticated()
             )
             .with(securityConfigurerAdapter(), (c) -> c.configure(http));
         // @formatter:on
