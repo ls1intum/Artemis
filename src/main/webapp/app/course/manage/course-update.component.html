@@ -34,6 +34,24 @@
             </div>
             <hr />
             <div>
+                <div class="container no-padding">
+                    <div class="row">
+                        <div class="col-6">
+                            <image-cropper
+                                [imageFile]="courseImageUploadFile"
+                                [maintainAspectRatio]="true"
+                                [aspectRatio]="1"
+                                [resizeToWidth]="200"
+                                [cropperMinWidth]="100"
+                                [onlyScaleDown]="true"
+                                [roundCropper]="true"
+                                (imageCropped)="imageCropped($event)"
+                                (imageLoaded)="imageLoaded()"
+                                [style.display]="showCropper ? null : 'none'"
+                            />
+                        </div>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col">
                         <div class="form-group">
@@ -67,24 +85,6 @@
                             </div>
                         }
                     }
-                </div>
-                <div class="container no-padding">
-                    <div class="row">
-                        <div class="col-6">
-                            <image-cropper
-                                [imageFile]="courseImageUploadFile"
-                                [maintainAspectRatio]="true"
-                                [aspectRatio]="1"
-                                [resizeToWidth]="200"
-                                [cropperMinWidth]="100"
-                                [onlyScaleDown]="true"
-                                [roundCropper]="true"
-                                (imageCropped)="imageCropped($event)"
-                                (imageLoaded)="imageLoaded()"
-                                [style.display]="showCropper ? null : 'none'"
-                            />
-                        </div>
-                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description"></label>
