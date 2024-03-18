@@ -144,7 +144,7 @@ Programming Exercises
 
 Programming Exercises - Repository Access
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**Action Types:**
+Action Types:
     **READ** (fetch, pull), **WRITE** (push), **RESET** (reset to origin head)
 
 Access to all repositories of a course:
@@ -163,8 +163,6 @@ Access for Teaching Assistants and Students on their **own** repositories (**gra
 | Before start                                                 | *READ*, *WRITE*, *RESET*     | restricted |
 +--------------------------------------------------------------+------------------------------+------------+
 | After start but before due date and not locked               | *READ*, *WRITE*, *RESET*                  |
-+--------------------------------------------------------------+-------------------------------------------+
-| After due date and practice mode enabled                     | *READ*, *WRITE*, *RESET*                  |
 +--------------------------------------------------------------+-------------------------------------------+
 | After due date                                               | *READ*                                    |
 +--------------------------------------------------------------+-------------------------------------------+
