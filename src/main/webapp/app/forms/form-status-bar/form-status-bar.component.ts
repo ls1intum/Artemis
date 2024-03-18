@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewEncapsulation } from '@angular/core';
 
 export type FormSectionStatus = {
     title: string;
@@ -10,6 +10,7 @@ export type FormSectionStatus = {
     selector: 'jhi-form-status-bar',
     templateUrl: './form-status-bar.component.html',
     styleUrl: './form-status-bar.component.scss',
+    encapsulation: ViewEncapsulation.None,
 })
 export class FormStatusBarComponent {
     @Input()
