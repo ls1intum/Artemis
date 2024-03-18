@@ -32,6 +32,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -498,4 +499,99 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             }
         }),
     );
+
+    it('assureConditionsSatisfied should alert and return false if not all hidden tests have passed', () => {
+        jest.spyOn(window, 'alert').mockImplementation(() => {});
+        comp.exercise = {
+            type: ExerciseType.PROGRAMMING,
+            dueDate: dayjs().subtract(5, 'minutes'),
+            studentParticipations: [
+                {
+                    id: 2,
+                    results: [
+                        {
+                            assessmentType: AssessmentType.AUTOMATIC,
+                            score: 80,
+                        },
+                    ],
+                },
+            ] as StudentParticipation[],
+        } as ProgrammingExercise;
+
+        const result = comp.assureConditionsSatisfied();
+
+        expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.notEnoughPoints');
+        expect(result).toBeFalse();
+    });
+
+    it('assureConditionsSatisfied should alert and return false if the feedback request has already been sent', () => {
+        jest.spyOn(window, 'alert').mockImplementation(() => {});
+        comp.exercise = {
+            type: ExerciseType.PROGRAMMING,
+            dueDate: dayjs().add(5, 'minutes'),
+            studentParticipations: [
+                {
+                    id: 2,
+                    individualDueDate: dayjs().subtract(5, 'days'),
+                    results: [
+                        {
+                            assessmentType: AssessmentType.AUTOMATIC,
+                            score: 100,
+                        },
+                    ],
+                },
+            ] as StudentParticipation[],
+        } as ProgrammingExercise;
+
+        const result = comp.assureConditionsSatisfied();
+
+        expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAlreadySent');
+        expect(result).toBeFalse();
+    });
+
+    it('assureConditionsSatisfied should alert and return false if the request is made after the due date', () => {
+        jest.spyOn(window, 'alert').mockImplementation(() => {});
+        comp.exercise = {
+            type: ExerciseType.PROGRAMMING,
+            dueDate: dayjs().subtract(5, 'minutes'),
+            studentParticipations: [
+                {
+                    id: 2,
+                    results: [
+                        {
+                            assessmentType: AssessmentType.AUTOMATIC,
+                            score: 100,
+                        },
+                    ],
+                },
+            ] as StudentParticipation[],
+        } as ProgrammingExercise;
+
+        const result = comp.assureConditionsSatisfied();
+
+        expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAfterDueDate');
+        expect(result).toBeFalse();
+    });
+
+    it('assureConditionsSatisfied should return true if all conditions are satisfied', () => {
+        comp.exercise = {
+            type: ExerciseType.PROGRAMMING,
+            dueDate: dayjs().add(5, 'minutes'),
+            studentParticipations: [
+                {
+                    id: 2,
+                    results: [
+                        {
+                            assessmentType: AssessmentType.AUTOMATIC,
+                            score: 100,
+                        },
+                    ],
+                },
+            ] as StudentParticipation[],
+        } as ProgrammingExercise;
+
+        const result = comp.assureConditionsSatisfied();
+
+        expect(result).toBeTrue();
+    });
 });

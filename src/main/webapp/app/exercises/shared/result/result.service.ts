@@ -164,10 +164,10 @@ export class ResultService implements IResultService {
      * @param short flag that indicates if the resultString should use the short format
      */
     private getBaseResultStringProgrammingExercise(result: Result, relativeScore: number, points: number, buildAndTestMessage: string, short: boolean | undefined): string {
+        if (Result.isAutomaticAIResult(result)) {
+            return buildAndTestMessage;
+        }
         if (short) {
-            if (Result.isAutomaticAIResult(result)) {
-                return buildAndTestMessage;
-            }
             if (!result.testCaseCount) {
                 return this.translateService.instant('artemisApp.result.resultString.programmingShort', {
                     relativeScore,

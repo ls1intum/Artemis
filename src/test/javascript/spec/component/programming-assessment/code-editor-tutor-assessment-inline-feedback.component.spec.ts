@@ -149,10 +149,10 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     });
 
     it('should not display credits and icons for non-graded feedback suggestions', () => {
-        comp.feedback.type = FeedbackType.AUTOMATIC;
-        comp.feedback.text = NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback';
-        comp.updateFeedback();
-
+        comp.feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
+        } as Feedback;
         fixture.detectChanges();
 
         const badgeElement = fixture.debugElement.query(By.css('.badge'));
@@ -160,14 +160,41 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     });
 
     it('should display credits and icons for graded feedback', () => {
-        comp.feedback.credits = 1;
-        comp.feedback.type = FeedbackType.AUTOMATIC;
-        comp.feedback.text = 'feedback';
-        comp.updateFeedback();
+        comp.feedback = {
+            credits: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: 'feedback',
+        } as Feedback;
         fixture.detectChanges();
 
         const badgeElement = fixture.debugElement.query(By.css('.badge'));
         expect(badgeElement).not.toBeNull();
         expect(badgeElement.nativeElement.textContent).toContain('1P');
+    });
+
+    it('should use the correct translation key for non-graded feedback', () => {
+        comp.feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
+        } as Feedback;
+        fixture.detectChanges();
+
+        const headerElement = fixture.debugElement.query(By.css('.col h6')).nativeElement;
+        expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.feedback');
+        const paragraphElement = fixture.debugElement.query(By.css('.col p')).nativeElement;
+        expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.feedback));
+    });
+
+    it('should use the correct translation key for graded feedback', () => {
+        comp.feedback = {
+            type: FeedbackType.MANUAL,
+            text: 'feedback',
+        } as Feedback;
+        fixture.detectChanges();
+
+        const headerElement = fixture.debugElement.query(By.css('.col h6')).nativeElement;
+        expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.tutorComment');
+        const paragraphElement = fixture.debugElement.query(By.css('.col p')).nativeElement;
+        expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.feedback));
     });
 });
