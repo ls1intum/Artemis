@@ -140,9 +140,11 @@ public class SecurityConfiguration {
                 .permissionsPolicy(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(requests -> requests
-                .requestMatchers(antMatcher("/public/**"), antMatcher("/management/info"), antMatcher("/management/health")).permitAll()
-                .requestMatchers(antMatcher("/*.js"), antMatcher("/*.css"), antMatcher("/*.webapp"), antMatcher("/*.map"), antMatcher("/*.txt"), antMatcher("/browserconfig.xml")).permitAll()
-                .requestMatchers(antMatcher("/content/**"), antMatcher("/i18n/**/*.json"), antMatcher("/logo/**"), antMatcher("/media/**"), antMatcher("/swagger-ui/axios.min.js")).permitAll()
+                .requestMatchers(antMatcher("/"), antMatcher("/index.html"), antMatcher("/public/**")).permitAll()
+                .requestMatchers(antMatcher("/*.js"), antMatcher("/*.css"), antMatcher("/*.map")).permitAll()
+                .requestMatchers(antMatcher("/manifest.webapp"), antMatcher("/robots.txt")).permitAll()
+                .requestMatchers(antMatcher("/content/**"), antMatcher("/i18n/*.json"), antMatcher("/logo/*")).permitAll()
+                .requestMatchers(antMatcher("/management/info"), antMatcher("/management/health")).permitAll()
                 .requestMatchers(antMatcher("/api/admin/**")).hasAuthority(Role.ADMIN.getAuthority())
                 .requestMatchers(antMatcher("/api/public/**")).permitAll()
                 // TODO: Remove the following three lines in June 2024 together with LegacyResource
@@ -157,8 +159,6 @@ public class SecurityConfiguration {
                     log.info("Monitoring IP addresses: " + monitoringIpAddresses);
                     return new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr()));
                 })
-                .requestMatchers(antMatcher("/")).permitAll()
-                .requestMatchers(antMatcher("/index.html")).permitAll()
                 .requestMatchers(antMatcher("/**")).authenticated()
             )
             .with(securityConfigurerAdapter(), (c) -> c.configure(http));
