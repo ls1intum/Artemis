@@ -273,14 +273,14 @@ public class QuizScheduleService {
      * stop scheduler
      */
     public void stopSchedule() {
-        if (!scheduledProcessQuizSubmissions.isNull()) {
+        var savedHandler = scheduledProcessQuizSubmissions.getAndSet(null);
+        if (savedHandler != null) {
             log.info("Try to stop quiz schedule service");
-            var scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(scheduledProcessQuizSubmissions.get());
+            var scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(savedHandler);
             try {
                 // if the task has been disposed, this will throw a StaleTaskException
                 boolean cancelSuccess = scheduledFuture.cancel(false);
                 scheduledFuture.dispose();
-                scheduledProcessQuizSubmissions.set(null);
                 log.info("Stop Quiz Schedule Service was successful: {}", cancelSuccess);
             }
             catch (@SuppressWarnings("unused") StaleTaskException e) {
