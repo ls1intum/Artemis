@@ -26,7 +26,7 @@ export abstract class AbstractExerciseFeedback {
         cy.reloadUntilFound(this.complainButtonSelector);
         cy.get(this.complainButtonSelector).click();
         cy.get('#complainTextArea').type(complaint, { parseSpecialCharSequences: false });
-        cy.intercept(POST, BASE_API + 'complaints').as('postComplaint');
+        cy.intercept(POST, `${BASE_API}/complaints`).as('postComplaint');
         cy.get('#submit-complaint').click();
         return cy.wait('@postComplaint').then((request: Interception) => {
             expect(request.response!.statusCode).to.eq(201);

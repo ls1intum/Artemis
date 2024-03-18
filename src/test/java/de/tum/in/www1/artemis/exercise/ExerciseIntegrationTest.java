@@ -1,10 +1,17 @@
 package de.tum.in.www1.artemis.exercise;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.within;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,8 +23,19 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -25,12 +43,19 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizPointStatistic;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
@@ -206,27 +231,16 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
                 // Test presence and absence of exercise type specific properties
                 if (exerciseServer instanceof FileUploadExercise fileUploadExercise) {
-                    assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
-                    assertThat(fileUploadExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertFileUploadExercise(fileUploadExercise, "png", null);
                 }
                 else if (exerciseServer instanceof ModelingExercise modelingExercise) {
-                    assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
-                    assertThat(modelingExercise.getExampleSolutionModel()).as("Sample solution model was filtered out").isNull();
-                    assertThat(modelingExercise.getExampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
+                    assertModelingExercise(modelingExercise, DiagramType.ClassDiagram, null, null);
                 }
                 else if (exerciseServer instanceof ProgrammingExercise programmingExerciseExercise) {
-                    assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
-                    assertThat(programmingExerciseExercise.getTemplateRepositoryUri()).as("Template repository uri was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getSolutionRepositoryUri()).as("Solution repository uri was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getTestRepositoryUri()).as("Test repository uri was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getTemplateBuildPlanId()).as("Template build plan was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getSolutionBuildPlanId()).as("Solution build plan was filtered out").isNull();
+                    assertProgrammingExercise(programmingExerciseExercise, true, null, null, null, null, null);
                 }
                 else if (exerciseServer instanceof QuizExercise quizExercise) {
-                    assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
-                    assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
-                    assertThat(quizExercise.getQuizPointStatistic()).as("Quiz point statistic was filtered out").isNull();
-                    assertThat(quizExercise.getQuizQuestions()).as("Quiz questions were filtered out").isEmpty();
+                    assertQuizExercise(quizExercise, 10, 1, null, List.of());
                 }
                 else if (exerciseServer instanceof TextExercise textExercise) {
                     assertThat(textExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
@@ -234,27 +248,75 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
                 // Test that the exercise does not have more than one participation.
                 assertThat(exerciseServer.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
-                if (!exerciseServer.getStudentParticipations().isEmpty()) {
-                    // Buffer participation so that null checking is easier.
-                    Participation participation = exerciseServer.getStudentParticipations().iterator().next();
-                    if (!participation.getSubmissions().isEmpty()) {
-                        // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
-                        assertThat(participation.getSubmissions()).as("At most one submission for participation").hasSizeLessThanOrEqualTo(1);
-                        Submission submission = participation.getSubmissions().iterator().next();
-                        if (submission != null) {
-                            // Test that the correct text submission was filtered.
-                            if (submission instanceof TextSubmission textSubmission) {
-                                assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
-                            }
-                            // Test that the correct modeling submission was filtered.
-                            else if (submission instanceof ModelingSubmission modelingSubmission) {
-                                assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model2");
-                            }
-                        }
-                    }
+
+                if (exerciseServer.getStudentParticipations().isEmpty()) {
+                    continue;
+                }
+                // Buffer participation so that null checking is easier.
+                Participation participation = exerciseServer.getStudentParticipations().iterator().next();
+
+                if (participation.getSubmissions().isEmpty()) {
+                    continue;
+                }
+                // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
+                assertThat(participation.getSubmissions()).as("At most one submission for participation").hasSizeLessThanOrEqualTo(1);
+                Submission submission = participation.getSubmissions().iterator().next();
+
+                if (submission == null) {
+                    continue;
+                }
+                // Test that the correct text submission was filtered.
+                if (submission instanceof TextSubmission textSubmission) {
+                    assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
+                }
+                // Test that the correct modeling submission was filtered.
+                else if (submission instanceof ModelingSubmission modelingSubmission) {
+                    assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model2");
                 }
             }
         }
+    }
+
+    private <T> void assertEqualOrNull(T actual, T expected, String entityName) {
+        if (expected != null) {
+            assertThat(actual).as(entityName + " was set correctly").isEqualTo(expected);
+        }
+        else {
+            assertThat(actual).as(entityName + " not present").isNull();
+        }
+    }
+
+    private void assertFileUploadExercise(FileUploadExercise exercise, String filePattern, String exampleSolution) {
+        assertEqualOrNull(exercise.getFilePattern(), filePattern, "File pattern");
+        assertEqualOrNull(exercise.getExampleSolution(), exampleSolution, "Sample solution");
+    }
+
+    private void assertModelingExercise(ModelingExercise exercise, DiagramType diagramType, String exampleSolutionModel, String exampleSolutionExplanation) {
+        assertThat(exercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(diagramType);
+        assertEqualOrNull(exercise.getExampleSolutionModel(), exampleSolutionModel, "Sample solution model");
+        assertEqualOrNull(exercise.getExampleSolutionExplanation(), exampleSolutionExplanation, "Sample solution explanation");
+    }
+
+    private void assertProgrammingExercise(ProgrammingExercise exercise, boolean projectKey, String templateRepositoryUri, String solutionRepositoryUri, String testRepositoryUri,
+            String templateBuildPlanId, String solutionBuildPlanId) {
+        if (projectKey) {
+            assertThat(exercise.getProjectKey()).as("Project key was set").isNotNull();
+        }
+        else {
+            assertThat(exercise.getProjectKey()).as("Project key not present").isNull();
+        }
+        assertEqualOrNull(exercise.getTemplateRepositoryUri(), templateRepositoryUri, "Template repository uri");
+        assertEqualOrNull(exercise.getSolutionRepositoryUri(), solutionRepositoryUri, "Solution repository uri");
+        assertEqualOrNull(exercise.getTestRepositoryUri(), testRepositoryUri, "Test repository uri");
+        assertEqualOrNull(exercise.getTemplateBuildPlanId(), templateBuildPlanId, "Template build plan id");
+        assertEqualOrNull(exercise.getSolutionBuildPlanId(), solutionBuildPlanId, "Solution build plan id");
+    }
+
+    private void assertQuizExercise(QuizExercise exercise, int duration, int allowedNumberOfAttempts, QuizPointStatistic quizPointStatistic, List<QuizQuestion> quizQuestions) {
+        assertThat(exercise.getDuration()).as("Duration was set correctly").isEqualTo(duration);
+        assertThat(exercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(allowedNumberOfAttempts);
+        assertEqualOrNull(exercise.getQuizPointStatistic(), quizPointStatistic, "Quiz point statistic");
+        assertEqualOrNull(exercise.getQuizQuestions(), quizQuestions, "Quiz questions");
     }
 
     @Test
@@ -314,30 +376,19 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
 
                 if (exerciseWithDetails instanceof FileUploadExercise fileUploadExercise) {
-                    assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
-                    assertThat(fileUploadExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertFileUploadExercise(fileUploadExercise, "png", null);
                     assertThat(fileUploadExercise.getStudentParticipations()).as("Number of participations is correct").isEmpty();
                 }
                 else if (exerciseWithDetails instanceof ModelingExercise modelingExercise) {
-                    assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
-                    assertThat(modelingExercise.getExampleSolutionModel()).as("Sample solution model was filtered out").isNull();
-                    assertThat(modelingExercise.getExampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
+                    assertModelingExercise(modelingExercise, DiagramType.ClassDiagram, null, null);
                     assertThat(modelingExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(2);
                 }
                 else if (exerciseWithDetails instanceof ProgrammingExercise programmingExerciseExercise) {
-                    assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
-                    assertThat(programmingExerciseExercise.getTemplateRepositoryUri()).as("Template repository uri was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getSolutionRepositoryUri()).as("Solution repository uri was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getTestRepositoryUri()).as("Test repository uri was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getTemplateBuildPlanId()).as("Template build plan was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getSolutionBuildPlanId()).as("Solution build plan was filtered out").isNull();
+                    assertProgrammingExercise(programmingExerciseExercise, true, null, null, null, null, null);
                     assertThat(programmingExerciseExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(2);
                 }
                 else if (exerciseWithDetails instanceof QuizExercise quizExercise) {
-                    assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
-                    assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
-                    assertThat(quizExercise.getQuizPointStatistic()).as("Quiz point statistic was filtered out").isNull();
-                    assertThat(quizExercise.getQuizQuestions()).as("Quiz questions were filtered out").isEmpty();
+                    assertQuizExercise(quizExercise, 10, 1, null, List.of());
                     assertThat(quizExercise.getStudentParticipations()).as("Number of participations is correct").isEmpty();
                 }
                 else if (exerciseWithDetails instanceof TextExercise textExercise) {

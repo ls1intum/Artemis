@@ -11,7 +11,7 @@ export class ExamStartEndPage {
     }
 
     pressStartWithWait() {
-        cy.intercept(GET, COURSE_BASE + '*/exams/*/student-exams/*/conduction').as('startExam');
+        cy.intercept(GET, `${COURSE_BASE}/*/exams/*/student-exams/*/conduction`).as('startExam');
         cy.get('#start-exam').click();
         return cy.wait('@startExam');
     }
@@ -25,7 +25,7 @@ export class ExamStartEndPage {
     }
 
     pressFinish() {
-        cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/submit').as('finishExam');
+        cy.intercept(POST, `${COURSE_BASE}/*/exams/*/student-exams/submit`).as('finishExam');
         cy.get('#end-exam').click();
         return cy.wait('@finishExam', { timeout: 10000 });
     }
@@ -47,7 +47,7 @@ export class ExamStartEndPage {
     }
 
     pressShowSummary() {
-        cy.intercept(GET, COURSE_BASE + '*/exams/*/student-exams/*/summary').as('examSummaryDownload');
+        cy.intercept(GET, `${COURSE_BASE}/*/exams/*/student-exams/*/summary`).as('examSummaryDownload');
         cy.get('#showExamSummaryButton').should('be.visible').should('not.have.attr', 'disabled', { timeout: 15000 }).click();
         cy.wait('@examSummaryDownload');
     }
