@@ -21,27 +21,36 @@ function isVideoOnlyTumUrl(url: URL): boolean {
     return url?.searchParams.get('video_only') === '1';
 }
 
-function videoSourceTransformUrlValidator(control: AbstractControl): ValidationErrors | null {
-    const invalidVideoUrlError = { invalidVideoUrl: true };
+function videoSourceTransformUrlValidator(control: AbstractControl): ValidationErrors | undefined {
     const urlValue = control.value;
-    if (!urlValue) return null;
-    try {
-        return isTumLiveUrl(new URL(urlValue)) || urlParser.parse(urlValue) ? null : invalidVideoUrlError;
-    } catch {
-        return invalidVideoUrlError;
+    if (!urlValue) {
+        return undefined;
     }
+    let parsedUrl, url;
+    try {
+        url = new URL(urlValue);
+        parsedUrl = urlParser.parse(urlValue);
+    } catch {
+        //intentionally empty
+    }
+    // The URL is valid if it's a TUM-Live URL or if it can be parsed by the js-video-url-parser.
+    if ((url && isTumLiveUrl(url)) || parsedUrl) {
+        return undefined;
+    }
+    return { invalidVideoUrl: true };
 }
 
-function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | null {
-    const invalidVideoUrlError = { invalidVideoUrl: true };
+function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | undefined {
+    let url;
     try {
-        const urlValue = control.value;
-        const url = new URL(urlValue);
-        if (isTumLiveUrl(url)) return isVideoOnlyTumUrl(url) ? null : invalidVideoUrlError;
-        return urlParser.parse(urlValue) ? invalidVideoUrlError : null;
+        url = new URL(control.value);
     } catch {
-        return invalidVideoUrlError;
+        // intentionally empty
     }
+    if (url && !(isTumLiveUrl(url) && !isVideoOnlyTumUrl(url))) {
+        return undefined;
+    }
+    return { invalidVideoUrl: true };
 }
 
 @Component({
@@ -146,16 +155,14 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
 
     extractEmbeddedUrl(videoUrl: string) {
         const url = new URL(videoUrl);
-        const isTumUrl = isTumLiveUrl(url);
-        if (isTumUrl && !isVideoOnlyTumUrl(url)) {
+        if (isTumLiveUrl(url)) {
             url.searchParams.set('video_only', '1');
+            return url.toString();
         }
-        return isTumUrl
-            ? url.toString()
-            : urlParser.create({
-                  videoInfo: urlParser.parse(videoUrl)!,
-                  format: 'embed',
-              });
+        return urlParser.create({
+            videoInfo: urlParser.parse(videoUrl)!,
+            format: 'embed',
+        });
     }
 
     cancelForm() {
