@@ -99,6 +99,9 @@
             "selectExternalTool": "Wählen Sie ein externes Tool",
             "selectCourse": "Kurs wählen",
             "addNewPlatform": "Neue Plattformkonfiguration hinzufügen"
+        },
+        "lti-platform": {
+            "deleted": "LTI-Plattform erfolgreich gelöscht"
         }
     }
 }

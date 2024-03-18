@@ -37,12 +37,16 @@ public class PublicLtiResource {
 
     /**
      * POST lti13/auth-callback Redirects an LTI 1.3 Authorization Request Response to the client
+     * POST lti13/deep-link: Redirects an LTI 1.3 Deep Linking Request Response to the client
+     *
+     * Consolidates handling for both 'auth-callback' and 'deep-link' endpoints to simplify client interactions.
+     * This approach ensures consistent processing and user experience for authentication and deep linking flows.
      *
      * @param request  HTTP request
      * @param response HTTP response
      * @throws IOException If an input or output exception occurs
      */
-    @PostMapping("lti13/auth-callback")
+    @PostMapping({ "lti13/auth-callback", "lti13/deep-link" })
     @EnforceNothing
     public void lti13LaunchRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String state = request.getParameter("state");
