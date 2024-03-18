@@ -19,7 +19,7 @@ if [ "$TEST_FRAMEWORK" = "playwright" ]; then
       echo "Invalid configuration. Please choose among mysql, postgres or mysql-localci."
       exit 1
   fi
-elif [ "$TEST_FRAMEWORK" = "cypress" ]; then
+else
   if [ "$CONFIGURATION" = "mysql" ]; then
     COMPOSE_FILE="cypress-E2E-tests-mysql.yml"
   elif [ "$CONFIGURATION" = "postgres" ]; then
@@ -30,9 +30,6 @@ elif [ "$TEST_FRAMEWORK" = "cypress" ]; then
     echo "Invalid configuration. Please choose among mysql, postgres or local."
     exit 1
   fi
-else
-    echo "Invalid test framework. Please choose either cypress or playwright."
-    exit 1
 fi
 
 echo "Compose file:"
