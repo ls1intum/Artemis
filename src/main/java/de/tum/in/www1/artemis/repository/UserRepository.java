@@ -1,15 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.distinct;
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getActivatedOrDeactivatedSpecification;
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getAuthorityAndCourseSpecification;
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getAuthoritySpecification;
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getCourseSpecification;
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getInternalOrExternalSpecification;
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getSearchTermSpecification;
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getWithOrWithoutRegistrationNumberSpecification;
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.notSoftDeleted;
+import static de.tum.in.www1.artemis.repository.specs.UserSpecs.*;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -886,6 +878,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     default User findByIdElseThrow(long userId) throws EntityNotFoundException {
         return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            WHERE user.login = :login
+                AND :#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+            """)
+    boolean isAdmin(@Param("login") String login);
 
     @Query("""
             SELECT COUNT(user) > 0

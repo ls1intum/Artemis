@@ -4,11 +4,16 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.*;
-import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.*;
+import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
+import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.isParticipationTeamDestination;
 
 import java.net.InetSocketAddress;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.Cookie;
@@ -49,11 +54,14 @@ import org.springframework.web.util.WebUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterators;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -283,22 +291,13 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
              * use case.
              */
 
-            if (isBuildQueueAdminDestination(destination)) {
-                var user = userRepository.getUserWithAuthorities(principal.getName());
-                return authorizationCheckService.isAdmin(user);
-            }
-
-            if (isBuildAgentDestination(destination)) {
-                log.debug("Allowing subscription to build agent destination: {}", destination);
-                var user = userRepository.getUserWithAuthorities(principal.getName());
-                return authorizationCheckService.isAdmin(user);
+            if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination)) {
+                return authorizationCheckService.isAdmin(principal);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
-                Course course = courseRepository.findByIdElseThrow(courseId.get());
-                var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-                return authorizationCheckService.isAtLeastInstructorInCourse(course, user);
+                return authorizationCheckService.isAtLeastInstructorInCourse(principal, courseId.get());
             }
 
             if (isParticipationTeamDestination(destination)) {
@@ -306,23 +305,14 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 return isParticipationOwnedByUser(principal, participationId);
             }
             if (isNonPersonalExerciseResultDestination(destination)) {
-                Long exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination);
-
-                // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
-                Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-                if (exercise.isExamExercise()) {
-                    return isUserInstructorOrHigherForExercise(principal, exercise);
-                }
-                else {
-                    return isUserTAOrHigherForExercise(principal, exercise);
-                }
+                final var exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination);
+                return exerciseId.filter(id -> authorizationCheckService.isAtLeastTeachingAssistantInExercise(principal, id)).isPresent();
             }
 
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
                 var exam = examRepository.findByIdElseThrow(examId.get());
-                var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-                return authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), user);
+                return authorizationCheckService.isAtLeastInstructorInCourse(principal, exam.getCourse().getId());
             }
             return true;
         }

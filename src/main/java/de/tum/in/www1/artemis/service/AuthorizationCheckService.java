@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.security.Principal;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -123,6 +124,18 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the current principal is at least an editor in the given course.
+     *
+     * @param principal the principal that needs to be checked
+     * @param courseId  the id of the course that needs to be checked
+     * @return true if the user is at least an editor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastEditorInCourse(Principal principal, long courseId) {
+        return userRepository.isAtLeastEditorInCourse(principal.getName(), courseId);
+    }
+
+    /**
      * Checks if the current user is at least an editor in the given course.
      *
      * @param courseId the id of the course that needs to be checked
@@ -235,6 +248,18 @@ public class AuthorizationCheckService {
     public boolean isAtLeastTeachingAssistantInCourse(@NotNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
+    }
+
+    /**
+     * Checks if the current principal is at least a teaching assistant in the given course.
+     *
+     * @param principal the principal that needs to be checked
+     * @param courseId  the id of the course that needs to be checked
+     * @return true if the user is at least a teaching assistant in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastTeachingAssistantInCourse(Principal principal, long courseId) {
+        return userRepository.isAtLeastTeachingAssistantInCourse(principal.getName(), courseId);
     }
 
     /**
@@ -410,6 +435,18 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the current principal is at least a student in the given course.
+     *
+     * @param principal the principal that needs to be checked
+     * @param courseId  the id of the course that needs to be checked
+     * @return true if the user is at least a student in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastStudentInCourse(Principal principal, long courseId) {
+        return userRepository.isAtLeastStudentInCourse(principal.getName(), courseId);
+    }
+
+    /**
      * Checks if the current user is at least a student in the given course.
      *
      * @param courseId the id of the course that needs to be checked
@@ -527,6 +564,18 @@ public class AuthorizationCheckService {
     public boolean isAtLeastInstructorInCourse(@NotNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin(user);
+    }
+
+    /**
+     * Checks if the current principal is at least an instructor in the given course.
+     *
+     * @param principal the principal that needs to be checked
+     * @param courseId  the id of the course that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastInstructorInCourse(Principal principal, long courseId) {
+        return userRepository.isAtLeastInstructorInCourse(principal.getName(), courseId);
     }
 
     /**
@@ -773,6 +822,17 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the passed principal is an admin user
+     *
+     * @param principal the principal with authorities. If the principal is null, the currently logged-in user will be used.
+     * @return true, if user is admin, otherwise false
+     */
+    @CheckReturnValue
+    public boolean isAdmin(@NotNull Principal principal) {
+        return userRepository.isAdmin(principal.getName());
+    }
+
+    /**
      * Checks if the passed user is an admin user. Throws an AccessForbiddenException in case the user is not an admin
      *
      * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
@@ -908,6 +968,18 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the current principal is at least a student in the given exercise.
+     *
+     * @param principal  the principal that needs to be checked
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user is at least a student in the exercise, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastStudentInExercise(Principal principal, long exerciseId) {
+        return userRepository.isAtLeastStudentInExercise(principal.getName(), exerciseId);
+    }
+
+    /**
      * Checks if the current user is at least an instructor in the given exercise.
      *
      * @param exerciseId the id of the exercise that needs to be checked
@@ -917,6 +989,18 @@ public class AuthorizationCheckService {
     public boolean isAtLeastTeachingAssistantInExercise(long exerciseId) {
         final var login = SecurityUtils.getCurrentUserLogin();
         return login.filter(s -> userRepository.isAtLeastTeachingAssistantInExercise(s, exerciseId)).isPresent();
+    }
+
+    /**
+     * Checks if the current principal is at least a teaching assistant in the given exercise.
+     *
+     * @param principal  the principal that needs to be checked
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user is at least a teaching assistant in the exercise, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastTeachingAssistantInExercise(Principal principal, long exerciseId) {
+        return userRepository.isAtLeastTeachingAssistantInExercise(principal.getName(), exerciseId);
     }
 
     /**
@@ -932,6 +1016,18 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the current principal is at least an editor in the given exercise.
+     *
+     * @param principal  the principal that needs to be checked
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user is at least an editor in the exercise, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastEditorInExercise(Principal principal, long exerciseId) {
+        return userRepository.isAtLeastEditorInExercise(principal.getName(), exerciseId);
+    }
+
+    /**
      * Checks if the current user is at least an instructor in the given exercise.
      *
      * @param exerciseId the id of the exercise that needs to be checked
@@ -941,6 +1037,18 @@ public class AuthorizationCheckService {
     public boolean isAtLeastInstructorInExercise(long exerciseId) {
         final var login = SecurityUtils.getCurrentUserLogin();
         return login.filter(s -> userRepository.isAtLeastInstructorInExercise(s, exerciseId)).isPresent();
+    }
+
+    /**
+     * Checks if the current principal is at least an instructor in the given exercise.
+     *
+     * @param principal  the principal that needs to be checked
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user is at least an instructor in the exercise, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastInstructorInExercise(Principal principal, long exerciseId) {
+        return userRepository.isAtLeastInstructorInExercise(principal.getName(), exerciseId);
     }
 
     /**
