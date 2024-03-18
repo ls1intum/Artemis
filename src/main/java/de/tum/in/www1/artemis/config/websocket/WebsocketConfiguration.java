@@ -291,13 +291,15 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
              * use case.
              */
 
+            final var login = principal.getName();
+
             if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination)) {
-                return authorizationCheckService.isAdmin(principal);
+                return authorizationCheckService.isAdmin(login);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
-                return authorizationCheckService.isAtLeastInstructorInCourse(principal, courseId.get());
+                return authorizationCheckService.isAtLeastInstructorInCourse(login, courseId.get());
             }
 
             if (isParticipationTeamDestination(destination)) {
@@ -306,13 +308,13 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             }
             if (isNonPersonalExerciseResultDestination(destination)) {
                 final var exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination);
-                return exerciseId.filter(id -> authorizationCheckService.isAtLeastTeachingAssistantInExercise(principal, id)).isPresent();
+                return exerciseId.filter(id -> authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, id)).isPresent();
             }
 
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
                 var exam = examRepository.findByIdElseThrow(examId.get());
-                return authorizationCheckService.isAtLeastInstructorInCourse(principal, exam.getCourse().getId());
+                return authorizationCheckService.isAtLeastInstructorInCourse(login, exam.getCourse().getId());
             }
             return true;
         }

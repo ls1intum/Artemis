@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.security.Principal;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -124,15 +123,15 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the current principal is at least an editor in the given course.
+     * Checks if the passed user is at least an editor in the given course.
      *
-     * @param principal the principal that needs to be checked
-     * @param courseId  the id of the course that needs to be checked
+     * @param login    the login of the user that needs to be checked
+     * @param courseId the id of the course that needs to be checked
      * @return true if the user is at least an editor in the course, false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastEditorInCourse(Principal principal, long courseId) {
-        return userRepository.isAtLeastEditorInCourse(principal.getName(), courseId);
+    public boolean isAtLeastEditorInCourse(String login, long courseId) {
+        return userRepository.isAtLeastEditorInCourse(login, courseId);
     }
 
     /**
@@ -251,15 +250,15 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the current principal is at least a teaching assistant in the given course.
+     * Checks if the passed user is at least a teaching assistant in the given course.
      *
-     * @param principal the principal that needs to be checked
-     * @param courseId  the id of the course that needs to be checked
+     * @param login    the login of the user that needs to be checked
+     * @param courseId the id of the course that needs to be checked
      * @return true if the user is at least a teaching assistant in the course, false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastTeachingAssistantInCourse(Principal principal, long courseId) {
-        return userRepository.isAtLeastTeachingAssistantInCourse(principal.getName(), courseId);
+    public boolean isAtLeastTeachingAssistantInCourse(String login, long courseId) {
+        return userRepository.isAtLeastTeachingAssistantInCourse(login, courseId);
     }
 
     /**
@@ -435,15 +434,15 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the current principal is at least a student in the given course.
+     * Checks if the passed user is at least a student in the given course.
      *
-     * @param principal the principal that needs to be checked
-     * @param courseId  the id of the course that needs to be checked
+     * @param login    the login of the user that needs to be checked
+     * @param courseId the id of the course that needs to be checked
      * @return true if the user is at least a student in the course, false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastStudentInCourse(Principal principal, long courseId) {
-        return userRepository.isAtLeastStudentInCourse(principal.getName(), courseId);
+    public boolean isAtLeastStudentInCourse(String login, long courseId) {
+        return userRepository.isAtLeastStudentInCourse(login, courseId);
     }
 
     /**
@@ -567,15 +566,15 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the current principal is at least an instructor in the given course.
+     * Checks if the passed user is at least an instructor in the given course.
      *
-     * @param principal the principal that needs to be checked
-     * @param courseId  the id of the course that needs to be checked
+     * @param login    the login of the user that needs to be checked
+     * @param courseId the id of the course that needs to be checked
      * @return true if the user is at least an instructor in the course, false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastInstructorInCourse(Principal principal, long courseId) {
-        return userRepository.isAtLeastInstructorInCourse(principal.getName(), courseId);
+    public boolean isAtLeastInstructorInCourse(String login, long courseId) {
+        return userRepository.isAtLeastInstructorInCourse(login, courseId);
     }
 
     /**
@@ -822,14 +821,14 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the passed principal is an admin user
+     * Checks if the passed user is an admin user
      *
-     * @param principal the principal with authorities. If the principal is null, the currently logged-in user will be used.
+     * @param login the login of the user that needs to be checked
      * @return true, if user is admin, otherwise false
      */
     @CheckReturnValue
-    public boolean isAdmin(@NotNull Principal principal) {
-        return userRepository.isAdmin(principal.getName());
+    public boolean isAdmin(@NotNull String login) {
+        return userRepository.isAdmin(login);
     }
 
     /**
@@ -968,15 +967,15 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the current principal is at least a student in the given exercise.
+     * Checks if the passed user is at least a student in the given exercise.
      *
-     * @param principal  the principal that needs to be checked
+     * @param login      the login of the user that needs to be checked
      * @param exerciseId the id of the exercise that needs to be checked
      * @return true if the user is at least a student in the exercise, false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastStudentInExercise(Principal principal, long exerciseId) {
-        return userRepository.isAtLeastStudentInExercise(principal.getName(), exerciseId);
+    public boolean isAtLeastStudentInExercise(String login, long exerciseId) {
+        return userRepository.isAtLeastStudentInExercise(login, exerciseId);
     }
 
     /**
@@ -992,15 +991,15 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the current principal is at least a teaching assistant in the given exercise.
+     * Checks if the passed user is at least a teaching assistant in the given exercise.
      *
-     * @param principal  the principal that needs to be checked
+     * @param login      the login of the user that needs to be checked
      * @param exerciseId the id of the exercise that needs to be checked
      * @return true if the user is at least a teaching assistant in the exercise, false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastTeachingAssistantInExercise(Principal principal, long exerciseId) {
-        return userRepository.isAtLeastTeachingAssistantInExercise(principal.getName(), exerciseId);
+    public boolean isAtLeastTeachingAssistantInExercise(String login, long exerciseId) {
+        return userRepository.isAtLeastTeachingAssistantInExercise(login, exerciseId);
     }
 
     /**
@@ -1016,15 +1015,15 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the current principal is at least an editor in the given exercise.
+     * Checks if the passed user is at least an editor in the given exercise.
      *
-     * @param principal  the principal that needs to be checked
+     * @param login      the login of the user that needs to be checked
      * @param exerciseId the id of the exercise that needs to be checked
      * @return true if the user is at least an editor in the exercise, false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastEditorInExercise(Principal principal, long exerciseId) {
-        return userRepository.isAtLeastEditorInExercise(principal.getName(), exerciseId);
+    public boolean isAtLeastEditorInExercise(String login, long exerciseId) {
+        return userRepository.isAtLeastEditorInExercise(login, exerciseId);
     }
 
     /**
@@ -1040,15 +1039,15 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the current principal is at least an instructor in the given exercise.
+     * Checks if the passed user is at least an instructor in the given exercise.
      *
-     * @param principal  the principal that needs to be checked
+     * @param login      the login of the user that needs to be checked
      * @param exerciseId the id of the exercise that needs to be checked
      * @return true if the user is at least an instructor in the exercise, false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastInstructorInExercise(Principal principal, long exerciseId) {
-        return userRepository.isAtLeastInstructorInExercise(principal.getName(), exerciseId);
+    public boolean isAtLeastInstructorInExercise(String login, long exerciseId) {
+        return userRepository.isAtLeastInstructorInExercise(login, exerciseId);
     }
 
     /**
