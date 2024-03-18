@@ -501,6 +501,25 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldReturnBadRequestWhenCompetencyNotExists() throws Exception {
+            var notPersCompetency = new Competency();
+            notPersCompetency.setId(1337L);
+            var persistedCompetency = competencyUtilService.createCompetency(course);
+            var relationHeadNotPers = new CompetencyRelation();
+            relationHeadNotPers.setHeadCompetency(notPersCompetency);
+            relationHeadNotPers.setTailCompetency(persistedCompetency);
+
+            request.post("/api/courses/" + course.getId() + "/competencies/relations/", relationHeadNotPers, HttpStatus.NOT_FOUND);
+
+            var relationTailNotPers = new CompetencyRelation();
+            relationTailNotPers.setHeadCompetency(persistedCompetency);
+            relationTailNotPers.setTailCompetency(notPersCompetency);
+
+            request.post("/api/courses/" + course.getId() + "/competencies/relations/", relationTailNotPers, HttpStatus.NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnBadRequestWhenTypeNotPresent() throws Exception {
             var headCompetency = competencyUtilService.createCompetency(course);
             var relationToCreate = new CompetencyRelation();
@@ -811,6 +830,18 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnBadRequestWhenPrerequisiteNotExists() throws Exception {
             request.delete("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldNotRemovePrerequisiteOfAnotherCourse() throws Exception {
+            Course anotherCourse = courseUtilService.createCourse();
+            anotherCourse.addPrerequisite(competency);
+            anotherCourse = courseRepository.save(anotherCourse);
+
+            request.delete("/api/courses/" + course2.getId() + "/prerequisites/" + competency.getId(), HttpStatus.OK);
+            anotherCourse = courseRepository.findWithEagerCompetenciesById(anotherCourse.getId()).orElseThrow();
+            assertThat(anotherCourse.getPrerequisites()).contains(competency);
         }
     }
 
