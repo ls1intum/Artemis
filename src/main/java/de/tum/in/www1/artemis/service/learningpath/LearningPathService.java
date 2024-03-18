@@ -2,8 +2,10 @@ package de.tum.in.www1.artemis.service.learningpath;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -15,15 +17,29 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.competency.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
+import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
+import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LearningPathRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
@@ -57,9 +73,14 @@ public class LearningPathService {
 
     private final LearningPathNgxService learningPathNgxService;
 
+    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
             CourseRepository courseRepository, CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository,
-            LearningPathNgxService learningPathNgxService) {
+            LearningPathNgxService learningPathNgxService, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            StudentParticipationRepository studentParticipationRepository) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
         this.competencyProgressRepository = competencyProgressRepository;
@@ -67,6 +88,8 @@ public class LearningPathService {
         this.competencyRepository = competencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.learningPathNgxService = learningPathNgxService;
+        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -116,16 +139,16 @@ public class LearningPathService {
     }
 
     /**
-     * Search for all learning paths fitting a {@link PageableSearchDTO search query}. The result is paged.
+     * Search for all learning paths fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
      *
-     * @param search the search query defining the search term and the size of the returned page
-     * @param course the course the learning paths are linked to
+     * @param search   the search query defining the search term and the size of the returned page
+     * @param courseId the id of the course the learning paths are linked to
      * @return A wrapper object containing a list of all found learning paths and the total number of pages
      */
-    public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull PageableSearchDTO<String> search, @NotNull Course course) {
+    public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull SearchTermPageableSearchDTO<String> search, long courseId) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LEARNING_PATH);
         final var searchTerm = search.getSearchTerm();
-        final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, course.getId(), pageable);
+        final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, courseId, pageable);
         final List<LearningPathInformationDTO> contentDTOs = learningPathPage.getContent().stream().map(LearningPathInformationDTO::of).toList();
         return new SearchResultPageDTO<>(contentDTOs, learningPathPage.getTotalPages());
     }
@@ -279,5 +302,62 @@ public class LearningPathService {
      */
     public NgxLearningPathDTO generateNgxPathRepresentation(@NotNull LearningPath learningPath) {
         return this.learningPathNgxService.generateNgxPathRepresentation(learningPath);
+    }
+
+    /**
+     * Finds a learning path by its id and eagerly fetches the competencies, linked lecture units and exercises, and the corresponding domain objects storing the progress of the
+     * connected user.
+     * <p>
+     * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
+     *
+     * @param learningPathId the id of the learning path to fetch
+     * @return the learning path with fetched data
+     */
+    public LearningPath findWithCompetenciesAndLearningObjectsAndCompletedUsersById(long learningPathId) {
+        LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
+        if (learningPath.getUser() == null) {
+            learningPath.getCompetencies().forEach(competency -> {
+                competency.setUserProgress(Collections.emptySet());
+                competency.getLectureUnits().forEach(lectureUnit -> lectureUnit.setCompletedUsers(Collections.emptySet()));
+                competency.getExercises().forEach(exercise -> exercise.setStudentParticipations(Collections.emptySet()));
+            });
+            return learningPath;
+        }
+        Long userId = learningPath.getUser().getId();
+        Set<Long> competencyIds = learningPath.getCompetencies().stream().map(Competency::getId).collect(Collectors.toSet());
+        Map<Long, CompetencyProgress> competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId).stream()
+                .collect(Collectors.toMap(progress -> progress.getCompetency().getId(), cp -> cp));
+        Set<LectureUnit> lectureUnits = learningPath.getCompetencies().stream().flatMap(competency -> competency.getLectureUnits().stream()).collect(Collectors.toSet());
+        Map<Long, LectureUnitCompletion> completions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, userId).stream()
+                .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), cp -> cp));
+        Set<Long> exerciseIds = learningPath.getCompetencies().stream().flatMap(competency -> competency.getExercises().stream()).map(Exercise::getId).collect(Collectors.toSet());
+        Map<Long, StudentParticipation> studentParticipations = studentParticipationRepository.findDistinctAllByExerciseIdInAndStudentId(exerciseIds, userId).stream()
+                .collect(Collectors.toMap(participation -> participation.getExercise().getId(), sp -> sp));
+        learningPath.getCompetencies().forEach(competency -> {
+            if (competencyProgresses.containsKey(competency.getId())) {
+                competency.setUserProgress(Set.of(competencyProgresses.get(competency.getId())));
+            }
+            else {
+                competency.setUserProgress(Collections.emptySet());
+            }
+            competency.getLectureUnits().forEach(lectureUnit -> {
+                if (completions.containsKey(lectureUnit.getId())) {
+                    lectureUnit.setCompletedUsers(Set.of(completions.get(lectureUnit.getId())));
+                }
+                else {
+                    lectureUnit.setCompletedUsers(Collections.emptySet());
+                }
+            });
+            competency.getExercises().forEach(exercise -> {
+                if (studentParticipations.containsKey(exercise.getId())) {
+                    exercise.setStudentParticipations(Set.of(studentParticipations.get(exercise.getId())));
+                }
+                else {
+                    exercise.setStudentParticipations(Collections.emptySet());
+                }
+            });
+        });
+
+        return learningPath;
     }
 }

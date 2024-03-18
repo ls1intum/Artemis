@@ -103,7 +103,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT
                 AND c.student.id = :studentId
                 AND c.result.participation.exercise.course.id = :courseId
-                AND (c.accepted IS FALSE OR c.accepted IS NULL)
+                AND (c.accepted = FALSE OR c.accepted IS NULL)
             """)
     long countUnacceptedComplaintsByStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
 
@@ -121,7 +121,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT
                 AND c.team.shortName = :teamShortName
                 AND c.result.participation.exercise.course.id = :courseId
-                AND (c.accepted IS FALSE OR c.accepted IS NULL)
+                AND (c.accepted = FALSE OR c.accepted IS NULL)
             """)
     long countUnacceptedComplaintsByComplaintTypeTeamShortNameAndCourseId(@Param("teamShortName") String teamShortName, @Param("courseId") Long courseId);
 
@@ -174,7 +174,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             FROM Complaint c
             WHERE c.result.participation.exercise.id IN :exerciseIds
                 AND c.complaintType = :complaintType
-                AND c.result.participation.testRun IS FALSE
+                AND c.result.participation.testRun = FALSE
             GROUP BY c.result.participation.exercise.id
             """)
     List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
@@ -192,7 +192,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             SELECT COUNT(c)
             FROM Complaint c
             WHERE c.complaintType = :complaintType
-                AND c.result.participation.testRun IS FALSE
+                AND c.result.participation.testRun = FALSE
                 AND c.result.participation.exercise.id = :exerciseId
             """)
     long countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
@@ -273,8 +273,8 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             SELECT new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints(
                 r.assessor.id,
                 COUNT(c),
-                SUM( CASE WHEN (c.accepted IS TRUE ) THEN 1L ELSE 0L END),
-                SUM( CASE WHEN (c.accepted IS TRUE) THEN e.maxPoints ELSE 0.0 END)
+                SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
+                SUM( CASE WHEN (c.accepted = TRUE) THEN e.maxPoints ELSE 0.0 END)
             )
             FROM Complaint c
                 JOIN c.result r
@@ -299,8 +299,8 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             SELECT new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints(
                 r.assessor.id,
                 COUNT(c),
-                SUM( CASE WHEN (c.accepted IS TRUE ) THEN 1L ELSE 0L END),
-                SUM( CASE WHEN (c.accepted IS TRUE) THEN e.maxPoints ELSE 0.0 END)
+                SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
+                SUM( CASE WHEN (c.accepted = TRUE) THEN e.maxPoints ELSE 0.0 END)
             )
             FROM Complaint c
                 JOIN c.result r
@@ -325,8 +325,8 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             SELECT new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints(
                 r.assessor.id,
                 COUNT(c),
-                SUM( CASE WHEN (c.accepted IS TRUE ) THEN 1L ELSE 0L END),
-                SUM( CASE WHEN (c.accepted IS TRUE) THEN e.maxPoints ELSE 0.0 END)
+                SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
+                SUM( CASE WHEN (c.accepted = TRUE) THEN e.maxPoints ELSE 0.0 END)
             )
             FROM Complaint c
                 JOIN c.result r
@@ -488,7 +488,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK
                 AND e.course.id = :courseId
                 AND r.completionDate IS NOT NULL
-                AND c.accepted IS TRUE
+                AND c.accepted = TRUE
             GROUP BY cr.reviewer.id
             """)
     List<TutorLeaderboardAnsweredMoreFeedbackRequests> findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(@Param("courseId") long courseId);
@@ -513,7 +513,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             WHERE c.complaintType = de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK
                 AND e.id = :exerciseId
                 AND r.completionDate IS NOT NULL
-                AND c.accepted IS TRUE
+                AND c.accepted = TRUE
             GROUP BY cr.reviewer.id
             """)
     List<TutorLeaderboardAnsweredMoreFeedbackRequests> findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(@Param("exerciseId") long exerciseId);
