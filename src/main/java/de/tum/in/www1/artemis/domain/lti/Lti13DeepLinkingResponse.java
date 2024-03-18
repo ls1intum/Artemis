@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.lti;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,8 +37,8 @@ import com.google.gson.JsonObject;
 public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) String aud, @JsonProperty(IdTokenClaimNames.ISS) String iss,
         @JsonProperty(IdTokenClaimNames.EXP) String exp, @JsonProperty(IdTokenClaimNames.IAT) String iat, @JsonProperty(IdTokenClaimNames.NONCE) String nonce,
         @JsonProperty(Claims.MSG) String message, @JsonProperty(Claims.LTI_DEPLOYMENT_ID) String deploymentId, @JsonProperty(Claims.MESSAGE_TYPE) String messageType,
-        @JsonProperty(Claims.LTI_VERSION) String ltiVersion, @JsonProperty(Claims.CONTENT_ITEMS) String contentItems, JsonObject deepLinkingSettings, String clientRegistrationId,
-        String returnUrl) {
+        @JsonProperty(Claims.LTI_VERSION) String ltiVersion, @JsonProperty(Claims.CONTENT_ITEMS) ArrayList<Map<String, Object>> contentItems, JsonObject deepLinkingSettings,
+        String clientRegistrationId, String returnUrl) {
 
     /**
      * Constructs an Lti13DeepLinkingResponse from an OIDC ID token and client registration ID.
@@ -112,7 +113,7 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
      * @param contentItems The new contentItems value.
      * @return A new Lti13DeepLinkingResponse instance.
      */
-    public Lti13DeepLinkingResponse setContentItems(String contentItems) {
+    public Lti13DeepLinkingResponse setContentItems(ArrayList<Map<String, Object>> contentItems) {
         return new Lti13DeepLinkingResponse(this.aud, this.iss, this.exp, this.iat, this.nonce, this.message, this.deploymentId, this.messageType, this.ltiVersion, contentItems,
                 this.deepLinkingSettings, this.clientRegistrationId, this.returnUrl);
     }
