@@ -31,7 +31,7 @@ public class ExamLockResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories : Unlock all repositories of the exam (only necessary for external version control systems)
+     * POST /courses/{courseId}/exams/{examId}/unlock-all-repositories : Unlock all repositories of the exam (only necessary for external version control systems)
      * Locking and unlocking repositories is not supported when using the local version control system.
      * Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
      *
@@ -39,7 +39,7 @@ public class ExamLockResource {
      * @param examId   the id of the exam
      * @return the number of unlocked exercises
      */
-    @PostMapping("courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories")
+    @PostMapping("courses/{courseId}/exams/{examId}/unlock-all-repositories")
     @EnforceAtLeastInstructor
     public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to unlock all repositories of exam {}", examId);
@@ -50,7 +50,7 @@ public class ExamLockResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories : Lock all repositories of the exam (only necessary for external version control systems)
+     * POST /courses/{courseId}/exams/{examId}/lock-all-repositories : Lock all repositories of the exam (only necessary for external version control systems)
      * Locking and unlocking repositories is not supported when using the local version control system.
      * Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
      *
@@ -58,7 +58,7 @@ public class ExamLockResource {
      * @param examId   the id of the exam
      * @return the number of locked exercises
      */
-    @PostMapping("courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories")
+    @PostMapping("courses/{courseId}/exams/{examId}/lock-all-repositories")
     @EnforceAtLeastInstructor
     public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to lock all repositories of exam {}", examId);
