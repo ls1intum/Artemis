@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPer
 
 @Service
 @Profile("bitbucket")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BitbucketService extends AbstractVersionControlService {
 
     private static final int MAX_GIVE_PERMISSIONS_RETRIES = 5;
@@ -870,6 +871,7 @@ public class BitbucketService extends AbstractVersionControlService {
         createRepository(entityName, topLevelEntity);
     }
 
+    @Deprecated(forRemoval = true) // will be removed in 7.0.0
     public final class BitbucketRepositoryUri extends VcsRepositoryUri {
 
         public BitbucketRepositoryUri(String projectKey, String repositorySlug) {
