@@ -14,6 +14,7 @@ import { parse } from 'papaparse';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { AdminUserService } from 'app/core/user/admin-user.service';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
@@ -41,6 +42,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     @Input() exam: Exam | undefined;
     @Input() tutorialGroup: TutorialGroup | undefined;
     @Input() examUserMode: boolean;
+    @Input() adminUserMode: boolean;
 
     usersToImport: StudentDTO[] = [];
     examUsersToImport: ExamUserDTO[] = [];
@@ -68,6 +70,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         private alertService: AlertService,
         private examManagementService: ExamManagementService,
         private courseManagementService: CourseManagementService,
+        private adminUserService: AdminUserService,
         private tutorialGroupService: TutorialGroupsService,
     ) {}
 
@@ -237,6 +240,8 @@ export class UsersImportDialogComponent implements OnDestroy {
                 next: (res) => this.onSaveSuccess(res),
                 error: () => this.onSaveError(),
             });
+        } else if (this.adminUserMode) {
+            this.adminUserService.importAll(this.usersToImport).subscribe({ next: (res) => this.onSaveSuccess(res), error: () => this.onSaveError() });
         } else {
             this.alertService.error('artemisApp.importUsers.genericErrorMessage');
         }

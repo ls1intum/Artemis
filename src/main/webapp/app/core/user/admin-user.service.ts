@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { User } from 'app/core/user/user.model';
 import { UserFilter } from 'app/admin/user-management/user-management.component';
+import { StudentDTO } from 'app/entities/student-dto.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdminUserService {
@@ -19,6 +20,15 @@ export class AdminUserService {
      */
     create(user: User): Observable<HttpResponse<User>> {
         return this.http.post<User>(this.resourceUrl, user, { observe: 'response' });
+    }
+
+    /**
+     * Import a list of users from ldap to artemis
+     * @param users The list of users to be imported.
+     * @return Observable<HttpResponse<User[]>> with not found Users
+     */
+    importAll(users: StudentDTO[]): Observable<HttpResponse<StudentDTO[]>> {
+        return this.http.post<StudentDTO[]>(`${this.resourceUrl}/import`, users, { observe: 'response' });
     }
 
     /**
