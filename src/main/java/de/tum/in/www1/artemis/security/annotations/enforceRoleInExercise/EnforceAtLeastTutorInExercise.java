@@ -23,5 +23,5 @@ public @interface EnforceAtLeastTutorInExercise {
      * @return the name of the field in the method parameters that contains the exercise id
      */
     @AliasFor(annotation = EnforceRoleInExercise.class)
-    String exerciseIdFieldName() default "exerciseId";
+    String resourceIdFieldName() default "exerciseId";
 }

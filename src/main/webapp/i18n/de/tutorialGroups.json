@@ -76,6 +76,8 @@
             },
             "tutorialFreePeriod": {
                 "date": "Datum",
+                "startDate": "Startdatum",
+                "endDate": "Enddatum",
                 "reason": "Grund"
             }
         },
@@ -174,9 +176,20 @@
                 }
             },
             "tutorialFreePeriodForm": {
+                "timeFrame": {
+                    "periodWithinDay": "Freier Zeitraum innerhalb eines Tages",
+                    "period": "Freier Zeitraum",
+                    "day": "Freier Tag"
+                },
                 "dateInput": {
                     "label": "Datum",
+                    "labelStart": "Anfangsdatum",
+                    "labelEnd": "Enddatum",
+                    "labelStartTime": "Startuhrzeit",
+                    "labelEndTime": "Enduhrzeit",
                     "requiredDateError": "Ein Datum muss angegeben werden!",
+                    "requiredEndDateError": "Ein Enddatum muss angegeben werden!",
+                    "invalidEndDateError": "Das Enddatum muss nach dem Startdatum sein!",
                     "parseError": "Das Datum muss im Format 'YYYY-MM-DD' sein"
                 },
                 "reasonInput": {
@@ -270,8 +283,8 @@
             },
             "tutorialFreePeriodsManagement": {
                 "explanation": "Definiere kursweite Tage, an denen keine Übungsgruppen stattfinden sollen. Dies kann verwendet werden, um Feiertage oder andere Tage zu definieren, an denen keine Übungsgruppen stattfinden sollen.",
-                "title": "Freie Tage verwalten",
-                "createFreePeriodButton": "Neuen freien Tag hinzufügen",
+                "title": "Freie Zeiträume verwalten",
+                "createFreePeriodButton": "Neuen freien Zeitraum hinzufügen",
                 "timeZoneExplanation": "Jeder Tag wird in der Zeitzone {{ timeZone }} angezeigt",
                 "deleteDialog": {
                     "question": "Sicher, dass der freie Tag {{ title }} gelöscht werden soll?"

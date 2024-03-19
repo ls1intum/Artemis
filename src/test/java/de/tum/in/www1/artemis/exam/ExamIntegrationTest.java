@@ -1006,6 +1006,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId())).hasSize(3);
 
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+
+        assertThat(courseRepository.findById(course.getId())).isEmpty();
+        assertThat(examRepository.findById(exam.getId())).isEmpty();
     }
 
     @Test

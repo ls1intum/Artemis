@@ -23,5 +23,5 @@ public @interface EnforceAtLeastStudentInCourse {
      * @return the name of the field in the method parameters that contains the course id
      */
     @AliasFor(annotation = EnforceRoleInCourse.class)
-    String courseIdFieldName() default "courseId";
+    String resourceIdFieldName() default "courseId";
 }
