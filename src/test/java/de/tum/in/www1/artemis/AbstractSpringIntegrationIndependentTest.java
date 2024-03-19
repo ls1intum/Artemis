@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
@@ -52,9 +53,12 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @SpyBean
     protected OAuth2JWKSService oAuth2JWKSService;
 
+    @SpyBean
+    protected LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
     @AfterEach
     protected void resetSpyBeans() {
-        Mockito.reset(oAuth2JWKSService);
+        Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository);
         super.resetSpyBeans();
     }
 
