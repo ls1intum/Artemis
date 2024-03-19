@@ -54,7 +54,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     nextSubmissionBusy: boolean;
     courseId: number;
     examId = 0;
-    exercise: ModelingExercise;
     exerciseId: number;
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
@@ -138,12 +137,18 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * Load the feedback suggestions for the current submission from Athena.
      */
     private async loadFeedbackSuggestions(): Promise<void> {
-        this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getModelingFeedbackSuggestions(this.exercise, this.submission!.id!))) ?? [];
+        if (!this.modelingExercise) {
+            return;
+        }
+
+        this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getModelingFeedbackSuggestions(this.modelingExercise, this.submission!.id!))) ?? [];
         const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback]; // pre-compute to not have to do this in the loop
         // Don't show feedback suggestions that have the same description and reference - probably it is coming from an earlier suggestion anyway
         this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) =>
             allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
         );
+
+        console.log(this.feedbackSuggestions);
     }
 
     private loadSubmission(submissionId: number): void {

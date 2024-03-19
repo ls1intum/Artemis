@@ -35,7 +35,7 @@ public class AthenaModuleService {
     private String athenaUrl;
 
     // If value is present, split the provided modules by comma; default to empty list
-    @Value("#{'${artemis.athena.restricted-modules:},module_modelling_llm'}")
+    @Value("#{'${artemis.athena.restricted-modules:}'}")
     private List<String> restrictedModules;
 
     private static final Logger log = LoggerFactory.getLogger(AthenaModuleService.class);
@@ -117,12 +117,12 @@ public class AthenaModuleService {
      * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
      */
     public List<String> getAthenaModelingModulesForCourse(Course course) throws NetworkingException {
-        List<String> availableTextModules = getAthenaModules().stream().filter(module -> "modelling".equals(module.type)).map(module -> module.name).toList();
+        List<String> availableModelingModules = getAthenaModules().stream().filter(module -> "modelling".equals(module.type)).map(module -> module.name).toList();
         if (!course.getRestrictedAthenaModulesAccess()) {
             // filter out restricted modules
-            availableTextModules = availableTextModules.stream().filter(moduleName -> !restrictedModules.contains(moduleName)).toList();
+            availableModelingModules = availableModelingModules.stream().filter(moduleName -> !restrictedModules.contains(moduleName)).toList();
         }
-        return availableTextModules;
+        return availableModelingModules;
     }
 
     /**
