@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.tutorialgroups;
 
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Optional;
@@ -99,11 +100,12 @@ public class TutorialGroupUtilService {
      * Creates and saves a TutorialGroupFreePeriod for the TutorialGroupsConfiguration with the given ID.
      *
      * @param tutorialGroupsConfigurationId The ID of the TutorialGroupsConfiguration
-     * @param date                          The date of the TutorialGroupFreePeriod
+     * @param startDate                     The startDate of the TutorialGroupFreePeriod
+     * @param endDate                       The endDate of the TutorialGroupFreePeriod
      * @param reason                        The reason for the TutorialGroupFreePeriod
      * @return The created TutorialGroupFreePeriod
      */
-    public TutorialGroupFreePeriod addTutorialGroupFreeDay(Long tutorialGroupsConfigurationId, LocalDate date, String reason) {
+    public TutorialGroupFreePeriod addTutorialGroupFreePeriod(Long tutorialGroupsConfigurationId, LocalDateTime startDate, LocalDateTime endDate, String reason) {
         var tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
         var course = tutorialGroupsConfiguration.getCourse();
 
@@ -111,8 +113,8 @@ public class TutorialGroupUtilService {
         newTutorialGroupFreePeriod.setTutorialGroupsConfiguration(tutorialGroupsConfiguration);
         newTutorialGroupFreePeriod.setReason(reason);
 
-        newTutorialGroupFreePeriod.setStart(interpretInTimeZone(date, START_OF_DAY, course.getTimeZone()));
-        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(date, END_OF_DAY, course.getTimeZone()));
+        newTutorialGroupFreePeriod.setStart(interpretInTimeZone(startDate.toLocalDate(), startDate.toLocalTime(), course.getTimeZone()));
+        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(endDate.toLocalDate(), endDate.toLocalTime(), course.getTimeZone()));
 
         return tutorialGroupFreePeriodRepository.save(newTutorialGroupFreePeriod);
     }

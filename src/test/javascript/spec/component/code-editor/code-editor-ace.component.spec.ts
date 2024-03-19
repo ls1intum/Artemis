@@ -56,7 +56,9 @@ describe('CodeEditorAceComponent', () => {
                 getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode');
                 getInlineFeedbackNodeStub.mockReturnValue(document.createElement('div'));
                 // Mock the ResizeObserver, which is not available in the test environment
-                global.ResizeObserver = jest.fn().mockImplementation((...args) => new MockResizeObserver(args));
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 

@@ -196,7 +196,7 @@ Some guidelines:
 5. It is preferable to test a component through the interaction of the user with the template. This decouples the test from the concrete implementation used in the component.
    For example, if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click, and then assert that the data has been loaded and that the expected template changes have occurred.
 
-    Here is an example of such a test for `exercise-update-warning component <https://github.com/ls1intum/Artemis/blob/main/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L43>`_
+    Here is an example of such a test for `exercise-update-warning component <https://github.com/ls1intum/Artemis/blob/6e44346c77ce4c817e24269f0150b4118bc12f50/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L46>`_
 
     .. code:: ts
 
