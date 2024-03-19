@@ -52,8 +52,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "gitlab", "jenkins", "athena", "scheduling", "lti", "aeolus" })
 @TestPropertySource(properties = { "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
         "info.guided-tour.course-group-editors=artemis-artemistutorial-editors", "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors",
-        "artemis.user-management.use-external=false", "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
-        "artemis.version-control.version-control-access-token=true" })
+        "artemis.user-management.use-external=false", "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$" })
 public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends AbstractArtemisIntegrationTest {
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
