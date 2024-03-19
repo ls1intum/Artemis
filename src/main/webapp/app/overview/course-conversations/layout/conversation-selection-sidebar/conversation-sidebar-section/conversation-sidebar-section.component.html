@@ -18,30 +18,10 @@
         @if (visibleConversations.length || mutedConversations.length || hiddenConversations.length) {
             <ul class="conversation-list">
                 @for (conversation of visibleConversations; track conversationsTrackByFn($index, conversation)) {
-                    <li
-                        [conversation]="conversation"
-                        [activeConversation]="activeConversation"
-                        [course]="course"
-                        jhi-conversation-sidebar-entry
-                        (click)="conversationSelected.emit(conversation)"
-                        (settingsDidChange)="settingsDidChange.emit()"
-                        (conversationIsFavoriteDidChange)="conversationIsFavoriteDidChange.emit()"
-                        (conversationIsMutedDidChange)="conversationIsMutedDidChange.emit()"
-                        (conversationIsHiddenDidChange)="conversationIsHiddenDidChange.emit()"
-                    ></li>
+                    <ng-container *ngTemplateOutlet="conversationEntry; context: { conversation: conversation }" />
                 }
                 @for (conversation of mutedConversations; track conversationsTrackByFn($index, conversation)) {
-                    <li
-                        [conversation]="conversation"
-                        [activeConversation]="activeConversation"
-                        [course]="course"
-                        jhi-conversation-sidebar-entry
-                        (click)="conversationSelected.emit(conversation)"
-                        (settingsDidChange)="settingsDidChange.emit()"
-                        (conversationIsFavoriteDidChange)="conversationIsFavoriteDidChange.emit()"
-                        (conversationIsMutedDidChange)="conversationIsMutedDidChange.emit()"
-                        (conversationIsHiddenDidChange)="conversationIsHiddenDidChange.emit()"
-                    ></li>
+                    <ng-container *ngTemplateOutlet="conversationEntry; context: { conversation: conversation }" />
                 }
                 @if (hiddenConversations && hiddenConversations.length > 0) {
                     <li (click)="isHiddenConversationListPresented = !isHiddenConversationListPresented" class="hidden-conversation-divider text-center">
@@ -57,17 +37,7 @@
                     </li>
                     @if (isHiddenConversationListPresented) {
                         @for (conversation of hiddenConversations; track conversationsTrackByFn($index, conversation)) {
-                            <li
-                                [conversation]="conversation"
-                                [activeConversation]="activeConversation"
-                                [course]="course"
-                                jhi-conversation-sidebar-entry
-                                (click)="conversationSelected.emit(conversation)"
-                                (settingsDidChange)="settingsDidChange.emit()"
-                                (conversationIsFavoriteDidChange)="conversationIsFavoriteDidChange.emit()"
-                                (conversationIsMutedDidChange)="conversationIsMutedDidChange.emit()"
-                                (conversationIsHiddenDidChange)="conversationIsHiddenDidChange.emit()"
-                            ></li>
+                            <ng-container *ngTemplateOutlet="conversationEntry; context: { conversation: conversation }" />
                         }
                     }
                 }
@@ -75,3 +45,17 @@
         }
     </div>
 </div>
+
+<ng-template #conversationEntry let-conversation="conversation">
+    <li
+        [conversation]="conversation"
+        [activeConversation]="activeConversation"
+        [course]="course"
+        jhi-conversation-sidebar-entry
+        (click)="conversationSelected.emit(conversation)"
+        (settingsDidChange)="settingsDidChange.emit()"
+        (conversationIsFavoriteDidChange)="conversationIsFavoriteDidChange.emit()"
+        (conversationIsMutedDidChange)="conversationIsMutedDidChange.emit()"
+        (conversationIsHiddenDidChange)="conversationIsHiddenDidChange.emit()"
+    ></li>
+</ng-template>

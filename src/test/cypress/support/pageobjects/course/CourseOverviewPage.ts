@@ -26,7 +26,7 @@ export class CourseOverviewPage {
     }
 
     openRunningProgrammingExercise(exerciseID: number) {
-        cy.intercept(GET, BASE_API + 'programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
+        cy.intercept(GET, `${BASE_API}/programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks`).as('initialQuery');
         this.openRunningExercise(exerciseID);
         cy.wait('@initialQuery');
     }

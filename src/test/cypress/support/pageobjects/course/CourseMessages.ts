@@ -1,4 +1,4 @@
-import { BASE_API, DELETE, POST, PUT } from '../../constants';
+import { COURSE_BASE, DELETE, POST, PUT } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the course messages page.
@@ -45,13 +45,13 @@ export class CourseMessagesPage {
     }
 
     joinChannel(channelID: number) {
-        cy.intercept(POST, BASE_API + 'courses/*/channels/*/register').as('joinChannel');
+        cy.intercept(POST, `${COURSE_BASE}/*/channels/*/register`).as('joinChannel');
         cy.get(`#channel-${channelID}`).find(`#register${channelID}`).click({ force: true });
         cy.wait('@joinChannel');
     }
 
     leaveChannel(channelID: number) {
-        cy.intercept(POST, BASE_API + 'courses/*/channels/*/deregister').as('leaveChannel');
+        cy.intercept(POST, `${COURSE_BASE}/*/channels/*/deregister`).as('leaveChannel');
         cy.get(`#channel-${channelID}`).find(`#deregister${channelID}`).click({ force: true });
         cy.wait('@leaveChannel');
     }
@@ -85,7 +85,7 @@ export class CourseMessagesPage {
     }
 
     createChannel(isAnnouncementChannel: boolean, isPublic: boolean) {
-        cy.intercept(POST, BASE_API + 'courses/*/channels').as('createChannel');
+        cy.intercept(POST, `${COURSE_BASE}/*/channels`).as('createChannel');
         cy.get('.modal-content').find('#submitButton').click();
         cy.wait('@createChannel').then((interception) => {
             const response = interception.response!.body;
@@ -140,13 +140,13 @@ export class CourseMessagesPage {
     editMessage(messageId: number, message: string) {
         this.getSinglePost(messageId).find('.editIcon').click();
         this.getSinglePost(messageId).find('.markdown-editor').find('.ace_editor').click().type(message, { delay: 8 });
-        cy.intercept(PUT, BASE_API + 'courses/*/messages/*').as('updateMessage');
+        cy.intercept(PUT, `${COURSE_BASE}/*/messages/*`).as('updateMessage');
         this.getSinglePost(messageId).find('#save').click();
         cy.wait('@updateMessage');
     }
 
     deleteMessage(messageId: number) {
-        cy.intercept(DELETE, BASE_API + 'courses/*/messages/*').as('deleteMessage');
+        cy.intercept(DELETE, `${COURSE_BASE}/*/messages/*`).as('deleteMessage');
         this.getSinglePost(messageId).find('.deleteIcon').click();
         this.getSinglePost(messageId).find('.deleteIcon').click();
         cy.wait('@deleteMessage');
@@ -157,7 +157,7 @@ export class CourseMessagesPage {
     }
 
     save(force = false) {
-        cy.intercept(POST, BASE_API + 'courses/*/messages').as('createMessage');
+        cy.intercept(POST, `${COURSE_BASE}/*/messages`).as('createMessage');
         cy.get('#save').click({ force });
         return cy.wait('@createMessage');
     }
@@ -167,13 +167,13 @@ export class CourseMessagesPage {
     }
 
     createGroupChat() {
-        cy.intercept(POST, BASE_API + 'courses/*/group-chats').as('createGroupChat');
+        cy.intercept(POST, `${COURSE_BASE}/*/group-chats`).as('createGroupChat');
         cy.get('#submitButton').click();
         return cy.wait('@createGroupChat');
     }
 
     updateGroupChat() {
-        cy.intercept(POST, BASE_API + 'courses/*/group-chats/*/register').as('updateGroupChat');
+        cy.intercept(POST, `${COURSE_BASE}/*/group-chats/*/register`).as('updateGroupChat');
         cy.get('#submitButton').click();
         cy.wait('@updateGroupChat');
     }
