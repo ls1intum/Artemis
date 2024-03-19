@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.User;
  */
 public abstract class VcsTokenManagementService {
 
+    // TODO: this should be configurable in the yml file so that server admins can change it, 365 should be the default
     protected static final Duration MAX_LIFETIME = Duration.ofDays(365);
 
     /**
@@ -45,6 +46,7 @@ public abstract class VcsTokenManagementService {
      * @param user        the user whose access token is to be renewed
      * @param newLifetime the lifetime for the newly crated access token
      */
+    // TODO: we should notify the user via email that the token was changed
     public abstract void renewAccessToken(User user, Duration newLifetime);
 
     // Todo: See future plans in https://github.com/ls1intum/Artemis/issues/8103
