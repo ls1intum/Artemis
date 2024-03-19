@@ -143,7 +143,7 @@ public class ParticipantScoreScheduleService {
      * Additionally, we schedule all participant scores that are outdated/invalid.
      */
     @Scheduled(cron = "0 * * * * *")
-    protected void scheduleTasks() {
+    public void scheduleTasks() {
         log.debug("Schedule tasks to process...");
         SecurityUtils.setAuthorizationObject();
         if (isRunning.get()) {
