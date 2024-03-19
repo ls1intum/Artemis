@@ -22,6 +22,7 @@ describe('BuildQueueComponent', () => {
         getQueuedBuildJobs: jest.fn(),
         getRunningBuildJobs: jest.fn(),
         cancelBuildJobInCourse: jest.fn(),
+        cancelBuildJob: jest.fn(),
         cancelAllQueuedBuildJobsInCourse: jest.fn(),
         cancelAllRunningBuildJobsInCourse: jest.fn(),
         cancelAllQueuedBuildJobs: jest.fn(),
@@ -280,6 +281,25 @@ describe('BuildQueueComponent', () => {
 
         // Expectations: The service method for canceling a build job in a course is called with the correct parameters
         expect(mockBuildQueueService.cancelBuildJobInCourse).toHaveBeenCalledWith(testCourseId, buildJobId);
+    });
+
+    it('should cancel a build job without a course ID', () => {
+        const buildJobId = '1';
+
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        // Mock BuildQueueService to return a successful response for canceling a build job
+        mockBuildQueueService.cancelBuildJob.mockReturnValue(of(null));
+
+        // Initialize the component
+        component.ngOnInit();
+
+        // Call the cancelBuildJob method
+        component.cancelBuildJob(buildJobId);
+
+        // Expectations: The service method for canceling a build job is called without a course ID
+        expect(mockBuildQueueService.cancelBuildJob).toHaveBeenCalledWith(buildJobId);
     });
 
     it('should cancel all queued build jobs in a course', () => {
