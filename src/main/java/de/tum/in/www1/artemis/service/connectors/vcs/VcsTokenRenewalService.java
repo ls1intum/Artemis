@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -54,7 +53,7 @@ public class VcsTokenRenewalService {
      * Additionally, new access tokens for users with missing access tokens are created.
      * This method has no effect if the VCS access token config option is disabled.
      */
-    @Scheduled(cron = "0  0  4 * * SUN") // Every sunday at 4 am
+    // @Scheduled(cron = "0 0 4 * * SUN") // Every sunday at 4 am
     public void renewAllVcsAccessTokens() {
         if (versionControlAccessToken && vcsTokenManagementService.isPresent()) {
             log.info("Started scheduled access token renewal");
