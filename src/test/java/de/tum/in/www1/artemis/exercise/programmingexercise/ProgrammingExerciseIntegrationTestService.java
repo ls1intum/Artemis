@@ -1703,12 +1703,12 @@ class ProgrammingExerciseIntegrationTestService {
 
     void lockAllRepositories_asStudent_forbidden() throws Exception {
         final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
+        request.post(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     void lockAllRepositories_asTutor_forbidden() throws Exception {
         final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
+        request.post(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     void lockAllRepositories() throws Exception {
@@ -1723,7 +1723,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation2.getStudents());
 
         final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(ROOT + endpoint, null, HttpStatus.OK);
+        request.postWithoutLocation(ROOT + endpoint, null, HttpStatus.OK, null);
 
         verify(versionControlService, timeout(300)).setRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUri(), programmingExercise.getProjectKey(),
                 participation1.getStudents());
@@ -1761,7 +1761,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockDefaultBranch(programmingExercise);
 
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.post(ROOT + endpoint, null, HttpStatus.OK);
+        request.postWithoutLocation(ROOT + endpoint, null, HttpStatus.OK, null);
 
         verify(versionControlService, timeout(300)).addMemberToRepository(participation1.getVcsRepositoryUri(), participation1.getStudent().orElseThrow(),
                 VersionControlRepositoryPermission.REPO_WRITE);

@@ -14,8 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 
@@ -50,10 +49,8 @@ public class ProgrammingExerciseLockResource {
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
     @PostMapping(UNLOCK_ALL_REPOSITORIES)
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipations(exerciseId);
         log.info("Unlocked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();
@@ -68,10 +65,8 @@ public class ProgrammingExerciseLockResource {
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
     @PostMapping(LOCK_ALL_REPOSITORIES)
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipations(exerciseId);
         log.info("Locked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();
