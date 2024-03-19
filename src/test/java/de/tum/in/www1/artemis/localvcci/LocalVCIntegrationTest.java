@@ -69,6 +69,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assignmentRepository.resetLocalRepo();
         templateRepository.resetLocalRepo();
         solutionRepository.resetLocalRepo();
+        testsRepository.resetLocalRepo();
     }
 
     @Test
