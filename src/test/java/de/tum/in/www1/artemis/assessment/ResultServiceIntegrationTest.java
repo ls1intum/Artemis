@@ -329,7 +329,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         // the exercise has no grading criteria -> empty points map in every resultWithPoints
         for (final var resultWithPoints : resultsWithPoints) {
-            assertThat(resultWithPoints.pointsPerCriterion()).isEmpty();
+            assertThat(resultWithPoints.pointsPerCriterion()).isNullOrEmpty();
         }
     }
 
@@ -484,7 +484,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         // the exercise has no grading criteria -> empty points map in every resultWithPoints
         for (final var resultWithPoints : resultsWithPoints) {
-            assertThat(resultWithPoints.pointsPerCriterion()).isEmpty();
+            assertThat(resultWithPoints.pointsPerCriterion()).isNullOrEmpty();
         }
     }
 
