@@ -315,24 +315,14 @@ describe('ProgrammingExercise Service', () => {
         tick();
     }));
 
-    it('should make GET request to retrieve diff between submissions for CommitDetailsView', fakeAsync(() => {
+    it('should make GET request to retrieve diff between commits for CommitDetailsView', fakeAsync(() => {
         const exerciseId = 1;
-        const submissionId = 2;
-        const submissionId2 = 3;
+        const participationId = 2;
+        const commitId = '2';
+        const commitId2 = '3';
         const expected = { id: 1, entries: [new ProgrammingExerciseGitDiffEntry()] } as unknown as ProgrammingExerciseGitDiffReport;
-        service.getDiffReportForCommitDetailsViewForSubmissions(exerciseId, submissionId, submissionId2).subscribe((resp) => expect(resp).toEqual(expected));
-        const url = `${resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report-commit-details/${submissionId2}`;
-        const req = httpMock.expectOne({ method: 'GET', url });
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should make GET request to retrieve diff between submission and template for CommitDetailsView', fakeAsync(() => {
-        const exerciseId = 1;
-        const submissionId = 2;
-        const expected = { id: 1, entries: [] } as unknown as ProgrammingExerciseGitDiffReport;
-        service.getDiffReportForCommitDetailsViewForSubmissionWithTemplate(exerciseId, submissionId).subscribe((resp) => expect(resp).toEqual(expected));
-        const url = `${resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report-commit-details-with-template`;
+        service.getDiffReportForCommits(exerciseId, participationId, commitId, commitId2).subscribe((resp) => expect(resp).toEqual(expected));
+        const url = `${resourceUrl}/${exerciseId}/participation/${participationId}/commits/${commitId}/diff-report/${commitId2}`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(expected);
         tick();

@@ -84,31 +84,37 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     private static Stream<Arguments> argumentsForGetParticipationResults() {
         ZonedDateTime startDate = ZonedDateTime.now().minusDays(3);
+        ZonedDateTime releaseDate = ZonedDateTime.now().minusDays(4);
         ZonedDateTime someDate = ZonedDateTime.now();
         ZonedDateTime futureDate = ZonedDateTime.now().plusDays(3);
         ZonedDateTime pastDate = ZonedDateTime.now().minusDays(1);
         return Stream.of(
                 // No assessmentType and no completionDate -> notFound
-                Arguments.of(startDate, null, null, null, false),
+                Arguments.of(null, null, null, null, null, false),
                 // Automatic result is always returned
-                Arguments.of(startDate, AssessmentType.AUTOMATIC, null, null, true), Arguments.of(startDate, AssessmentType.AUTOMATIC, someDate, null, true),
-                Arguments.of(startDate, AssessmentType.AUTOMATIC, someDate, futureDate, true), Arguments.of(startDate, AssessmentType.AUTOMATIC, someDate, pastDate, true),
-                Arguments.of(startDate, AssessmentType.AUTOMATIC, null, futureDate, true), Arguments.of(startDate, AssessmentType.AUTOMATIC, null, pastDate, true),
+                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, null, null, true),
+                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, someDate, null, true),
+                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, someDate, futureDate, true),
+                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, someDate, pastDate, true),
+                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, null, futureDate, true),
+                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, null, pastDate, true),
                 // Manual result without completion date (assessment was only saved but no submitted) is not returned
-                Arguments.of(startDate, AssessmentType.SEMI_AUTOMATIC, null, null, false), Arguments.of(startDate, AssessmentType.SEMI_AUTOMATIC, null, futureDate, false),
-                Arguments.of(startDate, AssessmentType.SEMI_AUTOMATIC, null, pastDate, false),
+                Arguments.of(startDate, releaseDate, AssessmentType.SEMI_AUTOMATIC, null, null, false),
+                Arguments.of(startDate, releaseDate, AssessmentType.SEMI_AUTOMATIC, null, futureDate, false),
+                Arguments.of(startDate, releaseDate, AssessmentType.SEMI_AUTOMATIC, null, pastDate, false),
                 // Manual result is not returned if completed and assessment due date has not passed
-                Arguments.of(startDate, AssessmentType.SEMI_AUTOMATIC, someDate, futureDate, false),
+                Arguments.of(startDate, releaseDate, AssessmentType.SEMI_AUTOMATIC, someDate, futureDate, false),
                 // Manual result is returned if completed and assessmentDue date has passed
-                Arguments.of(startDate, AssessmentType.SEMI_AUTOMATIC, someDate, pastDate, true));
+                Arguments.of(startDate, releaseDate, AssessmentType.SEMI_AUTOMATIC, someDate, pastDate, true));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("argumentsForGetParticipationResults")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetParticipationWithLatestResultAsAStudent(ZonedDateTime startDate, AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
-            boolean expectLastCreatedResult) throws Exception {
+    void testGetParticipationWithLatestResultAsAStudent(ZonedDateTime startDate, ZonedDateTime releaseDate, AssessmentType assessmentType, ZonedDateTime completionDate,
+            ZonedDateTime assessmentDueDate, boolean expectLastCreatedResult) throws Exception {
         programmingExercise.setStartDate(startDate);
+        programmingExercise.setReleaseDate(releaseDate);
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExerciseRepository.save(programmingExercise);
         var result = addStudentParticipationWithResult(assessmentType, completionDate);
@@ -127,9 +133,10 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("argumentsForGetParticipationResults")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetParticipationWithLatestResult_multipleResultsAvailable(ZonedDateTime startDate, AssessmentType assessmentType, ZonedDateTime completionDate,
-            ZonedDateTime assessmentDueDate, boolean expectLastCreatedResult) throws Exception {
+    void testGetParticipationWithLatestResult_multipleResultsAvailable(ZonedDateTime startDate, ZonedDateTime releaseDate, AssessmentType assessmentType,
+            ZonedDateTime completionDate, ZonedDateTime assessmentDueDate, boolean expectLastCreatedResult) throws Exception {
         programmingExercise.setStartDate(startDate);
+        programmingExercise.setReleaseDate(releaseDate);
         // Add an automatic result first
         var firstResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
@@ -207,9 +214,10 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("argumentsForGetParticipationResults")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetParticipationWithAllResults(ZonedDateTime startDate, AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
-            boolean expectLastCreatedResult) throws Exception {
+    void testGetParticipationWithAllResults(ZonedDateTime startDate, ZonedDateTime releaseDate, AssessmentType assessmentType, ZonedDateTime completionDate,
+            ZonedDateTime assessmentDueDate, boolean expectLastCreatedResult) throws Exception {
         programmingExercise.setStartDate(startDate);
+        programmingExercise.setReleaseDate(releaseDate);
         // Add an automatic result first
         var firstResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
@@ -295,6 +303,17 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.FORBIDDEN, ProgrammingExerciseStudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationAllResults_studentCanAccessIfNoStartDateSet() throws Exception {
+        programmingExercise.setStartDate(null);
+        programmingExercise.setReleaseDate(null);
+        programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
     }
 
     @Test
@@ -614,6 +633,33 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     void retrieveCommitInfoEditorForbidden() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commits-info", HttpStatus.FORBIDDEN, CommitInfoDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void retrieveCommitHistoryStudentSuccess() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author", "authorEmail");
+        var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
+        doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
+        request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void retrieveCommitHistoryStudentNotOwningParticipationForbidden() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.FORBIDDEN, CommitInfoDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void retrieveCommitHistoryTutorNotOwningParticipationSuccess() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author", "authorEmail");
+        var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
+        doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
+        request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
     }
 
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
