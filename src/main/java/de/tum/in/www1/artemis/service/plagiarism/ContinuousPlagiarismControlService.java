@@ -8,7 +8,6 @@ import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import de.jplag.exceptions.ExitException;
@@ -65,10 +64,6 @@ public class ContinuousPlagiarismControlService {
         this.plagiarismResultRepository = plagiarismResultRepository;
     }
 
-    /**
-     * Daily triggers plagiarism checks as a part of continuous plagiarism control.
-     */
-    @Scheduled(cron = "${artemis.scheduling.continuous-plagiarism-control-trigger-time:0 0 5 * * *}")
     public void executeChecks() {
         log.info("Starting continuous plagiarism control...");
 
