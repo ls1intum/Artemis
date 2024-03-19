@@ -73,7 +73,7 @@ describe('LearningPathGraphComponent', () => {
         comp.onResize();
         expect(updateStub).toHaveBeenCalledExactlyOnceWith(true);
         expect(centerStub).toHaveBeenCalledExactlyOnceWith(true);
-        expect(zoomToFitStub).toHaveBeenCalledExactlyOnceWith(true);
+        expect(zoomToFitStub).toHaveBeenCalledExactlyOnceWith({ autoCenter: true });
     });
 
     it('should zoom to fit and center on resize', () => {
@@ -81,7 +81,7 @@ describe('LearningPathGraphComponent', () => {
         const centerStub = jest.spyOn(comp.center$, 'next');
         fixture.detectChanges();
         comp.onCenterView();
-        expect(zoomToFitStub).toHaveBeenCalledExactlyOnceWith(true);
+        expect(zoomToFitStub).toHaveBeenCalledExactlyOnceWith({ autoCenter: true });
         expect(centerStub).toHaveBeenCalledExactlyOnceWith(true);
     });
 });
