@@ -1,7 +1,7 @@
 <div class="d-flex justify-content-between gap-3">
     @if (course) {
         <div class="sidebar-width">
-            <jhi-sidebar [entityData]="course.exercises" />
+            <jhi-sidebar [sidebarData]="sidebarData" />
         </div>
 
         @if (exerciseSelected) {

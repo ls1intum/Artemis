@@ -1,3 +1,7 @@
+$footer-height-dev: 164px;
+$header-height: 84px;
+$footer-height-prod: 142px;
+
 /* ==========================================================================
 Course Info Bar
 ========================================================================== */
@@ -210,4 +214,13 @@ canvas#complete-chart {
 
 .module-bg {
     background-color: var(--module-bg);
+}
+
+.scrollable-content {
+    height: calc(100vh - $footer-height-prod - $header-height);
+    overflow-y: auto;
+
+    &.content-height-dev {
+        height: calc(100vh - $footer-height-dev - $header-height);
+    }
 }

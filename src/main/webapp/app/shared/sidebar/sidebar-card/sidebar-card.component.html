@@ -4,11 +4,11 @@
         'border-success': entityItem?.difficulty === DifficultyLevel.EASY,
         'border-warning': entityItem?.difficulty === DifficultyLevel.MEDIUM,
         'border-danger': entityItem?.difficulty === DifficultyLevel.HARD,
-        'border-module': !entityItem?.difficulty,
-        'bg-selected border-selected': isSelected
+        'border-module': !entityItem?.difficulty
     }"
-    [routerLink]="noExerciseSelected ? './' + entityItem.id : '../' + entityItem.id"
-    (click)="storeLastSelectedExercise(entityItem.id)"
+    [routerLink]="noItemSelected ? './' + entityItem.id : '../' + entityItem.id"
+    (click)="storeLastSelectedItem(entityItem.id)"
+    [routerLinkActive]="'bg-selected border-selected'"
 >
-    <jhi-sidebar-card-item [entityItem]="entityItem" />
+    <jhi-sidebar-card-item [sidebarType]="sidebarType" [entityItem]="entityItem" />
 </div>

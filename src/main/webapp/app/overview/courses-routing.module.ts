@@ -65,8 +65,20 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.lectures',
+                    hasSidebar: true,
                 },
                 canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'lectures/:lectureId',
+                component: CourseLecturesComponent,
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.lectures',
+                    hasSidebar: true,
+                },
+                canActivate: [UserRouteAccessService],
+                loadChildren: () => import('../overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
             },
             {
                 path: 'statistics',
