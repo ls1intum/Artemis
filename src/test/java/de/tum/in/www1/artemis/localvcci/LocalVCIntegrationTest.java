@@ -237,26 +237,29 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     private RemoteRefUpdate setupAndTryForcePush(LocalRepository originalRepository, String repositoryUri, String login, String projectKey, String repositorySlug)
             throws Exception {
 
+        Path tempDirectory = null;
+        Git secondLocalGit = null;
+
         try {
             // Create a second local repository and push a file from there
-            Path tempDirectory = Files.createTempDirectory("tempDirectory");
-            Git secondLocalGit = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDirectory.toFile()).call();
+            tempDirectory = Files.createTempDirectory("tempDirectory");
+            secondLocalGit = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDirectory.toFile()).call();
             localVCLocalCITestService.commitFile(tempDirectory, secondLocalGit);
             localVCLocalCITestService.testPushSuccessful(secondLocalGit, login, projectKey, repositorySlug);
-        
+
             // Commit a file to the original local repository
             localVCLocalCITestService.commitFile(originalRepository.localRepoFile.toPath(), originalRepository.localGit, "second-test.txt");
-        
+
             // Try to push normally, should fail because the remote already contains work that does not exist locally
             PushResult pushResultNormal = originalRepository.localGit.push().setRemote(repositoryUri).call().iterator().next();
             RemoteRefUpdate remoteRefUpdateNormal = pushResultNormal.getRemoteUpdates().iterator().next();
             assertThat(remoteRefUpdateNormal.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD);
-        
+
             // Force push from the original local repository
             PushResult pushResultForce = originalRepository.localGit.push().setForce(true).setRemote(repositoryUri).call().iterator().next();
-            RemoteRefUpdate remoteRefUpdate = pushResultForce.getRemoteUpdates().iterator().next();
-            return remoteRefUpdate;
-        } finally {
+            return pushResultForce.getRemoteUpdates().iterator().next();
+        }
+        finally {
             if (secondLocalGit != null) {
                 secondLocalGit.close();
             }
@@ -264,8 +267,6 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
                 FileUtils.deleteDirectory(tempDirectory.toFile());
             }
         }
-
-        return remoteRefUpdate;
     }
 
     @Test
