@@ -13,6 +13,7 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleName;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameContaining;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
+import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
 import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.assertj.core.api.Assertions;
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -246,7 +248,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
             public void check(JavaMethod method, ConditionEvents events) {
                 // Get annotation
                 var enforceRoleInCourseAnnotation = getAnnotation(EnforceRoleInCourse.class, method);
-                var courseIdFieldName = enforceRoleInCourseAnnotation.courseIdFieldName();
+                var courseIdFieldName = enforceRoleInCourseAnnotation.resourceIdFieldName();
                 if (!hasParameterWithName(method, courseIdFieldName)) {
                     events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), courseIdFieldName)));
                 }
@@ -267,7 +269,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
             public void check(JavaMethod method, ConditionEvents events) {
                 // Get annotation
                 var enforceRoleInExerciseAnnotation = getAnnotation(EnforceRoleInExercise.class, method);
-                var exerciseIdFieldName = enforceRoleInExerciseAnnotation.exerciseIdFieldName();
+                var exerciseIdFieldName = enforceRoleInExerciseAnnotation.resourceIdFieldName();
                 if (!hasParameterWithName(method, exerciseIdFieldName)) {
                     events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), exerciseIdFieldName)));
                 }
@@ -326,6 +328,22 @@ class ArchitectureTest extends AbstractArchitectureTest {
         }
 
         return null;
+    }
+
+    @Test
+    void testTransactional() {
+        var classesPredicated = and(INTERFACES, annotatedWith(Repository.class));
+        var transactionalRule = methods().that().areAnnotatedWith(simpleNameAnnotation("Transactional")).should().beDeclaredInClassesThat(classesPredicated);
+
+        // TODO: In the future we should reduce this number and eventually replace it by transactionalRule.check(allClasses)
+        // The following methods currently violate this rule:
+        // Method <de.tum.in.www1.artemis.service.LectureImportService.importLecture(Lecture, Course)>
+        // Method <de.tum.in.www1.artemis.service.exam.StudentExamService.generateMissingStudentExams(Exam)>
+        // Method <de.tum.in.www1.artemis.service.exam.StudentExamService.generateStudentExams(Exam)>
+        // Method <de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService.importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)>
+        // Method <de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService.onTimeZoneUpdate(Course)>
+        var result = transactionalRule.evaluate(allClasses);
+        Assertions.assertThat(result.getFailureReport().getDetails()).hasSize(5);
     }
 
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes

@@ -111,6 +111,9 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                     } else if (repositoryType === 'TESTS') {
                         this.domainService.setDomain([DomainType.TEST_REPOSITORY, this.exercise]);
                         this.repositoryUri = this.exercise.testRepositoryUri!;
+                    } else {
+                        this.participationCouldNotBeFetched = true;
+                        this.loadingParticipation = false;
                     }
                 }),
             )

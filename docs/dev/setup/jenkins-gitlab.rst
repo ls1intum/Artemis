@@ -405,7 +405,7 @@ GitLab Access Token
 
     You first have to create a SSH key (locally), e.g. using ``ssh-keygen`` (more information on how to create a SSH
     key can be found e.g. at `ssh.com <https://www.ssh.com/ssh/keygen/>`__ or
-    at `gitlab.com <https://docs.gitlab.com/ee/ssh/#rsa-ssh-keys>`__).
+    at `gitlab.com <https://docs.gitlab.com/ee/user/ssh.html#rsa-ssh-keys>`__).
 
     The list of supported ciphers can be found at `Apache Mina <https://github.com/apache/mina-sshd>`__.
 
@@ -1009,6 +1009,8 @@ and the corresponding Docker image can be found on
 You should also update the Jenkins plugins regularly due to security
 reasons. You can update them directly in the Web User Interface in the
 Plugin Manager.
+
+.. _jenkins_build_agents:
 
 Build agents
 ^^^^^^^^^^^^

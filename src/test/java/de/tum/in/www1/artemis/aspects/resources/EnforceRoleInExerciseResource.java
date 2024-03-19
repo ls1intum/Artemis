@@ -70,31 +70,31 @@ public class EnforceRoleInExerciseResource {
     }
 
     @GetMapping("testEnforceRoleInExerciseFieldName/{renamedExerciseId}")
-    @EnforceRoleInExercise(value = Role.STUDENT, exerciseIdFieldName = "renamedExerciseId")
+    @EnforceRoleInExercise(value = Role.STUDENT, resourceIdFieldName = "renamedExerciseId")
     public ResponseEntity<Void> testEnforceRoleInExerciseFieldName(@PathVariable long renamedExerciseId) {
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("testEnforceAtLeastStudentInExerciseFieldName/{renamedExerciseId}")
-    @EnforceAtLeastStudentInExercise(exerciseIdFieldName = "renamedExerciseId")
+    @EnforceAtLeastStudentInExercise(resourceIdFieldName = "renamedExerciseId")
     public ResponseEntity<Void> testEnforceAtLeastStudentInExerciseFieldName(@PathVariable long renamedExerciseId) {
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("testEnforceAtLeastTutorInExerciseFieldName/{renamedExerciseId}")
-    @EnforceAtLeastTutorInExercise(exerciseIdFieldName = "renamedExerciseId")
+    @EnforceAtLeastTutorInExercise(resourceIdFieldName = "renamedExerciseId")
     public ResponseEntity<Void> testEnforceAtLeastTutorInExerciseFieldName(@PathVariable long renamedExerciseId) {
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("testEnforceAtLeastEditorInExerciseFieldName/{renamedExerciseId}")
-    @EnforceAtLeastEditorInExercise(exerciseIdFieldName = "renamedExerciseId")
+    @EnforceAtLeastEditorInExercise(resourceIdFieldName = "renamedExerciseId")
     public ResponseEntity<Void> testEnforceAtLeastEditorInExerciseFieldName(@PathVariable long renamedExerciseId) {
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("testEnforceAtLeastInstructorInExerciseFieldName/{renamedExerciseId}")
-    @EnforceAtLeastInstructorInExercise(exerciseIdFieldName = "renamedExerciseId")
+    @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "renamedExerciseId")
     public ResponseEntity<Void> testEnforceAtLeastInstructorInExerciseFieldName(@PathVariable long renamedExerciseId) {
         return ResponseEntity.ok().build();
     }
