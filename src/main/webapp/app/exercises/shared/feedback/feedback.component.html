@@ -128,6 +128,12 @@
                     </div>
                 }
 
+                <div class="d-flex justify-content-start m-1">
+                    @if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+                        <p jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip"></p>
+                    }
+                </div>
+
                 <div class="feedback-list">
                     @for (feedbackItemNode of feedbackItemNodes; track feedbackItemNode) {
                         <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course" />

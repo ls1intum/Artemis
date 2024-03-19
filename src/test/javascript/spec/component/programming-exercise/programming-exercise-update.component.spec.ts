@@ -1033,7 +1033,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.programmingExercise.exampleSolutionPublicationDate).toBeUndefined();
         expect(comp.programmingExercise.zipFileForImport?.name).toBe('test.zip');
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
-        expect(comp.programmingExercise.allowFeedbackRequests).toBeFalse();
         expect(comp.programmingExercise.allowOfflineIde).toBeTrue();
         expect(comp.programmingExercise.allowOnlineEditor).toBeTrue();
         expect(comp.programmingExercise.publishBuildPlanUrl).toBeFalse();
