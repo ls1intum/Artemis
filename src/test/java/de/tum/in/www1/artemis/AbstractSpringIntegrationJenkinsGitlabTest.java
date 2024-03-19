@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static org.mockito.Mockito.*;
-import static tech.jhipster.config.JHipsterConstants.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -31,7 +33,11 @@ import com.offbytwo.jenkins.JenkinsServer;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.connector.JenkinsRequestMockProvider;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
@@ -49,7 +55,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ResourceLock("AbstractSpringIntegrationJenkinsGitlabTest")
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "gitlab", "jenkins", "athena", "scheduling", "lti", "aeolus" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "gitlab", "jenkins", "athena", "scheduling", "lti", "aeolus", "apollon" })
 @TestPropertySource(properties = { "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
         "info.guided-tour.course-group-editors=artemis-artemistutorial-editors", "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors",
         "artemis.user-management.use-external=false", "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$" })
