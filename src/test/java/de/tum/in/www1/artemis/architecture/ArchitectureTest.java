@@ -64,11 +64,9 @@ import com.hazelcast.core.HazelcastInstance;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
-import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaParameter;
-import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
@@ -108,17 +106,17 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testCorrectServiceAnnotation() {
-        JavaClasses serviceClasses = new ClassFileImporter().importPackages("de.tum.in.www1.artemis.service");
 
-        classes().that().haveSimpleNameEndingWith("Service").and().areNotInterfaces().and().doNotHaveModifier(ABSTRACT).should()
-                .beAnnotatedWith(org.springframework.stereotype.Service.class).because("services should be consistently managed by Spring's dependency injection container.")
-                .check(serviceClasses);
+        classes().that().resideInAPackage("de.tum.in.www1.artemis.service..").and().haveSimpleNameEndingWith("Service").and().areNotInterfaces().and().doNotHaveModifier(ABSTRACT)
+                .should().beAnnotatedWith(org.springframework.stereotype.Service.class)
+                .because("services should be consistently managed by Spring's dependency injection container.").check(allClasses);
 
-        classes().that().haveSimpleNameEndingWith("Service").should().notBeAnnotatedWith(Component.class);
+        classes().that().haveSimpleNameEndingWith("Service").should().notBeAnnotatedWith(Component.class).check(allClasses);
+        classes().that().haveSimpleNameEndingWith("Service").should().notBeAnnotatedWith(RestController.class).check(allClasses);
 
         classes().that().areAnnotatedWith(Service.class).should().haveSimpleNameEndingWith("Service").check(allClasses);
-
         classes().that().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(Component.class).check(allClasses);
+        classes().that().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(RestController.class).check(allClasses);
     }
 
     @Test
