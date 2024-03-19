@@ -13,6 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param endDate
  * @param reason
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TutorialGroupFreePeriodDTO(@NotNull LocalDateTime startDate, @NotNull LocalDateTime endDate, String reason) {
 }
