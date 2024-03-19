@@ -6,6 +6,7 @@ import { ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { SidebarTypes } from 'app/types/sidebar';
 
 @Component({
     selector: 'jhi-sidebar-card-item',
@@ -18,8 +19,7 @@ export class SidebarCardItemComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
     @Input()
     entityItem?: any;
-
-    @Input() studentParticipation?: StudentParticipation;
+    @Input() sidebarType?: SidebarTypes;
 
     @Input()
     noExerciseSelected?: boolean;

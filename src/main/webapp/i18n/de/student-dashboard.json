@@ -31,6 +31,9 @@
             "showLess": "Weniger anzeigen",
             "manage": "Verwalten",
             "studentView": "Studentenansicht",
+            "general": {
+                "noDataFound": "Keine Einträge gefunden."
+            },
             "menu": {
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",

@@ -1,4 +1,17 @@
-import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    EmbeddedViewRef,
+    HostListener,
+    OnDestroy,
+    OnInit,
+    QueryList,
+    TemplateRef,
+    ViewChild,
+    ViewChildren,
+    ViewContainerRef,
+} from '@angular/core';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
@@ -157,12 +170,13 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     async ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
+            this.courseId = parseInt(params.courseId, 10);
         });
         this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
         });
+        this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
@@ -603,5 +617,21 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 exercise.studentParticipations = teamAssignment.studentParticipations;
             }
         });
+    }
+
+    @HostListener('window:keydown.Control.y', ['$event'])
+    onKeyDownControlY(event: KeyboardEvent) {
+        event.preventDefault();
+        this.toggleCollapseState();
+    }
+
+    getCollapseStateFromStorage() {
+        const storedCollapseState: string | null = localStorage.getItem('sidebar.collapseState');
+        if (storedCollapseState) this.isCollapsed = JSON.parse(storedCollapseState);
+    }
+
+    toggleCollapseState() {
+        this.isCollapsed = !this.isCollapsed;
+        localStorage.setItem('navbar.collapseState', JSON.stringify(this.isCollapsed));
     }
 }

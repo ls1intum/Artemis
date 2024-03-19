@@ -33,10 +33,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./core/about-us/artemis-about-us.module').then((module) => module.ArtemisAboutUsModule),
                 },
                 {
-                    path: 'courses/:courseId/lectures/:lectureId',
-                    loadChildren: () => import('./overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
-                },
-                {
                     path: 'courses/:courseId/competencies/:competencyId',
                     loadChildren: () => import('./overview/course-competencies/course-competencies-details.module').then((m) => m.ArtemisCourseCompetenciesDetailsModule),
                 },

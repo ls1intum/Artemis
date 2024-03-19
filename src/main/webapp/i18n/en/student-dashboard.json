@@ -31,6 +31,9 @@
             "showLess": "Show less",
             "manage": "Manage",
             "studentView": "Student view",
+            "general": {
+                "noDataFound": "No data found."
+            },
             "menu": {
                 "exercises": "Exercises",
                 "statistics": "Statistics",

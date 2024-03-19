@@ -54,7 +54,7 @@ import { PROFILE_IRIS } from 'app/app.constants';
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview.scss', './course-exercise-detail.component.scss'],
+    styleUrls: ['../course-overview.scss', './course-exercise-details.component.scss'],
     providers: [ExerciseCacheService],
 })
 export class CourseExerciseDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {

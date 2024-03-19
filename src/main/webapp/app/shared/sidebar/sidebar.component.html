@@ -6,14 +6,20 @@
                     <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-2" />
                 </div>
             }
-            @if (!entityData || !(entityData | searchFilter: ['title', 'type'] : searchValue)?.length) {
-                <div class="mt-2 text-center scrollable-content">No data found.</div>
+            @if (!sidebarData?.ungroupedData || !(sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue)?.length) {
+                <div jhiTranslate="artemisApp.courseOverview.general.noDataFound" class="mt-2 text-center scrollable-content"></div>
             } @else {
                 <div class="scrollable-content my-2" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
-                    @if (groupByCategory) {
-                        <jhi-sidebar-accordion [searchValue]="searchValue" [entityData]="entityData" [routeParams]="routeParams" />
+                    @if (sidebarData?.groupByCategory && sidebarData.groupedData) {
+                        <jhi-sidebar-accordion
+                            [searchValue]="searchValue"
+                            [groupedData]="sidebarData.groupedData"
+                            [sidebarType]="sidebarData.sidebarType"
+                            [storageId]="sidebarData.storageId"
+                            [routeParams]="routeParams"
+                        />
                     } @else {
-                        @for (entityItem of entityData | searchFilter: ['title', 'type'] : searchValue; track entityItem) {
+                        @for (entityItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track entityItem) {
                             <jhi-sidebar-card [entityItem]="entityItem" />
                         }
                     }
@@ -23,8 +29,8 @@
         <div
             class="double-arrow my-2"
             [ngClass]="{ 'menu-closed': isCollapsed }"
-            [ngbTooltip]="(isCollapsed ? 'Expand' : 'Collapse') + ' Sidebar'"
-            (click)="isCollapsed = !isCollapsed"
+            [ngbTooltip]="(isCollapsed ? 'Expand' : 'Collapse') + ' Sidebar (Ctrl + X)'"
+            (click)="toggleCollapseState()"
         >
             <div [attr.aria-expanded]="!isCollapsed" aria-controls="collapseBasic">
                 <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />

@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DifficultyLevel } from 'app/entities/exercise.model';
+import { SidebarTypes } from 'app/types/sidebar';
 import { Subscription } from 'rxjs';
 @Component({
     selector: 'jhi-sidebar-card',
@@ -13,12 +14,14 @@ export class SidebarCardComponent implements OnChanges {
     entityItem?: any;
     @Input()
     routeParams?: any;
+    @Input() sidebarType?: SidebarTypes;
+    @Input() storageId?: string = '';
 
     isSelected: boolean = false;
-    exerciseId: string;
+    itemId: string;
 
     paramSubscription?: Subscription;
-    noExerciseSelected: boolean = false;
+    noItemSelected: boolean = false;
 
     constructor(
         private router: Router,
@@ -26,6 +29,7 @@ export class SidebarCardComponent implements OnChanges {
     ) {}
 
     ngOnChanges(): void {
+        //Double Check if I need this
         if (!Object.keys(this.routeParams).length) {
             const lastSelectedExercise = this.getLastSelectedExercise();
 
@@ -33,19 +37,19 @@ export class SidebarCardComponent implements OnChanges {
                 this.isSelected = Number(lastSelectedExercise) === this.entityItem.id;
                 this.router.navigate([lastSelectedExercise], { relativeTo: this.route });
             } else {
-                this.noExerciseSelected = true;
+                this.noItemSelected = true;
             }
         } else {
-            this.exerciseId = this.routeParams.exerciseId;
-            this.isSelected = Number(this.exerciseId) === this.entityItem.id;
+            this.itemId = this.routeParams.exerciseId;
+            this.isSelected = Number(this.itemId) === this.entityItem.id;
         }
     }
 
-    storeLastSelectedExercise(exerciseId: number) {
-        sessionStorage.setItem('sidebar.lastSelectedExercise', JSON.stringify(exerciseId));
+    storeLastSelectedItem(exerciseId: number) {
+        sessionStorage.setItem('sidebar.lastSelectedItem.' + this.storageId, JSON.stringify(exerciseId));
     }
 
     getLastSelectedExercise(): string | null {
-        return sessionStorage.getItem('sidebar.lastSelectedExercise');
+        return sessionStorage.getItem('sidebar.lastSelectedItem.' + this.storageId);
     }
 }
