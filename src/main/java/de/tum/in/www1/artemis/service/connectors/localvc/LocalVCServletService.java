@@ -246,7 +246,7 @@ public class LocalVCServletService {
         boolean isAllowedRepository = repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
                 || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString());
 
-        return isAllowedRepository && authorizationCheckService.isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        return isAllowedRepository && authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
     private LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
