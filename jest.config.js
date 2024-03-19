@@ -1,5 +1,4 @@
 const esModules = [
-    '@angular-slider/ngx-slider',
     '@angular/animations',
     '@angular/cdk',
     '@angular/cdk',

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Layout } from '@swimlane/ngx-graph';
+import { Layout, NgxGraphZoomOptions } from '@swimlane/ngx-graph';
 import * as shape from 'd3-shape';
 import { Subject } from 'rxjs';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
@@ -30,7 +30,7 @@ export class LearningPathGraphComponent implements OnInit {
 
     update$: Subject<boolean> = new Subject<boolean>();
     center$: Subject<boolean> = new Subject<boolean>();
-    zoomToFit$: Subject<boolean> = new Subject<boolean>();
+    zoomToFit$: Subject<NgxGraphZoomOptions> = new Subject<NgxGraphZoomOptions>();
 
     protected readonly NodeType = NodeType;
 
@@ -131,11 +131,11 @@ export class LearningPathGraphComponent implements OnInit {
     onResize() {
         this.update$.next(true);
         this.center$.next(true);
-        this.zoomToFit$.next(true);
+        this.zoomToFit$.next({ autoCenter: true });
     }
 
     onCenterView() {
-        this.zoomToFit$.next(true);
+        this.zoomToFit$.next({ autoCenter: true });
         this.center$.next(true);
     }
 }
