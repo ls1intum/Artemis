@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmissionPatch;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
@@ -28,6 +27,7 @@ import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilServ
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.websocket.dto.SubmissionPatch;
 import de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService;
 
 class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -118,7 +118,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPatchModelingSubmission() {
-        ModelingSubmissionPatch patch = new ModelingSubmissionPatch();
+        SubmissionPatch patch = new SubmissionPatch(participation, null);
 
         // when we submit a patch ...
         participationTeamWebsocketService.patchModelingSubmission(participation.getId(), patch, getPrincipalMock());
@@ -129,7 +129,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPatchModelingSubmissionWithWrongPrincipal() {
-        ModelingSubmissionPatch patch = new ModelingSubmissionPatch();
+        SubmissionPatch patch = new SubmissionPatch(participation, null);
 
         // when we submit a patch, but with the wrong user ...
         participationTeamWebsocketService.patchModelingSubmission(participation.getId(), patch, getPrincipalMock("student2"));

@@ -1,12 +1,11 @@
 import { SubmissionPatch } from 'app/entities/submission-patch.model';
-import { User } from 'app/core/user/user.model';
 
 /**
  * A payload for a submission patch. It contains the patch and the sender of the patch.
  */
 export class SubmissionPatchPayload {
     public submissionPatch: SubmissionPatch;
-    public sender: User;
+    public sender: string;
 }
 
 /**

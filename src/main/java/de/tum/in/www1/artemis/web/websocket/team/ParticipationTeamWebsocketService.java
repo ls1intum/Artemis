@@ -31,7 +31,6 @@ import com.hazelcast.core.HazelcastInstance;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmissionPatch;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -41,6 +40,7 @@ import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.websocket.dto.OnlineTeamStudentDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.SubmissionPatch;
 import de.tum.in.www1.artemis.web.websocket.dto.SubmissionPatchPayload;
 import de.tum.in.www1.artemis.web.websocket.dto.SubmissionSyncPayload;
 
@@ -154,15 +154,15 @@ public class ParticipationTeamWebsocketService {
     /**
      * Called by a student of a team to update the modeling submission of the team for their participation
      *
-     * @param participationId         id of participation
-     * @param modelingSubmissionPatch patch to be applied to modeling submission
-     * @param principal               principal of user who wants to update the text submission
+     * @param participationId id of participation
+     * @param submissionPatch patch to be applied to modeling submission
+     * @param principal       principal of user who wants to update the text submission
      */
     @MessageMapping("/topic/participations/{participationId}/team/modeling-submissions/patch")
-    public void patchModelingSubmission(@DestinationVariable Long participationId, @Payload ModelingSubmissionPatch modelingSubmissionPatch, Principal principal) {
+    public void patchModelingSubmission(@DestinationVariable Long participationId, @Payload SubmissionPatch submissionPatch, Principal principal) {
         long start = System.currentTimeMillis();
-        patchSubmission(participationId, modelingSubmissionPatch, principal, "/modeling-submissions");
-        log.info("Websocket endpoint patchModelingSubmission took {}ms for patch with id {}", System.currentTimeMillis() - start, modelingSubmissionPatch.getId());
+        patchSubmission(participationId, submissionPatch, principal, "/modeling-submissions");
+        log.info("Websocket endpoint patchModelingSubmission took {}ms", System.currentTimeMillis() - start);
     }
 
     /**
@@ -224,8 +224,16 @@ public class ParticipationTeamWebsocketService {
         }
     }
 
+    /**
+     * Called by a student for updating a shared submission being collaborated on by the whole team.
+     *
+     * @param participationId id of participation
+     * @param submissionPatch patch to be applied to submission (changes made by calling student)
+     * @param principal       principal of user who wants to update the submission
+     * @param topicPath       path of websocket destination topic where to send the new submission
+     */
     private void patchSubmission(@DestinationVariable Long participationId, @Payload SubmissionPatch submissionPatch, Principal principal, String topicPath) {
-        // Without this, custom jpa repository methods don't work in websocket channel.
+        // Without this, custom jpa repository methods don't work in websocket channel.x
         SecurityUtils.setAuthorizationObject();
 
         final StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
@@ -235,14 +243,11 @@ public class ParticipationTeamWebsocketService {
             return;
         }
 
-        final User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-        final Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
-
         // update the last action date for the user and send out list of team members
         updateValue(lastActionTracker, participationId, principal.getName());
         sendOnlineTeamStudents(participationId);
 
-        SubmissionPatchPayload payload = new SubmissionPatchPayload(submissionPatch, user);
+        SubmissionPatchPayload payload = new SubmissionPatchPayload(submissionPatch, principal.getName());
         websocketMessagingService.sendMessage(getDestination(participationId, topicPath), payload);
     }
 

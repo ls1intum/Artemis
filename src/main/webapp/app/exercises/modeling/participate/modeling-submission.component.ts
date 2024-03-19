@@ -34,7 +34,7 @@ import { getNamesForAssessments } from '../assess/modeling-assessment.util';
 import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
-import { ModelingSubmissionPatch } from 'app/entities/modeling-submission-patch.model';
+import { SubmissionPatch } from 'app/entities/submission-patch.model';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -100,7 +100,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // submission sync with team members
     private submissionChange = new Subject<ModelingSubmission>();
     submissionObservable = this.submissionChange.asObservable();
-    submissionPatchObservable = new Subject<ModelingSubmissionPatch>();
+    submissionPatchObservable = new Subject<SubmissionPatch>();
 
     // private modelingEditorInitialized = new ReplaySubject<void>();
     resizeOptions = { verticalResize: true };
@@ -341,7 +341,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      */
     onModelPatch(patch: Patch) {
         if (this.modelingExercise.teamMode) {
-            const submissionPatch = new ModelingSubmissionPatch(patch);
+            const submissionPatch = new SubmissionPatch(patch);
             submissionPatch.participation = this.participation;
             if (submissionPatch.participation?.exercise) {
                 submissionPatch.participation.exercise.studentParticipations = [];
@@ -484,7 +484,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * patches from the server. Updates the modeling editor with the received patch.
      * @param submissionPatch
      */
-    onReceiveSubmissionPatchFromTeam(submissionPatch: ModelingSubmissionPatch) {
+    onReceiveSubmissionPatchFromTeam(submissionPatch: SubmissionPatch) {
         this.modelingEditor.importPatch(submissionPatch.patch);
     }
 

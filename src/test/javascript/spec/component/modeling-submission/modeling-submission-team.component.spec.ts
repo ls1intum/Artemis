@@ -44,7 +44,7 @@ import { HttpResponse } from '@angular/common/http';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseMode } from 'app/entities/exercise.model';
-import { ModelingSubmissionPatch } from 'app/entities/modeling-submission-patch.model';
+import { SubmissionPatch } from 'app/entities/submission-patch.model';
 
 describe('ModelingSubmissionComponent', () => {
     // needed to make sure ace is defined
@@ -142,7 +142,6 @@ describe('ModelingSubmissionComponent', () => {
 
         // We have got it?
         expect(receiverMock).toHaveBeenCalled();
-        expect(receiverMock.mock.lastCall[0].id).toBeDefined();
         expect(receiverMock.mock.lastCall[0].patch[0].path).toBe('/test');
     });
 
@@ -155,7 +154,7 @@ describe('ModelingSubmissionComponent', () => {
         comp.ngOnInit();
 
         const editorImportSpy = jest.spyOn(comp.modelingEditor, 'importPatch');
-        const submissionPatch = new ModelingSubmissionPatch([
+        const submissionPatch = new SubmissionPatch([
             {
                 op: 'replace',
                 path: '/elements/1/name',
