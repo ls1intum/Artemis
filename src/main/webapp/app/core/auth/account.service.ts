@@ -49,7 +49,7 @@ export class AccountService implements IAccountService {
         private profileService: ProfileService,
     ) {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken!;
+            this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken ?? false;
         });
     }
 
