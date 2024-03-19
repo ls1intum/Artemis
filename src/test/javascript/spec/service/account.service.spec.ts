@@ -14,6 +14,9 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Team } from 'app/entities/team.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
+import { HttpResponse } from '@angular/common/http';
 
 describe('AccountService', () => {
     let accountService: AccountService;
@@ -41,12 +44,22 @@ describe('AccountService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+            ],
         });
         httpService = new MockHttpService();
         translateService = TestBed.inject(TranslateService);
         // @ts-ignore
-        accountService = new AccountService(translateService, new MockSyncStorage(), httpService, new MockWebsocketService(), new MockFeatureToggleService());
+        accountService = new AccountService(
+            translateService,
+            new MockSyncStorage(),
+            httpService,
+            new MockWebsocketService(),
+            new MockFeatureToggleService(),
+            new MockProfileService(),
+        );
         getStub = jest.spyOn(httpService, 'get');
         postStub = jest.spyOn(httpService, 'post');
     });
@@ -519,6 +532,41 @@ describe('AccountService', () => {
 
             expect(accountService.getAndClearPrefilledUsername()).toBe('test');
             expect(accountService.getAndClearPrefilledUsername()).toBeUndefined();
+        });
+    });
+
+    describe('test token related user retrieval logic', () => {
+        let fetchStub;
+
+        beforeEach(() => {
+            fetchStub = jest.spyOn(accountService, 'fetch').mockReturnValue(of(new HttpResponse(user)));
+        });
+
+        it('should retrieve user if vcs token is missing', () => {
+            accountService['versionControlAccessTokenRequired'] = true;
+            user.vcsAccessToken = undefined;
+            accountService.userIdentity = user;
+
+            accountService.identity();
+            expect(fetchStub).toHaveBeenCalledOnce();
+        });
+
+        it('should not retrieve user if token is missing but not required', () => {
+            accountService['versionControlAccessTokenRequired'] = false;
+            user.vcsAccessToken = undefined;
+            accountService.userIdentity = user;
+
+            accountService.identity();
+            expect(fetchStub).not.toHaveBeenCalled();
+        });
+
+        it('should not retrieve user if token is present', () => {
+            accountService['versionControlAccessTokenRequired'] = true;
+            user.vcsAccessToken = 'iAmAToken';
+            accountService.userIdentity = user;
+
+            accountService.identity();
+            expect(fetchStub).not.toHaveBeenCalled();
         });
     });
 });
