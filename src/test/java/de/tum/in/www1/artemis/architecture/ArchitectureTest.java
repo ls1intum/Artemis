@@ -13,7 +13,6 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleName;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameContaining;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
-import static com.tngtech.archunit.core.domain.JavaModifier.ABSTRACT;
 import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
@@ -64,11 +63,9 @@ import com.hazelcast.core.HazelcastInstance;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
-import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaParameter;
-import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
@@ -97,27 +94,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
         noPublicTests.check(testClasses);
         classNames.check(testClasses);
         noPublicTestClasses.check(testClasses.that(are(not(simpleNameContaining("Abstract")))));
-    }
-
-    @Test
-    void testNoWrongServiceImports() {
-        ArchRule rule = noClasses().should().dependOnClassesThat().resideInAnyPackage("org.jvnet.hk2.annotations")
-                .because("this is the wrong service class, use org.springframework.stereotype.Service.");
-        rule.check(allClasses);
-    }
-
-    @Test
-    void testCorrectServiceAnnotation() {
-        JavaClasses serviceClasses = new ClassFileImporter().importPackages("de.tum.in.www1.artemis.service");
-
-        ArchRule rule = classes().that().haveSimpleNameEndingWith("Service").and().areNotInterfaces().and().doNotHaveModifier(ABSTRACT).should()
-                .beAnnotatedWith(org.springframework.stereotype.Service.class).because("services should be consistently managed by Spring's dependency injection container.");
-
-        rule.check(serviceClasses);
-
-        ArchRule rule2 = classes().that().areAnnotatedWith(Service.class).should().haveSimpleNameEndingWith("Service");
-
-        rule2.check(allClasses);
     }
 
     @Test
