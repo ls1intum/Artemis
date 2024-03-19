@@ -8,11 +8,11 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 @Component({
-    selector: 'jhi-in-app-sidebar-card-item',
-    templateUrl: './in-app-sidebar-card-item.component.html',
-    styleUrls: ['./in-app-sidebar-card-item.component.scss'],
+    selector: 'jhi-sidebar-card-item',
+    templateUrl: './sidebar-card-item.component.html',
+    styleUrls: ['./sidebar-card-item.component.scss'],
 })
-export class InAppSidebarCardItemComponent implements OnInit {
+export class SidebarCardItemComponent implements OnInit {
     private readonly initializationStatesToShowProgrammingResult = [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED];
     readonly InitializationState = InitializationState;
     readonly ExerciseType = ExerciseType;

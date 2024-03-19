@@ -10,5 +10,5 @@
     [routerLink]="noExerciseSelected ? './' + entityItem.id : '../' + entityItem.id"
     (click)="storeLastSelectedExercise(entityItem.id)"
 >
-    <jhi-in-app-sidebar-card-item [entityItem]="entityItem" />
+    <jhi-sidebar-card-item [entityItem]="entityItem" />
 </div>

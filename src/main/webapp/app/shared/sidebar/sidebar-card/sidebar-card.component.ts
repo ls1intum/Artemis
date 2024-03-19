@@ -3,11 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DifficultyLevel } from 'app/entities/exercise.model';
 import { Subscription } from 'rxjs';
 @Component({
-    selector: 'jhi-in-app-sidebar-card',
-    templateUrl: './in-app-sidebar-card.component.html',
-    styleUrls: ['./in-app-sidebar-card.component.scss'],
+    selector: 'jhi-sidebar-card',
+    templateUrl: './sidebar-card.component.html',
+    styleUrls: ['./sidebar-card.component.scss'],
 })
-export class InAppSidebarCardComponent implements OnChanges {
+export class SidebarCardComponent implements OnChanges {
     DifficultyLevel = DifficultyLevel;
     @Input()
     entityItem?: any;

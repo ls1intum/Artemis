@@ -8,11 +8,11 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProfileService } from '../layouts/profiles/profile.service';
 
 @Component({
-    selector: 'jhi-in-app-sidebar',
-    templateUrl: './in-app-sidebar.component.html',
-    styleUrls: ['./in-app-sidebar.component.scss'],
+    selector: 'jhi-sidebar',
+    templateUrl: './sidebar.component.html',
+    styleUrls: ['./sidebar.component.scss'],
 })
-export class InAppSidebarComponent implements OnDestroy, OnChanges, OnInit {
+export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Input() entityData?: Exercise[];
     @Input() searchFieldEnabled: boolean = true;
     // If true accordions are used

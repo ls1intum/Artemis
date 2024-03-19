@@ -17,7 +17,7 @@
             <hr class="my-0" />
             <div [ngbCollapse]="collapseState[exerciseGroupKey].isCollapsed" class="p-2 bg-body">
                 @for (entityItem of exerciseGroups[exerciseGroupKey].exercises | searchFilter: ['title', 'type'] : searchValue; track entityItem) {
-                    <jhi-in-app-sidebar-card class="pb-1" [entityItem]="entityItem" [routeParams]="routeParams" />
+                    <jhi-sidebar-card class="pb-1" [entityItem]="entityItem" [routeParams]="routeParams" />
                 }
             </div>
             @if (!collapseState[exerciseGroupKey].isCollapsed) {

@@ -28,11 +28,11 @@ const DEFAULT_EXERCISE_COLLAPSE_STATE: ExerciseCollapseState = {
 };
 
 @Component({
-    selector: 'jhi-in-app-sidebar-accordion',
-    templateUrl: './in-app-sidebar-accordion.component.html',
-    styleUrls: ['./in-app-sidebar-accordion.component.scss'],
+    selector: 'jhi-sidebar-accordion',
+    templateUrl: './sidebar-accordion.component.html',
+    styleUrls: ['./sidebar-accordion.component.scss'],
 })
-export class InAppSidebarAccordionComponent implements OnChanges, OnInit {
+export class SidebarAccordionComponent implements OnChanges, OnInit {
     protected readonly Object = Object;
 
     @Input() entityData?: Exercise[];
