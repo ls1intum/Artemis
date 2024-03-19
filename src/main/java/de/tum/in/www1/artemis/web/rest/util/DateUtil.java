@@ -1,12 +1,12 @@
-package de.tum.in.www1.artemis.web.rest.tutorialgroups;
+package de.tum.in.www1.artemis.web.rest.util;
 
 import java.time.*;
 import java.time.format.DateTimeParseException;
 
-public class TutorialGroupDateUtil {
+public class DateUtil {
 
     /*
-     * Note: We can NOT use LocalTime.MIN as the precision is not supported by the database, and thus it will rounded
+     * Note: We can NOT use LocalTime.MIN as the precision is not supported by the database, and thus it will be rounded
      */
     public static final LocalTime START_OF_DAY = LocalTime.of(0, 0, 0);
 
@@ -48,6 +48,26 @@ public class TutorialGroupDateUtil {
 
         try {
             LocalTime.parse(timeString);
+            return true;
+        }
+        catch (DateTimeParseException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if a string follows the ISO 8601 format for dateTime
+     *
+     * @param timeString the string to check
+     * @return true if the string follows the ISO 8601 format for time or if null
+     */
+    public static boolean isIso8601DateTimeString(String timeString) {
+        if (timeString == null) {
+            return true;
+        }
+
+        try {
+            LocalDateTime.parse(timeString);
             return true;
         }
         catch (DateTimeParseException e) {
