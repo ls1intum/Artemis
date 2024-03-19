@@ -1,0 +1,14 @@
+Never gonna [-spot 1] you up
+Never gonna [-spot 2] you down
+Never gonna [-spot 3] around and [-spot 4] you
+Never gonna make you [-spot 5]
+Never gonna say [-spot 6]
+Never gonna tell a lie and hurt you
+
+
+[-option 1] give
+[-option 2] let
+[-option 3] run
+[-option 4] desert
+[-option 5] cry
+[-option 6] goodbye
