@@ -31,7 +31,7 @@
                             class="btn btn-primary d-print-none"
                             [routerLink]="['/course-management', courseId, getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id]"
                         >
-                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.exercise">Affected exercise</span>
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.exercise"></span>
                         </a>
                         <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
                             <button type="button" class="btn btn-primary d-print-none dropdown-toggle-split" ngbDropdownToggle></button>
@@ -40,7 +40,7 @@
                                     ngbDropdownItem
                                     [routerLink]="['/course-management', courseId, getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id, 'plagiarism']"
                                 >
-                                    <span jhiTranslate="artemisApp.plagiarism.plagiarismDetection">Plagiarism Detection</span>
+                                    <span jhiTranslate="artemisApp.plagiarism.plagiarismDetection"></span>
                                 </a>
                             </div>
                         </div>
@@ -69,7 +69,7 @@
                 <div class="verdict-container">
                     <ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" [destroyOnHide]="false" class="nav-tabs">
                         <li [ngbNavItem]="1">
-                            <a ngbNavLink jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism">Plagiarism</a>
+                            <a ngbNavLink jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism"></a>
                             <ng-template ngbNavContent>
                                 <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.plagiarismDescription' | artemisTranslate }}</p>
                                 <div class="form-inline">
@@ -94,7 +94,7 @@
                             </ng-template>
                         </li>
                         <li [ngbNavItem]="2">
-                            <a ngbNavLink jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction">Point Deduction</a>
+                            <a ngbNavLink jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction"></a>
                             <ng-template ngbNavContent>
                                 <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeductionDescription' | artemisTranslate }}</p>
                                 <div class="form-inline">
@@ -124,7 +124,7 @@
                             </ng-template>
                         </li>
                         <li [ngbNavItem]="3">
-                            <a ngbNavLink jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warning">Warning</a>
+                            <a ngbNavLink jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warning"></a>
                             <ng-template ngbNavContent>
                                 <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.warningDescription' | artemisTranslate }}</p>
                                 <div class="form">
@@ -157,17 +157,13 @@
                     @if (!isStudentNotified()) {
                         <div class="disabled-overlay">
                             <fa-icon [icon]="faInfo" [fixedWidth]="true" />
-                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.studentNotNotified">
-                                You must notify the student before determining the verdict.
-                            </span>
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.studentNotNotified"></span>
                         </div>
                     }
                     @if (isStudentNotified() && plagiarismCase.verdict) {
                         <div class="disabled-overlay">
                             <fa-icon [icon]="faCheck" [fixedWidth]="true" />
-                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.alreadyDecided">
-                                An instructor already determined a verdict for this plagiarism case.
-                            </span>
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.alreadyDecided"></span>
                         </div>
                     }
                 </div>
