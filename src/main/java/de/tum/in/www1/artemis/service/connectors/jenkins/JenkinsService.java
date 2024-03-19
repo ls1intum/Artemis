@@ -28,8 +28,10 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
@@ -64,10 +66,15 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final Optional<AeolusTemplateService> aeolusTemplateService;
 
+    private final ProfileService profileService;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public JenkinsService(JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
             @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService,
-            JenkinsInternalUrlService jenkinsInternalUrlService, TestwiseCoverageService testwiseCoverageService, Optional<AeolusTemplateService> aeolusTemplateService) {
+            JenkinsInternalUrlService jenkinsInternalUrlService, TestwiseCoverageService testwiseCoverageService, Optional<AeolusTemplateService> aeolusTemplateService,
+            ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
@@ -75,6 +82,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.aeolusTemplateService = aeolusTemplateService;
+        this.profileService = profileService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     @Override
@@ -114,6 +123,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(exercise);
         if (windfile != null) {
             exercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
+        }
+        if (profileService.isAeolus()) {
+            programmingExerciseRepository.save(exercise);
         }
     }
 
