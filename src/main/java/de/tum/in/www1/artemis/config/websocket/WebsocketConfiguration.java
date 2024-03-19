@@ -310,11 +310,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 final var exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination).orElseThrow();
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
-                Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId); // TODO IMPORTANT: Remove this call once the line below is fixed
                 if (exerciseRepository.isExamExercise(exerciseId)) {
-                    return isUserInstructorOrHigherForExercise(principal, exercise);
-                    // TODO IMPORTANT: Why is this not working?!?
-                    // return authorizationCheckService.isAtLeastInstructorInExercise(login, exerciseId);
+                    Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+                    return authorizationCheckService.isAtLeastInstructorInCourse(login, exercise.getCourseViaExerciseGroupOrCourseMember().getId());
                 }
                 else {
                     // return isUserTAOrHigherForExercise(principal, exercise);
