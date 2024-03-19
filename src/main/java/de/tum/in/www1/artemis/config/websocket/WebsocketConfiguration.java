@@ -307,8 +307,19 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 return isParticipationOwnedByUser(principal, participationId);
             }
             if (isNonPersonalExerciseResultDestination(destination)) {
-                final var exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination);
-                return exerciseId.filter(id -> authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, id)).isPresent();
+                final var exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination).orElseThrow();
+
+                // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
+                Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId); // TODO IMPORTANT: Remove this call once the line below is fixed
+                if (exerciseRepository.isExamExercise(exerciseId)) {
+                    return isUserInstructorOrHigherForExercise(principal, exercise);
+                    // TODO IMPORTANT: Why is this not working?!?
+                    // return authorizationCheckService.isAtLeastInstructorInExercise(login, exerciseId);
+                }
+                else {
+                    // return isUserTAOrHigherForExercise(principal, exercise);
+                    return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, exerciseId);
+                }
             }
 
             var examId = getExamIdFromExamRootDestination(destination);

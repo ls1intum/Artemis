@@ -106,15 +106,12 @@ public class ResultWebsocketService {
      * Returns the exercise id from the destination route
      *
      * @param destination Websocket destination topic from which to extract the exercise id
-     * @return exercise id
+     * @return optional containing the exercise id was found, empty otherwise
      */
     public static Optional<Long> getExerciseIdFromNonPersonalExerciseResultDestination(String destination) {
         Pattern pattern = Pattern.compile("^" + getNonPersonalExerciseResultDestination("(\\d*)"));
         Matcher matcher = pattern.matcher(destination);
-        if (matcher.find()) {
-            return Optional.of(Long.parseLong(matcher.group(1)));
-        }
-        return Optional.empty();
+        return matcher.find() ? Optional.of(Long.parseLong(matcher.group(1))) : Optional.empty();
     }
 
     private static String getNonPersonalExerciseResultDestination(long exerciseId) {
