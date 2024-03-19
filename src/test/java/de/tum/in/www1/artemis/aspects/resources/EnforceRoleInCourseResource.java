@@ -70,31 +70,31 @@ public class EnforceRoleInCourseResource {
     }
 
     @GetMapping("testEnforceRoleInCourseFieldName/{renamedCourseId}")
-    @EnforceRoleInCourse(value = Role.STUDENT, courseIdFieldName = "renamedCourseId")
+    @EnforceRoleInCourse(value = Role.STUDENT, resourceIdFieldName = "renamedCourseId")
     public ResponseEntity<Void> testEnforceRoleInCourseFieldName(@PathVariable long renamedCourseId) {
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("testEnforceAtLeastStudentInCourseFieldName/{renamedCourseId}")
-    @EnforceAtLeastStudentInCourse(courseIdFieldName = "renamedCourseId")
+    @EnforceAtLeastStudentInCourse(resourceIdFieldName = "renamedCourseId")
     public ResponseEntity<Void> testEnforceAtLeastStudentInCourseFieldName(@PathVariable long renamedCourseId) {
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("testEnforceAtLeastTutorInCourseFieldName/{renamedCourseId}")
-    @EnforceAtLeastTutorInCourse(courseIdFieldName = "renamedCourseId")
+    @EnforceAtLeastTutorInCourse(resourceIdFieldName = "renamedCourseId")
     public ResponseEntity<Void> testEnforceAtLeastTutorInCourseFieldName(@PathVariable long renamedCourseId) {
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("testEnforceAtLeastEditorInCourseFieldName/{renamedCourseId}")
-    @EnforceAtLeastEditorInCourse(courseIdFieldName = "renamedCourseId")
+    @EnforceAtLeastEditorInCourse(resourceIdFieldName = "renamedCourseId")
     public ResponseEntity<Void> testEnforceAtLeastEditorInCourseFieldName(@PathVariable long renamedCourseId) {
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("testEnforceAtLeastInstructorInCourseFieldName/{renamedCourseId}")
-    @EnforceAtLeastInstructorInCourse(courseIdFieldName = "renamedCourseId")
+    @EnforceAtLeastInstructorInCourse(resourceIdFieldName = "renamedCourseId")
     public ResponseEntity<Void> testEnforceAtLeastInstructorInCourseFieldName(@PathVariable long renamedCourseId) {
         return ResponseEntity.ok().build();
     }
