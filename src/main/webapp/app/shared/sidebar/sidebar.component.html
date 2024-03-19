@@ -1,4 +1,4 @@
-<div class="d-flex in-app-sidebar rounded-3 px-3 sidebar-width" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
+<div class="d-flex sidebar rounded-3 px-3 sidebar-width" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
     <div class="w-100 bg-module">
         <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
             @if (searchFieldEnabled) {
@@ -11,10 +11,10 @@
             } @else {
                 <div class="scrollable-content my-2" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
                     @if (groupByCategory) {
-                        <jhi-in-app-sidebar-accordion [searchValue]="searchValue" [entityData]="entityData" [routeParams]="routeParams" />
+                        <jhi-sidebar-accordion [searchValue]="searchValue" [entityData]="entityData" [routeParams]="routeParams" />
                     } @else {
                         @for (entityItem of entityData | searchFilter: ['title', 'type'] : searchValue; track entityItem) {
-                            <jhi-in-app-sidebar-card [entityItem]="entityItem" />
+                            <jhi-sidebar-card [entityItem]="entityItem" />
                         }
                     }
                 </div>

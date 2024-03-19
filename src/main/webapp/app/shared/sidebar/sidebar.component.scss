@@ -11,7 +11,7 @@ $footer-height-prod: 142px;
     overflow-y: auto;
 }
 
-.in-app-sidebar {
+.sidebar {
     background-color: var(--module-bg);
     height: calc(100vh - $footer-height-prod - $header-height);
     &.sidebar-height-dev {
