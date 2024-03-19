@@ -110,14 +110,15 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testCorrectServiceAnnotation() {
         JavaClasses serviceClasses = new ClassFileImporter().importPackages("de.tum.in.www1.artemis.service");
 
-        ArchRule rule = classes().that().haveSimpleNameEndingWith("Service").and().areNotInterfaces().and().doNotHaveModifier(ABSTRACT).should()
-                .beAnnotatedWith(org.springframework.stereotype.Service.class).because("services should be consistently managed by Spring's dependency injection container.");
+        classes().that().haveSimpleNameEndingWith("Service").and().areNotInterfaces().and().doNotHaveModifier(ABSTRACT).should()
+                .beAnnotatedWith(org.springframework.stereotype.Service.class).because("services should be consistently managed by Spring's dependency injection container.")
+                .check(serviceClasses);
 
-        rule.check(serviceClasses);
+        classes().that().haveSimpleNameEndingWith("Service").should().notBeAnnotatedWith(Component.class);
 
-        ArchRule rule2 = classes().that().areAnnotatedWith(Service.class).should().haveSimpleNameEndingWith("Service");
+        classes().that().areAnnotatedWith(Service.class).should().haveSimpleNameEndingWith("Service").check(allClasses);
 
-        rule2.check(allClasses);
+        classes().that().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(Component.class).check(allClasses);
     }
 
     @Test
