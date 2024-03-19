@@ -110,11 +110,11 @@ describe('Team Submission Sync Component', () => {
         component.receiveSubmissionPatch.subscribe(receiver);
 
         mockEmitter.next({
-            submissionPatch: { id: 1, patch: [{ op: 'replace', path: '/text', value: 'new text' }] },
-            sender: currentUser,
+            submissionPatch: { patch: [{ op: 'replace', path: '/text', value: 'new text' }] },
+            sender: currentUser.login!,
         });
 
-        expect(receiver).toHaveBeenCalledWith({ id: 1, patch: [{ op: 'replace', path: '/text', value: 'new text' }] });
+        expect(receiver).toHaveBeenCalledWith({ patch: [{ op: 'replace', path: '/text', value: 'new text' }] });
     });
 
     it('should properly send submission patches.', () => {
@@ -126,7 +126,7 @@ describe('Team Submission Sync Component', () => {
         component.ngOnInit();
 
         const expectedTopic = '/topic/participations/3/team/text-submissions/patch';
-        const patch: SubmissionPatch = { id: 1, patch: [{ op: 'replace', path: '/text', value: 'new text' }] };
+        const patch: SubmissionPatch = { patch: [{ op: 'replace', path: '/text', value: 'new text' }] };
         mockEmitter.next(patch);
         expect(sendSpy).toHaveBeenCalledWith(expectedTopic, patch);
     });
