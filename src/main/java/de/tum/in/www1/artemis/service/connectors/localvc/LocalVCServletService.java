@@ -227,6 +227,13 @@ public class LocalVCServletService {
         return userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
     }
 
+    /**
+     * Determines whether a user is allowed to force-push to a certain repository.
+     *
+     * @param request The request object containing all information about the incoming request.
+     * @return true if the user is allowed to force-push to the repository, false otherwise.
+     * @throws LocalVCAuthException If an internal error occurs, e.g. because the LocalVCRepositoryUri could not be created.
+     */
     public boolean isUserAllowedToForcePush(HttpServletRequest request) throws LocalVCAuthException {
         User user = authenticateUser(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER));
 
