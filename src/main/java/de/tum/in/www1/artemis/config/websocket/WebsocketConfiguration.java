@@ -315,7 +315,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     return authorizationCheckService.isAtLeastInstructorInCourse(login, exercise.getCourseViaExerciseGroupOrCourseMember().getId());
                 }
                 else {
-                    // return isUserTAOrHigherForExercise(principal, exercise);
                     return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, exerciseId);
                 }
             }
