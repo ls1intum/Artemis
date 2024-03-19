@@ -547,7 +547,7 @@ describe('AccountService', () => {
             expect(fetchStub).toHaveBeenCalledOnce();
         });
 
-        it('should not retrieve user if token is missing but not required', () => {
+        it('should not retrieve user if vcs token is missing but not required', () => {
             accountService['versionControlAccessTokenRequired'] = false;
             user.vcsAccessToken = undefined;
             accountService.userIdentity = user;
@@ -556,7 +556,7 @@ describe('AccountService', () => {
             expect(fetchStub).not.toHaveBeenCalled();
         });
 
-        it('should not retrieve user if token is present', () => {
+        it('should not retrieve user if vcs token is present', () => {
             accountService['versionControlAccessTokenRequired'] = true;
             user.vcsAccessToken = 'iAmAToken';
             accountService.userIdentity = user;
