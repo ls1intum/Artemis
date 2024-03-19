@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VcsTokenManagementService;
 /**
  * Provides VCS access token services for GitLab via means of personal access tokens.
  */
-@Component
+@Service
 @Profile("gitlab")
 public class GitLabPersonalAccessTokenManagementService extends VcsTokenManagementService {
 

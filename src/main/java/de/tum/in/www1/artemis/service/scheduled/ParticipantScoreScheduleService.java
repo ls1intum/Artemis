@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -137,13 +136,7 @@ public class ParticipantScoreScheduleService {
         scheduledTasks.clear();
     }
 
-    /**
-     * Every minute, query for modified results and schedule a task to update the participant scores.
-     * We schedule all results that were created/updated since the last run of the cron job.
-     * Additionally, we schedule all participant scores that are outdated/invalid.
-     */
-    @Scheduled(cron = "0 * * * * *")
-    protected void scheduleTasks() {
+    public void scheduleTasks() {
         log.debug("Schedule tasks to process...");
         SecurityUtils.setAuthorizationObject();
         if (isRunning.get()) {
