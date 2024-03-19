@@ -421,7 +421,7 @@ public class UserService {
 
     /**
      * Updates the user (and synchronizes its password) and its groups in the connected version control system (e.g. GitLab if available).
-     * Also updates the user groups in the used authentication provider (like {@link JiraAuthenticationProvider}.
+     * Also updates the user groups in the used authentication provider (like {@link JiraAuthenticationProvider}).
      *
      * @param oldUserLogin The username of the user. If the username is updated in the user object, it must be the one before the update in order to find the user in the VCS
      * @param user         The updated user in Artemis (this method assumes that the user including its groups was already saved to the Artemis database)
@@ -795,6 +795,12 @@ public class UserService {
         userRepository.updateUserLanguageKey(userId, languageKey);
     }
 
+    /**
+     * This method first tries to find and then to add each user of the given list to the course
+     *
+     * @param userDtos users to be added to the course
+     * @return a list of not found users
+     */
     public List<StudentDTO> importUsers(List<StudentDTO> userDtos) {
         List<StudentDTO> notFoundUsers = new ArrayList<>();
         for (var userDto : userDtos) {
