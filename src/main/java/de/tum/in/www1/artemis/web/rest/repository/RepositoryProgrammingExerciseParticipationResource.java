@@ -198,10 +198,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return executeAndCheckForExceptions(() -> {
             Repository repository;
             // if the repository type is tests, we need to check out the tests repository
-            if (repositoryType == RepositoryType.TESTS)
+            if (repositoryType == RepositoryType.TESTS) {
                 repository = gitService.checkoutRepositoryAtCommit(programmingExercise.getVcsTestRepositoryUri(), commitId, true);
-            else
+           } else {
                 repository = gitService.checkoutRepositoryAtCommit(getRepositoryUri(participationId), commitId, true);
+                }
             Map<String, String> filesWithContent = super.repositoryService.getFilesWithContent(repository);
             gitService.switchBackToDefaultBranchHead(repository);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
