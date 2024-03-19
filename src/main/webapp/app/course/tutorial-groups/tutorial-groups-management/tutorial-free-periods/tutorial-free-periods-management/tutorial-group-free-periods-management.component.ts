@@ -54,8 +54,30 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
         this.dialogErrorSource.unsubscribe();
     }
 
-    public isInThePast(tutorialGroupFreeDay: TutorialGroupFreePeriod): boolean {
-        return tutorialGroupFreeDay.start!.isBefore(this.getCurrentDate());
+    get freeDays(): TutorialGroupFreePeriod[] {
+        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod));
+    }
+    public static isFreeDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
+        const startIsMidnight: boolean = tutorialGroupFreePeriod.start!.hour() === 0 && tutorialGroupFreePeriod.start!.minute() === 0;
+        const endIsMidnight: boolean = tutorialGroupFreePeriod.end!.hour() === 23 && tutorialGroupFreePeriod.end!.minute() === 59;
+
+        return tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end!, 'day') && startIsMidnight && endIsMidnight;
+    }
+
+    get freePeriods(): TutorialGroupFreePeriod[] {
+        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriod(tutorialGroupFreePeriod));
+    }
+
+    public static isFreePeriod(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
+        return !tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end!, 'day');
+    }
+
+    get freePeriodsWithinDay(): TutorialGroupFreePeriod[] {
+        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(tutorialGroupFreePeriod));
+    }
+
+    public static isFreePeriodWithinDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod) {
+        return tutorialGroupFreePeriod.start!.date() === tutorialGroupFreePeriod.end!.date() && !TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod);
     }
 
     public getCurrentDate(): dayjs.Dayjs {
@@ -90,7 +112,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
             .add(() => this.cdr.detectChanges());
     }
 
-    openCreateFreeDayDialog(event: MouseEvent) {
+    openCreateFreePeriodDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(CreateTutorialGroupFreePeriodComponent, { size: 'lg', scrollable: false, backdrop: 'static', animation: false });
         modalRef.componentInstance.course = this.course;
