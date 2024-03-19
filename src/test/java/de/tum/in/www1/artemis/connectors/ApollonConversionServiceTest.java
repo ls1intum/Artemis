@@ -2,7 +2,11 @@ package de.tum.in.www1.artemis.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
@@ -17,11 +21,11 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.connector.apollon.ApollonRequestMockProvider;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 
-class ApollonConversionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ApollonConversionServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ApollonRequestMockProvider apollonRequestMockProvider;

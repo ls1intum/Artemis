@@ -9,11 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.connector.apollon.ApollonRequestMockProvider;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonHealthIndicator;
 
-class ApollonHealthIndicatorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ApollonHealthIndicatorTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ApollonRequestMockProvider apollonRequestMockProvider;
