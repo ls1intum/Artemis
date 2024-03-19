@@ -40,17 +40,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(EditTutorialGroupFreePeriodComponent);
-                component = fixture.componentInstance;
-                activeModal = TestBed.inject(NgbActiveModal);
-                periodService = TestBed.inject(TutorialGroupFreePeriodService);
-                examplePeriod = generateExampleTutorialGroupFreePeriod({});
-                exampleConfiguration = generateExampleTutorialGroupsConfiguration({});
-                component.course = course;
-                component.tutorialGroupFreePeriod = examplePeriod;
-                component.tutorialGroupsConfiguration = exampleConfiguration;
-                component.initialize();
-                fixture.detectChanges();
+                setUpTestComponent(generateExampleTutorialGroupFreePeriod({}));
             });
     });
 
@@ -62,9 +52,37 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should set form data correctly', () => {
+    it('should set form data correctly for editing free days', () => {
         const formStub: TutorialGroupFreePeriodFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormStubComponent)).componentInstance;
         expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(examplePeriod, 'Europe/Berlin'));
+        expect(formStub.formData).toEqual(component.formData);
+    });
+
+    it('should set form data correctly for editing free periods', () => {
+        const periodToEdit: TutorialGroupFreePeriod = generateExampleTutorialGroupFreePeriod({
+            id: 2,
+            start: dayjs('2021-01-02T00:00:00').tz('UTC'),
+            end: dayjs('2021-01-07T23:59:00').tz('UTC'),
+            reason: 'TestReason',
+        });
+
+        setUpTestComponent(periodToEdit);
+
+        const formStub: TutorialGroupFreePeriodFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormStubComponent)).componentInstance;
+        expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodToEdit, 'Europe/Berlin'));
+        expect(formStub.formData).toEqual(component.formData);
+    });
+
+    it('should set form data correctly for editing free periods within a day', () => {
+        const periodWithinDayToEdit: TutorialGroupFreePeriod = generateExampleTutorialGroupFreePeriod({
+            id: 2,
+            start: dayjs('2021-01-08T12:00:00').tz('UTC'),
+            end: dayjs('2021-01-09T14:00:00').tz('UTC'),
+            reason: 'TestReason',
+        });
+        setUpTestComponent(periodWithinDayToEdit);
+        const formStub: TutorialGroupFreePeriodFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormStubComponent)).componentInstance;
+        expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodWithinDayToEdit, 'Europe/Berlin'));
         expect(formStub.formData).toEqual(component.formData);
     });
 
@@ -85,7 +103,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         const sessionForm: TutorialGroupFreePeriodFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormStubComponent)).componentInstance;
 
         const formData = {
-            date: dayjs('2021-01-01T00:00:00').tz('Europe/Berlin').toDate(),
+            startDate: dayjs('2021-01-01T00:00:00').tz('Europe/Berlin').toDate(),
             reason: 'Changed',
         };
 
@@ -95,4 +113,19 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         expect(updatedStub).toHaveBeenCalledWith(course.id!, exampleConfiguration.id!, examplePeriod.id!, formDataToTutorialGroupFreePeriodDTO(formData));
         expect(closeSpy).toHaveBeenCalledOnce();
     });
+
+    // Helper functions
+    function setUpTestComponent(freePeriod: TutorialGroupFreePeriod) {
+        fixture = TestBed.createComponent(EditTutorialGroupFreePeriodComponent);
+        component = fixture.componentInstance;
+        activeModal = TestBed.inject(NgbActiveModal);
+        periodService = TestBed.inject(TutorialGroupFreePeriodService);
+        examplePeriod = freePeriod;
+        exampleConfiguration = generateExampleTutorialGroupsConfiguration({});
+        component.course = course;
+        component.tutorialGroupFreePeriod = examplePeriod;
+        component.tutorialGroupsConfiguration = exampleConfiguration;
+        component.initialize();
+        fixture.detectChanges();
+    }
 });

@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -109,6 +110,23 @@ public class BuildScriptProvider {
         scriptCache.put(uniqueKey, script);
         log.debug("Caching script for {}", uniqueKey);
         return script;
+    }
+
+    /**
+     * Returns the default build script for the given programming exercise
+     *
+     * @param exercise the programming exercise for which the build script should be provided
+     * @return the script for the given programming exercise
+     */
+    public String getScriptFor(ProgrammingExercise exercise) {
+        try {
+            return getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
+                    exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
+        }
+        catch (IOException e) {
+            log.error("Failed to provide build script for programming exercise " + exercise.getId(), e);
+        }
+        return null;
     }
 
     /**
