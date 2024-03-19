@@ -5,11 +5,9 @@ import static de.tum.in.www1.artemis.web.rest.util.DateUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -17,8 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
@@ -30,6 +26,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupFreePeriodService;
+import de.tum.in.www1.artemis.web.rest.dto.TutorialGroupFreePeriodDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Profile(PROFILE_CORE)
@@ -246,15 +243,5 @@ public class TutorialGroupFreePeriodResource {
         if (tutorialGroupFreePeriod.getReason() != null) {
             tutorialGroupFreePeriod.setReason(tutorialGroupFreePeriod.getReason().trim());
         }
-    }
-
-    /**
-     * Used because we want to interpret the date in the time zone of the tutorial groups configuration
-     *
-     * @param startDate
-     * @param endDate
-     * @param reason
-     */
-    public record TutorialGroupFreePeriodDTO(@NotNull LocalDateTime startDate, @NotNull LocalDateTime endDate, @JsonInclude(JsonInclude.Include.NON_NULL) String reason) {
     }
 }

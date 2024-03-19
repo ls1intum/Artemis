@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.user.UserFactory;
-import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupFreePeriodResource;
+import de.tum.in.www1.artemis.web.rest.dto.TutorialGroupFreePeriodDTO;
 
 class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
@@ -259,8 +259,8 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     void create_overlapsWithSessionAlreadyCancelledDueToFreePeriod_shouldNotUpdateTutorialFreePeriod() throws Exception {
         // given
         this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, FIRST_AUGUST_MONDAY_00_00);
-        TutorialGroupFreePeriodResource.TutorialGroupFreePeriodDTO dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_11_00, "Holiday");
-        TutorialGroupFreePeriodResource.TutorialGroupFreePeriodDTO dto2 = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_11_00, FIRST_AUGUST_MONDAY_13_00, "Holiday");
+        TutorialGroupFreePeriodDTO dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_11_00, "Holiday");
+        TutorialGroupFreePeriodDTO dto2 = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_11_00, FIRST_AUGUST_MONDAY_13_00, "Holiday");
 
         // when
         TutorialGroupFreePeriod createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
@@ -284,12 +284,10 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     void delete_cancelledSessionStillOverlapsWithAnotherFreePeriod_shouldNotActivateSession() throws Exception {
         // given
         TutorialGroupSession firstMondayOfAugustSession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, FIRST_AUGUST_MONDAY_00_00);
-        TutorialGroupFreePeriodResource.TutorialGroupFreePeriodDTO dto = createTutorialGroupFreePeriodDTO(
-                FIRST_AUGUST_MONDAY_10_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(), FIRST_AUGUST_MONDAY_11_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(),
-                "Holiday");
-        TutorialGroupFreePeriodResource.TutorialGroupFreePeriodDTO dto2 = createTutorialGroupFreePeriodDTO(
-                FIRST_AUGUST_MONDAY_11_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(), FIRST_AUGUST_MONDAY_13_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(),
-                "Holiday");
+        TutorialGroupFreePeriodDTO dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_10_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(),
+                FIRST_AUGUST_MONDAY_11_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(), "Holiday");
+        TutorialGroupFreePeriodDTO dto2 = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_11_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(),
+                FIRST_AUGUST_MONDAY_13_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(), "Holiday");
 
         TutorialGroupFreePeriod createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
         TutorialGroupFreePeriod createdPeriod2 = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto2, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
@@ -438,18 +436,18 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
     }
 
-    private TutorialGroupFreePeriodResource.TutorialGroupFreePeriodDTO createTutorialGroupFreePeriodDTO(LocalDateTime startDate, LocalDateTime endDate, String reason) {
-        return new TutorialGroupFreePeriodResource.TutorialGroupFreePeriodDTO(startDate, endDate, reason);
+    private TutorialGroupFreePeriodDTO createTutorialGroupFreePeriodDTO(LocalDateTime startDate, LocalDateTime endDate, String reason) {
+        return new TutorialGroupFreePeriodDTO(startDate, endDate, reason);
     }
 
     private void assertTutorialGroupFreePeriodProperties(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
         assertThat(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getId()).isEqualTo(exampleConfigurationId);
     }
 
-    private void assertTutorialGroupFreePeriodCreatedCorrectlyFromDTO(TutorialGroupFreePeriod freePeriod, TutorialGroupFreePeriodResource.TutorialGroupFreePeriodDTO dto) {
-        assertThat(freePeriod.getStart()).isEqualTo(ZonedDateTime.of(dto.startDate().toLocalDate(), dto.startDate().toLocalTime(), ZoneId.of(exampleTimeZone)));
-        assertThat(freePeriod.getEnd()).isEqualTo(ZonedDateTime.of(dto.endDate().toLocalDate(), dto.endDate().toLocalTime(), ZoneId.of(exampleTimeZone)));
-        assertThat(freePeriod.getReason()).isEqualTo(dto.reason());
+    private void assertTutorialGroupFreePeriodCreatedCorrectlyFromDTO(TutorialGroupFreePeriod freePeriod, TutorialGroupFreePeriodDTO dto) {
+        assertThat(freePeriod.getStart()).isEqualTo(ZonedDateTime.of(dto.getStartDate().toLocalDate(), dto.getStartDate().toLocalTime(), ZoneId.of(exampleTimeZone)));
+        assertThat(freePeriod.getEnd()).isEqualTo(ZonedDateTime.of(dto.getEndDate().toLocalDate(), dto.getEndDate().toLocalTime(), ZoneId.of(exampleTimeZone)));
+        assertThat(freePeriod.getReason()).isEqualTo(dto.getReason());
     }
 
 }
