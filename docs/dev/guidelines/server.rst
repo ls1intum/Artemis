@@ -138,22 +138,32 @@ Additional notes on the controller methods:
 
 .. _server-guideline-dto-usage:
 
-12. Use DTOs for data transfer
-==============================
+12. Use DTOs for Efficient Data Transfer
+========================================
 
-Use data transfer objects (DTOs) to send data from the server to the client, i.e. responses of RestControllers and WebSocket messages.
+Purpose of DTOs
+---------------
 
-Definition and Characteristics of DTOs:
+Data Transfer Objects (DTOs) are pivotal in the efficient transfer of data from the server to the client, specifically for the responses from RestControllers and messages via WebSocket. These objects are designed to streamline the data exchange process by ensuring data is immutable, relevant, and precisely tailored to the needs of the client application.
 
-1. Java Records: DTOs are implemented as Java records. Records do not support inheritance, so duplication for DTOs is ok.
-2. No Entity Objects: DTOs must not contain entity objects, but only primitive types (or the corresponding wrapper classes), enums or other DTOs.
-3. Minimal Data: DTOs should only include the minimum amount of data required by the client application. Avoid adding any unnecessary or redundant information.
-4. Single Responsibility: Keep DTOs focused on specific tasks and data subsets to maintain a clear and concise data representation. Avoid using a single DTO for multiple payloads unless the data transferred is exactly the same. Create separate records for new or updated payloads.
-5. Avoid Adding Methods: Refrain from adding methods to DTOs. They should only serve as simple data containers without any business logic.
+Guidelines for Implementing DTOs
+--------------------------------
 
-Not utilizing DTOs can result in accidentally sending excessive data to clients, leading to unnecessary load on the underlying systems.
-In the worst-case scenario, this might lead to the inadvertent exposure of sensitive data.
-For instance, in a direct message chat, without employing DTOs, the following amount of information is transmitted via WebSocket for just one new message:
+1. **Immutable Java Records**: Implement DTOs as Java records to guarantee immutability. While Java records preclude inheritance, resulting in potential duplication, this is considered acceptable in the context of DTOs to ensure data integrity and simplicity.
+
+2. **Primitive data types and composition**: DTOs should strictly encapsulate primitive data types, their corresponding wrapper classes, enums, or compositions of other DTOs. This exclusion of entity objects from DTOs ensures that data remains decoupled from the database entities, facilitating a cleaner and more secure data transfer mechanism.
+
+3. **Minimum necessary data**: Adhere to the principle of including only the minimal data required by the client within DTOs. This practice reduces the overall data footprint, enhances performance, and mitigates the risk of inadvertently exposing unnecessary or sensitive data.
+
+4. **Single responsibility principle**: Each DTO should be dedicated to a specific task or subset of data. Avoid the temptation to reuse DTOs across different data payloads unless the data is identical. This approach maintains clarity and purpose within the data transfer objects.
+
+5. **Simplicity over complexity**: Refrain from embedding methods or business logic within DTOs. Their role is to serve as straightforward data carriers without additional functionalities that could complicate their structure or purpose.
+
+Implications of Not Using DTOs
+------------------------------
+
+Neglecting the use of DTOs can lead to the transmission of excessive or irrelevant data to clients. This not only imposes unnecessary strain on network and system resources but also heightens the risk of exposing sensitive information leading to data privacy issues. A typical example is a direct message chat application where, in the absence of DTOs, a single message might inadvertently include excessive metadata, user details, or other unintended information:
+
 
 .. code-block:: json
 
