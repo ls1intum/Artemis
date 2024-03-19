@@ -14,7 +14,6 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Team } from 'app/entities/team.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 import { HttpResponse } from '@angular/common/http';
 
@@ -44,10 +43,7 @@ describe('AccountService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ProfileService, useClass: MockProfileService },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
         httpService = new MockHttpService();
         translateService = TestBed.inject(TranslateService);
