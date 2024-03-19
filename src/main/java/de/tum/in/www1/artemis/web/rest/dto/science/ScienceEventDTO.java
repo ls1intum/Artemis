@@ -4,6 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.science.ScienceEventType;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ScienceEventDTO(ScienceEventType type, Long resourceId) {
 }

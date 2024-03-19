@@ -14,7 +14,7 @@ public class TutorialGroupFreePeriodDTO {
     @NotNull
     public LocalDateTime endDate;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String reason;
 
     public TutorialGroupFreePeriodDTO(LocalDateTime startDate, LocalDateTime endDate, String reason) {
