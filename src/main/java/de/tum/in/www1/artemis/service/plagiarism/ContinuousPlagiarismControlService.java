@@ -4,12 +4,11 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -30,7 +29,6 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
  * Manages continuous plagiarism control.
  */
 @Service
-@Component
 @Profile("scheduling")
 public class ContinuousPlagiarismControlService {
 

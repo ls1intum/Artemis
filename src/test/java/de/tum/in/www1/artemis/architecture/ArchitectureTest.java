@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.architecture;
 
 import static com.tngtech.archunit.base.DescribedPredicate.and;
 import static com.tngtech.archunit.base.DescribedPredicate.equalTo;
@@ -13,6 +13,7 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleName;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameContaining;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
+import static com.tngtech.archunit.core.domain.JavaModifier.ABSTRACT;
 import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
@@ -76,6 +77,7 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.in.www1.artemis.AbstractArchitectureTest;
 import de.tum.in.www1.artemis.config.ApplicationConfiguration;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceRoleInCourse;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceRoleInExercise;
@@ -97,6 +99,28 @@ class ArchitectureTest extends AbstractArchitectureTest {
         noPublicTests.check(testClasses);
         classNames.check(testClasses);
         noPublicTestClasses.check(testClasses.that(are(not(simpleNameContaining("Abstract")))));
+    }
+
+    @Test
+    void testNoWrongServiceImports() {
+        ArchRule rule = noClasses().should().dependOnClassesThat().resideInAnyPackage("org.jvnet.hk2.annotations")
+                .because("this is the wrong service class, use org.springframework.stereotype.Service.");
+        rule.check(allClasses);
+    }
+
+    @Test
+    void testCorrectServiceAnnotation() {
+
+        classes().that().resideInAPackage("de.tum.in.www1.artemis.service..").and().haveSimpleNameEndingWith("Service").and().areNotInterfaces().and().doNotHaveModifier(ABSTRACT)
+                .should().beAnnotatedWith(org.springframework.stereotype.Service.class)
+                .because("services should be consistently managed by Spring's dependency injection container.").check(allClasses);
+
+        classes().that().haveSimpleNameEndingWith("Service").should().notBeAnnotatedWith(Component.class).check(allClasses);
+        classes().that().haveSimpleNameEndingWith("Service").should().notBeAnnotatedWith(RestController.class).check(allClasses);
+
+        classes().that().areAnnotatedWith(Service.class).should().haveSimpleNameEndingWith("Service").check(allClasses);
+        classes().that().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(Component.class).check(allClasses);
+        classes().that().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(RestController.class).check(allClasses);
     }
 
     @Test

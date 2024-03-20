@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.BuildStatus;
@@ -42,7 +42,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     private ParticipationUtilService participationUtilService;
 
     @Autowired
-    private BuildScriptProvider buildScriptProvider;
+    private BuildScriptProviderService buildScriptProviderService;
 
     @Autowired
     private AeolusTemplateService aeolusTemplateService;
@@ -71,7 +71,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         exercise.setBuildScript(script);
         exercise.setBuildPlanConfiguration(null);
         continuousIntegrationService.recreateBuildPlansForExercise(exercise);
-        script = buildScriptProvider.getScriptFor(exercise.getProgrammingLanguage(), Optional.of(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
+        script = buildScriptProviderService.getScriptFor(exercise.getProgrammingLanguage(), Optional.of(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
                 exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
         assertThat(exercise.getBuildPlanConfiguration()).isEqualTo(new Gson().toJson(windfile));
@@ -82,14 +82,14 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Test
     void testGetScriptForWithoutCache() {
-        ReflectionTestUtils.setField(buildScriptProvider, "scriptCache", new ConcurrentHashMap<>());
+        ReflectionTestUtils.setField(buildScriptProviderService, "scriptCache", new ConcurrentHashMap<>());
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
         programmingExercise.setProjectType(null);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setSequentialTestRuns(false);
         programmingExercise.setTestwiseCoverageEnabled(false);
-        String script = buildScriptProvider.getScriptFor(programmingExercise);
+        String script = buildScriptProviderService.getScriptFor(programmingExercise);
         assertThat(script).isNotNull();
     }
 

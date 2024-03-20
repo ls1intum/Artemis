@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
-import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 
 /**
  * Service for generating build scripts for programming exercises using Aeolus
@@ -25,14 +25,14 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
     /**
      * Instantiates a new build script generation service.
      *
-     * @param buildScriptProvider    the build script provider
-     * @param aeolusBuildPlanService the aeolus build plan service
-     * @param aeolusTemplateService  the aeolus template service
-     * @param profileService         the profile service
+     * @param buildScriptProviderService the build script provider
+     * @param aeolusBuildPlanService     the aeolus build plan service
+     * @param aeolusTemplateService      the aeolus template service
+     * @param profileService             the profile service
      */
-    public AeolusBuildScriptGenerationService(BuildScriptProvider buildScriptProvider, AeolusBuildPlanService aeolusBuildPlanService, AeolusTemplateService aeolusTemplateService,
-            ProfileService profileService) {
-        super(buildScriptProvider);
+    public AeolusBuildScriptGenerationService(BuildScriptProviderService buildScriptProviderService, AeolusBuildPlanService aeolusBuildPlanService,
+            AeolusTemplateService aeolusTemplateService, ProfileService profileService) {
+        super(buildScriptProviderService);
         this.aeolusBuildPlanService = aeolusBuildPlanService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.profileService = profileService;
