@@ -297,7 +297,7 @@ public class BuildLogEntryService {
 
         StringBuilder logsStringBuilder = new StringBuilder();
         for (BuildLogEntry buildLogEntry : buildLogEntries) {
-            logsStringBuilder.append(buildLogEntry.getTime()).append("\n").append(buildLogEntry.getLog());
+            logsStringBuilder.append(buildLogEntry.getTime()).append("\t").append(buildLogEntry.getLog());
         }
 
         try {
