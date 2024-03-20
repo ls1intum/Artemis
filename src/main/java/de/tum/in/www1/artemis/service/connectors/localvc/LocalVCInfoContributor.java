@@ -24,5 +24,8 @@ public class LocalVCInfoContributor implements InfoContributor {
 
         // Store name of the version control system
         builder.withDetail(Constants.VERSION_CONTROL_NAME, "Local VC");
+
+        // Show the access token in case it is available in the clone URL
+        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, true);
     }
 }

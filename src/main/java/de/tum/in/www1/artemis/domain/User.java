@@ -142,6 +142,23 @@ public class User extends AbstractAuditingEntity implements Participant {
     private ZonedDateTime vcsAccessTokenExpiryDate = null;
 
     /**
+     * The actual full public ssh key of a user used to authenticate git clone and git push operations if available
+     */
+    @Nullable
+    @JsonIgnore
+    @Column(name = "ssh_public_key")
+    private String sshPublicKey = null;
+
+    /**
+     * A hash of the public ssh key for fast comparison in the database (with an index)
+     */
+    @Nullable
+    @Size(max = 100)
+    @JsonIgnore
+    @Column(name = "ssh_public_key_hash")
+    private String sshPublicKeyHash = null;
+
+    /**
      * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
      * Workaround: Annotation @Column(name = "`groups`") escapes this word using backticks.
      */

@@ -13,6 +13,7 @@ services:
             - ./nginx/timeouts.conf:/etc/nginx/conf.d/timeouts.conf:ro
             - ./nginx/artemis-nginx.conf:/etc/nginx/conf.d/artemis-nginx.conf:ro
             - ./nginx/artemis-upstream-single-node.conf:/etc/nginx/includes/artemis-upstream.conf:ro
+            - ./nginx/artemis-ssh-upstream-single-node.conf:/etc/nginx/includes/artemis-ssh-upstream.conf:ro
             - ./nginx/artemis-server.conf:/etc/nginx/includes/artemis-server.conf:ro
             - ./nginx/dhparam.pem:/etc/nginx/dhparam.pem:ro
             - ./nginx/nginx_503.html:/usr/share/nginx/html/503.html:ro
@@ -29,10 +30,12 @@ services:
         ports:
             - "80:80"
             - "443:443"
+            - "7921:7921" # Git SSH
         # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "80"
             - "443"
+            - "7921" # Git SSH
         healthcheck:
             test: service nginx status || exit 1
             start_period: 60s

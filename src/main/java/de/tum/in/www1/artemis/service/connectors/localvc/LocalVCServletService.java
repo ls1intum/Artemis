@@ -26,6 +26,8 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
+import com.google.common.base.Strings;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -52,6 +54,7 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
  */
 @Service
 @Profile("localvc")
+// TODO: we should rename this because its used in the context of https and ssh git operations
 public class LocalVCServletService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
@@ -78,10 +81,12 @@ public class LocalVCServletService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final LocalVCService localVCService;
+    private static URL localVCBaseUrl;
 
     @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    public void setLocalVCBaseUrl(URL localVCBaseUrl) {
+        LocalVCServletService.localVCBaseUrl = localVCBaseUrl;
+    }
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
@@ -111,7 +116,6 @@ public class LocalVCServletService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
-        this.localVCService = localVCService;
     }
 
     /**
@@ -220,8 +224,19 @@ public class LocalVCServletService {
         String username = basicAuthCredentials.substring(0, separatorIndex);
         String password = basicAuthCredentials.substring(separatorIndex + 1);
 
+        var user = userRepository.findOneByLogin(username);
+
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, password);
+
+            // Note: we first check if the user has used a vcs access token instead of a password
+
+            if (user.isPresent() && !Strings.isNullOrEmpty(user.get().getVcsAccessToken()) && Objects.equals(user.get().getVcsAccessToken(), password)) {
+                // user is authenticated by using the correct access token
+                return user.get();
+            }
+
+            // if the user does not have an access token or has used a password, we try to authenticate the user with it
 
             // Try to authenticate the user based on the configured options, this can include sending the data to an external system (e.g. LDAP) or using internal authentication.
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
@@ -232,7 +247,7 @@ public class LocalVCServletService {
         }
 
         // Check that the user exists.
-        return userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
+        return user.orElseThrow(LocalVCAuthException::new);
     }
 
     private String checkAuthorizationHeader(String authorizationHeader) throws LocalVCAuthException {
@@ -250,7 +265,7 @@ public class LocalVCServletService {
         return new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
     }
 
-    private void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType, boolean isPracticeRepository)
+    public void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType, boolean isPracticeRepository)
             throws LocalVCAuthException, LocalVCForbiddenException {
 
         if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString()) || auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
@@ -378,7 +393,7 @@ public class LocalVCServletService {
         return exercise;
     }
 
-    private LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
+    private static LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
             return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUrl);
         }
@@ -516,9 +531,8 @@ public class LocalVCServletService {
      * @param repository the repository for which the default branch should be determined.
      * @return the name of the default branch.
      */
-    public String getDefaultBranchOfRepository(Repository repository) {
+    public static String getDefaultBranchOfRepository(Repository repository) {
         Path repositoryFolderPath = repository.getDirectory().toPath();
-        LocalVCRepositoryUri localVCRepositoryUri = getLocalVCRepositoryUri(repositoryFolderPath);
-        return localVCService.getDefaultBranchOfRepository(localVCRepositoryUri);
+        return LocalVCService.getDefaultBranchOfRepository(repositoryFolderPath.toString());
     }
 }
