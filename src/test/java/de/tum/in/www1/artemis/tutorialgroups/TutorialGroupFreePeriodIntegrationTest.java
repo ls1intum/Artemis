@@ -445,9 +445,9 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     }
 
     private void assertTutorialGroupFreePeriodCreatedCorrectlyFromDTO(TutorialGroupFreePeriod freePeriod, TutorialGroupFreePeriodDTO dto) {
-        assertThat(freePeriod.getStart()).isEqualTo(ZonedDateTime.of(dto.getStartDate().toLocalDate(), dto.getStartDate().toLocalTime(), ZoneId.of(exampleTimeZone)));
-        assertThat(freePeriod.getEnd()).isEqualTo(ZonedDateTime.of(dto.getEndDate().toLocalDate(), dto.getEndDate().toLocalTime(), ZoneId.of(exampleTimeZone)));
-        assertThat(freePeriod.getReason()).isEqualTo(dto.getReason());
+        assertThat(freePeriod.getStart()).isEqualTo(ZonedDateTime.of(dto.startDate().toLocalDate(), dto.startDate().toLocalTime(), ZoneId.of(exampleTimeZone)));
+        assertThat(freePeriod.getEnd()).isEqualTo(ZonedDateTime.of(dto.endDate().toLocalDate(), dto.endDate().toLocalTime(), ZoneId.of(exampleTimeZone)));
+        assertThat(freePeriod.getReason()).isEqualTo(dto.reason());
     }
 
 }

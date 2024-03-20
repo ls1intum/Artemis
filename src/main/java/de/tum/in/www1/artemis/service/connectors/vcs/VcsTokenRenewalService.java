@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.service.connectors.vcs;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,10 +40,12 @@ public class VcsTokenRenewalService {
     /**
      * The config parameter for enabling VCS access tokens.
      */
-    @Value("${artemis.version-control.version-control-access-token:#{false}}")
-    private Boolean versionControlAccessToken;
+    private final boolean versionControlAccessToken;
 
-    public VcsTokenRenewalService(Optional<VcsTokenManagementService> vcsTokenManagementService, UserRepository userRepository) {
+    // note: we inject the configuration value here to easily test with different ones
+    public VcsTokenRenewalService(@Value("${artemis.version-control.version-control-access-token:#{false}}") boolean versionControlAccessToken,
+            Optional<VcsTokenManagementService> vcsTokenManagementService, UserRepository userRepository) {
+        this.versionControlAccessToken = versionControlAccessToken;
         this.vcsTokenManagementService = vcsTokenManagementService;
         this.userRepository = userRepository;
     }
@@ -53,7 +55,7 @@ public class VcsTokenRenewalService {
      * Additionally, new access tokens for users with missing access tokens are created.
      * This method has no effect if the VCS access token config option is disabled.
      */
-    @Scheduled(cron = "0  0  4 * * SUN") // Every sunday at 4 am
+    @Scheduled(cron = "0 0 4 * * SUN") // Every sunday at 4 am
     public void renewAllVcsAccessTokens() {
         if (versionControlAccessToken && vcsTokenManagementService.isPresent()) {
             log.info("Started scheduled access token renewal");
@@ -64,7 +66,7 @@ public class VcsTokenRenewalService {
     }
 
     private int renewExpiringAccessTokens() {
-        List<User> users = userRepository.getUsersWithAccessTokenExpirationDateBefore(ZonedDateTime.now().plus(MINIMAL_LIFETIME));
+        Set<User> users = userRepository.getUsersWithAccessTokenExpirationDateBefore(ZonedDateTime.now().plus(MINIMAL_LIFETIME));
         for (User user : users) {
             try {
                 vcsTokenManagementService.orElseThrow().renewAccessToken(user);
@@ -77,7 +79,7 @@ public class VcsTokenRenewalService {
     }
 
     private int createMissingAccessTokens() {
-        List<User> users = userRepository.getUsersWithAccessTokenNull();
+        Set<User> users = userRepository.getUsersWithAccessTokenNull();
         for (User user : users) {
             try {
                 vcsTokenManagementService.orElseThrow().createAccessToken(user);

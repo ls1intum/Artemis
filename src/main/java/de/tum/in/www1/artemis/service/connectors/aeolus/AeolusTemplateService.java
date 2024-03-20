@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
-import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 
 /**
  * Handles the request to {@link de.tum.in.www1.artemis.web.rest.AeolusTemplateResource} and Artemis internal
@@ -41,13 +41,13 @@ public class AeolusTemplateService {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    private final BuildScriptProvider buildScriptProvider;
+    private final BuildScriptProviderService buildScriptProviderService;
 
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
-            BuildScriptProvider buildScriptProvider) {
+            BuildScriptProviderService buildScriptProviderService) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.resourceLoaderService = resourceLoaderService;
-        this.buildScriptProvider = buildScriptProvider;
+        this.buildScriptProviderService = buildScriptProviderService;
         // load all scripts into the cache
         cacheOnBoot();
     }
@@ -124,12 +124,12 @@ public class AeolusTemplateService {
             // to be backwards compatible, we assume that java exercises without project type are plain maven projects
             projectType = Optional.of(ProjectType.PLAIN_MAVEN);
         }
-        String templateFileName = buildScriptProvider.buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "yaml");
+        String templateFileName = buildScriptProviderService.buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "yaml");
         String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
         if (templateCache.containsKey(uniqueKey)) {
             return templateCache.get(uniqueKey);
         }
-        String scriptCache = buildScriptProvider.getCachedScript(uniqueKey);
+        String scriptCache = buildScriptProviderService.getCachedScript(uniqueKey);
         if (scriptCache == null) {
             log.error("No windfile found for key {}", uniqueKey);
             return null;
