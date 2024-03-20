@@ -172,6 +172,30 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
+        path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/commit-history',
+        component: CommitHistoryComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [LocalVCGuard],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/commit-history/:commitHash',
+        component: CommitDetailsViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [LocalVCGuard],
+    },
+    {
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository',
         component: RepositoryViewComponent,
         data: {
