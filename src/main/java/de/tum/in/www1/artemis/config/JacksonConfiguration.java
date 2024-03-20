@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.zalando.problem.jackson.ProblemModule;
 import org.zalando.problem.violations.ConstraintViolationProblemModule;
 
 import com.fasterxml.jackson.datatype.hibernate6.Hibernate6Module;
@@ -44,6 +45,11 @@ public class JacksonConfiguration {
     @Bean
     public ConstraintViolationProblemModule constraintViolationProblemModule() {
         return new ConstraintViolationProblemModule();
+    }
+
+    @Bean
+    public ProblemModule problemModule() {
+        return new ProblemModule().withStackTraces(false);
     }
 
 }

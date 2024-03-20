@@ -376,6 +376,7 @@ dependencies {
     implementation "com.h2database:h2:2.2.224"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
+    implementation "org.zalando:jackson-datatype-problem:0.27.1"
     implementation "com.ibm.icu:icu4j:74.2"
     implementation "com.github.seancfoley:ipaddress:5.5.0"
     implementation "org.apache.maven:maven-model:3.9.6"

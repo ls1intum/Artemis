@@ -52,7 +52,7 @@ import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
 @Profile(PROFILE_CORE)
 public class SecurityConfiguration {
 
-    private final Logger log = LoggerFactory.getLogger(SecurityConfiguration.class);
+    private final static Logger log = LoggerFactory.getLogger(SecurityConfiguration.class);
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
