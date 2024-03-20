@@ -198,7 +198,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return executeAndCheckForExceptions(() -> {
             Repository repository;
             // if the repository type is tests, we need to check out the tests repository
-            if (repositoryType == RepositoryType.TESTS) {
+            if (repositoryType.equals(RepositoryType.TESTS)) {
                 repository = gitService.checkoutRepositoryAtCommit(programmingExercise.getVcsTestRepositoryUri(), commitId, true);
             }
             else {
