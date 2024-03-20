@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.websocket.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -11,5 +12,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
  * @param participation the participation the patch is related to
  * @param patch         the patch that is to be applied to the submission
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SubmissionPatch(Participation participation, JsonNode patch) {
 }
