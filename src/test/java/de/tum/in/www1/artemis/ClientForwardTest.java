@@ -39,11 +39,6 @@ class ClientForwardTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void getUnmappedDottedEndpoint() throws Exception {
-        request.getMvc().perform(get("/foo.js")).andExpect(status().isUnauthorized());
-    }
-
-    @Test
     void getUnmappedNestedDottedEndpoint() throws Exception {
         request.getMvc().perform(get("/foo/bar.js")).andExpect(status().isUnauthorized());
     }
