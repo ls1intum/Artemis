@@ -199,6 +199,19 @@ describe('BuildQueueService', () => {
         req.flush({}); // Flush an empty response to indicate success
     });
 
+    it('should cancel all running build jobs for a specific agent', () => {
+        const agentName = 'agent1';
+
+        service.cancelAllRunningBuildJobsForAgent(agentName).subscribe(() => {
+            // Ensure that the cancellation was successful
+            expect(true).toBeTrue();
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-running-jobs-for-agent?agentName=${agentName}`);
+        expect(req.request.method).toBe('DELETE');
+        req.flush({}); // Flush an empty response to indicate success
+    });
+
     it('should handle errors when cancelling a specific build job', fakeAsync(() => {
         const buildJobId = '1';
 
@@ -375,6 +388,39 @@ describe('BuildQueueService', () => {
         });
 
         const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-all-queued-jobs`);
+        expect(req.request.method).toBe('DELETE');
+
+        // Simulate an error response from the server
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        // Verify that an error occurred during the subscription
+        expect(errorOccurred).toBeTrue();
+    }));
+
+    it('should handle errors when cancelling all running build jobs for a specific agent', fakeAsync(() => {
+        const agentName = 'agent1';
+
+        let errorOccurred = false;
+
+        service.cancelAllRunningBuildJobsForAgent(agentName).subscribe({
+            error: (err) => {
+                // Ensure that the error is handled properly
+                expect(err.message).toBe(
+                    'Failed to cancel all running build jobs for agent ' +
+                        agentName +
+                        '\nHttp failure response for ' +
+                        service.adminResourceUrl +
+                        '/cancel-all-running-jobs-for-agent?agentName=' +
+                        agentName +
+                        ': 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-running-jobs-for-agent?agentName=${agentName}`);
         expect(req.request.method).toBe('DELETE');
 
         // Simulate an error response from the server
