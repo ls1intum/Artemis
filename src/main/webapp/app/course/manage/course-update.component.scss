@@ -10,7 +10,7 @@
 
     .no-image {
         background: #dddddd url('../../../content/images/image-placeholder.png') no-repeat center;
-        background-size: 60%;
+        background-size: 100%;
         border-radius: 50%;
         height: 100px;
         width: 100px;
@@ -34,10 +34,36 @@
     }
 }
 
-image-cropper {
-    padding: 0 0 10px 0 !important;
-}
-
 .delete-course-icon button {
     width: 100%;
+}
+
+.image-with-icons {
+    position: relative;
+}
+
+.icon-button-wrapper {
+    position: absolute;
+    margin-left: 8px;
+    background-color: lightgrey;
+    border-radius: 50%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.icon-button-1 {
+    top: 70px;
+    right: 85px;
+    color: red;
+    border: 1px solid red;
+}
+
+.icon-button-2 {
+    top: 70px;
+    right: 25px;
+    border: 1px solid black;
 }

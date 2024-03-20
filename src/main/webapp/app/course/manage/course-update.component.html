@@ -4,7 +4,17 @@
             <div class="container headline">
                 <input type="file" #fileInput style="display: none" (change)="setCourseImage($event)" />
                 @if (croppedImage) {
-                    <jhi-secured-image (click)="triggerFileInput()" [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
+                    <div class="image-with-icons">
+                        <jhi-secured-image class="secured-image" [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
+
+                        <button type="submit" class="btn icon-button-wrapper icon-button-1" (click)="deleteCourseIcon()">
+                            <fa-icon [icon]="faTrash" />
+                        </button>
+
+                        <button type="button" class="btn icon-button-wrapper icon-button-2" (click)="triggerFileInput()">
+                            <fa-icon [icon]="faPen" />
+                        </button>
+                    </div>
                 }
                 @if (!croppedImage) {
                     <div class="no-image" (click)="triggerFileInput()"></div>
@@ -19,14 +29,6 @@
                         @if (course.id) {
                             <div class="d-flex flex-column align-items-start">
                                 <h4 id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel"></h4>
-                            </div>
-                        }
-                        @if (croppedImage && course.courseIcon) {
-                            <div class="mt-2" style="width: auto">
-                                <button id="delete-course-icon" class="btn btn-danger btn-sm" (click)="deleteCourseIcon()">
-                                    <fa-icon [icon]="faTrash" />
-                                    <span jhiTranslate="artemisApp.course.delete.icon">Remove Icon</span>
-                                </button>
                             </div>
                         }
                     </div>
@@ -146,7 +148,7 @@
                             [error]="!isValidDate"
                         />
                         @if (!isValidDate) {
-                            <span class="invalid-feedback"> {{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate }}</span>
+                            <span class="invalid-feedback"> {{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate } }</span>
                         }
                     </div>
                 </div>
