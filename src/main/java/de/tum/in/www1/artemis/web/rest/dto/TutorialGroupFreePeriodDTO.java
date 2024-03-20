@@ -6,44 +6,13 @@ import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-public class TutorialGroupFreePeriodDTO {
-
-    @NotNull
-    public LocalDateTime startDate;
-
-    @NotNull
-    public LocalDateTime endDate;
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String reason;
-
-    public TutorialGroupFreePeriodDTO(LocalDateTime startDate, LocalDateTime endDate, String reason) {
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.reason = reason;
-    }
-
-    public LocalDateTime getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(LocalDateTime startDate) {
-        this.startDate = startDate;
-    }
-
-    public LocalDateTime getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(LocalDateTime endDate) {
-        this.endDate = endDate;
-    }
-
-    public String getReason() {
-        return reason;
-    }
-
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
+/**
+ * Used because we want to interpret the date in the time zone of the tutorial groups configuration
+ *
+ * @param startDate
+ * @param endDate
+ * @param reason
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record TutorialGroupFreePeriodDTO(@NotNull LocalDateTime startDate, @NotNull LocalDateTime endDate, String reason) {
 }

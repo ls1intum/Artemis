@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.localvc;
+package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
@@ -16,8 +16,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
@@ -27,8 +26,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.GitDiffReportParserService;
 
 @Profile(PROFILE_CORE)
-@RestController
-@RequestMapping("api/")
+@Service
 public class CommitHistoryService {
 
     private static final Logger log = LoggerFactory.getLogger(CommitHistoryService.class);
