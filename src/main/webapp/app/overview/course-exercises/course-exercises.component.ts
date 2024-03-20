@@ -7,14 +7,11 @@ import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercis
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { cloneDeep } from 'lodash-es';
-import dayjs from 'dayjs';
-import { ExerciseGroups, SidebarData, TimeGroupCategory } from 'app/types/sidebar';
+import { ExerciseGroups, SidebarData } from 'app/types/sidebar';
+import { CourseOverviewService } from '../course-overview.service';
 
 //Todo einheitlöich machen
-const DEFAULT_EXERCISE_GROUPS: ExerciseGroups = {
+const DEFAULT_UNIT_GROUPS: ExerciseGroups = {
     future: { entityData: [] },
     current: { entityData: [] },
     past: { entityData: [] },
@@ -37,7 +34,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     exerciseForGuidedTour?: Exercise;
 
     exerciseSelected: boolean = true;
-    exerciseGroups: ExerciseGroups = DEFAULT_EXERCISE_GROUPS;
+    exerciseGroups: ExerciseGroups = DEFAULT_UNIT_GROUPS;
     sidebarData: SidebarData;
 
     constructor(
@@ -46,6 +43,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         private guidedTourService: GuidedTourService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private router: Router,
+        private courseOverviewService: CourseOverviewService,
     ) {}
 
     ngOnInit() {
@@ -64,7 +62,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         });
 
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
-        const upcomingExercise = this.getUpcomingExercise();
+        const upcomingExercise = this.courseOverviewService.getUpcomingExercise(this.course?.exercises);
         this.paramSubscription = this.route.params.subscribe((params) => {
             const exerciseId = parseInt(params.exerciseId, 10);
             // If no exercise is selected navigate to the upcoming exercise
@@ -77,8 +75,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     prepareSidebarData() {
-        this.sortedExercises = this.sortEntityData();
-        this.exerciseGroups = this.groupExercisesByDueDate();
+        if (!this.course?.exercises) {
+            return;
+        }
+        this.sortedExercises = this.courseOverviewService.sortExercises(this.course.exercises);
+        this.exerciseGroups = this.courseOverviewService.groupExercisesByDueDate(this.sortedExercises);
         this.updateSidebarData();
     }
 
@@ -90,69 +91,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             groupedData: this.exerciseGroups,
             ungroupedData: this.sortedExercises,
         };
-    }
-
-    private groupExercisesByDueDate(): ExerciseGroups {
-        const groupedExerciseGroups: ExerciseGroups = cloneDeep(DEFAULT_EXERCISE_GROUPS);
-        if (!this.sortedExercises) {
-            return groupedExerciseGroups;
-        }
-
-        for (const exercise of this.sortedExercises) {
-            const exerciseGroup = this.getCorrespondingExerciseGroup(exercise);
-            groupedExerciseGroups[exerciseGroup].entityData.push(exercise);
-        }
-
-        return groupedExerciseGroups;
-    }
-
-    private getCorrespondingExerciseGroup(exercise: Exercise): TimeGroupCategory {
-        if (!exercise.dueDate) {
-            return 'noDueDate';
-        }
-
-        const dueDate = dayjs(exercise.dueDate);
-        const now = dayjs();
-
-        const dueDateIsInThePast = dueDate.isBefore(now);
-        if (dueDateIsInThePast) {
-            return 'past';
-        }
-
-        const dueDateIsWithinNextWeek = dueDate.isBefore(now.add(1, 'week'));
-        if (dueDateIsWithinNextWeek) {
-            return 'current';
-        }
-
-        return 'future';
-    }
-
-    studentParticipation(exercise: Exercise): StudentParticipation | undefined {
-        return exercise.studentParticipations?.length ? exercise.studentParticipations[0] : undefined;
-    }
-
-    sortEntityData(): Exercise[] | undefined {
-        const sortedEntityData = this.course?.exercises?.sort((a, b) => {
-            const dueDateA = getExerciseDueDate(a, this.studentParticipation(a))?.valueOf() ?? 0;
-            const dueDateB = getExerciseDueDate(b, this.studentParticipation(b))?.valueOf() ?? 0;
-
-            if (dueDateB - dueDateA !== 0) {
-                return dueDateB - dueDateA;
-            }
-            // If Due Date is identical or undefined sort by title
-            return a.title && b.title ? a.title.localeCompare(b.title) : 0;
-        });
-
-        return sortedEntityData;
-    }
-
-    getUpcomingExercise(): Exercise | undefined {
-        if (this.course) {
-            const upcomingExercise = this.course.exercises?.reduce((a, b) => {
-                return (a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b;
-            });
-            return upcomingExercise;
-        }
     }
 
     private onCourseLoad() {
