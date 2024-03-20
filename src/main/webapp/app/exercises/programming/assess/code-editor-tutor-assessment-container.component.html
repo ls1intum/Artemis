@@ -4,15 +4,13 @@
             @if (participationCouldNotBeFetched) {
                 <span>
                     <fa-icon [icon]="faTimesCircle" class="text-danger" />
-                    <span jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</span>
+                    <span jhiTranslate="artemisApp.editor.errors.participationNotFound"></span>
                 </span>
             }
             @if (lockLimitReached) {
                 <div>
                     <fa-icon [icon]="faTimesCircle" class="text-danger" />
-                    <span jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached">
-                        You have reached the maximum number of unfinished assessments in this course. Please finish your open assessments before being able to start a new one.
-                    </span>
+                    <span jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"></span>
                 </div>
             }
         </div>
@@ -112,9 +110,7 @@
                         target="_blank"
                         rel="noopener noreferrer"
                         jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"
-                    >
-                        Go to repository
-                    </a>
+                    ></a>
                 }
             </ng-container>
             @if (participation) {
@@ -136,6 +132,7 @@
                     class="card-body markdown-preview instructions-wrapper__content overflow-auto"
                     [exercise]="exercise!"
                     [programmingParticipation]="participation"
+                    [gradingCriteria]="exercise.gradingCriteria"
                 />
             }
         </ng-template>
@@ -157,9 +154,9 @@
     <ng-template #noSubmission>
         @if (!loadingInitialSubmission) {
             <div class="alert alert-warning text-center mt-4" role="alert">
-                <p jhiTranslate="artemisApp.programmingAssessment.notFound">We haven't found any new submission without an assessment, please go back.</p>
+                <p jhiTranslate="artemisApp.programmingAssessment.notFound"></p>
                 <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
                 </a>
             </div>
         }

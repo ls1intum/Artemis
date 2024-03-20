@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.competency.RelationType;
 @Repository
 public interface CompetencyRelationRepository extends JpaRepository<CompetencyRelation, Long> {
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     @Query("""
             DELETE FROM CompetencyRelation relation

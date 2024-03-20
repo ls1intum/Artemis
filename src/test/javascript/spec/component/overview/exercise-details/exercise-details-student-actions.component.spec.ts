@@ -43,6 +43,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let startExerciseStub: jest.SpyInstance;
     let resumeStub: jest.SpyInstance;
     let getProfileInfoSub: jest.SpyInstance;
+    let router: MockRouter;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
     const exercise: Exercise = {
@@ -99,6 +100,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 debugElement = fixture.debugElement;
                 courseExerciseService = debugElement.injector.get(CourseExerciseService);
                 profileService = debugElement.injector.get(ProfileService);
+                router = debugElement.injector.get(Router) as unknown as MockRouter;
 
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
                 getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
@@ -142,6 +144,45 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             expect(startExerciseButton).not.toBeNull();
         }),
     );
+
+    it('should create the correct repository URL for missing exerciseID in URL', () => {
+        // Set up necessary data for the test
+        const courseId = 123; // Example course ID
+        const exerciseId = 456; // Example exercise ID
+        const repositoryUrl = `/courses/${courseId}/exercises`;
+        const expectedRepositoryLink = `/courses/${courseId}/exercises/${exerciseId}`;
+        router.setUrl(repositoryUrl);
+
+        // Assign the courseId and exerciseId to the component's input properties
+        comp.courseId = courseId;
+        comp.exercise = { id: exerciseId } as Exercise;
+
+        // Call the ngOnInit method to initialize the component
+        comp.ngOnInit();
+
+        // Assert that the repositoryLink property is set correctly
+        expect(comp.repositoryLink).toBe(expectedRepositoryLink);
+    });
+
+    it('should create the correct repository URL for exam exercises', () => {
+        // Set up necessary data for the test
+        const courseId = 123; // Example course ID
+        const exerciseId = 456; // Example exercise ID
+        const examId = 789; // Example exam ID
+        const repositoryUrl = `/courses/${courseId}/exams/${examId}`;
+        const expectedRepositoryLink = `/courses/${courseId}/exams/${examId}/exercises/${exerciseId}`;
+        router.setUrl(repositoryUrl);
+
+        // Assign the courseId and exerciseId to the component's input properties
+        comp.courseId = courseId;
+        comp.exercise = { id: exerciseId } as Exercise;
+
+        // Call the ngOnInit method to initialize the component
+        comp.ngOnInit();
+
+        // Assert that the repositoryLink property is set correctly
+        expect(comp.repositoryLink).toBe(expectedRepositoryLink);
+    });
 
     it('should reflect the correct participation state when team exercise was started', fakeAsync(() => {
         const inactivePart = { id: 2, initializationState: InitializationState.UNINITIALIZED } as StudentParticipation;

@@ -29,7 +29,7 @@
                         <span>
                             <span>{{ tutorialGroup.title }} - </span>
                             @if (filteredUsersSize < registeredStudents.length) {
-                                <span>{{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"> out of </span> </span>
+                                <span>{{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"></span> </span>
                             }
                             {{ registeredStudents.length }}
                             <span [jhiTranslate]="'artemisApp.course.students'"></span>

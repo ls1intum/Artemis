@@ -129,6 +129,7 @@ public class ProgrammingExercise extends Exercise {
     private SubmissionPolicy submissionPolicy;
 
     @Nullable
+    @Enumerated(EnumType.ORDINAL)
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
 
