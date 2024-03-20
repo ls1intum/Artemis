@@ -340,6 +340,9 @@ public class ProgrammingExerciseParticipationResource {
     @EnforceAtLeastStudent
     public ModelAndView redirectGetParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @PathVariable long participationId,
             @PathVariable String commitId, @RequestParam RepositoryType repositoryType) {
+        if (repositoryType == null) {
+            throw new BadRequestAlertException("Invalid repository type", ENTITY_NAME, "invalidRepositoryType");
+        }
         ProgrammingExerciseParticipation participation;
         if (repositoryType.equals(RepositoryType.USER)) {
             participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
