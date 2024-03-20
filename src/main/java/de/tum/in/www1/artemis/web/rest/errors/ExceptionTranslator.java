@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.NativeWebRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.socket.sockjs.SockJsMessageDeliveryException;
 import org.zalando.problem.*;
 import org.zalando.problem.spring.web.advice.ProblemHandling;
@@ -181,4 +182,9 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         return create(ex, problem, request);
     }
 
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Problem> handleResourceNotFoundException(NoResourceFoundException ex, NativeWebRequest request) {
+        final var problem = Problem.builder().withStatus(Status.NOT_FOUND).withDetail(ex.getMessage()).build();
+        return create(ex, problem, request);
+    }
 }
