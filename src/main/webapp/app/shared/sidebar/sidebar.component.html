@@ -23,8 +23,10 @@
                             [routeParams]="routeParams"
                         />
                     } @else {
-                        @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem) {
-                            <jhi-sidebar-card [routeParams]="routeParams" [sidebarItem]="sidebarItem" />
+                        @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem; let last = $last) {
+                            <div [ngClass]="{ 'mb-2': !last }">
+                                <jhi-sidebar-card [routeParams]="routeParams" [sidebarItem]="sidebarItem" />
+                            </div>
                         }
                     }
                 </div>

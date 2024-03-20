@@ -10,9 +10,6 @@
     </div>
     <div class="d-flex justify-content-between align-items-baseline small">
         <small class="me-2 text-truncate">
-            @if (sidebarType === 'exercise' && sidebarItem.subtitleLeft !== 'No due date') {
-                <span>{{ 'artemisApp.courseOverview.exerciseList.shortDueDate' | artemisTranslate }}: </span>
-            }
             {{ sidebarItem.subtitleLeft }}
         </small>
         <small class="text-truncate d-inline">
