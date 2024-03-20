@@ -99,7 +99,12 @@ public class BuildJobManagementService {
     public CompletableFuture<LocalCIBuildResult> executeBuildJob(LocalCIBuildJobQueueItem buildJobItem) throws LocalCIException {
 
         // Check if the Docker image is available. If not, pull it.
-        localCIDockerService.pullDockerImage(buildJobItem.buildConfig().dockerImage());
+        try {
+            localCIDockerService.pullDockerImage(buildJobItem.buildConfig().dockerImage());
+        }
+        catch (LocalCIException e) {
+            throw new CompletionException("Could not pull Docker image " + buildJobItem.buildConfig().dockerImage(), e);
+        }
 
         // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
         String containerName = buildContainerPrefix + buildJobItem.participationId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
