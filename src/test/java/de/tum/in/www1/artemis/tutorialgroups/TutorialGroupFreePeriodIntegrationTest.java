@@ -296,7 +296,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId, null);
 
         // when
-        request.delete(getTutorialGroupFreePeriodsPath() + createdPeriod.getId(), HttpStatus.NO_CONTENT);
+        request.delete(getTutorialGroupFreePeriodsPath(createdPeriod.getId()), HttpStatus.NO_CONTENT);
 
         // then
         firstMondayOfAugustSession = tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());

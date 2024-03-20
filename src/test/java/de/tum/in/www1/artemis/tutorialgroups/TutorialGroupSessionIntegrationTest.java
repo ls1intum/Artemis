@@ -213,15 +213,15 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         assertThat(session.getAttendanceCount()).isNull();
 
         // when
-        request.patchWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + 3001, null,
-                TutorialGroupSession.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.patchWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, session.getId()) + "/attendance-count" + "?attendanceCount=" + 3001, null,
+                TutorialGroupSession.class, HttpStatus.BAD_REQUEST);
         // then
         session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
         assertThat(session.getAttendanceCount()).isNull();
 
         // when
-        request.patchWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + -1, null,
-                TutorialGroupSession.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.patchWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, session.getId()) + "/attendance-count" + "?attendanceCount=" + -1, null,
+                TutorialGroupSession.class, HttpStatus.BAD_REQUEST);
         // then
         session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
         assertThat(session.getAttendanceCount()).isNull();
