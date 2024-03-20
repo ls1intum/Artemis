@@ -103,7 +103,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
     const plagiarismCaseInfo = { id: 20, verdict: PlagiarismVerdict.WARNING };
 
-    const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
+    const route = { pathFromRoot: [{ params: 0 }, { params: 1 }], params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
     beforeEach(() => {
         TestBed.configureTestingModule({

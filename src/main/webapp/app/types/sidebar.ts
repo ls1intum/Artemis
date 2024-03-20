@@ -1,36 +1,21 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
+export type SidebarTypes = 'exercise' | 'default';
 
-export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDueDate';
-export type SidebarTypes = 'exercise' | 'lecture' | 'default';
-
-export type ExerciseGroups = Record<TimeGroupCategory, { entityData: Exercise[] }>;
-export type LectureGroups = Record<TimeGroupCategory, { entityData: Lecture[] }>;
-export type DefaultGroups = Record<TimeGroupCategory, { entityData: BaseCardElement[] }>;
+export type AccordionGroups = Record<TimeGroupCategory, { entityData: SidebarCardElement[] }>;
 export type ExerciseCollapseState = Record<TimeGroupCategory, boolean>;
-// TODO
-export type ungroupedDataArrayTypes = Exercise[] | Lecture[] | BaseCardElement[];
 
 export interface SidebarData {
     groupByCategory: boolean;
     sidebarType?: SidebarTypes;
-    groupedData?: GroupTypes;
-    ungroupedData?: ungroupedDataArrayTypes;
+    groupedData?: AccordionGroups;
+    ungroupedData?: SidebarCardElement[];
     storageId?: string;
 }
 
-export interface SidebarAccordionData extends SidebarData {
-    // + groupedData,
-    // accordionHEadings
-    // AccordionCollapseState
-    // CdkAccordion
-}
-
-export type GroupTypes = ExerciseGroups | LectureGroups | DefaultGroups;
-export type CardItemType = 'Exercise' | 'Lecture' | 'Default' | 'Communication';
-
-export interface BaseCardElement {
+export interface SidebarCardElement {
     /**
      * Defines the item's title that will be shown in the card
      */
@@ -44,7 +29,7 @@ export interface BaseCardElement {
     /**
      * Defines the item's id that will be used to search for selected
      */
-    id?: string;
+    id: string | number;
     /**
      * If set to true, the icons for quick actions will be displayed on the top right
      */
@@ -52,9 +37,9 @@ export interface BaseCardElement {
     /**
      * If set to true, a subtitle will be displayed on left side
      */
-    subtileLeft?: string;
+    subtitleLeft?: string;
     /**
-     * If set to true, a subtitle will be displayed on right side
+     * If set to true, a subtitle will be displayed on right side, special case for exercises will be refactored
      */
     subtitleRight?: string;
     /**
@@ -67,25 +52,22 @@ export interface BaseCardElement {
      * the item.
      */
     routerLink?: string;
-}
 
-export interface BaseCardItem {
-    type: CardItemType;
-}
-// wenn groupedByGategory
-
-// CardItemsDefault
-// title
-// showIcons if true, (topright)
-// suntitleLeft (belowTitle)
-// subtileRight
-// routerLink
-// active
-// action
-//
-// Exercise extra ??
-// Exam has extra Card!
-
-export interface ExerciseCardItem extends BaseCardItem {
-    type: 'Exercise';
+    // TODO Extra Exercise Part
+    /**
+     * Set for Exercises
+     */
+    type?: string;
+    /**
+     * Set for Exercises, shows the colored border on the left side
+     */
+    difficulty?: DifficultyLevel;
+    /**
+     * Set for Exercises
+     */
+    studentParticipation?: StudentParticipation;
+    /**
+     * Set for Exercises. Will be removed after refactoring
+     */
+    exercise?: Exercise;
 }

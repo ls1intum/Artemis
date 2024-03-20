@@ -7,15 +7,15 @@ import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercis
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ExerciseGroups, SidebarData } from 'app/types/sidebar';
+import { AccordionGroups, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 
 //Todo einheitlöich machen
-const DEFAULT_UNIT_GROUPS: ExerciseGroups = {
+const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
     current: { entityData: [] },
     past: { entityData: [] },
-    noDueDate: { entityData: [] },
+    noDate: { entityData: [] },
 };
 
 @Component({
@@ -30,12 +30,13 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private courseUpdatesSubscription: Subscription;
 
     course?: Course;
-    sortedExercises?: Exercise[] | undefined;
+    sortedExercises?: Exercise[];
     exerciseForGuidedTour?: Exercise;
 
     exerciseSelected: boolean = true;
-    exerciseGroups: ExerciseGroups = DEFAULT_UNIT_GROUPS;
+    accordionExerciseGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sidebarData: SidebarData;
+    sidebarExercises: SidebarCardElement[] = [];
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -79,7 +80,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             return;
         }
         this.sortedExercises = this.courseOverviewService.sortExercises(this.course.exercises);
-        this.exerciseGroups = this.courseOverviewService.groupExercisesByDueDate(this.sortedExercises);
+        this.sidebarExercises = this.courseOverviewService.mapExercisesToSidebarCardElements(this.sortedExercises);
+        this.accordionExerciseGroups = this.courseOverviewService.groupExercisesByDueDate(this.sortedExercises);
         this.updateSidebarData();
     }
 
@@ -88,8 +90,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             groupByCategory: true,
             sidebarType: 'exercise',
             storageId: 'exercise',
-            groupedData: this.exerciseGroups,
-            ungroupedData: this.sortedExercises,
+            groupedData: this.accordionExerciseGroups,
+            ungroupedData: this.sidebarExercises,
         };
     }
 

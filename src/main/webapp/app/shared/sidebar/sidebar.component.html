@@ -7,7 +7,11 @@
                 </div>
             }
             @if (!sidebarData?.ungroupedData || !(sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue)?.length) {
-                <div jhiTranslate="artemisApp.courseOverview.general.noDataFound" class="mt-2 text-center scrollable-content"></div>
+                <div
+                    [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
+                    jhiTranslate="artemisApp.courseOverview.general.noDataFound"
+                    class="mt-2 text-center scrollable-content"
+                ></div>
             } @else {
                 <div class="scrollable-content my-2" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
                     @if (sidebarData?.groupByCategory && sidebarData.groupedData) {
@@ -19,8 +23,10 @@
                             [routeParams]="routeParams"
                         />
                     } @else {
-                        @for (entityItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track entityItem) {
-                            <jhi-sidebar-card [entityItem]="entityItem" />
+                        @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem; let last = $last) {
+                            <div [ngClass]="{ 'mb-2': !last }">
+                                <jhi-sidebar-card [routeParams]="routeParams" [sidebarItem]="sidebarItem" />
+                            </div>
                         }
                     }
                 </div>
