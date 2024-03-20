@@ -67,7 +67,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     @BeforeEach
     void setUp() {
         athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), athenaModuleService,
-                new AthenaDTOConverter(textBlockRepository, textExerciseRepository, programmingExerciseRepository));
+                new AthenaDTOConverterService(textBlockRepository, textExerciseRepository, programmingExerciseRepository));
 
         athenaRequestMockProvider.enableMockingOfRequests();
 

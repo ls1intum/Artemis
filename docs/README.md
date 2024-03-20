@@ -10,37 +10,37 @@ Creating a user manual for a learning platform such as Artemis can be a bit of a
 ## Best Practices
 1. Artemis documentation must use **realistic examples** and personas and must avoid the use of test data. 
 
-2. **Keep it Simple and Student-Friendly**: Remember, you're writing for students, not just fellow tech enthusiasts. Use plain language, avoid jargon, and explain technical terms when they can't be avoided.
+2. **Keep it simple and student friendly**: Remember, you're writing for students, not just fellow tech enthusiasts. Use plain language, avoid jargon, and explain technical terms when they can't be avoided.
 
-3. **Use Visual Aids**: Screenshots, diagrams, and even short video tutorials can be a lot more effective than pages of text. They make it easier for students to understand and follow instructions
+3. **Use visual aids**: Screenshots, diagrams, and even short video tutorials can be a lot more effective than pages of text. They make it easier for students to understand and follow instructions
 
-4. **Structure it Intuitively**: Organize the content in a logical flow. Start with basic functions before moving to more advanced features. Think about how a student would use the system and structure your documentation accordingly.
+4. **Structure it intuitively**: Organize the content in a logical flow. Start with basic functions before moving to more advanced features. Think about how a student would use the system and structure your documentation accordingly.
 
-5. **Include a Searchable FAQ Section**: Let's face it, not everyone is going to read the documentation cover-to-cover. A FAQ section for common issues or questions can be a lifesaver
+5. **Include a searchable FAQ section**: Let's face it, not everyone is going to read the documentation cover-to-cover. A FAQ section for common issues or questions can be a lifesaver
 
-6. **Accessible and Inclusive Design**: Make sure your documentation is accessible to all students, including those with disabilities. Use clear fonts, alt text for images, and consider a screen-reader-friendly version.
+6. **Apply accessible and inclusive design**: Make sure your documentation is accessible to all students, including those with disabilities. Use clear fonts, alt text for images, and consider a screen-reader-friendly version.
 
-7. **Regular Updates**: An LMS evolves, and so should your documentation. Keep it up-to-date with any changes in the system.
+7. **Update regularly**: Artemis evolves, and so should the documentation. Keep it up-to-date with any changes in the system.
 
-8. **Feedback Loop**: Encourage students to give feedback on the documentation. They might point out confusing sections or missing information that you hadn't considered.
+8. **Create a feedback loop**: Encourage students to give feedback on the documentation. They might point out confusing sections or missing information that you hadn't considered.
 
-9. **Using familiar information in the documentation is crucial because it simplifies the learning process for new users**. Real-world scenarios demonstrate to users how to apply specific features within their own context, whereas test data can mislead and fails to reflect real use cases. Realistic examples and personas provide clarity and relevance, ensuring users can effectively understand and utilize Artemis.
+9. **Use familiar information**: This is crucial in the documentation because it simplifies the learning process for new users. Real-world scenarios demonstrate to users how to apply specific features within their own context, whereas test data can mislead and fails to reflect real use cases. Realistic examples and personas provide clarity and relevance, ensuring users can effectively understand and utilize Artemis.
 
-10. **Well-defined personas are vital for the development process**. They not only help readers to understand the documentation, but also allow developers to better understand Artemis and its users. Many organizations use personas, the two blog posts below contain additional introduction and motivation for the topic:
+10. **Use well defined personas**: Personas are vital for the development process, they do not only help readers to understand the documentation, but also allow developers to better understand Artemis and its users. Many organizations use personas, the two blog posts below contain additional introduction and motivation for the topic:
 - [Using Personas During Design and Documentation](https://www.uxmatters.com/mt/archives/2010/10/using-personas-during-design-and-documentation.php)
 - [Customer Personas: How to Write Them and Why You Need Them in Agile Software Development](https://community.atlassian.com/t5/App-Central/Customer-Personas-How-to-Write-Them-and-Why-You-Need-Them-in/ba-p/759228)
 
-11. Screenshots and screencasts included in Artemis documentation **must** present **realistic data**. That includes but is not limited to:
+11. **Use realistic data**: Screenshots and screencasts included in Artemis documentation **must** present **realistic data**. That includes but is not limited to:
    - realistic user, course and exercise names
    - realistic text passages, like submissions contents and problem statements  
 
-12. Screenshots and screencasts included in Artemis documentation **must not** present any test data or server information. That includes but is not limited to:
+12. **Avoid test data**: Screenshots and screencasts included in Artemis documentation **must not** present any test data or server information. That includes but is not limited to:
    - `Test Server` and `Development` labels
    - test user, course and exercise names
    - _Lorem ipsum_ and mock text passages, like submissions contents and problem statements 
    - test server and `localhost` domains
 
-13. **Screencasts must be as short as possible** (max. 2 minutes) to keep the documentation simple and easy to navigate. If you have larger ones, please split them into small screencasts based on the user workflow or features that you describe. Embed videos using TUM.Live and do **not** host them on Youtube.
+13. **Keep screencasts short**: Cut them to at most two minutes to keep the documentation simple and easy to navigate. If you have larger ones, please split them into small screencasts based on the user workflow or features that you describe. Embed videos using TUM.Live and do **not** host them on Youtube (to avoid advertisement and data privacy issues).
 
 
 
