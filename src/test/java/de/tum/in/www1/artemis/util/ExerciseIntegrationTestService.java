@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
  * Service responsible for util methods / shared code that is helpful or common for testing all exercise types
  */
 @Service
-public class ExerciseIntegrationTestUtils {
+public class ExerciseIntegrationTestService {
 
     @Autowired
     protected PageableSearchUtilService pageableSearchUtilService;
