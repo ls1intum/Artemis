@@ -183,19 +183,11 @@ public class LocalVCServletService {
             return;
         }
 
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(request.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
-
+        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
         String projectKey = localVCRepositoryUri.getProjectKey();
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
 
-        ProgrammingExercise exercise;
-
-        try {
-            exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true);
-        }
-        catch (EntityNotFoundException e) {
-            throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey, e);
-        }
+        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
 
         // Check that offline IDE usage is allowed.
         if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
@@ -232,6 +224,41 @@ public class LocalVCServletService {
 
         // Check that the user exists.
         return userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
+    }
+
+    /**
+     * Determines whether a user is allowed to force-push to a certain repository.
+     *
+     * @param request The request object containing all information about the incoming request.
+     * @return true if the user is allowed to force-push to the repository, false otherwise.
+     * @throws LocalVCAuthException If an internal error occurs, e.g. because the LocalVCRepositoryUri could not be created.
+     */
+    public boolean isUserAllowedToForcePush(HttpServletRequest request) throws LocalVCAuthException {
+        User user = authenticateUser(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER));
+
+        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
+        String projectKey = localVCRepositoryUri.getProjectKey();
+        String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
+
+        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
+
+        boolean isAllowedRepository = repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
+                || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString());
+
+        return isAllowedRepository && authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+    }
+
+    private LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
+        return new LocalVCRepositoryUri(request.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
+    }
+
+    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
+        try {
+            return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true);
+        }
+        catch (EntityNotFoundException e) {
+            throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey, e);
+        }
     }
 
     private String checkAuthorizationHeader(String authorizationHeader) throws LocalVCAuthException {
