@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs/esm';
 
-import { BASE_API } from '../../../constants';
+import { UPLOAD_EXERCISE_BASE } from '../../../constants';
 import { POST } from '../../../constants';
 import { enterDate } from '../../../utils';
 
@@ -48,7 +48,7 @@ export class FileUploadExerciseCreationPage {
     }
 
     create() {
-        cy.intercept(POST, BASE_API + 'file-upload-exercises').as('fileUploadExerciseCreation');
+        cy.intercept(POST, UPLOAD_EXERCISE_BASE).as('fileUploadExerciseCreation');
         cy.get('#save-entity').click();
         return cy.wait('@fileUploadExerciseCreation');
     }
