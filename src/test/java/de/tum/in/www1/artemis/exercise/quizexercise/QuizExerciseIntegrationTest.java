@@ -641,7 +641,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         quizExerciseUtilService.renameAndSaveQuiz(quizExercise, searchTerm);
         quizExerciseUtilService.renameAndSaveQuiz(examQuizExercise, searchTerm + "-Morpork");
 
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises", searchTerm);
+        exerciseIntegrationTestService.testCourseAndExamFilters("/api/quiz-exercises", searchTerm);
     }
 
     @Test
