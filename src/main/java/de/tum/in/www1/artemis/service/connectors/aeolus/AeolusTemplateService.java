@@ -3,7 +3,8 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.IOUtils;
@@ -61,11 +62,7 @@ public class AeolusTemplateService {
                     continue;
                 }
                 String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
-                String projectType = filename.split("_")[0].replace(".yaml", "");
-                Optional<ProjectType> optionalProjectType = Optional.empty();
-                if (!projectType.equals("default")) {
-                    optionalProjectType = Optional.of(ProjectType.valueOf(projectType.toUpperCase()));
-                }
+                Optional<ProjectType> optionalProjectType = extractProjectType(filename);
                 String uniqueKey = directory + "_" + filename;
                 byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
                 String script = new String(fileContent, StandardCharsets.UTF_8);
@@ -138,6 +135,24 @@ public class AeolusTemplateService {
         this.addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);
         templateCache.put(uniqueKey, windfile);
         return windfile;
+    }
+
+    /**
+     * Extracts the project type from the filename, maven_blackbox is a special case
+     *
+     * @param filename the filename
+     * @return the project type
+     */
+    private static Optional<ProjectType> extractProjectType(String filename) {
+        String[] split = filename.replace(".yaml", "").split("_");
+        String projectType = split[0];
+        if (!projectType.equals("default")) {
+            if (split.length > 2 && split[1].equals("maven") && split[2].equals("blackbox")) {
+                return Optional.of(ProjectType.MAVEN_BLACKBOX);
+            }
+            return Optional.of(ProjectType.valueOf(projectType.toUpperCase()));
+        }
+        return Optional.empty();
     }
 
     /**
