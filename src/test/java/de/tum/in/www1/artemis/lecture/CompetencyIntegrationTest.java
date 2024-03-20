@@ -305,21 +305,21 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-        void testAsTutor() throws Exception {
+        void shouldFailAsTutor() throws Exception {
             this.testAllPreAuthorizeInstructor();
             this.testAllPreAuthorizeEditor();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testAsStudent() throws Exception {
+        void shouldFailAsStudent() throws Exception {
             this.testAllPreAuthorizeInstructor();
             this.testAllPreAuthorizeEditor();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-        void testAsEditor() throws Exception {
+        void shouldFailAsEditor() throws Exception {
             this.testAllPreAuthorizeInstructor();
             // do not call testAllPreAuthorizeEditor, as these methods should succeed
         }
@@ -330,14 +330,14 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testExistingCompetency() throws Exception {
+        void shouldReturnCompetencyTitleWhenCompetencyExists() throws Exception {
             String title = request.get("/api/competencies/" + competency.getId() + "/title", HttpStatus.OK, String.class);
             assertThat(title).isEqualTo(competency.getTitle());
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testNonExistingCompetency() throws Exception {
+        void shouldReturnNotFoundWhenCompetencyNotExists() throws Exception {
             request.get("/api/competencies/12312321321/title", HttpStatus.NOT_FOUND, String.class);
         }
     }
@@ -377,13 +377,13 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
-        void testShouldReturnForbiddenForUserNotInCourse() throws Exception {
+        void shouldReturnForbiddenForUserNotInCourse() throws Exception {
             request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.FORBIDDEN, Competency.class);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testShouldReturnBadRequestForWrongCourse() throws Exception {
+        void shouldReturnBadRequestForWrongCourse() throws Exception {
             request.get("/api/courses/" + course2.getId() + "/competencies/" + competency.getId(), HttpStatus.BAD_REQUEST, Competency.class);
         }
     }
@@ -393,7 +393,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testShouldReturnCompetenciesForStudentOfCourse() throws Exception {
+        void shouldReturnCompetenciesForStudentOfCourse() throws Exception {
             TextUnit unreleasedLectureUnit = new TextUnit();
             unreleasedLectureUnit.setName("TextUnitOfLectureOne");
             unreleasedLectureUnit.setReleaseDate(ZonedDateTime.now().plus(5, ChronoUnit.DAYS));
@@ -449,7 +449,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void instructorCanDeleteCompetency() throws Exception {
+        void shouldDeleteCompetencyWhenInstructor() throws Exception {
             request.delete("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.OK);
             request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.NOT_FOUND, Competency.class);
         }
@@ -485,7 +485,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void instructorCanCreate() throws Exception {
+        void shouldCreateForInstructor() throws Exception {
             var headCompetency = competencyUtilService.createCompetency(course);
             var relationToCreate = new CompetencyRelation();
             relationToCreate.setTailCompetency(competency);

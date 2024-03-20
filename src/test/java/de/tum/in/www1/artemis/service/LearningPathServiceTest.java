@@ -108,7 +108,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class HeathCheck {
+    class HealthCheck {
 
         @BeforeEach
         void setup() {
