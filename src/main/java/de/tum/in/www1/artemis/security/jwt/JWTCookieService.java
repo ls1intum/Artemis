@@ -12,10 +12,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 @Profile(PROFILE_CORE)
-@Component
+@Service
 public class JWTCookieService {
 
     private static final String CYPRESS_PROFILE = "cypress";
