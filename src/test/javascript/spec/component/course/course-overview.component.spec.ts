@@ -8,7 +8,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -50,6 +50,9 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatSidenavModule } from '@angular/material/sidenav';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -141,7 +144,7 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
             declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -225,6 +228,12 @@ describe('CourseOverviewComponent', () => {
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+    });
+
+    it('should create sidebar items', () => {
+        component.course = { id: 123, lectures: [], exams: [] };
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
     });
 
     it('loads conversations when switching to message tab once', async () => {
