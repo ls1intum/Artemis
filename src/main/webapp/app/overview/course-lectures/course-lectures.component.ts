@@ -4,14 +4,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { LectureGroups, SidebarData } from 'app/types/sidebar';
+import { AccordionGroups, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 
-const DEFAULT_UNIT_GROUPS: LectureGroups = {
+const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
     current: { entityData: [] },
     past: { entityData: [] },
-    noDueDate: { entityData: [] },
+    noDate: { entityData: [] },
 };
 
 @Component({
@@ -27,8 +27,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     lectureSelected: boolean = true;
     sidebarData: SidebarData;
-    lectureGroups: LectureGroups = DEFAULT_UNIT_GROUPS;
+    accordionLectureGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sortedLectures: Lecture[] = [];
+    sidebarLectures: SidebarCardElement[] = [];
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -66,17 +67,17 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
             return;
         }
         this.sortedLectures = this.courseOverviewService.sortLectures(this.course.lectures);
-        this.lectureGroups = this.courseOverviewService.groupLecturesByStartDate(this.sortedLectures);
+        this.sidebarLectures = this.courseOverviewService.mapLecturesToSidebarCardElements(this.sortedLectures);
+        this.accordionLectureGroups = this.courseOverviewService.groupLecturesByStartDate(this.sortedLectures);
         this.updateSidebarData();
     }
 
     updateSidebarData() {
         this.sidebarData = {
             groupByCategory: true,
-            sidebarType: 'lecture',
             storageId: 'lecture',
-            groupedData: this.lectureGroups,
-            ungroupedData: this.sortedLectures,
+            groupedData: this.accordionLectureGroups,
+            ungroupedData: this.sidebarLectures,
         };
     }
 

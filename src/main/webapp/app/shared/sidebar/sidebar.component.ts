@@ -1,10 +1,9 @@
 import { Component, HostListener, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
 import { faChevronRight, faFilter, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
-import { ExerciseGroups, SidebarData } from 'app/types/sidebar';
+import { SidebarData } from 'app/types/sidebar';
 
 @Component({
     selector: 'jhi-sidebar',
@@ -12,12 +11,7 @@ import { ExerciseGroups, SidebarData } from 'app/types/sidebar';
     styleUrls: ['./sidebar.component.scss'],
 })
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
-    @Input() ungroupedData?: Exercise[];
     @Input() searchFieldEnabled: boolean = true;
-    // If true accordions are used
-    @Input() groupByCategory: boolean = true;
-    @Input() groupedData: ExerciseGroups;
-    @Input() type: string;
     @Input() sidebarData: SidebarData;
 
     searchValue = '';

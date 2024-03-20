@@ -1,14 +1,13 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseCollapseState, GroupTypes, SidebarTypes } from 'app/types/sidebar';
+import { AccordionGroups, ExerciseCollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { Params } from '@angular/router';
 
-//TODO More Generic
 const DEFAULT_EXERCISE_COLLAPSE_STATE: ExerciseCollapseState = {
     future: true,
     current: false,
     past: true,
-    noDueDate: true,
+    noDate: true,
 };
 
 @Component({
@@ -21,7 +20,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
 
     @Input() searchValue: string;
     @Input() routeParams: Params;
-    @Input() groupedData: GroupTypes;
+    @Input() groupedData: AccordionGroups;
     @Input() sidebarType?: SidebarTypes;
     @Input() storageId?: string = '';
 
@@ -58,7 +57,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         const routeParamKey = Object.keys(this.routeParams)[0];
         if (this.routeParams[routeParamKey] && this.groupedData) {
             const groupWithSelectedItem = Object.entries(this.groupedData).find((groupedItem) =>
-                groupedItem[1].entityData.some((entityItem: any) => entityItem.id === Number(this.routeParams[routeParamKey])),
+                groupedItem[1].entityData.some((entityItem: SidebarCardElement) => entityItem.id === Number(this.routeParams[routeParamKey])),
             );
             if (groupWithSelectedItem) {
                 const groupName = groupWithSelectedItem[0];

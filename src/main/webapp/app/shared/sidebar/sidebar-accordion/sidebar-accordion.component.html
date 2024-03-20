@@ -5,7 +5,7 @@
         <div class="pointer" [ngClass]="{ 'd-none': !(groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }">
             <div class="control-label d-flex align-items-center justify-content-between py-2 bg-module" (click)="toggleGroupCategoryCollapse(groupKey)">
                 <div class="my-2">
-                    {{ 'artemisApp.courseOverview.exerciseList.' + groupKey | artemisTranslate }}
+                    {{ 'artemisApp.courseOverview.exerciseList.' + groupKey | artemisTranslate | titlecase }}
                     ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
                 </div>
                 <div class="icon-container pe-3">
@@ -14,8 +14,8 @@
             </div>
             <hr class="my-0" />
             <div [ngbCollapse]="collapseState[groupKey]" class="p-2 bg-body">
-                @for (entityItem of groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue; track entityItem) {
-                    <jhi-sidebar-card [storageId]="storageId" [sidebarType]="sidebarType" class="pb-1" [entityItem]="entityItem" [routeParams]="routeParams" />
+                @for (sidebarItem of groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem) {
+                    <jhi-sidebar-card [storageId]="storageId" [sidebarType]="sidebarType" class="pb-1" [sidebarItem]="sidebarItem" [routeParams]="routeParams" />
                 }
             </div>
             @if (!collapseState[groupKey]) {

@@ -66,6 +66,7 @@
                 "current": "Aktuell",
                 "future": "Zukünftig",
                 "noDueDate": "Unbefristet",
+                "noDate": "Ohne Datum",
                 "view": "Ansicht",
                 "timeframeView": "Zeitliche Ansicht",
                 "weeklyView": "Wochenansicht",

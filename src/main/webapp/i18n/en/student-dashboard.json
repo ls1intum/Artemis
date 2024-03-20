@@ -66,6 +66,7 @@
                 "current": "Current",
                 "future": "Future",
                 "noDueDate": "No due date",
+                "noDate": "No date",
                 "view": "View",
                 "timeframeView": "Timeframe view",
                 "weeklyView": "Weekly view",
