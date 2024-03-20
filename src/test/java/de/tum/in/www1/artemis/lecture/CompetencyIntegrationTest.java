@@ -421,29 +421,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         }
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(IncludedInOverallScore.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateCompetencyToOptional(IncludedInOverallScore includedInOverallScore) throws Exception {
-        Competency newCompetency = new Competency();
-        newCompetency.setTitle("Title");
-        newCompetency.setDescription("Description");
-        newCompetency.setCourse(course);
-        newCompetency = competencyRepository.save(newCompetency);
-
-        TextExercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
-        exercise.setMaxPoints(1.0);
-        exercise.setIncludedInOverallScore(includedInOverallScore);
-        exercise.setCompetencies(Set.of(newCompetency));
-        exerciseRepository.save(exercise);
-
-        newCompetency.setOptional(true);
-        request.put("/api/courses/" + course.getId() + "/competencies", newCompetency, HttpStatus.OK);
-
-        Competency savedCompetency = competencyRepository.findByIdElseThrow(newCompetency.getId());
-        assertThat(savedCompetency.isOptional()).isTrue();
-    }
-
     @Nested
     class DeleteCompetency {
 
@@ -686,6 +663,29 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         void shouldReturnBadRequestForCompetencyWithoutId() throws Exception {
             competency.setId(null);
             request.putWithResponseBody("/api/courses/" + course.getId() + "/competencies", competency, Competency.class, HttpStatus.BAD_REQUEST);
+        }
+
+        @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+        @EnumSource(IncludedInOverallScore.class)
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldUpdateCompetencyToOptionalWhenSettingOptional(IncludedInOverallScore includedInOverallScore) throws Exception {
+            Competency newCompetency = new Competency();
+            newCompetency.setTitle("Title");
+            newCompetency.setDescription("Description");
+            newCompetency.setCourse(course);
+            newCompetency = competencyRepository.save(newCompetency);
+
+            TextExercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
+            exercise.setMaxPoints(1.0);
+            exercise.setIncludedInOverallScore(includedInOverallScore);
+            exercise.setCompetencies(Set.of(newCompetency));
+            exerciseRepository.save(exercise);
+
+            newCompetency.setOptional(true);
+            request.put("/api/courses/" + course.getId() + "/competencies", newCompetency, HttpStatus.OK);
+
+            Competency savedCompetency = competencyRepository.findByIdElseThrow(newCompetency.getId());
+            assertThat(savedCompetency.isOptional()).isTrue();
         }
     }
 
