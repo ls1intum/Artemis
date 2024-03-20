@@ -41,6 +41,35 @@ extensions = [
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'venv']
 
+linkcheck_ignore = [
+    r'http(s)?://.*localhost(:\d+)?/?',
+    r'https://artemis.cs.hm.edu/',  # DNS entry no longer exists
+    r'https://bamboo.ase.in.tum.de/build/admin/edit/.*',
+    r'https://hermes.artemis.cit.tum.de/',  # expired certificate
+    # IEEE server returns code 418 when checking links
+    r'https://doi.org/10.1109/CSEET58097.2023.00020',
+    r'https://doi.org/10.1109/CSEET58097.2023.00021',
+    r'https://doi.org/10.1109/CSEET58097.2023.00031',
+    r'https://doi.org/10.1109/CSEET58097.2023.00037',
+    r'https://doi.org/10.1109/ITHET50392.2021.9759809',
+]
+# when upgrading to Sphinx 7.1 or newer we can use
+# `linkcheck_anchors_ignore_for_url` instead to exclude the angular.io and
+# GitHub URLs completely instead of excluding specific anchors here
+linkcheck_anchors_ignore = [
+    # Angular guide
+    r'deprecated-deep--and-ng-deep',
+    r'testing-http-requests',
+    r'no_errors_schema',
+    r'stubbing-unneeded-components',
+    # end Angular guide
+    r'readme',  # links to GitHub readmes
+    r'testing-of-pull-requests',  # Orion readme
+    r'L[0-9]+(-L[0-9]+)?',  # links referring to concrete line numbers in the GitHub UI
+    r'environment-variables',  # GitHub Spring wiki
+    r'installation'  # k3d guide
+]
+
 # -- Publications ------------------------------------------------------------
 bibtex_bibfiles = ['research/publications.bib']
 bibtex_default_style = 'unsrtalpha'
