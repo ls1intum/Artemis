@@ -175,7 +175,7 @@ public class ProgrammingExerciseGitDiffReportResource {
         VcsRepositoryUri repositoryUri;
         ProgrammingExerciseParticipation participation;
 
-        if (repositoryType == RepositoryType.USER) {
+        if (repositoryType.equals(RepositoryType.USER)) {
             participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
             if (!participation.getExercise().getId().equals(exerciseId)) {
                 throw new ConflictException("A git diff report entry can only be retrieved if the participation's exercise id matches with the exercise id", ENTITY_NAME,
@@ -184,7 +184,7 @@ public class ProgrammingExerciseGitDiffReportResource {
             repositoryUri = participation.getVcsRepositoryUri();
         }
         else {
-            if (repositoryType == RepositoryType.TEMPLATE) {
+            if (repositoryType.equals(RepositoryType.TEMPLATE)) {
                 participation = this.programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exerciseId);
             }
             else {
@@ -193,7 +193,7 @@ public class ProgrammingExerciseGitDiffReportResource {
                 participation = this.programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(exerciseId);
             }
 
-            if (repositoryType == RepositoryType.TESTS) {
+            if (repositoryType.equals(RepositoryType.TESTS)) {
                 repositoryUri = ((ProgrammingExercise) participation.getExercise()).getVcsTestRepositoryUri();
             }
             else {

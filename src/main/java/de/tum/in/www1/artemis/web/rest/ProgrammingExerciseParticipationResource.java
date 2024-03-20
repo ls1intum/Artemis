@@ -286,12 +286,15 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise/{exerciseID}/commit-history/{repositoryType}")
     @EnforceAtLeastTutor
     public List<CommitInfoDTO> getCommitHistoryForTemplateSolutionOrTestRepo(@PathVariable long exerciseID, @PathVariable RepositoryType repositoryType) {
+        boolean isTemplateRepository = repositoryType.equals(RepositoryType.TEMPLATE);
+        boolean isSolutionRepository = repositoryType.equals(RepositoryType.SOLUTION);
         boolean isTestRepository = repositoryType.equals(RepositoryType.TESTS);
         ProgrammingExerciseParticipation participation;
-        if (!repositoryType.equals(RepositoryType.SOLUTION) && !repositoryType.equals(RepositoryType.TEMPLATE) && !repositoryType.equals(RepositoryType.TESTS)) {
+
+        if (!isTemplateRepository && !isSolutionRepository && !isTestRepository) {
             throw new BadRequestAlertException("Invalid repository type", ENTITY_NAME, "invalidRepositoryType");
         }
-        else if (repositoryType.equals(RepositoryType.TEMPLATE)) {
+        else if (isTemplateRepository) {
             participation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exerciseID);
         }
         else {
@@ -338,11 +341,11 @@ public class ProgrammingExerciseParticipationResource {
     public ModelAndView redirectGetParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @PathVariable long participationId,
             @PathVariable String commitId, @RequestParam RepositoryType repositoryType) {
         ProgrammingExerciseParticipation participation;
-        if (repositoryType == RepositoryType.USER) {
+        if (repositoryType.equals(RepositoryType.USER)) {
             participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         }
         else {
-            if (repositoryType == RepositoryType.TEMPLATE) {
+            if (repositoryType.equals(RepositoryType.TEMPLATE)) {
                 participation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exerciseId);
             }
             else {
