@@ -67,6 +67,7 @@ actions:
     results:
       - name: gcc
         path: target/gcc.xml
+        type: static-code-analysis
       - name: junit_test-reports/tests-results.xml
         path: test-reports/tests-results.xml
         type: junit
