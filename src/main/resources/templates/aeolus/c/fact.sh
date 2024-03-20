@@ -10,7 +10,6 @@ setup_the_build_environment () {
   # ------------------------------
   # Updating assignment and test-reports ownership...
   sudo chown artemis_user:artemis_user assignment/ -R || true
-  sudo rm -rf test-reports
   sudo mkdir test-reports
   sudo chown artemis_user:artemis_user test-reports/ -R || true
 

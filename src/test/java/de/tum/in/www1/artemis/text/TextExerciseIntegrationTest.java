@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
+import de.tum.in.www1.artemis.util.ExerciseIntegrationTestService;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
@@ -85,7 +85,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
+    private ExerciseIntegrationTestService exerciseIntegrationTestService;
 
     @Autowired
     private ChannelRepository channelRepository;
@@ -870,7 +870,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private void testCourseAndExamFilters(String courseTitle) throws Exception {
         textExerciseUtilService.addCourseWithOneReleasedTextExercise(courseTitle);
         textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise(courseTitle + "-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/text-exercises", courseTitle);
+        exerciseIntegrationTestService.testCourseAndExamFilters("/api/text-exercises", courseTitle);
     }
 
     @Test
