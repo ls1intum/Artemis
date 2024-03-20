@@ -961,10 +961,22 @@ public class CourseService {
         return (searchResult);
     }
 
+    /**
+     * adds a given user to a user group
+     *
+     * @param user  user to be added to a group
+     * @param group user-group where the user should be added
+     */
     public void addUserToGroup(User user, String group) {
         userService.addUserToGroup(user, group);
     }
 
+    /**
+     * removes a given user to a user group
+     *
+     * @param user  user to be removed from a group
+     * @param group user-group where the user should be removed
+     */
     public void removeUserFromGroup(User user, String group) {
         userService.removeUserFromGroup(user, group);
     }

@@ -195,7 +195,7 @@ public class AdminUserResource {
     }
 
     /**
-     * POST /users/import : Import multiple users to the user management
+     * POST users/import : Import multiple users to the user management
      * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
      * <p>
      * This method first tries to find the user in the internal Artemis user database (because the user is probably already using Artemis).
@@ -213,7 +213,7 @@ public class AdminUserResource {
     }
 
     /**
-     * PUT ldap : Updates an existing User based on the info available in the LDAP server.
+     * PUT users/:userId/sync-ldap : Updates an existing User based on the info available in the LDAP server.
      *
      * @param userId of the user to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated user

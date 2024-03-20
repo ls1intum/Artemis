@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
-import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
+import de.tum.in.www1.artemis.service.connectors.ldap.LdapAuthenticationProvider;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -421,7 +421,7 @@ public class UserService {
 
     /**
      * Updates the user (and synchronizes its password) and its groups in the connected version control system (e.g. GitLab if available).
-     * Also updates the user groups in the used authentication provider (like {@link JiraAuthenticationProvider}).
+     * Also updates the user groups in the used authentication provider (like {@link LdapAuthenticationProvider}).
      *
      * @param oldUserLogin The username of the user. If the username is updated in the user object, it must be the one before the update in order to find the user in the VCS
      * @param user         The updated user in Artemis (this method assumes that the user including its groups was already saved to the Artemis database)
