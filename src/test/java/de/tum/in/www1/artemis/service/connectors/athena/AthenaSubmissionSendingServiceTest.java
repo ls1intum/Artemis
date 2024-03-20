@@ -39,7 +39,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     private AthenaModuleService athenaModuleService;
 
     @Autowired
-    private AthenaDTOConverter athenaDTOConverter;
+    private AthenaDTOConverterService athenaDTOConverterService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -66,7 +66,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         userUtilService.addUsers(TEST_PREFIX, MAX_NUMBER_OF_TOTAL_PARTICIPATIONS, 0, 0, 0);
 
         athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), submissionRepository, athenaModuleService,
-                athenaDTOConverter);
+                athenaDTOConverterService);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
