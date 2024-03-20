@@ -1529,6 +1529,77 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         localRepo.resetLocalRepo();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenFeedbackRequestedAndRateLimitExceeded_thenFail() throws Exception {
+
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(100));
+        programmingExercise = exerciseRepo.save(programmingExercise);
+
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+
+        var result = ParticipationFactory.generateResult(true, 100).participation(participation);
+        result.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result);
+
+        // generate 5 athena results
+        for (int i = 0; i < 5; i++) {
+            var athenaResult = ParticipationFactory.generateResult(false, 100).participation(participation);
+            athenaResult.setCompletionDate(ZonedDateTime.now());
+            athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+            resultRepository.save(athenaResult);
+        }
+
+        request.putAndExpectError("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "preconditions not met");
+
+        localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenFeedbackRequestedAndRateLimitStillUnknownDueRequestsInProgress_thenFail() throws Exception {
+
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(100));
+        programmingExercise = exerciseRepo.save(programmingExercise);
+
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+
+        var result = ParticipationFactory.generateResult(false, 100).participation(participation);
+        result.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result);
+
+        // generate 5 athena results
+        for (int i = 0; i < 5; i++) {
+            var athenaResult = ParticipationFactory.generateResult(false, 100).participation(participation);
+            athenaResult.setCompletionDate(ZonedDateTime.now());
+            athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+            athenaResult.setSuccessful(null);
+            resultRepository.save(athenaResult);
+        }
+
+        request.putAndExpectError("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "preconditions not met");
+
+        localRepo.resetLocalRepo();
+    }
+
     @Nested
     @Isolated
     class ParticipationIntegrationIsolatedTest {

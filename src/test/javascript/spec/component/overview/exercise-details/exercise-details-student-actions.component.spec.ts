@@ -594,4 +594,32 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         expect(result).toBeTrue();
     });
+
+    it('assureConditionsSatisfied should alert and return false if the maximum number of successful Athena results is reached', () => {
+        jest.spyOn(window, 'alert').mockImplementation(() => {});
+        comp.exercise = {
+            type: ExerciseType.PROGRAMMING,
+            dueDate: dayjs().add(5, 'minutes'),
+            studentParticipations: [
+                {
+                    id: 2,
+                    individualDueDate: undefined,
+                    results: [
+                        {
+                            assessmentType: AssessmentType.AUTOMATIC,
+                            score: 100,
+                        },
+                        { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true },
+                        { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true },
+                        { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true },
+                    ],
+                },
+            ] as StudentParticipation[],
+        } as ProgrammingExercise;
+
+        const result = comp.assureConditionsSatisfied();
+
+        expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.maxAthenaResultsReached');
+        expect(result).toBeFalse();
+    });
 });

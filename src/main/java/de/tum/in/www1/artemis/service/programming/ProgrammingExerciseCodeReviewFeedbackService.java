@@ -84,6 +84,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
     public ProgrammingExerciseStudentParticipation handleNonGradedFeedbackRequest(Long exerciseId, ProgrammingExerciseStudentParticipation participation,
             ProgrammingExercise programmingExercise) {
         if (this.athenaFeedbackSuggestionsService != null) {
+            this.checkRateLimitOrThrow(participation);
             CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(exerciseId, participation, programmingExercise));
             return participation;
         }
@@ -206,4 +207,19 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         return participation;
     }
 
+    private void checkRateLimitOrThrow(ProgrammingExerciseStudentParticipation participation) {
+
+        var athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+
+        var countOfAthenaResultsInProcessOrSuccessful = athenaResults.stream().filter(result -> result.isSuccessful() == null || result.isSuccessful() == Boolean.TRUE).count();
+
+        var countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();
+
+        if (countOfAthenaResultsInProcessOrSuccessful >= 3) {
+            throw new BadRequestAlertException("Cannot send additional AI feedback requests now. Try again later!", "participation", "preconditions not met");
+        }
+        if (countOfSuccessfulRequests >= 3) {
+            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditions not met");
+        }
+    }
 }

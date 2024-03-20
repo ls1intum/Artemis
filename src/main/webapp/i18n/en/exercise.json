@@ -170,6 +170,7 @@
             "notEnoughPoints": "You have to pass all tests to send feedback requests.",
             "lockRepositoryWarning": "Your repository will be locked. You can only continue working after you receive an answer.",
             "feedbackRequestAfterDueDate": "You cannot submit feedback requests after the due date.",
+            "maxAthenaResultsReached": "You have reached the maximum number of AI feedback requests.",
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
             "name": "Name",
             "studentId": "Login",
