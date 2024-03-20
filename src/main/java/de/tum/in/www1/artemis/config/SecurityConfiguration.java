@@ -33,6 +33,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
@@ -42,6 +43,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -129,6 +131,7 @@ public class SecurityConfiguration {
             .csrf(AbstractHttpConfigurer::disable)
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(handler -> handler.authenticationEntryPoint(problemSupport).accessDeniedHandler(problemSupport))
+            .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
             .headers(headers -> headers
                 .contentSecurityPolicy(csp -> csp.policyDirectives("script-src 'self' 'unsafe-inline' 'unsafe-eval'"))
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
@@ -137,7 +140,7 @@ public class SecurityConfiguration {
                 .permissionsPolicy(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(requests -> requests
-                .requestMatchers(antMatcher("/public/**")).permitAll()
+                .requestMatchers(antMatcher("/"), antMatcher("/index.html"), antMatcher("/public/**")).permitAll()
                 .requestMatchers(antMatcher("/*.js"), antMatcher("/*.css"), antMatcher("/*.map")).permitAll()
                 .requestMatchers(antMatcher("/manifest.webapp"), antMatcher("/robots.txt")).permitAll()
                 .requestMatchers(antMatcher("/content/**"), antMatcher("/i18n/*.json"), antMatcher("/logo/*")).permitAll()

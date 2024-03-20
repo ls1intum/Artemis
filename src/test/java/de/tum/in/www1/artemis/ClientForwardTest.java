@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import javax.servlet.http.Cookie;
+import jakarta.servlet.http.Cookie;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,14 +11,16 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.ResultActions;
 
+import de.tum.in.www1.artemis.config.SecurityConfiguration;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
-import de.tum.in.www1.artemis.web.rest.ClientForwardResource;
+import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
 
 /**
  * Test class for the ClientForwardController REST controller.
  *
- * @see ClientForwardResource
+ * @see SpaWebFilter
+ * @see SecurityConfiguration
  */
 class ClientForwardTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -38,12 +40,12 @@ class ClientForwardTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void getUnmappedDottedEndpoint() throws Exception {
-        request.getMvc().perform(get("/foo.js")).andExpect(status().isNotFound());
+        request.getMvc().perform(get("/foo.js")).andExpect(status().isUnauthorized());
     }
 
     @Test
     void getUnmappedNestedDottedEndpoint() throws Exception {
-        request.getMvc().perform(get("/foo/bar.js")).andExpect(status().isNotFound());
+        request.getMvc().perform(get("/foo/bar.js")).andExpect(status().isUnauthorized());
     }
 
     @Test
