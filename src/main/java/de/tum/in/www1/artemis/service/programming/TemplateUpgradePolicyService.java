@@ -12,13 +12,13 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
  */
 @Profile(PROFILE_CORE)
 @Service
-public class TemplateUpgradePolicy {
+public class TemplateUpgradePolicyService {
 
     private final JavaTemplateUpgradeService javaRepositoryUpgradeService;
 
     private final DefaultTemplateUpgradeService defaultRepositoryUpgradeService;
 
-    public TemplateUpgradePolicy(JavaTemplateUpgradeService javaRepositoryUpgradeService, DefaultTemplateUpgradeService defaultRepositoryUpgradeService) {
+    public TemplateUpgradePolicyService(JavaTemplateUpgradeService javaRepositoryUpgradeService, DefaultTemplateUpgradeService defaultRepositoryUpgradeService) {
         this.javaRepositoryUpgradeService = javaRepositoryUpgradeService;
         this.defaultRepositoryUpgradeService = defaultRepositoryUpgradeService;
     }

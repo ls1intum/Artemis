@@ -7,15 +7,15 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
  */
 public abstract class BuildScriptGenerationService {
 
-    protected final BuildScriptProvider buildScriptProvider;
+    protected final BuildScriptProviderService buildScriptProviderService;
 
     /**
      * Constructor for BuildScriptGenerationService
      *
-     * @param buildScriptProvider buildScriptProvider
+     * @param buildScriptProviderService buildScriptProvider
      */
-    public BuildScriptGenerationService(BuildScriptProvider buildScriptProvider) {
-        this.buildScriptProvider = buildScriptProvider;
+    public BuildScriptGenerationService(BuildScriptProviderService buildScriptProviderService) {
+        this.buildScriptProviderService = buildScriptProviderService;
     }
 
     /**

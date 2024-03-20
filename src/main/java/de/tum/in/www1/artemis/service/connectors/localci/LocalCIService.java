@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
@@ -40,17 +40,17 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private final BuildScriptProvider buildScriptProvider;
+    private final BuildScriptProviderService buildScriptProviderService;
 
     private final AeolusTemplateService aeolusTemplateService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, BuildScriptProvider buildScriptProvider,
-            AeolusTemplateService aeolusTemplateService, ProgrammingExerciseRepository programmingExerciseRepository) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
+            BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService, ProgrammingExerciseRepository programmingExerciseRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
-        this.buildScriptProvider = buildScriptProvider;
+        this.buildScriptProviderService = buildScriptProviderService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
@@ -72,7 +72,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         if (exercise == null) {
             return;
         }
-        String script = buildScriptProvider.getScriptFor(exercise);
+        String script = buildScriptProviderService.getScriptFor(exercise);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
         exercise.setBuildScript(script);
         exercise.setBuildPlanConfiguration(new Gson().toJson(windfile));

@@ -28,9 +28,9 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
  */
 @Service
 @Profile("aeolus | localci")
-public class BuildScriptProvider {
+public class BuildScriptProviderService {
 
-    private static final Logger log = LoggerFactory.getLogger(BuildScriptProvider.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildScriptProviderService.class);
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -42,7 +42,7 @@ public class BuildScriptProvider {
      *
      * @param resourceLoaderService resourceLoaderService
      */
-    public BuildScriptProvider(ResourceLoaderService resourceLoaderService) {
+    public BuildScriptProviderService(ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
         // load all scripts into the cache
         cacheOnBoot();
