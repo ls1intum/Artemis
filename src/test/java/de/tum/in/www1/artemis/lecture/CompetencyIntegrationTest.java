@@ -475,7 +475,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteCourse_asAdmin_shouldAlsoDeleteCompetency() throws Exception {
+    void deleteCourseShouldAlsoDeleteCompetency() throws Exception {
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
         request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.NOT_FOUND, Competency.class);
     }
@@ -551,7 +551,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getCompetencyRelations() throws Exception {
+    void getCompetencyRelationsShouldGetRelations() throws Exception {
         Competency competency2 = competencyUtilService.createCompetency(course);
         Competency competency3 = competencyUtilService.createCompetency(course);
 
@@ -568,7 +568,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteCompetencyRelation() throws Exception {
+    void deleteCompetencyRelationShouldDeleteRelation() throws Exception {
         Competency competency2 = competencyUtilService.createCompetency(course);
 
         var relation = createRelation(competency, competency2, RelationType.EXTENDS);
@@ -581,7 +581,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteLecture_asInstructor_shouldUpdateCompetency() throws Exception {
+    void deleteLectureShouldUpdateCompetency() throws Exception {
         request.delete("/api/lectures/" + lecture.getId(), HttpStatus.OK);
         Competency competency = request.get("/api/courses/" + course.getId() + "/competencies/" + this.competency.getId(), HttpStatus.OK, Competency.class);
         assertThat(competency.getLectureUnits()).isEmpty();
@@ -589,55 +589,59 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteLectureUnit_asInstructor_shouldUpdateCompetency() throws Exception {
+    void deleteLectureUnitShouldUpdateCompetency() throws Exception {
         request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + idOfTextUnitOfLectureOne, HttpStatus.OK);
         Competency competency = request.get("/api/courses/" + course.getId() + "/competencies/" + this.competency.getId(), HttpStatus.OK, Competency.class);
         assertThat(competency.getLectureUnits()).isEmpty();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getCompetencyCourseProgressTeamsTest_asInstructorOne() throws Exception {
-        User tutor = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
-        var teams = teamUtilService.addTeamsForExerciseFixedTeamSize(TEST_PREFIX, "lgi", teamTextExercise, 2, tutor, 1);
+    @Nested
+    class GetCompetencyCourseProgress {
 
-        createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(0), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
-        createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(0), 10.0, 0.0, 50, false);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldGetCompetencyCourseProgressWhenTeamExercise() throws Exception {
+            User tutor = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+            var teams = teamUtilService.addTeamsForExerciseFixedTeamSize(TEST_PREFIX, "lgi", teamTextExercise, 2, tutor, 1);
 
-        createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(1), 10.0, 0.0, 10, false);
+            createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(0), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
+            createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(0), 10.0, 0.0, 50, false);
 
-        await().until(() -> participantScoreScheduleService.isIdle());
+            createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(1), 10.0, 0.0, 10, false);
 
-        CourseCompetencyProgressDTO courseCompetencyProgress = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/course-progress",
-                HttpStatus.OK, CourseCompetencyProgressDTO.class);
+            await().until(() -> participantScoreScheduleService.isIdle());
 
-        assertThat(courseCompetencyProgress.averageStudentScore()).isEqualTo(30);
-    }
+            CourseCompetencyProgressDTO courseCompetencyProgress = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/course-progress",
+                    HttpStatus.OK, CourseCompetencyProgressDTO.class);
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getCompetencyCourseProgressIndividualTest_asInstructorOne() throws Exception {
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
-        User instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+            assertThat(courseCompetencyProgress.averageStudentScore()).isEqualTo(30);
+        }
 
-        createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
-        createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 50, false);
-        createTextExerciseParticipationSubmissionAndResult(textExercise, student2, 10.0, 0.0, 10, false);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldGetCompetencyCourseProgress() throws Exception {
+            User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+            User instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
 
-        createTextExerciseParticipationSubmissionAndResult(textExercise, instructor1, 10.0, 0.0, 100, true); // will be ignored as not a student
+            createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
+            createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 50, false);
+            createTextExerciseParticipationSubmissionAndResult(textExercise, student2, 10.0, 0.0, 10, false);
 
-        await().until(() -> participantScoreScheduleService.isIdle());
+            createTextExerciseParticipationSubmissionAndResult(textExercise, instructor1, 10.0, 0.0, 100, true); // will be ignored as not a student
 
-        CourseCompetencyProgressDTO courseCompetencyProgress = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/course-progress",
-                HttpStatus.OK, CourseCompetencyProgressDTO.class);
+            await().until(() -> participantScoreScheduleService.isIdle());
 
-        assertThat(courseCompetencyProgress.averageStudentScore()).isEqualTo(53.3);
+            CourseCompetencyProgressDTO courseCompetencyProgress = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/course-progress",
+                    HttpStatus.OK, CourseCompetencyProgressDTO.class);
+
+            assertThat(courseCompetencyProgress.averageStudentScore()).isEqualTo(53.3);
+        }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getCompetencyStudentProgressTest() throws Exception {
+    void getCompetencyStudentProgressShouldReturnProgress() throws Exception {
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         lectureUnitService.setLectureUnitCompletion(textUnitRepository.findById(idOfTextUnitOfLectureOne).orElseThrow(), student1, true);
 
@@ -768,51 +772,66 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
-    void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
-        final var search = pageableSearchUtilService.configureSearch("");
-        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
-        assertThat(result.getResultsOnPage()).isNullOrEmpty();
-    }
+    @Nested
+    class GetCompetencies {
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
-        final var search = pageableSearchUtilService.configureSearch(competency.getTitle());
-        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
-        assertThat(result.getResultsOnPage()).hasSize(1);
-    }
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+        void shouldNotGetResultsFromCoursesForInstructorNotInCourses() throws Exception {
+            final var search = pageableSearchUtilService.configureSearch("");
+            final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(result.getResultsOnPage()).isNullOrEmpty();
+        }
 
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testAdminGetsResultsFromAllCourses() throws Exception {
-        final var search = pageableSearchUtilService.configureSearch(competency.getTitle());
-        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
-        assertThat(result.getResultsOnPage()).hasSize(1);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldGetResultsFromCoursesForInstructor() throws Exception {
+            final var search = pageableSearchUtilService.configureSearch(competency.getTitle());
+            final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(result.getResultsOnPage()).hasSize(1);
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void shouldGetResultsFromAllCoursesForAdmin() throws Exception {
+            final var search = pageableSearchUtilService.configureSearch(competency.getTitle());
+            final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(result.getResultsOnPage()).hasSize(1);
+        }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getPrerequisites() throws Exception {
+    void getPrerequisitesShouldReturnPrerequisites() throws Exception {
         List<Competency> prerequisites = request.getList("/api/courses/" + course2.getId() + "/prerequisites", HttpStatus.OK, Competency.class);
         assertThat(prerequisites).containsExactly(competency);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void addPrerequisite() throws Exception {
-        Competency competency = new Competency();
-        competency.setTitle("CompetencyTwo");
-        competency.setDescription("This is an example competency");
-        competency.setCourse(course2);
-        competency = competencyRepository.save(competency);
+    @Nested
+    class AddPrerequisite {
 
-        Competency prerequisite = request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class,
-                HttpStatus.OK);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldAddPrerequisite() throws Exception {
+            Competency competency = new Competency();
+            competency.setTitle("CompetencyTwo");
+            competency.setDescription("This is an example competency");
+            competency.setCourse(course2);
+            competency = competencyRepository.save(competency);
 
-        assertThat(prerequisite).isNotNull();
-        assertThat(prerequisite.getConsecutiveCourses()).contains(course);
+            Competency prerequisite = request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class,
+                    HttpStatus.OK);
+
+            assertThat(prerequisite).isNotNull();
+            assertThat(prerequisite.getConsecutiveCourses()).contains(course);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldNotAddPrerequisiteWhenAlreadyCompetencyInCourse() throws Exception {
+            // Test that a competency of a course can not be a prerequisite to the same course
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.BAD_REQUEST);
+        }
     }
 
     @Nested
@@ -843,13 +862,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             anotherCourse = courseRepository.findWithEagerCompetenciesById(anotherCourse.getId()).orElseThrow();
             assertThat(anotherCourse.getPrerequisites()).contains(competency);
         }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void addPrerequisite_doNotAllowCycle() throws Exception {
-        // Test that a competency of a course can not be a prerequisite to the same course
-        request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.BAD_REQUEST);
     }
 
     @Nested
