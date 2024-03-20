@@ -18,7 +18,7 @@ export class ExerciseResultPage {
     }
 
     clickOpenExercise(exerciseId: number) {
-        cy.intercept(GET, BASE_API + 'results/*/rating').as('getResults');
+        cy.intercept(GET, `${BASE_API}/results/*/rating`).as('getResults');
         cy.get('#open-exercise-' + exerciseId).click();
         return cy.wait('@getResults');
     }

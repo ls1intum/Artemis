@@ -74,8 +74,8 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
     @Query("""
             SELECT session
             FROM TutorialGroupSession session
-            WHERE session.start <= :end
-                AND session.end >= :start
+            WHERE session.start < :end
+                AND session.end > :start
                 AND session.tutorialGroup.course = :course
             """)
     Set<TutorialGroupSession> findAllBetween(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
