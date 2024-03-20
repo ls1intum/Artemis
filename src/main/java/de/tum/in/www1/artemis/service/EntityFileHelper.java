@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
@@ -10,24 +8,20 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
-import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
 
 /**
  * Service for handling file operations for entities.
  */
-@Profile(PROFILE_CORE)
-@Service
 @Deprecated(forRemoval = true)
-public class EntityFileService {
+public class EntityFileHelper {
 
-    private static final Logger log = LoggerFactory.getLogger(EntityFileService.class);
+    private static final Logger log = LoggerFactory.getLogger(EntityFileHelper.class);
 
     private final FileService fileService;
 
-    public EntityFileService(FileService fileService) {
+    public EntityFileHelper(FileService fileService) {
         this.fileService = fileService;
     }
 
