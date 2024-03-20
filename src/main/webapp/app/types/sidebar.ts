@@ -1,3 +1,4 @@
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 
@@ -34,6 +35,12 @@ export interface BaseCardElement {
      * Defines the item's title that will be shown in the card
      */
     title: string;
+    /**
+     * This is an optional string which may define an icon for the card item.
+     * It has to be a valid FontAwesome icon name and will be displayed in the
+     * 'regular' style.
+     */
+    icon?: IconProp;
     /**
      * Defines the item's id that will be used to search for selected
      */
