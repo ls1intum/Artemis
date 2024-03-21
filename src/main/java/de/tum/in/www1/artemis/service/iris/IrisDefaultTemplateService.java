@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
  */
 @Profile(PROFILE_CORE)
 @Service
-public final class IrisDefaultTemplateService {
+public class IrisDefaultTemplateService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisDefaultTemplateService.class);
 

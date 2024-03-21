@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs/internal/Subscription';
     selector: '[jhiFeatureToggleHide]',
 })
 export class FeatureToggleHideDirective implements OnInit, OnDestroy {
-    @Input('jhiFeatureToggleHide') feature: FeatureToggle;
+    @Input('jhiFeatureToggleHide') feature?: FeatureToggle;
 
     private featureActive = true;
 
@@ -23,9 +23,7 @@ export class FeatureToggleHideDirective implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.featureToggleActiveSubscription) {
-            this.featureToggleActiveSubscription.unsubscribe();
-        }
+        this.featureToggleActiveSubscription?.unsubscribe();
     }
 
     /**
