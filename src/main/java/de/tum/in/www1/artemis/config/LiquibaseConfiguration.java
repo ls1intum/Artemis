@@ -128,7 +128,7 @@ public class LiquibaseConfiguration {
             }
         }
         if (currentVersion.isGreaterThanOrEqualTo(version700) && currentVersion.isLowerThan(version800)) {
-            // TODO: replace this with the migration from 6.9.X -> 7.0.0 once it is created.
+            // TODO: add the migration check for 6.9.X -> 7.0.0 once it is created.
             if (previousVersion.isLowerThan(migrationPathVersion)) {
                 log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_12_9_String);
             }
