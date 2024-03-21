@@ -46,7 +46,7 @@ export class UsersImportDialogComponent implements OnDestroy {
 
     usersToImport: StudentDTO[] = [];
     examUsersToImport: ExamUserDTO[] = [];
-    notFoundUsers: StudentDTO[] = [];
+    notFoundUsers: Partial<StudentDTO>[] = [];
 
     isParsing = false;
     validationError?: string;
@@ -241,7 +241,20 @@ export class UsersImportDialogComponent implements OnDestroy {
                 error: () => this.onSaveError(),
             });
         } else if (this.adminUserMode) {
-            this.adminUserService.importAll(this.usersToImport).subscribe({ next: (res) => this.onSaveSuccess(res), error: () => this.onSaveError() });
+            // convert StudentDTO to User
+            const artemisUsers = this.usersToImport.map((student) => ({ ...student, visibleRegistrationNumber: student.registrationNumber }));
+            this.adminUserService.importAll(artemisUsers).subscribe({
+                next: (res) => {
+                    const convertedRes = new HttpResponse({
+                        body: res.body?.map((user) => ({
+                            ...user,
+                            registrationNumber: user.visibleRegistrationNumber,
+                        })),
+                    });
+                    this.onSaveSuccess(convertedRes);
+                },
+                error: () => this.onSaveError(),
+            });
         } else {
             this.alertService.error('artemisApp.importUsers.genericErrorMessage');
         }
@@ -266,9 +279,9 @@ export class UsersImportDialogComponent implements OnDestroy {
 
         for (const notFound of this.notFoundUsers) {
             if (
-                (notFound.registrationNumber?.length > 0 && notFound.registrationNumber === user.registrationNumber) ||
-                (notFound.login?.length > 0 && notFound.login === user.login) ||
-                (notFound.email?.length > 0 && notFound.email === user.email)
+                (notFound.registrationNumber?.length && notFound.registrationNumber === user.registrationNumber) ||
+                (notFound.login?.length && notFound.login === user.login) ||
+                (notFound.email?.length && notFound.email === user.email)
             ) {
                 return true;
             }
@@ -303,7 +316,7 @@ export class UsersImportDialogComponent implements OnDestroy {
      * Callback method that is called when the import request was successful
      * @param {HttpResponse<StudentDTO[]>} notFoundUsers - List of users that could NOT be imported since they were not found
      */
-    onSaveSuccess(notFoundUsers: HttpResponse<StudentDTO[]>) {
+    onSaveSuccess(notFoundUsers: HttpResponse<Partial<StudentDTO>[]>) {
         this.isImporting = false;
         this.hasImported = true;
         this.notFoundUsers = notFoundUsers.body! || [];

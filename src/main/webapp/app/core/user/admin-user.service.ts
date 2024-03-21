@@ -5,7 +5,6 @@ import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { User } from 'app/core/user/user.model';
 import { UserFilter } from 'app/admin/user-management/user-management.component';
-import { StudentDTO } from 'app/entities/student-dto.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdminUserService {
@@ -27,8 +26,8 @@ export class AdminUserService {
      * @param users The list of users to be imported.
      * @return Observable<HttpResponse<User[]>> with not found Users
      */
-    importAll(users: StudentDTO[]): Observable<HttpResponse<StudentDTO[]>> {
-        return this.http.post<StudentDTO[]>(`${this.resourceUrl}/import`, users, { observe: 'response' });
+    importAll(users: Partial<User>[]): Observable<HttpResponse<User[]>> {
+        return this.http.post<User[]>(`${this.resourceUrl}/import`, users, { observe: 'response' });
     }
 
     /**
@@ -52,6 +51,15 @@ export class AdminUserService {
             options = filter.adjustOptions(options);
         }
         return this.http.get<User[]>(this.resourceUrl, { params: options, observe: 'response' });
+    }
+
+    /**
+     * Find a user on the server.
+     * @param login The login of the user to find.
+     * @return Observable<HttpResponse<User>> with the found user as body.
+     */
+    findUser(login: string): Observable<User> {
+        return this.http.get<User>(`${this.resourceUrl}/${login}`);
     }
 
     /**
