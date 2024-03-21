@@ -21,8 +21,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -147,26 +145,8 @@ public abstract class RepositoryResource {
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
-            return getFileFromRepository(filename, repository);
+            return repositoryService.getFileFromRepository(filename, repository);
         });
-    }
-
-    /**
-     * Helper method to get the content of a file from the given repository.
-     *
-     * @param filename   of the file to retrieve.
-     * @param repository the repository to retrieve the file from.
-     * @return the file if available.
-     * @throws IOException if the file can't be retrieved.
-     */
-    protected ResponseEntity<byte[]> getFileFromRepository(String filename, Repository repository) throws IOException {
-        byte[] out = repositoryService.getFile(repository, filename);
-        HttpHeaders responseHeaders = new HttpHeaders();
-        var contentType = repositoryService.getFileType(repository, filename);
-        responseHeaders.add("Content-Type", contentType);
-        // Prevent the file from being interpreted as HTML by the browser when opened directly:
-        responseHeaders.setContentDisposition(ContentDisposition.builder("attachment").filename(filename).build());
-        return new ResponseEntity<>(out, responseHeaders, HttpStatus.OK);
     }
 
     /**

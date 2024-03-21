@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
+import de.tum.in.www1.artemis.service.RepositoryParticipationService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
@@ -60,11 +61,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
+    private final RepositoryParticipationService repositoryParticipationService;
+
     public RepositoryProgrammingExerciseParticipationResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<VersionControlService> versionControlService,
             RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
+            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
+            RepositoryParticipationService repositoryParticipationService) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, versionControlService, programmingExerciseRepository, repositoryAccessService,
                 localVCServletService);
         this.participationAuthCheckService = participationAuthCheckService;
@@ -73,6 +77,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.participationRepository = participationRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
+        this.repositoryParticipationService = repositoryParticipationService;
     }
 
     /**
@@ -104,49 +109,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         repositoryAccessService.checkAccessRepositoryElseThrow(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise,
                 repositoryActionType);
 
-        return getRepositoryFromGitService(pullOnGet, programmingParticipation);
-    }
-
-    /**
-     * Get the repository for the plagiarism view of the given participation.
-     *
-     * @param participationId the id of the participation to retrieve the repository for
-     * @return the repository for the plagiarism view of the given participation
-     * @throws GitAPIException          if the repository could not be accessed
-     * @throws AccessForbiddenException if the user does not have access to the repository
-     */
-    Repository getRepositoryForPlagiarismView(Long participationId) throws GitAPIException, AccessForbiddenException {
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
-
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
-            throw new IllegalArgumentException();
-        }
-
-        repositoryAccessService.checkHasAccessToPlagiarismSubmission(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), RepositoryActionType.READ);
-
-        return getRepositoryFromGitService(true, programmingParticipation);
-    }
-
-    /**
-     * Helper method to get the repository for the given participation from the git service.
-     *
-     * @param pullOnGet                whether to pull the repository before returning it
-     * @param programmingParticipation the participation to retrieve the repository for
-     * @return the repository for the given participation
-     * @throws GitAPIException if the repository could not be accessed
-     */
-    private Repository getRepositoryFromGitService(boolean pullOnGet, ProgrammingExerciseParticipation programmingParticipation) throws GitAPIException {
-        var repositoryUri = programmingParticipation.getVcsRepositoryUri();
-
-        // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
-        // Retrieving the default branch is not necessary if the repository is already cached.
-        if (gitService.isRepositoryCached(repositoryUri)) {
-            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet);
-        }
-        else {
-            String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(programmingParticipation);
-            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch);
-        }
+        return repositoryParticipationService.getRepositoryFromGitService(pullOnGet, programmingParticipation);
     }
 
     @Override
@@ -215,7 +178,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to files for plagiarism view for domainId : {}", participationId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepositoryForPlagiarismView(participationId);
+            Repository repository = repositoryParticipationService.getRepositoryForPlagiarismView(participationId);
             Map<String, FileType> fileList = repositoryService.getFiles(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
         });
@@ -297,8 +260,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to file {} for plagiarism view for domainId : {}", filename, participationId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepositoryForPlagiarismView(participationId);
-            return super.getFileFromRepository(filename, repository);
+            Repository repository = repositoryParticipationService.getRepositoryForPlagiarismView(participationId);
+            return repositoryService.getFileFromRepository(filename, repository);
         });
     }
 

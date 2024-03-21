@@ -83,7 +83,7 @@ public class RepositoryAccessService {
 
         if (!hasStarted) {
             // Only teaching assistants have access to the repository before the exercise has started.
-            return isTeachingAssistang;
+            return isTeachingAssistant;
         }
 
         return hasAccessAfterExerciseStart(studentParticipation, repositoryActionType, isLocked);
@@ -123,8 +123,8 @@ public class RepositoryAccessService {
             return true;
         }
 
-        // The user has write or reset permissions if due date has passed, but the participation is in practice mode.
-        return !beforeDueDate && isPracticeMode;
+        // The user has write or reset permissions if due date has passed, but the participation is in practice mode and not locked.
+        return !beforeDueDate && isPracticeMode && !isLocked;
     }
 
     /**
