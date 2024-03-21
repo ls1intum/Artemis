@@ -53,7 +53,7 @@ Additionally, we outline the capabilities available to different user roles with
      - ✔
      -
      -
-   * - `User account provisioning`_
+   * - `Artemis user account provisioning`_
      - ✔
      -
      -
@@ -342,7 +342,7 @@ To unlock the full potential of the LTI configuration and enable the Deep Linkin
     :width: 700
     :alt: Edit Course-wise LTI Configuration
 
-User account provisioning
+Artemis user account provisioning
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Instructors can decide to automatically create new user accounts for students who first participate in an exercise via an external platform and do not already have an Artemis account. Artemis automatically generates a new student account by default when they first engage with an Artemis exercise through an external LMS.
@@ -360,8 +360,8 @@ However, if instructors prefer to restrict exercise participation to only those 
 #. In the *General Configuration* section, enable the *Require existing user* checkbox.
 #. Hit *Save* to apply your changes.
 
-On the LTI platform site
-------------------------
+Linking Artemis Exercises
+-------------------------
 
 Artemis supports various methods for integrating LTI platforms, enhancing the platform's versatility in connecting with external learning resources. A preferred method for setting up exercise links in Artemis is deep linking (also known as content selection).
 This approach streamlines the integration process, allowing for a seamless connection between Artemis and external platforms. For situations where Deep Linking is not enabled, manual configuration of exercise links within external platforms is also possible.
