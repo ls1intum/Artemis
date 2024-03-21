@@ -103,18 +103,21 @@ public class LiquibaseConfiguration {
         var currentVersion = new Semver(currentVersionString);
         var migrationPathVersion = new Semver(migrationPathVersion5_12_9_String);
         var version600 = new Semver("6.0.0");
+        var version700 = new Semver("8.0.0");
         var version800 = new Semver("8.0.0");
         if (currentVersion.isLowerThan(version600)) {
             log.info("Migration path check: Not necessary");
+            return;
         }
-        if (currentVersion.isGreaterThanOrEqualTo(version600) && currentVersion.isLowerThan(version800)) {
-            previousVersionString = getPreviousVersionElseThrow();
-            log.info("The previous version was {}", previousVersionString);
-            if (previousVersionString == null) {
-                // this means Artemis was never started before and no DATABASECHANGELOG exists, we can simply proceed
-                return;
-            }
-            var previousVersion = new Semver(previousVersionString);
+        previousVersionString = getPreviousVersionElseThrow();
+        log.info("The previous version was {}", previousVersionString);
+        if (previousVersionString == null) {
+            // this means Artemis was never started before and no DATABASECHANGELOG exists, we can simply proceed
+            log.info("Migration path check: Not necessary");
+            return;
+        }
+        var previousVersion = new Semver(previousVersionString);
+        if (currentVersion.isGreaterThanOrEqualTo(version600) && currentVersion.isLowerThan(version700)) {
             if (previousVersion.isLowerThan(migrationPathVersion)) {
                 log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_12_9_String);
             }
@@ -123,6 +126,9 @@ public class LiquibaseConfiguration {
                 updateInitialChecksum();
                 log.info("Successfully cleaned up initial schema during migration");
             }
+        }
+        if (currentVersion.isGreaterThanOrEqualTo(version700) && currentVersion.isLowerThan(version800)) {
+            // TODO: handle migration from 6.9.X -> 7.0.0
         }
 
     }
