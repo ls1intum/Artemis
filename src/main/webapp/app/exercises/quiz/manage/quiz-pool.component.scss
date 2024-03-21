@@ -13,12 +13,12 @@
 
 .edit-quiz-footer {
     height: 100px;
-    position: fixed;
+    position: sticky;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 10;
-    box-shadow: 0 0 3px var(--edit-quiz-footer-box-shadow);
+    border-top: 1px solid var(--border-color);
     background: var(--edit-quiz-footer-background);
     padding-top: 10px;
 
