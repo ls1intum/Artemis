@@ -103,8 +103,7 @@ public class RepositoryAccessService {
         }
 
         // Check if the user has write or reset permissions.
-        else
-            return hasWriteOrResetPermissions(studentParticipation, isLocked);
+        return hasWriteOrResetPermissions(studentParticipation, isLocked);
     }
 
     /**
