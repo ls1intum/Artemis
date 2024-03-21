@@ -53,6 +53,7 @@ import { CourseAccessStorageService } from 'app/course/course-access-storage.ser
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -149,6 +150,7 @@ describe('CourseOverviewComponent', () => {
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(OrionFilterDirective),
+                MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
