@@ -98,8 +98,9 @@ public class RepositoryAccessService {
      */
     private boolean hasAccessAfterExerciseStart(StudentParticipation studentParticipation, RepositoryActionType repositoryActionType, boolean isLocked) {
         // The user always has read permissions after the exercise has started.
-        if (repositoryActionType == RepositoryActionType.READ)
+        if (repositoryActionType == RepositoryActionType.READ) {
             return true;
+        }
 
         // Check if the user has write or reset permissions.
         else
