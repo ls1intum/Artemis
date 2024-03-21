@@ -17,12 +17,23 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.competency.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
+import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
+import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LearningPathRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
@@ -130,14 +141,14 @@ public class LearningPathService {
     /**
      * Search for all learning paths fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
      *
-     * @param search the search query defining the search term and the size of the returned page
-     * @param course the course the learning paths are linked to
+     * @param search   the search query defining the search term and the size of the returned page
+     * @param courseId the id of the course the learning paths are linked to
      * @return A wrapper object containing a list of all found learning paths and the total number of pages
      */
-    public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull SearchTermPageableSearchDTO<String> search, @NotNull Course course) {
+    public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull SearchTermPageableSearchDTO<String> search, long courseId) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LEARNING_PATH);
         final var searchTerm = search.getSearchTerm();
-        final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, course.getId(), pageable);
+        final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, courseId, pageable);
         final List<LearningPathInformationDTO> contentDTOs = learningPathPage.getContent().stream().map(LearningPathInformationDTO::of).toList();
         return new SearchResultPageDTO<>(contentDTOs, learningPathPage.getTotalPages());
     }
