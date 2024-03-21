@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;

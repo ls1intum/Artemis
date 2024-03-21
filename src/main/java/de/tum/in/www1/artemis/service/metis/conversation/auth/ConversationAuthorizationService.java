@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
 
 @Profile(PROFILE_CORE)
 @Service

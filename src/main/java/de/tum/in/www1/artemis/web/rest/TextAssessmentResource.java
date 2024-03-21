@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSendingService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;

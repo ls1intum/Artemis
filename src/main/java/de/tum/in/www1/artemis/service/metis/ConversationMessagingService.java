@@ -37,8 +37,8 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonStrategy;

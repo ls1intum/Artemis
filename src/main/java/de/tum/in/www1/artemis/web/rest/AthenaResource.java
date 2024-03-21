@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaModuleService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaRepositoryExportService;

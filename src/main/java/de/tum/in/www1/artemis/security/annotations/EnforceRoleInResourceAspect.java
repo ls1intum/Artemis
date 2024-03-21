@@ -12,7 +12,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Pointcut;
 
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
 
 public abstract class EnforceRoleInResourceAspect {
 

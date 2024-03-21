@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.GradeStepsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;

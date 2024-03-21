@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 

@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
 import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSubSettingsInterface;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;

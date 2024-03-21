@@ -57,7 +57,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
