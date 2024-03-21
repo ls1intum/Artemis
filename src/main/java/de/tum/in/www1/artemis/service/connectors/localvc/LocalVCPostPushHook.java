@@ -46,7 +46,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
         String wrongBranchMessage = "Only pushes to the default branch will be graded. Your changes were saved nonetheless.";
 
-        if (command.getType() != ReceiveCommand.Type.UPDATE) {
+        if (command.getType() != ReceiveCommand.Type.UPDATE && command.getType() != ReceiveCommand.Type.UPDATE_NONFASTFORWARD) {
             // The command can also be of type CREATE (e.g. when creating a new branch). This will never lead to a new submission.
             // Pushes for submissions must come from the default branch, which can only be updated and not created by the student.
             // Updates to other branches will be caught in the catch block below, returning an error message to the user.
