@@ -94,51 +94,51 @@ export class ParticipationSubmissionComponent implements OnInit {
             }
             this.participationService.getLogsAvailabilityForResultsOfParticipation(this.participationId).subscribe((logsAvailable) => {
                 this.logsAvailable = logsAvailable;
+                if (this.isTmpOrSolutionProgrParticipation) {
+                    // Find programming exercise of template and solution programming participation
+                    this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
+                        this.exercise = exerciseResponse.body!;
+                        this.exerciseStatusBadge = dayjs().isAfter(dayjs(this.exercise.dueDate!)) ? 'bg-danger' : 'bg-success';
+                        const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
+                        const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
+
+                        // Check if requested participationId belongs to the template or solution participation
+                        if (this.participationId === templateParticipation?.id) {
+                            this.participation = templateParticipation;
+                            this.submissions = templateParticipation.submissions!;
+                            // This is needed to access the exercise in the result details
+                            templateParticipation.programmingExercise = this.exercise;
+                        } else if (this.participationId === solutionParticipation?.id) {
+                            this.participation = solutionParticipation;
+                            this.submissions = solutionParticipation.submissions!;
+                            // This is needed to access the exercise in the result details
+                            solutionParticipation.programmingExercise = this.exercise;
+                        } else {
+                            // Should not happen
+                            alert(this.translateService.instant('artemisApp.participation.noParticipation'));
+                        }
+
+                        if (this.submissions) {
+                            this.submissions.forEach((submission: ProgrammingSubmission) => {
+                                if (submission.results) {
+                                    submission.results.forEach((result: Result) => {
+                                        result.logsAvailable = this.logsAvailable?.[result.id!];
+                                    });
+                                }
+                            });
+                        }
+
+                        this.isLoading = false;
+                    });
+                } else {
+                    // Get exercise for release and due dates
+                    this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
+                        this.exercise = exerciseResponse.body!;
+                        this.updateStatusBadgeColor();
+                    });
+                    this.fetchParticipationAndSubmissionsForStudent();
+                }
             });
-            if (this.isTmpOrSolutionProgrParticipation) {
-                // Find programming exercise of template and solution programming participation
-                this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
-                    this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = dayjs().isAfter(dayjs(this.exercise.dueDate!)) ? 'bg-danger' : 'bg-success';
-                    const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
-                    const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
-
-                    // Check if requested participationId belongs to the template or solution participation
-                    if (this.participationId === templateParticipation?.id) {
-                        this.participation = templateParticipation;
-                        this.submissions = templateParticipation.submissions!;
-                        // This is needed to access the exercise in the result details
-                        templateParticipation.programmingExercise = this.exercise;
-                    } else if (this.participationId === solutionParticipation?.id) {
-                        this.participation = solutionParticipation;
-                        this.submissions = solutionParticipation.submissions!;
-                        // This is needed to access the exercise in the result details
-                        solutionParticipation.programmingExercise = this.exercise;
-                    } else {
-                        // Should not happen
-                        alert(this.translateService.instant('artemisApp.participation.noParticipation'));
-                    }
-
-                    if (this.submissions) {
-                        this.submissions.forEach((submission: ProgrammingSubmission) => {
-                            if (submission.results) {
-                                submission.results.forEach((result: Result) => {
-                                    result.logsAvailable = this.logsAvailable?.[result.id!];
-                                });
-                            }
-                        });
-                    }
-
-                    this.isLoading = false;
-                });
-            } else {
-                // Get exercise for release and due dates
-                this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
-                    this.exercise = exerciseResponse.body!;
-                    this.updateStatusBadgeColor();
-                });
-                this.fetchParticipationAndSubmissionsForStudent();
-            }
         });
 
         // Get active profiles, to distinguish between Bitbucket and GitLab
