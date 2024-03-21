@@ -119,8 +119,9 @@ public class RepositoryAccessService {
         boolean isPracticeMode = studentParticipation.isPracticeMode();
 
         // The user has write or reset permissions if the participation is not locked and the due date has not passed yet.
-        if (beforeDueDate && !isLocked)
+        if (beforeDueDate && !isLocked) {
             return true;
+        }
 
         // The user has write or reset permissions if due date has passed, but the participation is in practice mode.
         return !beforeDueDate && isPracticeMode;
