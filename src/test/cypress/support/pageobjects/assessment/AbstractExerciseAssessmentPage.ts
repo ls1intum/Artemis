@@ -19,7 +19,7 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     submit() {
-        cy.intercept(PUT, BASE_API + 'participations/*/manual-results?submit=true').as('submitAssessment');
+        cy.intercept(PUT, `${BASE_API}/participations/*/manual-results?submit=true`).as('submitAssessment');
         this.submitWithoutInterception();
         return cy.wait('@submitAssessment');
     }
@@ -39,16 +39,16 @@ export abstract class AbstractExerciseAssessmentPage {
         cy.get('#responseTextArea').type(response, { parseSpecialCharSequences: false });
         switch (exerciseType) {
             case ExerciseType.PROGRAMMING:
-                cy.intercept(PUT, BASE_API + 'programming-submissions/*/assessment-after-complaint').as('complaintAnswer');
+                cy.intercept(PUT, `${BASE_API}/programming-submissions/*/assessment-after-complaint`).as('complaintAnswer');
                 break;
             case ExerciseType.TEXT:
-                cy.intercept(PUT, BASE_API + 'participations/*/submissions/*/text-assessment-after-complaint').as('complaintAnswer');
+                cy.intercept(PUT, `${BASE_API}/participations/*/submissions/*/text-assessment-after-complaint`).as('complaintAnswer');
                 break;
             case ExerciseType.MODELING:
-                cy.intercept(PUT, BASE_API + 'complaint-responses/complaint/*/resolve').as('complaintAnswer');
+                cy.intercept(PUT, `${BASE_API}/complaint-responses/complaint/*/resolve`).as('complaintAnswer');
                 break;
             case ExerciseType.FILE_UPLOAD:
-                cy.intercept(PUT, BASE_API + 'file-upload-submissions/*/assessment-after-complaint').as('complaintAnswer');
+                cy.intercept(PUT, `${BASE_API}/file-upload-submissions/*/assessment-after-complaint`).as('complaintAnswer');
                 break;
             default:
                 throw new Error(`Exercise type '${exerciseType}' is not supported yet!`);

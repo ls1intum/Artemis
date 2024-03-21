@@ -19,7 +19,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
-            highlightSelector: '.guided-tour.tab-item.statistics',
+            highlightSelector: '.guided-tour.tab-link.statistics',
             headlineTranslateKey: 'tour.courseExerciseOverview.statistics.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.statistics.content',
             highlightPadding: 10,

@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,7 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentT
         assertThat(dueFuture.isDone()).isFalse();
         assertThat(assessmentDueFuture.isDone()).isFalse();
 
-        await().untilAsserted(() -> {
+        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
             assertEqual(releaseTrigger, true);
             assertEqual(dueTrigger, false);
             assertEqual(assessmentDueTrigger, false);
@@ -53,7 +54,7 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentT
         assertThat(dueFuture.isDone()).isFalse();
         assertThat(assessmentDueFuture.isDone()).isFalse();
 
-        await().untilAsserted(() -> {
+        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
             assertEqual(releaseTrigger, true);
             assertEqual(dueTrigger, true);
             assertEqual(assessmentDueTrigger, false);
@@ -63,7 +64,7 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentT
         assertThat(dueFuture.isDone()).isTrue();
         assertThat(assessmentDueFuture.isDone()).isFalse();
 
-        await().untilAsserted(() -> {
+        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
             assertEqual(releaseTrigger, true);
             assertEqual(dueTrigger, true);
             assertEqual(assessmentDueTrigger, true);
