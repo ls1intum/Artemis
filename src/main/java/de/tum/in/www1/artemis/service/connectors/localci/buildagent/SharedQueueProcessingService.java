@@ -68,6 +68,11 @@ public class SharedQueueProcessingService {
      */
     private final ReentrantLock instanceLock = new ReentrantLock();
 
+    /**
+     * Lock for operations to update build agent.
+     */
+    private final ReentrantLock updateAgentLock = new ReentrantLock();
+
     private UUID listenerId;
 
     public SharedQueueProcessingService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService, BuildJobManagementService buildJobManagementService) {
@@ -180,23 +185,29 @@ public class SharedQueueProcessingService {
     }
 
     private void updateLocalBuildAgentInformation() {
-        // Add/update
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        List<LocalCIBuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
-        int numberOfCurrentBuildJobs = processingJobsOfMember.size();
-        int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
-        boolean active = numberOfCurrentBuildJobs > 0;
-        LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active,
-                recentBuildJobs);
         try {
-            buildAgentInformation.lock(memberAddress);
-            buildAgentInformation.put(memberAddress, info);
-        }
-        catch (Exception e) {
-            log.error("Error while updating build agent information for agent {}", memberAddress, e);
+            updateAgentLock.lock();
+            // Add/update
+            String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+            List<LocalCIBuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
+            int numberOfCurrentBuildJobs = processingJobsOfMember.size();
+            int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
+            boolean active = numberOfCurrentBuildJobs > 0;
+            LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember,
+                    active, recentBuildJobs);
+            try {
+                buildAgentInformation.lock(memberAddress);
+                buildAgentInformation.put(memberAddress, info);
+            }
+            catch (Exception e) {
+                log.error("Error while updating build agent information for agent {}", memberAddress, e);
+            }
+            finally {
+                buildAgentInformation.unlock(memberAddress);
+            }
         }
         finally {
-            buildAgentInformation.unlock(memberAddress);
+            updateAgentLock.unlock();
         }
     }
 
