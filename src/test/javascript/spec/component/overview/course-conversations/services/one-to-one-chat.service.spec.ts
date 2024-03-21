@@ -8,6 +8,8 @@ import { MockTranslateService } from '../../../../helpers/mocks/service/mock-tra
 import { AccountService } from 'app/core/auth/account.service';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
 
 describe('OneToOneChatService', () => {
     let service: OneToOneChatService;
@@ -20,6 +22,7 @@ describe('OneToOneChatService', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: NotificationService, useClass: MockNotificationService },
             ],
         });
         service = TestBed.inject(OneToOneChatService);

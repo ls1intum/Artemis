@@ -41,7 +41,7 @@ export const createCommitUrl = (
     let repoSlugPostfix: string | undefined = undefined;
     if (participation?.type === ParticipationType.PROGRAMMING) {
         const studentParticipation = participation as ProgrammingExerciseStudentParticipation;
-        if (studentParticipation.repositoryUrl) {
+        if (studentParticipation.repositoryUri) {
             repoSlugPostfix = studentParticipation.participantIdentifier;
             if (isPracticeMode(studentParticipation)) {
                 repoSlugPostfix = 'practice-' + repoSlugPostfix;

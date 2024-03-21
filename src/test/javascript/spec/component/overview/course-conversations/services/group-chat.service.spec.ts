@@ -7,12 +7,14 @@ import { MockAccountService } from '../../../../helpers/mocks/service/mock-accou
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
-import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
 
 describe('GroupChatService', () => {
     let service: GroupChatService;
     let httpMock: HttpTestingController;
-    let elemDefault: GroupChatDto;
+    let elemDefault: GroupChatDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -20,6 +22,7 @@ describe('GroupChatService', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: NotificationService, useClass: MockNotificationService },
             ],
         });
         service = TestBed.inject(GroupChatService);
@@ -50,7 +53,7 @@ describe('GroupChatService', () => {
         const expected = { ...returnedFromService };
 
         service
-            .update(1, 1, new GroupChatDto())
+            .update(1, 1, new GroupChatDTO())
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
 

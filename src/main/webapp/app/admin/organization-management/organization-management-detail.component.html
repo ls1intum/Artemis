@@ -1,54 +1,56 @@
 <div>
     <h2>
-        <span jhiTranslate="artemisApp.organizationManagement.detail.title">Organization</span> [<b>{{ organization.name }}</b
+        <span jhiTranslate="artemisApp.organizationManagement.detail.title"></span> [<b>{{ organization.name }}</b
         >]
     </h2>
     <div class="container">
         <div class="row">
             <div class="col">
                 <dl class="row-md jh-entity-details">
-                    <dt><span jhiTranslate="global.field.id">Id</span></dt>
+                    <dt><span jhiTranslate="global.field.id"></span></dt>
                     <dd>{{ organization.id }}</dd>
-                    <dt><span jhiTranslate="artemisApp.organizationManagement.name">Name</span></dt>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.name"></span></dt>
                     <dd>{{ organization.name }}</dd>
-                    <dt><span jhiTranslate="artemisApp.organizationManagement.shortName">Short Name</span></dt>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.shortName"></span></dt>
                     <dd>{{ organization.shortName }}</dd>
-                    <dt><span jhiTranslate="artemisApp.organizationManagement.url">Url</span></dt>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.url"></span></dt>
                     <dd>{{ organization.url }}</dd>
-                    <dt><span jhiTranslate="artemisApp.organizationManagement.logoUrl">Logo Url</span></dt>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.logoUrl"></span></dt>
                     <dd>{{ organization.logoUrl }}</dd>
-                    <dt><span jhiTranslate="artemisApp.organizationManagement.description">Description</span></dt>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.description"></span></dt>
                     <dd>{{ organization.description }}</dd>
-                    <dt><span jhiTranslate="artemisApp.organizationManagement.emailPattern">Email Pattern</span></dt>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.emailPattern"></span></dt>
                     <dd>{{ organization.emailPattern }}</dd>
                 </dl>
             </div>
         </div>
         <div class="row">
             <h3>
-                <span jhiTranslate="artemisApp.organizationManagement.courses">Courses</span>
+                <span jhiTranslate="artemisApp.organizationManagement.courses"></span>
             </h3>
             <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th><span jhiTranslate="global.field.id">ID</span></th>
-                            <th><span jhiTranslate="artemisApp.course.title">Title</span></th>
-                            <th><span jhiTranslate="artemisApp.course.shortName">Short Name</span></th>
+                            <th><span jhiTranslate="global.field.id"></span></th>
+                            <th><span jhiTranslate="artemisApp.course.title"></span></th>
+                            <th><span jhiTranslate="artemisApp.course.shortName"></span></th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let course of organization.courses">
-                            <td>
-                                <a [routerLink]="['/course-management/', course.id]">{{ course.id }}</a>
-                            </td>
-                            <td>
-                                <span>{{ course.title }}</span>
-                            </td>
-                            <td>
-                                <span>{{ course.shortName }}</span>
-                            </td>
-                        </tr>
+                        @for (course of organization.courses; track course) {
+                            <tr>
+                                <td>
+                                    <a [routerLink]="['/course-management/', course.id]">{{ course.id }}</a>
+                                </td>
+                                <td>
+                                    <span>{{ course.title }}</span>
+                                </td>
+                                <td>
+                                    <span>{{ course.shortName }}</span>
+                                </td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
@@ -56,7 +58,7 @@
     </div>
     <div class="container p-2">
         <h3>
-            <span jhiTranslate="artemisApp.organizationManagement.users">Users</span>
+            <span jhiTranslate="artemisApp.organizationManagement.users"></span>
         </h3>
         <jhi-data-table
             [isLoading]="isLoading"
@@ -93,53 +95,49 @@
                     <ngx-datatable-column prop="" [minWidth]="60" [width]="80" [maxWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id"> ID </span>
-                                <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id"></span>
+                                <fa-icon [icon]="controls.iconForSortPropField('id')" />
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
                             <a routerLink="/admin/user-management/{{ value?.login }}"> {{ value.id }} </a>
                         </ng-template>
                     </ngx-datatable-column>
-
                     <ngx-datatable-column prop="login" [minWidth]="150" [width]="200" [maxWidth]="200">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.userManagement.login"> Login </span>
-                                <fa-icon [icon]="controls.iconForSortPropField('login')"></fa-icon>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.userManagement.login"></span>
+                                <fa-icon [icon]="controls.iconForSortPropField('login')" />
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
                             <span>{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
-
                     <ngx-datatable-column prop="name" [minWidth]="150" [width]="250" [maxWidth]="250">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.userManagement.name"> Name </span>
-                                <fa-icon [icon]="controls.iconForSortPropField('name')"></fa-icon>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.userManagement.name"></span>
+                                <fa-icon [icon]="controls.iconForSortPropField('name')" />
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
                             <span>{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
-
                     <ngx-datatable-column prop="email" [minWidth]="150" [width]="250">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.userManagement.email"> Email </span>
-                                <fa-icon [icon]="controls.iconForSortPropField('email')"></fa-icon>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.userManagement.email"></span>
+                                <fa-icon [icon]="controls.iconForSortPropField('email')" />
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
                             <span>{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
-
                     <ngx-datatable-column prop="" [minWidth]="150" [width]="200">
-                        <ng-template ngx-datatable-header-template> </ng-template>
+                        <ng-template ngx-datatable-header-template />
                         <ng-template ngx-datatable-cell-template let-value="value">
                             <div class="w-100 text-end">
                                 <button
@@ -150,7 +148,7 @@
                                     (delete)="removeFromOrganization(value)"
                                     [dialogError]="dialogError$"
                                 >
-                                    <fa-icon [icon]="faUserSlash" class="me-1"></fa-icon>
+                                    <fa-icon [icon]="faUserSlash" class="me-1" />
                                 </button>
                             </div>
                         </ng-template>

@@ -33,9 +33,9 @@ public class SensitiveInformationUtil {
     public static void assertSensitiveInformationWasFilteredProgrammingExercise(ProgrammingExercise exercise) {
         assertThat(exercise.getTemplateBuildPlanId()).isNullOrEmpty();
         assertThat(exercise.getSolutionBuildPlanId()).isNullOrEmpty();
-        assertThat(exercise.getTemplateRepositoryUrl()).isNullOrEmpty();
-        assertThat(exercise.getSolutionRepositoryUrl()).isNullOrEmpty();
-        assertThat(exercise.getTestRepositoryUrl()).isNullOrEmpty();
+        assertThat(exercise.getTemplateRepositoryUri()).isNullOrEmpty();
+        assertThat(exercise.getSolutionRepositoryUri()).isNullOrEmpty();
+        assertThat(exercise.getTestRepositoryUri()).isNullOrEmpty();
         assertSensitiveInformationWasFilteredExercise(exercise);
     }
 

@@ -5,7 +5,7 @@ import { Course } from 'app/entities/course.model';
 
 import { courseCreation, courseManagement, courseManagementAPIRequest, navigationBar } from '../../support/artemis';
 import { admin, studentOne } from '../../support/users';
-import { convertBooleanToYesNo, convertModelAfterMultiPart, dayjsToString, generateUUID, trimDate } from '../../support/utils';
+import { convertBooleanToCheckIconClass, convertModelAfterMultiPart, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 
 // Common primitives
 const courseData = {
@@ -143,7 +143,7 @@ describe('Course management', () => {
             courseManagement.getCourseEndDate().contains(courseData.endDate.format(dateFormat));
             courseManagement.getCourseSemester().contains(courseData.semester);
             courseManagement.getCourseProgrammingLanguage().contains(courseData.programmingLanguage);
-            courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(courseData.testCourse));
+            courseManagement.getCourseTestCourse().find(convertBooleanToCheckIconClass(courseData.testCourse)).should('exist');
             courseManagement.getCourseMaxComplaints().contains(courseData.maxComplaints);
             courseManagement.getCourseMaxTeamComplaints().contains(courseData.maxTeamComplaints);
             courseManagement.getMaxComplaintTimeDays().contains(courseData.maxComplaintTimeDays);
@@ -176,7 +176,7 @@ describe('Course management', () => {
                 courseManagement.getCourseHeaderTitle().contains(courseData.title).should('be.visible');
                 courseManagement.getCourseTitle().contains(courseData.title);
                 courseManagement.getCourseShortName().contains(courseData.shortName);
-                courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(courseData.testCourse));
+                courseManagement.getCourseTestCourse().find(convertBooleanToCheckIconClass(courseData.testCourse)).should('exist');
                 courseManagement.getCourseStudentGroupName().contains(courseData.studentGroupName);
                 courseManagement.getCourseTutorGroupName().contains(courseData.tutorGroupName);
                 courseManagement.getCourseEditorGroupName().contains(courseData.editorGroupName);
@@ -223,7 +223,7 @@ describe('Course management', () => {
             courseManagement.getCourseHeaderTitle().contains(editedCourseData.title).should('be.visible');
             courseManagement.getCourseTitle().contains(editedCourseData.title);
             courseManagement.getCourseShortName().contains(courseData.shortName);
-            courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(editedCourseData.testCourse));
+            courseManagement.getCourseTestCourse().find(convertBooleanToCheckIconClass(editedCourseData.testCourse)).should('exist');
         });
 
         after('Delete course', () => {

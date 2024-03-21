@@ -298,7 +298,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         var exercise = courseExercise.stream().findFirst();
         assertThat(exercise).isPresent();
 
-        var user = userRepo.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().findFirst();
+        var user = userRepo.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().findFirst();
         assertThat(user).isPresent();
 
         gitlabRequestMockProvider.mockFailToUpdateOldGroupMembers(exercise.get(), user.get());
@@ -580,7 +580,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     void testRemoveTutorFromCourse_removeUserFromGitlabGroupFails() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
         Optional<User> optionalTutor = userRepo.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1");
         assertThat(optionalTutor).isPresent();
@@ -605,7 +605,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
-        request.put("/api/courses", course, HttpStatus.OK);
+        request.getMvc().perform(courseTestService.buildUpdateCourse(1, course)).andExpect(status().isOk()).andReturn();
 
         verifyNoInteractions(versionControlService);
     }
@@ -1020,12 +1020,6 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testInvalidOnlineCourseConfigurationNonUniqueRegistrationId() throws Exception {
-        courseTestService.testInvalidOnlineCourseConfigurationNonUniqueRegistrationId();
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
         courseTestService.testUpdateValidOnlineCourseConfigurationAsStudent_forbidden();
@@ -1056,8 +1050,26 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetCoursesForImportWithoutPermission() throws Exception {
+        courseTestService.testGetCoursesForImportWithoutPermission();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateCourseEnableLearningPaths() throws Exception {
-        courseTestService.testUpdateCourseEnableLearningPaths();
+    void testGetCoursesForImport_asInstuctor() throws Exception {
+        courseTestService.testGetCoursesForImport();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetCoursesForImport_asAdmin() throws Exception {
+        courseTestService.testGetCoursesForImport();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testFindAllOnlineCoursesForLtiDashboard() throws Exception {
+        courseTestService.testFindAllOnlineCoursesForLtiDashboard();
     }
 }

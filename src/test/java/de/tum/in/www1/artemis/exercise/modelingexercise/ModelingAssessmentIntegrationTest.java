@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.exercise.modelingexercise;
 
+import static de.tum.in.www1.artemis.util.TestResourceUtils.loadFileFromResources;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -40,7 +41,6 @@ import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 
@@ -161,7 +161,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         syntaxTreeExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "SyntaxTree");
         flowchartExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "Flowchart");
 
-        validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        validModel = loadFileFromResources("test-data/model-submission/model.54727.json");
     }
 
     @AfterEach
@@ -475,7 +475,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         saveModelingSubmissionAndAssessment(true);
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
@@ -508,8 +508,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         saveModelingSubmissionAndAssessment_activityDiagram(true);
         participationUtilService.createAndSaveParticipationForExercise(activityExercise, TEST_PREFIX + "student2");
 
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"),
-                true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + activityExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
@@ -523,8 +522,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         saveModelingSubmissionAndAssessment_activityDiagram(true);
         participationUtilService.createAndSaveParticipationForExercise(activityExercise, TEST_PREFIX + "student2");
 
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"),
-                true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + activityExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
@@ -538,8 +536,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         saveModelingSubmissionAndAssessment(true);
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.partial.json"),
-                true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.partial.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
@@ -556,7 +553,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
                 "test-data/model-assessment/assessment.54727.partial.json", TEST_PREFIX + "tutor1", true);
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
@@ -572,7 +569,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
                 TEST_PREFIX + "tutor1", true);
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
@@ -583,14 +580,13 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2")
     void testAutomaticAssessmentUponModelSubmission_similarElementsWithinModel() throws Exception {
-        modelingSubmission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.inheritance.json"), true);
+        modelingSubmission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.inheritance.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, TEST_PREFIX + "student1");
         modelingAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(classExercise, modelingSubmission,
                 "test-data/model-assessment/assessment.inheritance.json", TEST_PREFIX + "tutor1", true);
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.inheritance.cpy.json"),
-                true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.inheritance.cpy.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
@@ -604,7 +600,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         saveModelingSubmissionAndAssessment(true);
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
@@ -961,7 +957,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
                 "test-data/model-assessment/assessment.54727.partial.json", TEST_PREFIX + "tutor1", true);
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "tutor1");
 
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
@@ -1114,26 +1110,26 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     private void saveModelingSubmission() throws Exception {
-        modelingSubmission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        modelingSubmission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, TEST_PREFIX + "student1");
     }
 
     private void saveModelingSubmissionAndAssessment(boolean submitAssessment) throws Exception {
-        modelingSubmission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        modelingSubmission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, TEST_PREFIX + "student1");
         modelingAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(classExercise, modelingSubmission,
                 "test-data/model-assessment/assessment.54727.v2.json", TEST_PREFIX + "tutor1", submitAssessment);
     }
 
     private void saveModelingSubmissionAndAssessment_activityDiagram(boolean submitAssessment) throws Exception {
-        modelingSubmission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
+        modelingSubmission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(activityExercise, modelingSubmission, TEST_PREFIX + "student1");
         modelingAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(activityExercise, modelingSubmission,
                 "test-data/model-assessment/example-activity-assessment.json", TEST_PREFIX + "tutor1", submitAssessment);
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
-        modelingSubmission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
+        modelingSubmission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(activityExercise, modelingSubmission, TEST_PREFIX + "student1");
         modelingAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(activityExercise, modelingSubmission, TEST_PREFIX + "tutor1", false);
         request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/cancel-assessment", null, expectedStatus);
@@ -1416,7 +1412,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     private void overrideAssessment(String student, String originalAssessor, HttpStatus httpStatus, String submit, boolean originalAssessmentSubmitted) throws Exception {
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         submission = modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, student, originalAssessor);
         submission.getLatestResult().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
         resultRepo.save(submission.getLatestResult());
@@ -1435,7 +1431,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         HttpStatus httpStatus = HttpStatus.OK;
         String submit = "true";
 
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         submission = modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, student, originalAssessor);
 
         Result newResult = participationUtilService
@@ -1534,6 +1530,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     void testCheckPlagiarismIdenticalLongModels() throws Exception {
         modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
         modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student2");
+        modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "tutor1");
+        modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "instructor1");
         var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";
         var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
         assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
@@ -1555,7 +1553,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testdeleteResult() throws Exception {
         Course course = exerciseUtilService.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "modeling", 1,
-                Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
+                Optional.of(loadFileFromResources("test-data/model-submission/model.54727.json")));
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
         exerciseUtilService.addAssessmentToExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
         exerciseUtilService.addAssessmentToExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"));

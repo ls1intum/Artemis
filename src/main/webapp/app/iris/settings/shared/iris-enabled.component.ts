@@ -21,7 +21,6 @@ export class IrisEnabledComponent implements OnInit {
     constructor(private irisSettingsService: IrisSettingsService) {}
 
     ngOnInit(): void {
-        console.log(this.exercise, this.course, this.irisSubSettingsType);
         if (this.exercise) {
             this.irisSettingsService.getUncombinedProgrammingExerciseSettings(this.exercise.id!).subscribe((settings) => {
                 this.irisSettings = settings;
@@ -62,6 +61,9 @@ export class IrisEnabledComponent implements OnInit {
                 break;
             case IrisSubSettingsType.CODE_EDITOR:
                 this.irisSubSettings = this.irisSettings?.irisCodeEditorSettings;
+                break;
+            case IrisSubSettingsType.COMPETENCY_GENERATION:
+                this.irisSubSettings = this.irisSettings?.irisCompetencyGenerationSettings;
                 break;
         }
     }

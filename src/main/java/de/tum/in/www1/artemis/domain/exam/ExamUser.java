@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.service.EntityFileService;
+import de.tum.in.www1.artemis.service.EntityFileHelper;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
@@ -30,13 +30,10 @@ import de.tum.in.www1.artemis.service.FileService;
 public class ExamUser extends AbstractAuditingEntity {
 
     @Transient
-    private final transient FilePathService filePathService = new FilePathService();
-
-    @Transient
     private final transient FileService fileService = new FileService();
 
     @Transient
-    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
+    private final transient EntityFileHelper entityFileService = new EntityFileHelper(fileService);
 
     @Transient
     private String prevSigningImagePath;

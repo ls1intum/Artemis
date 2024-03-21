@@ -75,6 +75,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @JoinColumn(unique = true)
     private QuizPointStatistic quizPointStatistic;
 
+    // TODO: test if we should use mappedBy here as well
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JoinColumn(name = "exercise_id")
@@ -320,15 +321,15 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     }
 
     @Override
-    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
+    public Set<StudentParticipation> findRelevantParticipation(Set<StudentParticipation> participations) {
         for (StudentParticipation participation : participations) {
             if (participation.getExercise() != null && participation.getExercise().equals(this)) {
                 // in quiz exercises we don't care about the InitializationState
                 // => return the first participation we find
-                return List.of(participation);
+                return Set.of(participation);
             }
         }
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     @Override
@@ -354,12 +355,10 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
                 }
                 if (Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null) {
                     // take the first found result that fulfills the above requirements
-                    if (latestSubmission == null) {
-                        latestSubmission = submission;
-                    }
+                    // or
                     // take newer results and thus disregard older ones
                     // this should actually not be the case for quiz exercises, because they only should have one rated result
-                    else if (latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
+                    if (latestSubmission == null || latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
                         latestSubmission = submission;
                     }
                 }

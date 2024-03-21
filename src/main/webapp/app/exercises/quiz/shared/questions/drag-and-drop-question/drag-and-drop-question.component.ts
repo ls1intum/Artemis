@@ -242,11 +242,9 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
      */
     getUnassignedDragItems() {
         return this.question.dragItems?.filter((dragItem) => {
-            return (
-                !this.mappings?.some((mapping) => {
-                    return this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem);
-                }, this) ?? true
-            );
+            return !this.mappings?.some((mapping) => {
+                return this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem);
+            }, this);
         }, this);
     }
 

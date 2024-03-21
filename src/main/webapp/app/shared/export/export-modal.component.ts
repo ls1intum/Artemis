@@ -24,7 +24,8 @@ export enum CsvDecimalSeparator {
 
 export interface CsvExportOptions {
     fieldSeparator: CsvFieldSeparator;
-    quoteStrings: CsvQuoteStrings;
+    quoteStrings: boolean;
+    quoteCharacter: CsvQuoteStrings;
     decimalSeparator: CsvDecimalSeparator;
 }
 
@@ -56,14 +57,16 @@ export class ExportModalComponent implements OnInit {
             case 'de':
                 this.options = {
                     fieldSeparator: CsvFieldSeparator.SEMICOLON,
-                    quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+                    quoteStrings: true,
+                    quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
                     decimalSeparator: CsvDecimalSeparator.COMMA,
                 };
                 break;
             default:
                 this.options = {
                     fieldSeparator: CsvFieldSeparator.COMMA,
-                    quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+                    quoteStrings: true,
+                    quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
                     decimalSeparator: CsvDecimalSeparator.PERIOD,
                 };
         }
@@ -82,7 +85,8 @@ export class ExportModalComponent implements OnInit {
      * @param quoteString chosen quoteString option which is used to quote strings in the generated csv file
      */
     setCsvQuoteString(quoteString: CsvQuoteStrings) {
-        this.options.quoteStrings = quoteString;
+        this.options.quoteCharacter = quoteString;
+        this.options.quoteStrings = quoteString !== CsvQuoteStrings.NONE;
     }
 
     /**

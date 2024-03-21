@@ -66,9 +66,6 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
-    @Autowired
-    private FilePathService filePathService;
-
     private FileUploadExercise releasedFileUploadExercise;
 
     private FileUploadExercise finishedFileUploadExercise;
@@ -172,7 +169,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
             }
         }
 
-        URI publicFilePath = filePathService.publicPathForActualPathOrThrow(actualFilePath, returnedSubmission.getId());
+        URI publicFilePath = FilePathService.publicPathForActualPathOrThrow(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath.toString());
         var fileBytes = Files.readAllBytes(actualFilePath);

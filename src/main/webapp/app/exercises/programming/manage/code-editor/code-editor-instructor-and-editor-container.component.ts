@@ -21,6 +21,7 @@ import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { filter, switchMap } from 'rxjs';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -69,16 +70,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.profileService
             .getProfileInfo()
             .pipe(
-                filter((profileInfo) => profileInfo?.activeProfiles?.includes('iris')),
+                filter((profileInfo) => profileInfo?.activeProfiles?.includes(PROFILE_IRIS)),
                 switchMap(() => this.irisSettingsService.getCombinedCourseSettings(this.exercise!.course!.id!)),
             )
             .subscribe((settings) => {
                 this.irisSettings = settings;
             });
-    }
-
-    isIrisEnabled() {
-        return this.irisSettings?.irisCodeEditorSettings?.enabled;
     }
 
     toRepository(component: ExerciseComponent) {

@@ -8,6 +8,8 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
+import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 
 @Component({
     selector: 'jhi-edit-course-lti-configuration',
@@ -17,6 +19,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     course: Course;
     onlineCourseConfiguration: OnlineCourseConfiguration;
     onlineCourseConfigurationForm: FormGroup;
+    ltiConfiguredPlatforms: LtiPlatformConfiguration[];
 
     isSaving = false;
 
@@ -28,6 +31,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
         private router: Router,
+        private ltiConfigurationService: LtiConfigurationService,
     ) {}
 
     /**
@@ -43,16 +47,12 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
 
         this.onlineCourseConfigurationForm = new FormGroup({
             id: new FormControl(this.onlineCourseConfiguration.id),
-            ltiKey: new FormControl(this.onlineCourseConfiguration.ltiKey),
-            ltiSecret: new FormControl(this.onlineCourseConfiguration.ltiSecret),
             userPrefix: new FormControl(this.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
             requireExistingUser: new FormControl(this.onlineCourseConfiguration.requireExistingUser),
-            registrationId: new FormControl(this.onlineCourseConfiguration.registrationId),
-            clientId: new FormControl(this.onlineCourseConfiguration?.clientId),
-            authorizationUri: new FormControl(this.onlineCourseConfiguration?.authorizationUri),
-            tokenUri: new FormControl(this.onlineCourseConfiguration?.tokenUri),
-            jwkSetUri: new FormControl(this.onlineCourseConfiguration?.jwkSetUri),
+            ltiPlatformConfiguration: new FormControl(''),
         });
+
+        this.getPreconfiguredPlatforms();
     }
 
     /**
@@ -93,5 +93,28 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
      */
     navigateToLtiConfigurationPage() {
         this.router.navigate(['course-management', this.course.id!.toString(), 'lti-configuration']);
+    }
+
+    /**
+     * Gets the LTI 1.3 pre-configured platforms
+     */
+    getPreconfiguredPlatforms() {
+        this.ltiConfigurationService.findAll().subscribe((configuredLtiPlatforms) => {
+            if (configuredLtiPlatforms) {
+                this.ltiConfiguredPlatforms = configuredLtiPlatforms;
+            }
+        });
+    }
+
+    setPlatform(platform: LtiPlatformConfiguration) {
+        this.onlineCourseConfiguration.ltiPlatformConfiguration = platform;
+        this.onlineCourseConfigurationForm.get('ltiPlatformConfiguration')?.setValue(platform);
+    }
+
+    getLtiPlatform(platform: LtiPlatformConfiguration) {
+        const customName = platform.customName ? platform.customName : '';
+        const originalUrl = platform.originalUrl ? platform.originalUrl : '';
+
+        return customName + ' ' + originalUrl;
     }
 }

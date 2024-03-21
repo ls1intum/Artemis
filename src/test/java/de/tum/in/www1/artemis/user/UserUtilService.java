@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 @Service
 public class UserUtilService {
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(UserUtilService.class);
 
     private static final Authority userAuthority = new Authority(Role.STUDENT.getAuthority());
 
@@ -333,7 +333,7 @@ public class UserUtilService {
         // Otherwise, the amount users per course constantly increases while running the tests,
         // even though the old users are not needed anymore.
         if (!usersToAdd.isEmpty()) {
-            Set<User> currentUsers = userTestRepository.findAllInAnyGroup();
+            Set<User> currentUsers = userTestRepository.findAllByGroupsNotEmpty();
             log.debug("Removing {} users from all courses...", currentUsers.size());
             currentUsers.forEach(user -> user.setGroups(Set.of()));
             userRepo.saveAll(currentUsers);

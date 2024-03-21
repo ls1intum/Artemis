@@ -25,13 +25,14 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 
 /**
  * Service responsible for initializing the database with specific testdata related to participations, submissions and results.
@@ -72,7 +73,7 @@ public class ParticipationUtilService {
     private TextSubmissionRepository textSubmissionRepo;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepo;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepo;
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepo;
@@ -110,7 +111,7 @@ public class ParticipationUtilService {
             participation.setBuildPlanId(buildPlanId);
             participation.setProgrammingExercise(exercise);
             participation.setInitializationState(InitializationState.INITIALIZED);
-            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getProjectKey(), repoName));
+            participation.setRepositoryUri(String.format("http://some.test.url/%s/%s.git", exercise.getProjectKey(), repoName));
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
@@ -242,7 +243,7 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation addTeamParticipationForExercise(Exercise exercise, long teamId) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId);
         if (storedParticipation.isEmpty()) {
             Team team = teamRepo.findById(teamId).orElseThrow();
             StudentParticipation participation = new StudentParticipation();
@@ -250,7 +251,7 @@ public class ParticipationUtilService {
             participation.setParticipant(team);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
+            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId);
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
@@ -272,7 +273,7 @@ public class ParticipationUtilService {
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
-        participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
+        participation.setRepositoryUri(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -294,7 +295,7 @@ public class ParticipationUtilService {
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateTeamProgrammingExerciseStudentParticipation(exercise, team);
         final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase();
-        participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
+        participation.setRepositoryUri(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -303,11 +304,11 @@ public class ParticipationUtilService {
     /**
      * Creates and saves a ProgrammingExerciseStudentParticipation for the given ProgrammingExercise given the Participant's login. If an existing
      * ProgrammingExerciseStudentParticipation exists for the given ProgrammingExercise and Participant, it will be returned instead. The
-     * ProgrammingExerciseStudentParticipation's repositoryUrl is set to the given localRepoPath.
+     * ProgrammingExerciseStudentParticipation's repositoryUri is set to the given localRepoPath.
      *
      * @param exercise      The ProgrammingExercise the ProgrammingExerciseStudentParticipation belongs to
      * @param login         The login of the Participant the ProgrammingExerciseStudentParticipation belongs to
-     * @param localRepoPath The repositoryUrl of the ProgrammingExerciseStudentParticipation
+     * @param localRepoPath The repositoryUri of the ProgrammingExerciseStudentParticipation
      * @return The created or existing ProgrammingExerciseStudentParticipation with eagerly loaded submissions, results and assessors
      */
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExerciseForLocalRepo(ProgrammingExercise exercise, String login, URI localRepoPath) {
@@ -318,7 +319,7 @@ public class ParticipationUtilService {
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
-        participation.setRepositoryUrl(String.format(localRepoPath.toString() + "%s/%s.git", exercise.getProjectKey(), repoName));
+        participation.setRepositoryUri(String.format(localRepoPath.toString() + "%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -706,7 +707,7 @@ public class ParticipationUtilService {
      * @throws Exception If the file cannot be read
      */
     public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
-        String fileContent = FileUtils.loadFileFromResources(path);
+        String fileContent = TestResourceUtils.loadFileFromResources(path);
         return mapper.readValue(fileContent, mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class));
     }
 
@@ -806,12 +807,14 @@ public class ParticipationUtilService {
         resultRepo.save(result);
 
         assertThat(exercise.getGradingCriteria()).isNotNull();
-        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).isNotNull();
+        assertThat(exercise.getGradingCriteria()).allMatch(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions() != null);
 
         // add feedback which is associated with structured grading instructions
+        GradingInstruction anyInstruction = GradingCriterionUtil.findAnyInstructionWhere(exercise.getGradingCriteria(), gradingInstruction -> true).orElseThrow();
         Feedback feedback = new Feedback();
-        feedback.setGradingInstruction(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0));
+        feedback.setGradingInstruction(anyInstruction);
         addFeedbackToResult(feedback, result);
+
         return studentParticipation;
     }
 
@@ -825,20 +828,20 @@ public class ParticipationUtilService {
         return resultRepo.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
     }
 
-    public void mockCreationOfExerciseParticipation(boolean useGradedParticipationOfResult, Result gradedResult, ProgrammingExercise programmingExercise, UrlService urlService,
+    public void mockCreationOfExerciseParticipation(boolean useGradedParticipationOfResult, Result gradedResult, ProgrammingExercise programmingExercise, UriService uriService,
             VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws URISyntaxException {
         String templateRepoName;
         if (useGradedParticipationOfResult) {
-            templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(((ProgrammingExerciseStudentParticipation) gradedResult.getParticipation()).getVcsRepositoryUrl());
+            templateRepoName = uriService.getRepositorySlugFromRepositoryUri(((ProgrammingExerciseStudentParticipation) gradedResult.getParticipation()).getVcsRepositoryUri());
         }
         else {
-            templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getVcsTemplateRepositoryUrl());
+            templateRepoName = uriService.getRepositorySlugFromRepositoryUri(programmingExercise.getVcsTemplateRepositoryUri());
         }
         mockCreationOfExerciseParticipation(templateRepoName, programmingExercise, versionControlService, continuousIntegrationService);
     }
 
     /**
-     * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise. The StudentParticipation's repositoryUrl is set to a fake
+     * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise. The StudentParticipation's repositoryUri is set to a fake
      * URL.
      *
      * @param templateRepoName             The expected sourceRepositoryName when calling the copyRepository method of the mocked VersionControlService
@@ -848,13 +851,13 @@ public class ParticipationUtilService {
      */
     public void mockCreationOfExerciseParticipation(String templateRepoName, ProgrammingExercise programmingExercise, VersionControlService versionControlService,
             ContinuousIntegrationService continuousIntegrationService) throws URISyntaxException {
-        var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
+        var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
         doReturn(someURL).when(versionControlService).copyRepository(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class));
         mockCreationOfExerciseParticipationInternal(programmingExercise, versionControlService, continuousIntegrationService);
     }
 
     /**
-     * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise. The StudentParticipation's repositoryUrl is set to a fake
+     * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise. The StudentParticipation's repositoryUri is set to a fake
      * URL.
      *
      * @param programmingExercise          The ProgrammingExercise the StudentParticipation belongs to
@@ -863,7 +866,7 @@ public class ParticipationUtilService {
      */
     public void mockCreationOfExerciseParticipation(ProgrammingExercise programmingExercise, VersionControlService versionControlService,
             ContinuousIntegrationService continuousIntegrationService) throws URISyntaxException {
-        var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
+        var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
         doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(), any(String.class), any(String.class), any(String.class));
         mockCreationOfExerciseParticipationInternal(programmingExercise, versionControlService, continuousIntegrationService);
     }

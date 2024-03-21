@@ -14,7 +14,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faPlus, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
@@ -29,7 +29,7 @@ export class TextExerciseComponent extends ExerciseComponent {
     // Icons
     faSort = faSort;
     faPlus = faPlus;
-    faTimes = faTimes;
+    faTrash = faTrash;
 
     protected get exercises() {
         return this.textExercises;

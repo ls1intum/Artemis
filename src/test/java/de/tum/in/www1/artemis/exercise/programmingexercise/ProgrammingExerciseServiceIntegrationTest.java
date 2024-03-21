@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
+import de.tum.in.www1.artemis.util.ExerciseIntegrationTestService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 
 class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -51,7 +51,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
+    private ExerciseIntegrationTestService exerciseIntegrationTestService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -234,7 +234,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     private void testCourseAndExamFilters(boolean withSCA, String programmingExerciseTitle) throws Exception {
         programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, withSCA);
         programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise(programmingExerciseTitle + "-Morpork", programmingExerciseTitle + "Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/", programmingExerciseTitle);
+        exerciseIntegrationTestService.testCourseAndExamFilters("/api/programming-exercises/", programmingExerciseTitle);
         testSCAFilter(programmingExerciseTitle, withSCA);
     }
 
@@ -292,15 +292,30 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNoBuildPlanAccessSecretForImportedExercise() {
+        var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, createToBeImported());
+        assertThat(programmingExercise.getBuildPlanAccessSecret()).isEqualTo(importedExercise.getBuildPlanAccessSecret()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDifferentBuildPlanAccessSecretForImportedExercise() {
+        programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(programmingExercise, "text");
+        var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, createToBeImported());
+        assertThat(programmingExercise.getBuildPlanAccessSecret()).isNotNull().isNotEqualTo(importedExercise.getBuildPlanAccessSecret());
+    }
+
     private ProgrammingExercise importExerciseBase() {
         final var toBeImported = createToBeImported();
-        programmingExercise.setGradingCriteria(new ArrayList<>());
+        programmingExercise.setGradingCriteria(new HashSet<>());
         return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }
 
     private ProgrammingExercise importExerciseBaseWithSubmissionPolicy(SubmissionPolicy submissionPolicy) {
         final var toBeImported = createToBeImportedWithSubmissionPolicy(submissionPolicy);
-        programmingExercise.setGradingCriteria(new ArrayList<>());
+        programmingExercise.setGradingCriteria(new HashSet<>());
         return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }
 

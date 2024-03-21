@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.deployment;
 
+import java.util.Objects;
+
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLContainerElement;
@@ -55,6 +57,11 @@ public class UMLNode extends UMLContainerElement {
     @Override
     public String getType() {
         return UML_NODE_TYPE;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name, stereotype);
     }
 
     @Override

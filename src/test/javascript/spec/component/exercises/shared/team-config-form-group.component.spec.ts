@@ -4,6 +4,8 @@ import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model'
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { Subject } from 'rxjs';
+import { NgModel } from '@angular/forms';
 
 describe('Team Config Form Group Component', () => {
     let fixture: ComponentFixture<TeamConfigFormGroupComponent>;
@@ -39,6 +41,24 @@ describe('Team Config Form Group Component', () => {
         component.exercise.teamAssignmentConfig = undefined;
         component.ngOnInit();
         expect(component.config).toEqual(new TeamAssignmentConfig());
+    });
+
+    it('should emit valid changes correctly', () => {
+        const calculateValidSpy = jest.spyOn(component, 'calculateFormValid');
+        const formValidChangesSpy = jest.spyOn(component, 'calculateFormValid');
+        component.minTeamSizeField = { valueChanges: new Subject() } as any as NgModel;
+        component.maxTeamsizeField = { valueChanges: new Subject() } as any as NgModel;
+        component.exercise.mode = ExerciseMode.TEAM;
+        component.ngAfterViewChecked();
+        expect(component.inputFieldSubscriptions).not.toBeEmpty();
+        expect(component.inputFieldSubscriptions).toHaveLength(2);
+        (component.minTeamSizeField.valueChanges as Subject<boolean>).next(false);
+        expect(calculateValidSpy).toHaveBeenCalledOnce();
+        expect(formValidChangesSpy).toHaveBeenCalledOnce();
+        component.ngOnDestroy();
+        for (const subscription of component.inputFieldSubscriptions) {
+            expect(subscription?.closed).toBeTrue();
+        }
     });
 
     it('should set config to undefined when exercise mode changed to INDIVIDUAL', () => {

@@ -1,43 +1,43 @@
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { Course } from 'app/entities/course.model';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
-export function canAddUsersToConversation(conversation: ConversationDto): boolean {
+export function canAddUsersToConversation(conversation: ConversationDTO): boolean {
     if (!conversation) {
         return false;
     }
-    const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
+    const groupChatCheck = (groupChat: GroupChatDTO): boolean => !!groupChat.isMember;
     const channelCheck = (channel: ChannelDTO): boolean => !channel.isCourseWide && hasChannelModerationRights(channel);
 
-    if (isChannelDto(conversation)) {
+    if (isChannelDTO(conversation)) {
         return channelCheck(conversation);
-    } else if (isGroupChatDto(conversation)) {
+    } else if (isGroupChatDTO(conversation)) {
         return groupChatCheck(conversation);
-    } else if (isOneToOneChatDto(conversation)) {
+    } else if (isOneToOneChatDTO(conversation)) {
         return false;
     } else {
         throw new Error('Conversation type not supported');
     }
 }
 
-export function canCreateNewMessageInConversation(conversation: ConversationDto): boolean {
+export function canCreateNewMessageInConversation(conversation: ConversationDTO): boolean {
     if (!conversation) {
         return false;
     }
-    const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
-    const oneToOneChatCheck = (oneToOneChat: ConversationDto): boolean => {
+    const groupChatCheck = (groupChat: GroupChatDTO): boolean => !!groupChat.isMember;
+    const oneToOneChatCheck = (oneToOneChat: ConversationDTO): boolean => {
         return !!oneToOneChat.isMember;
     };
     const channelCheck = (channel: ChannelDTO): boolean =>
         !!channel.isMember && !channel.isArchived && (!channel.isAnnouncementChannel || (channel.isAnnouncementChannel && !!channel.hasChannelModerationRights));
 
-    if (isChannelDto(conversation)) {
+    if (isChannelDTO(conversation)) {
         return channelCheck(conversation);
-    } else if (isGroupChatDto(conversation)) {
+    } else if (isGroupChatDTO(conversation)) {
         return groupChatCheck(conversation);
-    } else if (isOneToOneChatDto(conversation)) {
+    } else if (isOneToOneChatDTO(conversation)) {
         return oneToOneChatCheck(conversation);
     } else {
         throw new Error('Conversation type not supported');
@@ -52,25 +52,25 @@ export function canRevokeChannelModeratorRole(channel: ChannelDTO): boolean {
     return hasChannelModerationRights(channel);
 }
 
-export function canRemoveUsersFromConversation(conversation: ConversationDto): boolean {
+export function canRemoveUsersFromConversation(conversation: ConversationDTO): boolean {
     if (!conversation) {
         return false;
     }
-    const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
+    const groupChatCheck = (groupChat: GroupChatDTO): boolean => !!groupChat.isMember;
     const channelCheck = (channel: ChannelDTO): boolean => !!channel.hasChannelModerationRights;
 
-    if (isChannelDto(conversation)) {
+    if (isChannelDTO(conversation)) {
         return channelCheck(conversation);
-    } else if (isGroupChatDto(conversation)) {
+    } else if (isGroupChatDTO(conversation)) {
         return groupChatCheck(conversation);
-    } else if (isOneToOneChatDto(conversation)) {
+    } else if (isOneToOneChatDTO(conversation)) {
         return false;
     } else {
         throw new Error('Conversation type not supported');
     }
 }
 
-export function canLeaveConversation(conversation: ConversationDto): boolean {
+export function canLeaveConversation(conversation: ConversationDTO): boolean {
     if (!conversation) {
         return false;
     }
@@ -80,10 +80,10 @@ export function canLeaveConversation(conversation: ConversationDto): boolean {
     }
     // the creator of a channel can not leave it
     // if the channel is course-wide, you also cannot leave it
-    if (isChannelDto(conversation) && (conversation?.isCreator || conversation?.isCourseWide)) {
+    if (isChannelDTO(conversation) && (conversation?.isCreator || conversation?.isCourseWide)) {
         return false;
     }
-    if (isOneToOneChatDto(conversation)) {
+    if (isOneToOneChatDTO(conversation)) {
         return false;
     }
     return true;
@@ -129,7 +129,7 @@ export function canChangeChannelProperties(channel: ChannelDTO): boolean {
     return !!channel.hasChannelModerationRights;
 }
 
-export function canChangeGroupChatProperties(groupChat: GroupChatDto): boolean {
+export function canChangeGroupChatProperties(groupChat: GroupChatDTO): boolean {
     if (!groupChat) {
         return false;
     }

@@ -20,11 +20,11 @@ public interface ProgrammingExerciseStudentParticipationTestRepository extends J
      *
      * @param buildPlanId new build plan id to be set
      */
-    @Transactional
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             UPDATE ProgrammingExerciseStudentParticipation p
-            SET p.buildPlanId = :#{#buildPlanId}
+            SET p.buildPlanId = :buildPlanId
             """)
     void updateBuildPlanIdOfAll(@Param("buildPlanId") Long buildPlanId);
 

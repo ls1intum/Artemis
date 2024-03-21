@@ -8,7 +8,7 @@ import { ProgrammingExercisePlantUmlService } from 'app/exercises/programming/sh
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 import { Result } from 'app/entities/result.model';
 import { ShowdownExtension } from 'showdown';
-import { sanitize } from 'dompurify';
+import DOMPurify from 'dompurify';
 
 // This regex is the same as in the server: ProgrammingExerciseTaskService.java
 const testsColorRegex = /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g;
@@ -59,7 +59,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                     const plantUmlHtmlContainer = document.getElementById(`plantUml-${index}`);
                     if (plantUmlHtmlContainer) {
                         // We need to sanitize the received svg as it could contain malicious code in a script tag.
-                        plantUmlHtmlContainer.innerHTML = sanitize(plantUmlSvg);
+                        plantUmlHtmlContainer.innerHTML = DOMPurify.sanitize(plantUmlSvg);
                     }
                 }),
             )

@@ -25,6 +25,8 @@ import 'cypress-wait-until';
 import './commands';
 // Imports utility functions
 import './utils';
+// Imports cy.pipe https://github.com/NicholasBoll/cypress-pipe
+import 'cypress-pipe';
 
 /**
  * We register hooks on the console.error and console.warn methods and forward their content to the process console to allow better debugging with cypress:run.

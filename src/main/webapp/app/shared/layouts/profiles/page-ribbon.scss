@@ -18,7 +18,7 @@ Developement Ribbon
     overflow: hidden;
     white-space: nowrap;
     pointer-events: none;
-    position: absolute;
+    position: fixed;
     opacity: 0.75;
 
     span {
@@ -36,8 +36,8 @@ Developement Ribbon
 
 /* top left */
 .ribbon-top-left {
-    top: -20px;
-    left: -20px;
+    top: 0;
+    left: 0;
 }
 
 .ribbon-top-left::before,

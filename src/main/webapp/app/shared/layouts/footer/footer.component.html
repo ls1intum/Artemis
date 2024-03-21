@@ -2,22 +2,21 @@
     <div class="guided-tour-footer-about col-sm-6">
         <a [routerLink]="['/about']" id="about" jhiTranslate="aboutUs" class="footer-text"></a>
     </div>
-
     <div class="col-sm-6 text-md-end">
         <a [href]="requestChangeUrl" id="request-change" jhiTranslate="requestChange" class="footer-text" target="_blank"></a>
         <a [href]="releaseNotesUrl" id="release-notes" jhiTranslate="releaseNotes" class="footer-text ms-3" target="_blank"></a>
         <a [routerLink]="['/privacy']" id="privacy" jhiTranslate="artemisApp.legal.privacyStatement.title" class="footer-text ms-3"></a>
         <a [routerLink]="['/imprint']" id="imprint" jhiTranslate="artemisApp.legal.imprint.title" class="footer-text ms-3"></a>
     </div>
-
-    <div class="col-sm-12 footer-git-wrapper" *ngIf="!inProduction || testServer">
-        <div class="footer-git">{{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranch }} •</div>
-        <div class="footer-git">{{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId }} •</div>
-        <div class="footer-git">{{ 'artemisApp.git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} •</div>
-        <div class="footer-git">{{ 'artemisApp.git.username' | artemisTranslate }}: {{ gitCommitUser }}</div>
-    </div>
+    @if (!inProduction || testServer) {
+        <div class="col-sm-12 footer-git-wrapper">
+            <div class="footer-git">{{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranch }} •</div>
+            <div class="footer-git">{{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId }} •</div>
+            <div class="footer-git">{{ 'artemisApp.git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} •</div>
+            <div class="footer-git">{{ 'artemisApp.git.username' | artemisTranslate }}: {{ gitCommitUser }}</div>
+        </div>
+    }
 </footer>
-
 <footer class="d-flex d-md-none justify-content-between mw-100">
     <div class="col-auto px-0">
         <a [routerLink]="['/about']" jhiTranslate="aboutUs" class="footer-text"></a>

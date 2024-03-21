@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,13 +27,14 @@ import com.google.common.collect.Lists;
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 
+@Profile(PROFILE_CORE)
 @Component
 public class MigrationEntry20230808_203400 extends MigrationEntry {
 
@@ -44,7 +46,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     private static final int TIMEOUT_IN_HOURS = 9;
 
-    private final Logger log = LoggerFactory.getLogger(MigrationEntry20230808_203400.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20230808_203400.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -62,7 +64,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     private final Environment environment;
 
-    private final UrlService urlService = new UrlService();
+    private final UriService uriService = new UriService();
 
     private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
@@ -346,18 +348,18 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
      */
     private void migrateTestRepository(AbstractBaseProgrammingExerciseParticipation participation) {
         var exercise = participation.getProgrammingExercise();
-        if (exercise.getTestRepositoryUrl() == null) {
+        if (exercise.getTestRepositoryUri() == null) {
             /*
-             * when the test repository url is null, we don't have to migrate the test build plan, saving multiple API calls
+             * when the test repository uri is null, we don't have to migrate the test build plan, saving multiple API calls
              * this is also only needed for Jenkins, as Bamboo does not have a separate test build plan
              */
             return;
         }
         try {
-            ciMigrationService.orElseThrow().removeWebHook(exercise.getVcsTestRepositoryUrl());
+            ciMigrationService.orElseThrow().removeWebHook(exercise.getVcsTestRepositoryUri());
         }
         catch (Exception e) {
-            log.warn("Failed to delete build triggers in test repository for exercise {} with test repository {}", exercise.getId(), exercise.getVcsTestRepositoryUrl(), e);
+            log.warn("Failed to delete build triggers in test repository for exercise {} with test repository {}", exercise.getId(), exercise.getVcsTestRepositoryUri(), e);
             errorList.add(participation);
         }
     }
@@ -369,19 +371,19 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
      * @param auxiliaryRepositories The auxiliary repositories to migrate
      */
     private void migrateStudentBuildPlan(ProgrammingExerciseStudentParticipation participation, List<AuxiliaryRepository> auxiliaryRepositories) {
-        VcsRepositoryUrl repositoryUrl;
+        VcsRepositoryUri repositoryUri;
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         try {
-            repositoryUrl = new VcsRepositoryUrl(urlService.getPlainUrlFromRepositoryUrl(participation.getVcsRepositoryUrl()));
+            repositoryUri = new VcsRepositoryUri(uriService.getPlainUriFromRepositoryUri(participation.getVcsRepositoryUri()));
         }
         catch (URISyntaxException e) {
             log.warn("Failed to convert git url {} for studentParticipationId {} exerciseId {} with buildPlanId {}, will abort migration for this Participation",
-                    participation.getVcsRepositoryUrl(), participation.getId(), exercise.getId(), participation.getBuildPlanId(), e);
+                    participation.getVcsRepositoryUri(), participation.getId(), exercise.getId(), participation.getBuildPlanId(), e);
             errorList.add(participation);
             return;
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), participation.getBuildPlanId(), repositoryUrl);
+            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), participation.getBuildPlanId(), repositoryUri);
         }
         catch (Exception e) {
             log.warn("Failed to migrate build plan notifications for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(),
@@ -389,7 +391,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey(), participation.getBuildPlanId(), repositoryUrl);
+            ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey(), participation.getBuildPlanId(), repositoryUri);
         }
         catch (Exception e) {
             log.warn("Failed to delete build triggers for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(), participation.getBuildPlanId(),
@@ -397,7 +399,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, String.valueOf(repositoryUrl),
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, String.valueOf(repositoryUri),
                     participation.getBranch());
         }
         catch (Exception e) {
@@ -406,7 +408,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), TEST_REPO_NAME, exercise.getTestRepositoryUrl(),
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), TEST_REPO_NAME, exercise.getTestRepositoryUri(),
                     participation.getBranch());
         }
         catch (Exception e) {
@@ -416,10 +418,10 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         }
         // NOTE: this handles an edge case with HASKELL exercises, where the solution repository is checked out in the student build plan
         try {
-            // we dont have the solution repository url in the student participation, so we have to get it from the repository service
-            var solutionRepositoryUrl = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).get().getVcsRepositoryUrl();
+            // we dont have the solution repository uri in the student participation, so we have to get it from the repository service
+            var solutionRepositoryUri = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).get().getVcsRepositoryUri();
             ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), SOLUTION_REPO_NAME,
-                    urlService.getPlainUrlFromRepositoryUrl(solutionRepositoryUrl), participation.getBranch());
+                    uriService.getPlainUriFromRepositoryUri(solutionRepositoryUri), participation.getBranch());
         }
         catch (Exception e) {
             log.warn("Failed to replace solution repository in student build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(),
@@ -428,7 +430,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         }
         for (var auxiliary : auxiliaryRepositories) {
             try {
-                ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), auxiliary.getName(), auxiliary.getRepositoryUrl(),
+                ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), auxiliary.getName(), auxiliary.getRepositoryUri(),
                         participation.getBranch());
             }
             catch (Exception e) {
@@ -456,21 +458,21 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
     private void migrateSolutionBuildPlan(AbstractBaseProgrammingExerciseParticipation participation, List<AuxiliaryRepository> auxiliaryRepositories) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUrl());
+            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUri());
         }
         catch (Exception e) {
             log.warn("Failed to migrate solution build plan for exercise id {} with buildPlanId {}", exercise.getId(), exercise.getSolutionBuildPlanId(), e);
             errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUrl());
+            ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUri());
         }
         catch (Exception e) {
             log.warn("Failed to delete solution build triggers for exercise {} with buildPlanId {}", exercise.getId(), exercise.getSolutionBuildPlanId(), e);
             errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), ASSIGNMENT_REPO_NAME, exercise.getSolutionRepositoryUrl(),
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), ASSIGNMENT_REPO_NAME, exercise.getSolutionRepositoryUri(),
                     exercise.getBranch());
         }
         catch (Exception e) {
@@ -478,14 +480,14 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), TEST_REPO_NAME, exercise.getTestRepositoryUrl(), exercise.getBranch());
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), TEST_REPO_NAME, exercise.getTestRepositoryUri(), exercise.getBranch());
         }
         catch (Exception e) {
             log.warn("Failed to replace tests repository in solution build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getSolutionBuildPlanId(), e);
             errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), SOLUTION_REPO_NAME, exercise.getSolutionRepositoryUrl(),
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), SOLUTION_REPO_NAME, exercise.getSolutionRepositoryUri(),
                     exercise.getBranch());
         }
         catch (Exception e) {
@@ -495,7 +497,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         }
         for (var auxiliary : auxiliaryRepositories) {
             try {
-                ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), auxiliary.getName(), auxiliary.getRepositoryUrl(),
+                ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), auxiliary.getName(), auxiliary.getRepositoryUri(),
                         exercise.getBranch());
             }
             catch (Exception e) {
@@ -522,21 +524,21 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
     private void migrateTemplateBuildPlan(AbstractBaseProgrammingExerciseParticipation participation, List<AuxiliaryRepository> auxiliaryRepositories) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUrl());
+            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUri());
         }
         catch (Exception e) {
             log.warn("Failed to migrate template build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getTemplateBuildPlanId(), e);
             errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUrl());
+            ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUri());
         }
         catch (Exception e) {
             log.warn("Failed to delete template build triggers for exercise {} with buildPlanId {}", exercise.getId(), exercise.getTemplateBuildPlanId(), e);
             errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), ASSIGNMENT_REPO_NAME, exercise.getTemplateRepositoryUrl(),
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), ASSIGNMENT_REPO_NAME, exercise.getTemplateRepositoryUri(),
                     exercise.getBranch());
         }
         catch (Exception e) {
@@ -544,7 +546,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), TEST_REPO_NAME, exercise.getTestRepositoryUrl(), exercise.getBranch());
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), TEST_REPO_NAME, exercise.getTestRepositoryUri(), exercise.getBranch());
         }
         catch (Exception e) {
             log.warn("Failed to replace tests repository in template build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getTemplateBuildPlanId(), e);
@@ -552,10 +554,10 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         }
         // NOTE: this handles an edge case with HASKELL exercises, where the solution repository is checked out in the student build plan
         try {
-            // we do not have the solution repository url in the template participation, so we have to get it from the repository service
-            var solutionRepositoryUrl = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).get().getVcsRepositoryUrl();
+            // we do not have the solution repository uri in the template participation, so we have to get it from the repository service
+            var solutionRepositoryUri = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).get().getVcsRepositoryUri();
             ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), SOLUTION_REPO_NAME,
-                    urlService.getPlainUrlFromRepositoryUrl(solutionRepositoryUrl), exercise.getBranch());
+                    uriService.getPlainUriFromRepositoryUri(solutionRepositoryUri), exercise.getBranch());
         }
         catch (Exception e) {
             log.warn("Failed to replace solution repository in template build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(),
@@ -564,7 +566,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         }
         for (var auxiliary : auxiliaryRepositories) {
             try {
-                ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), auxiliary.getName(), auxiliary.getRepositoryUrl(),
+                ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), auxiliary.getName(), auxiliary.getRepositoryUri(),
                         exercise.getBranch());
             }
             catch (Exception e) {

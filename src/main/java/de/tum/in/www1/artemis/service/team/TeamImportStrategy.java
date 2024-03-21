@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.team;
 
 import java.util.List;
 
+import org.hibernate.Hibernate;
+
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.repository.TeamRepository;
@@ -25,7 +27,12 @@ public abstract class TeamImportStrategy {
      * @param destinationExercise Exercise in which the cloned teams should be saved
      */
     protected void cloneTeamsIntoDestinationExercise(List<Team> originalTeams, Exercise destinationExercise) {
-        List<Team> clonedTeams = originalTeams.stream().map(Team::new).map(team -> team.exercise(destinationExercise)).toList();
+        List<Team> clonedTeams = originalTeams.stream().map(team -> {
+            if (!Hibernate.isInitialized(team.getStudents())) {
+                return teamRepository.findWithStudentsByIdElseThrow(team.getId());
+            }
+            return team;
+        }).map(Team::new).map(team -> team.exercise(destinationExercise)).toList();
         teamRepository.saveAll(clonedTeams);
     }
 }

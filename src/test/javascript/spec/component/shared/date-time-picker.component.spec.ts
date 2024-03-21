@@ -96,4 +96,18 @@ describe('FormDateTimePickerComponent', () => {
         expect(onChangeSpy).toHaveBeenCalledWith(newDate);
         expect(valueChangedStub).toHaveBeenCalledOnce();
     });
+
+    it('should have working getters', () => {
+        component.min = normalDate;
+        component.max = normalDate;
+        component.startAt = normalDate;
+        const timeZone = component.currentTimeZone;
+        const minDate = component.minDate;
+        const maxDate = component.maxDate;
+        const startDate = component.startDate;
+        expect(timeZone).toBeDefined();
+        expect(minDate).toBeDefined();
+        expect(maxDate).toBeDefined();
+        expect(startDate).toBeDefined();
+    });
 });

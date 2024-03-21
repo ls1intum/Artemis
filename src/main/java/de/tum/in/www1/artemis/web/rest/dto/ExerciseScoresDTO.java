@@ -11,34 +11,15 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
  * This DTO contains the information used for the exercise-scores-chart.component.ts
  * For every exercise we send the score of the requesting student, the average score achieved and the max score
  * achieved
+ * <p>
+ * Important: we need the release date information to sort the exercises in the chart by their release date
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ExerciseScoresDTO {
+public record ExerciseScoresDTO(long exerciseId, String exerciseTitle, ExerciseType exerciseType, ZonedDateTime releaseDate, double scoreOfStudent, double averageScoreAchieved,
+        double maxScoreAchieved) {
 
-    public Long exerciseId;
-
-    public String exerciseTitle;
-
-    public ExerciseType exerciseType;
-
-    // we need the release date information to sort the exercises in the chart by their release date
-    public ZonedDateTime releaseDate;
-
-    public Double scoreOfStudent;
-
-    public Double averageScoreAchieved;
-
-    public Double maxScoreAchieved;
-
-    public ExerciseScoresDTO() {
-        // empty constructor for jackson
+    public static ExerciseScoresDTO of(Exercise exercise, double scoreOfStudent, double averageScoreAchieved, double maxScoreAchieved) {
+        return new ExerciseScoresDTO(exercise.getId(), exercise.getTitle(), exercise.getExerciseType(), exercise.getReleaseDate(), scoreOfStudent, averageScoreAchieved,
+                maxScoreAchieved);
     }
-
-    public ExerciseScoresDTO(Exercise exercise) {
-        this.exerciseId = exercise.getId();
-        this.exerciseTitle = exercise.getTitle();
-        this.releaseDate = exercise.getReleaseDate();
-        this.exerciseType = exercise.getExerciseType();
-    }
-
 }

@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.service.plagiarism.PlagiarismService.filterParticipationMinimumScore;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
@@ -18,6 +21,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.jplag.JPlag;
@@ -30,14 +34,14 @@ import de.jplag.reporting.reportobject.ReportObjectFactory;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
@@ -45,17 +49,20 @@ import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingPlagiarismDetectionService {
 
     @Value("${artemis.repo-download-clone-path}")
     private Path repoDownloadClonePath;
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingPlagiarismDetectionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingPlagiarismDetectionService.class);
 
     private final FileService fileService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final PlagiarismService plagiarismService;
 
     private final GitService gitService;
 
@@ -69,22 +76,23 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final PlagiarismCacheService plagiarismCacheService;
 
-    private final UrlService urlService;
+    private final UriService uriService;
 
     private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
 
-    public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
-            PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, UrlService urlService,
+    public ProgrammingPlagiarismDetectionService(FileService fileService, ProgrammingExerciseRepository programmingExerciseRepository, PlagiarismService plagiarismService,
+            GitService gitService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
+            PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, UriService uriService,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.plagiarismService = plagiarismService;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
-        this.urlService = urlService;
+        this.uriService = uriService;
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
     }
 
@@ -184,7 +192,7 @@ public class ProgrammingPlagiarismDetectionService {
         final var projectKey = programmingExercise.getProjectKey();
         final var repoFolder = targetPath.resolve(projectKey).toFile();
         final var programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
-        final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
+        final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(programmingExercise.getTemplateParticipation().getVcsRepositoryUri());
 
         JPlagOptions options = new JPlagOptions(programmingLanguage, Set.of(repoFolder), Set.of())
                 // JPlag expects a value between 0.0 and 1.0
@@ -319,16 +327,9 @@ public class ProgrammingPlagiarismDetectionService {
         var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId());
 
         return studentParticipations.parallelStream().filter(participation -> !participation.isPracticeMode())
-                .filter(participation -> participation instanceof ProgrammingExerciseParticipation).map(participation -> (ProgrammingExerciseParticipation) participation)
-                .filter(participation -> participation.getVcsRepositoryUrl() != null).filter(participation -> {
-                    Submission submission = participation.findLatestSubmission().orElse(null);
-                    // filter empty submissions
-                    if (submission == null) {
-                        return false;
-                    }
-                    return minimumScore == 0
-                            || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore;
-                }).toList();
+                .filter(participation -> participation instanceof ProgrammingExerciseStudentParticipation).filter(plagiarismService.filterForStudents())
+                .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUri() != null)
+                .filter(filterParticipationMinimumScore(minimumScore)).toList();
     }
 
     private Optional<Repository> cloneTemplateRepository(ProgrammingExercise programmingExercise, String targetPath) {
@@ -338,7 +339,7 @@ public class ProgrammingPlagiarismDetectionService {
             return Optional.of(templateRepo);
         }
         catch (GitException | GitAPIException ex) {
-            log.error("Clone template repository {} in exercise '{}' did not work as expected: {}", programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(),
+            log.error("Clone template repository {} in exercise '{}' did not work as expected: {}", programmingExercise.getTemplateParticipation().getVcsRepositoryUri(),
                     programmingExercise.getTitle(), ex.getMessage());
             return Optional.empty();
         }
@@ -349,8 +350,8 @@ public class ProgrammingPlagiarismDetectionService {
             return true;
         }
 
-        var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(repo.getRemoteRepositoryUrl(), repo.getLocalPath(),
-                templateRepo.get().getRemoteRepositoryUrl(), templateRepo.get().getLocalPath());
+        var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(repo.getRemoteRepositoryUri(), repo.getLocalPath(),
+                templateRepo.get().getRemoteRepositoryUri(), templateRepo.get().getLocalPath());
         return diffToTemplate >= minimumSize;
     }
 
@@ -382,7 +383,7 @@ public class ProgrammingPlagiarismDetectionService {
                 }
             }
             catch (GitException | GitAPIException | InvalidPathException ex) {
-                log.error("Clone student repository {} in exercise '{}' did not work as expected: {}", participation.getVcsRepositoryUrl(), programmingExercise.getTitle(),
+                log.error("Clone student repository {} in exercise '{}' did not work as expected: {}", participation.getVcsRepositoryUri(), programmingExercise.getTitle(),
                         ex.getMessage());
             }
         });

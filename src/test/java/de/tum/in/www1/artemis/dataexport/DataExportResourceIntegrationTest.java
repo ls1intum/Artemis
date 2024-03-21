@@ -258,7 +258,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         // created date is automatically set on save
-        dataExport = dataExportRepository.save(dataExport);
+        dataExportRepository.save(dataExport);
         boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
         assertThat(canRequest).isFalse();
     }

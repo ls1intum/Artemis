@@ -8,7 +8,7 @@
 
     <div class="plagiarism-header-right">
         <button
-            [disabled]="comparison.status === plagiarismStatus.CONFIRMED || disableConfirmDenyButton"
+            [disabled]="comparison.status === plagiarismStatus.CONFIRMED || isLoading || exercise.teamMode"
             class="btn btn-success btn-sm"
             (click)="confirmPlagiarism()"
             data-qa="confirm-plagiarism-button"
@@ -17,7 +17,7 @@
         </button>
 
         <button
-            [disabled]="comparison.status === plagiarismStatus.DENIED || disableConfirmDenyButton"
+            [disabled]="comparison.status === plagiarismStatus.DENIED || isLoading || exercise.teamMode"
             class="btn btn-danger btn-sm"
             (click)="denyPlagiarism()"
             data-qa="deny-plagiarism-button"

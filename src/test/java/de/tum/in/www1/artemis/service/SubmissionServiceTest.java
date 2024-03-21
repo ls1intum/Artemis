@@ -568,8 +568,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         var participation1 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
         var participation2 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student2");
         var participation3 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student3");
-        // noinspection unused
-        var submissionWithoutComplaint = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
+
+        participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
         var submissionWithComplaintSameTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(),
                 TEST_PREFIX + "instructor1");
         var submissionWithComplaintOtherTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), TEST_PREFIX + "tutor2");
@@ -604,8 +604,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         var participation1 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
         var participation2 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student2");
         var participation3 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student3");
-        // noinspection unused
-        var submissionWithoutComplaint = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
+
+        participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
         var submissionWithComplaintSameTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), TEST_PREFIX + "tutor1");
         var submissionWithComplaintOtherTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), TEST_PREFIX + "tutor2");
         complaintUtilService.addComplaintToSubmission(submissionWithComplaintSameTutor, TEST_PREFIX + "student2", ComplaintType.COMPLAINT);
@@ -635,8 +635,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         var participation1 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
         var participation2 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student2");
         var participation3 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student3");
-        // noinspection unused
-        var submissionWithoutRequest = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
+
+        participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
         var submissionWithRequestSameTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), TEST_PREFIX + "tutor1");
         var submissionWithRequestOtherTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), TEST_PREFIX + "tutor2");
         complaintUtilService.addComplaintToSubmission(submissionWithRequestSameTutor, TEST_PREFIX + "student2", ComplaintType.MORE_FEEDBACK);

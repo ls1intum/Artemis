@@ -168,7 +168,7 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
      */
     loadNewData(statistic: QuizPointStatistic) {
         // if the Student finds a way to the Website
-        //      -> the Student will be send back to Courses
+        //      -> the Student will be sent back to Courses
         if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
             this.router.navigate(['courses']);
         }
@@ -180,7 +180,7 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
      * This functions loads the Quiz, which is necessary to build the Web-Template
      *
      * @param {QuizExercise} quizExercise: the quizExercise,
-     *                              which the this quiz-point-statistic presents.
+     *                              which this quiz-point-statistic presents.
      */
     loadQuizSuccess(quizExercise: QuizExercise) {
         // if the Student finds a way to the Website

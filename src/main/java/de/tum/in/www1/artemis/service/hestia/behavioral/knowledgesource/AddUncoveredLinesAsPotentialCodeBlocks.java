@@ -41,12 +41,12 @@ public class AddUncoveredLinesAsPotentialCodeBlocks extends BehavioralKnowledgeS
             var newChangeBlocks = new TreeSet<ChangeBlock>();
 
             for (ChangeBlock commonChange : groupedFile.getCommonChanges()) {
-                var firstLine = commonChange.getLines().first();
+                var firstLine = commonChange.lines().first();
                 var potentialPrefix = getPotentialPrefix(firstLine, groupedFile.getFileContent());
                 if (potentialPrefix != null) {
                     newChangeBlocks.add(potentialPrefix);
                 }
-                var lastLine = commonChange.getLines().last();
+                var lastLine = commonChange.lines().last();
                 var potentialPostfix = getPotentialPostfix(lastLine, groupedFile.getFileContent());
                 if (potentialPostfix != null) {
                     newChangeBlocks.add(potentialPostfix);

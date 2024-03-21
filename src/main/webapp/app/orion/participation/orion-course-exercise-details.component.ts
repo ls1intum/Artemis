@@ -5,7 +5,7 @@ import { Component } from '@angular/core';
     template: `
         <jhi-course-exercise-details>
             <ng-template #overrideStudentActions let-exercise="exercise" let-courseId="courseId">
-                <jhi-orion-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId"></jhi-orion-exercise-details-student-actions>
+                <jhi-orion-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" />
             </ng-template>
         </jhi-course-exercise-details>
     `,

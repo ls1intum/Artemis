@@ -1,24 +1,29 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.Posting;
-import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismAnswerPostService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismPostService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ReactionService {
 
@@ -33,20 +38,27 @@ public class ReactionService {
 
     private final ReactionRepository reactionRepository;
 
-    private final PostService postService;
+    private final PlagiarismPostService plagiarismPostService;
 
-    private final AnswerPostService answerPostService;
+    private final PlagiarismAnswerPostService plagiarismAnswerPostService;
 
     private final ConversationService conversationService;
 
-    public ReactionService(UserRepository userRepository, CourseRepository courseRepository, ReactionRepository reactionRepository, PostService postService,
-            AnswerPostService answerPostService, ConversationService conversationService) {
+    private final PostRepository postRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
+    public ReactionService(UserRepository userRepository, CourseRepository courseRepository, ReactionRepository reactionRepository, PlagiarismPostService plagiarismPostService,
+            PlagiarismAnswerPostService plagiarismAnswerPostService, ConversationService conversationService, PostRepository postRepository,
+            AnswerPostRepository answerPostRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.reactionRepository = reactionRepository;
-        this.postService = postService;
-        this.answerPostService = answerPostService;
+        this.plagiarismPostService = plagiarismPostService;
+        this.plagiarismAnswerPostService = plagiarismAnswerPostService;
         this.conversationService = conversationService;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
     }
 
     /**
@@ -59,6 +71,7 @@ public class ReactionService {
      */
     public Reaction createReaction(Long courseId, Reaction reaction) {
         Posting posting = reaction.getPost() == null ? reaction.getAnswerPost() : reaction.getPost();
+        final Course course = courseRepository.findByIdElseThrow(courseId);
 
         // checks
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -71,29 +84,12 @@ public class ReactionService {
 
         // we query the repository dependent on the type of posting and update this posting
         Reaction savedReaction;
-        if (posting instanceof Post) {
-            Post post = postService.findPostOrMessagePostById(posting.getId());
-            mayInteractWithConversationIfConversationMessageElseThrow(user, post);
-            reaction.setPost(post);
-            // save reaction
-            savedReaction = reactionRepository.save(reaction);
-
-            if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
-                // increase voteCount of post needed for sorting
-                post.setVoteCount(post.getVoteCount() + 1);
-            }
-
-            // save post
-            postService.addReaction(post, reaction, courseId);
+        if (posting instanceof Post post) {
+            savedReaction = createReactionForPost(reaction, post, user, course);
         }
         else {
-            AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
-            mayInteractWithConversationIfConversationMessageElseThrow(user, answerPost.getPost());
-            reaction.setAnswerPost(answerPost);
-            // save reaction
-            savedReaction = reactionRepository.save(reaction);
-            // save answer post
-            answerPostService.updateWithReaction(answerPost, reaction, courseId);
+            savedReaction = createReactionForAnswer(reaction, (AnswerPost) posting, user, course);
+
         }
         return savedReaction;
     }
@@ -118,7 +114,7 @@ public class ReactionService {
         Post updatedPost;
         if (reaction.getPost() != null) {
             updatedPost = reaction.getPost();
-            mayInteractWithConversationIfConversationMessageElseThrow(user, updatedPost);
+            mayInteractWithConversationElseThrow(user, updatedPost, course);
 
             if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
                 // decrease voteCount of post needed for sorting
@@ -126,26 +122,83 @@ public class ReactionService {
             }
 
             // remove reaction and persist post
-            postService.removeReaction(updatedPost, reaction, courseId);
+            updatedPost.removeReaction(reaction);
+            postRepository.save(updatedPost);
         }
         else {
             AnswerPost updatedAnswerPost = reaction.getAnswerPost();
-            mayInteractWithConversationIfConversationMessageElseThrow(user, updatedAnswerPost.getPost());
+            mayInteractWithConversationElseThrow(user, updatedAnswerPost.getPost(), course);
             updatedAnswerPost.removeReaction(reaction);
             updatedPost = updatedAnswerPost.getPost();
             // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
             // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
-            postService.preCheckUserAndCourseForCommunicationOrMessaging(reaction.getUser(), course);
             updatedPost.removeAnswerPost(updatedAnswerPost);
             updatedPost.addAnswerPost(updatedAnswerPost);
         }
-        postService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
+        plagiarismPostService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
         reactionRepository.deleteById(reactionId);
     }
 
-    private void mayInteractWithConversationIfConversationMessageElseThrow(User user, Post post) {
+    private void mayInteractWithConversationElseThrow(User user, Post post, Course course) {
         if (post.getConversation() != null) {
             conversationService.isMemberOrCreateForCourseWideElseThrow(post.getConversation().getId(), user, Optional.empty());
+            plagiarismPostService.preCheckUserAndCourseForCommunicationOrMessaging(user, course);
         }
+    }
+
+    /**
+     * Adds the given reaction to the answer
+     *
+     * @param reaction reaction to add
+     * @param posting  answer to add the reaction to
+     * @param user     user who reacted
+     * @param course   course the post belongs to
+     * @return saved reaction
+     */
+    private Reaction createReactionForAnswer(Reaction reaction, AnswerPost posting, User user, Course course) {
+        Reaction savedReaction;
+        AnswerPost answerPost = plagiarismAnswerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
+        mayInteractWithConversationElseThrow(user, answerPost.getPost(), course);
+        reaction.setAnswerPost(answerPost);
+        // save reaction
+        savedReaction = reactionRepository.save(reaction);
+        answerPost.addReaction(savedReaction);
+
+        // save answer post
+        AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
+        updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
+
+        plagiarismAnswerPostService.preparePostAndBroadcast(answerPost, course, null);
+        return savedReaction;
+    }
+
+    /**
+     * Adds the given reaction to the post
+     *
+     * @param reaction reaction to add
+     * @param posting  post to add the reaction to
+     * @param user     user who reacted
+     * @param course   course the post belongs to
+     * @return saved reaction
+     */
+    private Reaction createReactionForPost(Reaction reaction, Post posting, User user, Course course) {
+        Reaction savedReaction;
+        Post post = plagiarismPostService.findPostOrMessagePostById(posting.getId());
+        mayInteractWithConversationElseThrow(user, post, course);
+        reaction.setPost(post);
+        // save reaction
+        savedReaction = reactionRepository.save(reaction);
+
+        if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
+            // increase voteCount of post needed for sorting
+            post.setVoteCount(post.getVoteCount() + 1);
+        }
+
+        post.addReaction(reaction);
+        Post updatedPost = postRepository.save(post);
+        updatedPost.setConversation(post.getConversation());
+
+        plagiarismPostService.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
+        return savedReaction;
     }
 }

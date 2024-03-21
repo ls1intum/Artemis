@@ -1,4 +1,4 @@
-import { Conversation, ConversationDto, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 
 export class OneToOneChat extends Conversation {
@@ -6,12 +6,12 @@ export class OneToOneChat extends Conversation {
         super(ConversationType.ONE_TO_ONE);
     }
 }
-export class OneToOneChatDTO extends ConversationDto {
+export class OneToOneChatDTO extends ConversationDTO {
     constructor() {
         super(ConversationType.ONE_TO_ONE);
     }
     public members?: ConversationUserDTO[];
 }
-export function isOneToOneChatDto(conversation: ConversationDto): conversation is OneToOneChatDTO {
+export function isOneToOneChatDTO(conversation: ConversationDTO): conversation is OneToOneChatDTO {
     return conversation.type === ConversationType.ONE_TO_ONE;
 }

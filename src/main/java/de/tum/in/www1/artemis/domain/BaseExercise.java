@@ -29,7 +29,7 @@ public abstract class BaseExercise extends DomainObject {
     @JsonView(QuizView.Before.class)
     private String shortName;
 
-    @Column(name = "max_points")
+    @Column(name = "max_points", nullable = false)
     private Double maxPoints;
 
     @Column(name = "bonus_points")
@@ -41,23 +41,27 @@ public abstract class BaseExercise extends DomainObject {
 
     @Column(name = "release_date")
     @JsonView(QuizView.Before.class)
+    @Nullable
     private ZonedDateTime releaseDate;
 
     // TODO: Also use for quiz exercises
     @Column(name = "start_date")
     @JsonView(QuizView.Before.class)
+    @Nullable
     private ZonedDateTime startDate;
 
     @Column(name = "due_date")
     @JsonView(QuizView.Before.class)
+    @Nullable
     private ZonedDateTime dueDate;
 
     @Column(name = "assessment_due_date")
     @JsonView(QuizView.Before.class)
+    @Nullable
     private ZonedDateTime assessmentDueDate;
 
-    @Nullable
     @Column(name = "example_solution_publication_date")
+    @Nullable
     private ZonedDateTime exampleSolutionPublicationDate;
 
     @Enumerated(EnumType.STRING)
@@ -115,35 +119,39 @@ public abstract class BaseExercise extends DomainObject {
         this.assessmentType = assessmentType;
     }
 
+    @Nullable
     public ZonedDateTime getReleaseDate() {
         return releaseDate;
     }
 
-    public void setReleaseDate(ZonedDateTime releaseDate) {
+    public void setReleaseDate(@Nullable ZonedDateTime releaseDate) {
         this.releaseDate = releaseDate;
     }
 
+    @Nullable
     public ZonedDateTime getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(ZonedDateTime startDate) {
+    public void setStartDate(@Nullable ZonedDateTime startDate) {
         this.startDate = startDate;
     }
 
+    @Nullable
     public ZonedDateTime getDueDate() {
         return dueDate;
     }
 
-    public void setDueDate(ZonedDateTime dueDate) {
+    public void setDueDate(@Nullable ZonedDateTime dueDate) {
         this.dueDate = dueDate;
     }
 
+    @Nullable
     public ZonedDateTime getAssessmentDueDate() {
         return assessmentDueDate;
     }
 
-    public void setAssessmentDueDate(ZonedDateTime assessmentDueDate) {
+    public void setAssessmentDueDate(@Nullable ZonedDateTime assessmentDueDate) {
         this.assessmentDueDate = assessmentDueDate;
     }
 

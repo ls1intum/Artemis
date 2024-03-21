@@ -23,6 +23,14 @@ public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
             """)
     Optional<BuildPlan> findByProgrammingExercises_IdWithProgrammingExercises(@Param("exerciseId") long exerciseId);
 
+    @Query("""
+            SELECT buildPlan
+            FROM BuildPlan buildPlan
+                JOIN buildPlan.programmingExercises programmingExercises
+            WHERE programmingExercises.id = :exerciseId
+                """)
+    Optional<BuildPlan> findByProgrammingExercises_Id(@Param("exerciseId") long exerciseId);
+
     default BuildPlan findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(final long exerciseId) {
         return findByProgrammingExercises_IdWithProgrammingExercises(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find a build plan for exercise " + exerciseId));
@@ -43,5 +51,18 @@ public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
         buildPlanWrapper.setBuildPlan(buildPlan);
         buildPlanWrapper.addProgrammingExercise(exercise);
         return save(buildPlanWrapper);
+    }
+
+    /**
+     * Copies the build plan from the source exercise to the target exercise.
+     *
+     * @param sourceExercise The exercise containing the build plan to be copied.
+     * @param targetExercise The exercise into which the build plan is copied.
+     */
+    default void copyBetweenExercises(ProgrammingExercise sourceExercise, ProgrammingExercise targetExercise) {
+        findByProgrammingExercises_IdWithProgrammingExercises(sourceExercise.getId()).ifPresent(buildPlan -> {
+            buildPlan.addProgrammingExercise(targetExercise);
+            save(buildPlan);
+        });
     }
 }

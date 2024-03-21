@@ -68,7 +68,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
 
     @Autowired
-    private ProgrammingSubmissionRepository submissionRepository;
+    private ProgrammingSubmissionTestRepository submissionRepository;
 
     @Autowired
     private ParticipationRepository participationRepository;
@@ -483,8 +483,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         Long participationId = getParticipationIdByType(participationType, 0);
         final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).orElseThrow();
         bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
-        var repositoryUrl = (programmingParticipation).getVcsRepositoryUrl();
-        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(repositoryUrl);
+        var repositoryUri = (programmingParticipation).getVcsRepositoryUri();
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(repositoryUri);
         triggerBuild(participationType, 0);
 
         // Now a submission for the manual build should exist.
@@ -526,9 +526,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         Long participationId = getParticipationIdByType(participationType, 0);
         final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).orElseThrow();
         bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
-        var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
+        var repositoryUri = programmingParticipation.getVcsRepositoryUri();
         ObjectId objectId = COMMIT_HASH_OBJECT_ID;
-        doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
+        doReturn(objectId).when(gitService).getLastCommitHash(repositoryUri);
         triggerInstructorBuild(participationType, 0);
 
         // Now a submission for the manual build should exist.
@@ -562,8 +562,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCaseChanged() throws Exception {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        Commit commit = new Commit();
-        commit.setCommitHash(dummyHash);
+        Commit commit = new Commit(dummyHash, null, null, null, null);
 
         setBuildAndTestAfterDueDateForProgrammingExercise(null);
 
@@ -609,7 +608,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         submissions = submissionRepository.findAll();
 
         // After a push to the test repository, only the solution and template repository are built.
-        List<Result> results = resultRepository.findAllByExerciseId(exerciseId);
+        Set<Result> results = resultRepository.findAllByParticipationExerciseId(exerciseId);
         assertThat(results).isEmpty();
         solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).map(Participation::getResults)
                 .ifPresent(results::addAll);
@@ -750,13 +749,13 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, false);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
-        assertThat(statistics.getBuildCount()).isEqualTo(1);
-        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
-        assertThat(statistics.getTestDuration()).isEqualTo(10);
-        assertThat(statistics.getScaDuration()).isNull();
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(120);
-        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(1);
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
+        assertThat(statistics.buildCount()).isEqualTo(1);
+        assertThat(statistics.agentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.testDuration()).isEqualTo(10);
+        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.totalJobDuration()).isEqualTo(120);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(1);
     }
 
     @Test
@@ -773,13 +772,13 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, true);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
-        assertThat(statistics.getBuildCount()).isEqualTo(1);
-        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
-        assertThat(statistics.getTestDuration()).isEqualTo(10);
-        assertThat(statistics.getScaDuration()).isEqualTo(11);
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(120);
-        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(2);
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
+        assertThat(statistics.buildCount()).isEqualTo(1);
+        assertThat(statistics.agentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.testDuration()).isEqualTo(10);
+        assertThat(statistics.scaDuration()).isEqualTo(11);
+        assertThat(statistics.totalJobDuration()).isEqualTo(120);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(2);
     }
 
     @Test
@@ -795,14 +794,14 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, true);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
         // Should not extract any statistics
-        assertThat(statistics.getBuildCount()).isZero();
-        assertThat(statistics.getAgentSetupDuration()).isNull();
-        assertThat(statistics.getTestDuration()).isNull();
-        assertThat(statistics.getScaDuration()).isNull();
-        assertThat(statistics.getTotalJobDuration()).isNull();
-        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+        assertThat(statistics.buildCount()).isZero();
+        assertThat(statistics.agentSetupDuration()).isNull();
+        assertThat(statistics.testDuration()).isNull();
+        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.totalJobDuration()).isNull();
+        assertThat(statistics.dependenciesDownloadedCount()).isNull();
     }
 
     @NotNull

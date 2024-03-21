@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
@@ -47,10 +49,12 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.enableMockingOfRequests();
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
+        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
         textSubmission = new TextSubmission(2L).text("This is a text submission");
         textSubmission.setParticipation(new StudentParticipation().exercise(textExercise));
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
+        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setId(3L);
         programmingSubmission.setParticipation(new StudentParticipation().exercise(programmingExercise));
@@ -73,7 +77,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     void testFeedbackSuggestionsProgramming() throws NetworkingException {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.submission.id").value(programmingSubmission.getId()),
-                jsonPath("$.submission.repositoryUrl")
+                jsonPath("$.submission.repositoryUri")
                         .value("https://artemislocal.ase.in.tum.de/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"));
         List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission);
         assertThat(suggestions.get(0).title()).isEqualTo("Not so good");

@@ -1,12 +1,9 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
-import { CourseExercisesComponent, ExerciseFilter, ExerciseWithDueDate, SortingAttribute } from 'app/overview/course-exercises/course-exercises.component';
+import { CourseExercisesComponent, ExerciseFilter, SortingAttribute } from 'app/overview/course-exercises/course-exercises.component';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -38,30 +35,17 @@ export class CourseExercisesGroupedByWeekComponent implements OnInit, OnChanges 
     @Input() sortingAttribute: SortingAttribute;
 
     exerciseGroups: GroupedExercisesByWeek;
-    nextRelevantExercise?: ExerciseWithDueDate;
 
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
 
-    private currentUser?: User;
-
-    constructor(
-        private exerciseService: ExerciseService,
-        private accountService: AccountService,
-        private translateService: TranslateService,
-    ) {}
+    constructor(private translateService: TranslateService) {}
 
     ngOnInit() {
-        this.accountService.identity().then((user) => {
-            this.currentUser = user;
-            this.updateNextRelevantExercise();
-        });
-
         this.groupExercises(this.filteredAndSortedExercises);
     }
 
     ngOnChanges() {
-        this.updateNextRelevantExercise();
         this.groupExercises(this.filteredAndSortedExercises);
     }
 
@@ -109,22 +93,5 @@ export class CourseExercisesGroupedByWeekComponent implements OnInit, OnChanges 
         }
 
         this.exerciseGroups = groupedExercises;
-    }
-
-    private updateNextRelevantExercise() {
-        const nextExercise = this.exerciseService.getNextExerciseForHours(
-            this.course?.exercises?.filter((exercise) => CourseExercisesComponent.fulfillsCurrentFilter(exercise, this.activeFilters)),
-            12,
-            this.currentUser,
-        );
-        if (nextExercise) {
-            const dueDate = CourseExercisesComponent.exerciseDueDate(nextExercise);
-            this.nextRelevantExercise = {
-                exercise: nextExercise,
-                dueDate,
-            };
-        } else {
-            this.nextRelevantExercise = undefined;
-        }
     }
 }

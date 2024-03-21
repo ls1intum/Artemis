@@ -5,29 +5,34 @@
     <div class="mb-5 ms-2">
         <h3 class="mb-3 font-weight-bold">{{ 'artemisApp.aboutUsOverview.feature' | artemisTranslate }}</h3>
         <ol>
-            <li *ngFor="let section of sections">
-                <span [jhiTranslate]="'artemisApp.aboutUsOverview.' + section[0] + '.text'" [translateValues]="section[1]"></span>
-            </li>
+            @for (section of sections; track section) {
+                <li>
+                    <span [jhiTranslate]="'artemisApp.aboutUsOverview.' + section[0] + '.text'" [translateValues]="section[1]"></span>
+                </li>
+            }
         </ol>
     </div>
-
-    <div class="row ms-4 me-4 mb-4" *ngIf="data && data.projectManagers">
-        <div class="project-manager" *ngFor="let pm of data.projectManagers">
-            <div class="card-body">
-                <div class="row ms-1">
-                    <div class="col-md-4"><img class="img-fluid w-100 rounded" [src]="pm.photoDirectory" /></div>
-                    <div class="col-md-8">
-                        <h4 class="font-weight-bold">{{ pm.fullName }}</h4>
-                        <h5>{{ 'artemisApp.aboutUsOverview.roles.' + pm.role | artemisTranslate }}</h5>
-                        <span>
-                            <i></i>
-                            <a href="{{ pm.website }}" target="_blank" rel="noopener noreferrer">{{ 'artemisApp.aboutUsOverview.website' | artemisTranslate }}</a>
-                        </span>
+    @if (data && data.projectManagers) {
+        <div class="row ms-4 me-4 mb-4">
+            @for (pm of data.projectManagers; track pm) {
+                <div class="project-manager">
+                    <div class="card-body">
+                        <div class="row ms-1">
+                            <div class="col-md-4"><img class="img-fluid w-100 rounded" [src]="pm.photoDirectory" /></div>
+                            <div class="col-md-8">
+                                <h4 class="font-weight-bold">{{ pm.fullName }}</h4>
+                                <h5>{{ 'artemisApp.aboutUsOverview.roles.' + pm.role | artemisTranslate }}</h5>
+                                <span>
+                                    <i></i>
+                                    <a href="{{ pm.website }}" target="_blank" rel="noopener noreferrer">{{ 'artemisApp.aboutUsOverview.website' | artemisTranslate }}</a>
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            }
         </div>
-    </div>
+    }
     <div>
         <h3 class="mb-3 ms-2 font-weight-bold">{{ 'artemisApp.aboutUsOverview.getInTouch' | artemisTranslate }}</h3>
         <ul>
@@ -45,17 +50,21 @@
             </li>
         </ul>
     </div>
-    <div class="mt-5 ms-2 me-2" *ngIf="data && data.contributors">
-        <h3 class="font-weight-bold">{{ 'artemisApp.aboutUsOverview.contributors' | artemisTranslate }}</h3>
-        <div class="row">
-            <div class="contributor text-center" *ngFor="let contributor of data.contributors">
-                <img class="img-fluid" [src]="contributor.photoDirectory" />
-                <div class="text-center">
-                    <small id="contributorsName" class="font-weight-bold">{{ contributor.fullName }}</small>
-                </div>
+    @if (data && data.contributors) {
+        <div class="mt-5 ms-2 me-2">
+            <h3 class="font-weight-bold">{{ 'artemisApp.aboutUsOverview.contributors' | artemisTranslate }}</h3>
+            <div class="row">
+                @for (contributor of data.contributors; track contributor) {
+                    <div class="contributor text-center">
+                        <img class="img-fluid" [src]="contributor.photoDirectory" />
+                        <div class="text-center">
+                            <small id="contributorsName" class="font-weight-bold">{{ contributor.fullName }}</small>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
-    </div>
+    }
     <div class="mt-5 ms-2 me-2">
         <h3 class="font-weight-bold">{{ 'artemisApp.git.title' | artemisTranslate }}</h3>
         <div>

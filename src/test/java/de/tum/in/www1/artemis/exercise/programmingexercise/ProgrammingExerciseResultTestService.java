@@ -59,7 +59,7 @@ public class ProgrammingExerciseResultTestService {
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private BuildLogEntryRepository buildLogEntryRepository;

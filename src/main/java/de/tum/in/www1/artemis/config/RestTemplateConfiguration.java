@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 
 import javax.validation.constraints.NotNull;
@@ -24,6 +26,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInt
  * For now only provides a basic {@link org.springframework.web.client.RestTemplate RestTemplate} bean. Can be extended
  * to further customize how requests to other REST APIs are handled
  */
+@Profile(PROFILE_CORE)
 @Configuration
 public class RestTemplateConfiguration {
 
@@ -77,6 +80,17 @@ public class RestTemplateConfiguration {
     @Bean
     @Profile("apollon")
     public RestTemplate apollonRestTemplate() {
+        return createRestTemplate();
+    }
+
+    /**
+     * Creates a RestTemplate that can be used to communicate with Aeolus
+     *
+     * @return a RestTemplate with short timeouts
+     */
+    @Bean
+    @Profile("aeolus | localci")
+    public RestTemplate aeolusRestTemplate() {
         return createRestTemplate();
     }
 
@@ -145,7 +159,18 @@ public class RestTemplateConfiguration {
 
     @Bean
     @Profile("iris")
-    public RestTemplate shortTimeoutIrisRestTemplate() {
+    public RestTemplate shortTimeoutIrisRestTemplate(IrisAuthorizationInterceptor irisAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(irisAuthorizationInterceptor, createShortTimeoutRestTemplate());
+    }
+
+    /**
+     * Creates a RestTemplate that can be used to communicate with Aeolus
+     *
+     * @return a RestTemplate with short timeouts
+     */
+    @Bean
+    @Profile("aeolus | localci")
+    public RestTemplate shortTimeoutAeolusRestTemplate() {
         return createShortTimeoutRestTemplate();
     }
 

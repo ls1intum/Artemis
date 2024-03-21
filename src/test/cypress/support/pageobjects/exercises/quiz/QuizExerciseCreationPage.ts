@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs/esm';
 
-import { BASE_API, POST } from '../../../constants';
+import { BASE_API, POST, QUIZ_EXERCISE_BASE } from '../../../constants';
 import { enterDate } from '../../../utils';
 
 export class QuizExerciseCreationPage {
@@ -51,7 +51,7 @@ export class QuizExerciseCreationPage {
 
     uploadDragAndDropBackground() {
         cy.get('#background-image-input-form').children().eq(0).attachFile('exercise/quiz/drag_and_drop/background.jpg');
-        cy.intercept(POST, BASE_API + 'fileUpload*').as('uploadBackground');
+        cy.intercept(POST, `${BASE_API}/fileUpload*`).as('uploadBackground');
         cy.get('#background-image-input-form').children().eq(1).click();
         return cy.wait('@uploadBackground');
     }
@@ -60,13 +60,13 @@ export class QuizExerciseCreationPage {
      * @return <Chainable>  the response of the request
      */
     saveQuiz() {
-        cy.intercept(POST, BASE_API + 'quiz-exercises').as('createQuizExercise');
+        cy.intercept(POST, QUIZ_EXERCISE_BASE).as('createQuizExercise');
         cy.get('#quiz-save').click();
         return cy.wait('@createQuizExercise');
     }
 
     import() {
-        cy.intercept(POST, BASE_API + 'quiz-exercises/import/*').as('quizExerciseImport');
+        cy.intercept(POST, `${QUIZ_EXERCISE_BASE}/import/*`).as('quizExerciseImport');
         cy.get('#quiz-save').click();
         return cy.wait('@quizExerciseImport');
     }

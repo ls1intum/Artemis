@@ -38,8 +38,8 @@ public class CombineChangeBlocks extends BehavioralKnowledgeSource {
                     if (i < currentChangeBlocks.size() - 1) {
                         var nextChangeBlock = currentChangeBlocks.get(i + 1);
                         if (currentChangeBlock.intersectsOrTouches(nextChangeBlock)) {
-                            var lines = new TreeSet<>(currentChangeBlock.getLines());
-                            lines.addAll(nextChangeBlock.getLines());
+                            var lines = new TreeSet<>(currentChangeBlock.lines());
+                            lines.addAll(nextChangeBlock.lines());
                             newChangeBlocks.add(new GroupedFile.ChangeBlock(lines));
                             // Skip the next change block, as it has already been processed
                             i++;

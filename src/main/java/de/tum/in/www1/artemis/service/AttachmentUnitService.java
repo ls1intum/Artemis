@@ -1,21 +1,28 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Objects;
 
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class AttachmentUnitService {
 
@@ -25,18 +32,15 @@ public class AttachmentUnitService {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     private final SlideSplitterService slideSplitterService;
 
     private final SlideRepository slideRepository;
 
     public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, FilePathService filePathService) {
+            AttachmentRepository attachmentRepository, FileService fileService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
-        this.filePathService = filePathService;
         this.slideSplitterService = slideSplitterService;
         this.slideRepository = slideRepository;
     }
@@ -58,7 +62,7 @@ public class AttachmentUnitService {
         attachmentUnit.setLecture(lecture);
         lecture.addLectureUnit(savedAttachmentUnit);
 
-        handleFile(file, attachment, keepFilename);
+        handleFile(file, attachment, keepFilename, savedAttachmentUnit.getId());
         // Default attachment
         attachment.setVersion(1);
         attachment.setAttachmentUnit(savedAttachmentUnit);
@@ -90,11 +94,11 @@ public class AttachmentUnitService {
 
         Attachment existingAttachment = existingAttachmentUnit.getAttachment();
         if (existingAttachment == null) {
-            throw new ConflictException("Attachment unit must be associated to an attachment", "AttachmentUnit", "attachmentMissing");
+            throw new BadRequestAlertException("Attachment unit must be associated to an attachment", "AttachmentUnit", "attachmentMissing");
         }
 
         updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit);
-        handleFile(updateFile, existingAttachment, keepFilename);
+        handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentUnit.getId());
         final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
         existingAttachment.setVersion(revision);
         Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
@@ -104,6 +108,10 @@ public class AttachmentUnitService {
 
         if (updateFile != null) {
             if (existingAttachmentUnit.getSlides() != null && !existingAttachmentUnit.getSlides().isEmpty()) {
+                List<Slide> slides = existingAttachmentUnit.getSlides();
+                for (Slide slide : slides) {
+                    fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
+                }
                 slideRepository.deleteAll(existingAttachmentUnit.getSlides());
             }
             // Split the updated file into single slides only if it is a pdf
@@ -138,10 +146,11 @@ public class AttachmentUnitService {
      * @param attachment   Attachment linked to the file.
      * @param keepFilename Whether to keep the original filename or not.
      */
-    private void handleFile(MultipartFile file, Attachment attachment, boolean keepFilename) {
+    private void handleFile(MultipartFile file, Attachment attachment, boolean keepFilename, Long attachmentUnitId) {
         if (file != null && !file.isEmpty()) {
-            String filePath = fileService.handleSaveFile(file, keepFilename, false).toString();
-            attachment.setLink(filePath);
+            Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnitId.toString());
+            Path savePath = fileService.saveFile(file, basePath, keepFilename);
+            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, attachmentUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
         }
     }
@@ -154,7 +163,7 @@ public class AttachmentUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentUnit attachmentUnit) {
         if (file != null && !file.isEmpty()) {
-            this.fileService.evictCacheForPath(filePathService.actualPathForPublicPathOrThrow(URI.create(attachmentUnit.getAttachment().getLink())));
+            this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(URI.create(attachmentUnit.getAttachment().getLink())));
         }
     }
 

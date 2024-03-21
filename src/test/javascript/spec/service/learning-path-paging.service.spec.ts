@@ -1,6 +1,6 @@
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { LearningPathPagingService } from 'app/course/learning-paths/learning-path-paging.service';
-import { PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { TableColumn } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
 import { ArtemisTestModule } from '../test.module';
@@ -35,8 +35,8 @@ describe('LearningPathPagingService', () => {
             searchTerm: 'initialSearchTerm',
             sortingOrder: SortingOrder.DESCENDING,
             sortedColumn: TableColumn.ID,
-        } as PageableSearch;
-        learningPathPagingService.searchForLearningPaths(pageable, 1).subscribe();
+        } as SearchTermPageableSearch;
+        learningPathPagingService.search(pageable, { courseId: 1 }).subscribe();
         const params = new HttpParams()
             .set('pageSize', String(pageable.pageSize))
             .set('page', String(pageable.page))

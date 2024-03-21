@@ -1,0 +1,29 @@
+services:
+    aeolus-api:
+        container_name: aeolus-api
+        hostname: aeolus-api
+        image: ghcr.io/ls1intum/aeolus/api:nightly
+        pull_policy: always
+        restart: unless-stopped
+        environment:
+            BAMBOO_GENERATOR_API_HOST: "http://aeolus-bamboo-api:8091"
+        ports:
+            - "8090:80"
+        networks:
+            - aeolus
+            - artemis
+    aeolus-bamboo-api:
+        container_name: aeolus-bamboo-api
+        hostname: aeolus-bamboo-api
+        image: ghcr.io/ls1intum/aeolus/bamboo-generator:nightly
+        command: "--api"
+        pull_policy: always
+        restart: unless-stopped
+        networks:
+            - aeolus
+            - artemis
+
+networks:
+    aeolus:
+    artemis:
+        external: true

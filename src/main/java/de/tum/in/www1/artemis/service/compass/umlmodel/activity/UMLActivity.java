@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
@@ -58,6 +59,11 @@ public class UMLActivity extends UMLActivityElement implements Serializable {
      */
     public void addChildElement(UMLActivityElement childElement) {
         childElements.add(childElement);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), childElements);
     }
 
     @Override

@@ -1,11 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { DebugElement } from '@angular/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
-import { By } from '@angular/platform-browser';
 import { MockFileUploadExerciseService, fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AlertService } from 'app/core/util/alert.service';
@@ -22,14 +20,13 @@ import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
-import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
 
 describe('FileUploadExercise Management Detail Component', () => {
     let comp: FileUploadExerciseDetailComponent;
     let fixture: ComponentFixture<FileUploadExerciseDetailComponent>;
     let service: FileUploadExerciseService;
-    let debugElement: DebugElement;
     let statisticsService: StatisticsService;
 
     const route = {
@@ -67,7 +64,7 @@ describe('FileUploadExercise Management Detail Component', () => {
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(NonProgrammingExerciseDetailCommonActionsComponent),
                 MockComponent(ExerciseDetailStatisticsComponent),
-                MockComponent(ExerciseDetailsComponent),
+                MockComponent(DetailOverviewListComponent),
                 MockComponent(DocumentationButtonComponent),
             ],
             providers: [
@@ -83,7 +80,6 @@ describe('FileUploadExercise Management Detail Component', () => {
         comp = fixture.componentInstance;
         service = fixture.debugElement.injector.get(FileUploadExerciseService);
         statisticsService = fixture.debugElement.injector.get(StatisticsService);
-        debugElement = fixture.debugElement;
         statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(fileUploadExerciseStatistics));
     });
 
@@ -91,33 +87,25 @@ describe('FileUploadExercise Management Detail Component', () => {
         jest.restoreAllMocks();
     });
 
-    describe('Title should contain exercise id and description list', () => {
-        it('should call load all on init', fakeAsync(() => {
-            const headers = new HttpHeaders().append('link', 'link;link');
-            jest.spyOn(service, 'find').mockReturnValue(
-                of(
-                    new HttpResponse({
-                        body: fileUploadExerciseWithCourse,
-                        headers,
-                    }),
-                ),
-            );
-            comp.ngOnInit();
-            tick();
+    it('should load all on init', fakeAsync(() => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        jest.spyOn(service, 'find').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: fileUploadExerciseWithCourse,
+                    headers,
+                }),
+            ),
+        );
+        comp.ngOnInit();
+        tick();
 
-            expect(comp.fileUploadExercise).toEqual(fileUploadExerciseWithCourse);
+        expect(comp.fileUploadExercise).toEqual(fileUploadExerciseWithCourse);
 
-            fixture.detectChanges();
+        fixture.detectChanges();
 
-            const title = debugElement.query(By.css('h2'));
-            expect(title).not.toBeNull();
-            const h2: HTMLElement = title.nativeElement;
-            expect(h2.textContent!.endsWith(fileUploadExerciseWithCourse.id!.toString())).toBeTrue();
-
-            const descList = debugElement.query(By.css('dl'));
-            expect(descList).not.toBeNull();
-        }));
-    });
+        expect(comp.exerciseDetailSections).toBeDefined();
+    }));
 
     describe('onInit with course exercise', () => {
         beforeEach(() => {

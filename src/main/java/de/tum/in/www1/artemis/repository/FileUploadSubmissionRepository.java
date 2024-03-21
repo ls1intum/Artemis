@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +20,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the FileUploadSubmission entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface FileUploadSubmissionRepository extends JpaRepository<FileUploadSubmission, Long> {
 
@@ -25,14 +28,27 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor
      */
-    @Query("select distinct submission from FileUploadSubmission submission left join fetch submission.results r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
+    @Query("""
+            SELECT DISTINCT submission
+            FROM FileUploadSubmission submission
+                LEFT JOIN FETCH submission.results r
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.assessor
+            WHERE submission.id = :submissionId
+            """)
     Optional<FileUploadSubmission> findByIdWithEagerResultAndAssessorAndFeedback(@Param("submissionId") Long submissionId);
 
     /**
      * @param submissionId the submission id we are interested in
      * @return the submission with its assessor
      */
-    @Query("select distinct submission from FileUploadSubmission submission left join fetch submission.results r left join fetch r.assessor where submission.id = :#{#submissionId}")
+    @Query("""
+            SELECT DISTINCT submission
+            FROM FileUploadSubmission submission
+                LEFT JOIN FETCH submission.results r
+                LEFT JOIN FETCH r.assessor
+            WHERE submission.id = :submissionId
+            """)
     Optional<FileUploadSubmission> findByIdWithEagerResult(@Param("submissionId") Long submissionId);
 
     /**

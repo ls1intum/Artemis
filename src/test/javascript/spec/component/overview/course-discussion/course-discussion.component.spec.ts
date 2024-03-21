@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { CourseWideContext, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -28,15 +28,15 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import {
     metisCourse,
-    metisExamChannelDto,
+    metisExamChannelDTO,
     metisExercise,
     metisExercise2,
-    metisExerciseChannelDto,
-    metisGeneralChannelDto,
+    metisExerciseChannelDTO,
+    metisGeneralChannelDTO,
     metisLecture,
     metisLecture2,
     metisLecture3,
-    metisLectureChannelDto,
+    metisLectureChannelDTO,
     metisPostInChannel,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
@@ -47,6 +47,8 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { MatSelectModule } from '@angular/material/select';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -83,6 +85,7 @@ describe('CourseDiscussionComponent', () => {
             providers: [
                 FormBuilder,
                 MockProvider(SessionStorageService),
+                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },
@@ -103,7 +106,7 @@ describe('CourseDiscussionComponent', () => {
                     get: () => new BehaviorSubject(true).asObservable(),
                 });
                 Object.defineProperty(metisConversationService, 'conversationsOfUser$', {
-                    get: () => new BehaviorSubject([metisGeneralChannelDto, metisExerciseChannelDto, metisLectureChannelDto, metisExamChannelDto]).asObservable(),
+                    get: () => new BehaviorSubject([metisGeneralChannelDTO, metisExerciseChannelDTO, metisLectureChannelDTO, metisExamChannelDTO]).asObservable(),
                 });
 
                 jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(metisCourse));
@@ -128,9 +131,6 @@ describe('CourseDiscussionComponent', () => {
         expect(component.posts).toEqual([metisPostInChannel]);
         expect(component.currentPostContextFilter).toEqual({
             courseId: metisCourse.id,
-            courseWideContexts: undefined,
-            exerciseIds: undefined,
-            lectureIds: undefined,
             courseWideChannelIds: [],
             searchText: undefined,
             filterToUnresolved: false,
@@ -164,12 +164,12 @@ describe('CourseDiscussionComponent', () => {
         const contextOptions = getElement(fixture.debugElement, 'mat-select[name=context]');
         expect(component.lectures).toEqual([metisLecture, metisLecture2, metisLecture3]);
         expect(component.exercises).toEqual([metisExercise, metisExercise2]);
-        expect(component.courseWideChannels).toEqual([metisGeneralChannelDto, metisExerciseChannelDto, metisLectureChannelDto, metisExamChannelDto]);
+        expect(component.courseWideChannels).toEqual([metisGeneralChannelDTO, metisExerciseChannelDTO, metisLectureChannelDTO, metisExamChannelDTO]);
         // select should provide all context options
-        expect(contextOptions.textContent).toContain(metisGeneralChannelDto.name);
-        expect(contextOptions.textContent).toContain(metisExerciseChannelDto.name);
-        expect(contextOptions.textContent).toContain(metisLectureChannelDto.name);
-        expect(contextOptions.textContent).toContain(metisExamChannelDto.name);
+        expect(contextOptions.textContent).toContain(metisGeneralChannelDTO.name);
+        expect(contextOptions.textContent).toContain(metisExerciseChannelDTO.name);
+        expect(contextOptions.textContent).toContain(metisLectureChannelDTO.name);
+        expect(contextOptions.textContent).toContain(metisExamChannelDTO.name);
         // nothing should be selected
         const selectedContextOption = getElement(fixture.debugElement, 'mat-select[name=context]');
         expect(selectedContextOption.value).toBeUndefined();
@@ -190,9 +190,6 @@ describe('CourseDiscussionComponent', () => {
         component.onSelectContext();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
             courseId: metisCourse.id,
-            courseWideContexts: undefined,
-            exerciseIds: undefined,
-            lectureIds: undefined,
             courseWideChannelIds: [],
             searchText: component.searchText,
             filterToUnresolved: false,
@@ -311,9 +308,6 @@ describe('CourseDiscussionComponent', () => {
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
         expect(metisServiceGetFilteredPostsSpy.mock.calls[2][0]).toEqual({
             ...component.currentPostContextFilter,
-            courseWideContexts: undefined,
-            lectureIds: undefined,
-            exerciseIds: undefined,
         });
     }));
 
@@ -371,9 +365,6 @@ describe('CourseDiscussionComponent', () => {
     function expectGetFilteredPostsToBeCalled() {
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
             courseId: metisCourse.id,
-            courseWideContexts: undefined,
-            exerciseIds: undefined,
-            lectureIds: undefined,
             courseWideChannelIds: [],
             page: component.page - 1,
             pageSize: component.itemsPerPage,
@@ -386,21 +377,9 @@ describe('CourseDiscussionComponent', () => {
 
     describe('sorting of posts', () => {
         it('should distinguish context filter options for properly show them in form', () => {
-            let result = component.compareContextFilterOptionFn({ courseId: metisCourse.id }, { courseId: metisCourse.id });
+            let result = component.compareContextFilterOptionFn({ conversationId: 1 }, { conversationId: 1 });
             expect(result).toBeTrue();
-            result = component.compareContextFilterOptionFn({ courseId: metisCourse.id }, { courseId: 99 });
-            expect(result).toBeFalse();
-            result = component.compareContextFilterOptionFn({ lectureId: metisLecture.id }, { lectureId: metisLecture.id });
-            expect(result).toBeTrue();
-            result = component.compareContextFilterOptionFn({ lectureId: metisLecture.id }, { lectureId: 99 });
-            expect(result).toBeFalse();
-            result = component.compareContextFilterOptionFn({ exerciseId: metisExercise.id }, { exerciseId: metisExercise.id });
-            expect(result).toBeTrue();
-            result = component.compareContextFilterOptionFn({ exerciseId: metisExercise.id }, { exerciseId: 99 });
-            expect(result).toBeFalse();
-            result = component.compareContextFilterOptionFn({ courseWideContext: CourseWideContext.ORGANIZATION }, { courseWideContext: CourseWideContext.ORGANIZATION });
-            expect(result).toBeTrue();
-            result = component.compareContextFilterOptionFn({ courseWideContext: CourseWideContext.ORGANIZATION }, { courseWideContext: CourseWideContext.TECH_SUPPORT });
+            result = component.compareContextFilterOptionFn({ conversationId: 1 }, { conversationId: 2 });
             expect(result).toBeFalse();
         });
     });

@@ -31,7 +31,7 @@ Example:
     jhipster:
         mail:
             base-url: https://artemis.cit.tum.de
-            from: artemis.in@tum.de
+            from: artemis@xcit.tum.de
     management:
         health:
             mail:

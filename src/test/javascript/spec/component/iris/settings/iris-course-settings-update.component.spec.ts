@@ -18,6 +18,7 @@ import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
+import { IrisCompetencyGenerationSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-competency-generation-sub-settings-update/iris-competency-generation-sub-settings-update.component';
 
 describe('IrisCourseSettingsUpdateComponent Component', () => {
     let comp: IrisCourseSettingsUpdateComponent;
@@ -40,6 +41,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
                 MockComponent(IrisChatSubSettingsUpdateComponent),
                 MockComponent(IrisHestiaSubSettingsUpdateComponent),
                 MockComponent(IrisCodeEditorSubSettingsUpdateComponent),
+                MockComponent(IrisCompetencyGenerationSubSettingsUpdateComponent),
                 MockComponent(IrisGlobalAutoupdateSettingsUpdateComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(NgModel),
@@ -77,10 +79,11 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(getParentSettingsSpy).toHaveBeenCalledOnce();
 
         expect(fixture.debugElement.query(By.directive(IrisGlobalAutoupdateSettingsUpdateComponent))).toBeFalsy();
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(3);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(4);
         expect(fixture.debugElement.query(By.directive(IrisChatSubSettingsUpdateComponent))).toBeTruthy();
         expect(fixture.debugElement.query(By.directive(IrisHestiaSubSettingsUpdateComponent))).toBeTruthy();
         expect(fixture.debugElement.query(By.directive(IrisCodeEditorSubSettingsUpdateComponent))).toBeTruthy();
+        expect(fixture.debugElement.query(By.directive(IrisCompetencyGenerationSubSettingsUpdateComponent))).toBeTruthy();
     });
 
     it('Can deactivate correctly', () => {

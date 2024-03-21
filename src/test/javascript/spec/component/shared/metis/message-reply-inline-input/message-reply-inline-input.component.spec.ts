@@ -51,9 +51,6 @@ describe('MessageReplyInlineInputComponent', () => {
         expect(metisServiceCreateStub).toHaveBeenCalledWith({
             ...component.posting,
             title: undefined,
-            courseWideContext: undefined,
-            exercise: undefined,
-            lecture: undefined,
         });
         tick();
         expect(component.isLoading).toBeFalse();
@@ -95,9 +92,6 @@ describe('MessageReplyInlineInputComponent', () => {
             ...component.posting,
             content: editedContent,
             title: undefined,
-            courseWideContext: undefined,
-            exercise: undefined,
-            lecture: undefined,
         });
         tick();
         expect(component.isLoading).toBeFalse();

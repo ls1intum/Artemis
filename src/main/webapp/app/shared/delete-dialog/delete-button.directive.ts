@@ -7,7 +7,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
 @Directive({ selector: '[jhiDeleteButton]' })
 export class DeleteButtonDirective implements OnInit {
-    @Input() entityTitle: string;
+    @Input() entityTitle?: string;
     @Input() deleteQuestion: string;
     @Input() translateValues: { [key: string]: unknown } = {};
     @Input() deleteConfirmationText: string;

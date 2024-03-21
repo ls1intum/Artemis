@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
  */
 public class StaticCodeAnalysisConfigurer {
 
-    private static Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories = Map.of(ProgrammingLanguage.JAVA,
+    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories = Map.of(ProgrammingLanguage.JAVA,
             createDefaultCategoriesForJava(), ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift(), ProgrammingLanguage.C, createDefaultCategoriesForC());
 
     /**

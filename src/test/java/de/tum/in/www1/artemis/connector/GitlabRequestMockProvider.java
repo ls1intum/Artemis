@@ -8,15 +8,15 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Stream;
 
 import org.gitlab4j.api.*;
 import org.gitlab4j.api.models.*;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +27,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.client.RequestMatcher;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -37,21 +40,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
 
 @Component
 @Profile("gitlab")
 public class GitlabRequestMockProvider {
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(GitlabRequestMockProvider.class);
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -105,7 +109,7 @@ public class GitlabRequestMockProvider {
     private UserRepository userRepository;
 
     @Autowired
-    private UrlService urlService;
+    private UriService uriService;
 
     private AutoCloseable closeable;
 
@@ -113,6 +117,10 @@ public class GitlabRequestMockProvider {
             @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+    }
+
+    public RestTemplate getRestTemplate() {
+        return restTemplate;
     }
 
     public void enableMockingOfRequests() {
@@ -150,6 +158,10 @@ public class GitlabRequestMockProvider {
         mockAddUserToGroup(exercise.getProjectKey(), GUEST, "tutor1", 3L);
     }
 
+    public void mockGetUserApi() {
+        doReturn(userApi).when(gitLabApi).getUserApi();
+    }
+
     /**
      * Method to mock the getUser method to return mocked users with their id's
      *
@@ -170,6 +182,14 @@ public class GitlabRequestMockProvider {
      */
     public void mockGetUserID(String username, User user) throws GitLabApiException {
         doReturn(user).when(userApi).getUser(username);
+    }
+
+    public void mockGetUserID(User user) throws GitLabApiException {
+        doReturn(user).when(userApi).getUser(user.getUsername());
+    }
+
+    public void mockGetUserID(List<User> users) throws GitLabApiException {
+        doAnswer(invocation -> users.stream().filter(u -> u.getUsername().equals(invocation.getArgument(0))).findFirst().orElseThrow()).when(userApi).getUser(anyString());
     }
 
     public void mockUpdateUser() throws GitLabApiException {
@@ -195,13 +215,30 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockCheckIfProjectExists(final ProgrammingExercise exercise, final boolean exists) throws GitLabApiException {
-        Project foundProject = new Project();
-        foundProject.setName(exercise.getProjectName() + (exists ? "" : "abc"));
-        List<Project> result = new ArrayList<>();
-        if (exists) {
-            result.add(foundProject);
-        }
-        doReturn(result).when(projectApi).getProjects(exercise.getProjectKey());
+        final Group group = new Group();
+        group.setName(exercise.getProjectKey());
+
+        doReturn(Optional.of(group)).when(groupApi).getOptionalGroup(exercise.getProjectKey());
+        // doAnswer to create a new Stream instance for each call, otherwise it might have been consumed already when
+        // using the mocked method multiple times in a test
+        doAnswer(invocationOnMock -> {
+            if (exists) {
+                final Project foundProject = new Project();
+                foundProject.setName(exercise.getProjectName());
+
+                return Stream.of(foundProject);
+            }
+            else {
+                return Stream.empty();
+            }
+        }).when(groupApi).getProjectsStream(argThat(argument -> {
+            if (argument instanceof Group groupArgument) {
+                return exercise.getProjectKey().equals(groupArgument.getName());
+            }
+            else {
+                return false;
+            }
+        }));
     }
 
     /**
@@ -229,7 +266,7 @@ public class GitlabRequestMockProvider {
             event.setPushData(pushData);
             events.add(0, event); // The latest event has to be at the front
         }
-        var path = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
+        var path = uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri());
         doAnswer((invocation) -> events.stream()).when(eventsApi).getProjectEventsStream(eq(path), eq(Constants.ActionType.PUSHED), eq(null), eq(null), eq(null),
                 eq(Constants.SortOrder.DESC));
     }
@@ -272,6 +309,91 @@ public class GitlabRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
+    public void mockCreatePersonalAccessTokenError() throws GitLabApiException {
+        when(userApi.createPersonalAccessToken(any(), anyString(), any(), any())).thenThrow(new GitLabApiException("Simulated error"));
+    }
+
+    public void mockCreatePersonalAccessToken(long expectedRequestCount, Map<Object, String> userIdOrUsernameToTokenMap) throws GitLabApiException {
+        for (int i = 0; i < expectedRequestCount; ++i) {
+            when(userApi.createPersonalAccessToken(any(), anyString(), any(), any())).thenAnswer(invocation -> {
+                Object userIdOrUsername = invocation.getArgument(0);
+                String name = invocation.getArgument(1);
+                Date expiresAt = invocation.getArgument(2);
+                ImpersonationToken.Scope[] scopes = invocation.getArgument(3);
+
+                ImpersonationToken result = new ImpersonationToken();
+                result.setName(name);
+                result.setExpiresAt(expiresAt);
+                result.setScopes(scopes == null ? null : Arrays.asList(scopes));
+                result.setToken(userIdOrUsernameToTokenMap.get(userIdOrUsername));
+
+                return result;
+            });
+        }
+    }
+
+    public void mockListAndRevokePersonalAccessTokens(long expectedRequestCount, Map<Long, GitLabPersonalAccessTokenListResponseDTO> responseMap) {
+        final String urlPrefix = gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens";
+        RequestMatcher requestMatcher = request -> {
+            final String url = request.getURI().toString();
+            if (!url.startsWith(urlPrefix)) {
+                throw new AssertionError("URL prefix not matched");
+            }
+        };
+
+        for (int i = 0; i < 2 * expectedRequestCount; ++i) {
+            mockServer.expect(requestMatcher).andRespond(request -> {
+                if (request != null && request.getMethod() == HttpMethod.GET) {
+                    return handleListPersonalAccessTokenRequest(responseMap, request);
+                }
+                else if (request != null && request.getMethod() == HttpMethod.DELETE) {
+                    // Revoking an access token only returns the status code 204 (No Content).
+                    return withStatus(HttpStatus.NO_CONTENT).createResponse(request);
+                }
+                else {
+                    return withStatus(HttpStatus.BAD_REQUEST).createResponse(request);
+                }
+            });
+        }
+    }
+
+    public MockClientHttpResponse handleListPersonalAccessTokenRequest(Map<Long, GitLabPersonalAccessTokenListResponseDTO> responseMap, ClientHttpRequest request)
+            throws JsonProcessingException {
+        final Map<String, String> parameters = getParametersFromHttpRequest(Objects.requireNonNull(request));
+        if (parameters.containsKey("user_id")) {
+            Long userId = Long.parseLong(parameters.get("user_id"));
+            if (responseMap.containsKey(userId)) {
+                var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(List.of(responseMap.get(userId))).getBytes(StandardCharsets.UTF_8), HttpStatus.OK);
+                response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                return response;
+            }
+            else {
+                return new MockClientHttpResponse(new byte[0], HttpStatus.BAD_REQUEST);
+            }
+        }
+        else {
+            var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(responseMap.values().stream().toList()).getBytes(StandardCharsets.UTF_8),
+                    HttpStatus.OK);
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return response;
+        }
+    }
+
+    public Map<String, String> getParametersFromHttpRequest(ClientHttpRequest request) {
+        final String queryString = request.getURI().getQuery();
+        final Map<String, String> parameters = new HashMap<>();
+        if (queryString != null) {
+            String[] parameterStrings = queryString.split("&");
+            for (String parameterString : parameterStrings) {
+                int index = parameterString.indexOf("=");
+                String key = URLDecoder.decode(parameterString.substring(0, index), StandardCharsets.UTF_8);
+                String value = URLDecoder.decode(parameterString.substring(index + 1), StandardCharsets.UTF_8);
+                parameters.put(key, value);
+            }
+        }
+        return parameters;
+    }
+
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws GitLabApiException {
         final var projectKey = exercise.getProjectKey();
         final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
@@ -280,16 +402,16 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockConfigureRepository(ProgrammingExercise exercise, Set<de.tum.in.www1.artemis.domain.User> users, boolean userExists) throws GitLabApiException {
-        var repositoryUrl = exercise.getVcsTemplateRepositoryUrl();
+        var repositoryUri = exercise.getVcsTemplateRepositoryUri();
         for (var user : users) {
             String loginName = user.getLogin();
             mockUserExists(loginName, userExists);
             if (userExists) {
-                mockAddMemberToRepository(repositoryUrl, user.getLogin());
+                mockAddMemberToRepository(repositoryUri, user.getLogin());
             }
         }
         mockGetDefaultBranch(defaultBranch);
-        mockProtectBranch(defaultBranch, repositoryUrl);
+        mockProtectBranch(defaultBranch, repositoryUri);
     }
 
     public void mockUserExists(String username, boolean exists) throws GitLabApiException {
@@ -308,8 +430,8 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    private void mockAddMemberToRepository(VcsRepositoryUrl repositoryUrl, String login) throws GitLabApiException {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    private void mockAddMemberToRepository(VcsRepositoryUri repositoryUri, String login) throws GitLabApiException {
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         mockAddMemberToRepository(repositoryPath, login, false);
     }
 
@@ -331,14 +453,23 @@ public class GitlabRequestMockProvider {
         doReturn(mockProject).when(projectApi).getProject(notNull());
     }
 
-    private void mockProtectBranch(String branch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    private void mockProtectBranch(String branch, VcsRepositoryUri repositoryUri) throws GitLabApiException {
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         doReturn(new Branch()).when(repositoryApi).unprotectBranch(repositoryPath, branch);
         doReturn(new ProtectedBranch()).when(protectedBranchesApi).protectBranch(repositoryPath, branch);
     }
 
     public void mockFailToCheckIfProjectExists(String projectKey) throws GitLabApiException {
-        doThrow(GitLabApiException.class).when(projectApi).getProjects(projectKey);
+        doReturn(Optional.of(new Group())).when(groupApi).getOptionalGroup(projectKey);
+        doThrow(GitLabApiException.class).when(groupApi).getProjectsStream(any(Group.class));
+    }
+
+    public void mockGetOptionalGroup(final String projectKey, final Optional<Group> returnValue) {
+        doReturn(returnValue).when(groupApi).getOptionalGroup(projectKey);
+    }
+
+    public void mockGetProjectsStream(final Group group, final Stream<Project> returnValue) throws GitLabApiException {
+        doReturn(returnValue).when(groupApi).getProjectsStream(group);
     }
 
     public void mockHealth(String healthStatus, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
@@ -495,9 +626,9 @@ public class GitlabRequestMockProvider {
 
         final List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(updatedCourse);
 
-        final var allUsers = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
-        allUsers.addAll(userRepository.findAllInGroupWithAuthorities(oldEditorGroup));
-        allUsers.addAll(userRepository.findAllInGroupWithAuthorities(oldTeachingAssistantGroup));
+        final var allUsers = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(oldInstructorGroup);
+        allUsers.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(oldEditorGroup));
+        allUsers.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(oldTeachingAssistantGroup));
         allUsers.addAll(userRepository.findAllUserInGroupAndNotIn(updatedCourse.getInstructorGroupName(), allUsers));
         allUsers.addAll(userRepository.findAllUserInGroupAndNotIn(updatedCourse.getEditorGroupName(), allUsers));
         allUsers.addAll(userRepository.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), allUsers));
@@ -622,12 +753,12 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockRepositoryUrlIsValid(VcsRepositoryUrl repositoryUrl, boolean isUrlValid) throws GitLabApiException {
-        if (repositoryUrl == null || repositoryUrl.getURI() == null) {
+    public void mockRepositoryUriIsValid(VcsRepositoryUri repositoryUri, boolean isUrlValid) throws GitLabApiException {
+        if (repositoryUri == null || repositoryUri.getURI() == null) {
             return;
         }
 
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         if (isUrlValid) {
             doReturn(new Project()).when(projectApi).getProject(repositoryPath);
         }
@@ -638,10 +769,10 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, Set<de.tum.in.www1.artemis.domain.User> users) throws GitLabApiException {
+    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, Set<de.tum.in.www1.artemis.domain.User> users) throws GitLabApiException {
         for (var user : users) {
             mockGetUserId(user.getLogin(), true, false);
-            final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+            final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
             doReturn(new Member()).when(projectApi).updateMember(repositoryPath, 1L, GUEST);
         }
     }

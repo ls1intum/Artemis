@@ -29,10 +29,14 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
-@JsonSubTypes({ @JsonSubTypes.Type(value = StudentParticipation.class, name = "student"),
-        @JsonSubTypes.Type(value = ProgrammingExerciseStudentParticipation.class, name = "programming"),
-        @JsonSubTypes.Type(value = TemplateProgrammingExerciseParticipation.class, name = "template"),
-        @JsonSubTypes.Type(value = SolutionProgrammingExerciseParticipation.class, name = "solution"), })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = StudentParticipation.class, name = "student"),
+    @JsonSubTypes.Type(value = ProgrammingExerciseStudentParticipation.class, name = "programming"),
+    @JsonSubTypes.Type(value = TemplateProgrammingExerciseParticipation.class, name = "template"),
+    @JsonSubTypes.Type(value = SolutionProgrammingExerciseParticipation.class, name = "solution"),
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Participation extends DomainObject implements ParticipationInterface {
 

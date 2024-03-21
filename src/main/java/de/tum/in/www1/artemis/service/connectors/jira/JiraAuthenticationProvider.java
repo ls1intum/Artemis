@@ -57,9 +57,10 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @Profile("jira")
 @Primary
 @ComponentScan("de.tum.in.www1.artemis.*")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
 
-    private final Logger log = LoggerFactory.getLogger(JiraAuthenticationProvider.class);
+    private static final Logger log = LoggerFactory.getLogger(JiraAuthenticationProvider.class);
 
     @Value("${artemis.user-management.external.url}")
     private URL jiraUrl;

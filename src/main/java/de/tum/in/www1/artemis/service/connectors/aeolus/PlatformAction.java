@@ -9,8 +9,6 @@ public class PlatformAction extends Action {
 
     private String type;
 
-    private String platform;
-
     public String getKind() {
         return kind;
     }
@@ -25,13 +23,5 @@ public class PlatformAction extends Action {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public String getPlatform() {
-        return platform;
-    }
-
-    public void setPlatform(String platform) {
-        this.platform = platform;
     }
 }

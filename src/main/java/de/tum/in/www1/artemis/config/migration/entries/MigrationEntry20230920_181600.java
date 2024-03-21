@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
@@ -11,6 +13,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,12 +24,12 @@ import com.google.common.collect.Lists;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.in.www1.artemis.service.UriService;
 
+@Profile(PROFILE_CORE)
 @Component
 public class MigrationEntry20230920_181600 extends MigrationEntry {
 
@@ -38,7 +41,7 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
 
     private static final int TIMEOUT_IN_HOURS = 9;
 
-    private final Logger log = LoggerFactory.getLogger(MigrationEntry20230920_181600.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20230920_181600.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -52,7 +55,7 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
 
     private final Environment environment;
 
-    private final UrlService urlService = new UrlService();
+    private final UriService uriService = new UriService();
 
     private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
@@ -61,8 +64,8 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
     public MigrationEntry20230920_181600(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<CIVCSMigrationService> ciMigrationService, Optional<VersionControlService> versionControlService, Environment environment) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<CIVCSMigrationService> ciMigrationService,
+            Environment environment) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -264,19 +267,19 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
      * @param participation The participation to migrate
      */
     private void migrateStudentBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        VcsRepositoryUrl repositoryUrl;
+        VcsRepositoryUri repositoryUri;
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         try {
-            repositoryUrl = new VcsRepositoryUrl(urlService.getPlainUrlFromRepositoryUrl(participation.getVcsRepositoryUrl()));
+            repositoryUri = new VcsRepositoryUri(uriService.getPlainUriFromRepositoryUri(participation.getVcsRepositoryUri()));
         }
         catch (URISyntaxException e) {
             log.warn("Failed to convert git url {} for studentParticipationId {} exerciseId {} with buildPlanId {}, will abort migration for this Participation",
-                    participation.getVcsRepositoryUrl(), participation.getId(), exercise.getId(), participation.getBuildPlanId(), e);
+                    participation.getVcsRepositoryUri(), participation.getId(), exercise.getId(), participation.getBuildPlanId(), e);
             errorList.add(participation);
             return;
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), participation.getBuildPlanId(), repositoryUrl);
+            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), participation.getBuildPlanId(), repositoryUri);
         }
         catch (Exception e) {
             log.warn("Failed to migrate build plan notifications for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(),
@@ -293,7 +296,7 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
     private void migrateSolutionBuildPlan(AbstractBaseProgrammingExerciseParticipation participation) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUrl());
+            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUri());
         }
         catch (Exception e) {
             log.warn("Failed to migrate solution build plan for exercise id {} with buildPlanId {}", exercise.getId(), exercise.getSolutionBuildPlanId(), e);
@@ -309,7 +312,7 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
     private void migrateTemplateBuildPlan(AbstractBaseProgrammingExerciseParticipation participation) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUrl());
+            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUri());
         }
         catch (Exception e) {
             log.warn("Failed to migrate template build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getTemplateBuildPlanId(), e);

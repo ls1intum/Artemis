@@ -7,28 +7,11 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockProvider } from 'ng-mocks';
 
-function setUserAgent(userAgent: string) {
-    if (window.navigator.userAgent !== userAgent) {
-        const userAgentProp = {
-            get() {
-                return userAgent;
-            },
-        };
-        try {
-            Object.defineProperty(window.navigator, 'userAgent', userAgentProp);
-        } catch (e) {
-            // @ts-ignore
-            window.navigator = Object.create(navigator, {
-                userAgent: userAgentProp,
-            });
-        }
-    }
-}
-
 describe('OrionValidatorService', () => {
     let orionVersionValidator: OrionVersionValidator;
     let profileInfoStub: jest.SpyInstance;
     let navigateSpy: jest.SpyInstance;
+    let userAgentSpy: jest.SpyInstance;
 
     const allowedVersion = '1.0.0';
     const profileInfo = { allowedMinimumOrionVersion: allowedVersion } as ProfileInfo;
@@ -48,6 +31,8 @@ describe('OrionValidatorService', () => {
         profileInfoStub.mockReturnValue(of(profileInfo));
 
         navigateSpy = jest.spyOn(TestBed.inject(Router), 'navigateByUrl');
+
+        userAgentSpy = jest.spyOn(window.navigator, 'userAgent', 'get');
     });
 
     afterEach(() => {
@@ -55,7 +40,7 @@ describe('OrionValidatorService', () => {
     });
 
     it('should route to the error page if a legacy version is used', fakeAsync(() => {
-        setUserAgent(userAgent + legacy);
+        userAgentSpy.mockReturnValue(userAgent + legacy);
         orionVersionValidator.isOrion = true;
 
         orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBeFalse());
@@ -67,7 +52,7 @@ describe('OrionValidatorService', () => {
     }));
 
     it('should route to the error page if the version is too low', fakeAsync(() => {
-        setUserAgent(userAgent + versionTooLow);
+        userAgentSpy.mockReturnValue(userAgent + versionTooLow);
         orionVersionValidator.isOrion = true;
 
         orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBeFalse());
@@ -79,7 +64,7 @@ describe('OrionValidatorService', () => {
     }));
 
     it('should accept the correct version', fakeAsync(() => {
-        setUserAgent(userAgent + versionCorrect);
+        userAgentSpy.mockReturnValue(userAgent + versionCorrect);
         orionVersionValidator.isOrion = true;
 
         orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBeTrue());
@@ -90,7 +75,7 @@ describe('OrionValidatorService', () => {
     }));
 
     it('should not do anything if a normal browser is connected', fakeAsync(() => {
-        setUserAgent(userAgent);
+        userAgentSpy.mockReturnValue(userAgent);
 
         orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBeTrue());
         tick();

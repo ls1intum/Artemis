@@ -54,6 +54,8 @@
                     "hide": "Ausblenden",
                     "favorite": "Zu Favoriten hinzufügen",
                     "unfavorite": "Aus Favoriten entfernen",
+                    "mute": "Stummschalten",
+                    "unmute": "Stumm aus",
                     "settings": "Einstellungen"
                 }
             }

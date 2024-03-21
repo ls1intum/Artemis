@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { PROFILE_LTI } from 'app/app.constants';
+import { PROFILE_ATHENA, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { Subscription } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course-management.service';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
@@ -11,11 +11,15 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faChartBar, faClipboard, faEye, faFlag, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { Detail } from 'app/detail-overview-list/detail.model';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -35,13 +39,12 @@ export enum DoughnutChartType {
 export class CourseDetailComponent implements OnInit, OnDestroy {
     readonly DoughnutChartType = DoughnutChartType;
     readonly FeatureToggle = FeatureToggle;
-    readonly CHAT = IrisSubSettingsType.CHAT;
-    readonly HESTIA = IrisSubSettingsType.HESTIA;
-    readonly CODE_EDITOR = IrisSubSettingsType.CODE_EDITOR;
 
     courseDTO: CourseManagementDetailViewDto;
     activeStudents?: number[];
     course: Course;
+
+    courseDetailSections: DetailOverviewSection[];
 
     messagingEnabled: boolean;
     communicationEnabled: boolean;
@@ -50,6 +53,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     irisHestiaEnabled = false;
     irisCodeEditorEnabled = false;
     ltiEnabled = false;
+    isAthenaEnabled = false;
+    tutorialEnabled = false;
 
     isAdmin = false;
 
@@ -75,39 +80,280 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private accountService: AccountService,
         private irisSettingsService: IrisSettingsService,
+        private translateService: TranslateService,
+        private markdownService: ArtemisMarkdownService,
+        private featureToggleService: FeatureToggleService,
     ) {}
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.
      */
-    ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
-            this.irisEnabled = profileInfo.activeProfiles.includes('iris');
-            if (this.irisEnabled) {
-                this.irisSettingsService.getGlobalSettings().subscribe((settings) => {
-                    this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
-                    this.irisHestiaEnabled = settings?.irisHestiaSettings?.enabled ?? false;
-                    this.irisCodeEditorEnabled = settings?.irisCodeEditorSettings?.enabled ?? false;
-                });
-            }
-        });
+    async ngOnInit() {
+        this.tutorialEnabled = await firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorialGroups));
+        const profileInfo = await firstValueFrom(this.profileService.getProfileInfo());
+        this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
+        this.isAthenaEnabled = profileInfo?.activeProfiles.includes(PROFILE_ATHENA);
+        this.irisEnabled = profileInfo?.activeProfiles.includes(PROFILE_IRIS);
+        if (this.irisEnabled) {
+            const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
+            this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
+            this.irisHestiaEnabled = irisSettings?.irisHestiaSettings?.enabled ?? false;
+            this.irisCodeEditorEnabled = irisSettings?.irisCodeEditorSettings?.enabled ?? false;
+        }
         this.route.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
                 this.messagingEnabled = !!this.course.courseInformationSharingConfiguration?.includes('MESSAGING');
                 this.communicationEnabled = !!this.course.courseInformationSharingConfiguration?.includes('COMMUNICATION');
+                this.fetchOrganizations(course.id);
             }
             this.isAdmin = this.accountService.isAdmin();
+            this.getCourseDetailSections();
         });
-        // There is no course 0 -> will fetch no course if route does not provide different courseId
-        let courseId = 0;
         this.paramSub = this.route.params.subscribe((params) => {
-            courseId = params['courseId'];
+            const courseId = params['courseId'];
+            this.fetchCourseStatistics(courseId);
+            this.registerChangeInCourses(courseId);
         });
-        this.fetchCourseStatistics(courseId);
-        this.registerChangeInCourses(courseId);
-        this.fetchOrganizations(courseId);
+    }
+
+    getGeneralDetailSection(): DetailOverviewSection {
+        const generalDetails: Detail[] = [
+            { type: DetailType.Text, title: 'artemisApp.course.title', data: { text: this.course.title } },
+            { type: DetailType.Text, title: 'artemisApp.course.shortName', data: { text: this.course.shortName } },
+            {
+                type: DetailType.Link,
+                title: 'artemisApp.course.studentGroupName',
+                data: {
+                    text: `${this.course.studentGroupName} (${this.course.numberOfStudents ?? 0})`,
+                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'students'] : undefined,
+                },
+            },
+            {
+                type: DetailType.Link,
+                title: 'artemisApp.course.teachingAssistantGroupName',
+                data: {
+                    text: `${this.course.teachingAssistantGroupName} (${this.course.numberOfTeachingAssistants ?? 0})`,
+                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'tutors'] : undefined,
+                },
+            },
+            {
+                type: DetailType.Link,
+                title: 'artemisApp.course.editorGroupName',
+                data: {
+                    text: `${this.course.editorGroupName} (${this.course.numberOfEditors ?? 0})`,
+                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'editors'] : undefined,
+                },
+            },
+            {
+                type: DetailType.Link,
+                title: 'artemisApp.course.instructorGroupName',
+                data: {
+                    text: `${this.course.instructorGroupName} (${this.course.numberOfInstructors ?? 0})`,
+                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'instructors'] : undefined,
+                },
+            },
+            { type: DetailType.Date, title: 'artemisApp.course.startDate', data: { date: this.course.startDate } },
+            { type: DetailType.Date, title: 'artemisApp.course.endDate', data: { date: this.course.endDate } },
+            { type: DetailType.Text, title: 'artemisApp.course.semester', data: { text: this.course.semester } },
+        ];
+
+        if (this.course.organizations?.length) {
+            // insert detail after shortName
+            generalDetails.splice(2, 0, {
+                type: DetailType.Text,
+                title: 'artemisApp.course.organizations',
+                data: { text: this.course.organizations.map((orga) => orga.name).join(', ') },
+            });
+        }
+        return {
+            headline: 'artemisApp.course.detail.sections.general',
+            details: generalDetails,
+        };
+    }
+
+    getComplaintsDetails(): Detail[] {
+        if (this.course.complaintsEnabled) {
+            return [
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.course.maxComplaints.title',
+                    data: { text: this.course.maxComplaints },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.course.maxTeamComplaints.title',
+                    data: { text: this.course.maxTeamComplaints },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.course.maxComplaintTimeDays.title',
+                    data: { text: this.course.maxComplaintTimeDays },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.course.maxComplaintTextLimit.title',
+                    data: { text: this.course.maxComplaintTextLimit },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.course.maxComplaintResponseTextLimit.title',
+                    data: { text: this.course.maxComplaintResponseTextLimit },
+                },
+            ];
+        }
+        return [];
+    }
+
+    getAthenaDetails(): Detail[] {
+        const athenaDetails: Detail[] = [];
+        if (this.isAthenaEnabled) {
+            athenaDetails.push({
+                type: DetailType.Boolean,
+                title: 'artemisApp.course.restrictedAthenaModulesAccess.label',
+                data: { boolean: this.course.restrictedAthenaModulesAccess },
+            });
+        }
+        return athenaDetails;
+    }
+
+    getIrisDetails(): Detail[] {
+        const irisDetails: Detail[] = [];
+        if (this.irisEnabled && this.irisChatEnabled) {
+            irisDetails.push({
+                type: DetailType.ProgrammingIrisEnabled,
+                title: 'artemisApp.iris.settings.subSettings.enabled.chat',
+                data: { course: this.course, disabled: !this.isAdmin, subSettingsType: IrisSubSettingsType.CHAT },
+            });
+        }
+        // TODO: Enable in future PR
+        // details.push({
+        //     type: DetailType.ProgrammingIrisEnabled,
+        //     title: 'artemisApp.iris.settings.subSettings.enabled.hesita',
+        //     data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.HESTIA },
+        // });
+        // details.push({
+        //     type: DetailType.ProgrammingIrisEnabled,
+        //     title: 'artemisApp.iris.settings.subSettings.enabled.codeEditor',
+        //     data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.CODE_EDITOR },
+        // });
+        return irisDetails;
+    }
+
+    getModeDetailSection(): DetailOverviewSection {
+        const complaintsDetails = this.getComplaintsDetails();
+        const athenaDetails = this.getAthenaDetails();
+        const irisDetails = this.getIrisDetails();
+
+        const details: Detail[] = [
+            { type: DetailType.Text, title: 'artemisApp.course.maxPoints.title', data: { text: this.course.maxPoints } },
+            {
+                type: DetailType.Text,
+                title: 'artemisApp.course.accuracyOfScores',
+                data: { text: this.course.accuracyOfScores },
+            },
+            {
+                type: DetailType.Text,
+                title: 'artemisApp.course.defaultProgrammingLanguage',
+                data: { text: this.course.defaultProgrammingLanguage },
+            },
+            {
+                type: DetailType.Boolean,
+                title: 'artemisApp.course.testCourse.title',
+                data: { boolean: this.course.testCourse },
+            },
+            ...complaintsDetails,
+            ...athenaDetails,
+            ...irisDetails,
+        ];
+
+        // inserting optional details in reversed order, so that no index calculation is needed
+        if (this.course.requestMoreFeedbackEnabled) {
+            // insert detail after the complaintDetails
+            details.splice(4 + complaintsDetails.length, 0, {
+                type: DetailType.Text,
+                title: 'artemisApp.course.maxRequestMoreFeedbackTimeDays.title',
+                data: { text: this.course.maxRequestMoreFeedbackTimeDays },
+            });
+        }
+
+        if (this.tutorialEnabled) {
+            // insert tutorial detail after lti detail
+            details.splice(4, 0, {
+                type: DetailType.Text,
+                title: 'artemisApp.forms.configurationForm.timeZoneInput.label',
+                titleHelpText: 'artemisApp.forms.configurationForm.timeZoneInput.beta',
+                data: { text: this.course.timeZone },
+            });
+        }
+
+        if (this.ltiEnabled) {
+            // insert lti detail after testCourse detail
+            details.splice(4, 0, {
+                type: DetailType.Boolean,
+                title: 'artemisApp.course.onlineCourse.title',
+                data: { boolean: this.course.onlineCourse },
+            });
+        }
+
+        return {
+            headline: 'artemisApp.course.detail.sections.mode',
+            details: details,
+        };
+    }
+
+    getEnrollmentDetailSection(): DetailOverviewSection {
+        const enrollmentDetails: Detail[] = [
+            { type: DetailType.Boolean, title: 'artemisApp.course.registrationEnabled.title', data: { boolean: this.course.enrollmentEnabled } },
+            { type: DetailType.Boolean, title: 'artemisApp.course.unenrollmentEnabled.title', data: { boolean: this.course.unenrollmentEnabled } },
+        ];
+
+        if (this.course.enrollmentEnabled) {
+            // insert enrollment details after enrollmentEnabled detail
+            enrollmentDetails.splice(
+                1,
+                0,
+                { type: DetailType.Date, title: 'artemisApp.course.enrollmentStartDate', data: { date: this.course.enrollmentStartDate } },
+                { type: DetailType.Date, title: 'artemisApp.course.enrollmentEndDate', data: { date: this.course.enrollmentEndDate } },
+                {
+                    type: DetailType.Markdown,
+                    title: 'artemisApp.course.registrationConfirmationMessage',
+                    data: { innerHtml: this.markdownService.safeHtmlForMarkdown(this.course.enrollmentConfirmationMessage) },
+                },
+            );
+        }
+
+        if (this.course.unenrollmentEnabled) {
+            // insert unenrollment detail after unenrollmentEnabled detail
+            enrollmentDetails.push({ type: DetailType.Date, title: 'artemisApp.course.unenrollmentEndDate', data: { date: this.course.unenrollmentEndDate } });
+        }
+        return {
+            headline: 'artemisApp.course.detail.sections.enrollment',
+            details: enrollmentDetails,
+        };
+    }
+
+    getMessagingDetailSection(): DetailOverviewSection {
+        return {
+            headline: 'artemisApp.course.detail.sections.messaging',
+            details: [
+                { type: DetailType.Boolean, title: 'artemisApp.course.courseCommunicationSetting.communicationEnabled.label', data: { boolean: this.communicationEnabled } },
+                { type: DetailType.Boolean, title: 'artemisApp.course.courseCommunicationSetting.messagingEnabled.label', data: { boolean: this.messagingEnabled } },
+                {
+                    type: DetailType.Markdown,
+                    title: 'artemisApp.course.courseCommunicationSetting.messagingEnabled.codeOfConduct',
+                    data: { innerHtml: this.markdownService.safeHtmlForMarkdown(this.course.courseInformationSharingMessagingCodeOfConduct) },
+                },
+            ],
+        };
+    }
+
+    getCourseDetailSections() {
+        const generalSection = this.getGeneralDetailSection();
+        const modeSection = this.getModeDetailSection();
+        const enrollmentSection = this.getEnrollmentDetailSection();
+        const messagingSection = this.getMessagingDetailSection();
+        this.courseDetailSections = [generalSection, modeSection, enrollmentSection, messagingSection];
     }
 
     /**
@@ -117,6 +363,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
             this.courseManagementService.find(courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
+                this.getCourseDetailSections();
             });
             this.fetchCourseStatistics(courseId);
         });
@@ -148,6 +395,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private fetchOrganizations(courseId: number) {
         this.organizationService.getOrganizationsByCourse(courseId).subscribe((organizations) => {
             this.course.organizations = organizations;
+            this.getCourseDetailSections();
         });
     }
 }

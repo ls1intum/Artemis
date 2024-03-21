@@ -8,6 +8,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
 
 describe('ChannelService', () => {
     let service: ChannelService;
@@ -20,6 +22,7 @@ describe('ChannelService', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: NotificationService, useClass: MockNotificationService },
             ],
         });
         service = TestBed.inject(ChannelService);
@@ -38,6 +41,23 @@ describe('ChannelService', () => {
 
         service
             .getChannelsOfCourse(1)
+            .pipe(
+                take(1),
+                map((resp) => resp.body),
+            )
+            .subscribe((body) => expect(body).toContainEqual(expected));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush([returnedFromService]);
+        tick();
+    }));
+
+    it('getPublicChannelsOfCourse', fakeAsync(() => {
+        const returnedFromService = { ...elemDefault, title: 'Test' };
+        const expected = { ...returnedFromService };
+
+        service
+            .getPublicChannelsOfCourse(1)
             .pipe(
                 take(1),
                 map((resp) => resp.body),
@@ -69,6 +89,32 @@ describe('ChannelService', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
 
         const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        tick();
+    }));
+
+    it('getChannelOfLecture', fakeAsync(() => {
+        const returnedFromService = { ...elemDefault, id: 0 };
+        const expected = { ...returnedFromService };
+        service
+            .getChannelOfLecture(1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        tick();
+    }));
+
+    it('getChannelOfExercise', fakeAsync(() => {
+        const returnedFromService = { ...elemDefault, id: 0 };
+        const expected = { ...returnedFromService };
+        service
+            .getChannelOfExercise(1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         tick();
     }));

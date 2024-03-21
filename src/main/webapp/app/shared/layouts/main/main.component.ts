@@ -5,6 +5,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { DOCUMENT } from '@angular/common';
+import { AnalyticsService } from 'app/core/posthog/analytics.service';
 
 @Component({
     selector: 'jhi-main',
@@ -23,18 +24,27 @@ export class JhiMainComponent implements OnInit {
         private router: Router,
         private profileService: ProfileService,
         private sentryErrorHandler: SentryErrorHandler,
+        private analyticsService: AnalyticsService,
         private themeService: ThemeService,
         @Inject(DOCUMENT)
         private document: Document,
         private renderer: Renderer2,
     ) {
-        this.setupErrorHandling().then(null);
+        this.setupErrorHandling().then(undefined);
+        this.setupAnalytics().then(undefined);
     }
 
     private async setupErrorHandling() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             // sentry is only activated if it was specified in the application.yml file
             this.sentryErrorHandler.initSentry(profileInfo);
+        });
+    }
+
+    private async setupAnalytics() {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            // postHog is only activated if it was specified in the application.yml file
+            this.analyticsService.initAnalytics(profileInfo);
         });
     }
 

@@ -3,11 +3,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -16,9 +15,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockLanguageHelper, MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
-import { UMLModel } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ElementRef } from '@angular/core';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -31,8 +32,8 @@ describe('ApollonDiagramDetail Component', () => {
 
     const course: Course = { id: 123 } as Course;
     const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
-    let modalService: NgbModal;
     let alertService: AlertService;
+    let modalService: NgbModal;
     // @ts-ignore
     const model = testClassDiagram as UMLModel;
 
@@ -54,6 +55,7 @@ describe('ApollonDiagramDetail Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
             ],
             schemas: [],
         })
@@ -62,8 +64,8 @@ describe('ApollonDiagramDetail Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramDetailComponent);
                 apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
-                modalService = fixture.debugElement.injector.get(NgbModal);
                 alertService = fixture.debugElement.injector.get(AlertService);
+                modalService = fixture.debugElement.injector.get(NgbModal);
             });
     });
 
@@ -105,19 +107,21 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.editorContainer = new ElementRef(div);
         fixture.componentInstance.apollonDiagram = diagram;
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
+        const svgRenderer = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
+        jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(of(new Blob()));
         jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
         fixture.componentInstance.initializeApollonEditor(model);
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
         fixture.detectChanges();
-        const result = new Promise((resolve) => resolve(true));
-        jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance: fixture.componentInstance, result });
-        const successSpy = jest.spyOn(alertService, 'success');
+
+        const emitSpy = jest.spyOn(fixture.componentInstance.closeEdit, 'emit');
 
         // test
         await fixture.componentInstance.apollonEditor?.nextRender;
         await fixture.componentInstance.generateExercise();
-        expect(successSpy).toHaveBeenCalledOnce();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
 
         // clear the set time interval
         fixture.componentInstance.ngOnDestroy();
@@ -163,6 +167,22 @@ describe('ApollonDiagramDetail Component', () => {
         // test
         await fixture.componentInstance.downloadSelection();
         expect(window.URL.createObjectURL).toHaveBeenCalledOnce();
+    });
+
+    it('confirmExitDetailView', () => {
+        const openModalSpy = jest.spyOn(modalService, 'open');
+        const emitCloseModalSpy = jest.spyOn(fixture.componentInstance.closeModal, 'emit');
+        const emitCloseEditSpy = jest.spyOn(fixture.componentInstance.closeEdit, 'emit');
+
+        fixture.componentInstance.isSaved = true;
+        fixture.componentInstance.confirmExitDetailView(true);
+        expect(emitCloseModalSpy).toHaveBeenCalledOnce();
+        fixture.componentInstance.confirmExitDetailView(false);
+        expect(emitCloseEditSpy).toHaveBeenCalledOnce();
+
+        fixture.componentInstance.isSaved = false;
+        fixture.componentInstance.confirmExitDetailView(true);
+        expect(openModalSpy).toHaveBeenCalledOnce();
     });
 
     it('ngOnInit', async () => {

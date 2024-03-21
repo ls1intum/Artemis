@@ -1,0 +1,140 @@
+{{#system~}}The following is a work-in-progress programming exercise.{{~/system}}
+{{#system~}}The template repository:{{~/system}}
+{{#each templateRepository}}
+    {{#system~}}"{{@key}}":{{~/system}}
+    {{#user~}}{{this}}{{~/user}}
+{{/each}}
+{{#system~}}End of template repository.{{~/system}}
+
+{{#system~}}The solution repository:{{~/system}}
+{{#each solutionRepository}}
+    {{#system~}}"{{@key}}":{{~/system}}
+    {{#user~}}{{this}}{{~/user}}
+{{/each}}
+{{#system~}}End of solution repository.{{~/system}}
+
+{{set 'softExclude' ["AttributeTest.java", "ClassTest.java", "MethodTest.java", "ConstructorTest.java"]}}
+{{#system~}}The test repository:{{~/system}}
+{{#each testRepository}}
+    {{#system~}}"{{@key}}":{{~/system}}
+    {{set 'shouldshow' True}}
+    {{set 'tempfile' @key}}
+    {{#each softExclude}}
+        {{#if (contains tempfile this)}}
+            {{set 'shouldshow' False}}
+        {{/if}}
+    {{/each}}
+    {{#user~}}{{#if shouldshow}}{{this}}{{else}}Content omitted for brevity{{/if}}{{~/user}}
+{{/each}}
+{{#system~}}End of test repository.{{~/system}}
+
+{{#system~}}
+    The problem statement of an exercise provides the students with an overview of the exercise.
+    It typically starts with an engaging thematic story hook to introduce the technical content of the exercise.
+    Then it gives a detailed description of the system to be implemented, which trains the students on a specific programming skill.
+    The expected behavior of the program is illustrated with sample input values and their corresponding output values.
+    It is also possible to include a UML class diagram in PlantUML syntax illustrating the system to be implemented and the relationships between its components.
+    Do not surround the UML diagram with ```.
+    The problem statement is formatted in Markdown, and always starts with the title of the exercise in bold.
+
+    The tasks to be completed are listed with their associated test cases and clearly explained.
+    For example:
+    "1. [task][Implement Pet Class](testPetClassExists(), testPetClassHasAttributes(), testPetClassHasMethods()){}
+    Create a new Java class called Pet. A pet has a name, a species, and a weight. Its name and species are Strings,
+    while its weight is a double representing kilograms. Include a constructor and getters and setters for all three attributes."
+    "2. [task][Filter, Sort, and Map Lists](testFilter(), testSort(), testMap()){}
+    Implement the filter, sort, and map methods. The filter method takes a list of `T` and a `Predicate
+    <T>` as parameters,
+        and returns a list of `T` containing only the elements of the original list for which the predicate returns
+        true. The sort method takes a list of `T` and a `Comparator
+    <T>` as parameters, and returns a list of `T` containing the elements
+        of the original list sorted according to the comparator. The map method takes a list of `T` and a `Function
+        <T, R>` as parameters,
+        and returns a list of `R` containing the results of applying the function to each element of the original list."
+        "3. [task][Lagrange Interpolation](testLagrangeInterpolation()){}
+        Implement the lagrangeInterpolation method. The method takes a list of `Point` and a `double` as parameters,
+        and returns a `double` representing the y-value of the interpolated point. The interpolated point is the point
+        on the polynomial of degree `points.size() - 1` that passes through all the points in the list. The x-value of
+        the interpolated point is the `double` parameter, and the y-value is the return value of the method."
+
+        The problem statement is a major factor in the perceived difficulty of an exercise.
+        The difficulty can be adjusted as needed by changing the complexity of the tasks to be completed,
+        the associated test cases, the explanation of the tasks, the UML diagram, and/or the thematic story hook.
+{{~/system}}
+
+{{#if problemStatement}}
+    {{#system~}}Here is the current state of the problem statement:{{~/system}}
+    {{#user~}}{{problemStatement}}{{~/user}}
+{{/if}}
+
+{{#assistant~}}{{instructions}}{{~/assistant}}
+
+{{#if (less (len problemStatement) 200)}}
+    {{set 'type' 'overwrite'}}
+{{else}}
+    {{#block hidden=True}}
+        {{#system~}}
+                If you have extensive changes to make, where the majority of the content will be overwritten, respond
+                with 1.
+                If you have small changes to make, where the majority of the content will be unchanged, respond with 2.
+        {{~/system}}
+        {{#assistant~}}{{gen 'type' max_tokens=2}}{{/assistant}}
+        {{#if (equal type '1')}}
+            {{set 'type' 'overwrite'}}
+        {{else}}
+            {{set 'type' 'modify'}}
+        {{/if}}
+    {{/block}}
+{{/if}}
+
+{{#if (equal type 'overwrite')}}
+    {{#system~}}Write a new problem statement for the exercise.{{~/system}}
+    {{#assistant~}}{{gen 'updated' temperature=0.5 max_tokens=1000}}{{~/assistant}}
+{{else}}
+    {{#geneach 'changes' num_iterations=10 hidden=True}}
+        {{#system~}}
+                You are now in the process of editing the problem statement. Using as few words as possible,
+                uniquely identify the start of the excerpt you would like to overwrite in the problem statement.
+                This should be the first text from the original that you will overwrite; it will not remain in the
+                problem statement.
+                Do not use quotation marks. Do not justify your response. Be sure to account for spaces, punctuation,
+                and line breaks.
+                Use the special response "!start!" to quickly identify the very beginning of the text.
+            {{#if (not @first)}}
+                    So far, you have made the following edits:
+                {{#each changes}}
+                        Original: {{this.from}}-->{{this.to}}
+                        Edited: {{this.updated}}
+                {{/each}}
+                    Do not identify any original text that overlaps with a previous edit.
+                    If you have nothing else to edit, respond with the special response "!done!".
+            {{/if}}
+                Uniquely identify the start of the excerpt to overwrite.
+        {{~/system}}
+        {{#assistant~}}{{gen 'this.from' temperature=0.0 max_tokens=15}}{{~/assistant}}
+        {{#if (equal this.from '!done!')}}
+            {{break}}
+        {{/if}}
+        {{#if (not @first)}}
+            {{#if (equal this.from changes[0].from)}}
+                {{set 'this.from' '!done!'}}
+                {{break}}
+            {{/if}}
+        {{/if}}
+        {{#system~}}
+                Now, using as few words as possible,
+                uniquely identify the first text after '{{this.from}}' that should remain in the problem statement.
+                Your updated text will lead directly into this text.
+                Do not use quotation marks. Do not justify your response. Be sure to account for spaces, punctuation,
+                and line breaks.
+                Use the special response "!end!" to quickly identify the very end of the text.
+                Uniquely identify the first text that should remain.
+        {{/system}}
+        {{#assistant~}}{{gen 'this.to' temperature=0.0 max_tokens=15}}{{~/assistant}}
+        {{#system~}}
+                The excerpt from the problem statement starting with '{{this.from}}' and ending before '{{this.to}}'
+                should be overwritten with:
+        {{~/system}}
+        {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=1000 stop=this.to}}{{~/assistant}}
+    {{/geneach}}
+{{/if}}

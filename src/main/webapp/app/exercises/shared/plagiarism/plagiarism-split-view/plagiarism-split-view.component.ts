@@ -9,6 +9,7 @@ import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/Plag
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { HttpResponse } from '@angular/common/http';
 import { SimpleMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMatch';
+import dayjs from 'dayjs/esm';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -25,6 +26,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
     @Input() sortByStudentLogin: string;
+    @Input() forStudent: boolean;
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
@@ -37,6 +39,8 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
     public matchesA: Map<string, FromToElement[]>;
     public matchesB: Map<string, FromToElement[]>;
+
+    readonly dayjs = dayjs;
 
     constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 
@@ -119,6 +123,8 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
      * @param submission the submission to map the elements of
      */
     mapMatchesToElements(matches: SimpleMatch[], submission: PlagiarismSubmission<TextSubmissionElement>) {
+        // sort submission elements so that from and to indexes from matches reference correct elements
+        const elements = submission.elements?.sort((a, b) => a.id - b.id);
         const filesToMatchedElements = new Map<string, FromToElement[]>();
 
         matches.forEach((match) => {
@@ -126,7 +132,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
             if (match.length === 0) {
                 return;
             }
-            const file = submission.elements![match.start]?.file || 'none';
+            const file = elements![match.start]?.file || 'none';
 
             if (!filesToMatchedElements.has(file)) {
                 filesToMatchedElements.set(file, []);
@@ -134,7 +140,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
             const fileMatches = filesToMatchedElements.get(file)!;
 
-            fileMatches.push(new FromToElement(submission.elements![match.start], submission.elements![match.start + match.length - 1]));
+            fileMatches.push(new FromToElement(elements![match.start], elements![match.start + match.length - 1]));
         });
 
         return filesToMatchedElements;

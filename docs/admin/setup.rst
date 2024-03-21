@@ -12,6 +12,7 @@ For information on how to set up extension services to activate additional funct
    :includehidden:
    :maxdepth: 2
 
+   setup/security
    setup/programming-exercises
    setup/customization
    setup/legal-documents

@@ -14,13 +14,14 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { AlertService } from 'app/core/util/alert.service';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('CreateExerciseUnitComponent', () => {
     let createExerciseUnitComponentFixture: ComponentFixture<CreateExerciseUnitComponent>;

@@ -31,17 +31,18 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { HttpResponse } from '@angular/common/http';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
+import { generateCsv } from 'export-to-csv';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
 }));
 
-const generateCsv = jest.fn();
 jest.mock('export-to-csv', () => {
-    class MockExportToCsv {
-        generateCsv = generateCsv;
-    }
-    return { ExportToCsv: MockExportToCsv };
+    return {
+        mkConfig: jest.fn(),
+        download: jest.fn(() => jest.fn()),
+        generateCsv: jest.fn(() => jest.fn()),
+    };
 });
 
 describe('Plagiarism Inspector Component', () => {

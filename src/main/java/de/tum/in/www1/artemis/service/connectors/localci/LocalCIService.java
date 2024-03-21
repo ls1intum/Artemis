@@ -10,17 +10,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
+import com.google.gson.Gson;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
@@ -34,32 +38,46 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 @Profile("localci")
 public class LocalCIService extends AbstractContinuousIntegrationService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private final LocalCIDockerService localCIDockerService;
+    private final BuildScriptProviderService buildScriptProviderService;
 
-    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+    private final AeolusTemplateService aeolusTemplateService;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, LocalCIDockerService localCIDockerService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
+            BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService, ProgrammingExerciseRepository programmingExerciseRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
-        this.localCIDockerService = localCIDockerService;
-        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+        this.buildScriptProviderService = buildScriptProviderService;
+        this.aeolusTemplateService = aeolusTemplateService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl solutionRepositoryURL) {
-        // Only check whether the docker image needed for the build plan exists.
-        localCIDockerService.pullDockerImage(
-                programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType())));
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
+            VcsRepositoryUri solutionRepositoryUri) {
+        // Not implemented for local CI. no build plans must be created, because all the information for building
+        // a submission and running tests is contained in the participation.
     }
 
+    /**
+     * Fetches the default build plan configuration for the given exercise and the windfile for its metadata (docker image etc.).
+     *
+     * @param exercise for which the build plans should be recreated
+     */
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
-        // Not implemented for local CI. no build plans must be (re)created, because all the information for building a submission and running tests is contained in the
-        // participation.
+        if (exercise == null) {
+            return;
+        }
+        String script = buildScriptProviderService.getScriptFor(exercise);
+        Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
+        exercise.setBuildScript(script);
+        exercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
+        // recreating the build plans for the exercise means we need to store the updated exercise in the database
+        programmingExerciseRepository.save(exercise);
     }
 
     @Override
@@ -100,11 +118,11 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
+    public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
         // No build plans exist for local CI. Only return a plan name.
         final String cleanPlanName = getCleanPlanName(targetPlanName);
-        return targetProjectKey + "-" + cleanPlanName;
+        return targetExercise.getProjectKey() + "-" + cleanPlanName;
     }
 
     @Override
@@ -128,7 +146,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri,
             String newBranch) throws LocalCIException {
         // Not implemented for local CI. No build plans exist.
         // When a student pushes to a repository, a build is triggered using the information contained in the participation which includes the relevant repository.
@@ -139,7 +157,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key or null if it can't be found.
-     * @throws BambooException is thrown on casting errors.
+     * @throws LocalCIException is thrown on casting errors.
      */
     @Override
     public String getPlanKey(Object requestBody) throws LocalCIException {
@@ -155,7 +173,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        // No webhooks needed between local CI and local VC, so we return an empty Optional.
+        // No webhooks needed within Integrated Code Lifecycle, so we return an empty Optional.
         return Optional.empty();
     }
 

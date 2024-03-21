@@ -8,9 +8,7 @@
                     "loading": "Error while loading Apollon Diagrams"
                 }
             },
-            "created": "Created new Apollon Diagram with ID {{ param }}",
-            "updated": "Updated Apollon Diagram with ID {{ param }}",
-            "deleted": "Deleted Apollon Diagram with ID {{ param }}",
+            "updated": "Updated Apollon Diagram '{{ title }}'",
             "create": {
                 "success": "Apollon Diagram with title {{ title }} was created successfully",
                 "error": "Error while creating Apollon Diagram",
@@ -20,12 +18,13 @@
                 "error": "Error while updating Apollon Diagram"
             },
             "delete": {
-                "question": "Are you sure you want to delete Apollon Diagram {{ id }}?",
+                "question": "Are you sure you want to delete Apollon Diagram '{{ title }}'?",
                 "success": "Apollon Diagram with title {{ title }} was deleted successfully",
                 "error": "Error while deleting the Apollon Diagram with title {{ title }}"
             },
             "detail": {
-                "title": "Apollon Diagram",
+                "title": "Apollon Diagram {{ title }}",
+                "save": "Save Diagram",
                 "crop": "Crop image to selection",
                 "help": "Download your current selection as a PNG image",
                 "createLabel": "Generate a Quiz Exercise",
@@ -33,11 +32,16 @@
                 "error": {
                     "loading": "Error while loading Apollon Diagram"
                 },
-                "quizExercise": "Generate a Quiz Exercise for course {{ title }}."
+                "quizExercise": "Generate a Quiz Exercise for course {{ title }}.",
+                "exitConfirm": {
+                    "title": "Leave Diagram Editor",
+                    "question": "Your diagram has unsaved changes. Are you sure you want to leave the editor?"
+                }
             },
             "title": "Title",
             "jsonRepresentation": "JSON Representation",
-            "courseId": "Course ID"
+            "courseId": "Course ID",
+            "back": "Back to Overview"
         }
     }
 }

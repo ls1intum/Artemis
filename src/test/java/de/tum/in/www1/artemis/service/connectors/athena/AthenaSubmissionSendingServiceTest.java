@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 
@@ -34,10 +36,10 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     private SubmissionRepository submissionRepository;
 
     @Autowired
-    private AthenaModuleUrlHelper athenaModuleUrlHelper;
+    private AthenaModuleService athenaModuleService;
 
     @Autowired
-    private AthenaDTOConverter athenaDTOConverter;
+    private AthenaDTOConverterService athenaDTOConverterService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -63,14 +65,14 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         // we need to have one student per participation, otherwise the database constraints cannot be fulfilled
         userUtilService.addUsers(TEST_PREFIX, MAX_NUMBER_OF_TOTAL_PARTICIPATIONS, 0, 0, 0);
 
-        athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), submissionRepository, athenaModuleUrlHelper,
-                athenaDTOConverter);
+        athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), submissionRepository, athenaModuleService,
+                athenaDTOConverterService);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
-        textExercise.setFeedbackSuggestionsEnabled(true);
+        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionsEnabled(true);
+        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
     }
 
     @AfterEach
@@ -132,7 +134,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.exercise.bonusPoints").value(programmingExercise.getBonusPoints()),
                 jsonPath("$.exercise.gradingInstructions").value(programmingExercise.getGradingInstructions()),
                 jsonPath("$.exercise.problemStatement").value(programmingExercise.getProblemStatement()),
-                jsonPath("$.submissions[0].exerciseId").value(programmingExercise.getId()), jsonPath("$.submissions[0].repositoryUrl").isString());
+                jsonPath("$.submissions[0].exerciseId").value(programmingExercise.getId()), jsonPath("$.submissions[0].repositoryUri").isString());
 
         athenaSubmissionSendingService.sendSubmissions(programmingExercise);
         athenaRequestMockProvider.verify();
@@ -164,7 +166,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendSubmissionsWithFeedbackSuggestionsDisabledText() {
-        textExercise.setFeedbackSuggestionsEnabled(false);
+        textExercise.setFeedbackSuggestionModule(null);
         assertThatThrownBy(() -> athenaSubmissionSendingService.sendSubmissions(textExercise)).isInstanceOf(IllegalArgumentException.class);
     }
 }

@@ -11,6 +11,7 @@ type TestObject = {
     f: number;
     g: number;
     h: { i: number }[] | undefined;
+    j: (() => number) | undefined;
 };
 
 describe('Sort Service', () => {
@@ -24,6 +25,7 @@ describe('Sort Service', () => {
         f: 1,
         g: 3,
         h: [{ i: 1 }, { i: 2 }],
+        j: () => 9,
     };
     const e2: TestObject = {
         a: 18,
@@ -34,6 +36,7 @@ describe('Sort Service', () => {
         f: 1,
         g: 2,
         h: [],
+        j: () => 3,
     };
     const e3: TestObject = {
         a: 4,
@@ -44,6 +47,7 @@ describe('Sort Service', () => {
         f: 1,
         g: 1,
         h: undefined,
+        j: () => 8,
     };
     const e4: TestObject = {
         a: 28,
@@ -54,6 +58,7 @@ describe('Sort Service', () => {
         f: 4,
         g: 4,
         h: [{ i: 3 }],
+        j: undefined,
     };
     const e5: TestObject = {
         a: 15,
@@ -64,6 +69,7 @@ describe('Sort Service', () => {
         f: 5,
         g: 5,
         h: [{ i: 4 }, { i: -1 }],
+        j: () => 10,
     };
     const e6: TestObject = {
         a: 7,
@@ -74,6 +80,7 @@ describe('Sort Service', () => {
         f: 6,
         g: 6,
         h: [{ i: 0 }],
+        j: undefined,
     };
 
     beforeEach(() => {
@@ -101,6 +108,10 @@ describe('Sort Service', () => {
             ['d', false, [e2, e5, e1, e4], [e3, e6]],
             ['h[0]?.i', true, [e6, e1, e4, e5], [e2, e3]],
             ['h[0]?.i', false, [e5, e4, e1, e6], [e2, e3]],
+            ['h.last()?.i', true, [e5, e6, e1, e4], [e2, e3]],
+            ['h.last()?.i', false, [e4, e1, e6, e5], [e2, e3]],
+            ['j()', true, [e2, e3, e1, e5], [e4, e6]],
+            ['j()', false, [e5, e1, e3, e2], [e4, e6]],
         ])('should sort basic array with null values', (key: string, ascending: boolean, expectedDefinedOrder: TestObject[], undefinedObjects: TestObject[]) => {
             let times = 10;
             while (times-- > 0) {

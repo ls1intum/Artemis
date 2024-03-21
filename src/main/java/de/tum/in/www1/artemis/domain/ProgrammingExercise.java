@@ -17,8 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -52,7 +50,7 @@ public class ProgrammingExercise extends Exercise {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
 
     @Column(name = "test_repository_url")
-    private String testRepositoryUrl;
+    private String testRepositoryUri;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
@@ -131,6 +129,7 @@ public class ProgrammingExercise extends Exercise {
     private SubmissionPolicy submissionPolicy;
 
     @Nullable
+    @Enumerated(EnumType.ORDINAL)
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
 
@@ -149,14 +148,15 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "build_plan_configuration", table = "programming_exercise_details", columnDefinition = "longtext")
     private String buildPlanConfiguration;
 
+    @Column(name = "build_script", table = "programming_exercise_details", columnDefinition = "longtext")
+    private String buildScript;
+
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
-     * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
-     * It is not persisted as this setting can not be changed afterwards.
      * This is currently only supported for HASKELL and OCAML on BAMBOO, thus the default value is false.
      */
-    @Transient
-    private boolean checkoutSolutionRepositoryTransient = false;
+    @Column(name = "checkout_solution_repository", table = "programming_exercise_details", columnDefinition = "boolean default false")
+    private boolean checkoutSolutionRepository;
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -165,16 +165,16 @@ public class ProgrammingExercise extends Exercise {
      */
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     @JsonIgnore
-    public String getTemplateRepositoryUrl() {
+    public String getTemplateRepositoryUri() {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
-            return templateParticipation.getRepositoryUrl();
+            return templateParticipation.getRepositoryUri();
         }
         return null;
     }
 
-    public void setTemplateRepositoryUrl(String templateRepositoryUrl) {
+    public void setTemplateRepositoryUri(String templateRepositoryUri) {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
-            this.templateParticipation.setRepositoryUrl(templateRepositoryUrl);
+            this.templateParticipation.setRepositoryUri(templateRepositoryUri);
         }
     }
 
@@ -184,25 +184,25 @@ public class ProgrammingExercise extends Exercise {
      * @return The URL of the solution repository as a String
      */
     @JsonIgnore
-    public String getSolutionRepositoryUrl() {
+    public String getSolutionRepositoryUri() {
         if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
-            return solutionParticipation.getRepositoryUrl();
+            return solutionParticipation.getRepositoryUri();
         }
         return null;
     }
 
-    public void setSolutionRepositoryUrl(String solutionRepositoryUrl) {
+    public void setSolutionRepositoryUri(String solutionRepositoryUri) {
         if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
-            this.solutionParticipation.setRepositoryUrl(solutionRepositoryUrl);
+            this.solutionParticipation.setRepositoryUri(solutionRepositoryUri);
         }
     }
 
-    public void setTestRepositoryUrl(String testRepositoryUrl) {
-        this.testRepositoryUrl = testRepositoryUrl;
+    public void setTestRepositoryUri(String testRepositoryUri) {
+        this.testRepositoryUri = testRepositoryUri;
     }
 
-    public String getTestRepositoryUrl() {
-        return testRepositoryUrl;
+    public String getTestRepositoryUri() {
+        return testRepositoryUri;
     }
 
     public List<AuxiliaryRepository> getAuxiliaryRepositories() {
@@ -465,43 +465,43 @@ public class ProgrammingExercise extends Exercise {
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     /**
-     * Gets a URL of the templateRepositoryUrl if there is one
+     * Gets a URL of the templateRepositoryUri if there is one
      *
-     * @return a URL object of the templateRepositoryUrl or null if there is no templateRepositoryUrl
+     * @return a URL object of the templateRepositoryUri or null if there is no templateRepositoryUri
      */
     @JsonIgnore
-    public VcsRepositoryUrl getVcsTemplateRepositoryUrl() {
-        var templateRepositoryUrl = getTemplateRepositoryUrl();
-        if (templateRepositoryUrl == null || templateRepositoryUrl.isEmpty()) {
+    public VcsRepositoryUri getVcsTemplateRepositoryUri() {
+        var templateRepositoryUri = getTemplateRepositoryUri();
+        if (templateRepositoryUri == null || templateRepositoryUri.isEmpty()) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUrl(templateRepositoryUrl);
+            return new VcsRepositoryUri(templateRepositoryUri);
         }
         catch (URISyntaxException e) {
-            log.warn("Cannot create URI for templateRepositoryUrl: {} due to the following error: {}", templateRepositoryUrl, e.getMessage());
+            log.warn("Cannot create URI for templateRepositoryUri: {} due to the following error: {}", templateRepositoryUri, e.getMessage());
         }
         return null;
     }
 
     /**
-     * Gets a URL of the solutionRepositoryUrl if there is one
+     * Gets a URL of the solutionRepositoryUri if there is one
      *
-     * @return a URL object of the solutionRepositoryUrl or null if there is no solutionRepositoryUrl
+     * @return a URL object of the solutionRepositoryUri or null if there is no solutionRepositoryUri
      */
     @JsonIgnore
-    public VcsRepositoryUrl getVcsSolutionRepositoryUrl() {
-        var solutionRepositoryUrl = getSolutionRepositoryUrl();
-        if (solutionRepositoryUrl == null || solutionRepositoryUrl.isEmpty()) {
+    public VcsRepositoryUri getVcsSolutionRepositoryUri() {
+        var solutionRepositoryUri = getSolutionRepositoryUri();
+        if (solutionRepositoryUri == null || solutionRepositoryUri.isEmpty()) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUrl(solutionRepositoryUrl);
+            return new VcsRepositoryUri(solutionRepositoryUri);
         }
         catch (URISyntaxException e) {
-            log.warn("Cannot create URI for solutionRepositoryUrl: {} due to the following error: {}", solutionRepositoryUrl, e.getMessage());
+            log.warn("Cannot create URI for solutionRepositoryUri: {} due to the following error: {}", solutionRepositoryUri, e.getMessage());
         }
         return null;
     }
@@ -509,35 +509,35 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Gets a URL of the testRepositoryURL if there is one
      *
-     * @return a URL object of the testRepositoryURl or null if there is no testRepositoryUrl
+     * @return a URL object of the testRepositoryURl or null if there is no testRepositoryUri
      */
     @JsonIgnore
-    public VcsRepositoryUrl getVcsTestRepositoryUrl() {
-        if (testRepositoryUrl == null || testRepositoryUrl.isEmpty()) {
+    public VcsRepositoryUri getVcsTestRepositoryUri() {
+        if (testRepositoryUri == null || testRepositoryUri.isEmpty()) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUrl(testRepositoryUrl);
+            return new VcsRepositoryUri(testRepositoryUri);
         }
         catch (URISyntaxException e) {
-            log.warn("Cannot create URI for testRepositoryUrl: {} due to the following error: {}", testRepositoryUrl, e.getMessage());
+            log.warn("Cannot create URI for testRepositoryUri: {} due to the following error: {}", testRepositoryUri, e.getMessage());
         }
         return null;
     }
 
     /**
-     * Returns the repository url for the given repository type.
+     * Returns the repository uri for the given repository type.
      *
      * @param repositoryType The repository type for which the url should be returned
-     * @return The repository url
+     * @return The repository uri
      */
     @JsonIgnore
-    public VcsRepositoryUrl getRepositoryURL(RepositoryType repositoryType) {
+    public VcsRepositoryUri getRepositoryURL(RepositoryType repositoryType) {
         return switch (repositoryType) {
-            case TEMPLATE -> this.getVcsTemplateRepositoryUrl();
-            case SOLUTION -> this.getVcsSolutionRepositoryUrl();
-            case TESTS -> this.getVcsTestRepositoryUrl();
+            case TEMPLATE -> this.getVcsTemplateRepositoryUri();
+            case SOLUTION -> this.getVcsSolutionRepositoryUri();
+            case TESTS -> this.getVcsTestRepositoryUri();
             default -> throw new UnsupportedOperationException("Can retrieve URL for repository type " + repositoryType);
         };
     }
@@ -650,11 +650,13 @@ public class ProgrammingExercise extends Exercise {
      */
     @Override
     public void filterSensitiveInformation() {
-        setTemplateRepositoryUrl(null);
-        setSolutionRepositoryUrl(null);
-        setTestRepositoryUrl(null);
+        setTemplateRepositoryUri(null);
+        setSolutionRepositoryUri(null);
+        setTestRepositoryUri(null);
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
+        setBuildPlanConfiguration(null);
+        setBuildScript(null);
         super.filterSensitiveInformation();
     }
 
@@ -671,17 +673,17 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * Find relevant participations for this exercise. Normally there are only one practice and graded participation.
-     * In case there are multiple, they are filtered as implemented in {@link Exercise#findRelevantParticipation(List)}
+     * In case there are multiple, they are filtered as implemented in {@link Exercise#findRelevantParticipation(Set)}
      *
      * @param participations the list of available participations
      * @return the found participation in an unmodifiable list or the empty list, if none exists
      */
     @Override
-    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
-        List<StudentParticipation> participationOfExercise = participations.stream()
-                .filter(participation -> participation.getExercise() != null && participation.getExercise().equals(this)).toList();
-        List<StudentParticipation> gradedParticipations = participationOfExercise.stream().filter(participation -> !participation.isPracticeMode()).toList();
-        List<StudentParticipation> practiceParticipations = participationOfExercise.stream().filter(Participation::isPracticeMode).toList();
+    public Set<StudentParticipation> findRelevantParticipation(Set<StudentParticipation> participations) {
+        Set<StudentParticipation> participationOfExercise = participations.stream()
+                .filter(participation -> participation.getExercise() != null && participation.getExercise().equals(this)).collect(Collectors.toSet());
+        Set<StudentParticipation> gradedParticipations = participationOfExercise.stream().filter(participation -> !participation.isPracticeMode()).collect(Collectors.toSet());
+        Set<StudentParticipation> practiceParticipations = participationOfExercise.stream().filter(Participation::isPracticeMode).collect(Collectors.toSet());
 
         if (gradedParticipations.size() > 1) {
             gradedParticipations = super.findRelevantParticipation(gradedParticipations);
@@ -690,7 +692,7 @@ public class ProgrammingExercise extends Exercise {
             practiceParticipations = super.findRelevantParticipation(practiceParticipations);
         }
 
-        return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).toList();
+        return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).collect(Collectors.toSet());
     }
 
     /**
@@ -736,18 +738,18 @@ public class ProgrammingExercise extends Exercise {
 
     @Override
     public String toString() {
-        return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUrl='" + getTemplateRepositoryUrl() + "'" + ", solutionRepositoryUrl='" + getSolutionRepositoryUrl()
+        return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUri='" + getTemplateRepositoryUri() + "'" + ", solutionRepositoryUri='" + getSolutionRepositoryUri()
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
                 + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
                 + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
     public boolean getCheckoutSolutionRepository() {
-        return this.checkoutSolutionRepositoryTransient;
+        return this.checkoutSolutionRepository;
     }
 
     public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
-        this.checkoutSolutionRepositoryTransient = checkoutSolutionRepository;
+        this.checkoutSolutionRepository = checkoutSolutionRepository;
     }
 
     /**
@@ -896,12 +898,29 @@ public class ProgrammingExercise extends Exercise {
             return null;
         }
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(buildPlanConfiguration, Windfile.class);
+            return Windfile.deserialize(buildPlanConfiguration);
         }
-        catch (JsonSyntaxException | JsonProcessingException e) {
+        catch (JsonSyntaxException e) {
             log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
         }
         return null;
+    }
+
+    /**
+     * We store the bash script in the database
+     *
+     * @return the build script or null if the build script does not exist
+     */
+    public String getBuildScript() {
+        return buildScript;
+    }
+
+    /**
+     * Update the build script
+     *
+     * @param buildScript the new build script for the programming exercise
+     */
+    public void setBuildScript(String buildScript) {
+        this.buildScript = buildScript;
     }
 }

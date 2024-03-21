@@ -8,7 +8,7 @@ import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { BonusService, EntityResponseType } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { of, throwError } from 'rxjs';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -304,7 +304,7 @@ describe('BonusComponent', () => {
         expect(findBonusForExamSpy).toHaveBeenCalledOnce();
         expect(findBonusForExamSpy).toHaveBeenCalledWith(courseId, examId);
 
-        const state: PageableSearch = {
+        const state: SearchTermPageableSearch = {
             page: 1,
             pageSize: 100,
             searchTerm: '',

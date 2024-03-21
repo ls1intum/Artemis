@@ -1,13 +1,13 @@
 <div>
     <div class="row">
         <div class="col-sm d-flex align-items-center">
-            <h4 class="fw-medium" id="course-page-heading" jhiTranslate="artemisApp.course.home.title">Courses</h4>
-            <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+            <h4 class="fw-medium" id="course-page-heading" jhiTranslate="artemisApp.course.home.title"></h4>
+            <jhi-documentation-button [type]="documentationType" />
         </div>
         <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
             <div class="form-check">
                 <input id="showOnlyActive" class="form-check-input" type="checkbox" [checked]="showOnlyActive" (change)="toggleShowOnlyActive()" />
-                <label for="showOnlyActive" class="form-check-label" jhiTranslate="artemisApp.course.showActive">Show only active courses</label>
+                <label for="showOnlyActive" class="form-check-label" jhiTranslate="artemisApp.course.showActive"></label>
             </div>
             <a
                 jhiOrionFilter
@@ -17,37 +17,53 @@
                 id="create-course"
                 [routerLink]="['/course-management/new']"
             >
-                <fa-icon [icon]="faPlus"></fa-icon>
-                <span class="hidden-sm-down" jhiTranslate="artemisApp.course.home.createLabel"> Create new Course </span>
+                <fa-icon [icon]="faPlus" />
+                <span class="hidden-sm-down" jhiTranslate="artemisApp.course.home.createLabel"></span>
             </a>
         </div>
     </div>
     <div class="row"></div>
     <br />
-    <div class="table-responsive" *ngIf="courses">
-        <div class="course-table-container mb-3" *ngFor="let semester of courseSemesters">
-            <div class="control-label my-3" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
-                <fa-icon size="2x" class="pe-3" [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp"></fa-icon>
-                <span *ngIf="semester !== '' && semester !== 'test'" style="font-size: 24px"> {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }} </span>
-                <span *ngIf="semester === ''" style="font-size: 24px">
-                    {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ 'global.generic.unset' | artemisTranslate }}
-                </span>
-                <span *ngIf="semester === 'test'" style="font-size: 24px">
-                    {{ 'artemisApp.course.testCourse.plural' | artemisTranslate }}
-                </span>
-            </div>
-            <div *ngIf="!semesterCollapsed[semester]">
-                <jhi-course-management-card
-                    *ngFor="let course of coursesBySemester[semester]"
-                    class="col-md-8"
-                    [course]="course"
-                    [courseStatistics]="statistics[course.id!]"
-                    [courseWithExercises]="coursesWithExercises[course.id!]"
-                    [courseWithUsers]="coursesWithUsers[course.id!]"
-                    [isGuidedTour]="course === courseForGuidedTour"
-                ></jhi-course-management-card>
-            </div>
-            <div class="collapsed"></div>
+    @if (courses) {
+        <div class="table-responsive">
+            @for (semester of courseSemesters; track semester) {
+                <div class="course-table-container mb-3">
+                    <div class="control-label my-3" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
+                        <fa-icon size="2x" class="pe-3" [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp" />
+                        @if (semester !== '' && semester !== 'test' && semester !== 'recent') {
+                            <span style="font-size: 24px"> {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }} </span>
+                        }
+                        @if (semester === '') {
+                            <span style="font-size: 24px"> {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ 'global.generic.unset' | artemisTranslate }} </span>
+                        }
+                        @if (semester === 'test') {
+                            <span style="font-size: 24px">
+                                {{ 'artemisApp.course.testCourse.plural' | artemisTranslate }}
+                            </span>
+                        }
+                        @if (semester === 'recent') {
+                            <span style="font-size: 24px">
+                                {{ 'artemisApp.course.recentlyAccessed' | artemisTranslate }}
+                            </span>
+                        }
+                    </div>
+                    @if (!semesterCollapsed[semester]) {
+                        <div>
+                            @for (course of coursesBySemester[semester]; track course) {
+                                <jhi-course-management-card
+                                    class="col-md-8"
+                                    [course]="course"
+                                    [courseStatistics]="statistics[course.id!]"
+                                    [courseWithExercises]="coursesWithExercises[course.id!]"
+                                    [courseWithUsers]="coursesWithUsers[course.id!]"
+                                    [isGuidedTour]="course === courseForGuidedTour"
+                                />
+                            }
+                        </div>
+                    }
+                    <div class="collapsed"></div>
+                </div>
+            }
         </div>
-    </div>
+    }
 </div>

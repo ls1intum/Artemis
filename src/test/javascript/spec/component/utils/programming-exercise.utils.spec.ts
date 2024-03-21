@@ -31,7 +31,7 @@ describe('ProgrammingExerciseUtils URL utils', () => {
     let commitHash: string | undefined;
     let projectKey: string | undefined;
     let participantIdentifier: string | undefined;
-    let repositoryUrl: string | undefined;
+    let repositoryUri: string | undefined;
 
     function generateParticipationAndSubmission() {
         exercise = {
@@ -46,9 +46,9 @@ describe('ProgrammingExerciseUtils URL utils', () => {
             id: 2,
             type: participationType,
             participantIdentifier,
-            repositoryUrl,
+            repositoryUri,
             programmingExercise: exercise,
-        } as Participation & { programmingExercise: ProgrammingExercise; repositoryUrl: string | undefined; participantIdentifier: string | undefined };
+        } as Participation & { programmingExercise: ProgrammingExercise; repositoryUri: string | undefined; participantIdentifier: string | undefined };
         submission = {
             id: 3,
             submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
@@ -69,7 +69,7 @@ describe('ProgrammingExerciseUtils URL utils', () => {
         commitHash = '123456789';
         projectKey = 'somekey';
         participantIdentifier = 'student42';
-        repositoryUrl = 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42';
+        repositoryUri = 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42';
     });
 
     it('should return correct commit url for student submission', () => {
@@ -163,8 +163,8 @@ describe('ProgrammingExerciseUtils URL utils', () => {
         expect(createCommitUrlResult()).toBeUndefined();
     });
 
-    it('should return undefined commit url with undefined repository url for student participation', () => {
-        repositoryUrl = undefined;
+    it('should return undefined commit url with undefined repository uri for student participation', () => {
+        repositoryUri = undefined;
         generateParticipationAndSubmission();
         expect(createCommitUrlResult()).toBeUndefined();
     });
@@ -241,7 +241,7 @@ describe('ProgrammingExerciseUtils', () => {
         it('creates a commit url for a student submission', () => {
             const participantID = 'PID';
             const participation = new ProgrammingExerciseStudentParticipation();
-            participation.repositoryUrl = 'repositoryUrl';
+            participation.repositoryUri = 'repositoryUri';
             participation.participantIdentifier = participantID;
             const submission = new ProgrammingSubmission();
             submission.commitHash = commitHash;
@@ -255,7 +255,7 @@ describe('ProgrammingExerciseUtils', () => {
         it('creates a commit url for a student submission in practice mode', () => {
             const participantID = 'PID';
             const participation = new ProgrammingExerciseStudentParticipation();
-            participation.repositoryUrl = 'repositoryUrl';
+            participation.repositoryUri = 'repositoryUri';
             participation.testRun = true;
             participation.participantIdentifier = participantID;
             const submission = new ProgrammingSubmission();

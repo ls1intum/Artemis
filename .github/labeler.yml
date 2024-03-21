@@ -1,26 +1,35 @@
 server:
-- src/main/java/**/*.java
+  - changed-files:
+      - any-glob-to-any-file: src/main/java/**/*.java
 
 client:
-- src/main/webapp/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/main/webapp/**/*
 
 tests:
-- src/test/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/test/**/*
 
 cypress:
-- src/test/cypress/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/test/cypress/**/*
 
 database:
-- src/main/resources/config/liquibase/master.xml
+  - changed-files:
+      - any-glob-to-any-file: src/main/resources/config/liquibase/master.xml
 
 documentation:
-- docs/**/*
+  - changed-files:
+      - any-glob-to-any-file: docs/**/*
 
 docker:
-- docker/**/*
+  - changed-files:
+      - any-glob-to-any-file: docker/**/*
 
 config-change:
-- src/main/resources/config/*.yml
+  - changed-files:
+      - any-glob-to-any-file: src/main/resources/config/*.yml
 
 template:
-- src/main/resources/templates/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/main/resources/templates/**/*

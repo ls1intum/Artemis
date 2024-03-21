@@ -244,7 +244,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(AUTHENTICATEDUSER)
     void getAccount() throws Exception {
         // create user in repo
-        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         UserDTO account = request.get("/api/public/account", HttpStatus.OK, UserDTO.class);
         assertThat(account).isNotNull();
     }

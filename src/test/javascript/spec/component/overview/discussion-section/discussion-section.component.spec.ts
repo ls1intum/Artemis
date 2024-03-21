@@ -31,20 +31,23 @@ import {
     messagesBetweenUser1User2,
     metisCourse,
     metisExercise,
-    metisExerciseChannel,
+    metisExerciseChannelDTO,
     metisExercisePosts,
     metisLecture,
-    metisLectureChannel,
+    metisLectureChannelDTO,
     metisPostTechSupport,
 } from '../../../helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { PostContextFilter } from 'app/shared/metis/metis.util';
+import { PostContextFilter, SortDirection } from 'app/shared/metis/metis.util';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 
 @Directive({
     // eslint-disable-next-line @angular-eslint/directive-selector
@@ -55,7 +58,7 @@ class InfiniteScrollStubDirective {
     @Output() scrolledUp = new EventEmitter<void>();
 }
 
-describe('PageDiscussionSectionComponent', () => {
+describe('DiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
     let fixture: ComponentFixture<DiscussionSectionComponent>;
     let metisService: MetisService;
@@ -71,6 +74,8 @@ describe('PageDiscussionSectionComponent', () => {
                 FormBuilder,
                 MockProvider(SessionStorageService),
                 MockProvider(ChannelService),
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },
@@ -108,7 +113,7 @@ describe('PageDiscussionSectionComponent', () => {
                 getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: metisLectureChannel,
+                            body: metisLectureChannelDTO,
                             status: 200,
                         }),
                     ),
@@ -116,7 +121,7 @@ describe('PageDiscussionSectionComponent', () => {
                 getChannelOfExerciseSpy = jest.spyOn(channelService, 'getChannelOfExercise').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: metisExerciseChannel,
+                            body: metisExerciseChannelDTO,
                             status: 200,
                         }),
                     ),
@@ -138,7 +143,7 @@ describe('PageDiscussionSectionComponent', () => {
         tick();
         expect(component.course).toEqual(metisCourse);
         expect(component.createdPost).toBeDefined();
-        expect(component.channel).toEqual(metisLectureChannel);
+        expect(component.channel).toEqual(metisLectureChannelDTO);
         expect(getChannelOfLectureSpy).toHaveBeenCalled();
         expect(component.posts).toEqual(messagesBetweenUser1User2.reverse());
     }));
@@ -150,7 +155,7 @@ describe('PageDiscussionSectionComponent', () => {
         tick();
         expect(component.course).toEqual(metisCourse);
         expect(component.createdPost).toBeDefined();
-        expect(component.channel).toEqual(metisExerciseChannel);
+        expect(component.channel).toEqual(metisExerciseChannelDTO);
         expect(getChannelOfExerciseSpy).toHaveBeenCalled();
         expect(component.posts).toEqual(messagesBetweenUser1User2.reverse());
     }));
@@ -181,8 +186,10 @@ describe('PageDiscussionSectionComponent', () => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
+        tick();
         component.posts = metisExercisePosts;
         fixture.detectChanges();
+        tick();
         const newPostButtons = getElements(fixture.debugElement, '.btn-primary');
         expect(newPostButtons).not.toBeNull();
         expect(newPostButtons).toHaveLength(1);
@@ -267,15 +274,11 @@ describe('PageDiscussionSectionComponent', () => {
         component.setChannel(1);
 
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-            { ...component.currentPostContextFilter, conversationId: metisExerciseChannel.id } as PostContextFilter,
+            { ...component.currentPostContextFilter, conversationId: metisExerciseChannelDTO.id } as PostContextFilter,
             true,
-            {
-                ...new ChannelDTO(),
-                id: metisExerciseChannel.id,
-                isCourseWide: true,
-            },
+            metisExerciseChannelDTO,
         );
-        expect(component.channel).toBe(metisExerciseChannel);
+        expect(component.channel).toBe(metisExerciseChannelDTO);
     }));
 
     it('loads lecture messages if communication only', fakeAsync(() => {
@@ -284,12 +287,31 @@ describe('PageDiscussionSectionComponent', () => {
 
         component.setChannel(1);
 
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ ...component.currentPostContextFilter, conversationId: metisLectureChannel.id }, true, {
-            ...new ChannelDTO(),
-            id: metisLectureChannel.id,
-            isCourseWide: true,
-        });
-        expect(component.channel).toBe(metisLectureChannel);
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
+            { ...component.currentPostContextFilter, conversationId: metisLectureChannelDTO.id },
+            true,
+            metisLectureChannelDTO,
+        );
+        expect(component.channel).toBe(metisLectureChannelDTO);
+    }));
+
+    it('collapses sidebar if no channel exists', fakeAsync(() => {
+        component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
+        component.lecture = { id: 2 } as Lecture;
+        getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: undefined as any,
+                    status: 200,
+                }),
+            ),
+        );
+
+        component.setChannel(1);
+
+        expect(component.channel).toBeUndefined();
+        expect(component.noChannelAvailable).toBeTrue();
+        expect(component.collapsed).toBeTrue();
     }));
 
     it('should react to srcoll up event', fakeAsync(() => {
@@ -310,4 +332,20 @@ describe('PageDiscussionSectionComponent', () => {
 
         expect(commandMetisToFetchPostsSpy).toHaveBeenCalledOnce();
     }));
+
+    it('should toggle send message', () => {
+        component.shouldSendMessage = true;
+        component.toggleSendMessage();
+        expect(component.shouldSendMessage).toBeFalse();
+        component.toggleSendMessage();
+        expect(component.shouldSendMessage).toBeTrue();
+    });
+
+    it('should change sort direction', () => {
+        component.currentSortDirection = SortDirection.ASCENDING;
+        component.onChangeSortDir();
+        expect(component.currentSortDirection).toBe(SortDirection.DESCENDING);
+        component.onChangeSortDir();
+        expect(component.currentSortDirection).toBe(SortDirection.ASCENDING);
+    });
 });

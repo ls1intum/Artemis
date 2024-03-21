@@ -5,7 +5,7 @@
     display: flex;
     align-items: center;
     align-content: center;
-    height: 60px;
+    height: 70px;
 
     .item-title-container {
         display: flex;
@@ -130,10 +130,6 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-
-        span {
-            white-space: nowrap;
-        }
     }
 
     .pointer-row {

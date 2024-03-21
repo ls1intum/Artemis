@@ -1,0 +1,8 @@
+<h1 [hidden]="isLinking" jhiTranslate="artemisApp.lti13.deepLinking.linking"></h1>
+<div>
+    <form #deepLinkingForm id="deepLinkingForm" method="post" [attr.action]="actionLink | safeResourceUrl">
+        <input [(ngModel)]="jwt" hidden="true" id="JWT" name="JWT" />
+        <input [(ngModel)]="id" hidden="true" id="id" name="id" />
+    </form>
+</div>
+<h2 [hidden]="!isLinking" jhiTranslate="artemisApp.lti13.deepLinking.linkedFailed"></h2>

@@ -8,7 +8,7 @@ import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/
 import { downloadFile, downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismResult } from 'app/exercises/shared/plagiarism/types/PlagiarismResult';
-import { ExportToCsv } from 'export-to-csv';
+import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
@@ -356,19 +356,20 @@ export class PlagiarismInspectorComponent implements OnInit {
      */
     downloadPlagiarismResultsCsv() {
         if (this.plagiarismResult && this.plagiarismResult.comparisons.length > 0) {
-            const csvExporter = new ExportToCsv({
+            const exportOptions = {
                 fieldSeparator: ';',
-                quoteStrings: '"',
+                quoteStrings: true,
+                quoteCharacter: '"',
                 decimalSeparator: 'locale',
                 showLabels: true,
                 title: `Plagiarism Check for Exercise ${this.exercise.id}: ${this.exercise.title}`,
                 filename: `plagiarism-result_${this.exercise.type}-exercise-${this.exercise.id}`,
                 useTextFile: false,
                 useBom: true,
-                headers: ['Similarity', 'Status', 'Participant 1', 'Submission 1', 'Score 1', 'Size 1', 'Participant 2', 'Submission 2', 'Score 2', 'Size 2'],
-            });
+                columnHeaders: ['Similarity', 'Status', 'Participant 1', 'Submission 1', 'Score 1', 'Size 1', 'Participant 2', 'Submission 2', 'Score 2', 'Size 2'],
+            };
 
-            const csvData = (this.plagiarismResult.comparisons as PlagiarismComparison<ModelingSubmissionElement | TextSubmissionElement>[]).map((comparison) => {
+            const rowData = (this.plagiarismResult.comparisons as PlagiarismComparison<ModelingSubmissionElement | TextSubmissionElement>[]).map((comparison) => {
                 return Object.assign({
                     Similarity: comparison.similarity,
                     Status: comparison.status,
@@ -383,7 +384,9 @@ export class PlagiarismInspectorComponent implements OnInit {
                 });
             });
 
-            csvExporter.generateCsv(csvData);
+            const combinedOptions = mkConfig(exportOptions);
+            const csvData = generateCsv(combinedOptions)(rowData);
+            download(combinedOptions)(csvData);
         }
     }
 

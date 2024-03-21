@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.hestia.structural;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
@@ -12,6 +14,7 @@ import java.util.stream.Stream;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,10 +35,11 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 /**
  * Service for handling Solution Entries of structural Test Cases.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class StructuralTestCaseService {
 
-    private final Logger log = LoggerFactory.getLogger(StructuralTestCaseService.class);
+    private static final Logger log = LoggerFactory.getLogger(StructuralTestCaseService.class);
 
     private final GitService gitService;
 
@@ -81,8 +85,8 @@ public class StructuralTestCaseService {
             if (solutionParticipation.isEmpty()) {
                 return Collections.emptyList();
             }
-            solutionRepository = gitService.getOrCheckoutRepository(solutionParticipation.get().getVcsRepositoryUrl(), true);
-            testRepository = gitService.getOrCheckoutRepository(programmingExercise.getVcsTestRepositoryUrl(), true);
+            solutionRepository = gitService.getOrCheckoutRepository(solutionParticipation.get().getVcsRepositoryUri(), true);
+            testRepository = gitService.getOrCheckoutRepository(programmingExercise.getVcsTestRepositoryUri(), true);
 
             gitService.resetToOriginHead(solutionRepository);
             gitService.pullIgnoreConflicts(solutionRepository);

@@ -16,6 +16,7 @@ import { IrisGlobalSettingsUpdateComponent } from 'app/iris/settings/iris-global
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
+import { IrisCompetencyGenerationSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-competency-generation-sub-settings-update/iris-competency-generation-sub-settings-update.component';
 
 describe('IrisGlobalSettingsUpdateComponent Component', () => {
     let comp: IrisGlobalSettingsUpdateComponent;
@@ -34,6 +35,7 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
                 MockComponent(IrisChatSubSettingsUpdateComponent),
                 MockComponent(IrisHestiaSubSettingsUpdateComponent),
                 MockComponent(IrisCodeEditorSubSettingsUpdateComponent),
+                MockComponent(IrisCompetencyGenerationSubSettingsUpdateComponent),
                 MockComponent(IrisGlobalAutoupdateSettingsUpdateComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(NgModel),
@@ -64,10 +66,11 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
         expect(getModelsSpy).toHaveBeenCalledOnce();
 
         expect(fixture.debugElement.query(By.directive(IrisGlobalAutoupdateSettingsUpdateComponent))).toBeTruthy();
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(3);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(4);
         expect(fixture.debugElement.query(By.directive(IrisChatSubSettingsUpdateComponent))).toBeTruthy();
         expect(fixture.debugElement.query(By.directive(IrisHestiaSubSettingsUpdateComponent))).toBeTruthy();
         expect(fixture.debugElement.query(By.directive(IrisCodeEditorSubSettingsUpdateComponent))).toBeTruthy();
+        expect(fixture.debugElement.query(By.directive(IrisCompetencyGenerationSubSettingsUpdateComponent))).toBeTruthy();
     });
 
     it('Can deactivate correctly', () => {

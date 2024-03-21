@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 @Profile("bitbucket")
 @Component
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BitbucketAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.version-control.user}")

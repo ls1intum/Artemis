@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.lti;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.util.Assert;
 
-import com.google.gson.JsonParser;
+import com.google.gson.Gson;
 
 public class Lti13LaunchRequest {
 
@@ -19,6 +19,8 @@ public class Lti13LaunchRequest {
 
     private final Lti13AgsClaim agsClaim;
 
+    private final String clientRegistrationId;
+
     public Lti13LaunchRequest(OidcIdToken ltiIdToken, String clientRegistrationId) {
         this.iss = ltiIdToken.getClaim("iss");
         this.sub = ltiIdToken.getClaim("sub");
@@ -26,7 +28,7 @@ public class Lti13LaunchRequest {
 
         var resourceLinkClaim = ltiIdToken.getClaim(Claims.RESOURCE_LINK);
         if (resourceLinkClaim != null) {
-            this.resourceLinkId = JsonParser.parseString(resourceLinkClaim.toString()).getAsJsonObject().get("id").getAsString();
+            this.resourceLinkId = new Gson().toJsonTree(resourceLinkClaim).getAsJsonObject().get("id").getAsString();
         }
         else {
             this.resourceLinkId = null;
@@ -34,6 +36,7 @@ public class Lti13LaunchRequest {
         this.targetLinkUri = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
 
         this.agsClaim = Lti13AgsClaim.from(ltiIdToken).orElse(null);
+        this.clientRegistrationId = clientRegistrationId;
 
         Assert.notNull(iss, "Iss must not be empty in LTI 1.3 launch request");
         Assert.notNull(sub, "Sub must not be empty in LTI 1.3 launch request");
@@ -65,5 +68,9 @@ public class Lti13LaunchRequest {
 
     public Lti13AgsClaim getAgsClaim() {
         return agsClaim;
+    }
+
+    public String getClientRegistrationId() {
+        return clientRegistrationId;
     }
 }

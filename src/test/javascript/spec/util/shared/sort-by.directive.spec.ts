@@ -1,17 +1,17 @@
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { ArtemisTestModule } from '../../test.module';
 
 @Component({
     template: `
         <table>
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition($event)">
-                    <th jhiSortBy="name">ID<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="name">ID<fa-icon [icon]="faSort" /></th>
                 </tr>
             </thead>
         </table>
@@ -31,7 +31,8 @@ describe('Directive: SortByDirective', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TestSortByDirectiveComponent, SortDirective, SortByDirective, FaIconComponent],
+            imports: [ArtemisTestModule],
+            declarations: [TestSortByDirectiveComponent, SortDirective, SortByDirective],
         })
             .compileComponents()
             .then(() => {

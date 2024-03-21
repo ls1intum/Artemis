@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.web.rest.hestia;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,11 +24,12 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 /**
  * REST controller for managing {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask}.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ProgrammingExerciseTaskResource {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTaskResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTaskResource.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 

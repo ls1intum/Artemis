@@ -27,7 +27,7 @@ export class Notification implements BaseEntity {
 }
 
 /**
- * Corresponds to the server-side NotificationTitleTypeConstants(.java) constant Strings
+ * Corresponds to the server-side NotificationConstants(.java) constant Strings
  */
 export const EXERCISE_SUBMISSION_ASSESSED_TITLE = 'artemisApp.singleUserNotification.title.exerciseSubmissionAssessed';
 
@@ -51,6 +51,8 @@ export const NEW_LECTURE_POST_TITLE = 'artemisApp.groupNotification.title.newLec
 
 export const NEW_ANNOUNCEMENT_POST_TITLE = 'artemisApp.groupNotification.title.newAnnouncementPost';
 
+export const NEW_EXAM_POST_TITLE = 'artemisApp.groupNotification.title.newExamPost';
+
 export const NEW_COURSE_POST_TITLE = 'artemisApp.groupNotification.title.newCoursePost';
 
 export const NEW_REPLY_FOR_EXERCISE_POST_TITLE = 'artemisApp.groupNotification.title.newReplyForExercisePost';
@@ -58,6 +60,8 @@ export const NEW_REPLY_FOR_EXERCISE_POST_TITLE = 'artemisApp.groupNotification.t
 export const NEW_REPLY_FOR_LECTURE_POST_TITLE = 'artemisApp.groupNotification.title.newReplyForLecturePost';
 
 export const NEW_REPLY_FOR_COURSE_POST_TITLE = 'artemisApp.groupNotification.title.newReplyForCoursePost';
+
+export const NEW_REPLY_FOR_EXAM_POST_TITLE = 'artemisApp.groupNotification.title.newReplyForExamPost';
 
 export const FILE_SUBMISSION_SUCCESSFUL_TITLE = 'artemisApp.singleUserNotification.title.fileSubmissionSuccessful';
 
@@ -126,3 +130,13 @@ export const QUIZ_EXERCISE_STARTED_TEXT = 'artemisApp.groupNotification.text.qui
 
 export const DATA_EXPORT_CREATED_TITLE = 'artemisApp.singleUserNotification.title.dataExportCreated';
 export const DATA_EXPORT_FAILED_TITLE = 'artemisApp.singleUserNotification.title.dataExportFailed';
+
+export const NEW_MESSAGE_CHANNEL_TEXT = 'artemisApp.conversationNotification.text.newMessageChannel';
+
+export const NEW_MESSAGE_GROUP_CHAT_TEXT = 'artemisApp.conversationNotification.text.newMessageGroupChat';
+
+export const NEW_MESSAGE_DIRECT_TEXT = 'artemisApp.conversationNotification.text.newMessageDirect';
+
+export const MESSAGE_REPLY_IN_CONVERSATION_TEXT = 'artemisApp.singleUserNotification.text.messageReply';
+
+export const MESSAGE_REPLY_IN_CHANNEL_TEXT = 'artemisApp.singleUserNotification.text.channelMessageReply';

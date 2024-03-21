@@ -1,5 +1,4 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
@@ -23,7 +22,6 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     constructor(
         private activeModal: NgbActiveModal,
         private apollonDiagramService: ApollonDiagramService,
-        private router: Router,
         private alertService: AlertService,
     ) {}
 
@@ -40,11 +38,9 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     save() {
         this.isSaving = true;
         this.apollonDiagramService.create(this.apollonDiagram, this.apollonDiagram.courseId!).subscribe({
-            next: (response) => {
-                const newDiagram = response.body as ApollonDiagram;
+            next: () => {
                 this.isSaving = false;
-                this.dismiss();
-                this.router.navigate(['course-management', newDiagram.courseId, 'apollon-diagrams', newDiagram.id]);
+                this.activeModal.close();
             },
             error: () => {
                 this.alertService.error('artemisApp.apollonDiagram.create.error');
@@ -53,7 +49,7 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     }
 
     /**
-     * Closes the modal
+     * Cancels the modal
      */
     dismiss() {
         this.activeModal.dismiss('cancel');

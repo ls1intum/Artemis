@@ -9,6 +9,13 @@
                 "exportLabel": "Export Quiz Exercises",
                 "createModelDragAndDrop": "Create Drag and Drop Model Quiz"
             },
+            "detail": {
+                "title": "Quiz Exercise",
+                "questionCount": {
+                    "title": "Number of Questions",
+                    "value": "Multiple Choice: {{ mcCount }}, Drag And Drop: {{ dndCount }}, Short Answer: {{ shortCount }}"
+                }
+            },
             "created": "Created new Quiz Exercise with identifier {{ param }}",
             "updated": "Updated Quiz Exercise with identifier {{ param }}",
             "deleted": "Deleted Quiz Exercise with identifier {{ param }}",
@@ -81,6 +88,7 @@
             "addMultipleChoiceQuestion": "Add Multiple-Choice Question",
             "addDragAndDropQuestion": "Add Drag-And-Drop Question",
             "addShortAnswerQuestion": "Add Short-Answer Question",
+            "addApollonDragAndDropQuestion": "Create Apollon Drag-And-Drop Question",
             "addExistingQuestions": "Add Existing Questions",
             "fromAFile": "From a file",
             "fromACourse": "From a course",

@@ -109,6 +109,9 @@ Generate programming exercise
     - **Record Testwise Coverage:** Activate this option to record the testwise coverage for the solution repository.
       This is necessary when working with Hestia to generate code-based hints.
       This option is only available for Java/Kotlin-exercises with non-sequential test runs.
+    - **Customize Build Plan (with Aeolus)** Activate this option if you want to customize the build plan of your exercise.
+      This feature is available for all programming languages, and works with Bamboo, Jenkins, and LocalCI, Artemis provides templates for the build plan configuration.
+      The build plan can also be customized after the exercise creation.
 
     |
 

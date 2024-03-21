@@ -6,7 +6,7 @@
             [attr.aria-expanded]="!isQuestionCollapsed"
             [attr.aria-controls]="'collapseQuestion' + questionIndex"
         >
-            <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown"></fa-icon>
+            <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
         </button>
         <div class="form-group question-title">
             <input
@@ -51,7 +51,7 @@
                     <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</option>
                     <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</option>
                 </select>
-                <jhi-quiz-scoring-info-modal></jhi-quiz-scoring-info-modal>
+                <jhi-quiz-scoring-info-modal />
             </div>
             <div class="form-group">
                 <div class="form-check custom-control custom-checkbox">
@@ -66,8 +66,7 @@
                         class="form-check-label custom-control-label"
                         for="{{ 'cbRandomizeOrderMC' + questionIndex }}"
                         jhiTranslate="artemisApp.multipleChoiceQuestion.randomizeOrder"
-                    >
-                    </label>
+                    ></label>
                 </div>
             </div>
             <div class="form-group">
@@ -83,14 +82,13 @@
                         class="form-check-label custom-control-label"
                         for="{{ 'cbSingleChoiceMC' + questionIndex }}"
                         jhiTranslate="artemisApp.multipleChoiceQuestion.singleChoice"
-                    >
-                    </label>
-                    <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.multipleChoiceQuestion.singleChoiceInfo' | artemisTranslate"></fa-icon>
+                    ></label>
+                    <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.multipleChoiceQuestion.singleChoiceInfo' | artemisTranslate" />
                 </div>
             </div>
             <div class="form-group">
                 <div class="delete-button" (click)="deleteQuestion()">
-                    <fa-icon [icon]="faTrash" size="2x"></fa-icon>
+                    <fa-icon [icon]="faTrash" size="2x" />
                 </div>
             </div>
         </div>
@@ -109,16 +107,17 @@
                 >
                     <!-- Preview -->
                     <ng-container id="preview">
-                        <jhi-multiple-choice-question *ngIf="showMultipleChoiceQuestionPreview" [question]="question" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex">
-                        </jhi-multiple-choice-question>
+                        @if (showMultipleChoiceQuestionPreview) {
+                            <jhi-multiple-choice-question [question]="question" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex" />
+                        }
                         <hr />
                     </ng-container>
                     <!-- End of Preview-->
-
                     <!-- Visual -->
                     <ng-container id="visual" #visual>
-                        <jhi-multiple-choice-visual-question *ngIf="showMultipleChoiceQuestionVisual" [question]="question" (questionChanged)="changesInVisualMode()">
-                        </jhi-multiple-choice-visual-question>
+                        @if (showMultipleChoiceQuestionVisual) {
+                            <jhi-multiple-choice-visual-question [question]="question" (questionChanged)="changesInVisualMode()" />
+                        }
                     </ng-container>
                     <!-- End of Visual -->
                 </jhi-markdown-editor>

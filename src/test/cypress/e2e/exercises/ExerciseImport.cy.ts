@@ -26,7 +26,7 @@ import {
 import { admin, instructor, studentOne } from '../../support/users';
 import { checkField, convertModelAfterMultiPart, generateUUID } from '../../support/utils';
 
-describe('Import exercises', () => {
+describe('Import exercises', { scrollBehavior: 'center' }, () => {
     let course: Course;
     let secondCourse: Course;
     let textExercise: TextExercise;
@@ -158,7 +158,7 @@ describe('Import exercises', () => {
 
         programmingExerciseCreation.setTitle('Import Test');
         programmingExerciseCreation.setShortName('importtest' + generateUUID());
-        programmingExerciseCreation.setDueDate(dayjs().add(3, 'days')); // FIXME does not work yet
+        programmingExerciseCreation.setDueDate(dayjs().add(3, 'days'));
 
         programmingExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;

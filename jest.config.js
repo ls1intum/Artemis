@@ -38,16 +38,16 @@ const esModules = [
     'd3-time',
     'd3-transition',
     'dayjs/esm',
+    'export-to-csv',
     'franc-min',
     'internmap',
     'lodash-es',
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
-    'ngx-slider-v2',
     'ngx-webstorage',
     'rxjs/operators',
-    'trigram-utils'
+    'trigram-utils',
 ].join('|');
 
 const {
@@ -55,7 +55,6 @@ const {
 } = require('./tsconfig.json');
 
 module.exports = {
-    globalSetup: 'jest-preset-angular/global-setup',
     testEnvironmentOptions: {
         url: 'https://artemis.fake/test',
     },
@@ -101,10 +100,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 86.2,
-            branches: 73.4,
-            functions: 80.2,
-            lines: 86.4,
+            statements: 87.2,
+            branches: 73.8,
+            functions: 81.6,
+            lines: 87.2,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
@@ -148,5 +147,6 @@ module.exports = {
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
+        '@sentry/angular-ivy': '<rootDir>/node_modules/@sentry/angular-ivy/bundles/sentry-angular-ivy.umd.js',
     },
 };

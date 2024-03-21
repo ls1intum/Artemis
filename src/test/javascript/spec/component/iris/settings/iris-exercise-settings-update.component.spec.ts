@@ -18,6 +18,7 @@ import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
+import { IrisCompetencyGenerationSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-competency-generation-sub-settings-update/iris-competency-generation-sub-settings-update.component';
 
 describe('IrisExerciseSettingsUpdateComponent Component', () => {
     let comp: IrisExerciseSettingsUpdateComponent;
@@ -40,6 +41,7 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
                 MockComponent(IrisChatSubSettingsUpdateComponent),
                 MockComponent(IrisHestiaSubSettingsUpdateComponent),
                 MockComponent(IrisCodeEditorSubSettingsUpdateComponent),
+                MockComponent(IrisCompetencyGenerationSubSettingsUpdateComponent),
                 MockComponent(IrisGlobalAutoupdateSettingsUpdateComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(NgModel),
@@ -82,6 +84,7 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
         expect(fixture.debugElement.query(By.directive(IrisChatSubSettingsUpdateComponent))).toBeTruthy();
         expect(fixture.debugElement.query(By.directive(IrisHestiaSubSettingsUpdateComponent))).toBeFalsy();
         expect(fixture.debugElement.query(By.directive(IrisCodeEditorSubSettingsUpdateComponent))).toBeFalsy();
+        expect(fixture.debugElement.query(By.directive(IrisCompetencyGenerationSubSettingsUpdateComponent))).toBeFalsy();
     });
 
     it('Can deactivate correctly', () => {

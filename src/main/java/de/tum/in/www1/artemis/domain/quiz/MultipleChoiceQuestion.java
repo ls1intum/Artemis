@@ -24,8 +24,8 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 public class MultipleChoiceQuestion extends QuizQuestion {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderColumn
     @JoinColumn(name = "question_id")
+    @OrderColumn
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private List<AnswerOption> answerOptions = new ArrayList<>();

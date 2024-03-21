@@ -50,7 +50,7 @@ export class OnlineEditorPage {
      * @param name the file name
      */
     deleteFile(exerciseID: number, name: string) {
-        cy.intercept(DELETE, BASE_API + 'repository/*/**').as('deleteFile');
+        cy.intercept(DELETE, `${BASE_API}/repository/*/**`).as('deleteFile');
         this.findFile(exerciseID, name).find('#file-browser-file-delete').click();
         cy.get('#delete-file').click();
         cy.wait('@deleteFile').its('response.statusCode').should('eq', 200);
@@ -99,7 +99,7 @@ export class OnlineEditorPage {
     createFileInRootFolder(exerciseID: number, fileName: string) {
         const postRequestId = 'createFile' + fileName;
         const getRequestId = 'getFile' + fileName;
-        const requestPath = BASE_API + 'repository/*/file?file=' + fileName;
+        const requestPath = `${BASE_API}/repository/*/file?file=${fileName}`;
         getExercise(exerciseID).find('[id="create_file_root"]').click().wait(500);
         cy.intercept(POST, requestPath).as(postRequestId);
         cy.intercept(GET, requestPath).as(getRequestId);
@@ -124,7 +124,7 @@ export class OnlineEditorPage {
         const filePath = `src/${packagePath}/${fileName}`;
         const postRequestId = 'createFile' + fileName;
         const getRequestId = 'getFile' + fileName;
-        const requestPath = BASE_API + 'repository/*/file?file=' + filePath;
+        const requestPath = `${BASE_API}/repository/*/file?file=${filePath}`;
         getExercise(exerciseID).find('[id="file-browser-folder-create-file"]').eq(2).click().wait(500);
         cy.intercept(POST, requestPath).as(postRequestId);
         cy.intercept(GET, requestPath).as(getRequestId);

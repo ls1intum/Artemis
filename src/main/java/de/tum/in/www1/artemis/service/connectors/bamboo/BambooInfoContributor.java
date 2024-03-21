@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.config.Constants;
 
 @Component
 @Profile("bamboo")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BambooInfoContributor implements InfoContributor {
 
     @Value("${artemis.continuous-integration.url}")

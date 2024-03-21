@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.repository.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -13,11 +16,16 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 /**
  * Spring Data JPA repository for the PlagiarismCase entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface PlagiarismSubmissionRepository extends JpaRepository<PlagiarismSubmission<?>, Long> {
 
     @Modifying
     @Transactional // ok because of modifying query
-    @Query("UPDATE PlagiarismSubmission submission set submission.plagiarismCase = :#{#plagiarismCase} where submission.id = :#{#submissionId}")
+    @Query("""
+            UPDATE PlagiarismSubmission submission
+            SET submission.plagiarismCase = :plagiarismCase
+            WHERE submission.id = :submissionId
+            """)
     void updatePlagiarismCase(@Param("submissionId") Long submissionId, @Param("plagiarismCase") PlagiarismCase plagiarismCase);
 }

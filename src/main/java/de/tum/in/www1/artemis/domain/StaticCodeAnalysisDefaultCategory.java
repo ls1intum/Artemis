@@ -48,24 +48,7 @@ public class StaticCodeAnalysisDefaultCategory {
         return categoryMappings;
     }
 
-    public static class CategoryMapping {
-
-        private final StaticCodeAnalysisTool tool;
-
-        private final String category;
-
-        public CategoryMapping(StaticCodeAnalysisTool tool, String category) {
-            this.tool = tool;
-            this.category = category;
-        }
-
-        public StaticCodeAnalysisTool getTool() {
-            return tool;
-        }
-
-        public String getCategory() {
-            return category;
-        }
+    public record CategoryMapping(StaticCodeAnalysisTool tool, String category) {
     }
 
     @Override

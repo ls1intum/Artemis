@@ -19,6 +19,7 @@ export class AuditsComponent implements OnInit {
     predicate!: string;
     ascending!: boolean;
     toDate = '';
+    canLoad: boolean;
 
     // page information
     page = 1;
@@ -40,15 +41,16 @@ export class AuditsComponent implements OnInit {
     ngOnInit(): void {
         this.toDate = this.today();
         this.fromDate = this.previousMonth();
+        this.canLoad = this.calculateCanLoad();
         this.handleNavigation();
     }
 
-    canLoad(): boolean {
+    calculateCanLoad(): boolean {
         return this.fromDate !== '' && this.toDate !== '';
     }
 
     transition(): void {
-        if (this.canLoad()) {
+        if (this.canLoad) {
             this.router.navigate(['/admin/audits'], {
                 queryParams: {
                     page: this.page,
@@ -90,6 +92,7 @@ export class AuditsComponent implements OnInit {
             if (params.get('to')) {
                 this.toDate = this.datePipe.transform(params.get('to'), this.dateFormat)!;
             }
+            this.canLoad = this.calculateCanLoad();
             this.loadData();
         });
     }

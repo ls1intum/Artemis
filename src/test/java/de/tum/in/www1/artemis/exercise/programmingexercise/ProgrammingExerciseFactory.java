@@ -104,6 +104,8 @@ public class ProgrammingExerciseFactory {
         programmingExercise.setTestwiseCoverageEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
+        programmingExercise.setBuildScript("Some script");
+        programmingExercise.setBuildPlanConfiguration("{\"api\":\"v0.0.1\",\"metadata\":{},\"actions\":[]}");
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         }
@@ -115,8 +117,8 @@ public class ProgrammingExerciseFactory {
         }
         programmingExercise.setPackageName(programmingLanguage == ProgrammingLanguage.SWIFT ? "swiftTest" : "de.test");
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
-        String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
-        programmingExercise.setTestRepositoryUrl(testRepoUrl);
+        String testRepoUri = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
+        programmingExercise.setTestRepositoryUri(testRepoUri);
         programmingExercise.setBranch(DEFAULT_BRANCH);
     }
 
@@ -132,6 +134,7 @@ public class ProgrammingExerciseFactory {
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
         ProgrammingExercise toBeImported = new ProgrammingExercise();
 
+        toBeImported.getTasks().clear();
         toBeImported.setAllowOfflineIde(template.isAllowOfflineIde());
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setAssessmentDueDate(template.getAssessmentDueDate());
@@ -167,10 +170,9 @@ public class ProgrammingExerciseFactory {
         toBeImported.setStaticCodeAnalysisCategories(null);
         toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
         toBeImported.setStudentParticipations(null);
-        toBeImported.getTasks().clear();
         toBeImported.setTemplateParticipation(null);
         toBeImported.setTestCases(null);
-        toBeImported.setTestRepositoryUrl(template.getTestRepositoryUrl());
+        toBeImported.setTestRepositoryUri(template.getTestRepositoryUri());
         toBeImported.setTestwiseCoverageEnabled(template.isTestwiseCoverageEnabled());
         toBeImported.setTitle(title);
         toBeImported.setTotalNumberOfAssessments(template.getTotalNumberOfAssessments());
@@ -595,7 +597,7 @@ public class ProgrammingExerciseFactory {
             programmingExercise.setPackageName("de.test");
         }
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
-        programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
+        programmingExercise.setTestRepositoryUri("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
         programmingExercise.setShowTestNamesToStudents(false);
         programmingExercise.setBranch(DEFAULT_BRANCH);
     }

@@ -4,7 +4,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instr
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ExpandableSectionComponent } from 'app/assessment/assessment-instructions/expandable-section/expandable-section.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -12,6 +12,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('AssessmentInstructionsComponent', () => {
     let comp: AssessmentInstructionsComponent;
@@ -70,6 +71,24 @@ describe('AssessmentInstructionsComponent', () => {
         comp.exerciseInput = programmingExercise;
         expect(comp.sampleSolutionExplanation).toBeUndefined();
 
-        expect(markdownSpy).toHaveBeenCalledTimes(11);
+        expect(markdownSpy).toHaveBeenCalledTimes(7);
+    });
+
+    it('should convert the grading instructions to html', () => {
+        const markdownSpy = jest.spyOn(markdownService, 'safeHtmlForMarkdown');
+
+        comp.exerciseInput = { id: 1, type: ExerciseType.PROGRAMMING, gradingInstructions: '# Heading' } as ProgrammingExercise;
+
+        // once for problem statement, once for instructions
+        expect(markdownSpy).toHaveBeenCalledTimes(2);
+        expect(markdownSpy).toHaveBeenLastCalledWith('# Heading');
+    });
+
+    it('should ignore empty grading instructions', () => {
+        const markdownSpy = jest.spyOn(markdownService, 'safeHtmlForMarkdown');
+
+        comp.exerciseInput = { id: 1, type: ExerciseType.PROGRAMMING, problemStatement: 'problem', gradingInstructions: undefined } as ProgrammingExercise;
+
+        expect(markdownSpy).toHaveBeenCalledExactlyOnceWith('problem');
     });
 });

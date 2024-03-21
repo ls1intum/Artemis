@@ -6,7 +6,12 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -304,7 +309,7 @@ public class UserTestService {
     // Test
     public void updateUserGroups() throws Exception {
         var course = courseUtilService.addEmptyCourse();
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         courseRepository.save(course);
 
         // First we create a new user with group
@@ -551,7 +556,7 @@ public class UserTestService {
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
 
         var course = courseUtilService.addEmptyCourse();
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         course = courseUtilService.addEmptyCourse();
         course.setInstructorGroupName("instructor2");
         courseRepository.save(course);
@@ -578,7 +583,7 @@ public class UserTestService {
 
     // Test
     public void getUsers_asAdmin_isSuccessful() throws Exception {
-        var usersDb = userRepository.findAllWithGroupsAndAuthorities().stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+        var usersDb = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalse().stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
         userRepository.saveAll(usersDb);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
@@ -766,7 +771,7 @@ public class UserTestService {
         user.setPassword(password);
         user.setInternal(false);
         user.setActivated(false);
-        user = userRepository.save(user);
+        userRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 

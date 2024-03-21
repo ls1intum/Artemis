@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.lti.Lti13ClientRegistration;
 import de.tum.in.www1.artemis.domain.lti.Lti13PlatformConfiguration;
-import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -29,7 +29,7 @@ class LtiDynamicRegistrationServiceTest {
     private OAuth2JWKSService oAuth2JWKSService;
 
     @Mock
-    private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
     @Mock
     private RestTemplate restTemplate;
@@ -52,7 +52,7 @@ class LtiDynamicRegistrationServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiDynamicRegistrationService = new LtiDynamicRegistrationService(onlineCourseConfigurationRepository, oAuth2JWKSService, restTemplate);
+        ltiDynamicRegistrationService = new LtiDynamicRegistrationService(ltiPlatformConfigurationRepository, oAuth2JWKSService, restTemplate);
         ReflectionTestUtils.setField(ltiDynamicRegistrationService, "artemisServerUrl", "http://artemis.com");
 
         course = new Course();
@@ -76,25 +76,7 @@ class LtiDynamicRegistrationServiceTest {
         if (closeable != null) {
             closeable.close();
         }
-        reset(oAuth2JWKSService, onlineCourseConfigurationRepository, restTemplate);
-    }
-
-    @Test
-    void badRequestWhenNotOnlineCourse() {
-
-        course.setOnlineCourse(false);
-
-        assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfigurationUrl, registrationToken));
-    }
-
-    @Test
-    void badRequestWhenNoOnlineCourseConfiguration() {
-
-        course.setOnlineCourseConfiguration(null);
-
-        assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfigurationUrl, registrationToken));
+        reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, restTemplate);
     }
 
     @Test
@@ -103,7 +85,7 @@ class LtiDynamicRegistrationServiceTest {
         doThrow(HttpClientErrorException.class).when(restTemplate).getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class);
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfigurationUrl, registrationToken));
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken));
     }
 
     @Test
@@ -112,7 +94,7 @@ class LtiDynamicRegistrationServiceTest {
         when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfigurationUrl, registrationToken));
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken));
     }
 
     @Test
@@ -125,7 +107,7 @@ class LtiDynamicRegistrationServiceTest {
         when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfigurationUrl, registrationToken));
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken));
     }
 
     @Test
@@ -136,7 +118,7 @@ class LtiDynamicRegistrationServiceTest {
         doThrow(HttpClientErrorException.class).when(restTemplate).postForEntity(eq(platformConfiguration.getRegistrationEndpoint()), any(), eq(Lti13ClientRegistration.class));
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfigurationUrl, registrationToken));
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken));
     }
 
     @Test
@@ -146,9 +128,9 @@ class LtiDynamicRegistrationServiceTest {
         when(restTemplate.postForEntity(eq(platformConfiguration.getRegistrationEndpoint()), any(), eq(Lti13ClientRegistration.class)))
                 .thenReturn(ResponseEntity.accepted().body(clientRegistrationResponse));
 
-        ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfigurationUrl, registrationToken);
+        ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken);
 
-        verify(onlineCourseConfigurationRepository).save(any());
+        verify(ltiPlatformConfigurationRepository).save(any());
         verify(oAuth2JWKSService).updateKey(any());
     }
 
@@ -159,9 +141,9 @@ class LtiDynamicRegistrationServiceTest {
         when(restTemplate.postForEntity(eq(platformConfiguration.getRegistrationEndpoint()), any(), eq(Lti13ClientRegistration.class)))
                 .thenReturn(ResponseEntity.accepted().body(clientRegistrationResponse));
 
-        ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfigurationUrl, null);
+        ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, null);
 
-        verify(onlineCourseConfigurationRepository).save(any());
+        verify(ltiPlatformConfigurationRepository).save(any());
         verify(oAuth2JWKSService).updateKey(any());
     }
 }

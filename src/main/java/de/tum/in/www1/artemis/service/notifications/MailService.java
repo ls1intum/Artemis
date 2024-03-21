@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_SUBMISSION_ASSESSED;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.extractNotificationUrl;
 
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Profile;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -42,10 +44,11 @@ import tech.jhipster.config.JHipsterProperties;
  * <p>
  * We use the @Async annotation to send emails asynchronously.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class MailService implements InstantNotificationService {
 
-    private final Logger log = LoggerFactory.getLogger(MailService.class);
+    private static final Logger log = LoggerFactory.getLogger(MailService.class);
 
     private static final String USER = "user";
 
@@ -228,7 +231,7 @@ public class MailService implements InstantNotificationService {
         // Translation that can not be done via i18n Resource Bundle (for Thymeleaf) but has to be set in this service via Java
         String newAnnouncementString = locale.toString().equals("en") ? "New announcement \"%s\" in course \"%s\"" : "Neue Ankündigung \"%s\" im Kurs \"%s\"";
         String postTitle = ((Post) notificationSubject).getTitle();
-        String courseTitle = ((Post) notificationSubject).getCourse().getTitle();
+        String courseTitle = ((Post) notificationSubject).getConversation().getCourse().getTitle();
 
         return String.format(newAnnouncementString, postTitle, courseTitle);
     }

@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Organization;
@@ -12,10 +15,11 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 /**
  * Service implementation for managing Organization entities
  */
+@Profile(PROFILE_CORE)
 @Service
 public class OrganizationService {
 
-    private final Logger log = LoggerFactory.getLogger(OrganizationService.class);
+    private static final Logger log = LoggerFactory.getLogger(OrganizationService.class);
 
     private final OrganizationRepository organizationRepository;
 

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT;
 import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
@@ -15,41 +16,76 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.RatingRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StatisticsRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -59,25 +95,32 @@ import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
+import de.tum.in.www1.artemis.web.rest.dto.CourseContentCount;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
  * Service Implementation for managing Course.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class CourseService {
+
+    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
 
-    private final Logger log = LoggerFactory.getLogger(CourseService.class);
+    private static final Logger log = LoggerFactory.getLogger(CourseService.class);
 
     private final Environment env;
 
@@ -111,8 +154,6 @@ public class CourseService {
 
     private final AuditEventRepository auditEventRepository;
 
-    private final CompetencyService competencyService;
-
     private final CompetencyRepository competencyRepository;
 
     private final GradingScaleRepository gradingScaleRepository;
@@ -145,10 +186,6 @@ public class CourseService {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
-    private final TutorialGroupService tutorialGroupService;
-
-    private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
-
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
     private final ConversationRepository conversationRepository;
@@ -157,18 +194,22 @@ public class CourseService {
 
     private final Optional<IrisSettingsService> irisSettingsService;
 
+    private final LectureRepository lectureRepository;
+
+    private final TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
             UserService userService, ExamDeletionService examDeletionService, CompetencyRepository competencyRepository, GroupNotificationService groupNotificationService,
-            ExamRepository examRepository, CourseExamExportService courseExamExportService, CompetencyService competencyService, GradingScaleRepository gradingScaleRepository,
+            ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
-            TutorialGroupRepository tutorialGroupRepository, TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository, LearningPathService learningPathService,
-            Optional<IrisSettingsService> irisSettingsService) {
+            TutorialGroupRepository tutorialGroupRepository, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
+            LearningPathService learningPathService, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
+            TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -186,7 +227,6 @@ public class CourseService {
         this.groupNotificationService = groupNotificationService;
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
-        this.competencyService = competencyService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.statisticsRepository = statisticsRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -202,12 +242,34 @@ public class CourseService {
         this.participantScoreRepository = participantScoreRepository;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
         this.tutorialGroupRepository = tutorialGroupRepository;
-        this.tutorialGroupService = tutorialGroupService;
-        this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.conversationRepository = conversationRepository;
         this.learningPathService = learningPathService;
         this.irisSettingsService = irisSettingsService;
+        this.lectureRepository = lectureRepository;
+        this.tutorialGroupNotificationRepository = tutorialGroupNotificationRepository;
+        this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
+    }
+
+    /**
+     * Search for all courses fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
+     *
+     * @param search The search query defining the search term and the size of the returned page
+     * @param user   The user for whom to fetch all available lectures
+     * @return A wrapper object containing a list of all found courses and the total number of pages
+     */
+    public SearchResultPageDTO<Course> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user) {
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COURSE);
+
+        final var searchTerm = search.getSearchTerm();
+        final Page<Course> coursePage;
+        if (authCheckService.isAdmin(user)) {
+            coursePage = courseRepository.findByTitleIgnoreCaseContaining(searchTerm, pageable);
+        }
+        else {
+            coursePage = courseRepository.findByTitleInCoursesWhereInstructorOrEditor(searchTerm, user.getGroups(), pageable);
+        }
+        return new SearchResultPageDTO<>(coursePage.getContent(), coursePage.getTotalPages());
     }
 
     /**
@@ -217,9 +279,9 @@ public class CourseService {
      * @param user            the user for which the participations should be fetched
      * @param includeTestRuns flag that indicates whether test run participations should be included
      */
-    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, boolean includeTestRuns) {
-        Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
-        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, includeTestRuns);
+    public void fetchParticipationsWithSubmissionsAndResultsForCourses(Collection<Course> courses, User user, boolean includeTestRuns) {
+        var exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
+        var participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, includeTestRuns);
         if (participationsOfUserInExercises.isEmpty()) {
             return;
         }
@@ -267,11 +329,14 @@ public class CourseService {
         course.setExercises(exerciseService.filterExercisesForCourse(course, user));
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
         course.setExams(examRepository.findByCourseIdsForUser(Set.of(course.getId()), user.getId(), user.getGroups(), ZonedDateTime.now()));
+        // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
         course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
-        course.setCompetencies(competencyRepository.findAllForCourseWithProgressForUser(course.getId(), user.getId()));
-        course.setPrerequisites(competencyService.findAllPrerequisitesForCourse(course, user));
-        course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
-        course.setTutorialGroupsConfiguration(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
+        // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
+        course.setNumberOfCompetencies(competencyRepository.countByCourse(course));
+        // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
+        course.setNumberOfPrerequisites(competencyRepository.countPrerequisitesByCourseId(course.getId()));
+        // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them
+        course.setNumberOfTutorialGroups(tutorialGroupRepository.countByCourse(course));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
@@ -289,26 +354,32 @@ public class CourseService {
     }
 
     /**
-     * Get all courses with exercises, lectures and exams (filtered for given user)
+     * Get all courses with exercises (filtered for given user)
      *
      * @param user the user entity
-     * @return an unmodifiable list of all courses including exercises, lectures and exams for the user
+     * @return an unmodifiable list of all courses including exercises for the user
      */
-    public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
+    public Set<Course> findAllActiveWithExercisesForUser(User user) {
         long start = System.nanoTime();
-        var userVisibleCourses = courseRepository.findAllActiveWithLectures().stream().filter(course -> isCourseVisibleForUser(user, course)).toList();
+
+        var userVisibleCourses = courseRepository.findAllActive().stream().filter(course -> isCourseVisibleForUser(user, course)).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
 
         if (log.isDebugEnabled()) {
             log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
         }
         long startFindAllExercises = System.nanoTime();
         var courseIds = userVisibleCourses.stream().map(DomainObject::getId).collect(Collectors.toSet());
+        // TODO Performance: we only need the total score, the number of exercises and exams and - in case there is one - the currently active exercise(s)/exam(s)
+        // we do NOT need to retrieve this information and send it to the client
         Set<Exercise> allExercises = exerciseRepository.findByCourseIdsWithCategories(courseIds);
-        Set<Exam> allExams = examRepository.findByCourseIdsForUser(courseIds, user.getId(), user.getGroups(), ZonedDateTime.now());
+
         if (log.isDebugEnabled()) {
-            log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises and {} exams after {}", allExercises.size(), allExams.size(),
-                    TimeLogUtil.formatDurationFrom(startFindAllExercises));
+            log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises after {}", allExercises.size(), TimeLogUtil.formatDurationFrom(startFindAllExercises));
         }
+        var examCounts = examRepository.countVisibleExams(courseIds, ZonedDateTime.now());
+
+        var lectureCounts = lectureRepository.countVisibleLectures(courseIds, ZonedDateTime.now());
 
         long startFilterAll = System.nanoTime();
         var courses = userVisibleCourses.stream().peek(course -> {
@@ -316,9 +387,14 @@ public class CourseService {
             course.setExercises(allExercises.stream().filter(ex -> ex.getCourseViaExerciseGroupOrCourseMember().getId().equals(course.getId())).collect(Collectors.toSet()));
             course.setExercises(exerciseService.filterExercisesForCourse(course, user));
             exerciseService.loadExerciseDetailsIfNecessary(course, user);
-            course.setExams(allExams.stream().filter(ex -> ex.getCourse().getId().equals(course.getId())).collect(Collectors.toSet()));
-            course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
-        }).toList();
+            long numberOfLectures = lectureCounts.stream().filter(count -> count.courseId() == course.getId()).map(CourseContentCount::count).findFirst().orElse(0L);
+            course.setNumberOfLectures(numberOfLectures);
+            long numberOfExams = examCounts.stream().filter(count -> count.courseId() == course.getId()).map(CourseContentCount::count).findFirst().orElse(0L);
+            course.setNumberOfExams(numberOfExams);
+            // we do not send actual lectures or exams to the client, not needed
+            course.setLectures(Set.of());
+            course.setExams(Set.of());
+        }).collect(Collectors.toSet());
 
         if (log.isDebugEnabled()) {
             log.debug("all {} filterExercisesForCourse individually finished together after {}", courses.size(), TimeLogUtil.formatDurationFrom(startFilterAll));
@@ -352,6 +428,18 @@ public class CourseService {
     }
 
     /**
+     * Gets a set of all online courses for a specific LTI platform registration, filtered by the instructor user.
+     *
+     * @param registrationId the registration ID of the LTI platform to filter courses.
+     * @param user           the User object representing the instructor whose courses are to be fetched.
+     * @return a set of {@link Course} objects where the user is an instructor, related to the specified LTI platform.
+     */
+    public Set<Course> findAllOnlineCoursesForPlatformForUser(String registrationId, User user) {
+        return courseRepository.findOnlineCoursesWithRegistrationIdEager(registrationId).stream().filter(course -> authCheckService.isInstructorInCourse(course, user))
+                .collect(Collectors.toSet());
+    }
+
+    /**
      * Deletes all elements associated with the course including:
      * <ul>
      * <li>The Course</li>
@@ -372,28 +460,30 @@ public class CourseService {
         deleteExercisesOfCourse(course);
         deleteLecturesOfCourse(course);
         deleteCompetenciesOfCourse(course);
+        deleteTutorialGroupsOfCourse(course);
         deleteConversationsOfCourse(course);
         deleteNotificationsOfCourse(course);
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
-        deleteTutorialGroupsOfCourse(course);
         irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
+        log.debug("Successfully deleted course {}.", course.getTitle());
     }
 
     private void deleteTutorialGroupsOfCourse(Course course) {
         var tutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId());
+        // we first need to delete notifications and channels, only then we can delete the tutorial group
         tutorialGroups.forEach(tutorialGroup -> {
-            if (tutorialGroup.getTutorialGroupChannel() != null) {
-                tutorialGroup.setTutorialGroupChannel(null);
-            }
+            tutorialGroupNotificationRepository.deleteAllByTutorialGroupId(tutorialGroup.getId());
+            tutorialGroupChannelManagementService.deleteTutorialGroupChannel(tutorialGroup);
+            tutorialGroupRepository.deleteById(tutorialGroup.getId());
         });
-        tutorialGroupRepository.saveAll(tutorialGroups);
-        tutorialGroupRepository.deleteAllByCourse(course);
     }
 
     private void deleteConversationsOfCourse(Course course) {
+        // We cannot delete tutorial group channels here because the tutorial group references the channel.
+        // These are deleted on deleteTutorialGroupsOfCourse().
         // Posts and Conversation Participants should be automatically deleted due to cascade
         conversationRepository.deleteAllByCourseId(course.getId());
     }
@@ -593,7 +683,7 @@ public class CourseService {
 
     private List<StatisticsEntry> removeDuplicateActiveUserRows(List<StatisticsEntry> activeUserRows, ZonedDateTime startDate) {
         int startIndex = statisticsRepository.getWeekOfDate(startDate);
-        Map<Integer, List<String>> usersByDate = new HashMap<>();
+        Map<Integer, Set<String>> usersByDate = new HashMap<>();
         for (StatisticsEntry listElement : activeUserRows) {
             // listElement.date has the form "2021-05-04", to convert it to ZonedDateTime, it needs a time
             String dateOfElement = listElement.getDate() + " 10:00";
@@ -829,7 +919,7 @@ public class CourseService {
     @NotNull
     public ResponseEntity<Set<User>> getAllUsersInGroup(Course course, String groupName) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        var usersInGroup = userRepository.findAllInGroup(groupName);
+        var usersInGroup = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(groupName);
         usersInGroup.forEach(user -> {
             // explicitly set the registration number
             user.setVisibleRegistrationNumber(user.getRegistrationNumber());
@@ -1044,5 +1134,29 @@ public class CourseService {
             user.setCreatedBy(null);
             user.setCreatedDate(null);
         });
+    }
+
+    /**
+     * Checks if learning paths are enabled for the given course. If not, a BadRequestException is thrown.
+     * <p>
+     * If fetching the course from the database is not necessary, prefer using the method {@link #checkLearningPathsEnabledElseThrow(long)} with the course id as parameter.
+     *
+     * @param course the course to check
+     */
+    public void checkLearningPathsEnabledElseThrow(@NotNull Course course) {
+        if (!course.getLearningPathsEnabled()) {
+            throw new BadRequestException("Learning paths are not enabled for this course.");
+        }
+    }
+
+    /**
+     * Checks if learning paths are enabled for the given course. If not, a BadRequestException is thrown.
+     *
+     * @param courseId the id of the course to check
+     */
+    public void checkLearningPathsEnabledElseThrow(long courseId) {
+        if (!courseRepository.hasLearningPathsEnabled(courseId)) {
+            throw new BadRequestException("Learning paths are not enabled for this course.");
+        }
     }
 }

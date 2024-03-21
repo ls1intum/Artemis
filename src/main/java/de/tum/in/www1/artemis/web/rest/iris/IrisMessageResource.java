@@ -25,8 +25,8 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 /**
  * REST controller for managing {@link IrisMessage}.
  */
-@RestController
 @Profile("iris")
+@RestController
 @RequestMapping("api/iris/")
 public class IrisMessageResource {
 
@@ -83,7 +83,7 @@ public class IrisMessageResource {
 
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
-        irisSessionService.sendOverWebsocket(savedMessage);
+        irisSessionService.sendOverWebsocket(savedMessage, session);
         irisSessionService.requestMessageFromIris(session);
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();

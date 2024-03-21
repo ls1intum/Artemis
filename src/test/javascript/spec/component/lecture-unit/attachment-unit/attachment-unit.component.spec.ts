@@ -12,6 +12,9 @@ import { FileService } from 'app/shared/http/file.service';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faFile, faFileCsv, faFileImage, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ScienceService } from 'app/shared/science/science.service';
+import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 describe('AttachmentUnitComponent', () => {
     let attachmentUnit: AttachmentUnit;
@@ -19,18 +22,21 @@ describe('AttachmentUnitComponent', () => {
 
     let attachmentUnitComponentFixture: ComponentFixture<AttachmentUnitComponent>;
     let attachmentUnitComponent: AttachmentUnitComponent;
+    let scienceService: ScienceService;
+    let logEventStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
             declarations: [AttachmentUnitComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            providers: [MockProvider(FileService)],
-            schemas: [],
+            providers: [MockProvider(FileService), { provide: ScienceService, useClass: MockScienceService }],
         })
             .compileComponents()
             .then(() => {
                 attachmentUnitComponentFixture = TestBed.createComponent(AttachmentUnitComponent);
                 attachmentUnitComponent = attachmentUnitComponentFixture.componentInstance;
+                scienceService = TestBed.inject(ScienceService);
+                logEventStub = jest.spyOn(scienceService, 'logEvent');
 
                 attachment = new Attachment();
                 attachment.id = 1;
@@ -115,4 +121,10 @@ describe('AttachmentUnitComponent', () => {
             attachmentUnitComponent.handleClick(new Event('click'), false);
         });
     }, 1000);
+
+    it('should log event on download', () => {
+        attachmentUnitComponentFixture.detectChanges(); // ngInit
+        attachmentUnitComponent.downloadAttachment(new Event('click'));
+        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__OPEN_UNIT, attachmentUnit.id!);
+    });
 });

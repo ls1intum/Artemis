@@ -1,15 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
+import java.util.List;
 import java.util.Map;
-
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
  * Base class for the actions that can be defined in a {@link Windfile}
  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "class")
-@JsonSubTypes({ @JsonSubTypes.Type(value = ScriptAction.class, name = "script-action"), @JsonSubTypes.Type(value = PlatformAction.class, name = "platform-action") })
 public abstract class Action {
 
     private String name;
@@ -18,7 +14,13 @@ public abstract class Action {
 
     private Map<String, Object> environment;
 
+    private List<AeolusResult> results;
+
+    private String workdir;
+
     private boolean runAlways;
+
+    private String platform;
 
     public Map<String, Object> getParameters() {
         return parameters;
@@ -50,5 +52,29 @@ public abstract class Action {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public List<AeolusResult> getResults() {
+        return results;
+    }
+
+    public void setResults(List<AeolusResult> results) {
+        this.results = results;
+    }
+
+    public String getWorkdir() {
+        return workdir;
+    }
+
+    public void setWorkdir(String workdir) {
+        this.workdir = workdir;
+    }
+
+    public String getPlatform() {
+        return platform;
+    }
+
+    public void setPlatform(String platform) {
+        this.platform = platform;
     }
 }

@@ -71,6 +71,13 @@ export class ColorSelectorComponent implements OnInit {
      * @param {number} height
      */
     openColorSelector(event: MouseEvent, marginTop?: number, height?: number) {
+        /**
+         * without {@link event#stopPropagation} the color picker would close immediately as the mouseEvent
+         * is triggered again for the child component {@link ColorSelectorComponent} which would interpret
+         * it as a click outside the colorpicker
+         */
+        event.stopPropagation();
+
         const parentElement = (event.target as Element).closest('.ng-trigger') as HTMLElement;
 
         this.colorSelectorPosition.left = parentElement ? parentElement.offsetLeft : 0;

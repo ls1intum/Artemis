@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.export.DataExportQuizExerciseCreationService.TXT_FILE_EXTENSION;
 import static de.tum.in.www1.artemis.service.export.DataExportUtil.createDirectoryIfNotExistent;
 import static de.tum.in.www1.artemis.service.export.DataExportUtil.retrieveCourseDirPath;
@@ -19,6 +20,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -40,6 +42,7 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
  * It is responsible for creating the export for programming exercises and modeling, text, and file upload exercises.
  * For quiz exercises it delegates the creation of the export to {@link DataExportQuizExerciseCreationService}.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class DataExportExerciseCreationService {
 
@@ -51,7 +54,7 @@ public class DataExportExerciseCreationService {
 
     private final Path repoClonePath;
 
-    private final Logger log = LoggerFactory.getLogger(DataExportExerciseCreationService.class);
+    private static final Logger log = LoggerFactory.getLogger(DataExportExerciseCreationService.class);
 
     private final FileService fileService;
 
@@ -375,7 +378,7 @@ public class DataExportExerciseCreationService {
             headers.add("accepted");
             dataStreamBuilder.add(complaint.isAccepted());
         }
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
         var prefix = complaint.getComplaintType() == ComplaintType.COMPLAINT ? "complaint_" : "more_feedback_";
 
         try (final var printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve(prefix + complaint.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
@@ -420,7 +423,7 @@ public class DataExportExerciseCreationService {
         else if (plagiarismCase.getVerdict() == PlagiarismVerdict.WARNING) {
             dataStreamBuilder.add(plagiarismCase.getVerdictMessage());
         }
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
 
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(exercisePath.resolve("plagiarism_case_" + plagiarismCase.getId() + CSV_FILE_EXTENSION)),
                 csvFormat)) {

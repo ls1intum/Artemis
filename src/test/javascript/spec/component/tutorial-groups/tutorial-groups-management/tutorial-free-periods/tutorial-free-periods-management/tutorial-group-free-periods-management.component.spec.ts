@@ -24,6 +24,7 @@ import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-rou
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
+import { TutorialGroupFreePeriodsTableComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
 
 @Component({ selector: 'jhi-tutorial-group-free-period-row-buttons', template: '' })
 class TutorialGroupRowButtonsStubComponent {
@@ -59,6 +60,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
+                TutorialGroupFreePeriodsTableComponent,
             ],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
@@ -116,7 +118,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
             result: of(),
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-        const openDialogSpy = jest.spyOn(component, 'openCreateFreeDayDialog');
+        const openDialogSpy = jest.spyOn(component, 'openCreateFreePeriodDialog');
 
         const button = fixture.debugElement.nativeElement.querySelector('#create-tutorial-free-day');
         button.click();

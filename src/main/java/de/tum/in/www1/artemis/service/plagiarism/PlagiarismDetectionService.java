@@ -1,14 +1,16 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 
-import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
 import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -23,8 +25,8 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureServ
 /**
  * Service for triggering plagiarism checks.
  */
+@Profile(PROFILE_CORE)
 @Service
-@Component
 public class PlagiarismDetectionService {
 
     private static final Logger log = LoggerFactory.getLogger(PlagiarismDetectionService.class);

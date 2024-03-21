@@ -139,7 +139,7 @@ You can find the latest Artemis Dockerfile at ``docker/artemis/Dockerfile``.
         defined by the
         `Spring relaxed binding <https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#environment-variables>`__.
         You can either place those environment variables directly in the ``environment`` section,
-        or create an `.env-file <https://docs.docker.com/compose/environment-variables/#the-env-file>`__.
+        or create a `.env-file <https://docs.docker.com/compose/environment-variables/set-environment-variables/#substitute-with-an-env-file>`__.
         When starting an Artemis container directly with the Docker-CLI, an .env-file can also be given via the
         ``--env-file`` option.
 
@@ -211,7 +211,7 @@ Other run / debug configurations
   `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
 * **Artemis (Server, Jenkins & GitLab):** The server will be started separated from the client with the profiles
   ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
-* **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles ``dev,localci,localvc,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``. To use this configuration, Docker needs to be running on your system as the local CI system uses it to run build jobs.
+* **Artemis (Server with Integrated Code Lifecycle):** The server will be started separated from the client with the profiles ``dev,localci,localvc,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``. To use this configuration, Docker needs to be running on your system as Integrated Code Lifecycle uses it to run build jobs.
 * **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with ``athena`` profile and Local VC / CI enabled
   (see `Athena Service <#athena-service>`__).
 

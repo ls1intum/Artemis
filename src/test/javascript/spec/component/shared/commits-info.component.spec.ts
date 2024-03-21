@@ -63,7 +63,6 @@ describe('CommitsInfoComponent', () => {
     it('should correctly return commit url', () => {
         component.participationId = 1;
         component.commits = [commitInfo1];
-        component.ngOnInit();
         component.submissions = [
             {
                 commitHash: '123',
@@ -71,12 +70,15 @@ describe('CommitsInfoComponent', () => {
                     id: 1,
                     type: ParticipationType.PROGRAMMING,
                     participantIdentifier: '1',
-                    repositoryUrl: 'repo.abc',
+                    repositoryUri: 'repo.abc',
                 } as unknown as ProgrammingExerciseStudentParticipation,
             },
         ];
         component.exerciseProjectKey = 'key';
-        expect(component.getCommitUrl(commitInfo1)).toBe('https://bitbucket.ase.in.tum.de/projects/key/repos/key-1/commits/123');
+
+        component.ngOnInit();
+
+        expect(component.commits[0].commitUrl).toBe('https://bitbucket.ase.in.tum.de/projects/key/repos/key-1/commits/123');
     });
 
     it('should set localVC to true if active profiles contains localVc', () => {

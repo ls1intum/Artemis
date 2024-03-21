@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 @Profile("gitlabci")
 public class GitLabCIUserManagementService implements CIUserManagementService {
 
-    private final Logger log = LoggerFactory.getLogger(GitLabCIUserManagementService.class);
+    private static final Logger log = LoggerFactory.getLogger(GitLabCIUserManagementService.class);
 
     @Override
     public void createUser(User user, String password) throws ContinuousIntegrationException {

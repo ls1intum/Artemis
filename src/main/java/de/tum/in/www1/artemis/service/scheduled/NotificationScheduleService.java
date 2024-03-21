@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationServic
 @Profile("scheduling")
 public class NotificationScheduleService {
 
-    private final Logger log = LoggerFactory.getLogger(NotificationScheduleService.class);
+    private static final Logger log = LoggerFactory.getLogger(NotificationScheduleService.class);
 
     private final ScheduleService scheduleService;
 

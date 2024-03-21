@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -11,6 +14,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ExerciseDateService {
 
@@ -68,7 +72,7 @@ public class ExerciseDateService {
         final Exercise exercise = participation.getExercise();
         if (exercise.isExamExercise()) {
             if (participation instanceof StudentParticipation studentParticipation) {
-                return examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation);
+                return examDateService.isIndividualExerciseWorkingPeriodOver(exercise.getExamViaExerciseGroupOrCourseMember(), studentParticipation);
             }
             else {
                 return examDateService.isExamWithGracePeriodOver(exercise.getExamViaExerciseGroupOrCourseMember());

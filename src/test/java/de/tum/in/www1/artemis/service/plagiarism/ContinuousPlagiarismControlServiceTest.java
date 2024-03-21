@@ -5,12 +5,7 @@ import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -21,13 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import de.jplag.exceptions.BasecodeException;
 import de.jplag.exceptions.ExitException;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.*;
@@ -39,7 +28,6 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
-import de.tum.in.www1.artemis.service.metis.PostService;
 
 class ContinuousPlagiarismControlServiceTest {
 
@@ -53,12 +41,12 @@ class ContinuousPlagiarismControlServiceTest {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository = mock();
 
-    private final PostService postService = mock();
+    private final PlagiarismPostService plagiarismPostService = mock();
 
     private final PlagiarismResultRepository plagiarismResultRepository = mock();
 
     private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, plagiarismComparisonRepository,
-            plagiarismCaseService, plagiarismCaseRepository, postService, plagiarismResultRepository);
+            plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository);
 
     @Test
     void shouldExecuteChecks() throws ExitException, IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
@@ -139,8 +127,8 @@ class ContinuousPlagiarismControlServiceTest {
         verify(plagiarismComparisonRepository).updatePlagiarismComparisonStatus(12L, PlagiarismStatus.CONFIRMED);
         verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA(), true);
         verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB(), true);
-        verify(postService, times(2)).createContinuousPlagiarismControlPlagiarismCasePost(any());
-        verifyNoMoreInteractions(plagiarismComparisonRepository, plagiarismCaseService, postService, plagiarismResultRepository);
+        verify(plagiarismPostService, times(2)).createContinuousPlagiarismControlPlagiarismCasePost(any());
+        verifyNoMoreInteractions(plagiarismComparisonRepository, plagiarismCaseService, plagiarismPostService, plagiarismResultRepository);
     }
 
     @Test
@@ -165,7 +153,7 @@ class ContinuousPlagiarismControlServiceTest {
 
         // then
         verify(plagiarismCaseRepository).delete(plagiarismCase);
-        verifyNoMoreInteractions(plagiarismComparisonRepository, plagiarismCaseService, postService, plagiarismResultRepository);
+        verifyNoMoreInteractions(plagiarismComparisonRepository, plagiarismCaseService, plagiarismPostService, plagiarismResultRepository);
     }
 
     @Test

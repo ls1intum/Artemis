@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.service.ProfileService;
 @Profile("scheduling")
 public class WeeklyEmailSummaryScheduleService {
 
-    private final Logger log = LoggerFactory.getLogger(WeeklyEmailSummaryScheduleService.class);
+    private static final Logger log = LoggerFactory.getLogger(WeeklyEmailSummaryScheduleService.class);
 
     private final ProfileService profileService;
 

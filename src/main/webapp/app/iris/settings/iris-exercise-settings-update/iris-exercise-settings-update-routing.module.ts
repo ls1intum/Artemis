@@ -5,6 +5,7 @@ import { IrisModule } from 'app/iris/iris.module';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IrisExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update.component';
+import { IrisGuard } from 'app/iris/iris-guard.service';
 
 const routes: Routes = [
     {
@@ -14,7 +15,7 @@ const routes: Routes = [
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.iris.settings.title.exercise',
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, IrisGuard],
         canDeactivate: [PendingChangesGuard],
     },
 ];

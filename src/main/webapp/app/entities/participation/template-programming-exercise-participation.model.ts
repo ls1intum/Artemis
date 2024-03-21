@@ -3,7 +3,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 export class TemplateProgrammingExerciseParticipation extends Participation {
     public programmingExercise?: ProgrammingExercise;
-    public repositoryUrl?: string;
+    public repositoryUri?: string;
     public buildPlanId?: string;
     public buildPlanUrl?: string;
 

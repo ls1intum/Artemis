@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSendingS
 @Profile("athena & scheduling")
 public class AthenaScheduleService {
 
-    private final Logger log = LoggerFactory.getLogger(AthenaScheduleService.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaScheduleService.class);
 
     private final ExerciseLifecycleService exerciseLifecycleService;
 
@@ -65,7 +65,7 @@ public class AthenaScheduleService {
      * @param exercise exercise to schedule Athena for
      */
     public void scheduleExerciseForAthenaIfRequired(Exercise exercise) {
-        if (!exercise.getFeedbackSuggestionsEnabled()) {
+        if (!exercise.areFeedbackSuggestionsEnabled()) {
             cancelScheduledAthena(exercise.getId());
             return;
         }

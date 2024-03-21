@@ -32,7 +32,7 @@ export class ArtemisServerDateService implements ServerDateService {
      * get a new server date if necessary
      */
     updateTime(): void {
-        let shouldSync = false;
+        let shouldSync: boolean;
         const now = dayjs(new Date());
         if (this.recentClientDates.length > 4) {
             // only if some recent client dates (i.e. recent syncs) are older than 60s

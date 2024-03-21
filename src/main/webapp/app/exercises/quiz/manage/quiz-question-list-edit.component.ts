@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, QueryList, ViewChildren, ViewEncapsulation } from '@angular/core';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -9,6 +10,7 @@ import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.i
 import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
 import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
+import { ApollonDiagramImportDialogComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-import-dialog.component';
 
 @Component({
     selector: 'jhi-quiz-question-list-edit',
@@ -44,6 +46,8 @@ export class QuizQuestionListEditComponent {
     showExistingQuestions = false;
 
     fileMap = new Map<string, { path?: string; file: File }>();
+
+    constructor(private modalService: NgbModal) {}
 
     /**
      * Emit onQuestionUpdated if there is an update of the question.
@@ -143,6 +147,16 @@ export class QuizQuestionListEditComponent {
         dndQuestion.dragItems = [];
         dndQuestion.correctMappings = [];
         this.addQuestion(dndQuestion);
+    }
+
+    async importApollonDragAndDropQuestion() {
+        const modalRef: NgbModalRef = this.modalService.open(ApollonDiagramImportDialogComponent as Component, { size: 'xl', backdrop: 'static' });
+        modalRef.componentInstance.courseId = this.courseId;
+
+        const question = await modalRef.result;
+        if (question) {
+            this.addQuestion(question);
+        }
     }
 
     /**

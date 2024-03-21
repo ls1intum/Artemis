@@ -1,4 +1,4 @@
-<ng-container *ngIf="tutorialGroup.averageAttendance !== undefined && tutorialGroup.capacity !== undefined; else noUtilization">
+@if (tutorialGroup.averageAttendance !== undefined && tutorialGroup.capacity !== undefined) {
     <jhi-vertical-progress-bar
         [fillLevelInPercent]="Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100)"
         [widthInPixels]="20"
@@ -7,12 +7,11 @@
     >
         >
     </jhi-vertical-progress-bar>
-</ng-container>
-<ng-template #noUtilization>
+} @else {
     <!-- We can at least show the average attendance even if capacity is not defined-->
     <span>{{
         tutorialGroup.averageAttendance !== undefined
             ? ('artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: tutorialGroup.averageAttendance })
             : ''
     }}</span>
-</ng-template>
+}

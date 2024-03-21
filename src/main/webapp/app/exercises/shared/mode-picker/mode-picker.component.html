@@ -1,13 +1,9 @@
 <div class="d-flex align-items-start">
     <div class="btn-group" [ngClass]="{ disabled }">
-        <div
-            *ngFor="let option of options"
-            class="btn"
-            [class.disabled]="disabled"
-            [ngClass]="value === option.value ? option.btnClass : 'btn-default'"
-            (click)="setMode(option.value)"
-        >
-            {{ option.label ?? (option.labelKey | artemisTranslate) }}
-        </div>
+        @for (option of options; track option) {
+            <div class="btn" [class.disabled]="disabled" [ngClass]="value === option.value ? option.btnClass : 'btn-default'" (click)="setMode(option.value)">
+                {{ option.label ?? (option.labelKey | artemisTranslate) }}
+            </div>
+        }
     </div>
 </div>

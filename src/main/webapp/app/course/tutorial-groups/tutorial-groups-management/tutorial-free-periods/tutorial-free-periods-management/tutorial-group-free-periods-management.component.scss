@@ -13,3 +13,14 @@
         }
     }
 }
+
+tr.text-past td {
+    color: gray;
+}
+
+.free-period-reason-overflow {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* number of lines to show */
+    -webkit-box-orient: vertical;
+}

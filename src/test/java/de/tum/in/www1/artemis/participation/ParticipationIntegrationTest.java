@@ -477,10 +477,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
 
-        participation.setRepositoryUrl(ParticipationFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
         participationRepo.save(participation);
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 90).participation(participation);
         result.setCompletionDate(ZonedDateTime.now());
@@ -526,10 +526,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
 
-        participation.setRepositoryUrl(ParticipationFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
         participationRepo.save(participation);
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).participation(participation);
         result.setCompletionDate(ZonedDateTime.now());
@@ -554,9 +554,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
-        participation.setRepositoryUrl(ParticipationFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
         participationRepo.save(participation);
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
         var updatedParticipation = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         assertThat(updatedParticipation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
@@ -729,7 +729,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             if (exercise instanceof ProgrammingExercise aProgrammingExercise) {
                 assertThat(aProgrammingExercise.getSolutionParticipation()).isNull();
                 assertThat(aProgrammingExercise.getTemplateParticipation()).isNull();
-                assertThat(aProgrammingExercise.getTestRepositoryUrl()).isNull();
+                assertThat(aProgrammingExercise.getTestRepositoryUri()).isNull();
                 assertThat(aProgrammingExercise.getShortName()).isNull();
                 assertThat(aProgrammingExercise.isPublishBuildPlanUrl()).isNull();
                 assertThat(aProgrammingExercise.getProgrammingLanguage()).isNull();

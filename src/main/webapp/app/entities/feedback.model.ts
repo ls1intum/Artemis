@@ -150,6 +150,16 @@ export class Feedback implements BaseEntity {
     }
 
     /**
+     * Checks for equality of two feedbacks. Only checking the ids is not enough because they are undefined for inline
+     * feedbacks before they are saved.
+     * @param f1 The feedback that is compared to f2
+     * @param f2 The feedback that is compared to f1
+     */
+    public static areIdentical(f1: Feedback, f2: Feedback) {
+        return f1.id === f2.id && f1.text === f2.text && f1.detailText === f2.detailText;
+    }
+
+    /**
      * Get the referenced file path for referenced programming feedbacks, or undefined.
      * Typical reference format for programming feedback: `file:src/com/example/package/MyClass.java_line:13`.
      * Example output in this case: `src/com/example/package/MyClass.java`

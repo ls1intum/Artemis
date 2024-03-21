@@ -1,6 +1,8 @@
 <div class="d-flex flex-column gap-1 working-time-control">
     <div class="d-flex flex-column gap-1">
-        <label for="workingTimeHours" class="me-4" [jhiTranslate]="durationLabelText" *ngIf="durationLabelText"></label>
+        @if (durationLabelText) {
+            <label for="workingTimeHours" class="me-4" [jhiTranslate]="durationLabelText"></label>
+        }
         <div class="input-group">
             <input
                 [(ngModel)]="workingTime.hours"
@@ -45,22 +47,26 @@
             <label for="workingTimeSeconds" class="input-group-text">s</label>
         </div>
     </div>
-    <div class="d-flex flex-column gap-1" *ngIf="exam && relative">
-        <label for="workingTimePercent" class="me-4 flex-fill" [jhiTranslate]="relativeLabelText" *ngIf="relativeLabelText"></label>
-        <div class="input-group">
-            <input
-                [(ngModel)]="workingTime.percent"
-                (ngModelChange)="onPercentChanged()"
-                [disabled]="disabled"
-                id="workingTimePercent"
-                name="percent"
-                type="number"
-                class="text-center form-control form-number-input"
-                [min]="allowNegative ? -100 : 0"
-                step=".01"
-                required
-            />
-            <label for="workingTimePercent" class="input-group-text">%</label>
+    @if (exam && relative) {
+        <div class="d-flex flex-column gap-1">
+            @if (relativeLabelText) {
+                <label for="workingTimePercent" class="me-4 flex-fill" [jhiTranslate]="relativeLabelText"></label>
+            }
+            <div class="input-group">
+                <input
+                    [(ngModel)]="workingTime.percent"
+                    (ngModelChange)="onPercentChanged()"
+                    [disabled]="disabled"
+                    id="workingTimePercent"
+                    name="percent"
+                    type="number"
+                    class="text-center form-control form-number-input"
+                    [min]="allowNegative ? -100 : 0"
+                    step=".01"
+                    required
+                />
+                <label for="workingTimePercent" class="input-group-text">%</label>
+            </div>
         </div>
-    </div>
+    }
 </div>

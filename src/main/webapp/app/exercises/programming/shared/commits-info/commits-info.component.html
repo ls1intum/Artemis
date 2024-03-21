@@ -1,4 +1,8 @@
-<h5>{{ 'artemisApp.programmingExercise.commitInfo.title' | artemisTranslate }}</h5>
+@if (isRepositoryView) {
+    <h3>{{ 'artemisApp.programmingExercise.commitInfo.history' | artemisTranslate }}</h3>
+} @else {
+    <h5>{{ 'artemisApp.programmingExercise.commitInfo.title' | artemisTranslate }}</h5>
+}
 <div style="overflow-x: auto">
     <table class="table table-responsive">
         <thead>
@@ -7,44 +11,65 @@
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.commitHash' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.author' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.date' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.result' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.message' | artemisTranslate }}</th>
             </tr>
         </thead>
         <tbody>
-            <ng-container *ngFor="let commit of commits; let i = index">
+            @for (commit of commits; track commit; let i = $index) {
                 <tr>
                     <th scope="row">{{ i + 1 }}</th>
                     <td>
-                        <span *ngIf="localVC; else hashWithUrl">
-                            {{ commit.hash }}
-                        </span>
-                        <ng-template #hashWithUrl>
-                            <a [href]="getCommitUrl(commit)"> {{ commit.hash }} </a>
-                        </ng-template>
+                        @if (localVC) {
+                            @if (isRepositoryView) {
+                                <a [href]="routerLink + '/' + commit.hash"> {{ commit.hash }} </a>
+                            } @else {
+                                <span>
+                                    {{ commit.hash }}
+                                </span>
+                            }
+                        } @else {
+                            <a [href]="commit.commitUrl"> {{ commit.hash }} </a>
+                        }
                     </td>
                     <td>
-                        {{ commit.author }}
+                        @if (isRepositoryView) {
+                            {{ commit.author }}, <span class="text-primary">{{ commit.authorEmail }}</span>
+                        } @else {
+                            {{ commit.author }}
+                        }
                     </td>
                     <td>
                         {{ commit.timestamp | artemisDate: 'long' : true }}
                     </td>
+                    @if (isRepositoryView) {
+                        <td>
+                            @if (commit.result) {
+                                <jhi-result [result]="commit.result" [showUngradedResults]="true" [showBadge]="true" />
+                            } @else {
+                                <span class="text-body-secondary">
+                                    <fa-icon [icon]="faCircle" size="lg" />&nbsp;
+                                    <span> {{ 'artemisApp.result.noResult' | artemisTranslate }}</span>
+                                </span>
+                            }
+                        </td>
+                    }
                     <td>
                         {{ commit.message }}
-                        <ng-container *ngIf="currentSubmissionHash === commit.hash">
+                        @if (currentSubmissionHash === commit.hash) {
                             <span class="badge bg-info">
                                 {{ 'artemisApp.programmingExercise.commitInfo.currentSubmission' | artemisTranslate }}
                             </span>
-                        </ng-container>
-                        <ng-container *ngIf="previousSubmissionHash === commit.hash">
+                        }
+                        @if (previousSubmissionHash === commit.hash) {
                             <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.previousSubmission' | artemisTranslate }} </span>
-                        </ng-container>
-
-                        <ng-container *ngIf="!previousSubmissionHash && i === commits?.length! - 1">
+                        }
+                        @if (!previousSubmissionHash && i === commits?.length! - 1) {
                             <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.template' | artemisTranslate }} </span>
-                        </ng-container>
+                        }
                     </td>
                 </tr>
-            </ng-container>
+            }
         </tbody>
     </table>
 </div>

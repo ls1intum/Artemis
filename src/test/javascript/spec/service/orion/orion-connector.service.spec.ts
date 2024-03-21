@@ -43,6 +43,7 @@ describe('OrionConnectorService', () => {
             downloadSubmission: jest.fn(),
             initializeAssessment: jest.fn(),
             importParticipation: jest.fn(),
+            initializeTestRepository: jest.fn(),
         } as OrionExerciseConnector;
         (window as any).orionVCSConnector = { selectRepository: jest.fn(), submit: jest.fn() } as OrionVCSConnector;
         (window as any).orionBuildConnector = {

@@ -86,7 +86,7 @@ REST interfaces to the application client.
     Server Architecture
 
 
-Local VC and local CI
----------------------
+Integrated Code Lifecycle
+-------------------------
 
-.. include:: system-design/localvc-localci/localvc-localci-system-design.rst
+.. include:: system-design/integrated-code-lifecycle/integrated-code-lifecycle-system-design.rst

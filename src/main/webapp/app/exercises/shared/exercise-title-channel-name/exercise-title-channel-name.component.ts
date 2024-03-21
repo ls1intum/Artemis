@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { Course, isMessagingOrCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 
 @Component({
     selector: 'jhi-exercise-title-channel-name',
@@ -14,6 +15,8 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     @Input() isExamMode: boolean;
     @Input() isImport: boolean;
     @Input() hideTitleLabel: boolean;
+
+    @ViewChild(TitleChannelNameComponent) titleChannelNameComponent: TitleChannelNameComponent;
 
     @Output() onTitleChange = new EventEmitter<string>();
     @Output() onChannelNameChange = new EventEmitter<string>();

@@ -16,7 +16,7 @@ Artemis extends the basic `Markdown <https://daringfireball.net/projects/markdow
 Integrated Markdown Editor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The markdown editor contains a formatting toolbar at the top, allowing users to format text without learning Markdown syntax. 
+The markdown editor contains a formatting toolbar at the top, allowing users to format text without learning Markdown syntax.
 
 In addition, images can be uploaded and included by either dragging and dropping them into the editor field or by clicking at the footer of the editor, which brings up the file selection dialog.
 
@@ -30,7 +30,7 @@ The user can switch to a preview of the formatted content by clicking on the Pre
 Markdown Extensions For Communication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Markdown is also supported in the context of :ref:`communicating<communication>` with other users. Here, the Markdown syntax is extended to allow users to reference other posts, lectures or exercises.
+Markdown is also supported in the context of :ref:`communicating<communication>` with other users. Here, the Markdown syntax is extended to allow users to reference other messages, lectures, or exercises.
 
 |markdown-post-extensions|
 

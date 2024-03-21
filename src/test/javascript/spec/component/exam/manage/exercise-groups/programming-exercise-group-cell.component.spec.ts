@@ -22,11 +22,11 @@ describe('Programming Exercise Group Cell Component', () => {
         projectKey: 'key',
         templateParticipation: {
             buildPlanId: '1',
-            repositoryUrl: 'https://test.com/myrepo',
+            repositoryUri: 'https://test.com/myrepo',
         },
         solutionParticipation: {
             buildPlanId: '2',
-            repositoryUrl: 'https://test.com/myrepo',
+            repositoryUri: 'https://test.com/myrepo',
         },
         allowOfflineIde: true,
         allowOnlineEditor: true,
@@ -79,12 +79,12 @@ describe('Programming Exercise Group Cell Component', () => {
     });
 
     it('should display respository url', () => {
-        comp.displayRepositoryUrl = true;
+        comp.displayRepositoryUri = true;
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('a'));
         expect(span).toBeDefined();
         expect(span.nativeElement.textContent).toBe('Template');
-        expect(span.nativeElement.href).toBe(exercise.templateParticipation!.repositoryUrl);
+        expect(span.nativeElement.href).toBe(exercise.templateParticipation!.repositoryUri);
     });
 
     it('should display editor mode flags', () => {

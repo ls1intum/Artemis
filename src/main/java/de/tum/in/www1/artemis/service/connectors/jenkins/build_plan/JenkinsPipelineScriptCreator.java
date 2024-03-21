@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.build_plan;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -10,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.io.IOUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +26,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractBuildPlanCreator;
 
+@Profile(PROFILE_CORE)
 @Component
 public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
 

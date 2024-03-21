@@ -21,8 +21,8 @@ import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionVersionDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 
 class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -166,7 +166,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
         submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
-        PageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
+        SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
 
         var resultPage = request.getSearchResult("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, Submission.class,
                 pageableSearchUtilService.searchMapping(search));
@@ -177,7 +177,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize_exerciseNotFound() throws Exception {
         long randomExerciseId = UUID.nameUUIDFromBytes("test".getBytes()).getMostSignificantBits();
-        PageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
+        SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
         request.getSearchResult("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, Submission.class,
                 pageableSearchUtilService.searchMapping(search));
     }
@@ -190,7 +190,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         assertThat(textExercise).isNotNull();
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        PageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
+        SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
         request.getSearchResult("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, Submission.class,
                 pageableSearchUtilService.searchMapping(search));
     }

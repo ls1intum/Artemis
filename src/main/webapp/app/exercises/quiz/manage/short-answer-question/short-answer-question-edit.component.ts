@@ -208,6 +208,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             this,
         );
         this.changeDetector.detectChanges();
+        this.parseMarkdown(this.questionEditorText);
+        this.questionUpdated.emit();
     }
 
     /**

@@ -17,8 +17,8 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 /**
  * REST controller for managing the models Pyris provides.
  */
-@RestController
 @Profile("iris")
+@RestController
 @RequestMapping("api/")
 public class IrisModelsResource {
 

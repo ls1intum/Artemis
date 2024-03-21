@@ -17,6 +17,10 @@ public class WindfileMetadata {
 
     private DockerConfig docker;
 
+    private String resultHook;
+
+    private String resultHookCredentials;
+
     public String getName() {
         return name;
     }
@@ -63,5 +67,21 @@ public class WindfileMetadata {
 
     public void setDocker(DockerConfig docker) {
         this.docker = docker;
+    }
+
+    public String getResultHook() {
+        return resultHook;
+    }
+
+    public void setResultHook(String resultHook) {
+        this.resultHook = resultHook;
+    }
+
+    public void setResultHookCredentials(String resultHookCredentials) {
+        this.resultHookCredentials = resultHookCredentials;
+    }
+
+    public String getResultHookCredentials() {
+        return resultHookCredentials;
     }
 }

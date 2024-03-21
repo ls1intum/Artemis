@@ -73,8 +73,8 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getTemplateBuildPlanId(), true, false);
         bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getSolutionBuildPlanId(), true, false);
-        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
-        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(), programmingExercise.getProjectKey(), true);
+        bitbucketRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
+        bitbucketRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(), programmingExercise.getProjectKey(), true);
 
         var programmingExerciseCountBefore = programmingExerciseRepository.count();
 
@@ -168,8 +168,8 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
             bitbucketRequestMockProvider.enableMockingOfRequests();
             bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getTemplateBuildPlanId(), true, false);
             bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getSolutionBuildPlanId(), true, false);
-            bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
-            bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(), programmingExercise.getProjectKey(), true);
+            bitbucketRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
+            bitbucketRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(), programmingExercise.getProjectKey(), true);
         }
 
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
@@ -225,18 +225,18 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         // Create all possible combinations of the entries in allParticipations
         for (int i = 0; i < 2 << allParticipations.size(); i++) {
-            List<StudentParticipation> participationsToTest = new ArrayList<>();
+            Set<StudentParticipation> participationsToTest = new HashSet<>();
             for (int j = 0; j < allParticipations.size(); j++) {
                 if (((i >> j) & 1) == 1) {
                     participationsToTest.add(allParticipations.get(j));
                 }
             }
-            List<StudentParticipation> expectedParticipations = new ArrayList<>(participationsToTest);
+            Set<StudentParticipation> expectedParticipations = new HashSet<>(participationsToTest);
             if (expectedParticipations.contains(gradedParticipationInitialized)) {
                 expectedParticipations.remove(gradedParticipationFinished);
             }
 
-            List<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(participationsToTest);
+            Set<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(participationsToTest);
             assertThat(relevantParticipations).containsExactlyElementsOf(expectedParticipations);
         }
     }

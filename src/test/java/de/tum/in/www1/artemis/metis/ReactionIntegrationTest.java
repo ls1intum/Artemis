@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -43,6 +44,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private ConversationMessageRepository conversationMessageRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -87,7 +91,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
         // student1)
         existingPostsWithAnswers = conversationUtilService.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
-                .filter(coursePost -> coursePost.getAnswers() != null && coursePost.getPlagiarismCase() == null).toList();
+                .filter(coursePost -> coursePost.getAnswers() != null && !coursePost.getAnswers().isEmpty()).toList();
 
         // filters existing posts with conversation
         existingConversationPosts = existingPostsWithAnswers.stream().filter(post -> post.getConversation() != null).toList();
@@ -95,7 +99,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // get all answerPosts
         existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
 
-        course = existingPostsWithAnswers.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        course = existingPostsWithAnswers.stream().filter(post -> post.getPlagiarismCase() != null).findFirst().orElseThrow().getPlagiarismCase().getExercise()
+                .getCourseViaExerciseGroupOrCourseMember();
         courseId = course.getId();
     }
 
@@ -140,7 +145,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         checkCreatedReaction(reactionToSaveOnPost, createdReaction);
         assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
         // should increase post's vote count
-        assertThat(postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount() + 1);
+        assertThat(conversationMessageRepository.findById(postReactedOn.getId()).orElseThrow().getVoteCount()).isEqualTo(postReactedOn.getVoteCount() + 1);
     }
 
     @ParameterizedTest
@@ -169,7 +174,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void testCreateReactionOnConversationBetweenOtherUsers_forbidden() throws Exception {
         // student 1 is the author of the message between student1 & student2 and student3 not part of the conversation tries to react on it
-        Post messageReactedOn = existingConversationPosts.get(0);
+        Post messageReactedOn = existingConversationPosts.get(2);
         Reaction reactionToSaveOnMessage = createReactionOnPost(messageReactedOn);
 
         Reaction notCreatedReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnMessage, Reaction.class,
@@ -328,8 +333,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         params.add("postSortCriterion", sortCriterion.toString());
         params.add("sortingOrder", sortingOrder.toString());
+        params.add("courseWideChannelIds", "");
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
 
         Long numberOfMaxVotesSeenOnAnyPost = Long.MAX_VALUE;
         for (Post post : returnedPosts) {
@@ -364,8 +370,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         params.add("postSortCriterion", sortCriterion.toString());
         params.add("sortingOrder", sortingOrder.toString());
+        params.add("courseWideChannelIds", "");
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
 
         Long numberOfMaxVotesSeenOnAnyPost = 0L;
         for (Post post : returnedPosts) {
@@ -411,7 +418,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
         // should increase post's vote count
-        assertThat(postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount() + 1);
+        assertThat(conversationMessageRepository.findById(postReactedOn.getId()).orElseThrow().getVoteCount()).isEqualTo(postReactedOn.getVoteCount() + 1);
 
         // student 1 deletes their reaction on this post
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
@@ -419,7 +426,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(postReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(postReactedOn.getId()));
         assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
         // should decrease post's vote count
-        assertThat(postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount());
+        assertThat(conversationMessageRepository.findById(postReactedOn.getId()).orElseThrow().getVoteCount()).isEqualTo(postReactedOn.getVoteCount());
     }
 
     @ParameterizedTest

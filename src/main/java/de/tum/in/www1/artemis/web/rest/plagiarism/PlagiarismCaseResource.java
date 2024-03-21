@@ -1,18 +1,23 @@
 package de.tum.in.www1.artemis.web.rest.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -28,6 +33,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 /**
  * REST controller for managing Plagiarism Cases.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class PlagiarismCaseResource {
@@ -44,7 +50,7 @@ public class PlagiarismCaseResource {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
-    private final Logger log = LoggerFactory.getLogger(PlagiarismCaseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PlagiarismCaseResource.class);
 
     public PlagiarismCaseResource(CourseRepository courseRepository, AuthorizationCheckService authenticationCheckService, UserRepository userRepository,
             PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository) {
@@ -260,13 +266,14 @@ public class PlagiarismCaseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        var plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCaseId);
+        var plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfigElseThrow(plagiarismCaseId);
         if (!plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
             throw new AccessForbiddenException("Students only have access to plagiarism cases by which they are affected");
         }
 
         // hide potentially sensitive data
         plagiarismCase.getExercise().filterSensitiveInformation();
+        Optional.ofNullable(plagiarismCase.getExercise().getPlagiarismDetectionConfig()).ifPresent(PlagiarismDetectionConfig::filterSensitiveInformation);
 
         return getPlagiarismCaseResponseEntity(plagiarismCase);
     }

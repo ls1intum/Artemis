@@ -3,7 +3,11 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -451,7 +455,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor", TEST_PREFIX + "editor",
                 TEST_PREFIX + "instructor");
         course = courseRepo.save(course);
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         course = courseRepo.save(course);
 
         User tutor = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1").orElseThrow();
@@ -469,7 +473,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
-        request.put("/api/courses", course, HttpStatus.OK);
+        request.getMvc().perform(courseTestService.buildUpdateCourse(1, course)).andExpect(status().isOk()).andReturn();
 
         verifyNoInteractions(versionControlService);
     }
@@ -953,12 +957,6 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testInvalidOnlineCourseConfigurationNonUniqueRegistrationId() throws Exception {
-        courseTestService.testInvalidOnlineCourseConfigurationNonUniqueRegistrationId();
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
         courseTestService.testUpdateValidOnlineCourseConfigurationAsStudent_forbidden();
@@ -992,5 +990,29 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateCourseEnableLearningPaths() throws Exception {
         courseTestService.testUpdateCourseEnableLearningPaths();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetCoursesForImportWithoutPermission() throws Exception {
+        courseTestService.testGetCoursesForImportWithoutPermission();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCoursesForImport_asInsturctor() throws Exception {
+        courseTestService.testGetCoursesForImport();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetCoursesForImport_asAdmin() throws Exception {
+        courseTestService.testGetCoursesForImport();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testFindAllOnlineCoursesForLtiDashboard() throws Exception {
+        courseTestService.testFindAllOnlineCoursesForLtiDashboard();
     }
 }

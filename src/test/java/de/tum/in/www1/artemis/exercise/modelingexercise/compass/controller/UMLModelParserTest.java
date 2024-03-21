@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLControlFlow;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 
 class UMLModelParserTest {
 
@@ -230,7 +230,7 @@ class UMLModelParserTest {
     }
 
     private JsonObject loadFileFromResources(String path) throws Exception {
-        return parseString(FileUtils.loadFileFromResources(path)).getAsJsonObject();
+        return parseString(TestResourceUtils.loadFileFromResources(path)).getAsJsonObject();
     }
 
     private List<UMLElement> createExampleClassDiagramElements() {

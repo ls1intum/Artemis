@@ -1,13 +1,13 @@
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { Post } from 'app/entities/metis/post.model';
 
 import { COURSE_BASE, GET, POST, PUT } from '../constants';
 import { CypressCredentials } from '../users';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import Chainable = Cypress.Chainable;
 
 /**
@@ -36,7 +36,7 @@ export class CommunicationAPIRequests {
             displayPriority: 'NONE',
             visibleForStudents: true,
         };
-        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/messages`, body });
+        return cy.request({ method: POST, url: `${COURSE_BASE}/${course.id}/messages`, body });
     }
 
     /**
@@ -57,7 +57,7 @@ export class CommunicationAPIRequests {
             name,
             type: 'channel',
         };
-        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels`, body });
+        return cy.request({ method: POST, url: `${COURSE_BASE}/${course.id}/channels`, body });
     }
 
     /**
@@ -68,8 +68,8 @@ export class CommunicationAPIRequests {
      */
     getCourseWideChannels(courseId: number): Chainable<ChannelDTO[]> {
         return cy
-            .request({ method: GET, url: `${COURSE_BASE}${courseId}/conversations` })
-            .then((response) => response.body.filter((conv: ConversationDto) => getAsChannelDto(conv)?.isCourseWide === true));
+            .request({ method: GET, url: `${COURSE_BASE}/${courseId}/conversations` })
+            .then((response) => response.body.filter((conv: ConversationDTO) => getAsChannelDTO(conv)?.isCourseWide === true));
     }
 
     /**
@@ -80,7 +80,7 @@ export class CommunicationAPIRequests {
      * @returns A Cypress.Chainable<Cypress.Response<any>> representing the API request response.
      */
     getExerciseChannel(courseId: number, exerciseId: number) {
-        return cy.request({ method: GET, url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/channel` });
+        return cy.request({ method: GET, url: `${COURSE_BASE}/${courseId}/exercises/${exerciseId}/channel` });
     }
 
     /**
@@ -91,7 +91,7 @@ export class CommunicationAPIRequests {
      * @returns A Cypress.Chainable<Cypress.Response<any>> representing the API request response.
      */
     getLectureChannel(courseId: number, exerciseId: number) {
-        return cy.request({ method: GET, url: `${COURSE_BASE}${courseId}/lectures/${exerciseId}/channel` });
+        return cy.request({ method: GET, url: `${COURSE_BASE}/${courseId}/lectures/${exerciseId}/channel` });
     }
 
     /**
@@ -103,7 +103,7 @@ export class CommunicationAPIRequests {
      */
     createCourseMessageGroupChat(course: Course, users: Array<string>) {
         const body = users;
-        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/group-chats`, body });
+        return cy.request({ method: POST, url: `${COURSE_BASE}/${course.id}/group-chats`, body });
     }
 
     /**
@@ -125,7 +125,7 @@ export class CommunicationAPIRequests {
             displayPriority: 'NONE',
             visibleForStudents: true,
         };
-        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/messages`, body });
+        return cy.request({ method: POST, url: `${COURSE_BASE}/${course.id}/messages`, body });
     }
 
     /**
@@ -146,7 +146,7 @@ export class CommunicationAPIRequests {
             displayPriority: 'NONE',
             visibleForStudents: true,
         };
-        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/messages`, body });
+        return cy.request({ method: POST, url: `${COURSE_BASE}/${course.id}/messages`, body });
     }
 
     /**
@@ -162,7 +162,7 @@ export class CommunicationAPIRequests {
             name,
             type: 'groupChat',
         };
-        return cy.request({ method: PUT, url: `${COURSE_BASE}${course.id}/group-chats/${groupChat.id}`, body });
+        return cy.request({ method: PUT, url: `${COURSE_BASE}/${course.id}/group-chats/${groupChat.id}`, body });
     }
 
     /**
@@ -175,7 +175,7 @@ export class CommunicationAPIRequests {
      */
     joinUserIntoChannel(course: Course, channelId: number, user: CypressCredentials) {
         const body = [user.username];
-        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels/${channelId}/register`, body });
+        return cy.request({ method: POST, url: `${COURSE_BASE}/${course.id}/channels/${channelId}/register`, body });
     }
 
     /**
@@ -192,7 +192,7 @@ export class CommunicationAPIRequests {
             post,
             resolvesPost: true,
         };
-        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/answer-messages`, body });
+        return cy.request({ method: POST, url: `${COURSE_BASE}/${course.id}/answer-messages`, body });
     }
 
     /**
@@ -217,7 +217,7 @@ export class CommunicationAPIRequests {
             title,
             visibleForStudents: true,
         };
-        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/posts`, body });
+        return cy.request({ method: POST, url: `${COURSE_BASE}/${course.id}/posts`, body });
     }
 
     /**

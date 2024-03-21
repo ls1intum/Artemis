@@ -12,7 +12,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
-import { faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch, faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -53,6 +53,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     beforeDueDate: boolean;
     editorLabel?: string;
     localVCEnabled = false;
+    repositoryLink: string;
 
     // Icons
     faComment = faComment;
@@ -62,6 +63,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     faPlayCircle = faPlayCircle;
     faRedo = faRedo;
     faExternalLinkAlt = faExternalLinkAlt;
+    faCodeBranch = faCodeBranch;
 
     constructor(
         private alertService: AlertService,
@@ -74,6 +76,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     ) {}
 
     ngOnInit(): void {
+        this.repositoryLink = this.router.url;
+        if (this.repositoryLink.endsWith('exercises')) {
+            this.repositoryLink += `/${this.exercise.id}`;
+        }
+        if (this.repositoryLink.includes('exams')) {
+            this.repositoryLink += `/exercises/${this.exercise.id}`;
+        }
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
@@ -237,10 +246,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * - the participation is initialized (build plan exists, this is always the case during an exam), or
      * - the participation is inactive (build plan cleaned up), but can not be resumed (e.g. because we're after the due date)
      *
+     * for all conditions it is important that the repository is set
+     *
      * For course exercises, an initialized practice participation should only be displayed if it's not possible to start a new graded participation.
      * For exam exercises, only one active participation can exist, so this should be shown.
      */
     public shouldDisplayIDEButtons(): boolean {
+        if (!this.isRepositoryUriSet()) {
+            return false;
+        }
         const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise);
         const activePracticeParticipation = this.practiceParticipation?.initializationState === InitializationState.INITIALIZED && (shouldPreferPractice || this.examMode);
         const activeGradedParticipation = this.gradedParticipation?.initializationState === InitializationState.INITIALIZED;
@@ -250,6 +264,16 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             !isStartExerciseAvailable(this.exercise, this.gradedParticipation);
 
         return activePracticeParticipation || activeGradedParticipation || inactiveGradedParticipation;
+    }
+
+    /**
+     * Returns true if the repository uri of the active participation is set
+     * We don't want to show buttons that would interact with the repository if the repository is not set
+     */
+    private isRepositoryUriSet(): boolean {
+        const participations = this.exercise.studentParticipations ?? [];
+        const activeParticipation: ProgrammingExerciseStudentParticipation = this.participationService.getSpecificStudentParticipation(participations, false) ?? participations[0];
+        return !!activeParticipation?.repositoryUri;
     }
 
     /**

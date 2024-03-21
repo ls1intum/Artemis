@@ -81,6 +81,18 @@ public class ConversationFactory {
     /**
      * Generates a Channel for the given Course.
      *
+     * @param course       The Course to generate the Channel for
+     * @param channelName  The name of the Channel
+     * @param isCourseWide True, if the Channel is course-wide
+     * @return The generated Channel
+     */
+    public static Channel generateAnnouncementChannel(Course course, String channelName, boolean isCourseWide) {
+        return generatePublicChannel(course, channelName, isCourseWide, true);
+    }
+
+    /**
+     * Generates a Channel for the given Course.
+     *
      * @param course         The Course to generate the Channel for
      * @param channelName    The name of the Channel
      * @param isCourseWide   True, if the Channel is course-wide

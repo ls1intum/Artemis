@@ -18,11 +18,10 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.mail.javamail.JavaMailSender;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
@@ -50,9 +49,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected String defaultBranch;
 
     // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
-    @SpyBean
-    protected Lti10Service lti10Service;
-
     @SpyBean
     protected Lti13Service lti13Service;
 
@@ -114,7 +110,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     @SpyBean
-    protected UrlService urlService;
+    protected UriService uriService;
 
     @SpyBean
     protected ScheduleService scheduleService;
@@ -151,31 +147,31 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     protected void resetSpyBeans() {
-        Mockito.reset(lti10Service, gitService, groupNotificationService, conversationNotificationService, tutorialGroupNotificationService, singleUserNotificationService,
+        Mockito.reset(gitService, groupNotificationService, conversationNotificationService, tutorialGroupNotificationService, singleUserNotificationService,
                 websocketMessagingService, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
-                urlService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService);
+                uriService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService);
     }
 
     @Override
-    public void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUrl repositoryUrl) {
+    public void mockGetRepositorySlugFromRepositoryUri(String repositorySlug, VcsRepositoryUri repositoryUri) {
         // mock both versions to be independent
-        doReturn(repositorySlug).when(urlService).getRepositorySlugFromRepositoryUrl(repositoryUrl);
-        doReturn(repositorySlug).when(urlService).getRepositorySlugFromRepositoryUrlString(repositoryUrl.toString());
+        doReturn(repositorySlug).when(uriService).getRepositorySlugFromRepositoryUri(repositoryUri);
+        doReturn(repositorySlug).when(uriService).getRepositorySlugFromRepositoryUriString(repositoryUri.toString());
     }
 
     @Override
-    public void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUrl repositoryUrl) {
-        doReturn(projectKey).when(urlService).getProjectKeyFromRepositoryUrl(repositoryUrl);
+    public void mockGetProjectKeyFromRepositoryUri(String projectKey, VcsRepositoryUri repositoryUri) {
+        doReturn(projectKey).when(uriService).getProjectKeyFromRepositoryUri(repositoryUri);
     }
 
     @Override
-    public void mockGetRepositoryPathFromRepositoryUrl(String projectPath, VcsRepositoryUrl repositoryUrl) {
-        doReturn(projectPath).when(urlService).getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    public void mockGetRepositoryPathFromRepositoryUri(String projectPath, VcsRepositoryUri repositoryUri) {
+        doReturn(projectPath).when(uriService).getRepositoryPathFromRepositoryUri(repositoryUri);
     }
 
     @Override
     public void mockGetProjectKeyFromAnyUrl(String projectKey) {
-        doReturn(projectKey).when(urlService).getProjectKeyFromRepositoryUrl(any());
+        doReturn(projectKey).when(uriService).getProjectKeyFromRepositoryUri(any());
     }
 
     /**

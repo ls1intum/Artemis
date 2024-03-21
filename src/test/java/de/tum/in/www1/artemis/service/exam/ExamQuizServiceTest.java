@@ -160,7 +160,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(studentExamRepository.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
+        assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(NUMBER_OF_STUDENTS);
 
@@ -205,7 +205,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(studentExamRepository.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
+        assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
 
         // add participations with no submissions
@@ -256,7 +256,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(studentExamRepository.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
+        assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(NUMBER_OF_STUDENTS);
 
@@ -308,7 +308,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(studentExamRepository.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
+        assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(NUMBER_OF_STUDENTS);
 

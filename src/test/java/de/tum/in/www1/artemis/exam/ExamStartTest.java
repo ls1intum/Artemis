@@ -243,7 +243,7 @@ class ExamStartTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
             ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             // The participation should not get locked if it gets created after the exam already started
             assertThat(studentParticipation.isLocked()).isFalse();
-            verify(versionControlService).addMemberToRepository(studentParticipation.getVcsRepositoryUrl(), studentParticipation.getStudent().orElseThrow(),
+            verify(versionControlService).addMemberToRepository(studentParticipation.getVcsRepositoryUri(), studentParticipation.getStudent().orElseThrow(),
                     VersionControlRepositoryPermission.REPO_WRITE);
         }
     }

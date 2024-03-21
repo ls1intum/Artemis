@@ -87,6 +87,11 @@ public class UMLUseCaseAssociation extends UMLElement {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name, source, target, type);
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (!super.equals(obj)) {
             return false;

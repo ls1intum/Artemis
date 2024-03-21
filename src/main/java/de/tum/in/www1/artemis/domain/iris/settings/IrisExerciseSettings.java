@@ -36,10 +36,12 @@ public class IrisExerciseSettings extends IrisSettings {
         this.exercise = exercise;
     }
 
+    @Override
     public IrisChatSubSettings getIrisChatSettings() {
         return irisChatSettings;
     }
 
+    @Override
     public void setIrisChatSettings(IrisChatSubSettings irisChatSettings) {
         this.irisChatSettings = irisChatSettings;
     }
@@ -61,6 +63,16 @@ public class IrisExerciseSettings extends IrisSettings {
 
     @Override
     public void setIrisCodeEditorSettings(IrisCodeEditorSubSettings irisCodeEditorSettings) {
+
+    }
+
+    @Override
+    public IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings() {
+        return null;
+    }
+
+    @Override
+    public void setIrisCompetencyGenerationSettings(IrisCompetencyGenerationSubSettings irisCompetencyGenerationSubSettings) {
 
     }
 }

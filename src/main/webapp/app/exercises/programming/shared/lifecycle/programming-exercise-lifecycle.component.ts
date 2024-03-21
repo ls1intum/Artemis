@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -6,21 +6,32 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
-import { Observable } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { AthenaService } from 'app/assessment/athena.service';
+import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
+import { every } from 'lodash-es';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
     templateUrl: './programming-exercise-lifecycle.component.html',
     styleUrls: ['./programming-exercise-test-schedule-picker.scss'],
 })
-export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges {
+export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
     @Input() exercise: ProgrammingExercise;
     @Input() isExamMode: boolean;
     @Input() readOnly: boolean;
 
+    @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
+
     readonly assessmentType = AssessmentType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
+
+    formValid: boolean;
+    formEmpty: boolean;
+    formValidChanges = new Subject<boolean>();
+
+    inputfieldSubscriptions: (Subscription | undefined)[] = [];
+    datePickerChildrenSubscription?: Subscription;
 
     // Icons
     faCogs = faCogs;
@@ -45,6 +56,11 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
         this.isAthenaEnabled$ = this.athenaService.isEnabled();
     }
 
+    ngAfterViewInit() {
+        this.setupDateFieldSubscriptions();
+        this.datePickerChildrenSubscription = this.datePickerComponents.changes.subscribe(() => this.setupDateFieldSubscriptions());
+    }
+
     ngOnChanges(simpleChanges: SimpleChanges) {
         if (simpleChanges.exercise) {
             const newExercise = simpleChanges.exercise.currentValue;
@@ -56,6 +72,31 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
                 this.updateExampleSolutionPublicationDate(newExercise.dueDate);
                 this.updateReleaseDate(newExercise.releaseDate);
             }
+        }
+    }
+
+    ngOnDestroy() {
+        this.datePickerChildrenSubscription?.unsubscribe();
+        this.unsubscribeDateFieldSubscriptions();
+    }
+
+    calculateFormStatus() {
+        const datePickers = this.datePickerComponents.toArray();
+        this.formValid = every(datePickers, (picker) => picker.dateInput.valid);
+        this.formEmpty = !every(datePickers, (picker) => picker.selectedDate);
+        this.formValidChanges.next(this.formValid);
+    }
+
+    setupDateFieldSubscriptions() {
+        this.unsubscribeDateFieldSubscriptions();
+        this.datePickerComponents
+            .toArray()
+            .forEach((picker) => this.inputfieldSubscriptions.push(picker.dateInput?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormStatus()))));
+    }
+
+    unsubscribeDateFieldSubscriptions() {
+        for (const subscription of this.inputfieldSubscriptions) {
+            subscription?.unsubscribe();
         }
     }
 
@@ -77,7 +118,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
             this.exercise.assessmentDueDate = undefined;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
-            this.exercise.feedbackSuggestionsEnabled = false;
+            this.exercise.feedbackSuggestionModule = undefined;
         } else {
             this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             this.exercise.allowComplaintsForAutomaticAssessments = false;

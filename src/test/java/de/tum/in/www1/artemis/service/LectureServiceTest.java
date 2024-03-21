@@ -21,8 +21,8 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 
 class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -122,8 +122,8 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
         lectureRepository.saveAll(course.getLectures());
         lecture = lectureRepository.findByIdElseThrow(lecture.getId());
 
-        PageableSearchDTO<String> pageable = pageableSearchUtilService.configureLectureSearch(lecture.getTitle());
-        pageable.setSortedColumn(Lecture.LectureSearchColumn.ID.name());
+        SearchTermPageableSearchDTO<String> pageable = pageableSearchUtilService.configureLectureSearch(lecture.getTitle());
+        pageable.setSortedColumn("ID");
         pageable.setPageSize(1);
 
         SearchResultPageDTO<Lecture> result1 = lectureService.getAllOnPageWithSize(pageable, editor);
@@ -136,7 +136,7 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private SearchResultPageDTO<Lecture> searchQueryWithUser(String query, User user) {
-        PageableSearchDTO<String> pageable = pageableSearchUtilService.configureLectureSearch(query);
+        SearchTermPageableSearchDTO<String> pageable = pageableSearchUtilService.configureLectureSearch(query);
         return lectureService.getAllOnPageWithSize(pageable, user);
     }
 

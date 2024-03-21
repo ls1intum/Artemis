@@ -119,9 +119,7 @@ class TokenProviderSecurityMetersTest {
 
     private String createExpiredToken() {
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", -ONE_MINUTE);
-
         Authentication authentication = createAuthentication();
-
         return tokenProvider.createToken(authentication, false);
     }
 
@@ -133,7 +131,6 @@ class TokenProviderSecurityMetersTest {
 
     private String createUnsupportedToken() {
         SecretKey key = (SecretKey) ReflectionTestUtils.getField(tokenProvider, "key");
-
         return Jwts.builder().content("payload").signWith(key, Jwts.SIG.HS256).compact();
     }
 

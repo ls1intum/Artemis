@@ -57,7 +57,7 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
 
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
 
-        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         exercise.setMaxPoints(80.0);
         exerciseRepository.save(exercise);

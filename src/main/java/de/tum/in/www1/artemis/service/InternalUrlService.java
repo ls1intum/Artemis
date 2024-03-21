@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
@@ -8,11 +10,13 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 
+@Profile(PROFILE_CORE)
 @Service
 public abstract class InternalUrlService {
 
@@ -28,46 +32,46 @@ public abstract class InternalUrlService {
     }
 
     /**
-     * Replaces the url of the vcs repository url to the internal url if it's
+     * Replaces the url of the vcs repository uri to the internal url if it's
      * defined.
      *
-     * @param vcsRepositoryUrl the vcs repository url
-     * @return the vcs repository url with the internal url
+     * @param vcsRepositoryUri the vcs repository uri
+     * @return the vcs repository uri with the internal url
      */
-    public VcsRepositoryUrl toInternalVcsUrl(VcsRepositoryUrl vcsRepositoryUrl) {
-        if (vcsRepositoryUrl.getURI() == null) {
+    public VcsRepositoryUri toInternalVcsUrl(VcsRepositoryUri vcsRepositoryUri) {
+        if (vcsRepositoryUri.getURI() == null) {
             log.warn("Cannot replace url to internal url {} because the url is null.", internalVcsUrl);
-            return vcsRepositoryUrl;
+            return vcsRepositoryUri;
         }
 
         try {
-            String newInternalUrl = toInternalVcsUrl(vcsRepositoryUrl.getURI().toString());
-            return new VcsRepositoryUrl(newInternalUrl);
+            String newInternalUrl = toInternalVcsUrl(vcsRepositoryUri.getURI().toString());
+            return new VcsRepositoryUri(newInternalUrl);
         }
         catch (URISyntaxException e) {
-            log.warn("Cannot replace url {} to {}: {}. Falling back to original url.", vcsRepositoryUrl, internalVcsUrl, e.getMessage());
-            return vcsRepositoryUrl;
+            log.warn("Cannot replace url {} to {}: {}. Falling back to original url.", vcsRepositoryUri, internalVcsUrl, e.getMessage());
+            return vcsRepositoryUri;
         }
     }
 
     /**
-     * Replaces the url of the vcs repository url to the internal url if it's
+     * Replaces the url of the vcs repository uri to the internal url if it's
      * defined.
      *
-     * @param vcsRepositoryUrl the vcs repository url
-     * @return the vcs repository url with the internal url
+     * @param vcsRepositoryUri the vcs repository uri
+     * @return the vcs repository uri with the internal url
      */
-    public String toInternalVcsUrl(String vcsRepositoryUrl) {
+    public String toInternalVcsUrl(String vcsRepositoryUri) {
         if (internalVcsUrl.isEmpty()) {
-            return vcsRepositoryUrl;
+            return vcsRepositoryUri;
         }
 
-        if (vcsRepositoryUrl == null) {
+        if (vcsRepositoryUri == null) {
             log.warn("Cannot replace url to internal url {} because the url is null.", internalVcsUrl);
-            return vcsRepositoryUrl;
+            return vcsRepositoryUri;
         }
 
-        return replaceUrl(vcsRepositoryUrl, internalVcsUrl.get());
+        return replaceUrl(vcsRepositoryUri, internalVcsUrl.get());
     }
 
     /**

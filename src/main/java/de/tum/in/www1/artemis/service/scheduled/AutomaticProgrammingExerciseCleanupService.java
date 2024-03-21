@@ -105,7 +105,7 @@ public class AutomaticProgrammingExerciseCleanupService {
         for (var programmingExercise : programmingExercises) {
             for (var studentParticipation : programmingExercise.getStudentParticipations()) {
                 var programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-                gitService.deleteLocalRepository(programmingExerciseParticipation.getVcsRepositoryUrl());
+                gitService.deleteLocalRepository(programmingExerciseParticipation.getVcsRepositoryUri());
             }
         }
 
@@ -116,9 +116,9 @@ public class AutomaticProgrammingExerciseCleanupService {
         log.info("Found {} programming exercise to clean local template, test and solution: {}", programmingExercises.size(),
                 programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.joining(", ")));
         for (var programmingExercise : programmingExercises) {
-            gitService.deleteLocalRepository(programmingExercise.getVcsTemplateRepositoryUrl());
-            gitService.deleteLocalRepository(programmingExercise.getVcsSolutionRepositoryUrl());
-            gitService.deleteLocalRepository(programmingExercise.getVcsTestRepositoryUrl());
+            gitService.deleteLocalRepository(programmingExercise.getVcsTemplateRepositoryUri());
+            gitService.deleteLocalRepository(programmingExercise.getVcsSolutionRepositoryUri());
+            gitService.deleteLocalRepository(programmingExercise.getVcsTestRepositoryUri());
             gitService.deleteLocalProgrammingExerciseReposFolder(programmingExercise);
         }
     }

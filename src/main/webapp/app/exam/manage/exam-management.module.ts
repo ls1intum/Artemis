@@ -65,14 +65,17 @@ import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams
 
 import { ArtemisExamNavigationBarModule } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.module';
 import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
-import { NgxSliderModule } from 'ngx-slider-v2';
+import { MatSliderModule } from '@angular/material/slider';
 import { ProgrammingExerciseExamDiffComponent } from './student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
     // TODO: For better modularization we could define an exercise module with the corresponding exam routes
+    providers: [ArtemisDurationFromSecondsPipe],
     imports: [
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextExerciseModule,
@@ -104,9 +107,10 @@ const ENTITY_STATES = [...examManagementState];
         TitleChannelNameModule,
         ArtemisExamNavigationBarModule,
         ArtemisExamSubmissionComponentsModule,
-        NgxSliderModule,
+        MatSliderModule,
         GitDiffReportModule,
         ArtemisProgrammingExerciseModule,
+        DetailModule,
     ],
     declarations: [
         ExamManagementComponent,

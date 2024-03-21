@@ -3,6 +3,14 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+// Preliminary mock before import to prevent errors
+jest.mock('@sentry/angular-ivy', () => {
+    const originalModule = jest.requireActual('@sentry/angular-ivy');
+    return {
+        ...originalModule,
+        captureException: jest.fn(),
+    };
+});
 import * as Sentry from '@sentry/angular-ivy';
 
 describe('EntityTitleService', () => {
@@ -77,6 +85,7 @@ describe('EntityTitleService', () => {
         { type: undefined, ids: [undefined] },
         { type: undefined, ids: [] },
     ])('captures an exception if invalid parameters are supplied to getTitle', ({ type, ids }) => {
+        // Re-mock to get reference because direct import doesn't work here
         const captureSpy = jest.spyOn(Sentry, 'captureException').mockImplementation();
 
         let result: string | undefined = undefined;
@@ -99,6 +108,7 @@ describe('EntityTitleService', () => {
         { type: undefined, ids: [undefined], title: undefined },
         { type: undefined, ids: [], title: undefined },
     ])('captures an exception if invalid parameters are supplied to setTitle', ({ type, ids, title }) => {
+        // Re-mock to get reference because direct import doesn't work here
         const captureSpy = jest.spyOn(Sentry, 'captureException').mockImplementation();
 
         // @ts-ignore we want to test invalid params

@@ -3,7 +3,7 @@ import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@flaviosantoro92/ngx-datatable';
 import { flatten, get, isNumber } from 'lodash-es';
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { BaseEntity, StringBaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
 import { faCircleNotch, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
@@ -91,7 +91,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() showPageSizeDropdown = true;
     @Input() showSearchField = true;
     @Input() entityType = 'entity';
-    @Input() allEntities: BaseEntity[] = [];
+    @Input() allEntities: (BaseEntity | StringBaseEntity)[] = [];
     @Input() entitiesPerPageTranslation: string;
     @Input() showAllEntitiesTranslation: string;
     @Input() searchNoResultsTranslation = 'artemisApp.dataTable.search.noResults';
@@ -100,11 +100,13 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() searchFields: string[] = [];
     @Input() searchEnabled = true;
     @Input() searchEntityFilterEnabled = true;
-    @Input() searchTextFromEntity: (entity: BaseEntity) => string = entityToString;
-    @Input() searchResultFormatter: (entity: BaseEntity) => string = entityToString;
-    @Input() onSearchWrapper: (stream: Observable<{ text: string; entities: BaseEntity[] }>) => Observable<BaseEntity[]> = onSearchDefaultWrapper;
-    @Input() onAutocompleteSelectWrapper: (entity: BaseEntity, callback: (entity: BaseEntity) => void) => void = onAutocompleteSelectDefaultWrapper;
-    @Input() customFilter: (entity: BaseEntity) => boolean = () => true;
+    @Input() searchTextFromEntity: (entity: BaseEntity | StringBaseEntity) => string = entityToString;
+    @Input() searchResultFormatter: (entity: BaseEntity | StringBaseEntity) => string = entityToString;
+    @Input() onSearchWrapper: (stream: Observable<{ text: string; entities: (BaseEntity | StringBaseEntity)[] }>) => Observable<(BaseEntity | StringBaseEntity)[]> =
+        onSearchDefaultWrapper;
+    @Input() onAutocompleteSelectWrapper: (entity: BaseEntity | StringBaseEntity, callback: (entity: BaseEntity | StringBaseEntity) => void) => void =
+        onAutocompleteSelectDefaultWrapper;
+    @Input() customFilter: (entity: BaseEntity | StringBaseEntity) => boolean = () => true;
     @Input() customFilterKey: any = {};
 
     /**
@@ -126,7 +128,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @property entityCriteria Contains a list of search terms
      */
     isRendering: boolean;
-    entities: BaseEntity[];
+    entities: (BaseEntity | StringBaseEntity)[];
     pagingValue: PagingValue;
     entityCriteria: {
         textSearch: string[];
@@ -266,7 +268,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * First performs the filtering, then sorts the remaining entities.
      */
     private updateEntities() {
-        const searchPredicate = (entity: BaseEntity) => {
+        const searchPredicate = (entity: BaseEntity | StringBaseEntity) => {
             return !this.searchEntityFilterEnabled || this.filterEntityByTextSearch(this.entityCriteria.textSearch, entity, this.searchFields);
         };
         const filteredEntities = this.allEntities.filter((entity) => this.customFilter(entity) && searchPredicate(entity));
@@ -280,10 +282,10 @@ export class DataTableComponent implements OnInit, OnChanges {
      * Returns entities that match any of the provides search words, if searchWords is empty returns all entities.
      *
      * @param searchWords list of student logins or names
-     * @param entity BaseEntity
+     * @param entity BaseEntity | StringBaseEntity
      * @param searchFields list of paths in entity to search
      */
-    private filterEntityByTextSearch = (searchWords: string[], entity: BaseEntity, searchFields: string[]) => {
+    private filterEntityByTextSearch = (searchWords: string[], entity: BaseEntity | StringBaseEntity, searchFields: string[]) => {
         // When no search word is inputted, we return all entities.
         if (!searchWords.length) {
             return true;
@@ -299,7 +301,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @param entity Entity whose field values are extracted
      * @param fields Fields to extract from entity (can be paths such as "student.login")
      */
-    private entityFieldValues = (entity: BaseEntity, fields: string[]) => {
+    private entityFieldValues = (entity: BaseEntity | StringBaseEntity, fields: string[]) => {
         return flatten(fields.map((field) => this.collectEntityFieldValues(entity, field))).filter(Boolean) as string[];
     };
 
@@ -311,7 +313,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @param entity Entity whose field values are extracted
      * @param field Field to extract from entity (can be paths such as "student.login" or array path such as "students.login")
      */
-    private collectEntityFieldValues = (entity: BaseEntity, field: string): any[] => {
+    private collectEntityFieldValues = (entity: BaseEntity | StringBaseEntity, field: string): any[] => {
         const separator = '.';
         const [head, ...tail] = field.split(separator);
         if (tail.length > 0) {
@@ -353,7 +355,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      *
      * @param text$ stream of text input.
      */
-    onSearch = (text$: Observable<string>): Observable<BaseEntity[]> => {
+    onSearch = (text$: Observable<string>): Observable<(BaseEntity | StringBaseEntity)[]> => {
         return this.onSearchWrapper(
             text$.pipe(
                 debounceTime(200),
@@ -413,7 +415,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      *
      * @param entity Entity that was selected via autocomplete
      */
-    onAutocompleteSelect = (entity: BaseEntity) => {
+    onAutocompleteSelect = (entity: BaseEntity | StringBaseEntity) => {
         this.entityCriteria.textSearch[this.entityCriteria.textSearch.length - 1] = this.searchTextFromEntity(entity);
         this.onAutocompleteSelectWrapper(entity, this.filterAfterAutocompleteSelect);
     };
@@ -468,7 +470,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     }
 }
 
-const entityToString = (entity: BaseEntity) => entity.id!.toString();
+const entityToString = (entity: BaseEntity | StringBaseEntity) => entity.id!.toString();
 
 /**
  * Default on search wrapper that simply strips the search text and passes on the results.
@@ -477,7 +479,7 @@ const entityToString = (entity: BaseEntity) => entity.id!.toString();
  *
  * @param stream$ stream of searches of the format {text, entities} where entities are the results
  */
-const onSearchDefaultWrapper = (stream$: Observable<{ text: string; entities: BaseEntity[] }>): Observable<BaseEntity[]> => {
+const onSearchDefaultWrapper = (stream$: Observable<{ text: string; entities: (BaseEntity | StringBaseEntity)[] }>): Observable<(BaseEntity | StringBaseEntity)[]> => {
     return stream$.pipe(
         map(({ entities }) => {
             return entities;
@@ -493,6 +495,6 @@ const onSearchDefaultWrapper = (stream$: Observable<{ text: string; entities: Ba
  * @param entity The selected entity from the autocomplete suggestions
  * @param callback Function that can be called with the selected entity to trigger this component's default behavior for on select
  */
-const onAutocompleteSelectDefaultWrapper = (entity: BaseEntity, callback: (entity: BaseEntity) => void): void => {
+const onAutocompleteSelectDefaultWrapper = (entity: BaseEntity | StringBaseEntity, callback: (entity: BaseEntity | StringBaseEntity) => void): void => {
     callback(entity);
 };

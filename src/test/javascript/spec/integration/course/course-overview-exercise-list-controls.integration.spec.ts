@@ -9,9 +9,9 @@ import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/ser
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { RouterTestingModule } from '@angular/router/testing';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -25,6 +25,12 @@ import { NgModel } from '@angular/forms';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseExercisesGroupedByTimeframeComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-timeframe.component';
 import { CourseExercisesGroupedByWeekComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-week.component';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
+import { UMLDiagramType } from '@ls1intum/apollon';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CourseOverviewExerciseListControls', () => {
     let parentFixture: ComponentFixture<CourseOverviewComponent>;
@@ -41,7 +47,7 @@ describe('CourseOverviewExerciseListControls', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
             declarations: [
                 CourseOverviewComponent,
                 CourseExercisesComponent,
@@ -61,6 +67,7 @@ describe('CourseOverviewExerciseListControls', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: NotificationService, useClass: MockNotificationService },
             ],
         })
             .compileComponents()

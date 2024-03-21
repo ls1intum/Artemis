@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
@@ -16,14 +17,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
@@ -45,11 +43,12 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * REST controller for managing Files.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class FileResource {
 
-    private final Logger log = LoggerFactory.getLogger(FileResource.class);
+    private static final Logger log = LoggerFactory.getLogger(FileResource.class);
 
     private static final int DAYS_TO_CACHE = 1;
 
@@ -83,13 +82,13 @@ public class FileResource {
 
     private final CourseRepository courseRepository;
 
-    private final FilePathService filePathService;
+    private final LectureUnitService lectureUnitService;
 
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
             AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
             ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
-            FilePathService filePathService) {
+            LectureUnitService lectureUnitService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -105,7 +104,7 @@ public class FileResource {
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
-        this.filePathService = filePathService;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -162,109 +161,6 @@ public class FileResource {
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
         return getTemplateFileContentWithResponse(languagePrefix, projectTypePrefix);
-    }
-
-    /**
-     * GET /files/aeolus/templates/:language/:projectType : Get the aeolus template file with the given filename<br/>
-     * GET /files/aeolus/templates/:language : Get the aeolus template file with the given filename
-     * <p>
-     * The windfile contains the default build plan configuration for new programming exercises.
-     *
-     * @param language       The programming language for which the aeolus template file should be returned
-     * @param projectType    The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
-     * @param staticAnalysis Whether the static analysis template should be used
-     * @param sequentialRuns Whether the sequential runs template should be used
-     * @param testCoverage   Whether the test coverage template should be used
-     * @return The requested file, or 404 if the file doesn't exist
-     */
-    @GetMapping({ "files/aeolus/templates/{language}/{projectType}", "files/aeolus/templates/{language}" })
-    @EnforceAtLeastEditor
-    public ResponseEntity<String> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
-            @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
-            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns,
-            @RequestParam(value = "testCoverage", defaultValue = "false") boolean testCoverage) {
-        log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
-                projectType, staticAnalysis, sequentialRuns, testCoverage);
-
-        String languagePrefix = language.name().toLowerCase();
-        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
-
-        return getAeolusTemplateFileContentWithResponse(languagePrefix, projectTypePrefix, staticAnalysis, sequentialRuns, testCoverage);
-    }
-
-    /**
-     * Returns the file content of the template file for the given language and project type as JSON
-     *
-     * @param languagePrefix    The programming language for which the template file should be returned
-     * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
-     * @param staticAnalysis    Whether the static analysis template should be used
-     * @param sequentialRuns    Whether the sequential runs template should be used
-     * @param testCoverage      Whether the test coverage template should be used
-     * @return The requested file, or 404 if the file doesn't exist
-     */
-    private ResponseEntity<String> getAeolusTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix, boolean staticAnalysis, boolean sequentialRuns,
-            boolean testCoverage) {
-        try {
-            String fileName = buildAeolusTemplateName(projectTypePrefix, staticAnalysis, sequentialRuns, testCoverage);
-            Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", languagePrefix, fileName));
-            if (!fileResource.exists()) {
-                throw new IOException("File " + fileName + " not found");
-            }
-            byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
-            String yaml = new String(fileContent, StandardCharsets.UTF_8);
-            String json = convertYamlToJson(yaml);
-            HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.setContentType(MediaType.APPLICATION_JSON);
-            return new ResponseEntity<>(json, responseHeaders, HttpStatus.OK);
-        }
-        catch (IOException ex) {
-            log.warn("Error when retrieving aeolus template file", ex);
-            HttpHeaders responseHeaders = new HttpHeaders();
-            return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
-        }
-    }
-
-    /**
-     * Returns the file content of the template file for the given language and project type with the different options
-     *
-     * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
-     * @param staticAnalysis    whether the static analysis template should be used
-     * @param sequentialRuns    whether the sequential runs template should be used
-     * @param testCoverage      whether the test coverage template should be used
-     * @return The requested file, or 404 if the file doesn't exist
-     */
-    private String buildAeolusTemplateName(String projectTypePrefix, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage) {
-        List<String> fileNameComponents = new ArrayList<>();
-        if (!projectTypePrefix.isEmpty()) {
-            fileNameComponents.add(projectTypePrefix);
-        }
-        else {
-            fileNameComponents.add("default");
-        }
-        if (staticAnalysis) {
-            fileNameComponents.add("static");
-        }
-        if (sequentialRuns) {
-            fileNameComponents.add("sequential");
-        }
-        if (testCoverage) {
-            fileNameComponents.add("coverage");
-        }
-        return String.join("_", fileNameComponents) + ".yaml";
-    }
-
-    /**
-     * Converts a YAML string to a JSON string for easier communication with the client
-     *
-     * @param yaml YAML string
-     * @return JSON string
-     */
-    private String convertYamlToJson(String yaml) throws JsonProcessingException {
-        ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
-        Object obj = yamlReader.readValue(yaml, Object.class);
-
-        ObjectMapper jsonWriter = new ObjectMapper();
-        return jsonWriter.writeValueAsString(obj);
     }
 
     private ResponseEntity<byte[]> getTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix) {
@@ -366,7 +262,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId) {
         log.debug("REST request to get icon for course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        // NOTE: we do not enforce a check if the user is a student in the course here, because the course icon is not criticial and we do not want to waste resources
         return responseEntityForFilePath(getActualPathFromPublicPathString(course.getCourseIcon()));
     }
 
@@ -461,13 +357,12 @@ public class FileResource {
 
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
-        List<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE);
-
-        List<String> attachmentLinks = lectureAttachments.stream()
+        List<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream()
                 .filter(unit -> authCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
-                .map(unit -> FilePathService.getAttachmentUnitFilePath()
-                        .resolve(Path.of(String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))).toString())
                 .toList();
+
+        lectureUnitService.setCompletedForAllLectureUnits(lectureAttachments, user, true);
+        List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> FilePathService.actualPathForPublicPathOrThrow(URI.create(unit.getAttachment().getLink()))).toList();
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, lectureRepository.getLectureTitle(lectureId));
         if (file.isEmpty()) {
@@ -600,7 +495,7 @@ public class FileResource {
         if (publicPath == null) {
             throw new EntityNotFoundException("No file linked");
         }
-        return filePathService.actualPathForPublicPathOrThrow(URI.create(publicPath));
+        return FilePathService.actualPathForPublicPathOrThrow(URI.create(publicPath));
     }
 
     private MediaType getMediaTypeFromFilename(String filename) {

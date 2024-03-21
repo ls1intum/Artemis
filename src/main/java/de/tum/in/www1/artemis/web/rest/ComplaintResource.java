@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -8,6 +10,7 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,11 +34,12 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing complaints.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ComplaintResource {
 
-    private final Logger log = LoggerFactory.getLogger(ComplaintResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ComplaintResource.class);
 
     private static final String COMPLAINT_ENTITY_NAME = "complaint";
 
@@ -185,7 +189,7 @@ public class ComplaintResource {
         }
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         boolean isTeamParticipation = participation.getParticipant() instanceof Team;
-        boolean isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
+        boolean isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner() != null ? team.getOwner().getLogin() : null).orElse(null));
 
         if (!isAtLeastTutor) {
             complaint.getResult().setAssessor(null);

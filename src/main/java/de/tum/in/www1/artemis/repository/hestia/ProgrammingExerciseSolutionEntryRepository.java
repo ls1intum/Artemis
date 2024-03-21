@@ -44,8 +44,8 @@ public interface ProgrammingExerciseSolutionEntryRepository extends JpaRepositor
     @Query("""
             SELECT se
             FROM ProgrammingExerciseSolutionEntry se
-            LEFT JOIN FETCH se.testCase tc
-            LEFT JOIN FETCH tc.exercise pe
+                LEFT JOIN FETCH se.testCase tc
+                LEFT JOIN FETCH tc.exercise pe
             WHERE pe.id = :exerciseId
             """)
     Set<ProgrammingExerciseSolutionEntry> findByExerciseIdWithTestCases(@Param("exerciseId") long exerciseId);
@@ -59,8 +59,8 @@ public interface ProgrammingExerciseSolutionEntryRepository extends JpaRepositor
     @Query("""
             SELECT se
             FROM ProgrammingExerciseSolutionEntry se
-            LEFT JOIN FETCH se.testCase tc
-            LEFT JOIN FETCH tc.exercise pe
+                LEFT JOIN FETCH se.testCase tc
+                LEFT JOIN FETCH tc.exercise pe
             WHERE se.id = :entryId
             """)
     Optional<ProgrammingExerciseSolutionEntry> findByIdWithTestCaseAndProgrammingExercise(@Param("entryId") long entryId);
@@ -82,7 +82,7 @@ public interface ProgrammingExerciseSolutionEntryRepository extends JpaRepositor
     @Query("""
             SELECT se
             FROM ProgrammingExerciseSolutionEntry se
-            LEFT JOIN FETCH se.codeHint
+                LEFT JOIN FETCH se.codeHint
             WHERE se.testCase.id = :testCaseId
             """)
     Set<ProgrammingExerciseSolutionEntry> findByTestCaseIdWithCodeHint(@Param("testCaseId") Long testCaseId);

@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +18,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 /**
  * Controller for view and managing Log Level at runtime.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/admin/")
 public class LogResource {

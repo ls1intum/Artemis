@@ -564,7 +564,8 @@ describe('CourseScoresComponent', () => {
         const exportAsCsvStub = jest.spyOn(component, 'exportAsCsv').mockImplementation();
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
-            quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+            quoteStrings: true,
+            quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
             decimalSeparator: CsvDecimalSeparator.PERIOD,
         };
         component.exportResults(testOptions);

@@ -30,7 +30,7 @@ The setup has been tested with the described versions; newer ones might work, to
 
    Windows users can use ``choco`` to install it. More details can be found in the link under ``Other Installation Methods``
 
-* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl/>`__ - v1.21
+* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl>`__ - v1.21
    kubectl is the Kubernetes command-line tool, which allows you to run commands against Kubernetes clusters.
    It can be used to deploy applications, inspect and manage cluster resources, and view logs.
 
@@ -296,7 +296,7 @@ If you want to run with local user management and no programming exercises setup
 1. Go to the ``src/main/resources/config/application-artemis.yml`` file, and set use-external in
 the user-management section to false.
 If you have created an additional ``application-local.yml`` file as it is described in the
-`Setup documentation <https://docs.artemis.cit.tum.de/dev/setup/#server-setup>`__, make sure to edit this one.
+:ref:`Setup documentation <server setup>`, make sure to edit this one.
 
    Another possibility is to add the variable directly in ``src/main/kubernetes/artemis/configmap/artemis-configmap.yml``.
 

@@ -16,10 +16,10 @@ import com.hazelcast.core.HazelcastInstance;
  * All requests are forwarded to a Hazelcast topic and a node with the 'scheduling' profile will then process it.
  */
 @Service
-@Profile("!scheduling")
+@Profile("!scheduling & core")
 public class DistributedInstanceMessageSendService implements InstanceMessageSendService {
 
-    private final Logger log = LoggerFactory.getLogger(DistributedInstanceMessageSendService.class);
+    private static final Logger log = LoggerFactory.getLogger(DistributedInstanceMessageSendService.class);
 
     private final ScheduledExecutorService exec = Executors.newScheduledThreadPool(1);
 

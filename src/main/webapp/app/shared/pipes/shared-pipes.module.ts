@@ -7,7 +7,6 @@ import { AverageByPipe } from 'app/shared/pipes/average-by.pipe';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
-import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
 import { ExerciseTypePipe } from 'app/shared/pipes/exercise-type.pipe';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -26,7 +25,6 @@ import { NegatedTypeCheckPipe } from 'app/shared/pipes/negated-type-check.pipe';
         TypeCheckPipe,
         NegatedTypeCheckPipe,
         TruncatePipe,
-        SanitizeHtmlPipe,
         AverageByPipe,
         GradeStepBoundsPipe,
     ],
@@ -40,7 +38,6 @@ import { NegatedTypeCheckPipe } from 'app/shared/pipes/negated-type-check.pipe';
         TypeCheckPipe,
         NegatedTypeCheckPipe,
         TruncatePipe,
-        SanitizeHtmlPipe,
         SafeResourceUrlPipe,
         AverageByPipe,
         GradeStepBoundsPipe,

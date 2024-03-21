@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -8,6 +10,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,11 +26,12 @@ import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationServic
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api/courses")
+@RequestMapping("api/courses")
 public class OneToOneChatResource extends ConversationManagementResource {
 
-    private final Logger log = LoggerFactory.getLogger(OneToOneChatResource.class);
+    private static final Logger log = LoggerFactory.getLogger(OneToOneChatResource.class);
 
     private final OneToOneChatAuthorizationService oneToOneChatAuthorizationService;
 
@@ -60,7 +64,7 @@ public class OneToOneChatResource extends ConversationManagementResource {
      * @param otherChatParticipantLogins logins of other participants (must be 1 for one to one chat) excluding the requesting user
      * @return ResponseEntity with status 201 (Created) and with body containing the created one to one chat
      */
-    @PostMapping("/{courseId}/one-to-one-chats")
+    @PostMapping("{courseId}/one-to-one-chats")
     @EnforceAtLeastStudent
     public ResponseEntity<OneToOneChatDTO> startOneToOneChat(@PathVariable Long courseId, @RequestBody List<String> otherChatParticipantLogins) throws URISyntaxException {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();

@@ -34,10 +34,20 @@ describe('ColorSelectorComponent', () => {
         expect(addEventListenerSpy).toHaveBeenCalledOnce();
     });
 
+    it('should stop event propagation on openSelector', () => {
+        const event = { stopPropagation: jest.fn(), target: { closest: jest.fn() } };
+        const eventStopPropagationSpy = jest.spyOn(event, 'stopPropagation');
+        component.colorSelectorPosition = { left: 0, top: 0 };
+        component.openColorSelector(event as unknown as MouseEvent, 0, 0);
+
+        expect(eventStopPropagationSpy).toHaveBeenCalledOnce();
+    });
+
     it('should position the color selector after opening correctly', () => {
         const target = document.createElement('div');
         const event = {
             target,
+            stopPropagation: jest.fn(),
         } as unknown as MouseEvent;
         component.ngOnInit();
 

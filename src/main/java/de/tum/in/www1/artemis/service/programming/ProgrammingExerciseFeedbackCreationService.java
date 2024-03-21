@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -9,6 +10,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -31,6 +33,7 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 /**
  * Service for creating feedback for programming exercises.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseFeedbackCreationService {
 

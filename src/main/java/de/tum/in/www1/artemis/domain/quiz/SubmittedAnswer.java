@@ -25,8 +25,13 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 // Note: The "type" property has to be added on the front-end when making a request that includes a SubmittedAnswer Object
 // However, the "type" property will be automatically added by Jackson when an object is serialized
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceSubmittedAnswer.class, name = "multiple-choice"),
-        @JsonSubTypes.Type(value = DragAndDropSubmittedAnswer.class, name = "drag-and-drop"), @JsonSubTypes.Type(value = ShortAnswerSubmittedAnswer.class, name = "short-answer") })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = MultipleChoiceSubmittedAnswer.class, name = "multiple-choice"),
+    @JsonSubTypes.Type(value = DragAndDropSubmittedAnswer.class, name = "drag-and-drop"),
+    @JsonSubTypes.Type(value = ShortAnswerSubmittedAnswer.class, name = "short-answer")
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class SubmittedAnswer extends DomainObject {
 

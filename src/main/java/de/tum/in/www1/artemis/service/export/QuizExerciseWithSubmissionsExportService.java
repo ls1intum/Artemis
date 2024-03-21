@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
@@ -7,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +25,8 @@ import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 /**
  * Service responsible for exporting quiz exercises with their submissions.
  */
+
+@Profile(PROFILE_CORE)
 @Service
 public class QuizExerciseWithSubmissionsExportService {
 
@@ -33,15 +38,12 @@ public class QuizExerciseWithSubmissionsExportService {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     public QuizExerciseWithSubmissionsExportService(QuizExerciseRepository quizExerciseRepository, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService, FileService fileService, FilePathService filePathService) {
+            DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService, FileService fileService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
         this.fileService = fileService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -68,11 +70,11 @@ public class QuizExerciseWithSubmissionsExportService {
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    imagesToExport.add(filePathService.actualPathForPublicPath(URI.create(dragAndDropQuestion.getBackgroundFilePath())));
+                    imagesToExport.add(FilePathService.actualPathForPublicPath(URI.create(dragAndDropQuestion.getBackgroundFilePath())));
                 }
                 for (var dragItem : dragAndDropQuestion.getDragItems()) {
                     if (dragItem.getPictureFilePath() != null) {
-                        imagesToExport.add(filePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath())));
+                        imagesToExport.add(FilePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath())));
 
                     }
                 }

@@ -7,7 +7,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/utils/icons.utils';
-import { ExportToCsv } from 'export-to-csv';
+import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
@@ -243,15 +243,17 @@ export class CourseGroupComponent implements OnDestroy {
     exportAsCsv = (rows: any[], keys: string[]) => {
         const options = {
             fieldSeparator: ';',
-            quoteStrings: '"',
+            quoteStrings: true,
+            quoteCharacter: '"',
             showLabels: true,
             showTitle: false,
             filename: this.exportFileName,
             useTextFile: false,
             useBom: true,
-            headers: keys,
+            columnHeaders: keys,
         };
-        const csvExporter = new ExportToCsv(options);
-        csvExporter.generateCsv(rows);
+        const csvExportConfig = mkConfig(options);
+        const csvData = generateCsv(csvExportConfig)(rows);
+        download(csvExportConfig)(csvData);
     };
 }

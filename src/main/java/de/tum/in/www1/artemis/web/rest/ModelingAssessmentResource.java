@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,20 +23,19 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
-import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
 /**
  * REST controller for managing ModelingAssessment.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ModelingAssessmentResource extends AssessmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class);
 
     private static final String ENTITY_NAME = "modelingAssessment";
 
@@ -49,10 +51,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ModelingExerciseRepository modelingExerciseRepository,
             AssessmentService assessmentService, ModelingSubmissionRepository modelingSubmissionRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            ResultWebsocketService resultWebsocketService, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
-            SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
-        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, resultWebsocketService, exampleSubmissionRepository,
-                submissionRepository, singleUserNotificationService);
+            ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService, SubmissionRepository submissionRepository) {
+        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, exampleSubmissionRepository, submissionRepository);
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.authCheckService = authCheckService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -64,7 +64,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission that should be sent to the client
      * @return the assessment of the given submission
      */
-    @GetMapping("/modeling-submissions/{submissionId}/result")
+    @GetMapping("modeling-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
         return super.getAssessmentBySubmissionId(submissionId);
@@ -77,7 +77,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the example submission
      * @return the result linked to the example submission
      */
-    @GetMapping("/exercise/{exerciseId}/modeling-submissions/{submissionId}/example-assessment")
+    @GetMapping("exercise/{exerciseId}/modeling-submissions/{submissionId}/example-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> getModelingExampleAssessment(@PathVariable long exerciseId, @PathVariable long submissionId) {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
@@ -96,7 +96,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
-    @PutMapping("/modeling-submissions/{submissionId}/result/{resultId}/assessment")
+    @PutMapping("modeling-submissions/{submissionId}/result/{resultId}/assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
@@ -114,11 +114,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
-    @PutMapping("/modeling-submissions/{exampleSubmissionId}/example-assessment")
+    @PutMapping("modeling-submissions/{exampleSubmissionId}/example-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveModelingExampleAssessment(@PathVariable long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
         log.debug("REST request to save modeling example assessment : {}", exampleSubmissionId);
-        return super.saveExampleAssessment(exampleSubmissionId, feedbacks);
+        Result result = saveExampleAssessment(exampleSubmissionId, feedbacks);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -132,7 +133,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = POST_ASSESSMENT_AFTER_COMPLAINT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
-    @PutMapping("/modeling-submissions/{submissionId}/assessment-after-complaint")
+    @PutMapping("modeling-submissions/{submissionId}/assessment-after-complaint")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
@@ -164,7 +165,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission for which the current assessment should be canceled
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
-    @PutMapping("/modeling-submissions/{submissionId}/cancel-assessment")
+    @PutMapping("modeling-submissions/{submissionId}/cancel-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
         return super.cancelAssessment(submissionId);
@@ -178,7 +179,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param resultId        - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
-    @DeleteMapping("/participations/{participationId}/modeling-submissions/{submissionId}/results/{resultId}")
+    @DeleteMapping("participations/{participationId}/modeling-submissions/{submissionId}/results/{resultId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
         return super.deleteAssessment(participationId, submissionId, resultId);

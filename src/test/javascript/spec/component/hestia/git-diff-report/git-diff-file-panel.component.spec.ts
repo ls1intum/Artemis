@@ -5,7 +5,9 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { GitDiffFilePanelComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file-panel.component';
-import { NgbAccordion, NgbPanel } from '@ng-bootstrap/ng-bootstrap';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
+import { GitDiffFileComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file.component';
 
 describe('ProgrammingExerciseGitDiffFilePanel Component', () => {
     let comp: GitDiffFilePanelComponent;
@@ -13,8 +15,20 @@ describe('ProgrammingExerciseGitDiffFilePanel Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbPanel), MockComponent(NgbAccordion)],
-            declarations: [GitDiffFilePanelComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffLineStatComponent)],
+            imports: [ArtemisTestModule],
+            declarations: [
+                GitDiffFilePanelComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(GitDiffLineStatComponent),
+                MockComponent(GitDiffFileComponent),
+                MockDirective(DeleteButtonDirective),
+                MockDirective(NgbAccordionDirective),
+                MockDirective(NgbAccordionItem),
+                MockDirective(NgbAccordionHeader),
+                MockDirective(NgbAccordionButton),
+                MockDirective(NgbAccordionCollapse),
+                MockDirective(NgbAccordionBody),
+            ],
             providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffFilePanelComponent);

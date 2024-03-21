@@ -122,7 +122,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testRemoveTestCaseNames() {
-        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
         Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).testCase(tests.get(0));
         Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).testCase(tests.get(2)).detailText("This is wrong.");
@@ -139,7 +139,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void keepTestNamesWhenExerciseSettingActive() {
-        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         exercise.setShowTestNamesToStudents(true);
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
 

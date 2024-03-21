@@ -58,4 +58,20 @@ describe('Modeling Submission Viewer Component', () => {
 
         expect(modelingSubmissionService.getSubmissionWithoutLock).toHaveBeenCalledWith(1);
     });
+
+    it('should not fetch the submission if hideContent is true', () => {
+        jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutLock').mockReturnValue(of(modelingSubmission));
+        comp.hideContent = true;
+
+        comp.ngOnChanges({
+            plagiarismSubmission: {
+                previousValue: null,
+                isFirstChange: () => true,
+                firstChange: true,
+                currentValue: { submissionId: 1 },
+            },
+        });
+
+        expect(modelingSubmissionService.getSubmissionWithoutLock).not.toHaveBeenCalled();
+    });
 });

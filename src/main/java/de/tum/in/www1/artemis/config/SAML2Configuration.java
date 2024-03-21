@@ -44,7 +44,7 @@ import org.springframework.security.saml2.provider.service.registration.RelyingP
 // https://github.com/ls1intum/Artemis/pull/5721.
 public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
-    private final Logger log = LoggerFactory.getLogger(SAML2Configuration.class);
+    private static final Logger log = LoggerFactory.getLogger(SAML2Configuration.class);
 
     private final SAML2Properties properties;
 

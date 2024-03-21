@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service.notifications.push_notifications;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -16,6 +19,7 @@ import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepo
 /**
  * Handles the sending of iOS Notifications to the Relay Service
  */
+@Profile(PROFILE_CORE)
 @Service
 @EnableAsync(proxyTargetClass = true)
 public class ApplePushNotificationService extends PushNotificationService {
