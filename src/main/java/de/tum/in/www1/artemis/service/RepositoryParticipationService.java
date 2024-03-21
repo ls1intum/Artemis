@@ -63,7 +63,7 @@ public class RepositoryParticipationService {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
 
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Participation is not a programming exercise participation");
         }
 
         repositoryAccessService.checkHasAccessToPlagiarismSubmission(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), RepositoryActionType.READ);
