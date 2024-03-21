@@ -59,8 +59,9 @@ public class RepositoryAccessService {
         if (atLeastStudent && programmingParticipation instanceof StudentParticipation studentParticipation) {
             boolean ownerOfParticipation = authorizationCheckService.isOwnerOfParticipation(studentParticipation, user);
             if (ownerOfParticipation) {
-                if (hasAccessToOwnStudentParticipation(programmingExercise, repositoryActionType, studentParticipation, isTeachingAssistant, programmingParticipation.isLocked()))
+                if (hasAccessToOwnStudentParticipation(programmingExercise, repositoryActionType, studentParticipation, isTeachingAssistant, programmingParticipation.isLocked())) {
                     return;
+                }
             }
         }
 
