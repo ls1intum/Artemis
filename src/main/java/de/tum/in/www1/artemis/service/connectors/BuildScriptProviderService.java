@@ -142,7 +142,12 @@ public class BuildScriptProviderService {
     public String buildTemplateName(Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage, String fileExtension) {
         List<String> fileNameComponents = new ArrayList<>();
 
-        fileNameComponents.add(projectType.map(Enum::name).orElse("default").toLowerCase());
+        if (ProjectType.MAVEN_BLACKBOX.equals(projectType.orElse(null))) {
+            fileNameComponents.add("plain_" + projectType.get().name().toLowerCase());
+        }
+        else {
+            fileNameComponents.add(projectType.map(Enum::name).orElse("default").toLowerCase());
+        }
 
         if (staticAnalysis) {
             fileNameComponents.add("static");
