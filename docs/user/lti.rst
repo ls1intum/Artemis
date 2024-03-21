@@ -178,6 +178,9 @@ Please note that Moodle admins also need admin privileges on the Artemis site.
 #. Click on *Show more...* link to see further configuration settings. Set *Secure icon URL* field to Artemis icon URL.
 #. Save the recent changes.
 
+.. note::
+ To obtain the icon URL, right-click the Artemis site icon and choose "Copy image URL."
+
 This video describes how to configure Artemis and Moodle using Dynamic Registration Service:
 
 .. raw:: html
