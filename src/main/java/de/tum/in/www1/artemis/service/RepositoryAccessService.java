@@ -81,12 +81,12 @@ public class RepositoryAccessService {
             StudentParticipation studentParticipation, boolean isTeachingAssistant, boolean isLocked) {
         boolean hasStarted = exerciseDateService.hasExerciseStarted(programmingExercise);
 
-        if (hasStarted) {
-            return hasAccessAfterExerciseStart(studentParticipation, repositoryActionType, isLocked);
+        if (!hasStarted) {
+            // Only teaching assistants have access to the repository before the exercise has started.
+            return isTeachingAssistang;
         }
-        // Only teaching assistants have access to the repository before the exercise has started.
-        else
-            return isTeachingAssistant;
+
+        return hasAccessAfterExerciseStart(studentParticipation, repositoryActionType, isLocked);
     }
 
     /**
