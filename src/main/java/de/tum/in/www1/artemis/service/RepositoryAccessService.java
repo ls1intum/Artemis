@@ -102,9 +102,13 @@ public class RepositoryAccessService {
         if (repositoryActionType == RepositoryActionType.READ) {
             return true;
         }
+        if (isLocked) {
+            // The user does not have write or reset permissions if the participation is locked.
+            return false;
+        }
 
         // Check if the user has write or reset permissions.
-        return hasWriteOrResetPermissions(studentParticipation, isLocked);
+        return hasWriteOrResetPermissionsForUnlockedParticipation(studentParticipation);
     }
 
     /**
@@ -112,20 +116,19 @@ public class RepositoryAccessService {
      * for the given programming participation.
      *
      * @param studentParticipation The student participation.
-     * @param isLocked             True if the participation is locked, false otherwise.
      * @return True if the user has write or reset permissions, false otherwise.
      */
-    private boolean hasWriteOrResetPermissions(StudentParticipation studentParticipation, boolean isLocked) {
+    private boolean hasWriteOrResetPermissionsForUnlockedParticipation(StudentParticipation studentParticipation) {
         boolean beforeDueDate = exerciseDateService.isBeforeDueDate(studentParticipation);
         boolean isPracticeMode = studentParticipation.isPracticeMode();
 
-        // The user has write or reset permissions if the participation is not locked and the due date has not passed yet.
-        if (beforeDueDate && !isLocked) {
+        // The user has write or reset permissions if the due date has not passed yet.
+        if (beforeDueDate) {
             return true;
         }
 
-        // The user has write or reset permissions if due date has passed, but the participation is in practice mode and not locked.
-        return !beforeDueDate && isPracticeMode && !isLocked;
+        // The user has write or reset permissions if due date has passed, but the participation is in practice mode.
+        return isPracticeMode;
     }
 
     /**
