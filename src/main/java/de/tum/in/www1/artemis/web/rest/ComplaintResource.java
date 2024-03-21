@@ -84,7 +84,7 @@ public class ComplaintResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new complaints
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("complaints")
+    @PostMapping("complaints/a")
     @EnforceAtLeastStudent
     public ResponseEntity<Complaint> createComplaint(@RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint: {}", complaint);
@@ -121,7 +121,7 @@ public class ComplaintResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new complaints
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("complaints")
+    @PostMapping("complaints/b")
     @EnforceAtLeastStudent
     public ResponseEntity<Complaint> createComplaintForExamExercise(@RequestBody Complaint complaint, Principal principal, @RequestParam Long examId) throws URISyntaxException {
         log.debug("REST request to save Complaint for exam exercise: {}", complaint);
@@ -168,7 +168,7 @@ public class ComplaintResource {
      * @param submissionId the id of the submission for whose results we want to find a linked complaint
      * @return the ResponseEntity with status 200 (OK) and either with the complaint as body or an empty body, if no complaint was found for the result
      */
-    @GetMapping("complaints")
+    @GetMapping("complaints/c")
     @EnforceAtLeastStudent
     public ResponseEntity<Complaint> getComplaintBySubmissionId(@RequestParam Long submissionId) {
         log.debug("REST request to get latest Complaint associated with a result of submission : {}", submissionId);
@@ -214,7 +214,7 @@ public class ComplaintResource {
      * @param teamMode whether to return the number of allowed complaints per team (instead of per student)
      * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
      */
-    @GetMapping("complaints")
+    @GetMapping("complaints/d")
     @EnforceAtLeastStudent
     public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@RequestParam Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
@@ -243,7 +243,7 @@ public class ComplaintResource {
      * @param dashboard  the type of the dashboard
      * @return the ResponseEntity with status 200 (OK) and a list of complaints or a list of more feedback requests. The list can be empty
      */
-    @GetMapping("complaints")
+    @GetMapping("complaints/e")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Complaint>> getComplaintsForDashboard(Principal principal, @RequestParam Long exerciseId, @RequestParam String dashboard) {
         if (dashboard.equals("test-run")) {
@@ -269,7 +269,7 @@ public class ComplaintResource {
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("complaints")
+    @GetMapping("complaints/f")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Complaint>> getComplaintsForTutor(@RequestParam ComplaintType complaintType) {
         // Only tutors can retrieve all their own complaints without filter by course or exerciseId. Instructors need
@@ -291,7 +291,7 @@ public class ComplaintResource {
      * @param allComplaintsForTutor flag if all complaints should be send for a tutor
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("complaints")
+    @GetMapping("complaints/g")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId, @RequestParam(required = false) boolean allComplaintsForTutor) {
@@ -333,7 +333,7 @@ public class ComplaintResource {
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("complaints")
+    @GetMapping("complaints/r")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@RequestParam Long exerciseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId) {
@@ -370,7 +370,7 @@ public class ComplaintResource {
      * @param courseId the id of the course we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("complaints")
+    @GetMapping("complaints/t")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Complaint>> getComplaintsByCourseIdAndExamId(@RequestParam Long courseId, @RequestParam Long examId) {
         // Filtering by courseId
