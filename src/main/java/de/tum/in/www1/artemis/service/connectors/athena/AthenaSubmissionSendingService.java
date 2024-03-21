@@ -39,17 +39,17 @@ public class AthenaSubmissionSendingService {
 
     private final AthenaModuleService athenaModuleService;
 
-    private final AthenaDTOConverter athenaDTOConverter;
+    private final AthenaDTOConverterService athenaDTOConverterService;
 
     /**
      * Creates a new AthenaSubmissionSendingService.
      */
     public AthenaSubmissionSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, SubmissionRepository submissionRepository,
-            AthenaModuleService athenaModuleService, AthenaDTOConverter athenaDTOConverter) {
+            AthenaModuleService athenaModuleService, AthenaDTOConverterService athenaDTOConverterService) {
         this.submissionRepository = submissionRepository;
         connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
         this.athenaModuleService = athenaModuleService;
-        this.athenaDTOConverter = athenaDTOConverter;
+        this.athenaDTOConverterService = athenaDTOConverterService;
     }
 
     private record RequestDTO(ExerciseDTO exercise, List<SubmissionDTO> submissions) {
@@ -117,8 +117,8 @@ public class AthenaSubmissionSendingService {
                 submissions.size() - filteredSubmissions.size());
 
         try {
-            final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise),
-                    filteredSubmissions.stream().map((submission) -> athenaDTOConverter.ofSubmission(exercise.getId(), submission)).toList());
+            final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise),
+                    filteredSubmissions.stream().map((submission) -> athenaDTOConverterService.ofSubmission(exercise.getId(), submission)).toList());
             ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/submissions", request, maxRetries);
             log.info("Athena (calculating automatic feedback) responded: {}", response.data);
         }

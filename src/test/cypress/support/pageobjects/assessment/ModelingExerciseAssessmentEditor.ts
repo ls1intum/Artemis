@@ -29,13 +29,13 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
     }
 
     submitExample() {
-        cy.intercept(PUT, BASE_API + 'modeling-submissions/*/example-assessment').as('createExampleSubmission');
+        cy.intercept(PUT, `${BASE_API}/modeling-submissions/*/example-assessment`).as('createExampleSubmission');
         cy.contains('Save Example Assessment').click();
         return cy.wait('@createExampleSubmission').its('response.statusCode').should('eq', 200);
     }
 
     submit() {
-        cy.intercept(PUT, BASE_API + 'modeling-submissions/*/result/*/assessment*').as('submitModelingAssessment');
+        cy.intercept(PUT, `${BASE_API}/modeling-submissions/*/result/*/assessment*`).as('submitModelingAssessment');
         super.submitWithoutInterception();
         return cy.wait('@submitModelingAssessment').its('response.statusCode').should('eq', 200);
     }
