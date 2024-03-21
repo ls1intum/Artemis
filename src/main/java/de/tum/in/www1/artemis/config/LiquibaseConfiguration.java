@@ -103,11 +103,11 @@ public class LiquibaseConfiguration {
         var currentVersion = new Semver(currentVersionString);
         var migrationPathVersion = new Semver(migrationPathVersion5_12_9_String);
         var version600 = new Semver("6.0.0");
-        var version700 = new Semver("7.0.0");
+        var version800 = new Semver("8.0.0");
         if (currentVersion.isLowerThan(version600)) {
             log.info("Migration path check: Not necessary");
         }
-        if (currentVersion.isGreaterThanOrEqualTo(version600) && currentVersion.isLowerThan(version700)) {
+        if (currentVersion.isGreaterThanOrEqualTo(version600) && currentVersion.isLowerThan(version800)) {
             previousVersionString = getPreviousVersionElseThrow();
             log.info("The previous version was {}", previousVersionString);
             if (previousVersionString == null) {
