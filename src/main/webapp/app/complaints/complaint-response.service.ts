@@ -12,7 +12,7 @@ type EntityResponseType = HttpResponse<ComplaintResponse>;
 
 @Injectable({ providedIn: 'root' })
 export class ComplaintResponseService {
-    private resourceUrl = 'api/complaint-responses';
+    private resourceUrl = 'api/complaints';
 
     constructor(
         private http: HttpClient,
@@ -52,17 +52,17 @@ export class ComplaintResponseService {
     }
 
     removeLock(complaintId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/complaint/${complaintId}/response`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${complaintId}/response`, { observe: 'response' });
     }
 
     createLock(complaintId: number): Observable<EntityResponseType> {
         return this.http
-            .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/response`, {}, { observe: 'response' })
+            .post<ComplaintResponse>(`${this.resourceUrl}/${complaintId}/response`, {}, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
     refreshLockOrResolveComplaint(complaintResponseUpdate: ComplaintResponseUpdateDTO, complaintId: number | undefined): Observable<EntityResponseType> {
-        return this.http.patch<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/response`, complaintResponseUpdate, { observe: 'response' });
+        return this.http.patch<ComplaintResponse>(`${this.resourceUrl}/${complaintId}/response`, complaintResponseUpdate, { observe: 'response' });
     }
 
     public convertComplaintResponseEntityResponseDatesFromServer(res: EntityResponseType): EntityResponseType {

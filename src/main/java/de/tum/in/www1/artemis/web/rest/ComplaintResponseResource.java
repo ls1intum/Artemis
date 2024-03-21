@@ -45,12 +45,12 @@ public class ComplaintResponseResource {
     }
 
     /**
-     * POST /complaint/{complaintId}/response: locks the complaint by creating an empty complaint response
+     * POST /complaints/{complaintId}/response: locks the complaint by creating an empty complaint response
      *
      * @param complaintId - id of the complaint to lock
      * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
-    @PostMapping("complaint/{complaintId}/response")
+    @PostMapping("complaints/{complaintId}/response")
     @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> lockComplaint(@PathVariable long complaintId) {
         log.debug("REST request to create empty complaint response for complaint with id: {}", complaintId);
@@ -62,12 +62,12 @@ public class ComplaintResponseResource {
     }
 
     /**
-     * DELETE /complaint/{complaintId}/response: removes the lock on a complaint by removing the empty complaint response
+     * DELETE /complaints/{complaintId}/response: removes the lock on a complaint by removing the empty complaint response
      *
      * @param complaintId - id of the complaint to remove the lock for
      * @return the ResponseEntity with status 200 (Ok)
      */
-    @DeleteMapping("complaint/{complaintId}/response")
+    @DeleteMapping("complaints/{complaintId}/response")
     @EnforceAtLeastTutor
     public ResponseEntity<Void> removeLockFromComplaint(@PathVariable long complaintId) {
         log.debug("REST request to remove the lock on the complaint with the id: {}", complaintId);
@@ -77,21 +77,21 @@ public class ComplaintResponseResource {
     }
 
     /**
-     * PUT /complaint/{complaintId}/response: resolve a complaint by updating the complaint and the associated empty complaint response
+     * PUT /complaints/{complaintId}/response: resolve a complaint by updating the complaint and the associated empty complaint response
      *
      * @param complaintId             - id of the complaint to resolve
      * @param complaintResponseUpdate the complaint response used for resolving the complaint
      * @return if action is REFRESH_LOCK: status 201 (Created) and with body the empty complaint response
      *         if action is RESOLVE_COMPLAINT: the ResponseEntity with status 200 (Ok) and with body the complaint response used for resolving the complaint
      */
-    @PatchMapping("complaint/{complaintId}/response")
+    @PatchMapping("complaints/{complaintId}/response")
     @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponseUpdateDTO complaintResponseUpdate, @PathVariable long complaintId) {
-        if (complaintResponseUpdate == null || complaintResponseUpdate.getAction() == null) {
+        if (complaintResponseUpdate == null || complaintResponseUpdate.action() == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        Action action = complaintResponseUpdate.getAction();
+        Action action = complaintResponseUpdate.action();
 
         return switch (action) {
             case REFRESH_LOCK -> refreshComplaintResponse(complaintId);

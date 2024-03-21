@@ -191,18 +191,18 @@ public class ComplaintResponseService {
         if (originalComplaint.isAccepted() != null) {
             throw new IllegalArgumentException("You can not update the response to an already answered complaint");
         }
-        if (updatedComplaintResponse.getComplaintIsAccepted() == null) {
+        if (updatedComplaintResponse.complaintIsAccepted() == null) {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
         }
 
-        if (updatedComplaintResponse.getResponseText() != null) {
+        if (updatedComplaintResponse.responseText() != null) {
             // Retrieve course to get max complaint response limit
             final Course course = originalComplaint.getResult().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
 
             // Check whether the complaint text limit is exceeded
             Exercise exercise = originalComplaint.getResult().getParticipation().getExercise();
             int maxLength = course.getMaxComplaintResponseTextLimitForExercise(exercise);
-            if (maxLength < updatedComplaintResponse.getResponseText().length()) {
+            if (maxLength < updatedComplaintResponse.responseText().length()) {
                 throw new BadRequestAlertException("You cannot submit a complaint response that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
                         "exceededComplaintResponseTextLimit");
             }
@@ -217,11 +217,11 @@ public class ComplaintResponseService {
             throw new ComplaintResponseLockedException(emptyComplaintResponseFromDatabase);
         }
 
-        originalComplaint.setAccepted(updatedComplaintResponse.getComplaintIsAccepted()); // accepted or denied
+        originalComplaint.setAccepted(updatedComplaintResponse.complaintIsAccepted()); // accepted or denied
         originalComplaint = complaintRepository.save(originalComplaint);
 
         emptyComplaintResponseFromDatabase.setSubmittedTime(ZonedDateTime.now());
-        emptyComplaintResponseFromDatabase.setResponseText(updatedComplaintResponse.getResponseText());
+        emptyComplaintResponseFromDatabase.setResponseText(updatedComplaintResponse.responseText());
         emptyComplaintResponseFromDatabase.setComplaint(originalComplaint);
         emptyComplaintResponseFromDatabase.setReviewer(user);
         return complaintResponseRepository.save(emptyComplaintResponseFromDatabase);
