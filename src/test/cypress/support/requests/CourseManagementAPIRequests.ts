@@ -141,7 +141,7 @@ export class CourseManagementAPIRequests {
     }
 
     private addUserToCourse(courseId: number, username: string, roleIdentifier: string) {
-        return cy.request({ method: POST, url: `${COURSE_BASE}${courseId}/${roleIdentifier}/${username}` });
+        return cy.request({ method: POST, url: `${COURSE_BASE}/${courseId}/${roleIdentifier}/${username}` });
     }
 
     /**
@@ -152,7 +152,7 @@ export class CourseManagementAPIRequests {
      */
     deleteLecture(lectureId: number) {
         return cy.request({
-            url: `${BASE_API}lectures/${lectureId}`,
+            url: `${BASE_API}/lectures/${lectureId}`,
             method: DELETE,
         });
     }
@@ -176,7 +176,7 @@ export class CourseManagementAPIRequests {
             channelName: 'lecture-' + titleLowercase(title),
         };
         return cy.request({
-            url: `${BASE_API}lectures`,
+            url: `${BASE_API}/lectures`,
             method: POST,
             body,
         });

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 
-import { BASE_API, POST, PUT } from '../../constants';
+import { COURSE_BASE, POST, PUT } from '../../constants';
 import { enterDate } from '../../utils';
 
 /**
@@ -103,7 +103,7 @@ export class ExamCreationPage {
      * @returns the query chainable if a test needs to access the response
      */
     submit() {
-        cy.intercept(POST, BASE_API + '/courses/*/exams').as('createExamQuery');
+        cy.intercept(POST, `${COURSE_BASE}/*/exams`).as('createExamQuery');
         cy.get('#save-exam').click();
         return cy.wait('@createExamQuery');
     }
@@ -113,7 +113,7 @@ export class ExamCreationPage {
      * @returns the query chainable if a test needs to access the response
      */
     update() {
-        cy.intercept(PUT, BASE_API + 'courses/*/exams').as('updateExamQuery');
+        cy.intercept(PUT, `${COURSE_BASE}/*/exams`).as('updateExamQuery');
         cy.get('#save-exam').click();
         return cy.wait('@updateExamQuery');
     }

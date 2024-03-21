@@ -53,14 +53,14 @@ public class ProgrammingExerciseImportService {
 
     private final UriService uriService;
 
-    private final TemplateUpgradePolicy templateUpgradePolicy;
+    private final TemplateUpgradePolicyService templateUpgradePolicyService;
 
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, GitService gitService, FileService fileService, UserRepository userRepository,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UriService uriService, TemplateUpgradePolicy templateUpgradePolicy,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UriService uriService, TemplateUpgradePolicyService templateUpgradePolicyService,
             ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -72,7 +72,7 @@ public class ProgrammingExerciseImportService {
         this.userRepository = userRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.uriService = uriService;
-        this.templateUpgradePolicy = templateUpgradePolicy;
+        this.templateUpgradePolicyService = templateUpgradePolicyService;
         this.programmingExerciseImportBasicService = programmingExerciseImportBasicService;
     }
 
@@ -278,7 +278,7 @@ public class ProgrammingExerciseImportService {
 
         if (newExercise.isExamExercise()) {
             // Disable feedback suggestions on exam exercises (currently not supported)
-            newExercise.setFeedbackSuggestionsEnabled(false);
+            newExercise.setFeedbackSuggestionModule(null);
         }
 
         final var importedProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
@@ -286,7 +286,7 @@ public class ProgrammingExerciseImportService {
 
         // Update the template files
         if (updateTemplate) {
-            TemplateUpgradeService upgradeService = templateUpgradePolicy.getUpgradeService(importedProgrammingExercise.getProgrammingLanguage());
+            TemplateUpgradeService upgradeService = templateUpgradePolicyService.getUpgradeService(importedProgrammingExercise.getProgrammingLanguage());
             upgradeService.upgradeTemplate(importedProgrammingExercise);
         }
 

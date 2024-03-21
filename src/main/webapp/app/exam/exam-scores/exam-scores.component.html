@@ -45,7 +45,7 @@
             </div>
             <div class="mb-2">
                 <h4>
-                    <span jhiTranslate="artemisApp.examScores.examStatisticsTitle">Exam Statistics</span>
+                    <span jhiTranslate="artemisApp.examScores.examStatisticsTitle"></span>
                 </h4>
             </div>
             <!-- Filter settings -->
@@ -431,7 +431,7 @@
             @if (aggregatedExerciseGroupResults) {
                 <div>
                     <h4 class="mt-3">
-                        <span jhiTranslate="artemisApp.examScores.ExerciseGroupsTitle">Exercise groups statistics</span>
+                        <span jhiTranslate="artemisApp.examScores.ExerciseGroupsTitle"></span>
                     </h4>
                     @if (course) {
                         <div class="col mb-3">
@@ -546,7 +546,7 @@
             }
             <!-- Student Result Table -->
             <h4>
-                <span jhiTranslate="artemisApp.examScores.studentResultsTitle">Student Results</span>
+                <span jhiTranslate="artemisApp.examScores.studentResultsTitle"></span>
             </h4>
             <div class="table-responsive">
                 <table class="table table-sm table-striped table-bordered">
@@ -554,19 +554,19 @@
                         <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                             <th>#</th>
                             <th jhiSortBy="name">
-                                <span jhiTranslate="artemisApp.examScores.nameColumn">Name</span>
+                                <span jhiTranslate="artemisApp.examScores.nameColumn"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="login">
-                                <span jhiTranslate="artemisApp.examScores.loginColumn">Login</span>
+                                <span jhiTranslate="artemisApp.examScores.loginColumn"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="email">
-                                <span jhiTranslate="artemisApp.examScores.eMailColumn">E-Mail</span>
+                                <span jhiTranslate="artemisApp.examScores.eMailColumn"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="registrationNumber">
-                                <span jhiTranslate="artemisApp.examScores.registrationNumberColumn">Matriculation Number</span>
+                                <span jhiTranslate="artemisApp.examScores.registrationNumberColumn"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             @for (exerciseGroup of examScoreDTO.exerciseGroups; track exerciseGroup) {
@@ -576,11 +576,11 @@
                                 </th>
                             }
                             <th jhiSortBy="overallPointsAchieved">
-                                <span jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Points</span>
+                                <span jhiTranslate="artemisApp.examScores.overallPointsColumn"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="overallScoreAchieved">
-                                <span jhiTranslate="artemisApp.examScores.overallScoreColumn">Overall Score (%)</span>
+                                <span jhiTranslate="artemisApp.examScores.overallScoreColumn"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             @if (gradingScaleExists) {

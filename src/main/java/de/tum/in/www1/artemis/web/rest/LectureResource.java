@@ -280,9 +280,9 @@ public class LectureResource {
      */
     @GetMapping("lectures/{lectureId}/details-with-slides")
     @EnforceAtLeastStudent
-    public ResponseEntity<Lecture> getLectureWithDetailsAndSlides(@PathVariable Long lectureId) {
+    public ResponseEntity<Lecture> getLectureWithDetailsAndSlides(@PathVariable long lectureId) {
         log.debug("REST request to get lecture {} with details with slides ", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndWithSlidesElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndSlidesAndAttachmentsElseThrow(lectureId);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();

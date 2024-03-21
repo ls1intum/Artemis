@@ -47,6 +47,8 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     private LocalRepository solutionRepository;
 
+    private LocalRepository testsRepository;
+
     @BeforeEach
     void initRepositories() throws GitAPIException, IOException, URISyntaxException {
         // Create assignment repository
@@ -57,6 +59,9 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Create solution repository
         solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-solution");
+
+        // Create tests repository
+        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-tests");
     }
 
     @AfterEach
@@ -64,6 +69,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assignmentRepository.resetLocalRepo();
         templateRepository.resetLocalRepo();
         solutionRepository.resetLocalRepo();
+        testsRepository.resetLocalRepo();
     }
 
     @Test
@@ -190,32 +196,70 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUserTriesToForcePush() throws Exception {
+    void testStudentTriesToForcePush() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
 
-        // Create a second local repository, push a file from there, and then try to force push from the original local repository.
+        RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, repositoryUri, student1Login, projectKey1, assignmentRepositorySlug);
+
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testInstructorTriesToForcePush() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        String assignmentRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, assignmentRepositorySlug);
+        String templateRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, templateRepositorySlug);
+        String solutionRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, solutionRepositorySlug);
+        String testsRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, testsRepositorySlug);
+
+        // Force push to assignment repository (should not be possible)
+        RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, assignmentRepoUri, instructor1Login, projectKey1, assignmentRepositorySlug);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
+
+        // Force push to template repository (should be possible)
+        remoteRefUpdate = setupAndTryForcePush(templateRepository, templateRepoUri, instructor1Login, projectKey1, templateRepositorySlug);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+
+        // Force push to solution repository (should be possible)
+        remoteRefUpdate = setupAndTryForcePush(solutionRepository, solutionRepoUri, instructor1Login, projectKey1, solutionRepositorySlug);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+
+        // Force push to rests repository (should be possible)
+        remoteRefUpdate = setupAndTryForcePush(testsRepository, testsRepoUri, instructor1Login, projectKey1, testsRepositorySlug);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+    }
+
+    private RemoteRefUpdate setupAndTryForcePush(LocalRepository originalRepository, String repositoryUri, String login, String projectKey, String repositorySlug)
+            throws Exception {
+
+        // Create a second local repository and push a file from there
         Path tempDirectory = Files.createTempDirectory("tempDirectory");
         Git secondLocalGit = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDirectory.toFile()).call();
         localVCLocalCITestService.commitFile(tempDirectory, secondLocalGit);
-        localVCLocalCITestService.testPushSuccessful(secondLocalGit, student1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(secondLocalGit, login, projectKey, repositorySlug);
 
-        localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), assignmentRepository.localGit, "second-test.txt");
+        // Commit a file to the original local repository
+        localVCLocalCITestService.commitFile(originalRepository.localRepoFile.toPath(), originalRepository.localGit, "second-test.txt");
 
-        // Try to push normally, should fail because the remote already contains work that does not exist locally.
-        PushResult pushResultNormal = assignmentRepository.localGit.push().setRemote(repositoryUri).call().iterator().next();
+        // Try to push normally, should fail because the remote already contains work that does not exist locally
+        PushResult pushResultNormal = originalRepository.localGit.push().setRemote(repositoryUri).call().iterator().next();
         RemoteRefUpdate remoteRefUpdateNormal = pushResultNormal.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdateNormal.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD);
 
-        // Force push from the original local repository.
-        PushResult pushResultForce = assignmentRepository.localGit.push().setForce(true).setRemote(repositoryUri).call().iterator().next();
+        // Force push from the original local repository
+        PushResult pushResultForce = originalRepository.localGit.push().setForce(true).setRemote(repositoryUri).call().iterator().next();
         RemoteRefUpdate remoteRefUpdate = pushResultForce.getRemoteUpdates().iterator().next();
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
-        assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
 
         // Cleanup
         secondLocalGit.close();
         FileUtils.deleteDirectory(tempDirectory.toFile());
+
+        return remoteRefUpdate;
     }
 
     @Test

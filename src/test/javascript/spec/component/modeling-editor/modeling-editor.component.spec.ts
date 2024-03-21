@@ -194,8 +194,8 @@ describe('ModelingEditorComponent', () => {
         const icon = statusHint.query(By.css('fa-icon'));
         expect(icon).not.toBeNull();
 
-        const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
-        expect(spanText).toBe('All changes saved');
+        const spanElement = statusHint.query(By.css('span')).nativeElement;
+        expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.modelingEditor.allSaved');
     });
 
     it('should show yellow times save indicator if something is unsaved', () => {
@@ -209,8 +209,8 @@ describe('ModelingEditorComponent', () => {
         const icon = statusHint.query(By.css('fa-icon'));
         expect(icon).not.toBeNull();
 
-        const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
-        expect(spanText).toBe('Unsaved changes');
+        const spanElement = statusHint.query(By.css('span')).nativeElement;
+        expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.modelingEditor.unsavedChanges');
     });
 
     it('should show saving indicator if it is currently saving', () => {
@@ -224,8 +224,8 @@ describe('ModelingEditorComponent', () => {
         const icon = statusHint.query(By.css('fa-icon'));
         expect(icon).not.toBeNull();
 
-        const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
-        expect(spanText).toBe('Saving...');
+        const spanElement = statusHint.query(By.css('span')).nativeElement;
+        expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.modelingEditor.saving');
     });
 
     it('should handle explanation input change', () => {

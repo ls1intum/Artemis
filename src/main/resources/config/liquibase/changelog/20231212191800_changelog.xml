@@ -1,0 +1,20 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet id="20231212191800-1" author="maximiliansoelch">
+        <comment>Add new column to the course table to persist if a course has access to the restricted Athena modules.</comment>
+        <addColumn tableName="course">
+            <column name="restricted_athena_modules_access" type="boolean" valueBoolean="false" defaultValueBoolean="false">
+                <constraints nullable="false" />
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="20231212191800-2" author="maximiliansoelch">
+        <comment>Add new column to the exercise table to persist the athena module that should be used for feedback suggestions and remove the feedback_suggestions_enabled column of type boolean, which is not needed anymore.</comment>
+        <addColumn tableName="exercise">
+            <column name="feedback_suggestion_module" type="varchar(255)"/>
+        </addColumn>
+        <dropColumn tableName="exercise">
+            <column name="feedback_suggestions_enabled"/>
+        </dropColumn>
+    </changeSet>
+</databaseChangeLog>

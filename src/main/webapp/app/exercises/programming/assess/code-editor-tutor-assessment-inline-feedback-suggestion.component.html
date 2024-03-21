@@ -10,18 +10,18 @@
                 </h5>
             </div>
             <div class="col ps-0 pt-1 suggested-content">
-                <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedbackSuggestion">Feedback Suggestion:</h6>
+                <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedbackSuggestion"></h6>
                 <p [innerHTML]="buildFeedbackTextForReview(feedback, false)" class="mt-2"></p>
             </div>
         </div>
         <div class="row right-section ml-2">
             <button class="btn btn-success m-1 btn-sm" (click)="onAcceptSuggestion.emit(feedback)">
                 <fa-icon [icon]="faCheck" />
-                <span jhiTranslate="artemisApp.assessment.detail.accept">Accept</span>
+                <span jhiTranslate="artemisApp.assessment.detail.accept"></span>
             </button>
             <button class="btn btn-danger m-1 btn-sm" (click)="onDiscardSuggestion.emit(feedback)">
                 <fa-icon [icon]="faTrash" />
-                <span jhiTranslate="artemisApp.assessment.detail.discard">Discard</span>
+                <span jhiTranslate="artemisApp.assessment.detail.discard"></span>
             </button>
         </div>
     </div>

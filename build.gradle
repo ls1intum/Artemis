@@ -28,7 +28,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "6.9.1"
+version = "7.0.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -193,6 +193,7 @@ repositories {
 }
 
 ext["jackson.version"] = fasterxml_version
+ext['junit-jupiter.version'] = junit_version
 
 dependencies {
 
@@ -399,14 +400,12 @@ dependencies {
     // ---- TEST DEPENDENCIES ----
 
     testImplementation ("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
-        exclude module: "junit"
         exclude group: "org.junit.vintage", module: "junit-vintage-engine"
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.25.3"
-    testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
     testImplementation "io.github.classgraph:classgraph:4.8.165"
