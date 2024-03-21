@@ -346,7 +346,7 @@ To unlock the full potential of the LTI configuration and enable the Deep Linkin
     :alt: Edit Course-wise LTI Configuration
 
 Artemis user account provisioning
-^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Instructors can decide to automatically create new user accounts for students who first participate in an exercise via an external platform and do not already have an Artemis account. Artemis automatically generates a new student account by default when they first engage with an Artemis exercise through an external LMS.
 
