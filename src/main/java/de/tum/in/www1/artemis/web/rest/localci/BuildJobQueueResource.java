@@ -6,9 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
@@ -45,8 +48,7 @@ public class BuildJobQueueResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<List<LocalCIBuildJobQueueItem>> getQueuedBuildJobsForCourse(@PathVariable long courseId) {
         log.debug("REST request to get the queued build jobs for course {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(courseId)) {
             throw new AccessForbiddenException("You are not allowed to access queued build jobs of this course!");
         }
         List<LocalCIBuildJobQueueItem> buildJobQueue = localCIBuildJobQueueService.getQueuedJobsForCourse(courseId);
@@ -63,8 +65,7 @@ public class BuildJobQueueResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<List<LocalCIBuildJobQueueItem>> getRunningBuildJobsForCourse(@PathVariable long courseId) {
         log.debug("REST request to get the running build jobs for course {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(courseId)) {
             throw new AccessForbiddenException("You are not allowed to access running build jobs of this course!");
         }
         List<LocalCIBuildJobQueueItem> runningBuildJobs = localCIBuildJobQueueService.getProcessingJobsForCourse(courseId);
@@ -82,8 +83,7 @@ public class BuildJobQueueResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> cancelBuildJob(@PathVariable long courseId, @PathVariable String buildJobId) {
         log.debug("REST request to cancel the build job for course {} and with id {}", courseId, buildJobId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(courseId)) {
             throw new AccessForbiddenException("You are not allowed to cancel the build job of this course!");
         }
 
@@ -103,8 +103,7 @@ public class BuildJobQueueResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> cancelAllQueuedBuildJobs(@PathVariable long courseId) {
         log.debug("REST request to cancel all queued build jobs for course {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(courseId)) {
             throw new AccessForbiddenException("You are not allowed to cancel the build job of this course!");
         }
         // Call the cancelAllQueuedBuildJobs method in LocalCIBuildJobManagementService
@@ -123,8 +122,7 @@ public class BuildJobQueueResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> cancelAllRunningBuildJobs(@PathVariable long courseId) {
         log.debug("REST request to cancel all running build jobs for course {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(courseId)) {
             throw new AccessForbiddenException("You are not allowed to cancel the build job of this course!");
         }
         // Call the cancelAllRunningBuildJobs method in LocalCIBuildJobManagementService

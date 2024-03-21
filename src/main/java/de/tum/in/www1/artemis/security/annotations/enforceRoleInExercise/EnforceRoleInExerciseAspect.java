@@ -31,6 +31,6 @@ public class EnforceRoleInExerciseAspect extends EnforceRoleInResourceAspect {
 
     @Override
     protected void authorizationCheck(Role role, long resourceId) {
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(role, resourceId);
+        authorizationCheckService.checkIsAtLeastRoleForExerciseElseThrow(role, resourceId);
     }
 }
