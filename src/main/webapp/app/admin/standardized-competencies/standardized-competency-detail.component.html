@@ -1,0 +1,25 @@
+<div class="d-flex flex-column h-100">
+    <div>
+        <!-- TODO: header -->
+        <h4>{{ competency.title }}</h4>
+        @if (!isInEditMode) {
+            <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.edit'" [icon]="faEdit" (onClick)="edit()" />
+        }
+        <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.delete'" [icon]="faTrash" (onClick)="delete()" />
+    </div>
+    <div class="d-flex h-100">
+        <!-- TODO: body, also allow changes on edit -->
+        <!-- TODO: form rows -->
+        {{ competency.description }}
+        {{ competency.taxonomy }}
+        {{ competency.version }}
+        {{ competency.knowledgeArea }}
+        {{ competency.source }}
+    </div>
+    @if (isInEditMode) {
+        <div>
+            <jhi-button [btnType]="ButtonType.PRIMARY" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.save'" [icon]="faSave" (onClick)="save()" />
+            <jhi-button [btnType]="ButtonType.SECONDARY" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
+        </div>
+    }
+</div>

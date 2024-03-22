@@ -2,7 +2,8 @@ import { Component } from '@angular/core';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { CompetencyTaxonomy } from 'app/entities/competency.model';
+import { KnowledgeArea, StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
@@ -11,9 +12,17 @@ import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 })
 export class StandardizedCompetencyManagementComponent {
     //TODO: add a debounce to the search
-    title: string;
+    //TODO: differentiate between tree and original data source, so i can filter =)
+    //TODO: display hierarchy in the select
+
+    competencyTitleFilter?: string;
     knowledgeAreaFilter?: KnowledgeArea;
     knowledgeAreaArray: KnowledgeArea[];
+
+    //TODO: these two exclude each other :D
+    selectedCompetency?: StandardizedCompetency;
+
+    //Icons
     protected readonly faChevronRight = faChevronRight;
 
     readonly trackBy = (_: number, node: KnowledgeArea) => node.id;
@@ -60,6 +69,31 @@ export class StandardizedCompetencyManagementComponent {
             id: knowledgeArea.id,
             title: knowledgeArea.title,
         };
+    }
+
+    selectCompetency(competency: StandardizedCompetency) {
+        if (this.selectedCompetency?.id === competency.id) {
+            return;
+        }
+        if (this.selectedCompetency) {
+            //TODO: real handling here: ONLY IF IN EDIT MODE!!!
+            console.log('Are you sure you want to change?');
+            this.selectedCompetency = competency;
+        } else {
+            this.selectedCompetency = competency;
+        }
+    }
+
+    deleteCompetency(competencyId: number) {
+        console.log(competencyId);
+        //TODO: only if successful
+        this.selectedCompetency = undefined;
+        //TODO: also delete from other stuff and co (and de-select)
+    }
+
+    updateCompetency(competency: StandardizedCompetency) {
+        console.log(competency);
+        //TODO: other stuff
     }
 }
 
@@ -138,32 +172,3 @@ const DATA_2: KnowledgeArea[] = [
         ],
     },
 ];
-
-interface KnowledgeArea {
-    id?: number;
-    title?: string;
-    description?: string;
-    parent?: KnowledgeArea;
-    children?: KnowledgeArea[];
-    competencies?: StandardizedCompetency[];
-}
-
-interface StandardizedCompetency {
-    id?: number;
-    title?: string;
-    description?: string;
-    taxonomy?: CompetencyTaxonomy;
-    version?: string;
-    knowledgeArea?: KnowledgeArea;
-    source?: Source;
-    firstVersion?: StandardizedCompetency;
-    childVersions?: StandardizedCompetency[];
-    linkedCompetencies?: Competency[];
-}
-
-interface Source {
-    title?: string;
-    author?: string;
-    uri?: string;
-    competencies?: StandardizedCompetency[];
-}

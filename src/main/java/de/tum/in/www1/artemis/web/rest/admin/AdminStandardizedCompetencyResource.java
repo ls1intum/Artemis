@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -87,7 +88,7 @@ public class AdminStandardizedCompetencyResource {
      * @param competencyId the id of the competency that should be deleted
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("standardized-competencies/{competencyId}")
+    @DeleteMapping("standardized-competencies/{competencyId}")
     @EnforceAdmin
     public ResponseEntity<Void> deleteStandardizedCompetency(@PathVariable long competencyId) {
         log.debug("REST request to delete standardized competency : {}", competencyId);

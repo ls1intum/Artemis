@@ -14,7 +14,7 @@
     <div class="row">
         <div class="form-group col">
             <label for="title-input" jhiTranslate="artemisApp.standardizedCompetency.model.title"> </label>
-            <input id="title-input" class="form-control" [(ngModel)]="title" />
+            <input id="title-input" class="form-control" [(ngModel)]="competencyTitleFilter" />
         </div>
         <div class="form-group col">
             <label for="knowledge-area-select" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
@@ -46,11 +46,18 @@
                         <!-- TODO: if we do the filter here it is very expensive i guess -->
                         <div class="card p-2 w-100 rounded-0 mat-tree-node">
                             <span>{{ competency.title }}</span>
+                            <button class="btn btn-primary" (click)="selectCompetency(competency)">SELECT</button>
                         </div>
                     }
                 </div>
             </mat-nested-tree-node>
         </mat-tree>
-        <div class="card d-flex">I AM DETAIL CONTENT YIPPIEE</div>
+        @if (selectedCompetency) {
+            <!-- TODO: move the card into the detail thingy also maybe move p-2 into card -->
+            <!-- TODO: bug that if selecting another comp -> dont go out of edit mode XD -->
+            <div class="card p-2 d-flex">
+                <jhi-standardized-competency-detail class="h-100" [competency]="selectedCompetency" (onDelete)="deleteCompetency($event)" (onSave)="updateCompetency($event)" />
+            </div>
+        }
     </div>
 </div>
