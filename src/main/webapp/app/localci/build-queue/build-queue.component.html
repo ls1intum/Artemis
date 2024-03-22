@@ -57,16 +57,16 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                         @if (
-                            row.repositoryInfo.triggeredByPushTo === 'TEMPLATE' ||
-                            row.repositoryInfo.triggeredByPushTo === 'SOLUTION' ||
-                            row.repositoryInfo.triggeredByPushTo === 'TESTS'
+                            row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.TEMPLATE ||
+                            row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.SOLUTION ||
+                            row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.TESTS
                         ) {
                             <a
                                 [routerLink]="['/course-management', row.courseId, 'programming-exercises', row.exerciseId, 'participations', value, 'submissions']"
                                 [queryParams]="{ isTmpOrSolutionProgrParticipation: true }"
                                 >{{ value }}</a
                             >
-                        } @else if (row.repositoryInfo.triggeredByPushTo === 'USER') {
+                        } @else if (row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.USER) {
                             <a [routerLink]="['/course-management', row.courseId, 'programming-exercises', row.exerciseId, 'participations', value, 'submissions']">{{ value }}</a>
                         }
                     </ng-template>
@@ -102,9 +102,9 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                         @if (
-                            row.repositoryInfo.triggeredByPushTo === 'TEMPLATE' ||
-                            row.repositoryInfo.triggeredByPushTo === 'SOLUTION' ||
-                            row.repositoryInfo.triggeredByPushTo === 'TESTS'
+                            row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.TEMPLATE ||
+                            row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.SOLUTION ||
+                            row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.TESTS
                         ) {
                             <a
                                 class="wrap-long-text"
@@ -120,7 +120,7 @@
                                 ]"
                                 >{{ value }}</a
                             >
-                        } @else if (row.repositoryInfo.triggeredByPushTo === 'USER') {
+                        } @else if (row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.USER) {
                             <a
                                 class="wrap-long-text"
                                 [routerLink]="[
@@ -243,16 +243,16 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                         @if (
-                            row.repositoryInfo.triggeredByPushTo === 'TEMPLATE' ||
-                            row.repositoryInfo.triggeredByPushTo === 'SOLUTION' ||
-                            row.repositoryInfo.triggeredByPushTo === 'TESTS'
+                            row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.TEMPLATE ||
+                            row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.SOLUTION ||
+                            row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.TESTS
                         ) {
                             <a
                                 [routerLink]="['/course-management', row.courseId, 'programming-exercises', row.exerciseId, 'participations', value, 'submissions']"
                                 [queryParams]="{ isTmpOrSolutionProgrParticipation: true }"
                                 >{{ value }}</a
                             >
-                        } @else if (row.repositoryInfo.triggeredByPushTo === 'USER') {
+                        } @else if (row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.USER) {
                             <a [routerLink]="['/course-management', row.courseId, 'programming-exercises', row.exerciseId, 'participations', value, 'submissions']">{{ value }}</a>
                         }
                     </ng-template>
@@ -288,9 +288,9 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                         @if (
-                            row.repositoryInfo.triggeredByPushTo === 'TEMPLATE' ||
-                            row.repositoryInfo.triggeredByPushTo === 'SOLUTION' ||
-                            row.repositoryInfo.triggeredByPushTo === 'TESTS'
+                            row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.TEMPLATE ||
+                            row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.SOLUTION ||
+                            row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.TESTS
                         ) {
                             <a
                                 class="wrap-long-text"
@@ -306,7 +306,7 @@
                                 ]"
                                 >{{ value }}</a
                             >
-                        } @else if (row.repositoryInfo.triggeredByPushTo === 'USER') {
+                        } @else if (row.repositoryInfo.triggeredByPushTo === TriggeredByPushTo.USER) {
                             <a
                                 class="wrap-long-text"
                                 [routerLink]="[

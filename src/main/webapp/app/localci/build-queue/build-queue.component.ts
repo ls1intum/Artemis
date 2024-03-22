@@ -5,6 +5,7 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { take } from 'rxjs/operators';
+import { TriggeredByPushTo } from 'app/entities/repository-info.model';
 
 @Component({
     selector: 'jhi-build-queue',
@@ -146,4 +147,6 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
             }
         });
     }
+
+    protected readonly TriggeredByPushTo = TriggeredByPushTo;
 }

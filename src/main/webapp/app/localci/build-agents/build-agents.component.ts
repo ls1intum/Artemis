@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
+import { TriggeredByPushTo } from 'app/entities/repository-info.model';
 
 @Component({
     selector: 'jhi-build-agents',
@@ -90,4 +91,6 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
             this.buildQueueService.cancelAllRunningBuildJobsForAgent(buildAgent.name).subscribe();
         }
     }
+
+    protected readonly TriggeredByPushTo = TriggeredByPushTo;
 }
