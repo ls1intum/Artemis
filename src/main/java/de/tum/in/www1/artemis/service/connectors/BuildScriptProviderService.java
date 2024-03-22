@@ -28,9 +28,9 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
  */
 @Service
 @Profile("aeolus | localci")
-public class BuildScriptProvider {
+public class BuildScriptProviderService {
 
-    private static final Logger log = LoggerFactory.getLogger(BuildScriptProvider.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildScriptProviderService.class);
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -42,7 +42,7 @@ public class BuildScriptProvider {
      *
      * @param resourceLoaderService resourceLoaderService
      */
-    public BuildScriptProvider(ResourceLoaderService resourceLoaderService) {
+    public BuildScriptProviderService(ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
         // load all scripts into the cache
         cacheOnBoot();
@@ -142,7 +142,12 @@ public class BuildScriptProvider {
     public String buildTemplateName(Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage, String fileExtension) {
         List<String> fileNameComponents = new ArrayList<>();
 
-        fileNameComponents.add(projectType.map(Enum::name).orElse("default").toLowerCase());
+        if (ProjectType.MAVEN_BLACKBOX.equals(projectType.orElse(null))) {
+            fileNameComponents.add("plain_" + projectType.get().name().toLowerCase());
+        }
+        else {
+            fileNameComponents.add(projectType.map(Enum::name).orElse("default").toLowerCase());
+        }
 
         if (staticAnalysis) {
             fileNameComponents.add("static");

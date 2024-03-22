@@ -17,7 +17,8 @@ export interface IProgrammingExerciseParticipationService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseParticipationService implements IProgrammingExerciseParticipationService {
-    public resourceUrl = 'api/programming-exercise-participations/';
+    public resourceUrlParticipations = 'api/programming-exercise-participations/';
+    public resourceUrl = 'api/programming-exercise/';
 
     constructor(
         private http: HttpClient,
@@ -27,7 +28,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
 
     getLatestResultWithFeedback(participationId: number, withSubmission = false): Observable<Result | undefined> {
         const options = createRequestOption({ withSubmission });
-        return this.http.get<Result | undefined>(this.resourceUrl + participationId + '/latest-result-with-feedbacks', { params: options }).pipe(
+        return this.http.get<Result | undefined>(this.resourceUrlParticipations + participationId + '/latest-result-with-feedbacks', { params: options }).pipe(
             tap((res) => {
                 if (res?.participation?.exercise) {
                     this.sendTitlesToEntityTitleService(res?.participation);
@@ -38,14 +39,16 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     }
 
     getStudentParticipationWithLatestResult(participationId: number): Observable<ProgrammingExerciseStudentParticipation> {
-        return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-latest-result-and-feedbacks').pipe(
-            tap((res) => {
-                if (res.exercise) {
-                    this.sendTitlesToEntityTitleService(res);
-                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.exercise);
-                }
-            }),
-        );
+        return this.http
+            .get<ProgrammingExerciseStudentParticipation>(this.resourceUrlParticipations + participationId + '/student-participation-with-latest-result-and-feedbacks')
+            .pipe(
+                tap((res) => {
+                    if (res.exercise) {
+                        this.sendTitlesToEntityTitleService(res);
+                        this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.exercise);
+                    }
+                }),
+            );
     }
 
     /**
@@ -53,7 +56,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
      * @param participationId of the participation to get the student participation for
      */
     getStudentParticipationWithAllResults(participationId: number): Observable<ProgrammingExerciseStudentParticipation> {
-        return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-all-results').pipe(
+        return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrlParticipations + participationId + '/student-participation-with-all-results').pipe(
             tap((res) => {
                 if (res.exercise) {
                     this.sendTitlesToEntityTitleService(res);
@@ -64,7 +67,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     }
 
     checkIfParticipationHasResult(participationId: number): Observable<boolean> {
-        return this.http.get<boolean>(this.resourceUrl + participationId + '/has-result');
+        return this.http.get<boolean>(this.resourceUrlParticipations + participationId + '/has-result');
     }
 
     resetRepository(participationId: number, gradedParticipationId?: number) {
@@ -72,7 +75,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         if (gradedParticipationId) {
             params = params.set('gradedParticipationId', gradedParticipationId.toString());
         }
-        return this.http.put<void>(`${this.resourceUrl}${participationId}/reset-repository`, null, { observe: 'response', params });
+        return this.http.put<void>(`${this.resourceUrlParticipations}${participationId}/reset-repository`, null, { observe: 'response', params });
     }
 
     sendTitlesToEntityTitleService(participation: Participation | undefined) {
@@ -94,7 +97,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
      * @param commitId of the commit to get the files for
      */
     getParticipationRepositoryFilesWithContentAtCommit(participationId: number, commitId: string): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrl}${participationId}/files-content/${commitId}`).pipe(
+        return this.http.get(`${this.resourceUrlParticipations}${participationId}/files-content/${commitId}`).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
@@ -107,11 +110,18 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
      * Get the repository files with content for a given participation id at a specific commit hash. This is used for the commit details view.
      * The current user needs to be at least a teaching assistant in the course of the participation.
      * If the user is not a teaching assistant, the user needs to be in the team or the owner of the participation.
+     * @param exerciseId of the exercise to get the files for
      * @param participationId of the participation to get the files for
      * @param commitId of the commit to get the files for
+     * @param repositoryType of the participation to get the files for
      */
-    getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(participationId: number, commitId: string): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrl}${participationId}/files-content-commit-details/${commitId}`).pipe(
+    getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
+        exerciseId: number,
+        participationId: number,
+        commitId: string,
+        repositoryType: string,
+    ): Observable<Map<string, string> | undefined> {
+        return this.http.get(`${this.resourceUrl}${exerciseId}/participation/${participationId}/files-content-commit-details/${commitId}`, { params: { repositoryType } }).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
@@ -125,7 +135,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
      * @param participationId of the participation to get the commit infos for
      */
     retrieveCommitsInfoForParticipation(participationId: number): Observable<CommitInfo[]> {
-        return this.http.get<CommitInfo[]>(`${this.resourceUrl}${participationId}/commits-info`);
+        return this.http.get<CommitInfo[]>(`${this.resourceUrlParticipations}${participationId}/commits-info`);
     }
 
     /**
@@ -134,6 +144,10 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
      * @param participationId of the participation to get the commit infos for
      */
     retrieveCommitHistoryForParticipation(participationId: number): Observable<CommitInfo[]> {
-        return this.http.get<CommitInfo[]>(`${this.resourceUrl}${participationId}/commit-history`);
+        return this.http.get<CommitInfo[]>(`${this.resourceUrlParticipations}${participationId}/commit-history`);
+    }
+
+    retrieveCommitHistoryForTemplateSolutionOrTests(exerciseId: number, repositoryType: string): Observable<CommitInfo[]> {
+        return this.http.get<CommitInfo[]>(`${this.resourceUrl}${exerciseId}/commit-history/${repositoryType}`);
     }
 }
