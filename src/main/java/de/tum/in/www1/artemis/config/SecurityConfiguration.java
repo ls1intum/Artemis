@@ -141,7 +141,7 @@ public class SecurityConfiguration {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(requests -> requests
                 .requestMatchers(antMatcher("/"), antMatcher("/index.html"), antMatcher("/public/**")).permitAll()
-                .requestMatchers(antMatcher("/*.js"), antMatcher("/*.css"), antMatcher("/*.map")).permitAll()
+                .requestMatchers(antMatcher("/*.js"), antMatcher("/*.css"), antMatcher("/*.map"), antMatcher("/*.json")).permitAll()
                 .requestMatchers(antMatcher("/manifest.webapp"), antMatcher("/robots.txt")).permitAll()
                 .requestMatchers(antMatcher("/content/**"), antMatcher("/i18n/*.json"), antMatcher("/logo/*")).permitAll()
                 .requestMatchers(antMatcher("/management/info"), antMatcher("/management/health")).permitAll()
