@@ -13,6 +13,7 @@ import { TriggeredByPushTo } from 'app/entities/repository-info.model';
     styleUrl: './build-queue.component.scss',
 })
 export class BuildQueueComponent implements OnInit, OnDestroy {
+    protected readonly TriggeredByPushTo = TriggeredByPushTo;
     queuedBuildJobs: BuildJob[];
     runningBuildJobs: BuildJob[];
     courseChannels: string[] = [];
@@ -147,6 +148,4 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
             }
         });
     }
-
-    protected readonly TriggeredByPushTo = TriggeredByPushTo;
 }

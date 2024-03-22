@@ -14,6 +14,7 @@ import { TriggeredByPushTo } from 'app/entities/repository-info.model';
     styleUrl: './build-agents.component.scss',
 })
 export class BuildAgentsComponent implements OnInit, OnDestroy {
+    protected readonly TriggeredByPushTo = TriggeredByPushTo;
     buildAgents: BuildAgent[];
     channel: string = '/topic/admin/build-agents';
     websocketSubscription: Subscription;
@@ -91,6 +92,4 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
             this.buildQueueService.cancelAllRunningBuildJobsForAgent(buildAgent.name).subscribe();
         }
     }
-
-    protected readonly TriggeredByPushTo = TriggeredByPushTo;
 }
