@@ -335,7 +335,6 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
     implementation "org.springframework.cloud:spring-cloud-commons:4.1.1"
-    implementation "com.netflix.eureka:eureka-client-jersey3:2.0.2"
 
     // TODO: updating to a later version breaks the build
     implementation "io.netty:netty-all:4.1.101.Final"
