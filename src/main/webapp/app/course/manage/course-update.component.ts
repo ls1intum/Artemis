@@ -1,5 +1,5 @@
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, ElementRef, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -29,7 +29,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 
 @Component({
     selector: 'jhi-course-update',
@@ -39,9 +39,6 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 export class CourseUpdateComponent implements OnInit {
     CachingStrategy = CachingStrategy;
     ProgrammingLanguage = ProgrammingLanguage;
-
-    @ViewChild('cropperTemplate') cropperTemplate: TemplateRef<any>;
-    dialogRef: MatDialogRef<any>;
 
     @ViewChild('timeZoneInput') tzTypeAhead: NgbTypeahead;
     tzFocus$ = new Subject<string>();
@@ -99,7 +96,6 @@ export class CourseUpdateComponent implements OnInit {
         private router: Router,
         private featureToggleService: FeatureToggleService,
         private accountService: AccountService,
-        public dialog: MatDialog,
     ) {}
 
     ngOnInit() {
@@ -623,13 +619,14 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     openCropper(): void {
-        this.dialogRef = this.dialog.open(this.cropperTemplate);
-    }
-
-    closeCropper(): void {
-        if (this.dialogRef) {
-            this.dialogRef.close();
-        }
+        const modalRef = this.modalService.open(ImageCropperModalComponent, { size: 'm' });
+        modalRef.componentInstance.courseImageUploadFile = this.courseImageUploadFile;
+        modalRef.componentInstance.croppedImage = this.croppedImage;
+        modalRef.result.then((result) => {
+            if (result) {
+                this.croppedImage = result;
+            }
+        });
     }
 }
 

@@ -1,0 +1,44 @@
+import { Component } from '@angular/core';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
+
+@Component({
+    selector: 'jhi-image-cropper-modal',
+    standalone: true,
+    imports: [ArtemisSharedCommonModule, ImageCropperModule],
+    templateUrl: './image-cropper-modal.component.html',
+})
+export class ImageCropperModalComponent {
+    courseImageUploadFile?: File;
+    croppedImage?: string;
+
+    constructor(private activeModal: NgbActiveModal) {}
+
+    /**
+     * @param event
+     */
+    imageCropped(event: ImageCroppedEvent) {
+        this.croppedImage = event.base64;
+    }
+
+    /**
+     * Method is called when the process is canceled.
+     */
+    onCancel(): void {
+        this.close();
+    }
+
+    onSave(): void {
+        this.closeWithSaving();
+    }
+
+    private close(): void {
+        this.activeModal.close();
+    }
+
+    private closeWithSaving(): void {
+        this.activeModal.close(this.croppedImage);
+    }
+}
