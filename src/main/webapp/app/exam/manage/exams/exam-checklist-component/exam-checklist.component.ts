@@ -1,14 +1,14 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
-import { faAngleDown, faAngleUp, faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Submission } from 'app/entities/submission.model';
 
 interface AssessmentDetails {
     title: string | undefined;
-    student: string | undefined;
+    url: any[] | undefined;
 }
 
 type SubmissionWithDetails = Submission & {
@@ -34,8 +34,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     countMandatoryExercises = 0;
     isTestExam: boolean;
     allAssessmentsFinished: boolean = true;
-    isAssessmentsCollapsed = true;
     assessmentsWithDetails: SubmissionWithDetails[];
+    lastAssesment?: SubmissionWithDetails;
 
     numberOfSubmitted = 0;
     numberOfStarted = 0;
@@ -49,8 +49,6 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     faListAlt = faListAlt;
     faThList = faThList;
     faChartBar = faChartBar;
-    faAngleUp = faAngleUp;
-    faAngleDown = faAngleDown;
 
     constructor(
         private examChecklistService: ExamChecklistService,
@@ -88,6 +86,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                     }));
                 }
             }, 1000);
+            this.lastAssesment = this.assessmentsWithDetails.last();
         });
     }
 
@@ -100,11 +99,28 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
 
     getAssessmentDetails(submission: Submission): {
         title: string | undefined;
-        student: string | undefined;
+        url: any[] | undefined;
     } {
+        //const courseId = submission.participation?.exercise?.course?.id
+        const examId = submission.participation?.exercise?.exerciseGroup?.exam?.id;
+        const exerciseGroup = submission.participation?.exercise?.exerciseGroup?.id;
+        const exerciseType = submission.participation?.exercise?.type;
+        const submissionId = submission.id;
         return {
             title: submission.participation?.exercise?.title,
-            student: submission.participation?.participantName,
+            url: [
+                '/course-management',
+                '1',
+                'exams',
+                examId,
+                'exercise-groups',
+                exerciseGroup,
+                exerciseType + '-exercises',
+                '1',
+                'submissions',
+                submissionId,
+                'assessment?correction-round=0',
+            ],
         };
     }
 }

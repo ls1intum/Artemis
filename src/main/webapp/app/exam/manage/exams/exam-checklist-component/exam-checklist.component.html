@@ -469,33 +469,22 @@
                                             <li class="list-group-item border-1">
                                                 <jhi-checklist-check [checkAttribute]="allAssessmentsFinished" />
                                                 <span>{{ 'artemisApp.examManagement.checklist.textitems.exercisesAssessed' | artemisTranslate }}</span>
-                                                <br />
-                                                @if (!allAssessmentsFinished) {
-                                                    <ng-container>
-                                                        <button
-                                                            class="btn assessment-check-button"
-                                                            (click)="isAssessmentsCollapsed = !isAssessmentsCollapsed"
-                                                            [attr.aria-expanded]="!isAssessmentsCollapsed"
-                                                        >
-                                                            <span style="text-decoration: underline">{{
-                                                                'artemisApp.examManagement.checklist.textitems.exercisesAttention' | artemisTranslate
-                                                            }}</span>
-                                                            <fa-icon size="sm" [icon]="isAssessmentsCollapsed ? faAngleDown : faAngleUp" />
-                                                        </button>
-                                                        <div [ngbCollapse]="isAssessmentsCollapsed">
-                                                            <ul style="list-style-type: none">
-                                                                @for (assessment of assessmentsWithDetails; track assessment) {
-                                                                    <li>
-                                                                        {{ assessment.details.title }}
-                                                                        {{ 'artemisApp.examManagement.checklist.textitems.exercisesConjunction' | artemisTranslate }}
-                                                                        {{ assessment.details.student }}
-                                                                    </li>
-                                                                }
-                                                            </ul>
-                                                        </div>
-                                                    </ng-container>
-                                                }
                                             </li>
+                                            @if (!allAssessmentsFinished) {
+                                                <ng-container>
+                                                    <span style="text-decoration: underline; margin-left: 20px"
+                                                        >{{ 'artemisApp.examManagement.checklist.textitems.exercisesAttention' | artemisTranslate }}:</span
+                                                    >
+                                                    <div style="margin-left: 20px">
+                                                        @for (assessment of assessmentsWithDetails; track assessment; let lastAssessment = $last) {
+                                                            <a [routerLink]="assessment.details.url">{{ assessment.details.title }}</a>
+                                                            @if (!lastAssessment) {
+                                                                ,
+                                                            }
+                                                        }
+                                                    </div>
+                                                </ng-container>
+                                            }
                                         </span>
                                     </li>
                                 </ul>

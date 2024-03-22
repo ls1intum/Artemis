@@ -672,8 +672,7 @@
                     "numberParticipants": "Participants",
                     "variants": "Variants",
                     "exercisesAssessed": "All exercises are assessed",
-                    "exercisesAttention": "Exercises that need attention",
-                    "exercisesConjunction": "by"
+                    "exercisesAttention": "Exercises that need attention"
                 }
             },
             "editWorkingTime": {

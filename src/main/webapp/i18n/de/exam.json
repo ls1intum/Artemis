@@ -671,8 +671,7 @@
                     "numberParticipants": "Teilnehmende",
                     "variants": "Varianten",
                     "exercisesAssessed": "Alle Übungen sind bewertet",
-                    "exercisesAttention": "Übungen die Aufmerksamkeit erfordern",
-                    "exercisesConjunction": "von"
+                    "exercisesAttention": "Übungen die Aufmerksamkeit erfordern"
                 }
             },
             "editWorkingTime": {
