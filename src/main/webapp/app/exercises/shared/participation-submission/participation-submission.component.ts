@@ -137,6 +137,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                         this.updateStatusBadgeColor();
                     });
                     this.fetchParticipationAndSubmissionsForStudent();
+                    this.isLoading = false;
                 }
             });
         });
