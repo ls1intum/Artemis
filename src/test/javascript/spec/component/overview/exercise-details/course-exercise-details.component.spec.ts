@@ -103,7 +103,9 @@ describe('CourseExerciseDetailsComponent', () => {
 
     const plagiarismCaseInfo = { id: 20, verdict: PlagiarismVerdict.WARNING };
 
-    const route = { pathFromRoot: [{ params: 0 }, { params: 1 }], params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
+    const parentParams = { courseId: 1 };
+    const parentRoute = { parent: { parent: { params: of(parentParams) } } } as any as ActivatedRoute;
+    const route = { params: of({ exerciseId: exercise.id }), parent: parentRoute, queryParams: of({ welcome: '' }) } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -207,9 +209,11 @@ describe('CourseExerciseDetailsComponent', () => {
         fixture.detectChanges();
         tick(500);
         expect(comp.isProduction).toBeFalse();
+        expect(comp.exerciseId).toBe(42);
         expect(comp.courseId).toBe(1);
         expect(comp.exercise).toStrictEqual(exercise);
         expect(comp.hasMoreResults).toBeFalse();
+        comp.ngOnDestroy();
     }));
 
     it('should have student participations', fakeAsync(() => {

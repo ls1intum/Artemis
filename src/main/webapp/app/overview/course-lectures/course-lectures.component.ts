@@ -50,12 +50,12 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
             this.prepareSidebarData();
         });
 
-        const upcomingExercise = this.courseOverviewService.getUpcomingLecture(this.course?.lectures);
+        const upcomingLecture = this.courseOverviewService.getUpcomingLecture(this.course?.lectures);
         this.paramSubscription = this.route.params.subscribe((params) => {
             const lectureId = parseInt(params.lectureId, 10);
             // If no exercise is selected navigate to the upcoming exercise
-            if (!lectureId && upcomingExercise) {
-                this.router.navigate([upcomingExercise.id], { relativeTo: this.route });
+            if (!lectureId && upcomingLecture) {
+                this.router.navigate([upcomingLecture.id], { relativeTo: this.route });
             } else {
                 this.lectureSelected = lectureId ? true : false;
             }
