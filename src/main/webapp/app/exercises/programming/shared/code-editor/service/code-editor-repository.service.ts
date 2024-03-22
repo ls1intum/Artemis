@@ -162,7 +162,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
      */
     downloadFile(fileName: string, downloadName: string) {
         this.http
-            .get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'blob' })
+            .get(`${this.restResourceUrl}/files-plagiarism-view`, { params: new HttpParams().set('file', fileName), responseType: 'blob' })
             .pipe(handleErrorResponse(this.conflictService))
             .subscribe((res) => {
                 downloadFile(res, downloadName);
@@ -228,7 +228,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     getFileHeaders = (fileName: string, domain?: DomainChange) => {
         const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
         return this.http
-            .head<Blob>(`${restResourceUrl}/file`, { observe: 'response', params: new HttpParams().set('file', fileName) })
+            .head<Blob>(`${restResourceUrl}/file-plagiarism-view`, { observe: 'response', params: new HttpParams().set('file', fileName) })
             .pipe(handleErrorResponse(this.conflictService));
     };
 
