@@ -165,7 +165,7 @@ describe('ParticipationSubmissionComponent', () => {
         findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: submissions }));
 
         const getLogsAvailabilityForResultsOfParticipationStub = jest.spyOn(participationService, 'getLogsAvailabilityForResultsOfParticipation');
-        getLogsAvailabilityForResultsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: { 4: true } })));
+        getLogsAvailabilityForResultsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: { '4': true } })));
 
         fixture.detectChanges();
         tick();
@@ -210,7 +210,7 @@ describe('ParticipationSubmissionComponent', () => {
         findWithTemplateAndSolutionParticipationStub.mockReturnValue(of(new HttpResponse({ body: programmingExercise })));
 
         const getLogsAvailabilityForResultsOfParticipationStub = jest.spyOn(participationService, 'getLogsAvailabilityForResultsOfParticipation');
-        getLogsAvailabilityForResultsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: { 4: true } })));
+        getLogsAvailabilityForResultsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: { '4': true } })));
 
         fixture.detectChanges();
         tick();
@@ -250,7 +250,7 @@ describe('ParticipationSubmissionComponent', () => {
         findWithTemplateAndSolutionParticipationStub.mockReturnValue(of(new HttpResponse({ body: programmingExercise })));
 
         const getLogsAvailabilityForResultsOfParticipationStub = jest.spyOn(participationService, 'getLogsAvailabilityForResultsOfParticipation');
-        getLogsAvailabilityForResultsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: { 4: true } })));
+        getLogsAvailabilityForResultsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: { '4': true } })));
 
         fixture.detectChanges();
         tick();
@@ -277,7 +277,7 @@ describe('ParticipationSubmissionComponent', () => {
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submissionWithTwoResults] }));
             jest.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
             const getLogsAvailabilityForResultsOfParticipationStub = jest.spyOn(participationService, 'getLogsAvailabilityForResultsOfParticipation');
-            getLogsAvailabilityForResultsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: { 4: true } })));
+            getLogsAvailabilityForResultsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: { '4': true } })));
         });
 
         it('should delete result of fileUploadSubmission', fakeAsync(() => {
@@ -333,7 +333,7 @@ describe('ParticipationSubmissionComponent', () => {
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submissionWithTwoResults2] }));
             jest.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
             const getLogsAvailabilityForResultsOfParticipationStub = jest.spyOn(participationService, 'getLogsAvailabilityForResultsOfParticipation');
-            getLogsAvailabilityForResultsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: { 4: true } })));
+            getLogsAvailabilityForResultsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: { '4': true } })));
         });
 
         it('should not delete result of fileUploadSubmission because of server error', fakeAsync(() => {
