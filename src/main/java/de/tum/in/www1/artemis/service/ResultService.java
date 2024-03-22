@@ -406,6 +406,12 @@ public class ResultService {
         return result;
     }
 
+    /**
+     * Get a map of result ids to their availability of build log files.
+     *
+     * @param results the results for which to check the availability of build logs
+     * @return a map of result ids to their availability of build log files
+     */
     public Map<Long, Boolean> getLogsAvailabilityForResults(List<Result> results) {
         Map<Long, Boolean> logsAvailability = new HashMap<>();
         for (Result result : results) {

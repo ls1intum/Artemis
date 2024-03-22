@@ -30,6 +30,12 @@ public class BuildLogResource {
         this.buildLogEntryService = buildLogEntryService;
     }
 
+    /**
+     * GET /build-log/{resultId} : get the build log for a given result
+     *
+     * @param resultId the id of the result for which to retrieve the build log
+     * @return the ResponseEntity with status 200 (OK) and the build log in the body, or with status 404 (Not Found) if the build log could not be found
+     */
     @GetMapping("/build-log/{resultId}")
     @EnforceAtLeastEditor
     public ResponseEntity<Resource> getBuildLogForSubmission(@PathVariable long resultId) {

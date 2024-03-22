@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,8 +17,10 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.BuildJobResult;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
 
@@ -33,6 +37,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     @Autowired
     private SharedQueueProcessingService sharedQueueProcessingService;
+
+    @Autowired
+    private BuildLogEntryService buildLogEntryService;
 
     protected IQueue<LocalCIBuildJobQueueItem> queuedJobs;
 
@@ -138,4 +145,20 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     void testGetBuildAgents_instructorAccessForbidden() throws Exception {
         request.get("/api/admin/build-agents", HttpStatus.FORBIDDEN, List.class);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildLogsForResult() throws Exception {
+        try {
+            BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Dummy log");
+            buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "0");
+            var response = request.get("/api/build-log/0", HttpStatus.OK, String.class);
+            assertThat(response).contains("Dummy log");
+        }
+        finally {
+            Path buildLogFile = Path.of("build-logs", "0.log");
+            Files.deleteIfExists(buildLogFile);
+        }
+    }
+
 }

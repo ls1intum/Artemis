@@ -155,6 +155,13 @@ public class ResultResource {
         return new ResponseEntity<>(resultService.filterFeedbackForClient(result), HttpStatus.OK);
     }
 
+    /**
+     * GET /participations/:participationId/results/logs-available : get the logs availability for the results of a participation.
+     *
+     * @param participationId the id of the participation to the results
+     * @return the ResponseEntity with status 200 (OK) and with body the map of resultId and log availability, status 404 (Not Found) if the participation does not exist or 403
+     *         (forbidden) if the user does not have permissions to access the participation.
+     */
     @GetMapping("participations/{participationId}/results/logs-available")
     @EnforceAtLeastTutor
     public ResponseEntity<Map<Long, Boolean>> getLogsAvailabilityForResultsOfParticipation(@PathVariable long participationId) {
