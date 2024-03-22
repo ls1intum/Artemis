@@ -4,11 +4,8 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
 export type SidebarTypes = 'exercise' | 'default';
 
-export type ExerciseGroups = Record<TimeGroupCategory, { entityData: Exercise[] }>;
 export type AccordionGroups = Record<TimeGroupCategory, { entityData: SidebarCardElement[] }>;
 export type ExerciseCollapseState = Record<TimeGroupCategory, boolean>;
-export type CardItemType = 'Exercise' | 'Lecture' | 'Default' | 'Communication';
-// TODO
 
 export interface SidebarData {
     groupByCategory: boolean;
@@ -62,7 +59,7 @@ export interface SidebarCardElement {
      */
     type?: string;
     /**
-     * Set for Exercises
+     * Set for Exercises, shows the colored border on the left side
      */
     difficulty?: DifficultyLevel;
     /**
@@ -70,16 +67,7 @@ export interface SidebarCardElement {
      */
     studentParticipation?: StudentParticipation;
     /**
-     * Set for Exercises
+     * Set for Exercises. Will be removed after refactoring
      */
     exercise?: Exercise;
-}
-
-export interface BaseCardItem {
-    cardItemType: CardItemType;
-}
-
-export interface ExerciseCardItem extends BaseCardItem {
-    cardItemType: 'Exercise';
-    subtitleRight?: StudentParticipation;
 }

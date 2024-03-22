@@ -4,11 +4,11 @@ import { Lecture } from 'app/entities/lecture.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { AccordionGroups, ExerciseGroups, SidebarCardElement, TimeGroupCategory } from 'app/types/sidebar';
+import { AccordionGroups, SidebarCardElement, TimeGroupCategory } from 'app/types/sidebar';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 
-const DEFAULT_UNIT_GROUPS: AccordionGroups | ExerciseGroups = {
+const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
     current: { entityData: [] },
     past: { entityData: [] },
