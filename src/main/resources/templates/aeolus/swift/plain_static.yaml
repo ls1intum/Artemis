@@ -37,6 +37,7 @@ actions:
       - name: swiftlint
         path: target/swiftlint-result.xml
         before: false
+        type: static-code-analysis
       - name: junit_tests.xml
         path: assignment/tests.xml
         type: junit
