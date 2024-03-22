@@ -17,8 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
@@ -53,7 +55,7 @@ public class HestiaUtilTestService {
 
     // required=false is necessary, as this will otherwise fail when not part of a AbstractSpringIntegrationBambooBitbucketJiraTest
     @Autowired(required = false)
-    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
+    private GitlabRequestMockProvider gitlabRequestMockProvider;
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
@@ -119,8 +121,8 @@ public class HestiaUtilTestService {
                 eq(false), any());
         doNothing().when(gitService).pullIgnoreConflicts(any(Repository.class));
 
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(templateRepoUri));
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(templateRepoUri));
 
         var savedExercise = exerciseRepository.save(exercise);
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
@@ -180,8 +182,8 @@ public class HestiaUtilTestService {
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(solutionRepoUri),
                 eq(false), any());
 
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(solutionRepoUri));
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
 
         var savedExercise = exerciseRepository.save(exercise);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
@@ -227,8 +229,8 @@ public class HestiaUtilTestService {
                 .getOrCheckoutRepository(eq(participationRepoUri), eq(false), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(),
                 anyBoolean());
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(participationRepoUri));
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(participationRepoUri));
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(exercise, login, participationRepo.localRepoFile.toURI());
         var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.get(0).getId().getName(), SubmissionType.MANUAL);
         participation = programmingExerciseStudentParticipationRepository
@@ -281,8 +283,8 @@ public class HestiaUtilTestService {
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(false),
                 any());
 
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(testRepoUri));
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(testRepoUri));
 
         return exerciseRepository.save(exercise);
     }

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.connector;
 
 import static org.gitlab4j.api.models.AccessLevel.*;
+import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -30,6 +31,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.RequestMatcher;
 import org.springframework.web.client.RestTemplate;
@@ -447,10 +449,20 @@ public class GitlabRequestMockProvider {
         }
     }
 
+    public void mockDefaultBranch(String defaultBranch, String projectKey) throws GitLabApiException {
+        mockGetDefaultBranch(defaultBranch);
+        mockPutDefaultBranch(projectKey);
+    }
+
     public void mockGetDefaultBranch(String defaultBranch) throws GitLabApiException {
         var mockProject = new Project();
         mockProject.setDefaultBranch(defaultBranch);
         doReturn(mockProject).when(projectApi).getProject(notNull());
+    }
+
+    public void mockPutDefaultBranch(String projectKey) {
+        var defaultBranchPatternUrl = gitlabServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(defaultBranchPatternUrl))).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
     }
 
     private void mockProtectBranch(String branch, VcsRepositoryUri repositoryUri) throws GitLabApiException {

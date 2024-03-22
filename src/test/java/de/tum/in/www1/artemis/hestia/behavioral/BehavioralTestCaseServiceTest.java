@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
-class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "behavioraltestcastservice";
 
