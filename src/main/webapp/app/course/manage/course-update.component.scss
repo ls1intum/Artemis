@@ -45,7 +45,7 @@
 .icon-button-wrapper {
     position: absolute;
     margin-left: 8px;
-    background-color: lightgrey;
+    background-color: var(--gray-500);
     border-radius: 50%;
     display: inline-flex;
     justify-content: center;
@@ -58,12 +58,31 @@
 .icon-button-1 {
     top: 70px;
     right: 85px;
-    color: red;
-    border: 1px solid red;
+    color: var(--red);
+    border: 1px solid var(--red);
 }
 
 .icon-button-2 {
     top: 70px;
     right: 25px;
-    border: 1px solid black;
+    border: 1px solid var(--black);
+}
+
+.modal {
+    border-radius: 8px;
+    margin: auto;
+    padding: 20px;
+}
+
+.modal-header,
+.modal-footer {
+    padding: 12px 12px;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    text-align: right;
 }

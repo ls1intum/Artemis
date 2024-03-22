@@ -1,5 +1,5 @@
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -29,6 +29,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
     selector: 'jhi-course-update',
@@ -38,6 +39,9 @@ import { getSemesters } from 'app/utils/semester-utils';
 export class CourseUpdateComponent implements OnInit {
     CachingStrategy = CachingStrategy;
     ProgrammingLanguage = ProgrammingLanguage;
+
+    @ViewChild('cropperTemplate') cropperTemplate: TemplateRef<any>;
+    dialogRef: MatDialogRef<any>;
 
     @ViewChild('timeZoneInput') tzTypeAhead: NgbTypeahead;
     tzFocus$ = new Subject<string>();
@@ -53,7 +57,6 @@ export class CourseUpdateComponent implements OnInit {
     isSaving: boolean;
     courseImageUploadFile?: File;
     croppedImage?: string;
-    showCropper = false;
     complaintsEnabled = true; // default value
     requestMoreFeedbackEnabled = true; // default value
     customizeGroupNames = false; // default value
@@ -96,6 +99,7 @@ export class CourseUpdateComponent implements OnInit {
         private router: Router,
         private featureToggleService: FeatureToggleService,
         private accountService: AccountService,
+        public dialog: MatDialog,
     ) {}
 
     ngOnInit() {
@@ -357,6 +361,7 @@ export class CourseUpdateComponent implements OnInit {
         if (element.files?.[0]) {
             this.courseImageUploadFile = element.files[0];
         }
+        this.openCropper();
     }
 
     /**
@@ -364,10 +369,6 @@ export class CourseUpdateComponent implements OnInit {
      */
     imageCropped(event: ImageCroppedEvent) {
         this.croppedImage = event.base64;
-    }
-
-    imageLoaded() {
-        this.showCropper = true;
     }
 
     /**
@@ -619,6 +620,16 @@ export class CourseUpdateComponent implements OnInit {
 
     triggerFileInput() {
         this.fileInput.nativeElement.click();
+    }
+
+    openCropper(): void {
+        this.dialogRef = this.dialog.open(this.cropperTemplate);
+    }
+
+    closeCropper(): void {
+        if (this.dialogRef) {
+            this.dialogRef.close();
+        }
     }
 }
 
