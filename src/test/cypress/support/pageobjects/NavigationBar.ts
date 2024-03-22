@@ -9,7 +9,7 @@ export class NavigationBar {
      */
     openCourseManagement() {
         cy.log('Opening course-management page...');
-        cy.intercept(GET, COURSE_BASE + 'course-management-overview*').as('courseManagementQuery');
+        cy.intercept(GET, `${COURSE_BASE}/course-management-overview*`).as('courseManagementQuery');
         cy.get('#course-admin-menu').click();
         cy.wait('@courseManagementQuery', { timeout: 30000 });
         cy.url().should('include', '/course-management');
