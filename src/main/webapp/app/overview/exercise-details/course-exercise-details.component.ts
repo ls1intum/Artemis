@@ -147,31 +147,33 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     }
 
     ngOnInit() {
-        const courseIdParams$ = this.route.pathFromRoot[1].params;
+        const courseIdParams$ = this.route.parent?.parent?.parent?.params;
         const exerciseIdParams$ = this.route.params;
-        this.paramsSubscription = combineLatest([courseIdParams$, exerciseIdParams$]).subscribe(([courseIdParams, exerciseIdParams]) => {
-            const didExerciseChange = this.exerciseId !== parseInt(exerciseIdParams.exerciseId, 10);
-            const didCourseChange = this.courseId !== parseInt(courseIdParams.courseId, 10);
+        if (courseIdParams$) {
+            this.paramsSubscription = combineLatest([courseIdParams$, exerciseIdParams$]).subscribe(([courseIdParams, exerciseIdParams]) => {
+                const didExerciseChange = this.exerciseId !== parseInt(exerciseIdParams.exerciseId, 10);
+                const didCourseChange = this.courseId !== parseInt(courseIdParams.courseId, 10);
 
-            // if learningPathMode is enabled these attributes will be set by the parent
-            if (!this.learningPathMode) {
-                this.exerciseId = parseInt(exerciseIdParams.exerciseId, 10);
-                this.courseId = parseInt(courseIdParams.courseId, 10);
-            }
-            this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
-            this.accountService.identity().then((user: User) => {
-                this.currentUser = user;
+                // if learningPathMode is enabled these attributes will be set by the parent
+                if (!this.learningPathMode) {
+                    this.exerciseId = parseInt(exerciseIdParams.exerciseId, 10);
+                    this.courseId = parseInt(courseIdParams.courseId, 10);
+                }
+                this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
+                this.accountService.identity().then((user: User) => {
+                    this.currentUser = user;
+                });
+                if (didExerciseChange || didCourseChange) {
+                    this.loadExercise();
+                }
+
+                // log event
+                if (this.exerciseId) {
+                    this.setResourceId(this.exerciseId);
+                }
+                this.logEvent();
             });
-            if (didExerciseChange || didCourseChange) {
-                this.loadExercise();
-            }
-
-            // log event
-            if (this.exerciseId) {
-                this.setResourceId(this.exerciseId);
-            }
-            this.logEvent();
-        });
+        }
 
         this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo.inProduction;

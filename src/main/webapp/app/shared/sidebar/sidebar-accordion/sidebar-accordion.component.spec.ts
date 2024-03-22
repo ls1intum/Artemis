@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from 'src/test/javascript/spec/test.module';
 import { SidebarAccordionComponent } from './sidebar-accordion.component';
 
-fdescribe('SidebarAccordionComponent', () => {
+describe('SidebarAccordionComponent', () => {
     let component: SidebarAccordionComponent;
     let fixture: ComponentFixture<SidebarAccordionComponent>;
 
