@@ -121,6 +121,8 @@ spring:
             hibernate.jdbc.batch_size: 25
             hibernate.jdbc.time_zone: UTC
             hibernate.jdbc.lob.non_contextual_creation: true
+            # limit fetch depth to prevent queries from getting too large because of eager fetching
+            hibernate.max_fetch_depth: 3
     liquibase:
         contexts: tests
         enabled: true
