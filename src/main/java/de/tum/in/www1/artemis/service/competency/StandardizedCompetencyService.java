@@ -2,6 +2,11 @@ package de.tum.in.www1.artemis.service.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+
 import javax.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
@@ -113,6 +118,38 @@ public class StandardizedCompetencyService {
             throw new EntityNotFoundException("StandardizedCompetency", competencyId);
         }
         standardizedCompetencyRepository.deleteById(competencyId);
+    }
+
+    /**
+     * Gets a hierarchical structure of all knowledge areas including their competencies, sorted by their title
+     *
+     * @return the list of knowledge areas with no parent, containing all their descendants and competencies
+     */
+    public List<KnowledgeArea> getAllForTreeView() {
+        var knowledgeAreasForTreeView = new ArrayList<KnowledgeArea>();
+        var idMap = new HashMap<Long, KnowledgeArea>();
+
+        var knowledgeAreas = knowledgeAreaRepository.findAllWithCompetenciesByOrderByTitleAsc();
+        for (var knowledgeArea : knowledgeAreas) {
+            knowledgeArea.setChildren(new HashSet<>());
+            idMap.put(knowledgeArea.getId(), knowledgeArea);
+        }
+
+        for (var knowledgeArea : knowledgeAreas) {
+            // if the knowledge area has no parent add it to the result list
+            if (knowledgeArea.getParent() == null) {
+                knowledgeAreasForTreeView.add(knowledgeArea);
+                continue;
+            }
+            // otherwise add it to the children of its parents
+            var parent = idMap.get(knowledgeArea.getParent().getId());
+            if (parent == null) {
+                continue;
+            }
+            parent.addToChildren(knowledgeArea);
+        }
+
+        return knowledgeAreasForTreeView;
     }
 
     /**
