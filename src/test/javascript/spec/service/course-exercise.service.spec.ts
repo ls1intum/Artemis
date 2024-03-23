@@ -165,7 +165,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([fileUploadExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/file-upload-exercises/`, returnedFromService, fileUploadExercise);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/file-upload-exercises`, returnedFromService, fileUploadExercise);
         tick();
     }));
 
