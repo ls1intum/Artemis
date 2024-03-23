@@ -391,7 +391,10 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getComplaintByResultIdNoComplaintExists() throws Exception {
-        request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.OK, Void.class);
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("submissionId", modelingSubmission.getId().toString());
+
+        request.get("/api/complaints", HttpStatus.OK, Void.class, params);
     }
 
     @Test
@@ -832,10 +835,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         examExerciseComplaint.setId(1L);
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("examId", String.valueOf(examId));
 
-        final String url = "/api/complaints";
+        final String url = "/api/complaints?examId=" + examId;
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
     }
 
@@ -918,8 +919,11 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         course.setInstructorGroupName("test");
         course.setTeachingAssistantGroupName("test");
         courseRepository.save(course);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("examId", String.valueOf(examId));
+        params.add("courseId", String.valueOf(courseId));
 
-        request.getList("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, Complaint.class);
+        request.getList("/api/complaints", HttpStatus.FORBIDDEN, Complaint.class, params);
     }
 
     @Test
@@ -931,15 +935,18 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         final var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
-        final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
+        final String url = "/api/complaints?examId=" + examId;
         request.post(url, examExerciseComplaint, HttpStatus.CREATED);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("examId", String.valueOf(examId));
+        params.add("courseId", String.valueOf(courseId));
 
         Optional<Complaint> storedComplaint = complaintRepo.findByResultId(textSubmission.getLatestResult().getId());
-        request.get("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/complaints", HttpStatus.FORBIDDEN, List.class, params);
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
-        request.get("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/complaints", HttpStatus.FORBIDDEN, List.class, params);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        var fetchedComplaints = request.getList("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.OK, Complaint.class);
+        var fetchedComplaints = request.getList("/api/complaints/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.OK, Complaint.class);
         assertThat(fetchedComplaints.get(0).getId()).isEqualTo(storedComplaint.orElseThrow().getId().intValue());
         assertThat(fetchedComplaints.get(0).getComplaintText()).isEqualTo(storedComplaint.get().getComplaintText());
     }
@@ -1017,7 +1024,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         Complaint examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintType(ComplaintType.COMPLAINT);
         examExerciseComplaint.setComplaintText(complaintText);
-        String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examExercise.getExamViaExerciseGroupOrCourseMember().getId()));
+        String url = "/api/complaints?examId=" + examExercise.getExamViaExerciseGroupOrCourseMember().getId();
         request.post(url, examExerciseComplaint, expectedStatus);
         return textSubmission;
     }
