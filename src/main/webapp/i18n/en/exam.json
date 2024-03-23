@@ -182,11 +182,13 @@
                 "type": {
                     "examWideAnnouncement": "Exam-Wide Announcement",
                     "workingTimeUpdate": "Working Time Update",
-                    "examAttendanceCheck": "Attendance Check"
+                    "examAttendanceCheck": "Attendance Check",
+                    "problemStatementUpdate": "Problem Statement Update"
                 },
                 "from": "from",
                 "acknowledge": "Acknowledge",
                 "acknowledgeAll": "Acknowledge all",
+                "navigateToExercise": "Navigate to exercise",
                 "messages": {
                     "workingTimeUpdate": {
                         "titleEveryone": "The working time of the exam has been changed.",
@@ -196,6 +198,10 @@
                     },
                     "examAttendanceCheck": {
                         "description": "An exam supervisor has triggered the attendance check for you. Please follow the instructions of the supervisor."
+                    },
+                    "problemStatementUpdate": {
+                        "description": "The problem statement of the exercise '{{ exerciseName }}' was updated. Please open the exercise to see the changes.",
+                        "instructorMessage": "Instructor's message:"
                     }
                 }
             }

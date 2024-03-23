@@ -59,12 +59,30 @@
                     }
                 </div>
             }
+            @case (ExamLiveEventType.PROBLEM_STATEMENT_UPDATE) {
+                <div>
+                    <div>
+                        {{ 'artemisApp.exam.events.messages.problemStatementUpdate.description' | artemisTranslate: { exerciseName: problemStatementUpdateEvent.exerciseName } }}
+                    </div>
+                    @if (problemStatementUpdateEvent.text) {
+                        <div>{{ 'artemisApp.exam.events.messages.problemStatementUpdate.instructorMessage' | artemisTranslate }}</div>
+                        <div [innerHTML]="problemStatementUpdateEvent.text | htmlForMarkdown"></div>
+                    }
+                </div>
+            }
         }
     </div>
-    @if (showAcknowledge) {
-        <button class="btn btn-primary w-100 mt-2" (click)="acknowledgeEvent()">
-            <fa-icon [icon]="faCheck" />
-            <span jhiTranslate="artemisApp.exam.events.acknowledge"></span>
-        </button>
-    }
+    <div class="d-flex gap-2">
+        @if (showAcknowledge) {
+            <button class="btn btn-primary w-100 mt-2" (click)="acknowledgeEvent()">
+                <fa-icon [icon]="faCheck" />
+                <span jhiTranslate="artemisApp.exam.events.acknowledge"></span>
+            </button>
+        }
+        @if (event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE) {
+            <button class="btn btn-primary w-100 mt-2" (click)="navigateToExercise()">
+                <span jhiTranslate="artemisApp.exam.events.navigateToExercise"></span>
+            </button>
+        }
+    </div>
 </div>

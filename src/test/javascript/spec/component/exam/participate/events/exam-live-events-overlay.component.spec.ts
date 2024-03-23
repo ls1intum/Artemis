@@ -5,11 +5,13 @@ import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { MockExamParticipationLiveEventsService } from '../../../../helpers/mocks/service/mock-exam-participation-live-events.service';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 
 describe('ExamLiveEventsOverlayComponent', () => {
     let component: ExamLiveEventsOverlayComponent;
     let fixture: ComponentFixture<ExamLiveEventsOverlayComponent>;
     let mockLiveEventsService: ExamParticipationLiveEventsService;
+    let mockExamExerciseUpdateService: ExamExerciseUpdateService;
     let mockActiveModal: NgbActiveModal;
 
     beforeEach(async () => {
@@ -23,6 +25,7 @@ describe('ExamLiveEventsOverlayComponent', () => {
         fixture = TestBed.createComponent(ExamLiveEventsOverlayComponent);
         component = fixture.componentInstance;
         mockLiveEventsService = TestBed.inject(ExamParticipationLiveEventsService);
+        mockExamExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
         mockActiveModal = TestBed.inject(NgbActiveModal);
         fixture.detectChanges();
     });
@@ -89,5 +92,19 @@ describe('ExamLiveEventsOverlayComponent', () => {
         component.updateEventsToDisplay();
 
         expect(component.eventsToDisplay).toEqual([mockEvents[0]]);
+    });
+
+    it('should navigate to an exercise and acknowledge an event', () => {
+        const event: ExamLiveEvent = { id: 1, eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE } as any as ExamLiveEvent;
+        component.unacknowledgedEvents = [event];
+
+        jest.spyOn(mockExamExerciseUpdateService, 'navigateToExamExercise');
+        jest.spyOn(component, 'acknowledgeEvent');
+
+        component.navigateToExercise(event);
+
+        expect(mockExamExerciseUpdateService.navigateToExamExercise).toHaveBeenCalledOnce();
+        expect(component.acknowledgeEvent).toHaveBeenCalledWith(event);
+        expect(component.unacknowledgedEvents).toHaveLength(0);
     });
 });
