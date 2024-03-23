@@ -616,7 +616,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         fileUploadExerciseToBeConflicted.setId(123456789L);
         fileUploadExerciseRepository.save(fileUploadExerciseToBeConflicted);
 
-        request.putWithResponseBody("/api/file-upload-exercises" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExerciseToBeConflicted, FileUploadExercise.class,
+        request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExerciseToBeConflicted, FileUploadExercise.class,
                 HttpStatus.CONFLICT);
     }
 
@@ -626,7 +626,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
-        request.putWithResponseBody("/api/file-upload-exercises" + 123456789 + "/re-evaluate", fileUploadExercise, FileUploadExercise.class, HttpStatus.NOT_FOUND);
+        request.putWithResponseBody("/api/file-upload-exercises/" + 123456789 + "/re-evaluate", fileUploadExercise, FileUploadExercise.class, HttpStatus.NOT_FOUND);
     }
 
     @Test
