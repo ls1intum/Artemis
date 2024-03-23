@@ -16,8 +16,10 @@ import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Repository;
@@ -42,7 +44,10 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
  * In the future this service will be extended to make testing of the code hint generation easier.
  */
 @Service
-public class HestiaUtilTestService {
+public class HestiaUtilTestService extends AbstractSpringIntegrationJenkinsGitlabTest {
+
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
 
     @Autowired
     private GitService gitService;
@@ -114,6 +119,9 @@ public class HestiaUtilTestService {
                 eq(false), any());
         doNothing().when(gitService).pullIgnoreConflicts(any(Repository.class));
 
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
+
         var savedExercise = exerciseRepository.save(exercise);
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
@@ -172,6 +180,9 @@ public class HestiaUtilTestService {
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(solutionRepoUri),
                 eq(false), any());
 
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
+
         var savedExercise = exerciseRepository.save(exercise);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
@@ -216,6 +227,9 @@ public class HestiaUtilTestService {
                 .getOrCheckoutRepository(eq(participationRepoUri), eq(false), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(),
                 anyBoolean());
+
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
 
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(exercise, login, participationRepo.localRepoFile.toURI());
         var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.get(0).getId().getName(), SubmissionType.MANUAL);
@@ -268,6 +282,9 @@ public class HestiaUtilTestService {
                 any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(false),
                 any());
+
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
 
         return exerciseRepository.save(exercise);
     }
