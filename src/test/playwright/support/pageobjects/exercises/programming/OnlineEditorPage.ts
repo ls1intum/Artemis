@@ -139,7 +139,7 @@ export class OnlineEditorPage {
         await verifyOutput();
     }
 
-    async makeGitSubmissionAndVerifyResults(exerciseRepo: SimpleGit, exerciseRepoName: string, submission: ProgrammingExerciseSubmission) {
+    async makeGitSubmission(exerciseRepo: SimpleGit, exerciseRepoName: string, submission: ProgrammingExerciseSubmission) {
         for (const fileName of submission.deleteFiles) {
             const packagePath = submission.packageName!.replace(/\./g, '/');
             const filePath = `./src/${packagePath}/${fileName}`;

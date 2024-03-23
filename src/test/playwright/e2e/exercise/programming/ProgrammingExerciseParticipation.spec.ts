@@ -65,17 +65,15 @@ test.describe('Programming exercise participation', () => {
         });
 
         test.describe('Make a submission using git', () => {
-            const exerciseRepos: string[] = [];
-
             test('Makes a failing submission', async ({ page, programmingExerciseEditor }) => {
                 await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
                 const repoUrl = await programmingExerciseEditor.getRepoUrl();
                 const urlParts = repoUrl.split('/');
                 const repoName = urlParts[urlParts.length - 1];
-                exerciseRepos.push(repoName);
                 const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
                 const submission = javaBuildErrorSubmission;
-                await programmingExerciseEditor.makeGitSubmissionAndVerifyResults(exerciseRepo, repoName, submission);
+                await programmingExerciseEditor.makeGitSubmission(exerciseRepo, repoName, submission);
+                await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                 await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
                 const resultScore = await programmingExerciseEditor.getResultScore();
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
@@ -86,10 +84,10 @@ test.describe('Programming exercise participation', () => {
                 const repoUrl = await programmingExerciseEditor.getRepoUrl();
                 const urlParts = repoUrl.split('/');
                 const repoName = urlParts[urlParts.length - 1];
-                exerciseRepos.push(repoName);
                 const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
                 const submission = javaPartiallySuccessfulSubmission;
-                await programmingExerciseEditor.makeGitSubmissionAndVerifyResults(exerciseRepo, repoName, submission);
+                await programmingExerciseEditor.makeGitSubmission(exerciseRepo, repoName, submission);
+                await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                 await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
                 const resultScore = await programmingExerciseEditor.getResultScore();
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
@@ -100,19 +98,13 @@ test.describe('Programming exercise participation', () => {
                 const repoUrl = await programmingExerciseEditor.getRepoUrl();
                 const urlParts = repoUrl.split('/');
                 const repoName = urlParts[urlParts.length - 1];
-                exerciseRepos.push(repoName);
                 const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
                 const submission = javaAllSuccessfulSubmission;
-                await programmingExerciseEditor.makeGitSubmissionAndVerifyResults(exerciseRepo, repoName, submission);
+                await programmingExerciseEditor.makeGitSubmission(exerciseRepo, repoName, submission);
+                await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                 await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
                 const resultScore = await programmingExerciseEditor.getResultScore();
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
-            });
-
-            test.afterAll('Clean exercise repos', async () => {
-                for (const repo of exerciseRepos) {
-                    await fs.rmdir(`./test-exercise-repos/${repo}`, { recursive: true });
-                }
             });
         });
     });
