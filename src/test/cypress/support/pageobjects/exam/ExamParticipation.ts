@@ -132,7 +132,9 @@ export class ExamParticipation {
     }
 
     verifyExerciseTitleOnFinalPage(exerciseID: number, exerciseTitle: string) {
-        getExercise(exerciseID).find(`#exercise-group-title-${exerciseID}`).contains(exerciseTitle).should('be.visible');
+        const titleSelector = getExercise(exerciseID).find(`#exercise-group-title-${exerciseID}`);
+        titleSelector.scrollIntoView();
+        titleSelector.contains(exerciseTitle).should('be.visible');
     }
 
     verifyTextExerciseOnFinalPage(textFixture: string) {
