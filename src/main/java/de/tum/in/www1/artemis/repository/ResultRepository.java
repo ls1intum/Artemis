@@ -702,7 +702,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 .orElseThrow(() -> new EntityNotFoundException("Result by participationId", participationId));
     }
 
-    default Result findWithEagerSubmissionAndFeedbackAndAssessorAssessmentNoteByIdElseThrow(long resultId) {
+    default Result findWithEagerSubmissionAndFeedbackAndAssessorAndAssessmentNoteByIdElseThrow(long resultId) {
         return findWithEagerSubmissionAndFeedbackAndAssessorAndAssessmentNoteById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
