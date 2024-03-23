@@ -39,6 +39,11 @@ import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
+export interface ImportConfigs {
+    recreateBuildPlans: boolean;
+    updateTemplate: boolean;
+}
+
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
@@ -139,8 +144,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public customBuildPlansSupported: string = '';
 
     // Additional options for import
-    public recreateBuildPlans = false;
-    public updateTemplate = false;
+    // This is a wrapper to allow modifications from the other subcomponents
+    public readonly importConfigs: ImportConfigs = {
+        recreateBuildPlans: false,
+        updateTemplate: false,
+    };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
     public projectTypes: ProjectType[] = [];
@@ -626,7 +634,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromExistingExercise) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
+            this.subscribeToSaveResponse(
+                this.programmingExerciseService.importExercise(this.programmingExercise, this.importConfigs.recreateBuildPlans, this.importConfigs.updateTemplate),
+            );
         } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {
@@ -742,8 +752,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     onStaticCodeAnalysisChanged() {
         // On import: If SCA mode changed, activate recreation of build plans and update of the template
         if (this.isImportFromExistingExercise && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
-            this.recreateBuildPlans = true;
-            this.updateTemplate = true;
+            this.importConfigs.recreateBuildPlans = true;
+            this.importConfigs.updateTemplate = true;
         }
 
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
@@ -752,7 +762,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     onRecreateBuildPlanOrUpdateTemplateChange() {
-        if (!this.recreateBuildPlans || !this.updateTemplate) {
+        if (!this.importConfigs.recreateBuildPlans || !this.importConfigs.updateTemplate) {
             this.programmingExercise.staticCodeAnalysisEnabled = this.originalStaticCodeAnalysisEnabled;
         }
 
@@ -1075,9 +1085,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             rerenderSubject: this.rerenderSubject.asObservable(),
             validIdeSelection: this.validIdeSelection,
             inProductionEnvironment: this.inProductionEnvironment,
-            recreateBuildPlans: this.recreateBuildPlans,
+            recreateBuildPlans: this.importConfigs.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
-            updateTemplate: this.updateTemplate,
+            updateTemplate: this.importConfigs.updateTemplate,
             publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             buildPlanLoaded: this.buildPlanLoaded,
