@@ -5,13 +5,13 @@ import { COURSE_BASE, POST } from '../../constants';
  */
 export class StudentExamManagementPage {
     clickGenerateStudentExams() {
-        cy.intercept(POST, COURSE_BASE + '*/exams/*/generate-student-exams').as('generateStudentExams');
+        cy.intercept(POST, `${COURSE_BASE}/*/exams/*/generate-student-exams`).as('generateStudentExams');
         this.getGenerateStudentExamsButton().click();
         return cy.wait('@generateStudentExams');
     }
 
     clickRegisterCourseStudents() {
-        cy.intercept(POST, COURSE_BASE + '*/exams/*/register-course-students').as('registerCourseStudents');
+        cy.intercept(POST, `${COURSE_BASE}/*/exams/*/register-course-students`).as('registerCourseStudents');
         cy.get('#register-course-students').click();
         return cy.wait('@registerCourseStudents');
     }

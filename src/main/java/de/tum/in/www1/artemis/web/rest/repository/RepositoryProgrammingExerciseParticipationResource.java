@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
@@ -175,11 +176,13 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      *
      * @param participationId the participationId of the repository we want to get the files from
      * @param commitId        the commitId of the repository we want to get the files from
+     * @param repositoryType  the type of the repository (template, solution, tests)
      * @return a map with the file path as key and the file content as value
      */
     @GetMapping(value = "/repository/{participationId}/files-content/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable long participationId, @PathVariable String commitId) {
+    public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable long participationId, @PathVariable String commitId,
+            @RequestAttribute(required = false) RepositoryType repositoryType) {
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
         var participation = getProgrammingExerciseParticipation(participationId);
         var programmingExercise = programmingExerciseRepository.findByParticipationIdOrElseThrow(participationId);
@@ -193,7 +196,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new AccessForbiddenException(e);
         }
         return executeAndCheckForExceptions(() -> {
-            Repository repository = gitService.checkoutRepositoryAtCommit(getRepositoryUri(participationId), commitId, true);
+            Repository repository;
+            // if the repository type is tests, we need to check out the tests repository
+            if (repositoryType != null && repositoryType.equals(RepositoryType.TESTS)) {
+                repository = gitService.checkoutRepositoryAtCommit(programmingExercise.getVcsTestRepositoryUri(), commitId, true);
+            }
+            else {
+                repository = gitService.checkoutRepositoryAtCommit(getRepositoryUri(participationId), commitId, true);
+            }
             Map<String, String> filesWithContent = super.repositoryService.getFilesWithContent(repository);
             gitService.switchBackToDefaultBranchHead(repository);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);

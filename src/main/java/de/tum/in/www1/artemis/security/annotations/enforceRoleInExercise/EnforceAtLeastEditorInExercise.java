@@ -21,5 +21,5 @@ public @interface EnforceAtLeastEditorInExercise {
      *
      * @return the name of the field in the method parameters that contains the exercise id
      */
-    String exerciseIdFieldName() default "exerciseId";
+    String resourceIdFieldName() default "exerciseId";
 }

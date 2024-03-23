@@ -7,7 +7,7 @@ import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Observable, of } from 'rxjs';
-import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { CommitInfo } from 'app/entities/programming-submission.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -16,6 +16,8 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { HttpResponse } from '@angular/common/http';
 describe('CommitDetailsViewComponent', () => {
     let component: CommitDetailsViewComponent;
     let fixture: ComponentFixture<CommitDetailsViewComponent>;
@@ -24,9 +26,20 @@ describe('CommitDetailsViewComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
 
     // Define mock data for participation and commits
-    const submission2: ProgrammingSubmission = { id: 2, commitHash: 'commit2' } as ProgrammingSubmission;
-    const submission3: ProgrammingSubmission = { id: 3, commitHash: 'commit3' } as ProgrammingSubmission;
     const exercise = { id: 1, numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()], studentAssignedTeamIdComputed: true, secondCorrectionEnabled: true };
+
+    const mockExerciseWithTemplateAndSolution: ProgrammingExercise = {
+        id: 1,
+        templateParticipation: { id: 1, repositoryUri: 'template-repo-uri' },
+        solutionParticipation: { id: 1, repositoryUri: 'solution-repo-uri' },
+        numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+        studentAssignedTeamIdComputed: true,
+        secondCorrectionEnabled: true,
+    };
+
+    const mockTemplateCommit1: CommitInfo = { hash: 'templateCommit1', author: 'author1', message: 'message1', timestamp: dayjs('2021-01-01') };
+    const mockTemplateCommit2: CommitInfo = { hash: 'templateCommit2', author: 'author2', message: 'message2', timestamp: dayjs('2021-01-02') };
+    const mockTemplateCommits: CommitInfo[] = [mockTemplateCommit2, mockTemplateCommit1];
 
     const mockParticipation: ProgrammingExerciseStudentParticipation = {
         id: 2,
@@ -37,16 +50,13 @@ describe('CommitDetailsViewComponent', () => {
                 id: 1,
                 successful: true,
                 completionDate: dayjs('2021-01-02'),
-                submission: submission2,
             },
             {
                 id: 2,
                 successful: false,
                 completionDate: dayjs('2021-01-03'),
-                submission: submission3,
             },
         ],
-        submissions: [submission2, submission3],
     };
 
     // template commit
@@ -70,12 +80,8 @@ describe('CommitDetailsViewComponent', () => {
         timestamp: dayjs('2021-01-03'),
     };
     const mockCommits: CommitInfo[] = [commit2, commit3, commit1];
-    const mockDiffReportWithTemplate: ProgrammingExerciseGitDiffReport = {
+    const mockDiffReportForCommits: ProgrammingExerciseGitDiffReport = {
         id: 1,
-        programmingExercise: exercise,
-    };
-    const mockDiffReportForSubmissions: ProgrammingExerciseGitDiffReport = {
-        id: 2,
         programmingExercise: exercise,
     };
     const mockRepositoryFiles: Map<string, string> = new Map<string, string>();
@@ -108,9 +114,13 @@ describe('CommitDetailsViewComponent', () => {
         mockRepositoryFiles.set('file2', 'content2');
 
         jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
+
+        const mockExerciseResponse: HttpResponse<ProgrammingExercise> = new HttpResponse({ body: mockExerciseWithTemplateAndSolution });
+        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation').mockReturnValue(of(mockExerciseResponse));
+
         jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
-        jest.spyOn(programmingExerciseService, 'getDiffReportForCommitDetailsViewForSubmissions').mockReturnValue(of(mockDiffReportForSubmissions));
-        jest.spyOn(programmingExerciseService, 'getDiffReportForCommitDetailsViewForSubmissionWithTemplate').mockReturnValue(of(mockDiffReportWithTemplate));
+        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTemplateCommits));
+        jest.spyOn(programmingExerciseService, 'getDiffReportForCommits').mockReturnValue(of(mockDiffReportForCommits));
 
         fixture.detectChanges();
     }
@@ -128,7 +138,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnInit();
 
         // Expectations
-        expect(component.studentParticipation).toEqual(mockParticipation);
+        expect(component.participation).toEqual(mockParticipation);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -137,15 +147,17 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.paramSub?.closed).toBeTrue();
     });
 
-    it('should handle submissions', () => {
+    it('should load template participation', () => {
         setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'templateCommit2', exerciseId: 1, repositoryType: 'TEMPLATE' });
 
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect(component.currentSubmission).toEqual(submission2);
-        expect(component.previousSubmission).toBeUndefined();
+        // Expectations
+        expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
+        expect(component.exercise).toEqual(mockExerciseWithTemplateAndSolution);
+        expect(component.participationId).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation?.id);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -154,13 +166,15 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.paramSub?.closed).toBeTrue();
     });
 
-    it('should retrieve and handle commits', () => {
+    it('should handle commits for student participation', () => {
         setupComponent();
         activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
 
         // Trigger ngOnInit
         component.ngOnInit();
 
+        expect(component.currentCommit).toEqual(commit2);
+        expect(component.previousCommit).toEqual(commit1);
         expect(component.commits).toEqual([commit3, commit2, commit1]);
 
         // Trigger ngOnDestroy
@@ -171,14 +185,33 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.commitsInfoSubscription?.closed).toBeTrue();
     });
 
-    it('should handle new report for submission with template', () => {
+    it('should handle commits for template participation', () => {
+        setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'templateCommit2', exerciseId: 1, repositoryType: 'TEMPLATE' });
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        expect(component.currentCommit).toEqual(mockTemplateCommit2);
+        expect(component.previousCommit).toEqual(mockTemplateCommit1);
+        expect(component.commits).toEqual(mockTemplateCommits);
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+    });
+
+    it('should handle new report for commit with template', () => {
         setupComponent();
         activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
 
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect(component.report).toEqual(mockDiffReportWithTemplate);
+        expect(component.report).toEqual(mockDiffReportForCommits);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -189,7 +222,28 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.repoFilesSubscription?.closed).toBeTrue();
     });
 
-    it('should handle new report for submissions', () => {
+    it('should handle new report for template commit', () => {
+        setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit1', exerciseId: 1 });
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        expect(component.currentCommit).toEqual(commit1);
+        expect(component.previousCommit).toEqual(commit1);
+        expect(component.isTemplate).toBeTrue();
+        expect(component.leftCommitFileContentByPath).toEqual(new Map<string, string>());
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+        expect(component.repoFilesSubscription?.closed).toBeTrue();
+    });
+
+    it('should handle new report for commits', () => {
         setupComponent();
         //different commit hash than usual
         activatedRoute.setParameters({ participationId: 2, commitHash: 'commit3', exerciseId: 1 });
@@ -197,7 +251,7 @@ describe('CommitDetailsViewComponent', () => {
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect(component.report).toEqual(mockDiffReportForSubmissions);
+        expect(component.report).toEqual(mockDiffReportForCommits);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -230,7 +284,7 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
     });
 
-    it('should handle error when fetching repository files', () => {
+    it('should handle error when fetching left repository files', () => {
         setupComponent();
         activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
         jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(
@@ -259,22 +313,42 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
     });
 
-    it('should handle if current submission is not available', () => {
+    it('should handle error when fetching right repository files', () => {
         setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit1', exerciseId: 1 });
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+
+        // Define a variable to track the number of calls to the method
+        let callCount = 0;
+
+        // Mock the service to return an error the second time it is called
+        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockImplementation(() => {
+            if (callCount === 0) {
+                callCount++;
+                return of(mockRepositoryFiles);
+            } else {
+                return new Observable((subscriber) => {
+                    subscriber.error('Error');
+                });
+            }
+        });
+
+        fixture.detectChanges();
 
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect(component.currentSubmission).toBeUndefined();
-        expect(component.previousSubmission).toBeUndefined();
-        expect(component.currentCommit).toEqual(commit1);
-        expect(component.report).toBeUndefined();
+        expect(component.leftCommitFileContentByPath).toEqual(mockRepositoryFiles);
+        expect(component.rightCommitFileContentByPath).toEqual(new Map<string, string>());
+        expect(component.errorWhileFetchingRepos).toBeTrue();
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
+        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+        expect(component.repoFilesSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
     });
 });

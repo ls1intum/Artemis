@@ -139,7 +139,7 @@ You can find the latest Artemis Dockerfile at ``docker/artemis/Dockerfile``.
         defined by the
         `Spring relaxed binding <https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#environment-variables>`__.
         You can either place those environment variables directly in the ``environment`` section,
-        or create an `.env-file <https://docs.docker.com/compose/environment-variables/#the-env-file>`__.
+        or create a `.env-file <https://docs.docker.com/compose/environment-variables/set-environment-variables/#substitute-with-an-env-file>`__.
         When starting an Artemis container directly with the Docker-CLI, an .env-file can also be given via the
         ``--env-file`` option.
 

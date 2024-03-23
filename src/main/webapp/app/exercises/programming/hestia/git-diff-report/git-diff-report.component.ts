@@ -17,6 +17,8 @@ export class GitDiffReportComponent implements OnInit {
 
     @Input() diffForTemplateAndSolution = true;
 
+    @Input() diffForTemplateAndEmptyRepository = false;
+
     @Input() isRepositoryView = false;
 
     leftCommit: string | undefined;

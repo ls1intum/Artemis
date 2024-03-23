@@ -192,7 +192,7 @@ describe('BuildAgentsComponent', () => {
     });
 
     it('should return an empty string for no build jobs', () => {
-        mockBuildAgents[0].runningBuildJobs = [];
+        mockBuildAgents[0].runningBuildJobs = undefined;
         component.setBuildAgentBuildJobIds(mockBuildAgents);
 
         expect(mockBuildAgents[0].runningBuildJobsIds).toBe('');

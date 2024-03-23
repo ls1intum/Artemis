@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
@@ -22,8 +24,11 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
     private final LocalVCServletService localVCServletService;
 
-    public LocalVCPrePushHook(LocalVCServletService localVCServletService) {
+    private final HttpServletRequest request;
+
+    public LocalVCPrePushHook(LocalVCServletService localVCServletService, HttpServletRequest request) {
         this.localVCServletService = localVCServletService;
+        this.request = request;
     }
 
     /**
@@ -79,8 +84,16 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
             // Prevent force push.
             if (command.getType() == ReceiveCommand.Type.UPDATE_NONFASTFORWARD) {
-                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot force push.");
-                return;
+                try {
+                    if (!localVCServletService.isUserAllowedToForcePush(request)) {
+                        command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot force push.");
+                        return;
+                    }
+                }
+                catch (Exception e) {
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the user's permissions.");
+                    return;
+                }
             }
 
             git.close();

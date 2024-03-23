@@ -1,7 +1,7 @@
 <ng-template #controls>
     @if (course && course!.exercises && course!.exercises.length > 0) {
         <div class="course-overview-controls">
-            <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center justify-content-end">
                 <div class="btn-group me-2" ngbDropdown role="group">
                     <button class="btn btn-light dropdown-toggle" ngbDropdownToggle type="button">
                         {{ 'artemisApp.courseOverview.exerciseList.view' | artemisTranslate }}

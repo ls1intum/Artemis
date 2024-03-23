@@ -2,7 +2,7 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 
 import { examStartEnd } from '../../artemis';
-import { BASE_API, DELETE, PATCH, POST } from '../../constants';
+import { COURSE_BASE, DELETE, PATCH, POST } from '../../constants';
 import { CypressCredentials } from '../../users';
 
 /**
@@ -14,7 +14,7 @@ export class ExamTestRunPage {
      * @returns the query chainable if a test needs to access the response
      */
     confirmTestRun() {
-        cy.intercept(POST, BASE_API + '/courses/*/exams/*/test-run').as('createTestRunQuery');
+        cy.intercept(POST, `${COURSE_BASE}/*/exams/*/test-run`).as('createTestRunQuery');
         cy.get('.modal-dialog #createTestRunButton').click();
         return cy.wait('@createTestRunQuery');
     }
@@ -32,7 +32,7 @@ export class ExamTestRunPage {
     }
 
     saveTestRun() {
-        cy.intercept(PATCH, BASE_API + '/courses/*/exams/*/student-exams/*/working-time').as('updateTestRunQuery');
+        cy.intercept(PATCH, `${COURSE_BASE}/*/exams/*/student-exams/*/working-time`).as('updateTestRunQuery');
         cy.get('#save').click();
         return cy.wait('@updateTestRunQuery');
     }
@@ -88,7 +88,7 @@ export class ExamTestRunPage {
     deleteTestRun(testRunId: number) {
         cy.get(`#testrun-${testRunId}`).find('.delete-testrun').click();
         cy.get('#confirm-entity-name').type('Test Run');
-        cy.intercept(DELETE, BASE_API + '/courses/*/exams/*/test-run/*').as('deleteTestRunQuery');
+        cy.intercept(DELETE, `${COURSE_BASE}/*/exams/*/test-run/*`).as('deleteTestRunQuery');
         cy.get('#delete').click();
         return cy.wait('@deleteTestRunQuery');
     }

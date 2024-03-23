@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 
@@ -32,16 +32,16 @@ public class AeolusTemplateResource {
 
     private final AeolusTemplateService aeolusTemplateService;
 
-    private final BuildScriptProvider buildScriptProvider;
+    private final BuildScriptProviderService buildScriptProviderService;
 
     /**
      * Constructor for the AeolusTemplateResource
      *
      * @param aeolusTemplateService the service for retrieving the aeolus template files
      */
-    public AeolusTemplateResource(AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider) {
+    public AeolusTemplateResource(AeolusTemplateService aeolusTemplateService, BuildScriptProviderService buildScriptProviderService) {
         this.aeolusTemplateService = aeolusTemplateService;
-        this.buildScriptProvider = buildScriptProvider;
+        this.buildScriptProviderService = buildScriptProviderService;
     }
 
     /**
@@ -151,7 +151,7 @@ public class AeolusTemplateResource {
             if (!projectTypePrefix.isEmpty()) {
                 optionalProjectType = Optional.of(ProjectType.valueOf(projectTypePrefix.toUpperCase()));
             }
-            String script = buildScriptProvider.getScriptFor(language, optionalProjectType, staticAnalysis, sequentialRuns, testCoverage);
+            String script = buildScriptProviderService.getScriptFor(language, optionalProjectType, staticAnalysis, sequentialRuns, testCoverage);
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);
             return new ResponseEntity<>(script, responseHeaders, HttpStatus.OK);

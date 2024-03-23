@@ -766,7 +766,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable unlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
-        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepository,
+        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation,
                 participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
 
@@ -780,7 +780,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable unlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
-        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation,
+        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepository,
                 participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
 

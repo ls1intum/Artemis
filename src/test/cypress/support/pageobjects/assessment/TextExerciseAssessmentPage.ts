@@ -28,8 +28,8 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     submit() {
-        // Feedback route is special for text exercises so we override parent here...
-        cy.intercept(POST, BASE_API + 'participations/*/results/*/submit-text-assessment').as('submitFeedback');
+        // Feedback route is special for text exercises, so we override parent here...
+        cy.intercept(POST, `${BASE_API}/participations/*/results/*/submit-text-assessment`).as('submitFeedback');
         cy.get('#submit').click();
         return cy.wait('@submitFeedback');
     }

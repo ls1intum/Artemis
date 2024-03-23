@@ -13,7 +13,10 @@ import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import {
+    IconDefinition,
+    faChalkboardUser,
     faChartBar,
+    faChevronRight,
     faCircleNotch,
     faClipboard,
     faComment,
@@ -23,6 +26,7 @@ import {
     faFlag,
     faGraduationCap,
     faListAlt,
+    faListCheck,
     faNetworkWired,
     faPersonChalkboard,
     faSync,
@@ -35,12 +39,33 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { animate, style, transition, trigger } from '@angular/animations';
+
+interface SidebarItem {
+    routerLink: string;
+    icon?: IconDefinition;
+    name: string;
+    testId?: string;
+    translation: string;
+    hasInOrionProperty?: boolean;
+    showInOrionWindow?: boolean;
+    guidedTour?: boolean;
+    featureToggle?: FeatureToggle;
+}
 
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
-    styleUrls: ['course-overview.scss', '../shared/tab-bar/tab-bar.scss'],
+    styleUrls: ['course-overview.scss', 'course-overview.component.scss'],
     providers: [MetisConversationService],
+    animations: [
+        trigger('slideIn', [
+            transition(':enter', [style({ width: 'translateX(-100%)' }), animate(0, style({ transform: 'translateX(0)' }))]),
+            transition(':leave', [animate(0, style({ transform: 'translateX(-100%)' }))]),
+        ]),
+    ],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private ngUnsubscribe = new Subject<void>();
@@ -54,6 +79,12 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     public hasUnreadMessages: boolean;
     public messagesRouteLoaded: boolean;
     public communicationRouteLoaded: boolean;
+    public isProduction = true;
+    public isTestServer = false;
+    public pageTitle: string;
+    public sidebarItems: SidebarItem[];
+    public isNotManagementView: boolean;
+    isCollapsed = false;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -89,12 +120,15 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faComments = faComments;
     faClipboard = faClipboard;
     faGraduationCap = faGraduationCap;
-    faPersonChalkboard = faPersonChalkboard;
     faSync = faSync;
     faCircleNotch = faCircleNotch;
     faNetworkWired = faNetworkWired;
+    faChalkboardUser = faChalkboardUser;
+    faChevronRight = faChevronRight;
+    faListCheck = faListCheck;
 
     FeatureToggle = FeatureToggle;
+    CachingStrategy = CachingStrategy;
 
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -112,20 +146,164 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private metisConversationService: MetisConversationService,
         private router: Router,
         private courseAccessStorageService: CourseAccessStorageService,
+        private profileService: ProfileService,
     ) {}
 
     async ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
-
+        this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo.inProduction;
+            this.isTestServer = profileInfo.testServer ?? false;
+        });
         this.course = this.courseStorageService.getCourse(this.courseId);
-
+        this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
         this.courseAccessStorageService.onCourseAccessed(this.courseId);
 
         await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
+        this.sidebarItems = this.getSidebarItems();
+    }
+
+    getSidebarItems(): SidebarItem[] {
+        const sidebarItems = this.getDefaultItems();
+        if (this.course?.lectures) {
+            const lecturesItem: SidebarItem = this.getLecturesItems();
+            sidebarItems.splice(-1, 0, lecturesItem);
+        }
+        if (this.course?.exams && this.hasVisibleExams()) {
+            const examsItem: SidebarItem = this.getExamsItems();
+            sidebarItems.unshift(examsItem);
+        }
+        if (isCommunicationEnabled(this.course)) {
+            const communicationItem: SidebarItem = this.getCommunicationItems();
+            sidebarItems.push(communicationItem);
+        }
+
+        if (isMessagingEnabled(this.course) || isCommunicationEnabled(this.course)) {
+            const messagesItem: SidebarItem = this.getMessagesItems();
+            sidebarItems.push(messagesItem);
+        }
+
+        if (this.hasTutorialGroups()) {
+            const tutorialGroupsItem: SidebarItem = this.getTutorialGroupsItems();
+            sidebarItems.push(tutorialGroupsItem);
+        }
+
+        if (this.hasCompetencies()) {
+            const competenciesItem: SidebarItem = this.getCompetenciesItems();
+            sidebarItems.push(competenciesItem);
+            if (this.course?.learningPathsEnabled) {
+                const learningPathItem: SidebarItem = this.getLearningPathItems();
+                sidebarItems.push(learningPathItem);
+            }
+        }
+
+        return sidebarItems;
+    }
+
+    getLecturesItems() {
+        const lecturesItem: SidebarItem = {
+            routerLink: 'lectures',
+            icon: faChalkboardUser,
+            name: 'Lectures',
+            translation: 'artemisApp.courseOverview.menu.lectures',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+        };
+        return lecturesItem;
+    }
+    getExamsItems() {
+        const examsItem: SidebarItem = {
+            routerLink: 'exams',
+            icon: faGraduationCap,
+            name: 'Exams',
+            testId: 'exam-tab',
+            translation: 'artemisApp.courseOverview.menu.exams',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+        };
+        return examsItem;
+    }
+    getCommunicationItems() {
+        const communicationItem: SidebarItem = {
+            routerLink: 'discussion',
+            icon: faComment,
+            name: 'Communication',
+            translation: 'artemisApp.courseOverview.menu.communication',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+        };
+        return communicationItem;
+    }
+    getMessagesItems() {
+        const messagesItem: SidebarItem = {
+            routerLink: 'messages',
+            icon: faComments,
+            name: 'Messages',
+            translation: 'artemisApp.courseOverview.menu.messages',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+        };
+        return messagesItem;
+    }
+    getTutorialGroupsItems() {
+        const tutorialGroupsItem: SidebarItem = {
+            routerLink: 'tutorial-groups',
+            icon: faPersonChalkboard,
+            name: 'Exercises',
+            translation: 'artemisApp.courseOverview.menu.tutorialGroups',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            featureToggle: FeatureToggle.TutorialGroups,
+        };
+        return tutorialGroupsItem;
+    }
+    getCompetenciesItems() {
+        const competenciesItem: SidebarItem = {
+            routerLink: 'competencies',
+            icon: faFlag,
+            name: 'Competencies',
+            translation: 'artemisApp.courseOverview.menu.competencies',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+        };
+        return competenciesItem;
+    }
+    getLearningPathItems() {
+        const learningPathItem: SidebarItem = {
+            routerLink: 'learning-path',
+            icon: faNetworkWired,
+            name: 'Learning Path',
+            translation: 'artemisApp.courseOverview.menu.learningPath',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            featureToggle: FeatureToggle.LearningPaths,
+        };
+        return learningPathItem;
+    }
+
+    getDefaultItems() {
+        const exercisesItem: SidebarItem = {
+            routerLink: 'exercises',
+            icon: faListCheck,
+            name: 'Exercises',
+            translation: 'artemisApp.courseOverview.menu.exercises',
+        };
+
+        const statisticsItem: SidebarItem = {
+            routerLink: 'statistics',
+            icon: faListAlt,
+            name: 'Statistics',
+            translation: 'artemisApp.courseOverview.menu.statistics',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            guidedTour: true,
+        };
+
+        return [exercisesItem, statisticsItem];
     }
 
     async initAfterCourseLoad() {
@@ -177,6 +355,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * @param componentRef the sub route component that has been mounted into the router outlet
      */
     onSubRouteActivate(componentRef: any) {
+        this.getPageTitle();
         this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
         this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'discussion';
 
@@ -191,10 +370,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 this.controlConfiguration.subject?.subscribe((controls: TemplateRef<any>) => {
                     this.controls = controls;
                     this.tryRenderControls();
-                    // Since we might be pulling data upwards during a render cycle, we need to re-run change detection
-                    this.changeDetectorRef.detectChanges();
                 }) || undefined;
         }
+        // Since we change the pageTitle + might be pulling data upwards during a render cycle, we need to re-run change detection
+        this.changeDetectorRef.detectChanges();
+    }
+    getPageTitle(): void {
+        const routePageTitle: string = this.route.snapshot.firstChild?.data?.pageTitle;
+        this.pageTitle = routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
     }
 
     /**

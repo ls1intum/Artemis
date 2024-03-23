@@ -268,10 +268,13 @@ Generic styles
 }
 
 .page-wrapper {
-    //Space reserved at bottom for footer
-    padding-bottom: 5rem;
-    min-height: 100vh;
+    height: 100vh;
     position: relative;
+    min-width: 100vw;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: var(--bs-body-bg);
+    padding-bottom: 3rem;
 }
 
 .main-container {
@@ -423,8 +426,6 @@ ui bootstrap tweaks
     input {
         max-width: 100%;
     }
-
-    padding: 1rem 1rem;
 }
 
 .header-container {

@@ -18,4 +18,4 @@ It performs various actions, such as logging in, starting the exam, submitting a
 For each action, the tool measures the time it takes to complete the action and records the result.
 Additionally, the tool can be connected to Prometheus to collect and visualize workload metrics.
 
-For more information on how to set up and use the Benchmarking Tool, please refer to the `README <https://github.com/ls1intum/Artemis-Benchmarking?tab=readme-ov-file#artemis-benchmarking-tool>`_.
+For more information on how to set up and use the Benchmarking Tool, please refer to the `README <https://github.com/ls1intum/Artemis-Benchmarking?tab=readme-ov-file#readme>`_.

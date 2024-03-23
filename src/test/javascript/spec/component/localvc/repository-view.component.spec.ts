@@ -167,6 +167,40 @@ describe('RepositoryViewComponent', () => {
         expect(component.paramSub?.closed).toBeTrue();
     });
 
+    it('should handle unknown repository type', () => {
+        // Mock exercise and participation data
+        const mockExercise: ProgrammingExercise = {
+            id: 1,
+            numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+            studentAssignedTeamIdComputed: true,
+            secondCorrectionEnabled: true,
+        };
+        const mockExerciseResponse: HttpResponse<ProgrammingExercise> = new HttpResponse({ body: mockExercise });
+        const exerciseId = 1;
+
+        // route to an unknown repository type
+        activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'UNKNOWN' });
+
+        // Mock the service to return an error
+        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        // Expect loadingParticipation to be false after loading
+        expect(component.loadingParticipation).toBeFalse();
+
+        // Expect participationCouldNotBeFetched to be true
+        expect(component.participationCouldNotBeFetched).toBeTrue();
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.differentParticipationSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBeTrue();
+    });
+
     it('should load student participation', () => {
         // Mock participation data
         const mockParticipation: ProgrammingExerciseStudentParticipation = {

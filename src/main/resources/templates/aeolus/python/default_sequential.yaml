@@ -10,9 +10,6 @@ actions:
   - name: run_behavior_tests
     script: pytest behavior/* --junitxml=test-reports/behavior-results.xml
     runAlways: false
-  - name: junit
-    script: '#empty script action, just for the results'
-    runAlways: true
     results:
       - name: junit_test-reports/*results.xml
         path: test-reports/*results.xml

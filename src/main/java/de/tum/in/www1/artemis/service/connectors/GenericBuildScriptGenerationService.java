@@ -22,16 +22,16 @@ public class GenericBuildScriptGenerationService extends BuildScriptGenerationSe
     /**
      * Constructor for BuildScriptGenerationService
      *
-     * @param buildScriptProvider buildScriptProvider
+     * @param buildScriptProviderService buildScriptProvider
      */
-    public GenericBuildScriptGenerationService(BuildScriptProvider buildScriptProvider) {
-        super(buildScriptProvider);
+    public GenericBuildScriptGenerationService(BuildScriptProviderService buildScriptProviderService) {
+        super(buildScriptProviderService);
     }
 
     @Override
     public String getScript(ProgrammingExercise programmingExercise) {
         try {
-            return buildScriptProvider.getScriptFor(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()),
+            return buildScriptProviderService.getScriptFor(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()),
                     programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.hasSequentialTestRuns(), programmingExercise.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {

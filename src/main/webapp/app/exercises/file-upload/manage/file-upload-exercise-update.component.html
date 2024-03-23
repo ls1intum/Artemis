@@ -26,6 +26,7 @@
                 <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
             </div>
         }
+        <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.mode" id="artemisApp.exercise.sections.mode"></h3>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
@@ -34,6 +35,7 @@
             </div>
         </div>
         <jhi-team-config-form-group class="form-element" [exercise]="fileUploadExercise" [isImport]="isImport" />
+        <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
         <div class="form-group" id="field_problemStatement">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement"></label>
@@ -56,6 +58,7 @@
                 />
             </div>
         }
+        <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution"></h3>
         <!-- TODO we want to have a file upload here and store a PDF, not a text. We could allow to add text in the sample_solution_explanation field -->
         <div class="form-group" id="field_exampleSolution">
@@ -86,6 +89,7 @@
                 }
             </div>
         }
+        <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
         @if (!isExamMode) {
             <div class="d-flex">

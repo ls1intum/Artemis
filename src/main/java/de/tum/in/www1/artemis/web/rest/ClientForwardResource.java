@@ -15,6 +15,7 @@ public class ClientForwardResource {
 
     /**
      * Forwards any unmapped paths (except those containing a period) to the client index.html
+     * This is important so that reloads of the client app do not lead to NOT FOUND
      *
      * @return Forward Instruction for Browser
      */

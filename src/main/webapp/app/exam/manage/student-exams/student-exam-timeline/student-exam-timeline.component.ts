@@ -11,8 +11,6 @@ import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { Observable, Subscription, forkJoin, map, mergeMap, toArray } from 'rxjs';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ChangeContext, Options, SliderComponent } from '@angular-slider/ngx-slider';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
@@ -24,6 +22,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 @Component({
     selector: 'jhi-student-exam-timeline',
     templateUrl: './student-exam-timeline.component.html',
+    styleUrls: ['./student-exam-timeline.component.scss'],
 })
 export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
@@ -33,14 +32,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     // this is an array because the exam-timeline uses a page component for each exercise
     pageComponentVisited: boolean[];
     selectedTimestamp: number;
-    // Options for the @angular-slider/ngx-slider
-    options: Options = {
-        showTicks: true,
-        stepsArray: [{ value: 0 }],
-        translate: (value: number): string => {
-            return this.datePipe.transform(value, 'time', true);
-        },
-    };
+    timestampIndex = 0;
 
     studentExam: StudentExam;
     exerciseIndex: number;
@@ -57,7 +49,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
 
     @ViewChildren(ExamSubmissionComponent) currentPageComponents: QueryList<ExamSubmissionComponent>;
     @ViewChild('examNavigationBar') examNavigationBarComponent: ExamNavigationBarComponent;
-    @ViewChild('slider') slider: SliderComponent;
 
     private activatedRouteSubscription: Subscription;
 
@@ -66,7 +57,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         private submissionService: SubmissionService,
         private submissionVersionService: SubmissionVersionService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private datePipe: ArtemisDatePipe,
     ) {}
 
     ngOnInit(): void {
@@ -94,7 +84,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
                 }
             });
             this.sortTimeStamps();
-            this.setupRangeSlider();
+            this.selectedTimestamp = this.submissionTimeStamps[0]?.toDate().getTime() ?? 0;
             const firstSubmission = this.findFirstSubmission();
             this.currentSubmission = firstSubmission;
             this.exerciseIndex = this.findExerciseIndex(firstSubmission!);
@@ -160,15 +150,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         }
     }
 
-    private setupRangeSlider() {
-        this.selectedTimestamp = this.submissionTimeStamps[0]?.toDate().getTime() ?? 0;
-        // we need to create a new options object and assign it in the end to the old because otherwise, the new options are not properly recognized.
-        const newOptions: Options = Object.assign({}, this.options);
-        newOptions.stepsArray = this.submissionTimeStamps.map((date) => ({ value: date?.toDate().getTime() }));
-        newOptions.ticksTooltip = (value: number): string => {
-            return this.datePipe.transform(this.options.stepsArray?.at(value)?.value, 'time', true);
-        };
-        this.options = newOptions;
+    displayCurrentTimestamp(): string {
+        return dayjs(this.selectedTimestamp).format('HH:mm:ss');
     }
 
     /**
@@ -321,11 +304,10 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
 
     /**
      * This method is called when the user clicks on the slider
-     * @param changeContext the change context of the slider
      */
-    onSliderInputChange(changeContext: ChangeContext) {
-        this.selectedTimestamp = changeContext.value;
-        const submission = this.findCorrespondingSubmissionForTimestamp(changeContext.value);
+    onSliderInputChange() {
+        this.selectedTimestamp = this.submissionTimeStamps[this.timestampIndex].toDate().getTime();
+        const submission = this.findCorrespondingSubmissionForTimestamp(this.selectedTimestamp);
         if (this.isSubmissionVersion(submission)) {
             const submissionVersion = submission as SubmissionVersion;
             this.currentExercise = submissionVersion.submission.participation?.exercise;
