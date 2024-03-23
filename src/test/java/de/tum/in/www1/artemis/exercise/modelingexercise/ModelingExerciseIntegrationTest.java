@@ -70,7 +70,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
+    private ExerciseIntegrationTestService exerciseIntegrationTestService;
 
     @Autowired
     private TutorParticipationRepository tutorParticipationRepository;
@@ -719,7 +719,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private void testCourseAndExamFilters(String title) throws Exception {
         modelingExerciseUtilService.addCourseWithOneModelingExercise(title);
         modelingExerciseUtilService.addCourseExamExerciseGroupWithOneModelingExercise(title + "-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/", title);
+        exerciseIntegrationTestService.testCourseAndExamFilters("/api/modeling-exercises/", title);
     }
 
     @Test

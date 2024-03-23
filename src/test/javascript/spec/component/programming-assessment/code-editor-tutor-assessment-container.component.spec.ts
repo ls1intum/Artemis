@@ -239,7 +239,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 findWithParticipationsStub.mockReturnValue(of({ body: exercise }));
 
                 // Mock the ResizeObserver, which is not available in the test environment
-                global.ResizeObserver = jest.fn().mockImplementation((...args) => new MockResizeObserver(args));
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 

@@ -274,7 +274,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         complaintRepo.save(new Complaint().result(textAssessment).complaintText("This is not fair"));
 
         // Get Text Submission and Complaint
-        request.get("/api/participations/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, StudentParticipation.class);
+        request.get("/api/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, StudentParticipation.class);
         final Complaint complaint = request.get("/api/complaints/submissions/" + textSubmission.getId(), HttpStatus.OK, Complaint.class);
 
         // Accept Complaint and update Assessment
