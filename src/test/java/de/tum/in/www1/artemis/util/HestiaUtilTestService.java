@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Repository;
@@ -44,7 +44,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
  * In the future this service will be extended to make testing of the code hint generation easier.
  */
 @Service
-public class HestiaUtilTestService extends AbstractSpringIntegrationJenkinsGitlabTest {
+public class HestiaUtilTestService {
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -63,6 +63,9 @@ public class HestiaUtilTestService extends AbstractSpringIntegrationJenkinsGitla
 
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    private GitlabRequestMockProvider gitlabRequestMockProvider;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
