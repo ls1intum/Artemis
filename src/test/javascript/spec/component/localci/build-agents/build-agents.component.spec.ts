@@ -11,7 +11,7 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { BuildAgent } from 'app/entities/build-agent.model';
-import { RepositoryInfo } from 'app/entities/repository-info.model';
+import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/build-config.model';
 
@@ -32,7 +32,7 @@ describe('BuildAgentsComponent', () => {
     const repositoryInfo: RepositoryInfo = {
         repositoryName: 'repo2',
         repositoryType: 'USER',
-        triggeredByPushTo: 'USER',
+        triggeredByPushTo: TriggeredByPushTo.USER,
         assignmentRepositoryUri: 'https://some.uri',
         testRepositoryUri: 'https://some.uri',
         solutionRepositoryUri: 'https://some.uri',

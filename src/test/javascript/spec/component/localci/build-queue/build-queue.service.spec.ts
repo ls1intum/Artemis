@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
@@ -10,8 +10,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { BuildJob } from 'app/entities/build-job.model';
 import dayjs from 'dayjs/esm';
-import { fakeAsync, tick } from '@angular/core/testing';
-import { RepositoryInfo } from 'app/entities/repository-info.model';
+import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/build-config.model';
 
@@ -42,7 +41,7 @@ describe('BuildQueueService', () => {
 
         repositoryInfo.repositoryName = 'name1';
         repositoryInfo.repositoryType = 'USER';
-        repositoryInfo.triggeredByPushTo = 'USER';
+        repositoryInfo.triggeredByPushTo = TriggeredByPushTo.USER;
         repositoryInfo.assignmentRepositoryUri = 'uri1';
         repositoryInfo.testRepositoryUri = 'uri2';
         repositoryInfo.solutionRepositoryUri = 'uri3';
