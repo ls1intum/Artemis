@@ -76,10 +76,6 @@ export class MockComplaintService implements IComplaintService {
         return of(MockComplaintArrayResponse);
     }
 
-    getMoreFeedbackRequestsForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
-        return of(MockComplaintArrayResponse);
-    }
-
     isComplaintLocked(complaint: Complaint): boolean | undefined {
         return undefined;
     }

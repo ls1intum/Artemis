@@ -21,7 +21,6 @@ export interface IComplaintService {
     create: (complaint: Complaint, examId: number) => Observable<EntityResponseType>;
     findBySubmissionId: (participationId: number) => Observable<EntityResponseType>;
     getComplaintsForTestRun: (exerciseId: number) => Observable<EntityResponseTypeArray>;
-    getMoreFeedbackRequestsForTutor: (exerciseId: number) => Observable<EntityResponseTypeArray>;
     getNumberOfAllowedComplaintsInCourse: (courseId: number) => Observable<number>;
     findAllByTutorIdForCourseId: (tutorId: number, courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
     findAllByTutorIdForExerciseId: (tutorId: number, exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
@@ -112,17 +111,7 @@ export class ComplaintService implements IComplaintService {
      */
     getComplaintsForTestRun(exerciseId: number): Observable<EntityResponseTypeArray> {
         return this.http
-            .get<Complaint[]>(`${this.resourceUrl}?exerciseId=${exerciseId}&dashboard=test-run`, { observe: 'response' })
-            .pipe(map((res: EntityResponseTypeArray) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
-    }
-
-    /**
-     * Find more feedback requests for tutor in this exercise.
-     * @param exerciseId
-     */
-    getMoreFeedbackRequestsForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
-        return this.http
-            .get<Complaint[]>(`${this.resourceUrl}?exerciseId=${exerciseId}&dashboard=feedback`, { observe: 'response' })
+            .get<Complaint[]>(`${this.resourceUrl}?exerciseId=${exerciseId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseTypeArray) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
     }
 

@@ -233,34 +233,22 @@ public class ComplaintResource {
     }
 
     /**
-     * GET complaints?dashboard=test-run: get all the complaints associated to a test run exercise, but filter out the ones that are not about the tutor who is doing the request,
+     * GET complaints: get all the complaints associated to a test run exercise, but filter out the ones that are not about the tutor who is doing the request,
      * since this indicates test run
      * exercises
-     * GET complaints?dashboard=feedback: get all the more feedback requests associated to an exercise, that are about the tutor who is doing the request.
      *
      * @param exerciseId the id of the exercise we are interested in
      * @param principal  the user that wants to get complaints
-     * @param dashboard  the type of the dashboard
      * @return the ResponseEntity with status 200 (OK) and a list of complaints or a list of more feedback requests. The list can be empty
      */
-    @GetMapping(name = "complaints", params = { "exerciseId", "dashboard" })
+    @GetMapping(name = "complaints", params = { "exerciseId" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Complaint>> getComplaintsForDashboard(Principal principal, @RequestParam Long exerciseId, @RequestParam String dashboard) {
-        if (dashboard.equals("test-run")) {
-            Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-            List<Complaint> responseComplaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
-            responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, true, true);
-            return ResponseEntity.ok(responseComplaints);
-        }
-        else if (dashboard.equals("feedback")) {
-            Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-            List<Complaint> responseComplaints = complaintService.getMyMoreFeedbackRequests(exerciseId);
-            responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, false, false);
-            return ResponseEntity.ok(responseComplaints);
-        }
-        throw new BadRequestAlertException("Dashboard parameter is invalid.", COMPLAINT_ENTITY_NAME, "dashboardInvalid");
+    public ResponseEntity<List<Complaint>> getComplaintsForTestRunDashboard(Principal principal, @RequestParam Long exerciseId) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        List<Complaint> responseComplaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, true, true);
+        return ResponseEntity.ok(responseComplaints);
     }
 
     /**
