@@ -1,12 +1,11 @@
 import { Page, expect } from '@playwright/test';
 import { BASE_API } from '../../../constants';
-import { createFileWithContent, getExercise } from '../../../utils';
+import { getExercise } from '../../../utils';
 import { Commands } from '../../../commands';
 import { UserCredentials } from '../../../users';
 import { CoursesPage } from '../../course/CoursesPage';
 import { CourseOverviewPage } from '../../course/CourseOverviewPage';
 import { Fixtures } from '../../../../fixtures/fixtures';
-import { SimpleGit } from 'simple-git';
 
 export class OnlineEditorPage {
     private readonly page: Page;
@@ -137,23 +136,6 @@ export class OnlineEditorPage {
         await this.typeSubmission(exerciseID, submission);
         await this.submit(exerciseID);
         await verifyOutput();
-    }
-
-    async makeGitSubmission(exerciseRepo: SimpleGit, exerciseRepoName: string, submission: ProgrammingExerciseSubmission) {
-        for (const fileName of submission.deleteFiles) {
-            const packagePath = submission.packageName!.replace(/\./g, '/');
-            const filePath = `./src/${packagePath}/${fileName}`;
-            await exerciseRepo.rm(filePath);
-        }
-        for (const file of submission.files) {
-            const packagePath = submission.packageName!.replace(/\./g, '/');
-            const filePath = `src/${packagePath}/${file.name}`;
-            const sourceCode = await Fixtures.get(file.path);
-            await createFileWithContent(`./test-exercise-repos/${exerciseRepoName}/${filePath}`, sourceCode!);
-            await exerciseRepo.add(`./${filePath}`);
-        }
-        await exerciseRepo.commit('Implemented the tasks');
-        await exerciseRepo.push();
     }
 
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
