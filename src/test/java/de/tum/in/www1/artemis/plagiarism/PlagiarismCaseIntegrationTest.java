@@ -313,10 +313,11 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetMultiplePlagiarismCaseInfosForStudent() throws Exception {
-        var emptyPlagiarismCaseInfosResponse = request.get(
-                "/api/courses/" + course.getId() + "/plagiarism-case?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, String.class);
+        var emptyPlagiarismCaseInfosResponse = request.getMap(
+                "/api/courses/" + course.getId() + "/plagiarism-cases?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, Long.class,
+                PlagiarismCaseInfoDTO.class);
 
-        assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isNullOrEmpty();
+        assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isEmpty();
 
         addPost();
 
@@ -336,10 +337,11 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetMultiplePlagiarismCaseInfosForStudent_conflict() throws Exception {
         long wrongCourseId = course.getId() + 1;
-        var emptyPlagiarismCaseInfosResponse = request.get(
-                "/api/courses/" + wrongCourseId + "/plagiarism-case?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, String.class);
+        var emptyPlagiarismCaseInfosResponse = request.getMap(
+                "/api/courses/" + wrongCourseId + "/plagiarism-cases?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, Long.class,
+                PlagiarismCaseInfoDTO.class);
 
-        assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isNullOrEmpty();
+        assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isEmpty();
 
         addPost();
 
