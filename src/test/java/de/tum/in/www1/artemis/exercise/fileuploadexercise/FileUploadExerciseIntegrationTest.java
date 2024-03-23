@@ -604,7 +604,8 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         course.setInstructorGroupName("test");
         courseRepo.save(course);
 
-        request.putWithResponseBody("/api/file-upload-exercises" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExercise, FileUploadExercise.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExercise, FileUploadExercise.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
