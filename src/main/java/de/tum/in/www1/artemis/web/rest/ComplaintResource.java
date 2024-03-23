@@ -121,7 +121,7 @@ public class ComplaintResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new complaints
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping(name = "complaints", params = "examId")
+    @PostMapping(name = "complaints", params = { "examId" })
     @EnforceAtLeastStudent
     public ResponseEntity<Complaint> createComplaintForExamExercise(@RequestBody Complaint complaint, Principal principal, @RequestParam Long examId) throws URISyntaxException {
         log.debug("REST request to save Complaint for exam exercise: {}", complaint);
@@ -168,7 +168,8 @@ public class ComplaintResource {
      * @param submissionId the id of the submission for whose results we want to find a linked complaint
      * @return the ResponseEntity with status 200 (OK) and either with the complaint as body or an empty body, if no complaint was found for the result
      */
-    @GetMapping(name = "complaints", params = "submissionId")
+
+    @GetMapping(value = "complaints", params = { "submissionId" })
     @EnforceAtLeastStudent
     public ResponseEntity<Complaint> getComplaintBySubmissionId(@RequestParam Long submissionId) {
         log.debug("REST request to get latest Complaint associated with a result of submission : {}", submissionId);
@@ -257,7 +258,7 @@ public class ComplaintResource {
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping(name = "complaints", params = "complaintType")
+    @GetMapping(name = "complaints", params = { "complaintType" })
     @EnforceAtLeastTutor
     public ResponseEntity<List<Complaint>> getComplaintsForTutor(@RequestParam ComplaintType complaintType) {
         // Only tutors can retrieve all their own complaints without filter by course or exerciseId. Instructors need
