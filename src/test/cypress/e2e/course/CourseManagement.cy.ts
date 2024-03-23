@@ -96,19 +96,19 @@ describe('Course management', () => {
             courseCreation.setTitle(courseData.title);
             courseCreation.setShortName(courseData.shortName);
             courseCreation.setDescription(courseData.description);
-            courseCreation.setTestCourse(courseData.testCourse);
             courseCreation.setStartDate(courseData.startDate);
             courseCreation.setEndDate(courseData.endDate);
+            courseCreation.setTestCourse(courseData.testCourse);
             courseCreation.setSemester(courseData.semester);
             courseCreation.setCourseMaxPoints(courseData.maxPoints);
             courseCreation.setProgrammingLanguage(courseData.programmingLanguage);
+            courseCreation.setCustomizeGroupNames(courseData.customizeGroupNames);
             courseCreation.setEnableComplaints(courseData.enableComplaints);
             courseCreation.setMaxComplaints(courseData.maxComplaints);
             courseCreation.setMaxTeamComplaints(courseData.maxTeamComplaints);
             courseCreation.setMaxComplaintsTimeDays(courseData.maxComplaintTimeDays);
             courseCreation.setEnableMoreFeedback(courseData.enableMoreFeedback);
             courseCreation.setMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays);
-            courseCreation.setCustomizeGroupNames(courseData.customizeGroupNames);
             courseCreation.submit().then((request: Interception) => {
                 const courseBody = request.response!.body;
                 course = courseBody;
