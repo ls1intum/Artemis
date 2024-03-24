@@ -277,7 +277,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         complaintRepo.save(complaint);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("courseId", modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId().toString());
-        params.add("teamMode", "true");
+        params.add("isTeamMode", "true");
         Long nrOfAllowedComplaints = request.get("/api/complaints", HttpStatus.OK, Long.class, params);
         assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxTeamComplaints());
     }

@@ -886,7 +886,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final Exam exam = ExamFactory.generateExam(course);
         examRepository.save(exam);
         // The complaint is about a course exercise, not an exam exercise
-        request.post("api/complaints?examId=" + exam.getId(), complaint, HttpStatus.BAD_REQUEST);
+        request.post("/api/complaints?examId=" + exam.getId(), complaint, HttpStatus.BAD_REQUEST);
     }
 
     @Test
