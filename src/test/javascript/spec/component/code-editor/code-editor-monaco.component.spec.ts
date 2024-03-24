@@ -34,7 +34,9 @@ describe('CodeEditorMonacoComponent', () => {
                 fixture = TestBed.createComponent(CodeEditorMonacoComponent);
                 comp = fixture.componentInstance;
                 getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
-                global.ResizeObserver = jest.fn().mockImplementation((...args) => new MockResizeObserver(args));
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 

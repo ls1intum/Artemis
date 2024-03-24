@@ -29,7 +29,9 @@ describe('MonacoEditorComponent', () => {
                 mockThemeService = TestBed.inject(ThemeService);
                 fixture = TestBed.createComponent(MonacoEditorComponent);
                 comp = fixture.componentInstance;
-                global.ResizeObserver = jest.fn().mockImplementation((...args) => new MockResizeObserver(args));
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 
