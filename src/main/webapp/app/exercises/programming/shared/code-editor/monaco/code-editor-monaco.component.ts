@@ -75,11 +75,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.isLoading = false;
         }
 
-        if (this.selectedFile === fileName) {
-            //this.editor.setText(this.fileSession[fileName].code);
-            this.editor.changeModel(fileName, this.fileSession[fileName].code);
-            this.editor.setPosition(this.fileSession[fileName].cursor);
-        }
+        this.editor.changeModel(fileName, this.fileSession[fileName].code);
+        this.editor.setPosition(this.fileSession[fileName].cursor);
     }
 
     onFileTextChanged(text: string): void {
