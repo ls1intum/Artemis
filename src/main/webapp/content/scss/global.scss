@@ -274,7 +274,7 @@ Generic styles
     overflow-y: auto;
     overflow-x: hidden;
     background-color: var(--bs-body-bg);
-    padding-bottom: 3rem;
+    padding-bottom: var(--footer-height);
 }
 
 .main-container {
