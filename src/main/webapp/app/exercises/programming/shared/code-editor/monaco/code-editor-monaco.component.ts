@@ -9,7 +9,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
-import { CommitState, CreateFileChange, DeleteFileChange, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, CreateFileChange, DeleteFileChange, FileChange, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { fromPairs, pickBy } from 'lodash-es';
 
 export type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; loadingError: boolean } };
@@ -129,7 +129,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         } else if (fileChange instanceof DeleteFileChange) {
             this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
             this.storeAnnotations([fileChange.fileName]);
-        } else if (fileChange instanceof CreateFileChange && this.selectedFile === fileChange.fileName) {
+        } else if (fileChange instanceof CreateFileChange && fileChange.fileType === FileType.FILE) {
             this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 }, loadingError: false } };
         }
         this.setBuildAnnotations(this.annotationsArray);

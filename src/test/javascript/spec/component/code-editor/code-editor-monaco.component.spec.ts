@@ -16,6 +16,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { SimpleChange } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
+import { CreateFileChange, DeleteFileChange, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 describe('CodeEditorMonacoComponent', () => {
     let comp: CodeEditorMonacoComponent;
@@ -208,5 +209,55 @@ describe('CodeEditorMonacoComponent', () => {
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2`, document.createElement('div'));
         expect(getInlineFeedbackNodeStub).toHaveBeenCalledTimes(2);
         expect(selectFileInEditorStub).toHaveBeenCalledOnce();
+    });
+
+    it('should update file session when a file is renamed', async () => {
+        const oldFileName = 'old-file-name';
+        const newFileName = 'new-file-name';
+        const otherFileName = 'other-file';
+        const fileSession = {
+            [oldFileName]: { code: 'renamed', cursor: { row: 0, column: 0 }, loadingError: false },
+            [otherFileName]: { code: 'unrelated', cursor: { row: 0, column: 0 }, loadingError: false },
+        };
+        fixture.detectChanges();
+        comp.fileSession = { ...fileSession };
+        const renameFileChange = new RenameFileChange(FileType.FILE, oldFileName, newFileName);
+        await comp.onFileChange(renameFileChange);
+        expect(comp.fileSession).toEqual({
+            [newFileName]: fileSession[oldFileName],
+            [otherFileName]: fileSession[otherFileName],
+        });
+    });
+
+    it('should update file session when a file is deleted', async () => {
+        const fileToDeleteName = 'file-to-delete';
+        const otherFileName = 'other-file';
+        const fileSession = {
+            [fileToDeleteName]: { code: 'will be deleted', cursor: { row: 0, column: 0 }, loadingError: false },
+            [otherFileName]: { code: 'unrelated', cursor: { row: 0, column: 0 }, loadingError: false },
+        };
+        fixture.detectChanges();
+        comp.fileSession = { ...fileSession };
+        const deleteFileChange = new DeleteFileChange(FileType.FILE, fileToDeleteName);
+        await comp.onFileChange(deleteFileChange);
+        expect(comp.fileSession).toEqual({
+            [otherFileName]: fileSession[otherFileName],
+        });
+    });
+
+    it('should update file session when a file is created', async () => {
+        const fileToCreateName = 'file-to-create';
+        const otherFileName = 'other-file';
+        const fileSession = {
+            [otherFileName]: { code: 'unrelated', cursor: { row: 0, column: 0 }, loadingError: false },
+        };
+        fixture.detectChanges();
+        comp.fileSession = { ...fileSession };
+        const createFileChange = new CreateFileChange(FileType.FILE, fileToCreateName);
+        await comp.onFileChange(createFileChange);
+        expect(comp.fileSession).toEqual({
+            [otherFileName]: fileSession[otherFileName],
+            [fileToCreateName]: { code: '', cursor: { row: 0, column: 0 }, loadingError: false },
+        });
     });
 });
