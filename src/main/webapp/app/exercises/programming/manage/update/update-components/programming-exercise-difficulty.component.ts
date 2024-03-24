@@ -17,4 +17,14 @@ export class ProgrammingExerciseDifficultyComponent {
     protected readonly ProjectType = ProjectType;
 
     faQuestionCircle = faQuestionCircle;
+
+    disableReadOnlyModeIfConditionsNotMet() {
+        if (this.shouldDisableReadOnlyMode()) {
+            this.programmingExercise.allowOnlineEditorReadOnlyMode = false;
+        }
+    }
+
+    shouldDisableReadOnlyMode(): boolean {
+        return !this.programmingExercise.allowOfflineIde || !this.programmingExercise.allowOnlineEditor;
+    }
 }

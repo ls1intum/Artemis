@@ -22,9 +22,16 @@
             <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"></span>
         </div>
     }
+    @if (exercise.allowOnlineEditorReadOnlyMode) {
+        <div class="row-container">
+            <span class="badge bg-danger" jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.readOnlyMode.info">
+                For this exercise the online code editor is only enabled in the read-only mode
+            </span>
+        </div>
+    }
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
         <jhi-code-editor-container
-            [editable]="!repositoryIsLocked"
+            [editable]="!repositoryIsLocked && !exercise.allowOnlineEditorReadOnlyMode"
             [participation]="participation"
             [showEditorInstructions]="showEditorInstructions"
             [isTutorAssessment]="hasTutorAssessment"

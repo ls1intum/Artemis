@@ -9,6 +9,7 @@ import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picke
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 describe('ProgrammingExerciseDifficultyComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseDifficultyComponent>;
@@ -25,6 +26,7 @@ describe('ProgrammingExerciseDifficultyComponent', () => {
                 NgModel,
                 ProgrammingExerciseDifficultyComponent,
                 MockComponent(DifficultyPickerComponent),
+                MockComponent(HelpIconComponent),
                 MockComponent(TeamConfigFormGroupComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
