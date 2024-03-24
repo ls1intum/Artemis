@@ -124,9 +124,13 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
 
     // === TESTING SECURITY ===
     private void testAllPreAuthorize() throws Exception {
-        request.patch("/api/complaints/" + complaint.getId() + "/response", null, HttpStatus.FORBIDDEN);
+        request.postWithoutLocation("/api/complaints/" + complaint.getId() + "/response", null, HttpStatus.FORBIDDEN, null);
         request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.FORBIDDEN);
-        request.patch("/api/complaints/" + complaint.getId() + "/response", new ComplaintResponse(), HttpStatus.FORBIDDEN);
+        ComplaintResponseUpdateDTO complaintResponseUpdateResolve = new ComplaintResponseUpdateDTO(null, null, Action.RESOLVE_COMPLAINT);
+        ComplaintResponseUpdateDTO complaintResponseUpdateRefresh = new ComplaintResponseUpdateDTO(null, null, Action.REFRESH_LOCK);
+
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdateResolve, HttpStatus.FORBIDDEN);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdateRefresh, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -140,8 +144,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void createLock_noFailureCondition_shouldCreateEmptyComplaintResponse() throws Exception {
-        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, Action.RESOLVE_COMPLAINT);
-        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.CREATED);
+        request.postWithoutLocation("/api/complaints/" + complaint.getId() + "/response", null, HttpStatus.CREATED, null);
         Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
         assertThat(optionalComplaintResponse).isPresent();
         ComplaintResponse complaintResponse = optionalComplaintResponse.get();
