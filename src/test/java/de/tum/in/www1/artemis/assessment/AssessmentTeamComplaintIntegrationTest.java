@@ -26,6 +26,8 @@ import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilServ
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.dto.Action;
+import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
@@ -176,10 +178,9 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         complaint = complaintRepo.saveAndFlush(complaint);
 
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor1", complaint);
-        complaintResponse.getComplaint().setAccepted(false);
-        complaintResponse.setResponseText("rejected");
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, Action.RESOLVE_COMPLAINT);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponse, HttpStatus.OK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.OK);
         assertThat(complaintResponse.getComplaint().getParticipant()).isNull();
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
@@ -200,7 +201,10 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponse, HttpStatus.FORBIDDEN);
+
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, Action.RESOLVE_COMPLAINT);
+
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -255,7 +259,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         complaint.setParticipant(team);
         complaintRepo.save(complaint);
 
-        request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.FORBIDDEN, Complaint.class);
+        request.get("/api/complaints?submissionId=" + modelingSubmission.getId(), HttpStatus.FORBIDDEN, Complaint.class);
     }
 
     private void saveModelingSubmissionAndAssessment() throws Exception {
@@ -270,8 +274,8 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     void getNumberOfAllowedTeamComplaintsInCourse() throws Exception {
         complaint.setParticipant(team);
         complaintRepo.save(complaint);
-        Long nrOfAllowedComplaints = request.get("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/allowed-complaints?isTeamMode=true",
-                HttpStatus.OK, Long.class);
+        Long nrOfAllowedComplaints = request.get("/api/complaints?courseId=" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "&teamMode=true", HttpStatus.OK,
+                Long.class);
         assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxTeamComplaints());
     }
 

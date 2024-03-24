@@ -52,6 +52,8 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.dto.Action;
+import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
@@ -278,10 +280,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaint = complaintRepo.save(complaint);
         // creating the initial complaintResponse
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
-        complaintResponse.getComplaint().setAccepted(false);
-        complaintResponse.setResponseText("Rejected");
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, Action.RESOLVE_COMPLAINT);
 
-        request.put("/api/complaints/" + complaint.getId() + "/response", complaintResponse, HttpStatus.OK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.OK);
 
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
@@ -592,7 +593,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaint = complaintRepo.save(complaint);
 
         final var params = new LinkedMultiValueMap<String, String>();
-        params.add("complaintType", ComplaintType.COMPLAINT.name());
         params.add("exerciseId", modelingExercise.getId().toString());
 
         final var complaints = request.getList("/api/complaints", HttpStatus.OK, Complaint.class, params);
@@ -622,17 +622,20 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
 
         String complaintsUrl = "/api/complaints";
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("complaintType", ComplaintType.COMPLAINT.toString());
-        params.set("exerciseId", modelingExercise.getId().toString());
-        List<Complaint> complaintsByCourse = request.getList(complaintsUrl, HttpStatus.OK, Complaint.class, params);
-        List<Complaint> complaintsByExercise = request.getList(complaintsUrl, HttpStatus.OK, Complaint.class, params);
+        LinkedMultiValueMap<String, String> paramsExercise = new LinkedMultiValueMap<>();
+        LinkedMultiValueMap<String, String> paramsCourse = new LinkedMultiValueMap<>();
+        paramsExercise.add("complaintType", ComplaintType.COMPLAINT.toString());
+        paramsExercise.add("exerciseId", modelingExercise.getId().toString());
+        paramsCourse.add("complaintType", ComplaintType.COMPLAINT.toString());
+        paramsCourse.add("courseId", modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId().toString());
+        List<Complaint> complaintsByCourse = request.getList(complaintsUrl, HttpStatus.OK, Complaint.class, paramsCourse);
+        List<Complaint> complaintsByExercise = request.getList(complaintsUrl, HttpStatus.OK, Complaint.class, paramsExercise);
         assertThat(complaintsByExercise).hasSameSizeAs(complaintsByCourse).hasSize(1);
 
-        params.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
-        params.add("courseId", modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId().toString());
-        complaintsByCourse = request.getList(complaintsUrl, HttpStatus.OK, Complaint.class, params);
-        complaintsByExercise = request.getList(complaintsUrl, HttpStatus.OK, Complaint.class, params);
+        paramsCourse.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
+        paramsExercise.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
+        complaintsByCourse = request.getList(complaintsUrl, HttpStatus.OK, Complaint.class, paramsCourse);
+        complaintsByExercise = request.getList(complaintsUrl, HttpStatus.OK, Complaint.class, paramsExercise);
         assertThat(complaintsByCourse).hasSameSizeAs(complaintsByExercise).hasSize(2);
     }
 
@@ -882,7 +885,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final Exam exam = ExamFactory.generateExam(course);
         examRepository.save(exam);
         // The complaint is about a course exercise, not an exam exercise
-        request.post("api/complaints?examId=" + exam.getId(), complaint, HttpStatus.BAD_REQUEST);
+        request.post("api/complaints?examId=" + exam.getId().toString(), complaint, HttpStatus.BAD_REQUEST);
     }
 
     @Test

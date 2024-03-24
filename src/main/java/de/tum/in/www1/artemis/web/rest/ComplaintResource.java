@@ -123,7 +123,7 @@ public class ComplaintResource {
      */
     @PostMapping(value = "complaints", params = { "examId" })
     @EnforceAtLeastStudent
-    public ResponseEntity<Complaint> createComplaintForExamExercise(@RequestBody Complaint complaint, Principal principal, @RequestParam Long examId) throws URISyntaxException {
+    public ResponseEntity<Complaint> createComplaintForExamExercise(@RequestParam Long examId, @RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint for exam exercise: {}", complaint);
 
         validateNewComplaint(complaint);
@@ -215,7 +215,7 @@ public class ComplaintResource {
      * @param teamMode whether to return the number of allowed complaints per team (instead of per student)
      * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
      */
-    @GetMapping(value = "complaints", params = { "courseId", "teamMode" })
+    @GetMapping(value = "complaints", params = { "courseId" })
     @EnforceAtLeastStudent
     public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@RequestParam Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
