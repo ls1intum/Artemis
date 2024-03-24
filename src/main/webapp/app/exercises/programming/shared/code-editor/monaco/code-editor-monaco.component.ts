@@ -46,7 +46,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     annotationsArray: Array<Annotation> = [];
 
     @Output()
-    onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
+    onFileContentChange: EventEmitter<{ file: string; fileContent: string }> = new EventEmitter<{ file: string; fileContent: string }>();
 
     isLoading = false;
 
@@ -113,7 +113,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.editor.addLineWidget(line + 1, 'feedback-' + feedback.id, feedbackNode);
     }
 
-    protected filterFeedbackForFile(feedbacks: Feedback[]): Feedback[] {
+    filterFeedbackForFile(feedbacks: Feedback[]): Feedback[] {
         if (!this.selectedFile) {
             return [];
         }

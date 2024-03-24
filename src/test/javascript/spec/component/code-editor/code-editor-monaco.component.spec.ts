@@ -14,15 +14,40 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { LocalStorageService } from 'ngx-webstorage';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { SimpleChange } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
+
 describe('CodeEditorMonacoComponent', () => {
     let comp: CodeEditorMonacoComponent;
     let fixture: ComponentFixture<CodeEditorMonacoComponent>;
     let getInlineFeedbackNodeStub: jest.SpyInstance;
+    let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
+    let loadFileFromRepositoryStub: jest.SpyInstance;
+
+    const exampleFeedbacks = [
+        {
+            id: 1,
+            reference: 'file:file1.java_line:1',
+        },
+        {
+            id: 2,
+            reference: 'file:file1.java_line:2',
+        },
+        {
+            id: 3,
+            reference: 'file:file2.java_line:9',
+        },
+    ];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MonacoEditorModule],
-            declarations: [CodeEditorMonacoComponent, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MonacoEditorComponent],
+            declarations: [
+                CodeEditorMonacoComponent,
+                MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
+                MockComponent(CodeEditorHeaderComponent),
+                MonacoEditorComponent,
+            ],
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
@@ -33,6 +58,8 @@ describe('CodeEditorMonacoComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CodeEditorMonacoComponent);
                 comp = fixture.componentInstance;
+                codeEditorRepositoryFileService = fixture.debugElement.injector.get(CodeEditorRepositoryFileService);
+                loadFileFromRepositoryStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
                 getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
                 global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
                     return new MockResizeObserver(callback);
@@ -77,6 +104,61 @@ describe('CodeEditorMonacoComponent', () => {
         expect(comp.editor.isReadOnly()).toBeFalse();
     });
 
+    it('should update the file session and notify when the file content changes', () => {
+        const selectedFile = 'file';
+        const fileSession = {
+            [selectedFile]: { code: 'some unchanged code', cursor: { row: 0, column: 0 }, loadingError: false },
+        };
+        const newCode = 'some new code';
+        const valueCallbackStub = jest.fn();
+        comp.onFileContentChange.subscribe(valueCallbackStub);
+        fixture.detectChanges();
+        comp.fileSession = fileSession;
+        comp.selectedFile = selectedFile;
+        comp.onFileTextChanged(newCode);
+        expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith({ file: selectedFile, fileContent: newCode });
+        expect(comp.fileSession).toEqual({
+            [selectedFile]: { ...fileSession[selectedFile], code: newCode },
+        });
+    });
+
+    it('should load a selected file only if it is not present yet', async () => {
+        const fileToLoad = { fileName: 'file-to-load', fileContent: 'some code' };
+        const loadedFileSubject = new BehaviorSubject(fileToLoad);
+        loadFileFromRepositoryStub.mockReturnValue(loadedFileSubject);
+        const setPositionStub = jest.spyOn(comp.editor, 'setPosition').mockImplementation();
+        const changeModelStub = jest.spyOn(comp.editor, 'changeModel').mockImplementation();
+        const presentFileName = 'present-file';
+        const presentFileSession = {
+            [presentFileName]: { code: 'code\ncode', cursor: { row: 1, column: 2 }, loadingError: false },
+        };
+        fixture.detectChanges();
+        comp.fileSession = presentFileSession;
+        await comp.selectFileInEditor(fileToLoad.fileName);
+        await comp.selectFileInEditor(presentFileName);
+        expect(loadFileFromRepositoryStub).toHaveBeenCalledExactlyOnceWith(fileToLoad.fileName);
+        expect(comp.fileSession).toEqual({
+            ...presentFileSession,
+            [fileToLoad.fileName]: { code: fileToLoad.fileContent, cursor: { column: 0, row: 0 }, loadingError: false },
+        });
+        expect(setPositionStub).toHaveBeenCalledTimes(2);
+        expect(changeModelStub).toHaveBeenCalledTimes(2);
+    });
+
+    it('should use the code and cursor position of the selected file', async () => {
+        const setPositionStub = jest.spyOn(comp.editor, 'setPosition').mockImplementation();
+        const changeModelStub = jest.spyOn(comp.editor, 'changeModel').mockImplementation();
+        fixture.detectChanges();
+        const selectedFile = 'file1';
+        const fileSession = {
+            [selectedFile]: { code: 'code\ncode', cursor: { row: 1, column: 2 }, loadingError: false },
+        };
+        comp.fileSession = fileSession;
+        await comp.selectFileInEditor(selectedFile);
+        expect(setPositionStub).toHaveBeenCalledExactlyOnceWith(fileSession[selectedFile].cursor);
+        expect(changeModelStub).toHaveBeenCalledExactlyOnceWith(selectedFile, fileSession[selectedFile].code);
+    });
+
     it('should display build annotations for the current file', async () => {
         const setAnnotationsStub = jest.spyOn(comp.editor, 'setAnnotations').mockImplementation();
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
@@ -118,20 +200,7 @@ describe('CodeEditorMonacoComponent', () => {
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
         comp.isTutorAssessment = true;
         comp.selectedFile = 'file1.java';
-        comp.feedbacks = [
-            {
-                id: 1,
-                reference: 'file:file1.java_line:1',
-            },
-            {
-                id: 2,
-                reference: 'file:file1.java_line:2',
-            },
-            {
-                id: 3,
-                reference: 'file:file2.java_line:9',
-            },
-        ];
+        comp.feedbacks = exampleFeedbacks;
         fixture.detectChanges();
         await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) });
         expect(addLineWidgetStub).toHaveBeenCalledTimes(2);
