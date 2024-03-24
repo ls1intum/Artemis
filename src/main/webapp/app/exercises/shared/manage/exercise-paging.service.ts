@@ -2,7 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
-import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { Observable, map } from 'rxjs';
 
 export abstract class ExercisePagingService<T extends Exercise> extends PagingService<T> {
@@ -22,7 +22,7 @@ export abstract class ExercisePagingService<T extends Exercise> extends PagingSe
      * - programmingLanguage set to a language if only programming exercises of this language should be included. undefined for other exercise types.
      */
     public override search(
-        pageable: PageableSearch,
+        pageable: SearchTermPageableSearch,
         options: { isCourseFilter: boolean; isExamFilter: boolean; programmingLanguage?: ProgrammingLanguage },
     ): Observable<SearchResult<T>> {
         let params = this.createHttpParams(pageable);

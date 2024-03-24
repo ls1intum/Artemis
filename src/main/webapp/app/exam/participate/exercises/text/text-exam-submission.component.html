@@ -28,8 +28,8 @@
                         class="text-editor-textarea"
                         [maxLength]="maxCharacterCount"
                         [(ngModel)]="answer"
-                        [readonly]="readonly || !studentSubmission"
-                        [disabled]="!studentSubmission"
+                        [readOnly]="readonly || !studentSubmission"
+                        [disabled]="readonly || !studentSubmission"
                         (keydown.tab)="onTextEditorTab(textEditor, $event)"
                         (input)="onTextEditorInput($event)"
                     ></textarea>
@@ -39,7 +39,7 @@
         <!--endregion-->
         <!--region Right Panel-->
         <fa-icon right-header [icon]="farListAlt" />&nbsp;
-        <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+        <span right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
         <!-- problem statement update & difference highlighter -->
         <ng-container right-body>
             @if (exercise) {

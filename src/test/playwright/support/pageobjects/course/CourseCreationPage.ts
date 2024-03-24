@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
-import { BASE_API } from '../../constants';
+import { COURSE_ADMIN_BASE, COURSE_BASE } from '../../constants';
 import { enterDate } from '../../utils';
 
 /**
@@ -239,7 +239,7 @@ export class CourseCreationPage {
      * @returns the response if a test needs it
      */
     async submit() {
-        const responsePromise = this.page.waitForResponse(BASE_API + 'admin/courses');
+        const responsePromise = this.page.waitForResponse(COURSE_ADMIN_BASE);
         await this.page.click('#save-entity');
         const response = await responsePromise;
         return await response.json();
@@ -250,7 +250,7 @@ export class CourseCreationPage {
      * @returns the response if a test needs it
      */
     async update() {
-        const responsePromise = this.page.waitForResponse(BASE_API + 'courses/*');
+        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*`);
         await this.page.click('#save-entity');
         const response = await responsePromise;
         return response.json();

@@ -61,7 +61,8 @@ public class DataExportExamCreationService {
      * @throws IOException if an error occurs while accessing the file system
      */
     public void createExportForExams(long userId, Path workingDirectory) throws IOException {
-        Map<Course, List<StudentExam>> studentExamsPerCourse = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserId(userId).stream()
+        Map<Course, List<StudentExam>> studentExamsPerCourse = studentExamRepository
+                .findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userId).stream()
                 .collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));
 
         for (var entry : studentExamsPerCourse.entrySet()) {

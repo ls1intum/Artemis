@@ -41,7 +41,7 @@ export class CommunicationAPIRequests {
             displayPriority: 'NONE',
             visibleForStudents: true,
         };
-        const response = await this.page.request.post(`${COURSE_BASE}${course.id}/messages`, { data });
+        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/messages`, { data });
         return response.json();
     }
 
@@ -63,7 +63,7 @@ export class CommunicationAPIRequests {
             name,
             type: 'channel',
         };
-        const response = await this.page.request.post(`${COURSE_BASE}${course.id}/channels`, { data });
+        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/channels`, { data });
         return response.json();
     }
 
@@ -74,7 +74,7 @@ export class CommunicationAPIRequests {
      * @returns Promise<ChannelDTO[]> with the course-wide channels of the course.
      */
     async getCourseWideChannels(courseId: number): Promise<ChannelDTO[]> {
-        const response = await this.page.request.get(`${COURSE_BASE}${courseId}/conversations`);
+        const response = await this.page.request.get(`${COURSE_BASE}/${courseId}/conversations`);
         const conversations: ConversationDTO[] = await response.json();
         return conversations.filter((conv: ConversationDTO) => getAsChannelDTO(conv)?.isCourseWide === true);
     }
@@ -87,7 +87,7 @@ export class CommunicationAPIRequests {
      * @returns Promise<Channel> with the channel of the exercise.
      */
     async getExerciseChannel(courseId: number, exerciseId: number): Promise<Channel> {
-        const response = await this.page.request.get(`${COURSE_BASE}${courseId}/exercises/${exerciseId}/channel`);
+        const response = await this.page.request.get(`${COURSE_BASE}/${courseId}/exercises/${exerciseId}/channel`);
         return response.json();
     }
 
@@ -99,7 +99,7 @@ export class CommunicationAPIRequests {
      * @returns Promise<Channel> with the channel of the lecture.
      */
     async getLectureChannel(courseId: number, lectureId: number): Promise<Channel> {
-        const response = await this.page.request.get(`${COURSE_BASE}${courseId}/lectures/${lectureId}/channel`);
+        const response = await this.page.request.get(`${COURSE_BASE}/${courseId}/lectures/${lectureId}/channel`);
         return response.json();
     }
 
@@ -111,7 +111,7 @@ export class CommunicationAPIRequests {
      * @returns Promise<GroupChat> representing the group chat created.
      */
     async createCourseMessageGroupChat(course: Course, users: Array<string>): Promise<GroupChat> {
-        const response = await this.page.request.post(`${COURSE_BASE}${course.id}/group-chats`, { data: users });
+        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/group-chats`, { data: users });
         return response.json();
     }
 
@@ -134,7 +134,7 @@ export class CommunicationAPIRequests {
             displayPriority: 'NONE',
             visibleForStudents: true,
         };
-        const response = await this.page.request.post(`${COURSE_BASE}${course.id}/messages`, { data });
+        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/messages`, { data });
         return response.json();
     }
 
@@ -162,7 +162,7 @@ export class CommunicationAPIRequests {
             name,
             type: 'groupChat',
         };
-        await this.page.request.put(`${COURSE_BASE}${course.id}/group-chats/${groupChat.id}`, { data });
+        await this.page.request.put(`${COURSE_BASE}/${course.id}/group-chats/${groupChat.id}`, { data });
     }
 
     /**
@@ -174,7 +174,7 @@ export class CommunicationAPIRequests {
      */
     async joinUserIntoChannel(course: Course, channelId: number, user: UserCredentials) {
         const data = [user.username];
-        await this.page.request.post(`${COURSE_BASE}${course.id}/channels/${channelId}/register`, { data });
+        await this.page.request.post(`${COURSE_BASE}/${course.id}/channels/${channelId}/register`, { data });
     }
 
     /**
@@ -191,7 +191,7 @@ export class CommunicationAPIRequests {
             post,
             resolvesPost: true,
         };
-        const response = await this.page.request.post(`${COURSE_BASE}${course.id}/answer-messages`, { data });
+        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/answer-messages`, { data });
         return response.json();
     }
 
@@ -217,7 +217,7 @@ export class CommunicationAPIRequests {
             title,
             visibleForStudents: true,
         };
-        const response = await this.page.request.post(`${COURSE_BASE}${course.id}/posts`, { data });
+        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/posts`, { data });
         return response.json();
     }
 
@@ -242,7 +242,7 @@ export class CommunicationAPIRequests {
             title,
             visibleForStudents: true,
         };
-        const response = await this.page.request.post(`${COURSE_BASE}${course.id}/posts`, { data });
+        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/posts`, { data });
         return response.json();
     }
 }

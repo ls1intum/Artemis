@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.config.Constants;
 
 @Component
 @Profile("bitbucket")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BitbucketInfoContributor implements InfoContributor {
 
     @Value("${artemis.version-control.url}")

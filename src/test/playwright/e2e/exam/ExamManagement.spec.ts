@@ -1,24 +1,27 @@
 import { expect } from '@playwright/test';
 import { admin, instructor, studentOne } from '../../support/users';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, newBrowserPage } from '../../support/utils';
 import { test } from '../../support/fixtures';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Commands } from '../../support/commands';
+import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
+import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
+import { ExerciseAPIRequests } from '../../support/requests/ExerciseAPIRequests';
 
 test.describe('Exam management', () => {
-    let course: Course;
-    let exam: Exam;
-    let groupCount = 0;
-
-    test.beforeEach(async ({ login, courseManagementAPIRequests, examAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        exam = await examAPIRequests.createExam({ course, title: 'Exam ' + generateUUID() });
-    });
-
     test.describe('Exercise group', () => {
+        let course: Course;
+        let exam: Exam;
+
+        test.beforeEach('Create exam', async ({ login, courseManagementAPIRequests, examAPIRequests }) => {
+            await login(admin);
+            course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
+            await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+            exam = await examAPIRequests.createExam({ course, title: 'Exam ' + generateUUID() });
+        });
+
         test.beforeEach(async ({ login }) => {
             await login(instructor);
         });
@@ -26,7 +29,7 @@ test.describe('Exam management', () => {
         test.describe('Manage Group', () => {
             let exerciseGroup: ExerciseGroup;
 
-            test.beforeEach(async ({ examAPIRequests }) => {
+            test.beforeEach('Add exercise group for exam', async ({ examAPIRequests }) => {
                 exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             });
 
@@ -119,19 +122,39 @@ test.describe('Exam management', () => {
             await navigationBar.openCourseManagement();
             await courseManagement.openExamsOfCourse(course.id!);
             await examManagement.openExerciseGroups(exam.id!);
-            await examExerciseGroups.shouldShowNumberOfExerciseGroups(groupCount);
+            await examExerciseGroups.shouldShowNumberOfExerciseGroups(0);
             await examExerciseGroups.clickAddExerciseGroup();
             const groupName = 'Group 1';
             await examExerciseGroupCreation.typeTitle(groupName);
             await examExerciseGroupCreation.isMandatoryBoxShouldBeChecked();
             const group = await examExerciseGroupCreation.clickSave();
-            groupCount++;
             await examExerciseGroups.shouldHaveTitle(group.id!, groupName);
-            await examExerciseGroups.shouldShowNumberOfExerciseGroups(groupCount);
+            await examExerciseGroups.shouldShowNumberOfExerciseGroups(1);
+        });
+
+        test.afterEach(async ({ courseManagementAPIRequests }) => {
+            await courseManagementAPIRequests.deleteCourse(course, admin);
         });
     });
 
-    test.describe('Manage Students', () => {
+    test.describe.serial('Manage Students', () => {
+        let exam: Exam;
+        let course: Course;
+
+        test.beforeAll('Create exam and exercises', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
+            const examAPIRequests = new ExamAPIRequests(page);
+            const exerciseAPIRequests = new ExerciseAPIRequests(page);
+
+            await Commands.login(page, admin);
+            course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
+            await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+            exam = await examAPIRequests.createExam({ course, title: 'Exam ' + generateUUID() });
+            const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
+            await exerciseAPIRequests.createTextExercise({ exerciseGroup });
+        });
+
         test.beforeEach(async ({ login }) => {
             await login(instructor);
         });
@@ -144,16 +167,18 @@ test.describe('Exam management', () => {
             await studentExamManagement.checkStudent(studentOne.username);
         });
 
-        // TODO: Investigate when generate student exams button should be disabled
-        // test('Generates student exams', async ({ page, examManagement, studentExamManagement }) => {
-        //     await page.goto(`/course-management/${course.id}/exams`);
-        //     await examManagement.openStudentExams(exam.id!);
-        //     await studentExamManagement.clickGenerateStudentExams();
-        //     await expect(studentExamManagement.getGenerateStudentExamsButton()).toBeDisabled();
-        // });
-    });
+        test('Generates student exams', async ({ page, examManagement, studentExamManagement }) => {
+            await page.goto(`/course-management/${course.id}/exams`);
+            await examManagement.openStudentExams(exam.id!);
+            await studentExamManagement.clickGenerateStudentExams();
+            await page.waitForLoadState('networkidle');
+            await expect(studentExamManagement.getGenerateMissingStudentExamsButton()).toBeDisabled();
+        });
 
-    test.afterEach(async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
+        test.afterAll(async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
+            await courseManagementAPIRequests.deleteCourse(course, admin);
+        });
     });
 });

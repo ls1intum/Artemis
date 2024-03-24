@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Profile("jira")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class JiraAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.user-management.external.user}")

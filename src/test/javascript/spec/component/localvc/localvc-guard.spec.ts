@@ -39,4 +39,25 @@ describe('LocalVCGuard', () => {
         await guard.canActivate();
         expect(router.navigate).toHaveBeenCalledWith(['/']);
     });
+
+    it('should not allow access and navigate to "/" if an error occurs while fetching profile information', async () => {
+        // Mock the profileService to return a rejected promise with an error message
+        const errorMessage = 'Test error';
+        profileServiceMock.getProfileInfo.mockRejectedValue(errorMessage);
+
+        // Spy on console.error
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {}); // Mock console.error to do nothing
+
+        // Call the canActivate method
+        const canActivateResult = await guard.canActivate();
+
+        // Assert that the router's navigate method is called with ['/']
+        expect(router.navigate).toHaveBeenCalledWith(['/']);
+
+        // Assert that the canActivate method returns false
+        expect(canActivateResult).toBeFalse();
+
+        // Assert that console.error was called with the expected prefix string
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching profile information:', expect.anything());
+    });
 });

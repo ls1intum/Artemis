@@ -516,6 +516,10 @@ public class ParticipationResource {
         if (exercise.getExerciseType() == ExerciseType.QUIZ) {
             return studentParticipationRepository.findByExerciseIdWithLatestAndManualRatedResults(exercise.getId());
         }
+        if (exercise.isTeamMode()) {
+            // For team exercises the students need to be eagerly fetched
+            return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
+        }
         return studentParticipationRepository.findByExerciseIdWithLatestAndManualResults(exercise.getId());
     }
 

@@ -1,14 +1,12 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,37 +23,36 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
 
     Set<OneToOneChat> findAllByConversationParticipantsContaining(ConversationParticipant conversationParticipant);
 
-    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
             SELECT DISTINCT oneToOneChat
             FROM OneToOneChat oneToOneChat
-                LEFT JOIN oneToOneChat.conversationParticipants conversationParticipant
-                LEFT JOIN FETCH oneToOneChat.conversationParticipants
+                LEFT JOIN FETCH oneToOneChat.conversationParticipants conversationParticipant
+                LEFT JOIN FETCH conversationParticipant.user user
+                LEFT JOIN FETCH user.groups
             WHERE oneToOneChat.course.id = :courseId
                 AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :userId)
-                AND conversationParticipant.user.id = :userId
+                AND user.id = :userId
             ORDER BY oneToOneChat.lastMessageDate DESC
             """)
     List<OneToOneChat> findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
             SELECT o FROM OneToOneChat o
-                LEFT JOIN FETCH o.conversationParticipants p1
-                LEFT JOIN FETCH o.conversationParticipants p2
+                LEFT JOIN FETCH o.conversationParticipants p
+                LEFT JOIN FETCH p.user u
+                LEFT JOIN FETCH u.groups
             WHERE o.course.id = :courseId
-                AND p1.user.id = :userIdA
-                AND p2.user.id = :userIdB
-                AND p1.conversation = o
-                AND p2.conversation = o
+                AND p.conversation = o
+                AND (p.user.id = :userIdA OR p.user.id = :userIdB)
             """)
     Optional<OneToOneChat> findBetweenUsersWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
 
-    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
             SELECT DISTINCT oneToOneChat
             FROM OneToOneChat oneToOneChat
                 LEFT JOIN FETCH oneToOneChat.conversationParticipants p
+                LEFT JOIN FETCH p.user u
+                LEFT JOIN FETCH u.groups
             WHERE oneToOneChat.id = :oneToOneChatId
             """)
     Optional<OneToOneChat> findByIdWithConversationParticipantsAndUserGroups(@Param("oneToOneChatId") Long oneToOneChatId) throws EntityNotFoundException;

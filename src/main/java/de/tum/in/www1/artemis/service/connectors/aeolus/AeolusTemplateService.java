@@ -3,7 +3,8 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.IOUtils;
@@ -23,7 +24,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
-import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 
 /**
  * Handles the request to {@link de.tum.in.www1.artemis.web.rest.AeolusTemplateResource} and Artemis internal
@@ -41,13 +42,13 @@ public class AeolusTemplateService {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    private final BuildScriptProvider buildScriptProvider;
+    private final BuildScriptProviderService buildScriptProviderService;
 
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
-            BuildScriptProvider buildScriptProvider) {
+            BuildScriptProviderService buildScriptProviderService) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.resourceLoaderService = resourceLoaderService;
-        this.buildScriptProvider = buildScriptProvider;
+        this.buildScriptProviderService = buildScriptProviderService;
         // load all scripts into the cache
         cacheOnBoot();
     }
@@ -61,11 +62,7 @@ public class AeolusTemplateService {
                     continue;
                 }
                 String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
-                String projectType = filename.split("_")[0].replace(".yaml", "");
-                Optional<ProjectType> optionalProjectType = Optional.empty();
-                if (!projectType.equals("default")) {
-                    optionalProjectType = Optional.of(ProjectType.valueOf(projectType.toUpperCase()));
-                }
+                Optional<ProjectType> optionalProjectType = extractProjectType(filename);
                 String uniqueKey = directory + "_" + filename;
                 byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
                 String script = new String(fileContent, StandardCharsets.UTF_8);
@@ -124,12 +121,12 @@ public class AeolusTemplateService {
             // to be backwards compatible, we assume that java exercises without project type are plain maven projects
             projectType = Optional.of(ProjectType.PLAIN_MAVEN);
         }
-        String templateFileName = buildScriptProvider.buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "yaml");
+        String templateFileName = buildScriptProviderService.buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "yaml");
         String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
         if (templateCache.containsKey(uniqueKey)) {
             return templateCache.get(uniqueKey);
         }
-        String scriptCache = buildScriptProvider.getCachedScript(uniqueKey);
+        String scriptCache = buildScriptProviderService.getCachedScript(uniqueKey);
         if (scriptCache == null) {
             log.error("No windfile found for key {}", uniqueKey);
             return null;
@@ -138,6 +135,24 @@ public class AeolusTemplateService {
         this.addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);
         templateCache.put(uniqueKey, windfile);
         return windfile;
+    }
+
+    /**
+     * Extracts the project type from the filename, maven_blackbox is a special case
+     *
+     * @param filename the filename
+     * @return the project type
+     */
+    private static Optional<ProjectType> extractProjectType(String filename) {
+        String[] split = filename.replace(".yaml", "").split("_");
+        String projectType = split[0];
+        if (!projectType.equals("default")) {
+            if (split.length > 2 && split[1].equals("maven") && split[2].equals("blackbox")) {
+                return Optional.of(ProjectType.MAVEN_BLACKBOX);
+            }
+            return Optional.of(ProjectType.valueOf(projectType.toUpperCase()));
+        }
+        return Optional.empty();
     }
 
     /**

@@ -48,6 +48,7 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
     @AfterEach
     void afterEach() {
         gitUtilService.deleteRepos();
+        gitService.clearCachedRepositories();
     }
 
     @Test
@@ -114,12 +115,14 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    void testCheckoutRepositoryAtCommit(boolean withUrl) throws GitAPIException {
+    void testCheckoutRepositoryAtCommit(boolean withUri) throws GitAPIException {
         // first commit
         prepareRepositoryContent();
         String commitHash = getCommitHash("my first commit");
-        if (withUrl) {
-            gitService.checkoutRepositoryAtCommit(gitUtilService.getRepoUriByType(GitUtilService.REPOS.LOCAL), commitHash, true);
+        if (withUri) {
+            var uri = gitUtilService.getRepoUriByType(GitUtilService.REPOS.LOCAL);
+            try (var repo = gitService.checkoutRepositoryAtCommit(uri, commitHash, true)) {
+            }
         }
         else {
             try (var repo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL)) {
@@ -347,6 +350,5 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(commitsInfos.get(1).message()).isEqualTo("my first commit");
         assertThat(commitsInfos.get(2).hash()).isEqualTo(getCommitHash("initial commit"));
         assertThat(commitsInfos.get(2).message()).isEqualTo("initial commit");
-        gitService.clearCachedRepositories();
     }
 }

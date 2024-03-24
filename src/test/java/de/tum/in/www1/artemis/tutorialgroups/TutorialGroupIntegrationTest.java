@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -28,6 +29,8 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource;
@@ -36,6 +39,12 @@ import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.Tuto
 class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
     private static final String TEST_PREFIX = "tutorialgroup";
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private PostRepository postRepository;
 
     private User instructor1;
 
@@ -322,9 +331,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var tutorialGroupId = tutorialGroupUtilService
                 .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of()).getId();
         var sessionToSave = new ArrayList<TutorialGroupSession>();
-        var date = firstAugustMonday;
+        var date = FIRST_AUGUST_MONDAY_00_00;
         for (Integer att : attendance) {
-            var session = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(date), getExampleSessionEndOnDate(date), att);
+            var session = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(date.toLocalDate()),
+                    getExampleSessionEndOnDate(date.toLocalDate()), att);
             sessionToSave.add(session);
             date = date.plusDays(1);
         }
@@ -820,6 +830,22 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         asserTutorialGroupChannelIsCorrectlyConfigured(group1);
         asserTutorialGroupChannelIsCorrectlyConfigured(group2);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDeleteCourseWithTutorialGroups() throws Exception {
+        var channel = tutorialGroupRepository.getTutorialGroupChannel(exampleOneTutorialGroupId).orElseThrow();
+        var post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+
+        request.delete("/api/admin/courses/" + exampleCourseId, HttpStatus.OK);
+
+        assertThat(courseRepository.findById(exampleCourseId)).isEmpty();
+        assertThat(tutorialGroupRepository.findAllByCourseId(exampleCourseId)).isEmpty();
+        assertThat(tutorialGroupRepository.getTutorialGroupChannel(exampleOneTutorialGroupId)).isEmpty();
+        assertThat(tutorialGroupRepository.getTutorialGroupChannel(exampleTwoTutorialGroupId)).isEmpty();
+        assertThat(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(exampleCourseId)).isEmpty();
+        assertThat(postRepository.findById(post.getId())).isEmpty();
     }
 
     private List<TutorialGroupRegistrationImportDTO> sendImportRequest(List<TutorialGroupRegistrationImportDTO> tutorialGroupRegistrations) throws Exception {

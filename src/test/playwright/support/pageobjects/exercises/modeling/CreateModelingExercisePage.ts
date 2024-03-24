@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import { BASE_API, MODELING_EXERCISE_BASE } from '../../../constants';
+import { MODELING_EXERCISE_BASE } from '../../../constants';
 import { Dayjs } from 'dayjs';
 import { enterDate } from '../../../utils';
 
@@ -18,9 +18,9 @@ export class CreateModelingExercisePage {
 
     async addCategories(categories: string[]) {
         for (const category of categories) {
-            await this.page.locator('#field_categories').type(category);
-            // this line is a hack so the category ends
-            // await this.page.locator('#id').click({ force: true });
+            const categoriesField = this.page.locator('#field_categories');
+            await categoriesField.fill(category);
+            await categoriesField.press('Enter');
         }
     }
 
@@ -32,13 +32,13 @@ export class CreateModelingExercisePage {
 
     async save() {
         const responsePromise = this.page.waitForResponse(MODELING_EXERCISE_BASE);
-        await this.page.click('#modeling-exercise-creation-save');
+        await this.page.click('#save-entity');
         return await responsePromise;
     }
 
     async import() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}modeling-exercises/import/*`);
-        await this.page.click('#modeling-exercise-creation-save');
+        const responsePromise = this.page.waitForResponse(`${MODELING_EXERCISE_BASE}/import/*`);
+        await this.page.click('#save-entity');
         return await responsePromise;
     }
 

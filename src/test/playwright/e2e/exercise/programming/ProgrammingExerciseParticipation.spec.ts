@@ -6,7 +6,6 @@ import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/jav
 import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
 import { ProgrammingLanguage } from '../../../support/constants';
-import { admin, studentFour, studentOne, studentThree, studentTwo } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { gitClient } from '../../../support/pageobjects/exercises/programming/GitClient';
@@ -15,6 +14,8 @@ import { SimpleGit } from 'simple-git';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { createFileWithContent } from '../../../support/utils';
 import { ProgrammingExerciseSubmission } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
+import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
+import { admin, studentOne, studentThree, studentTwo } from '../../../support/users';
 
 test.describe('Programming exercise participation', () => {
     let course: Course;
@@ -22,10 +23,9 @@ test.describe('Programming exercise participation', () => {
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
         await login(admin, '/');
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
+        courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+        courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
+        courseManagementAPIRequests.addStudentToCourse(course, studentThree);
     });
 
     test.describe('Java programming exercise', () => {
@@ -113,29 +113,28 @@ test.describe('Programming exercise participation', () => {
         });
     });
 
-    // TODO: Add DB_TYPE as Playwright environment variable for checking here
     // Skip C tests within Jenkins used by the Postgres setup, since C is currently not supported there
     // See https://github.com/ls1intum/Artemis/issues/6994
-    // if (Cypress.env('DB_TYPE') !== 'Postgres') {
-    //     test.describe('C programming exercise', () => {
-    //         let exercise: ProgrammingExercise;
-    //
-    //         test.beforeEach('Setup c programming exercise', async ({ login, exerciseAPIRequests }) => {
-    //             await login(admin);
-    //             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
-    //         });
-    //
-    //         test('Makes a submission', async ({ programmingExerciseEditor }) => {
-    //             await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
-    //             await programmingExerciseEditor.openCodeEditor(exercise.id!);
-    //             const submission = cAllSuccessful;
-    //             await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
-    //                 const resultScore = await programmingExerciseEditor.getResultScore();
-    //                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
-    //             });
-    //         });
-    //     });
-    // }
+    if (process.env.PLAYWRIGHT_DB_TYPE !== 'Postgres') {
+        test.describe('C programming exercise', () => {
+            let exercise: ProgrammingExercise;
+
+            test.beforeEach('Setup c programming exercise', async ({ login, exerciseAPIRequests }) => {
+                await login(admin);
+                exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+            });
+
+            test('Makes a submission', async ({ programmingExerciseEditor }) => {
+                await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
+                await programmingExerciseEditor.openCodeEditor(exercise.id!);
+                const submission = cAllSuccessful;
+                await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
+                    const resultScore = await programmingExerciseEditor.getResultScore();
+                    await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+                });
+            });
+        });
+    }
 
     test.describe('Python programming exercise', () => {
         let exercise: ProgrammingExercise;

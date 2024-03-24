@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.Exam_;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup_;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -101,7 +101,8 @@ public class ExerciseSpecificationService {
      *
      * @param programmingLanguage the language to filter for
      * @return a Specification that can get passed to the @{@link de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository}
-     * @see de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService#getAllWithSCAOnPageWithSize(PageableSearchDTO, boolean, boolean, ProgrammingLanguage, User)
+     * @see de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService#getAllWithSCAOnPageWithSize(SearchTermPageableSearchDTO, boolean, boolean, ProgrammingLanguage,
+     *      User)
      */
     public Specification<ProgrammingExercise> createSCAFilter(ProgrammingLanguage programmingLanguage) {
         return (root, query, criteriaBuilder) -> {

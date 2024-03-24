@@ -2,7 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Submission } from 'app/entities/submission.model';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
-import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -21,7 +21,7 @@ export class ExampleSubmissionImportPagingService extends PagingService<Submissi
      * @param pageable   pageable search containing information required for pagination and sorting
      * @param options exerciseId id of exercise which submissions belongs to
      */
-    override search(pageable: PageableSearch, options: { exerciseId: number }): Observable<EntityResponseType> {
+    override search(pageable: SearchTermPageableSearch, options: { exerciseId: number }): Observable<EntityResponseType> {
         const params = this.createHttpParams(pageable);
         return this.http
             .get(`${ExampleSubmissionImportPagingService.resourceUrl}/${options.exerciseId}/submissions-for-import`, { params, observe: 'response' })

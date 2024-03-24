@@ -1,10 +1,10 @@
 import { Page } from '@playwright/test';
-import { BASE_API } from '../../constants';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { UserCredentials } from '../../users';
 import { Commands } from '../../commands';
 import { ExamStartEndPage } from './ExamStartEndPage';
+import { COURSE_BASE } from '../../constants';
 
 export class ExamTestRunPage {
     private readonly page: Page;
@@ -16,7 +16,7 @@ export class ExamTestRunPage {
     }
 
     async confirmTestRun() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}courses/*/exams/*/test-run`);
+        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/test-run`);
         await this.page.locator('.modal-dialog').locator('#createTestRunButton').click();
         return await responsePromise;
     }
@@ -34,7 +34,7 @@ export class ExamTestRunPage {
     }
 
     async saveTestRun() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}courses/*/exams/*/student-exams/*/working-time`);
+        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/student-exams/*/working-time`);
         await this.page.locator('#save').click();
         return await responsePromise;
     }
@@ -96,7 +96,7 @@ export class ExamTestRunPage {
     async deleteTestRun(testRunId: number) {
         await this.page.locator(`#testrun-${testRunId}`).locator('.delete-testrun').click();
         await this.page.locator('#confirm-entity-name').fill('Test Run');
-        const responsePromise = this.page.waitForResponse(`${BASE_API}courses/*/exams/*/test-run/*`);
+        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/test-run/*`);
         await this.page.locator('#delete').click();
         await responsePromise;
     }

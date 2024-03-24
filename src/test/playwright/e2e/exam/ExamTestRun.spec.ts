@@ -47,18 +47,6 @@ test.describe('Exam test run', () => {
         });
     });
 
-    // test.beforeEach('Create test run instance', async ({ login, page, examManagement, examTestRun }) => {
-    //     await login(instructor);
-    //     // TODO: API call used to not work. Test if it works now, otherwise use UI.
-    //     // testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
-    //     await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
-    //     await examManagement.openTestRun();
-    //     await examTestRun.createTestRun();
-    //     await examTestRun.setWorkingTimeMinutes(2);
-    //     const response = await examTestRun.confirmTestRun();
-    //     testRun = await response.json();
-    // });
-
     test('Create a test run', async ({ login, page, examManagement, examTestRun }) => {
         await login(instructor);
 
@@ -84,16 +72,9 @@ test.describe('Exam test run', () => {
     });
 
     test.describe('Manage a test run', () => {
-        test.beforeEach('Create test run instance', async ({ login, page, examManagement, examTestRun }) => {
+        test.beforeEach('Create test run instance', async ({ login, courseManagementAPIRequests }) => {
             await login(instructor);
-            // TODO: API call used to not work. Test if it works now, otherwise use UI.
-            // testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
-            await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
-            await examManagement.openTestRun();
-            await examTestRun.createTestRun();
-            await examTestRun.setWorkingTimeMinutes(2);
-            const response = await examTestRun.confirmTestRun();
-            testRun = await response.json();
+            testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
         });
 
         test('Change test run working time', async ({ login, examTestRun }) => {
@@ -142,7 +123,6 @@ test.describe('Exam test run', () => {
             await examTestRun.openTestRunPage(course, exam);
             await expect(examTestRun.getStarted(testRun.id!).getByText('Yes')).toBeVisible();
             await expect(examTestRun.getSubmitted(testRun.id!).getByText('Yes')).toBeVisible();
-            console.log('---Test finished---');
         });
 
         test('Deletes a test run', async ({ login, examTestRun }) => {
@@ -156,6 +136,5 @@ test.describe('Exam test run', () => {
 
     test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
         await courseManagementAPIRequests.deleteCourse(course, admin);
-        console.log('---Delete course finished---');
     });
 });

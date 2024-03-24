@@ -30,12 +30,8 @@ export class OnlineEditorPage {
                 await this.createFileInRootPackage(exerciseID, newFile.name, submission.packageName!);
             }
             const fileContent = await Fixtures.get(newFile.path);
-            const editorElement = getExercise(this.page, exerciseID).locator('#ace-code-editor');
-            await editorElement.focus();
-            // await editorElement.pressSequentially(fileContent!);
             await this.page.evaluate(
                 ({ editorSelector, fileContent }) => {
-                    console.log('Filling code editor');
                     const editorElement = document.querySelector(editorSelector);
                     if (editorElement) {
                         // @ts-expect-error ace does not exists on windows, but works without issue
@@ -50,7 +46,7 @@ export class OnlineEditorPage {
     }
 
     async deleteFile(exerciseID: number, name: string) {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}repository/*/**`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/repository/*/**`);
         await this.findFile(exerciseID, name).locator('#file-browser-file-delete').click();
         await this.page.locator('#delete-file').click();
         const response = await responsePromise;
@@ -80,7 +76,7 @@ export class OnlineEditorPage {
     async createFileInRootFolder(exerciseID: number, fileName: string) {
         await getExercise(this.page, exerciseID).locator('[id="create_file_root"]').click();
         await this.page.waitForTimeout(500);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}repository/*/file?file=${fileName}`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/repository/*/file?file=${fileName}`);
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').pressSequentially(fileName);
         await this.page.waitForTimeout(500);
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');
@@ -95,7 +91,7 @@ export class OnlineEditorPage {
         const filePath = `src/${packagePath}/${fileName}`;
         await getExercise(this.page, exerciseID).locator('#file-browser-folder-create-file').nth(2).click();
         await this.page.waitForTimeout(500);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}repository/*/file?file=${filePath}`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/repository/*/file?file=${filePath}`);
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').pressSequentially(fileName);
         await this.page.waitForTimeout(500);
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');

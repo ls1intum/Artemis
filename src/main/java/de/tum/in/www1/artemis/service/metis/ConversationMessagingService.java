@@ -103,12 +103,12 @@ public class ConversationMessagingService extends PostingService {
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(newMessage.getConversation().getId(), author, Optional.empty())
-                .orElse(conversationRepository.findByIdElseThrow(newMessage.getConversation().getId()));
+        var conversationId = newMessage.getConversation().getId();
+
+        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
+                .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
         log.debug("      createMessage:conversationService.isMemberOrCreateForCourseWideElseThrow DONE");
 
-        // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
-        conversation.setConversationParticipants(Set.of());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
         // extra checks for channels
@@ -132,8 +132,6 @@ public class ConversationMessagingService extends PostingService {
         log.debug("      conversationMessageRepository.save DONE");
         // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
-        // reduce the payload of the response / websocket message: this is important to avoid overloading the involved subsystems
-        createdMessage.getConversation().hideDetails();
         log.debug("      conversationMessageRepository.save DONE");
 
         createdMessage.setAuthor(author);
@@ -159,6 +157,7 @@ public class ConversationMessagingService extends PostingService {
         ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, conversation, course,
                 createdConversationMessage.mentionedUsers());
         PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE, notification);
+        createdMessage.getConversation().hideDetails();
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
             if (conversationService.isChannelVisibleToStudents(channel)) {

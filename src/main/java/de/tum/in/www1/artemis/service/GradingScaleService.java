@@ -16,8 +16,8 @@ import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
@@ -56,7 +56,7 @@ public class GradingScaleService {
     }
 
     /**
-     * Search for all grading scales fitting a {@link PageableSearchDTO search query} among the grading scales having grade type BONUS.
+     * Search for all grading scales fitting a {@link SearchTermPageableSearchDTO search query} among the grading scales having grade type BONUS.
      * If the user does not have ADMIN role, they can only access the grading scales if they are an instructor in the course related to it.
      * The result is paged, meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send too many results.
@@ -67,7 +67,7 @@ public class GradingScaleService {
      * @param user   The user for whom to fetch all available grading scales
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<GradingScale> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+    public SearchResultPageDTO<GradingScale> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.GRADING_SCALE);
         final var searchTerm = search.getSearchTerm();
         final Page<GradingScale> gradingScalePage;

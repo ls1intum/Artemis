@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public record BambooProjectDTO(String key, String name, String description, BambooBuildPlansDTO plans) {
 
     @JsonIgnoreProperties(ignoreUnknown = true)

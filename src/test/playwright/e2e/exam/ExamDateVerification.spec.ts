@@ -51,7 +51,6 @@ test.describe('Exam date verification', () => {
             await page.waitForURL(`**/exams/${exam.id}**`);
         });
 
-        // TODO: Not complete, contains fixtures
         test('Student can start after start Date', async ({
             page,
             login,

@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
+import de.tum.in.www1.artemis.web.rest.dto.score.TeamScoreSum;
 
 @Profile(PROFILE_CORE)
 @Repository
@@ -33,13 +34,13 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
     Optional<TeamScore> findByExercise_IdAndTeam_Id(Long exerciseId, Long teamId);
 
     @Query("""
-            SELECT t.id, SUM(s.lastRatedPoints)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.score.TeamScoreSum(t.id, COALESCE(SUM(s.lastRatedPoints), 0))
             FROM TeamScore s
                 LEFT JOIN s.team t
             WHERE s.exercise IN :exercises
             GROUP BY t.id
             """)
-    List<Object[]> getAchievedPointsOfTeams(@Param("exercises") Set<Exercise> exercises);
+    Set<TeamScoreSum> getAchievedPointsOfTeams(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
             SELECT s

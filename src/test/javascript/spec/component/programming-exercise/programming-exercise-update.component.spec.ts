@@ -67,6 +67,7 @@ import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
+import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -118,6 +119,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 MockComponent(ProgrammingExerciseProblemComponent),
                 MockComponent(DocumentationButtonComponent),
                 MockComponent(FormStatusBarComponent),
+                MockComponent(FormFooterComponent),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(CustomMinDirective),

@@ -1,4 +1,4 @@
-import { BASE_API } from '../../../constants';
+import { PROGRAMMING_EXERCISE_BASE } from '../../../constants';
 import { Page } from '@playwright/test';
 
 /**
@@ -28,7 +28,7 @@ export class CodeAnalysisGradingPage {
     }
 
     async saveChanges() {
-        const responsePromise = this.page.waitForResponse(BASE_API + 'programming-exercises/*/static-code-analysis-categories');
+        const responsePromise = this.page.waitForResponse(`${PROGRAMMING_EXERCISE_BASE}/*/static-code-analysis-categories`);
         await this.page.locator('#save-table-button').click();
         await responsePromise;
     }

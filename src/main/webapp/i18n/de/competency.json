@@ -21,6 +21,7 @@
             "masteryDescription": "Ein gewichteter Leistungsindex aus Fortschritt und Konfidenz, der Deine Entwicklung auf dem Weg zur Beherrschung der Kompetenz veranschaulicht.",
             "masteredStudents": "Studierende mit Kompetenz",
             "mastered": "Abgeschlossen",
+            "competencies": "Kompetenzen",
             "taxonomies": {
                 "REMEMBER": "Erinnern",
                 "UNDERSTAND": "Verstehen",
@@ -39,26 +40,39 @@
                 "CREATE": "entwerfen, formulieren, postulieren, erfinden, planen, bieten, schreiben, konstruieren, entwickeln"
             },
             "table": {
-                "panelHeader": "Deine Fortentwicklung",
-                "panelDescription": "Dein Weg zum Erwerb dieser Kompetenz."
+                "panelHeader": "Deine Fortentwicklung"
             },
             "manageCompetencies": {
                 "title": "Kompetenzmanagement",
-                "import": "Kompetenz importieren",
+                "import": "Kompetenzen importieren",
+                "importAll": "Alle Kompetenzen eines Kurses importieren",
                 "create": "Kompetenz erstellen",
-                "generate": "Kompetenzvorschläge generieren",
-                "importAll": "Alle Kompetenzen eines Kurses importieren"
+                "generate": "Kompetenzen generieren",
+                "empty": "Es existieren keine Kompetenzen für diesen Kurs"
             },
             "import": {
-                "label": "Kompetenz importieren",
-                "search": "Suche nach einer Kompetenz:",
-                "loading": "Lade...",
+                "title": "Kompetenzen importieren",
+                "searchTableHeader": "Nach Kompetenzen suchen",
+                "searchTableEmpty": "Keine Kompetenzen gefunden, die deiner Suche entsprechen",
+                "selectedTableHeader": "Ausgewählte Kompetenzen",
+                "selectedTableEmpty": "Keine Kompetenzen ausgewählt",
+                "importRelations": "Relationen importieren?",
+                "search": {
+                    "title": "Kompetenzen durchsuchen",
+                    "labelCompetencyTitle": "Kompetenztitel",
+                    "labelCompetencyDescription": "Kompetenzbeschreibung",
+                    "labelCourseTitle": "Kurstitel",
+                    "labelCourseSemester": "Semester",
+                    "showAdvancedSearch": "Erweiterte Suche anzeigen",
+                    "hideAdvancedSearch": "Erweiterte Suche ausblenden"
+                },
                 "table": {
                     "TITLE": "Titel",
-                    "COURSE_TITLE": "Kurs",
-                    "SEMESTER": "Semester",
-                    "doImport": "Auswählen"
-                }
+                    "DESCRIPTION": "Beschreibung",
+                    "COURSE_TITLE": "Kurstitel",
+                    "SEMESTER": "Semester"
+                },
+                "success": "Imported {{ noOfCompetencies }} competencies."
             },
             "generate": {
                 "title": "Kompetenzvorschläge generieren",
@@ -78,13 +92,14 @@
                     "maxlengthValidationError": "Kursbeschreibung darf maximal {{max}} Zeichen lang sein",
                     "regenerate": "Erneut generieren",
                     "regenerateTooltip": "Zusätzliche Kompetenzvorschläge generieren",
-                    "infoTooltip": "Gib eine Beschreibung ein, die sich auf den theoretischen/praktischen Inhalt und Lernziele des Kurses fokussiert. Iris generiert daraus Vorschläge für Kompetenzen, die du in deinen Kurs einfügen könntest."
+                    "infoTooltip": "Gib eine Beschreibung ein, die sich auf den theoretischen/praktischen Inhalt und Lernziele des Kurses fokussiert. Iris generiert daraus Vorschläge für Kompetenzen, die du in deinen Kurs einfügen könntest.",
+                    "success": "{{ noOfCompetencies }} Kompetenzvorschläge generiert.",
+                    "warning": "Keine Kompetenzvorschläge generiert. Versuche, eine ausführlichere Kursbeschreibung zu verwenden. Wenn das Problem weiterhin besteht, wende dich an die Administratoren."
                 }
             },
             "importAll": {
                 "title": "Alle Kompetenzen eines Kurses importieren",
                 "search": "Suche nach einem Kurs:",
-                "importRelations": "Relationen importieren?",
                 "table": {
                     "TITLE": "Titel",
                     "SEMESTER": "Semester",
@@ -155,10 +170,8 @@
             },
             "prerequisite": {
                 "title": "Voraussetzungen",
-                "managePrerequisites": {
-                    "title": "Voraussetzungen verwalten",
-                    "select": "Voraussetzung auswählen"
-                },
+                "select": "Voraussetzung auswählen",
+                "empty": "Es existieren keine Voraussetzungen für diesen Kurs",
                 "import": {
                     "label": "Voraussetzungen hinzufügen",
                     "table": {
@@ -176,15 +189,20 @@
                 "tailCompetency": "Kompetenz Schluss",
                 "relationType": "Beziehungstyp",
                 "headCompetency": "Kompetenz Start",
-                "relates": "Bezieht sich auf",
-                "assumes": "Setzt voraus",
-                "extends": "Erweitert",
-                "matches": "Stimmt überein mit",
                 "createRelation": "Beziehung erstellen",
                 "createsCircularRelation": "Du kannst keine kreisförmigen Beziehungen zwischen Kompetenzen erstellen.",
                 "selfRelation": "Du kannst keine Beziehung zwischen einer Kompetenz und sich selbst erstellen.",
-                "relationAlreadyExists": "Diese Beziehung existiert bereits."
+                "relationAlreadyExists": "Diese Beziehung existiert bereits.",
+                "type": {
+                    "RELATES": "Bezieht sich auf",
+                    "ASSUMES": "Setzt voraus",
+                    "EXTENDS": "Erweitert",
+                    "MATCHES": "Stimmt überein mit"
+                }
             }
+        },
+        "prerequisite": {
+            "deleted": "Voraussetzung entfernt"
         },
         "learningPath": {
             "learningPathButton": "Lernpfade",

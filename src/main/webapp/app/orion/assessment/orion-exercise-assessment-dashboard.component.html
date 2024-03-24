@@ -2,12 +2,14 @@
 @if (!exercise || exercise.type !== ExerciseType.PROGRAMMING || !orionState) {
     <jhi-exercise-assessment-dashboard />
 } @else {
+    <!-- If the exercise is programming, but not opened in Orion, show Orion open button-->
     @if (orionState.opened !== exerciseId || orionState.view !== ExerciseView.TUTOR) {
         <jhi-exercise-assessment-dashboard>
             <ng-template #overrideAssessmentTable>
                 <jhi-ide-button
                     [buttonLoading]="orionState.cloning"
                     buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.startYourParticipation' | artemisTranslate }}"
+                    [buttonType]="OrionButtonType.Download"
                     (clickHandler)="openAssessmentInOrion()"
                 />
             </ng-template>

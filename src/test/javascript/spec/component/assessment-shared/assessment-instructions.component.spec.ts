@@ -71,6 +71,24 @@ describe('AssessmentInstructionsComponent', () => {
         comp.exerciseInput = programmingExercise;
         expect(comp.sampleSolutionExplanation).toBeUndefined();
 
-        expect(markdownSpy).toHaveBeenCalledTimes(11);
+        expect(markdownSpy).toHaveBeenCalledTimes(7);
+    });
+
+    it('should convert the grading instructions to html', () => {
+        const markdownSpy = jest.spyOn(markdownService, 'safeHtmlForMarkdown');
+
+        comp.exerciseInput = { id: 1, type: ExerciseType.PROGRAMMING, gradingInstructions: '# Heading' } as ProgrammingExercise;
+
+        // once for problem statement, once for instructions
+        expect(markdownSpy).toHaveBeenCalledTimes(2);
+        expect(markdownSpy).toHaveBeenLastCalledWith('# Heading');
+    });
+
+    it('should ignore empty grading instructions', () => {
+        const markdownSpy = jest.spyOn(markdownService, 'safeHtmlForMarkdown');
+
+        comp.exerciseInput = { id: 1, type: ExerciseType.PROGRAMMING, problemStatement: 'problem', gradingInstructions: undefined } as ProgrammingExercise;
+
+        expect(markdownSpy).toHaveBeenCalledExactlyOnceWith('problem');
     });
 });

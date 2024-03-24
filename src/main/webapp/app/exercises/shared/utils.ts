@@ -62,15 +62,26 @@ export function getExerciseModeDetailSection(exercise: Exercise): DetailOverview
     };
 }
 
-export function getExerciseProblemDetailSection(formattedProblemStatement: SafeHtml | null): DetailOverviewSection {
+export function getExerciseProblemDetailSection(formattedProblemStatement: SafeHtml | null, exercise: Exercise): DetailOverviewSection {
+    const hasCompetencies = !!exercise.competencies?.length;
+    const details: Detail[] = [
+        {
+            title: hasCompetencies ? 'artemisApp.exercise.sections.problem' : undefined,
+            type: DetailType.Markdown,
+            data: { innerHtml: formattedProblemStatement },
+        },
+    ];
+
+    if (hasCompetencies) {
+        details.push({
+            title: 'artemisApp.competency.link.title',
+            type: DetailType.Text,
+            data: { text: exercise.competencies?.map((competency) => competency.title).join(', ') },
+        });
+    }
     return {
         headline: 'artemisApp.exercise.sections.problem',
-        details: [
-            {
-                type: DetailType.Markdown,
-                data: { innerHtml: formattedProblemStatement },
-            },
-        ],
+        details: details,
     };
 }
 

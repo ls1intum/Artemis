@@ -5,7 +5,11 @@ import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
@@ -16,7 +20,6 @@ import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisHealthIndicator;
 import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
@@ -34,10 +37,9 @@ public class IrisCodeEditorSessionResource extends IrisExerciseChatBasedSessionR
     private final IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
 
     protected IrisCodeEditorSessionResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, IrisHealthIndicator irisHealthIndicator, IrisRateLimitService irisRateLimitService,
+            IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, IrisRateLimitService irisRateLimitService,
             IrisCodeEditorSessionRepository irisCodeEditorSessionRepository) {
-        super(authCheckService, userRepository, irisSessionService, irisSettingsService, irisHealthIndicator, irisRateLimitService,
-                programmingExerciseRepository::findByIdElseThrow);
+        super(authCheckService, userRepository, irisSessionService, irisSettingsService, irisRateLimitService, programmingExerciseRepository::findByIdElseThrow);
         this.irisCodeEditorSessionRepository = irisCodeEditorSessionRepository;
     }
 

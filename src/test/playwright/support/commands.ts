@@ -21,7 +21,7 @@ export class Commands {
             .cookies()
             .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt'));
         if (!jwtCookie) {
-            const response = await page.request.post(BASE_API + 'public/authenticate', {
+            const response = await page.request.post(`${BASE_API}/public/authenticate`, {
                 data: {
                     username,
                     password,
@@ -45,7 +45,7 @@ export class Commands {
     };
 
     static logout = async (page: Page): Promise<void> => {
-        await page.request.post(BASE_API + 'public/logout');
+        await page.request.post(`${BASE_API}/public/logout`);
     };
 
     static reloadUntilFound = async (page: Page, selector: string, interval = 2000, timeout = 20000) => {

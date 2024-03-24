@@ -64,7 +64,7 @@
                 </ngx-charts-pie-chart>
             </div>
         } @else {
-            <h6 class="no-statistics" jhiTranslate="artemisApp.studentDashboard.noStatistics">No statistics available</h6>
+            <h6 class="no-statistics" jhiTranslate="artemisApp.studentDashboard.noStatistics"></h6>
         }
     </div>
     @if (nextRelevantExercise) {
@@ -73,7 +73,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-3 next-exercise-col">
-                        <h6 jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel">Next exercises:</h6>
+                        <h6 jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel"></h6>
                     </div>
                     <div class="col-6 next-exercise-col">
                         <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" placement="right auto" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" />
@@ -95,7 +95,7 @@
         <div class="card-footer text-body-secondary">
             <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
             <div class="col no-exercise">
-                <h6 jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel">No Exercise planned</h6>
+                <h6 jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel"></h6>
             </div>
         </div>
     }

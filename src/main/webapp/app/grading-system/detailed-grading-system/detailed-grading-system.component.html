@@ -112,7 +112,7 @@
                         <td>
                             <button (click)="deleteGradeStep(i)" type="button" class="btn btn-danger" style="float: right">
                                 <fa-icon [icon]="faTimes" />
-                                <span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span>
+                                <span jhiTranslate="artemisApp.gradingSystem.delete"></span>
                             </button>
                         </td>
                     </tr>
@@ -123,12 +123,12 @@
     <div style="margin-bottom: 1em">
         <button (click)="createGradeStep()" class="btn btn-success me-1 mb-1" type="button">
             <fa-icon [icon]="faPlus" />
-            <span jhiTranslate="artemisApp.gradingSystem.add">Add Grade Step</span>
+            <span jhiTranslate="artemisApp.gradingSystem.add"></span>
         </button>
     </div>
     <div>
         <button (click)="save()" [disabled]="isLoading || !validGradeSteps()" class="btn btn-primary mr-1 mb-1" type="button">
-            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="artemisApp.gradingSystem.save">Save</span>
+            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="artemisApp.gradingSystem.save"></span>
         </button>
         @if (existingGradingScale) {
             <button
@@ -141,7 +141,7 @@
                 [dialogError]="dialogError$"
                 [disabled]="isLoading"
             >
-                <fa-icon [icon]="faTimes"><span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span></fa-icon>
+                <fa-icon [icon]="faTimes"><span jhiTranslate="artemisApp.gradingSystem.delete"></span></fa-icon>
             </button>
         }
         @if (shouldShowGradingStepsAboveMaxPointsWarning()) {

@@ -127,7 +127,7 @@ public class ConversationService {
             return Optional.empty();
         }
 
-        Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+        Conversation conversation = loadConversationWithParticipantsIfGroupChat(conversationId);
 
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
@@ -140,6 +140,20 @@ public class ConversationService {
         }
 
         return Optional.of(conversation);
+    }
+
+    /**
+     * In certain use cases, we need the conversation participants to generate the human-readable name for a group chat.
+     *
+     * @param conversationId the id of the conversation
+     * @return the conversation that has been loaded
+     */
+    public Conversation loadConversationWithParticipantsIfGroupChat(Long conversationId) {
+        var conversation = conversationRepository.findByIdElseThrow(conversationId);
+        if (conversation instanceof GroupChat) {
+            return conversationRepository.findWithParticipantsById(conversationId).orElseThrow();
+        }
+        return conversation;
     }
 
     /**

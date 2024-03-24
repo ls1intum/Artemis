@@ -57,23 +57,19 @@ public class CompetencyRelationService {
      *
      * @param tailCompetency the tail Competency
      * @param headCompetency the head Competency
-     * @param type           the type of the relation
+     * @param relationType   the type of the relation
      * @param course         the course the relation belongs to
      * @return the persisted CompetencyRelation
      */
-    public CompetencyRelation createCompetencyRelation(Competency tailCompetency, Competency headCompetency, String type, Course course) {
-        RelationType relationType;
-        try {
-            relationType = RelationType.valueOf(type);
+    public CompetencyRelation createCompetencyRelation(Competency tailCompetency, Competency headCompetency, RelationType relationType, Course course) {
+        if (relationType == null) {
+            throw new BadRequestException("Competency relation must have a relation type");
         }
-        catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid value for relation type");
-        }
-
         var relation = getCompetencyRelation(tailCompetency, headCompetency, relationType);
         var competencies = competencyRepository.findAllForCourse(course.getId());
         var competencyRelations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
         competencyRelations.add(relation);
+
         if (competencyService.doesCreateCircularRelation(competencies, competencyRelations)) {
             throw new BadRequestException("You can't define circular dependencies between competencies");
         }

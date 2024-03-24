@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import { Exercise } from 'app/entities/exercise.model';
-import { BASE_API } from '../../constants';
+import { MODELING_EXERCISE_BASE, PROGRAMMING_EXERCISE_BASE, QUIZ_EXERCISE_BASE, TEXT_EXERCISE_BASE, UPLOAD_EXERCISE_BASE } from '../../constants';
 import { expect } from '@playwright/test';
 
 /**
@@ -34,7 +34,7 @@ export class CourseManagementExercisesPage {
         const exerciseElement = this.getExercise(exercise.id!);
         await exerciseElement.locator('#delete-exercise').click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}text-exercises/*`);
+        const responsePromise = this.page.waitForResponse(`${TEXT_EXERCISE_BASE}/*`);
         await this.page.locator('#delete').click();
         await responsePromise;
     }
@@ -43,7 +43,7 @@ export class CourseManagementExercisesPage {
         const exerciseElement = this.getExercise(exercise.id!);
         await exerciseElement.locator('#delete-exercise').click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}modeling-exercises/*`);
+        const responsePromise = this.page.waitForResponse(`${MODELING_EXERCISE_BASE}/*`);
         await this.page.locator('#delete').click();
         await responsePromise;
     }
@@ -52,7 +52,7 @@ export class CourseManagementExercisesPage {
         const exerciseElement = this.getExercise(exercise.id!);
         await exerciseElement.locator(`#delete-quiz-${exercise.id}`).click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}quiz-exercises/*`);
+        const responsePromise = this.page.waitForResponse(`${QUIZ_EXERCISE_BASE}/*`);
         await this.page.locator('#delete').click();
         await responsePromise;
     }
@@ -63,7 +63,7 @@ export class CourseManagementExercisesPage {
         await this.page.locator('#additional-check-0').check();
         await this.page.locator('#additional-check-1').check();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}programming-exercises/*`);
+        const responsePromise = this.page.waitForResponse(`${PROGRAMMING_EXERCISE_BASE}/*`);
         await this.page.locator('#delete').click();
         await responsePromise;
     }
@@ -72,7 +72,7 @@ export class CourseManagementExercisesPage {
         const exerciseElement = this.getExercise(exercise.id!);
         await exerciseElement.locator('#delete-exercise').click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}file-upload-exercises/*`);
+        const responsePromise = this.page.waitForResponse(`${UPLOAD_EXERCISE_BASE}/*`);
         await this.page.locator('#delete').click();
         await responsePromise;
     }

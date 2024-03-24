@@ -70,6 +70,13 @@ export interface OrionExerciseConnector {
      * @param exerciseJson Exercise in a Json string.
      */
     importParticipation(repository: string, exerciseJson: string): void;
+
+    /**
+     * Initialize test repository
+     *
+     * @param testRepository repository url as a link
+     */
+    initializeTestRepository(testRepository: string): void;
 }
 
 export interface OrionVCSConnector {

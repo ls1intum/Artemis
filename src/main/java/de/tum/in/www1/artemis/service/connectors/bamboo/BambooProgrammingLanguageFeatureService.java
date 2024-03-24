@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureServ
 
 @Service
 @Profile("bamboo")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BambooProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
     public BambooProgrammingLanguageFeatureService() {

@@ -1,7 +1,7 @@
 import dayjs, { Dayjs } from 'dayjs';
 import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType } from '../../support/constants';
 import { admin, instructor, studentOne, tutor, users } from '../../support/users';
-import { Browser, Page, expect } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 
 import javaPartiallySuccessful from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
 
@@ -27,6 +27,7 @@ import { OnlineEditorPage } from '../../support/pageobjects/exercises/programmin
 import { MultipleChoiceQuiz } from '../../support/pageobjects/exercises/quiz/MultipleChoiceQuiz';
 import { TextEditorPage } from '../../support/pageobjects/exercises/text/TextEditorPage';
 import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
+import { newBrowserPage } from '../../support/utils';
 
 let exam: Exam;
 
@@ -237,9 +238,7 @@ async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: Exerc
             break;
     }
 
-    console.log('Additional data to add: ', additionalData);
     const response = await examExerciseGroupCreation.addGroupWithExercise(exam, exerciseType, additionalData);
-    console.log('Created exercise: ', response);
     await examAPIRequests.generateMissingIndividualExams(exam);
     await examAPIRequests.prepareExerciseStartForExam(exam);
     response.additionalData = additionalData;
@@ -324,9 +323,4 @@ async function handleComplaint(
         await studentAssessment.checkComplaintStatusText('Complaint was accepted');
     }
     await studentAssessment.checkComplaintResponseText(complaintResponseText);
-}
-
-async function newBrowserPage(browser: Browser) {
-    const context = await browser.newContext();
-    return await context.newPage();
 }

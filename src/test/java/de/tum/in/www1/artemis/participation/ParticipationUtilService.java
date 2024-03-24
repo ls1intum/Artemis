@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 
 /**
  * Service responsible for initializing the database with specific testdata related to participations, submissions and results.
@@ -707,7 +707,7 @@ public class ParticipationUtilService {
      * @throws Exception If the file cannot be read
      */
     public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
-        String fileContent = FileUtils.loadFileFromResources(path);
+        String fileContent = TestResourceUtils.loadFileFromResources(path);
         return mapper.readValue(fileContent, mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class));
     }
 

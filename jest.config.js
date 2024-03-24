@@ -37,15 +37,14 @@ const esModules = [
     'd3-shape',
     'd3-time',
     'd3-transition',
-    'export-to-csv',
     'dayjs/esm',
+    'export-to-csv',
     'franc-min',
     'internmap',
     'lodash-es',
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
-    'ngx-slider-v2',
     'ngx-webstorage',
     'rxjs/operators',
     'trigram-utils',
@@ -101,9 +100,9 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 87.1,
+            statements: 87.2,
             branches: 73.8,
-            functions: 81.5,
+            functions: 81.6,
             lines: 87.2,
         },
     },

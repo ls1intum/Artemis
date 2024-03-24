@@ -92,6 +92,12 @@ describe('DetailOverviewList', () => {
         expect(modalSpy).toHaveBeenCalledOnce();
     });
 
+    it('should not open git diff modal', () => {
+        const modalSpy = jest.spyOn(modalService, 'open');
+        component.showGitDiff(undefined);
+        expect(modalSpy).not.toHaveBeenCalled();
+    });
+
     it('should download apollon Diagram', () => {
         const downloadSpy = jest.spyOn(modelingService, 'convertToPdf').mockReturnValue(of(new HttpResponse({ body: new Blob() })));
         component.downloadApollonDiagramAsPDf({} as UMLModel, 'title');

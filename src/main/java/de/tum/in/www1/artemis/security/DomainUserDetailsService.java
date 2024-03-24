@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
  * Authenticate a user from the database.
  */
 @Profile(PROFILE_CORE)
-@Component("userDetailsService")
+@Service("userDetailsService")
 public class DomainUserDetailsService implements UserDetailsService {
 
     private static final Logger log = LoggerFactory.getLogger(DomainUserDetailsService.class);

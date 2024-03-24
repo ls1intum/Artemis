@@ -1,7 +1,7 @@
 import { Page, expect } from '@playwright/test';
-import { BASE_API } from '../../../constants';
 import { getExercise } from '../../../utils';
 import { Fixtures } from '../../../../fixtures/fixtures';
+import { EXERCISE_BASE } from '../../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the text editor page.
@@ -21,20 +21,19 @@ export class TextEditorPage {
         await getExercise(this.page, exerciseID).locator('#text-editor').clear();
     }
 
-    // TODO: Test fixture correctness.
     async checkCurrentContent(exerciseID: number, expectedContent: string) {
         const text = await Fixtures.get(expectedContent);
         await expect(getExercise(this.page, exerciseID).locator('#text-editor')).toHaveValue(text!);
     }
 
     async saveAndContinue() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}exercises/*/text-submissions`);
+        const responsePromise = this.page.waitForResponse(`${EXERCISE_BASE}/*/text-submissions`);
         await this.page.click('#save');
         return await responsePromise;
     }
 
     async submit() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}exercises/*/text-submissions`);
+        const responsePromise = this.page.waitForResponse(`${EXERCISE_BASE}/*/text-submissions`);
         await this.page.locator('#submit button').click();
         return await responsePromise;
     }

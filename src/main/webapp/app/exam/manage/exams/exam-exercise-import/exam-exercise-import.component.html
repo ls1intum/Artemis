@@ -7,10 +7,10 @@
     <thead class="thead-dark align-center">
         <tr>
             <th class="w-25">
-                <label jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn">Exercise Group</label>
+                <label jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn"></label>
                 <jhi-help-icon text="artemisApp.examManagement.exerciseGroup.importModal.exerciseGroupTooltip" />
             </th>
-            <th class="w-75" jhiTranslate="artemisApp.examScores.titleExerciseColumn">Exercise</th>
+            <th class="w-75" jhiTranslate="artemisApp.examScores.titleExerciseColumn"></th>
         </tr>
     </thead>
     <tbody>
@@ -46,9 +46,7 @@
                                         class="form-check-label"
                                         for="exerciseGroup-{{ exerciseGroup.id }}-mandatory'"
                                         jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"
-                                    >
-                                        Mandatory
-                                    </label>
+                                    ></label>
                                 </td>
                                 <td>
                                     <input
@@ -68,20 +66,20 @@
                     <table class="table table-hover table-striped text-center">
                         <thead>
                             <tr>
-                                <th class="smallbox" jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.selected">Selected</th>
+                                <th class="smallbox" jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.selected"></th>
                                 <th class="smallbox">#</th>
-                                <th class="smallbox" jhiTranslate="artemisApp.exercise.type">Type</th>
+                                <th class="smallbox" jhiTranslate="artemisApp.exercise.type"></th>
                                 <th [class]="exerciseGroupContainsProgrammingExercises(exerciseGroup) ? 'mediumbox' : 'largebox'">
-                                    <label jhiTranslate="artemisApp.exercise.title">Title</label>
+                                    <label jhiTranslate="artemisApp.exercise.title"></label>
                                     <jhi-help-icon text="artemisApp.examManagement.exerciseGroup.importModal.exerciseTitleTooltip" />
                                 </th>
                                 @if (exerciseGroupContainsProgrammingExercises(exerciseGroup)) {
                                     <th class="mediumbox">
-                                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName">Short Name</label>
+                                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName"></label>
                                         <jhi-help-icon text="artemisApp.examManagement.exerciseGroup.importModal.shortNameTooltip" />
                                     </th>
                                 }
-                                <th class="smallbox" jhiTranslate="artemisApp.exercise.difficulty">Difficulty Level</th>
+                                <th class="smallbox" jhiTranslate="artemisApp.exercise.difficulty"></th>
                             </tr>
                         </thead>
                         <tbody>

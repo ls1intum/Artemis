@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test';
 import { Dayjs } from 'dayjs';
 import { enterDate } from '../../../utils';
-import { BASE_API } from '../../../constants';
+import { TEXT_EXERCISE_BASE } from '../../../constants';
 
 export class TextExerciseCreationPage {
     private readonly page: Page;
@@ -45,14 +45,14 @@ export class TextExerciseCreationPage {
     }
 
     async create() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}text-exercises`);
-        await this.page.locator('#submit-entity').click();
+        const responsePromise = this.page.waitForResponse(TEXT_EXERCISE_BASE);
+        await this.page.locator('#save-entity').click();
         return await responsePromise;
     }
 
     async import() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}text-exercises/import/*`);
-        await this.page.locator('#submit-entity').click();
+        const responsePromise = this.page.waitForResponse(`${TEXT_EXERCISE_BASE}/import/*`);
+        await this.page.locator('#save-entity').click();
         return await responsePromise;
     }
 

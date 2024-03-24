@@ -27,7 +27,7 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     async submit() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}participations/*/manual-results?submit=true`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/participations/*/manual-results?submit=true`);
         await this.submitWithoutInterception();
         return await responsePromise;
     }
@@ -53,16 +53,16 @@ export abstract class AbstractExerciseAssessmentPage {
         let responsePromise;
         switch (exerciseType) {
             case ExerciseType.PROGRAMMING:
-                responsePromise = this.page.waitForResponse(`${BASE_API}programming-submissions/*/assessment-after-complaint`);
+                responsePromise = this.page.waitForResponse(`${BASE_API}/programming-submissions/*/assessment-after-complaint`);
                 break;
             case ExerciseType.TEXT:
-                responsePromise = this.page.waitForResponse(`${BASE_API}participations/*/submissions/*/text-assessment-after-complaint`);
+                responsePromise = this.page.waitForResponse(`${BASE_API}/participations/*/submissions/*/text-assessment-after-complaint`);
                 break;
             case ExerciseType.MODELING:
-                responsePromise = this.page.waitForResponse(`${BASE_API}complaint-responses/complaint/*/resolve`);
+                responsePromise = this.page.waitForResponse(`${BASE_API}/complaint-responses/complaint/*/resolve`);
                 break;
             case ExerciseType.FILE_UPLOAD:
-                responsePromise = this.page.waitForResponse(`${BASE_API}file-upload-submissions/*/assessment-after-complaint`);
+                responsePromise = this.page.waitForResponse(`${BASE_API}/file-upload-submissions/*/assessment-after-complaint`);
                 break;
             default:
                 throw new Error(`Exercise type '${exerciseType}' is not supported yet!`);

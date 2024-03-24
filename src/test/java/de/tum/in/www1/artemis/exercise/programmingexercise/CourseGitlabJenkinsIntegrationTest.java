@@ -580,7 +580,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     void testRemoveTutorFromCourse_removeUserFromGitlabGroupFails() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
         Optional<User> optionalTutor = userRepo.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1");
         assertThat(optionalTutor).isPresent();
@@ -605,7 +605,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
-        request.put("/api/courses", course, HttpStatus.OK);
+        request.getMvc().perform(courseTestService.buildUpdateCourse(1, course)).andExpect(status().isOk()).andReturn();
 
         verifyNoInteractions(versionControlService);
     }

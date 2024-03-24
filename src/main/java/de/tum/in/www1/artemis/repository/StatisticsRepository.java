@@ -42,7 +42,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 AND s.submissionDate <= :endDate
                 AND (
                     s.participation.exercise.exerciseGroup IS NOT NULL
-                    OR EXISTS (SELECT c FROM Course c WHERE s.participation.exercise.course.testCourse IS FALSE)
+                    OR EXISTS (SELECT c FROM Course c WHERE s.participation.exercise.course.testCourse = FALSE)
                 )
             GROUP BY s.submissionDate
             ORDER BY s.submissionDate ASC
@@ -90,7 +90,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 AND submission.submissionDate <= :endDate
                 AND p.student.login NOT LIKE '%test%'
                 AND (submission.participation.exercise.exerciseGroup IS NOT NULL
-                    OR EXISTS (SELECT c FROM Course c WHERE submission.participation.exercise.course.testCourse IS FALSE)
+                    OR EXISTS (SELECT c FROM Course c WHERE submission.participation.exercise.course.testCourse = FALSE)
                 )
             ORDER BY submission.submissionDate ASC
             """)
@@ -123,7 +123,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 AND p.student.login NOT LIKE '%test%'
                 AND (
                     p.exercise.exerciseGroup IS NOT NULL
-                    OR p.exercise.course.testCourse IS FALSE
+                    OR p.exercise.course.testCourse = FALSE
                 )
             """)
     Long countActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
@@ -166,7 +166,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             FROM Exercise e
             WHERE e.releaseDate >= :startDate
                 AND e.releaseDate <= :endDate
-                AND e.course.testCourse IS FALSE
+                AND e.course.testCourse = FALSE
             GROUP BY e.releaseDate
             ORDER BY e.releaseDate ASC
             """)
@@ -193,7 +193,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             FROM Exercise e
             WHERE e.dueDate >= :startDate
                 AND e.dueDate <= :endDate
-                AND e.course.testCourse IS FALSE
+                AND e.course.testCourse = FALSE
             GROUP BY e.dueDate
             ORDER BY e.dueDate ASC
             """)
@@ -233,7 +233,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             FROM Exam e
             WHERE e.endDate >= :startDate
                 AND e.endDate <= :endDate
-                AND e.course.testCourse IS FALSE
+                AND e.course.testCourse = FALSE
             GROUP BY e.endDate
             ORDER BY e.endDate ASC
             """)
@@ -260,8 +260,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 LEFT JOIN e.studentExams se
             WHERE e.endDate >= :startDate
                 AND e.endDate <= :endDate
-                AND se.submitted IS TRUE
-                AND e.course.testCourse IS FALSE
+                AND se.submitted = TRUE
+                AND e.course.testCourse = FALSE
             GROUP BY e.endDate
             ORDER BY e.endDate ASC
             """)
@@ -275,7 +275,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 LEFT JOIN e.studentExams se
             WHERE e.endDate >= :startDate
                 AND e.endDate <= :endDate
-                AND se.submitted IS TRUE
+                AND se.submitted = TRUE
                 AND e.course.id = :courseId
             GROUP BY e.endDate
             ORDER BY e.endDate ASC
@@ -289,7 +289,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             FROM Exam e
             WHERE e.endDate >= :startDate
                 AND e.endDate <= :endDate
-                AND e.course.testCourse IS FALSE
+                AND e.course.testCourse = FALSE
             GROUP BY e.endDate
             ORDER BY e.endDate ASC
             """)
@@ -322,7 +322,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 ) AND r.assessor.login NOT LIKE '%test%'
                 AND (
                     r.participation.exercise.exerciseGroup IS NOT NULL
-                    OR EXISTS (SELECT c FROM Course c WHERE r.participation.exercise.course.testCourse IS FALSE)
+                    OR EXISTS (SELECT c FROM Course c WHERE r.participation.exercise.course.testCourse = FALSE)
                 )
             """)
     List<StatisticsEntry> getActiveTutors(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
@@ -369,7 +369,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 AND r.completionDate <= :endDate
                 AND (
                     r.participation.exercise.exerciseGroup IS NOT NULL
-                    OR EXISTS (SELECT c FROM Course c WHERE r.participation.exercise.course.testCourse IS FALSE)
+                    OR EXISTS (SELECT c FROM Course c WHERE r.participation.exercise.course.testCourse = FALSE)
                 )
             GROUP BY r.completionDate
             ORDER BY r.completionDate
@@ -412,7 +412,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 AND r.completionDate <= :endDate
                 AND (
                     r.participation.exercise.exerciseGroup IS NOT NULL
-                    OR EXISTS(SELECT c FROM Course c WHERE r.participation.exercise.course.testCourse IS FALSE ))
+                    OR EXISTS(SELECT c FROM Course c WHERE r.participation.exercise.course.testCourse = FALSE ))
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -454,7 +454,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             WHERE post.creationDate >= :startDate
                 AND post.creationDate <= :endDate
                 AND channel.course.id = :courseId
-                AND channel.isCourseWide IS TRUE
+                AND channel.isCourseWide = TRUE
             GROUP BY post.creationDate
             ORDER BY post.creationDate ASC
             """)
@@ -489,7 +489,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 LEFT JOIN answer.post post
                 LEFT JOIN TREAT (post.conversation AS Channel) channel
             WHERE channel.exercise.id = :exerciseId
-                AND answer.resolvesPost IS TRUE
+                AND answer.resolvesPost = TRUE
             """)
     long getNumberOfResolvedExercisePosts(@Param("exerciseId") long exerciseId);
 
@@ -502,9 +502,9 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 LEFT JOIN TREAT (post.conversation AS Channel) channel
             WHERE answer.creationDate >= :startDate
                 AND answer.creationDate <= :endDate
-                AND answer.resolvesPost IS TRUE
+                AND answer.resolvesPost = TRUE
                 AND channel.course.id = :courseId
-                AND channel.isCourseWide IS TRUE
+                AND channel.isCourseWide = TRUE
             GROUP BY answer.creationDate
             ORDER BY answer.creationDate ASC
             """)
@@ -519,7 +519,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 LEFT JOIN TREAT (post.conversation AS Channel) channel
             WHERE answer.creationDate >= :startDate
                 AND answer.creationDate <= :endDate
-                AND answer.resolvesPost IS TRUE
+                AND answer.resolvesPost = TRUE
                 AND channel.exercise.id = :exerciseId
             GROUP BY answer.creationDate
             ORDER BY answer.creationDate ASC

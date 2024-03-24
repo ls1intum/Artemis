@@ -159,6 +159,6 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * @return the path to the cloned repository
      */
     public Path getRepoClonePath(String baseRepoClonePath) {
-        return Paths.get(baseRepoClonePath, "git", projectKey, repositorySlug);
+        return Paths.get(baseRepoClonePath, projectKey, repositorySlug);
     }
 }

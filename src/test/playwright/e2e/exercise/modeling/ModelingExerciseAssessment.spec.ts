@@ -9,14 +9,14 @@ import { expect } from '@playwright/test';
 import { CourseManagementAPIRequests } from '../../../support/requests/CourseManagementAPIRequests';
 import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIRequests';
 import { Commands } from '../../../support/commands';
+import { newBrowserPage } from '../../../support/utils';
 
 test.describe('Modeling Exercise Assessment', () => {
     let course: Course;
     let modelingExercise: ModelingExercise;
 
     test.beforeAll('Create course and make a submission', async ({ browser }) => {
-        const context = await browser.newContext();
-        const page = await context.newPage();
+        const page = await newBrowserPage(browser);
         const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
 

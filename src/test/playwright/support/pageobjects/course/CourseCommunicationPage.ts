@@ -1,7 +1,7 @@
 import { Page } from 'playwright';
-import { BASE_API } from '../../constants';
 import { expect } from '@playwright/test';
 import { Post } from 'app/entities/metis/post.model';
+import { COURSE_BASE } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the course communication page.
@@ -62,7 +62,7 @@ export class CourseCommunicationPage {
      * @returns A promise that resolves with the response to the save action.
      */
     async save() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}courses/*/posts`);
+        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/posts`);
         await this.page.locator('#save').click();
         return await responsePromise;
     }
@@ -72,7 +72,7 @@ export class CourseCommunicationPage {
      * @returns A promise that resolves with the response to the save message action.
      */
     async saveMessage() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}courses/*/messages`);
+        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/messages`);
         await this.page.locator('#save').click();
         return await responsePromise;
     }
@@ -159,7 +159,7 @@ export class CourseCommunicationPage {
         const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .ace_content');
         await postReplyField.click();
         await postReplyField.pressSequentially(content);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}courses/*/answer-posts`);
+        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/answer-posts`);
         await postElement.locator('.new-reply-inline-input #save').click();
         await responsePromise;
     }
@@ -175,7 +175,7 @@ export class CourseCommunicationPage {
         const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .ace_content');
         await postReplyField.click();
         await postReplyField.pressSequentially(content);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}courses/*/answer-messages`);
+        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/answer-messages`);
         await this.getSinglePost(postID).locator('.new-reply-inline-input #save').click();
         const response = await responsePromise;
         return response.json();
@@ -189,7 +189,7 @@ export class CourseCommunicationPage {
     async react(postID: number, emoji: string) {
         await this.getSinglePost(postID).locator('.react').click();
         await this.page.locator('.emoji-mart').locator('.emoji-mart-search input').fill(emoji);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}courses/*/postings/reactions`);
+        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/postings/reactions`);
         await this.page.locator('.emoji-mart').locator('.emoji-mart-scroll').locator('ngx-emoji').first().click();
         await responsePromise;
     }
@@ -221,7 +221,7 @@ export class CourseCommunicationPage {
         const post = this.getSinglePost(postID);
         await post.locator('.editIcon').click();
         await this.setContentInline(content);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}courses/*/messages/*`);
+        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/messages/*`);
         await this.page.locator('#save').click();
         await responsePromise;
     }

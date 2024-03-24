@@ -39,8 +39,8 @@ The Android application supports the following features:
     #. Participate in live quizzes
     #. Practice quizzes
     #. View quiz results
-#. Communicate in Q&A forum:
-    #. Create new posts
+#. Communicate with course members:
+    #. Create new messages
     #. Write replies
     #. Add emoji reactions
 #. Receive push notifications:
@@ -133,7 +133,7 @@ The iOS application supports the following features:
     </iframe>
 
 #. Communicate via Messages:
-    #. Create new posts
+    #. Create new messages
     #. Write replies
     #. Add emoji reactions
     #. Create new conversations

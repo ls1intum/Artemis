@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.transaction.Transactional;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -33,6 +36,9 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     // This is used only for testing purposes
     List<Conversation> findAllByCourseId(long courseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants" })
+    Optional<Conversation> findWithParticipantsById(long conversationId);
+
     default Conversation findByIdElseThrow(long conversationId) {
         return this.findById(conversationId).orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
     }
@@ -58,9 +64,9 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
             FROM Conversation conv
                 LEFT JOIN Channel channel ON conv.id = channel.id
                 LEFT JOIN ConversationParticipant cp ON conv.id = cp.conversation.id AND cp.user.id = :userId
-                LEFT JOIN Post p ON conv.id = p.conversation.id AND (p.creationDate > cp.lastRead OR (channel.isCourseWide IS TRUE AND cp.lastRead IS NULL))
+                LEFT JOIN Post p ON conv.id = p.conversation.id AND (p.creationDate > cp.lastRead OR (channel.isCourseWide = TRUE AND cp.lastRead IS NULL))
             WHERE conv.id IN :conversationIds
-                AND (channel.isCourseWide IS TRUE OR (conv.id = cp.conversation.id AND cp.user.id = :userId))
+                AND (channel.isCourseWide = TRUE OR (conv.id = cp.conversation.id AND cp.user.id = :userId))
             GROUP BY conv.id, cp.id, cp.isModerator, cp.isFavorite, cp.isHidden, cp.lastRead
             """)
     List<UserConversationInfo> getUserInformationForConversations(@Param("conversationIds") Iterable<Long> conversationIds, @Param("userId") Long userId);
@@ -92,7 +98,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
             WHERE c.course.id = :courseId
             AND (
                 p.creationDate > cp.lastRead OR
-                (ch.isCourseWide IS TRUE AND cp.id IS NULL)
+                (ch.isCourseWide = TRUE AND cp.id IS NULL)
             )
             """)
     boolean userHasUnreadMessageInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);

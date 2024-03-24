@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabPersonalAccessTokenManagementService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsUserManagementService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -68,6 +69,9 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private GitLabPersonalAccessTokenManagementService gitLabPersonalAccessTokenManagementService;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -172,18 +176,18 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createInternalUser_asAdmin_with_vcsAccessToken_isSuccessful() throws Exception {
         gitlabRequestMockProvider.mockCreationOfUser("batman");
-        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", true);
+        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "versionControlAccessToken", true);
         userTestService.createInternalUser_asAdmin_isSuccessful();
-        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", false);
+        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "versionControlAccessToken", false);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createInternalUserWithoutRoles_isSuccessful() throws Exception {
         gitlabRequestMockProvider.mockCreationOfUser("batman");
-        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", true);
+        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "versionControlAccessToken", true);
         userTestService.createInternalUserWithoutRoles_asAdmin_isSuccessful();
-        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", false);
+        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "versionControlAccessToken", false);
     }
 
     @Test
@@ -358,7 +362,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUserWithGroupsAlreadyExistsInGitlab() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
         User newUser = userTestService.student;
         newUser.setId(null);
@@ -375,7 +379,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUserWithGroupsAlreadyFailsInGitlab() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
         User newUser = userTestService.student;
         newUser.setId(null);

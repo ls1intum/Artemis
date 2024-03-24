@@ -6,7 +6,12 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -304,7 +309,7 @@ public class UserTestService {
     // Test
     public void updateUserGroups() throws Exception {
         var course = courseUtilService.addEmptyCourse();
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         courseRepository.save(course);
 
         // First we create a new user with group
@@ -551,7 +556,7 @@ public class UserTestService {
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
 
         var course = courseUtilService.addEmptyCourse();
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         course = courseUtilService.addEmptyCourse();
         course.setInstructorGroupName("instructor2");
         courseRepository.save(course);

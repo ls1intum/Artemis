@@ -67,7 +67,6 @@ test.describe('Test exam participation', () => {
                 const exercise = exerciseArray[j];
                 await examNavigation.openExerciseAtIndex(j);
 
-                // TODO: Fix programming exercise editor and enable submissions
                 if (exercise.type !== ExerciseType.PROGRAMMING) {
                     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
                 }

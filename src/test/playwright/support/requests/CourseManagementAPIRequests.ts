@@ -119,8 +119,18 @@ export class CourseManagementAPIRequests {
             await Commands.login(this.page, admin);
             // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
             await this.page.waitForTimeout(500);
-            // TODO: Add retry mechanism in case of failures (with timeout)
-            await this.page.request.delete(`${COURSE_ADMIN_BASE}/${course.id}`);
+
+            // Retry in case of failures (with timeout in ms.)
+            const timeout = 5000;
+            const startTime = Date.now();
+            while (Date.now() - startTime < timeout) {
+                const response = await this.page.request.delete(`${COURSE_ADMIN_BASE}/${course.id}`);
+                if (response.ok()) {
+                    break;
+                }
+                console.log('Retrying delete course request due to failure');
+                await this.page.waitForTimeout(500);
+            }
         }
     }
 
@@ -155,7 +165,7 @@ export class CourseManagementAPIRequests {
     }
 
     private async addUserToCourse(courseId: number, username: string, roleIdentifier: string) {
-        await this.page.request.post(`${COURSE_BASE}${courseId}/${roleIdentifier}/${username}`);
+        await this.page.request.post(`${COURSE_BASE}/${courseId}/${roleIdentifier}/${username}`);
     }
 
     /**
@@ -176,7 +186,7 @@ export class CourseManagementAPIRequests {
             endDate,
             channelName: 'lecture-' + titleLowercase(title),
         };
-        const response = await this.page.request.post(`${BASE_API}lectures`, { data });
+        const response = await this.page.request.post(`${BASE_API}/lectures`, { data });
         return response.json();
     }
 
@@ -186,7 +196,7 @@ export class CourseManagementAPIRequests {
      * @param lectureId - The ID of the lecture to be deleted.
      */
     async deleteLecture(lectureId: number) {
-        await this.page.request.delete(`${BASE_API}lectures/${lectureId}`);
+        await this.page.request.delete(`${BASE_API}/lectures/${lectureId}`);
     }
 
     async createExamTestRun(exam: Exam, exercises: Array<Exercise>) {
@@ -197,7 +207,7 @@ export class CourseManagementAPIRequests {
             ended: false,
             numberOfExamSessions: 0,
         };
-        const response = await this.page.request.post(`${BASE_API}courses/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
+        const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
         return response.json();
     }
 }

@@ -1,5 +1,5 @@
 import { Page, expect } from '@playwright/test';
-import { BASE_API, PROGRAMMING_EXERCISE_BASE, ProgrammingLanguage } from '../../../constants';
+import { PROGRAMMING_EXERCISE_BASE, ProgrammingLanguage } from '../../../constants';
 import { Dayjs } from 'dayjs';
 
 const OWL_DATEPICKER_ARIA_LABEL_DATE_FORMAT = 'MMMM D, YYYY';
@@ -42,13 +42,13 @@ export class ProgrammingExerciseCreationPage {
     }
 
     async generate() {
-        const responsePromise = this.page.waitForResponse(`${PROGRAMMING_EXERCISE_BASE}setup`);
+        const responsePromise = this.page.waitForResponse(`${PROGRAMMING_EXERCISE_BASE}/setup`);
         await this.page.locator('#save-entity').click();
         return await responsePromise;
     }
 
     async import() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}programming-exercises/import/*`);
+        const responsePromise = this.page.waitForResponse(`${PROGRAMMING_EXERCISE_BASE}/import/*`);
         await this.page.locator('#save-entity').click();
         return await responsePromise;
     }

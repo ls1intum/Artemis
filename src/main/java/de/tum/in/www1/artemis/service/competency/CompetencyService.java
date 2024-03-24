@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.competency;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -24,6 +25,8 @@ import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
@@ -49,8 +52,13 @@ public class CompetencyService {
 
     private final ExerciseService exerciseService;
 
+    private final CompetencyProgressRepository competencyProgressRepository;
+
+    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
     public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
-            LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService, ExerciseService exerciseService) {
+            LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService, ExerciseService exerciseService,
+            CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository) {
         this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -58,6 +66,8 @@ public class CompetencyService {
         this.competencyProgressService = competencyProgressService;
         this.lectureUnitService = lectureUnitService;
         this.exerciseService = exerciseService;
+        this.competencyProgressRepository = competencyProgressRepository;
+        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
     }
 
     /**
@@ -76,13 +86,13 @@ public class CompetencyService {
     }
 
     /**
-     * Search for all competencies fitting a {@link PageableSearchDTO search query}. The result is paged.
+     * Search for all competencies fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
      *
      * @param search The search query defining the search term and the size of the returned page
-     * @param user   The user for whom to fetch all available lectures
+     * @param user   The user for whom to the competencies
      * @return A wrapper object containing a list of all found competencies and the total number of pages
      */
-    public SearchResultPageDTO<Competency> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+    public SearchResultPageDTO<Competency> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COMPETENCY);
         final var searchTerm = search.getSearchTerm();
         final Page<Competency> competencyPage;
@@ -96,37 +106,54 @@ public class CompetencyService {
     }
 
     /**
-     * Imports all competencies from a course (and optionally their relations) into another.
+     * Search for all competencies fitting a {@link CompetencyPageableSearchDTO search query}. The result is paged.
      *
-     * @param targetCourse    the course to import into
-     * @param sourceCourse    the course to import from
-     * @param importRelations if competency relations should get imported aswell
-     * @return A list of competencies, each also containing the relations it is the tail competency for.
+     * @param search The search query defining the search terms and the size of the returned page
+     * @param user   The user for whom to fetch the competencies
+     * @return A wrapper object containing a list of all found competencies and the total number of pages
      */
-    public List<CompetencyWithTailRelationDTO> importAllCompetenciesFromCourse(Course targetCourse, Course sourceCourse, boolean importRelations) {
-        var competencies = competencyRepository.findAllForCourse(sourceCourse.getId());
-        if (competencies.isEmpty()) {
-            return Collections.emptyList();
+    public SearchResultPageDTO<Competency> getOnPageWithSizeForImport(final CompetencyPageableSearchDTO search, final User user) {
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COMPETENCY);
+        final String title = search.getTitle().isBlank() ? null : search.getTitle();
+        final String description = search.getDescription().isBlank() ? null : search.getDescription();
+        final String courseTitle = search.getCourseTitle().isBlank() ? null : search.getCourseTitle();
+        final String semester = search.getSemester().isBlank() ? null : search.getSemester();
+
+        final Page<Competency> competencyPage;
+        if (authCheckService.isAdmin(user)) {
+            competencyPage = competencyRepository.findForImport(title, description, courseTitle, semester, pageable);
         }
-        // map the id of the old competency to the new competency
-        // used for assigning imported relations to the new competency
+        else {
+            competencyPage = competencyRepository.findForImportAndUserHasAccessToCourse(title, description, courseTitle, semester, user.getGroups(), pageable);
+        }
+        return new SearchResultPageDTO<>(competencyPage.getContent(), competencyPage.getTotalPages());
+    }
+
+    /**
+     * Imports the given competencies and relations into a course
+     *
+     * @param course       the course to import into
+     * @param competencies the competencies to import
+     * @param relations    the relations to import
+     * @return The list of imported competencies, each also containing the relations it is the tail competency for.
+     */
+    public List<CompetencyWithTailRelationDTO> importCompetenciesAndRelations(Course course, Set<Competency> competencies, Set<CompetencyRelation> relations) {
         var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
 
         for (var competency : competencies) {
             Competency importedCompetency = getCompetencyToCreate(competency);
-            importedCompetency.setCourse(targetCourse);
+            importedCompetency.setCourse(course);
 
             importedCompetency = competencyRepository.save(importedCompetency);
             idToImportedCompetency.put(competency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
         }
 
-        if (targetCourse.getLearningPathsEnabled()) {
+        if (course.getLearningPathsEnabled()) {
             var importedCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).toList();
-            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, targetCourse.getId());
+            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, course.getId());
         }
 
-        if (importRelations) {
-            var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(sourceCourse.getId());
+        if (!relations.isEmpty()) {
             for (var relation : relations) {
                 var tailCompetencyDTO = idToImportedCompetency.get(relation.getTailCompetency().getId());
                 var headCompetencyDTO = idToImportedCompetency.get(relation.getHeadCompetency().getId());
@@ -144,16 +171,27 @@ public class CompetencyService {
     }
 
     /**
-     * Gets a new competency from an existing one (without relations).
-     * <p>
-     * The competency is not persisted.
+     * Imports the given competencies into a course
      *
-     * @param competency the existing competency
-     * @return the new competency
+     * @param course       the course to import into
+     * @param competencies the competencies to import
+     * @return The list of imported competencies
      */
-    public Competency getCompetencyToCreate(Competency competency) {
-        return new Competency(competency.getTitle().trim(), competency.getDescription(), competency.getSoftDueDate(), competency.getMasteryThreshold(), competency.getTaxonomy(),
-                competency.isOptional());
+    public List<Competency> importCompetencies(Course course, Set<Competency> competencies) {
+        var importedCompetencies = new ArrayList<Competency>();
+
+        for (var competency : competencies) {
+            Competency importedCompetency = getCompetencyToCreate(competency);
+            importedCompetency.setCourse(course);
+
+            importedCompetency = competencyRepository.save(importedCompetency);
+            importedCompetencies.add(importedCompetency);
+        }
+
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, course.getId());
+        }
+        return importedCompetencies;
     }
 
     /**
@@ -247,6 +285,82 @@ public class CompetencyService {
         }
 
         competencyRepository.deleteById(competency.getId());
+    }
+
+    /**
+     * Finds a competency by its id and fetches its lecture units, exercises and progress for the provided user. It also fetches the lecture unit progress for the same user.
+     * <p>
+     * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
+     *
+     * @param competencyId The id of the competency to find
+     * @param userId       The id of the user for which to fetch the progress
+     * @return The found competency
+     */
+    public Competency findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(Long competencyId, Long userId) {
+        Competency competency = competencyRepository.findWithLectureUnitsAndExercisesByIdElseThrow(competencyId);
+        competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, userId).ifPresent(progress -> competency.setUserProgress(Set.of(progress)));
+        // collect to map lecture unit id -> this
+        var completions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(competency.getLectureUnits(), userId).stream()
+                .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), completion -> completion));
+        competency.getLectureUnits().forEach(lectureUnit -> {
+            if (completions.containsKey(lectureUnit.getId())) {
+                lectureUnit.setCompletedUsers(Set.of(completions.get(lectureUnit.getId())));
+            }
+            else {
+                lectureUnit.setCompletedUsers(Collections.emptySet());
+            }
+        });
+
+        return competency;
+    }
+
+    /**
+     * Finds competencies within a course and fetch progress for the provided user.
+     * <p>
+     * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
+     *
+     * @param courseId The id of the course for which to fetch the competencies
+     * @param userId   The id of the user for which to fetch the progress
+     * @return The found competency
+     */
+    public List<Competency> findCompetenciesWithProgressForUserByCourseId(Long courseId, Long userId) {
+        List<Competency> competencies = competencyRepository.findByCourseId(courseId);
+        var progress = competencyProgressRepository.findByCompetenciesAndUser(competencies, userId).stream()
+                .collect(Collectors.toMap(completion -> completion.getCompetency().getId(), completion -> completion));
+
+        competencies.forEach(competency -> {
+            if (progress.containsKey(competency.getId())) {
+                competency.setUserProgress(Set.of(progress.get(competency.getId())));
+            }
+            else {
+                competency.setUserProgress(Collections.emptySet());
+            }
+        });
+
+        return competencies;
+    }
+
+    /**
+     * Gets a new competency from an existing one (without relations).
+     * <p>
+     * The competency is not persisted.
+     *
+     * @param competency the existing competency
+     * @return the new competency
+     */
+    public Competency getCompetencyToCreate(Competency competency) {
+        return new Competency(competency.getTitle().trim(), competency.getDescription(), competency.getSoftDueDate(), competency.getMasteryThreshold(), competency.getTaxonomy(),
+                competency.isOptional());
+    }
+
+    /**
+     * Converts a list of competencies to a list of {@link CompetencyWithTailRelationDTO CompetencyWithTailRelationDTOs}
+     *
+     * @param competencies the list of competencies
+     * @return the list of CompetencyWithTailRelationDTOs
+     */
+    public List<CompetencyWithTailRelationDTO> competenciesToCompetencyWithTailRelationDTOs(List<Competency> competencies) {
+        return competencies.stream().map(competency -> new CompetencyWithTailRelationDTO(competency, Collections.emptyList())).toList();
     }
 
     /**

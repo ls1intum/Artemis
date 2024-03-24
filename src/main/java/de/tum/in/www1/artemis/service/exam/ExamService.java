@@ -25,7 +25,6 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -105,11 +104,11 @@ import de.tum.in.www1.artemis.web.rest.dto.BonusSourceResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -584,10 +583,6 @@ public class ExamService {
             // set the locked property of the participation properly
             if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
                     && exercise instanceof ProgrammingExercise programmingExercise) {
-                // check if hibernate proxy is initialized, else fetch exercise with submission policy
-                if (!Hibernate.isInitialized(programmingExercise.getSubmissionPolicy())) {
-                    programmingExercise = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow();
-                }
                 var submissionPolicy = programmingExercise.getSubmissionPolicy();
                 // in the unlikely case the student exam was already submitted, set all participations to locked
                 if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(studentExam.isEnded())) {
@@ -1354,7 +1349,7 @@ public class ExamService {
     }
 
     /**
-     * Search for all exams fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * Search for all exams fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged,
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exams if there are that many in Artemis.
      *
@@ -1363,7 +1358,7 @@ public class ExamService {
      * @param withExercises If only exams with exercises should be searched
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<Exam> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user, final boolean withExercises) {
+    public SearchResultPageDTO<Exam> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user, final boolean withExercises) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXAM);
         final var searchTerm = search.getSearchTerm();
         final Page<Exam> examPage;

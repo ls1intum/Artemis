@@ -94,14 +94,14 @@ export class PlaywrightUserManagement {
      * @returns the username template.
      */
     private getUsernameTemplate(): string {
-        return process.env.USERNAME ?? 'user_' + USER_ID_SELECTOR;
+        return process.env.PLAYWRIGHT_USERNAME_TEMPLATE ?? 'user_' + USER_ID_SELECTOR;
     }
 
     /**
      * @returns the password template.
      */
     private getPasswordTemplate(): string {
-        return process.env.PASSWORD ?? 'password_' + USER_ID_SELECTOR;
+        return process.env.PLAYWRIGHT_PASSWORD_TEMPLATE ?? 'password_' + USER_ID_SELECTOR;
     }
 
     /**
@@ -109,12 +109,12 @@ export class PlaywrightUserManagement {
      * Use like this: artemis.users.getAccountInfo((account) => { someFunction(account); });
      * */
     public async getAccountInfo(request: APIRequestContext): Promise<Account> {
-        const response = await request.get(BASE_API + 'public/account');
+        const response = await request.get(`${BASE_API}/public/account`);
         return response.json();
     }
 
     public async getUserInfo(username: string, page: Page): Promise<User> {
-        const response = await page.request.get(BASE_API + 'users/' + username);
+        const response = await page.request.get(`${BASE_API}/users/${username}`);
         return response.json();
     }
 }

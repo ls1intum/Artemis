@@ -19,10 +19,10 @@
         </div>
         <div class="form-group">
             @if (showImportFromExercise) {
-                <p class="intro-text" jhiTranslate="artemisApp.team.importTeams.introTextExercise">This dialog can be used to import teams from another exercise.</p>
+                <p class="intro-text" jhiTranslate="artemisApp.team.importTeams.introTextExercise"></p>
             }
             @if (!showImportFromExercise) {
-                <p class="intro-text" jhiTranslate="artemisApp.team.importTeams.introTextFile">This dialog can be used to import teams from a file into this exercise.</p>
+                <p class="intro-text" jhiTranslate="artemisApp.team.importTeams.introTextFile"></p>
             }
         </div>
         @if (!showImportFromExercise) {
@@ -36,7 +36,7 @@
             <div class="form-group">
                 <div class="d-flex align-items-end">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.team.sourceExercise.label">Source exercise</label>
+                        <label class="label-narrow" jhiTranslate="artemisApp.team.sourceExercise.label"></label>
                         <jhi-help-icon text="artemisApp.team.sourceExercise.tooltip" class="me-1" />
                     </div>
                     @if (searchingExercises) {
@@ -44,17 +44,17 @@
                     }
                     @if (searchingExercisesNoResultsForQuery === '') {
                         <span class="error-message text-danger">
-                            <span jhiTranslate="artemisApp.team.exerciseSearch.noResults">There are no other team-based exercises in this course.</span>
+                            <span jhiTranslate="artemisApp.team.exerciseSearch.noResults"></span>
                         </span>
                     }
                     @if (searchingExercisesNoResultsForQuery) {
                         <span class="error-message text-danger">
-                            <span jhiTranslate="artemisApp.team.exerciseSearch.noResultsForSearchTerm">No other team-based exercise found in course for search:</span>
+                            <span jhiTranslate="artemisApp.team.exerciseSearch.noResultsForSearchTerm"></span>
                             <strong>{{ searchingExercisesNoResultsForQuery }}</strong>
                         </span>
                     }
                     @if (searchingExercisesFailed) {
-                        <span class="error-message text-danger" jhiTranslate="artemisApp.team.exerciseSearch.failed"> Search failed. Please try again. </span>
+                        <span class="error-message text-danger" jhiTranslate="artemisApp.team.exerciseSearch.failed"></span>
                     }
                 </div>
                 <jhi-team-exercise-search
@@ -72,14 +72,14 @@
             <div class="form-group mt-2">
                 <div class="d-flex align-items-end">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label">Source teams</label>
+                        <label class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label"></label>
                         <jhi-help-icon text="artemisApp.team.sourceTeams.tooltip" class="me-1" />
                     </div>
                     @if (loadingSourceTeams) {
                         <fa-icon class="loading-spinner" [icon]="faSpinner" [spin]="true" />
                     }
                     @if (loadingSourceTeamsFailed) {
-                        <span class="error-message text-danger" jhiTranslate="artemisApp.team.loadSourceTeams.failed"> Loading teams failed. Please try again. </span>
+                        <span class="error-message text-danger" jhiTranslate="artemisApp.team.loadSourceTeams.failed"></span>
                     }
                 </div>
                 @if (sourceTeams) {
@@ -111,10 +111,10 @@
                                     <div class="list-group-item-index text-body-secondary">1</div>
                                     <div class="list-group-item list-group-item--teams py-5" [class.has-warning]="sourceTeams?.length === 0">
                                         @if (showImportFromExercise && sourceTeams?.length === 0) {
-                                            <span jhiTranslate="artemisApp.team.noTeamsInSourceExercise"> The source exercise has no teams. </span>
+                                            <span jhiTranslate="artemisApp.team.noTeamsInSourceExercise"></span>
                                         }
                                         @if (!showImportFromExercise && sourceTeams?.length === 0) {
-                                            <span jhiTranslate="artemisApp.team.noTeamsInFile"> File has no teams. </span>
+                                            <span jhiTranslate="artemisApp.team.noTeamsInFile"></span>
                                         }
                                     </div>
                                 </li>
@@ -124,7 +124,7 @@
                             <div class="source-teams-legend-container mt-4">
                                 <hr class="mt-3 mb-2" />
                                 <div>
-                                    <label jhiTranslate="artemisApp.team.sourceTeams.legend.label">Legend</label>
+                                    <label jhiTranslate="artemisApp.team.sourceTeams.legend.label"></label>
                                     <jhi-help-icon text="artemisApp.team.sourceTeams.legend.tooltip" class="me-1" />
                                 </div>
                                 <div class="source-teams-legend-box">
@@ -135,7 +135,7 @@
                                                 <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students || []" />
                                             </div>
                                             <div class="label-with-tooltip">
-                                                <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.label">Conflict-free team</label>
+                                                <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.label"></label>
                                                 <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.tooltip" class="me-1" />
                                             </div>
                                         </div>
@@ -145,7 +145,7 @@
                                                 <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students || []" />
                                             </div>
                                             <div class="label-with-tooltip">
-                                                <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.label">Team short name conflict</label>
+                                                <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.label"></label>
                                                 <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.tooltip" class="me-1" />
                                             </div>
                                         </div>
@@ -159,7 +159,7 @@
                                                 />
                                             </div>
                                             <div class="label-with-tooltip">
-                                                <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.studentConflict.label">Student conflict</label>
+                                                <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.studentConflict.label"></label>
                                                 <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.studentConflict.tooltip" class="me-1" />
                                             </div>
                                         </div>
@@ -175,7 +175,7 @@
             <hr class="my-4" />
             <div class="form-group mb-0">
                 <div>
-                    <label class="label-narrow" jhiTranslate="artemisApp.team.importStrategy.label">Import conflict strategy</label>
+                    <label class="label-narrow" jhiTranslate="artemisApp.team.importStrategy.label"></label>
                     <jhi-help-icon text="artemisApp.team.importStrategy.tooltip" class="me-1" />
                 </div>
                 <div class="d-flex flex-column mt-2 ps-2">
@@ -264,12 +264,12 @@
         }
         <div class="flex-grow-1 d-flex justify-content-end">
             <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
-                <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
             @if (importStrategy !== ImportStrategy.PURGE_EXISTING) {
                 <button type="submit" class="btn btn-warning" [disabled]="editForm.invalid || isSubmitDisabled">
                     <fa-icon [icon]="faUpload" class="me-2" />
-                    <span jhiTranslate="entity.action.to-import">Import</span>
+                    <span jhiTranslate="entity.action.to-import"></span>
                     <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch" />
                 </button>
             }
@@ -287,8 +287,8 @@
                     [dialogError]="dialogError$"
                 >
                     <fa-icon [icon]="faUpload" class="me-1" />
-                    <span jhiTranslate="entity.action.purge">Purge</span> +
-                    <span jhiTranslate="entity.action.to-import">Import</span>
+                    <span jhiTranslate="entity.action.purge"></span> +
+                    <span jhiTranslate="entity.action.to-import"></span>
                     <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch" />
                 </button>
             }
