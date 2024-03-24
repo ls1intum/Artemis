@@ -5,7 +5,7 @@ import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/
 import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
 import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
-import { ProgrammingLanguage } from '../../../support/constants';
+import { ExerciseCommit, ProgrammingLanguage } from '../../../support/constants';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { gitClient } from '../../../support/pageobjects/exercises/programming/GitClient';
@@ -76,7 +76,8 @@ test.describe('Programming exercise participation', () => {
                 const repoName = urlParts[urlParts.length - 1];
                 const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
                 const submission = javaBuildErrorSubmission;
-                await makeGitSubmission(exerciseRepo, repoName, submission);
+                const commitMessage = "Let's try and see";
+                await makeGitSubmission(exerciseRepo, repoName, submission, commitMessage);
                 await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                 await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
                 const resultScore = await programmingExerciseEditor.getResultScore();
@@ -90,7 +91,8 @@ test.describe('Programming exercise participation', () => {
                 const repoName = urlParts[urlParts.length - 1];
                 const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
                 const submission = javaPartiallySuccessfulSubmission;
-                await makeGitSubmission(exerciseRepo, repoName, submission);
+                const commitMessage = 'Initial implementation';
+                await makeGitSubmission(exerciseRepo, repoName, submission, commitMessage);
                 await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                 await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
                 const resultScore = await programmingExerciseEditor.getResultScore();
@@ -104,11 +106,41 @@ test.describe('Programming exercise participation', () => {
                 const repoName = urlParts[urlParts.length - 1];
                 const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
                 const submission = javaAllSuccessfulSubmission;
-                await makeGitSubmission(exerciseRepo, repoName, submission);
+                const commitMessage = 'Implemented all tasks';
+                await makeGitSubmission(exerciseRepo, repoName, submission, commitMessage);
                 await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                 await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
                 const resultScore = await programmingExerciseEditor.getResultScore();
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+            });
+
+            test('Checks commit history', async ({ page, programmingExerciseEditor }) => {
+                await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
+                const repoUrl = await programmingExerciseEditor.getRepoUrl();
+                const urlParts = repoUrl.split('/');
+                const repoName = urlParts[urlParts.length - 1];
+                const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
+
+                const partialSubmission = javaPartiallySuccessfulSubmission;
+                const initialCommitMessage = 'Initial commit';
+                await makeGitSubmission(exerciseRepo, repoName, partialSubmission, initialCommitMessage);
+
+                const correctSubmission = javaAllSuccessfulSubmission;
+                const finalCommitMessage = 'Implemented all tasks';
+                await makeGitSubmission(exerciseRepo, repoName, correctSubmission, finalCommitMessage, false);
+                await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
+                await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
+                await programmingExerciseEditor.getResultScore();
+
+                const repositoryPage = await programmingExerciseEditor.openRepository();
+                await programmingExerciseEditor.openCommitHistory(repositoryPage);
+                // All commits in descending order by their date
+                const commits: ExerciseCommit[] = [
+                    { message: finalCommitMessage, result: correctSubmission.expectedResult },
+                    { message: initialCommitMessage, result: partialSubmission.expectedResult },
+                    { message: 'Exercise-Template pushed by Artemis' },
+                ];
+                await programmingExerciseEditor.checkCommit(repositoryPage, 'Implemented the tasks', '100%', commits);
             });
         });
     });
@@ -160,12 +192,15 @@ test.describe('Programming exercise participation', () => {
     });
 });
 
-async function makeGitSubmission(exerciseRepo: SimpleGit, exerciseRepoName: string, submission: ProgrammingExerciseSubmission) {
-    for (const fileName of submission.deleteFiles) {
-        const packagePath = submission.packageName!.replace(/\./g, '/');
-        const filePath = `./src/${packagePath}/${fileName}`;
-        await exerciseRepo.rm(filePath);
+async function makeGitSubmission(exerciseRepo: SimpleGit, exerciseRepoName: string, submission: ProgrammingExerciseSubmission, commitMessage: string, deleteFiles: boolean = true) {
+    if (deleteFiles) {
+        for (const fileName of submission.deleteFiles) {
+            const packagePath = submission.packageName!.replace(/\./g, '/');
+            const filePath = `./src/${packagePath}/${fileName}`;
+            await exerciseRepo.rm(filePath);
+        }
     }
+
     for (const file of submission.files) {
         const packagePath = submission.packageName!.replace(/\./g, '/');
         const filePath = `src/${packagePath}/${file.name}`;
@@ -173,6 +208,6 @@ async function makeGitSubmission(exerciseRepo: SimpleGit, exerciseRepoName: stri
         await createFileWithContent(`./test-exercise-repos/${exerciseRepoName}/${filePath}`, sourceCode!);
         await exerciseRepo.add(`./${filePath}`);
     }
-    await exerciseRepo.commit('Implemented the tasks');
+    await exerciseRepo.commit(commitMessage);
     await exerciseRepo.push();
 }

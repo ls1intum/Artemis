@@ -1,5 +1,5 @@
 import { Page, expect } from '@playwright/test';
-import { BASE_API } from '../../../constants';
+import { BASE_API, ExerciseCommit } from '../../../constants';
 import { getExercise } from '../../../utils';
 import { Commands } from '../../../commands';
 import { UserCredentials } from '../../../users';
@@ -106,8 +106,8 @@ export class OnlineEditorPage {
     }
 
     async getResultScore() {
-        await this.page.locator('#result-score').waitFor({ state: 'visible' });
-        return this.page.locator('#result-score');
+        await this.page.locator('.tab-bar-exercise-details').locator('#result-score').waitFor({ state: 'visible' });
+        return this.page.locator('.tab-bar-exercise-details').locator('#result-score');
     }
 
     getResultScoreFromExercise(exerciseID: number) {
@@ -151,9 +151,41 @@ export class OnlineEditorPage {
         await Commands.reloadUntilFound(this.page, cloneRepoSelector);
         await this.page.locator(cloneRepoSelector).click();
         await this.page.locator('.popover-body').waitFor({ state: 'visible' });
-        const url = await this.page.locator('.clone-url').innerText();
-        console.log(url);
-        return url;
+        return await this.page.locator('.clone-url').innerText();
+    }
+
+    async openRepository() {
+        const repositoryPage = this.page.context().waitForEvent('page');
+        await this.page.locator('a', { hasText: 'Open repository' }).click();
+        return await repositoryPage;
+    }
+
+    async openCommitHistory(repositoryPage: Page) {
+        await repositoryPage.locator('a', { hasText: 'Open Commit History' }).click();
+    }
+
+    async checkCommit(repositoryPage: Page, message: string, result?: string, commits?: ExerciseCommit[]) {
+        const commitHistory = repositoryPage.locator('.card-body', { hasText: 'Commit History' });
+        // await expect(commitHistory.locator('td').getByText(message)).toBeVisible();
+        // if (result) {
+        //     await expect(commitHistory.locator('#result-score', { hasText: result })).toBeVisible();
+        // } else {
+        //     await expect(commitHistory.locator('td', { hasText: 'No result' })).toBeVisible();
+        // }
+
+        if (commits) {
+            const commitCount = commits.length;
+            for (let index = 0; index < commitCount; index++) {
+                const commit = commits[index];
+                const commitRow = commitHistory.locator('tbody').locator('tr').nth(index);
+                await expect(commitRow.locator('td').getByText(commit.message)).toBeVisible();
+                if (commit.result) {
+                    await expect(commitRow.locator('#result-score', { hasText: commit.result })).toBeVisible();
+                } else {
+                    await expect(commitRow.locator('td', { hasText: 'No result' })).toBeVisible();
+                }
+            }
+        }
     }
 }
 
