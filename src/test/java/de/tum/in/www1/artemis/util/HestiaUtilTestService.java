@@ -64,7 +64,8 @@ public class HestiaUtilTestService {
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    @Autowired
+    // required=false is necessary, as this will otherwise fail when not part of a AbstractSpringIntegrationJenkinsGitlabTest
+    @Autowired(required = false)
     private GitlabRequestMockProvider gitlabRequestMockProvider;
 
     @Autowired
