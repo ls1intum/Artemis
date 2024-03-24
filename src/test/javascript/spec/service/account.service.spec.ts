@@ -532,10 +532,10 @@ describe('AccountService', () => {
     });
 
     describe('test token related user retrieval logic', () => {
-        let fetchStub;
+        let fetchStub: jest.SpyInstance;
 
         beforeEach(() => {
-            fetchStub = jest.spyOn(accountService, 'fetch').mockReturnValue(of(new HttpResponse(user)));
+            fetchStub = jest.spyOn(accountService, 'fetch').mockReturnValue(of(new HttpResponse({ body: user })));
         });
 
         it('should retrieve user if vcs token is missing', () => {
