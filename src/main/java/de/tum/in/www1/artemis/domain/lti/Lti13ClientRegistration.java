@@ -59,7 +59,6 @@ public class Lti13ClientRegistration {
      * @param clientRegistrationId The client registration ID for LTI configuration.
      */
     public Lti13ClientRegistration(String serverUrl, String clientRegistrationId) {
-        // TODO: is this the correct replacement IMPLICIT --> AUTHORIZATION_CODE
         this.setGrantTypes(Arrays.asList(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue(), AuthorizationGrantType.AUTHORIZATION_CODE.getValue()));
         this.setResponseTypes(List.of("id_token"));
         this.setClientName("Artemis - " + serverUrl);
