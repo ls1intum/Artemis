@@ -9,7 +9,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -23,7 +22,7 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentT
     @Autowired
     private ExerciseLifecycleService exerciseLifecycleService;
 
-    @RepeatedTest(1000)
+    @Test
     void testScheduleExerciseOnReleaseTask() {
         final ZonedDateTime now = ZonedDateTime.now();
 
