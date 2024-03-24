@@ -20,11 +20,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-              "loader": {
-                  ".ttf": "file"
-              },
-              "browser": "src/main/webapp/app/app.main.ts",
-              "allowedCommonJsDependencies": [
+            "allowedCommonJsDependencies": [
               "brace",
               "brace/mode/java",
               "clone-deep",
@@ -64,7 +60,11 @@
                 "base": "build/resources/main/static/",
                 "browser": ""
             },
+            "loader": {
+                ".ttf": "file"
+            },
             "index": "src/main/webapp/index.html",
+            "browser": "src/main/webapp/app/app.main.ts",
             "polyfills": [
                 "src/main/webapp/app/polyfills.ts"
             ],
