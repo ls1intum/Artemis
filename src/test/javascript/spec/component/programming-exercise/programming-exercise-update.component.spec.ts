@@ -527,7 +527,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                     comp.onStaticCodeAnalysisChanged();
 
-                    expect(comp.updateTemplate).toBeTrue();
+                    expect(comp.importOptions.updateTemplate).toBeTrue();
 
                     comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                     comp.onStaticCodeAnalysisChanged();
@@ -543,10 +543,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 // Recreate build plan and template update should be automatically selected
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(scaActivatedOriginal ? undefined : newMaxPenalty);
-                expect(comp.recreateBuildPlans).toBeTrue();
-                expect(comp.updateTemplate).toBeTrue();
+                expect(comp.importOptions.recreateBuildPlans).toBeTrue();
+                expect(comp.importOptions.updateTemplate).toBeTrue();
 
-                comp.recreateBuildPlans = !comp.recreateBuildPlans;
+                comp.importOptions.recreateBuildPlans = !comp.importOptions.recreateBuildPlans;
                 comp.onRecreateBuildPlanOrUpdateTemplateChange();
                 tick();
 

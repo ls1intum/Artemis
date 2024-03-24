@@ -10,7 +10,8 @@ export class ShortAnswerQuiz {
     }
 
     submit() {
-        cy.intercept(POST, EXERCISE_BASE + '*/submissions/live').as('createQuizExercise');
+        cy.intercept(POST, `${EXERCISE_BASE}/*/submissions/live`).as('createQuizExercise');
+        cy.get('#submit-quiz').scrollIntoView();
         cy.get('#submit-quiz').click();
         return cy.wait('@createQuizExercise');
     }

@@ -5,7 +5,11 @@ import { ICodeEditorRepositoryFileService } from 'app/exercises/programming/shar
 @Injectable({ providedIn: 'root' })
 export class MockCodeEditorRepositoryFileService implements ICodeEditorRepositoryFileService {
     getRepositoryContent = () => EMPTY;
+
+    getRepositoryContentForPlagiarismView = () => EMPTY;
     getFile = (fileName: string) => EMPTY;
+
+    getFileForPlagiarismView = (fileName: string) => EMPTY;
     createFile = (fileName: string) => EMPTY;
     createFolder = (fileName: string) => EMPTY;
     updateFileContent = (fileName: string) => EMPTY;

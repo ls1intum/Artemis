@@ -3,7 +3,7 @@
 }
 @for (section of sections; track section) {
     <h3 class="section-headline" [id]="headlinesRecord[section.headline]">{{ section.headline | artemisTranslate }}</h3>
-    <dl>
+    <dl class="section-detail-list">
         @for (detail of section.details; track detail) {
             @if (!!detail) {
                 @if (detail.title) {

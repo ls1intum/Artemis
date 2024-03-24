@@ -100,7 +100,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCreateSystemNotification_asInstructor_Forbidden() throws Exception {
-        request.post("/api/admin/system-notifications/", systemNotification, HttpStatus.FORBIDDEN);
+        request.post("/api/admin/system-notifications", systemNotification, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -126,7 +126,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     void testUpdateSystemNotification_asInstructor_Forbidden() throws Exception {
         systemNotificationRepo.save(systemNotification);
         systemNotification.setText("updated text");
-        request.put("/api/admin/system-notifications/", systemNotification, HttpStatus.FORBIDDEN);
+        request.put("/api/admin/system-notifications", systemNotification, HttpStatus.FORBIDDEN);
     }
 
     @Test

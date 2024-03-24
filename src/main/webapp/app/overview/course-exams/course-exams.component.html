@@ -10,18 +10,17 @@
 }
 
 <!-- Section for real exams. Should not be displayed if no real exams exist -->
-@if (realExamsOfCourse.length > 0) {
-    <h2 class="my-2" jhiTranslate="artemisApp.exam.overview.realExamsHeading"></h2>
+@if (realExamsOfCourse.length) {
     <div class="row d-flex align-items-start">
         @for (exam of realExamsOfCourse; track exam) {
             <jhi-course-exam-detail [exam]="exam" [course]="course!" class="card col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-success hover-effect" id="exam-{{ exam.id }}" />
         }
     </div>
-    <hr />
 }
 <!-- Section test exams. Should not be displayed if no test exams exist -->
-@if (testExamsOfCourse.length > 0) {
-    <h2 jhiTranslate="artemisApp.exam.overview.testExamsHeading"></h2>
+@if (testExamsOfCourse.length) {
+    <hr />
+    <h5 jhiTranslate="artemisApp.exam.overview.testExamsHeading">Test Exams</h5>
     <div class="row">
         @for (exam of testExamsOfCourse; track exam) {
             <div class="row d-flex align-items-start">

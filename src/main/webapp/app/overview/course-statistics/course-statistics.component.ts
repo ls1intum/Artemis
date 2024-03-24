@@ -265,8 +265,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     ngOnDestroy() {
-        this.translateSubscription.unsubscribe();
-        this.courseUpdatesSubscription.unsubscribe();
+        this.translateSubscription?.unsubscribe();
+        this.courseUpdatesSubscription?.unsubscribe();
         this.paramSubscription?.unsubscribe();
     }
 
@@ -345,7 +345,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                         } else {
                             if (
                                 participation.initializationState === InitializationState.FINISHED &&
-                                (!exercise.dueDate || participation.initializationDate!.isBefore(exercise.dueDate!))
+                                (!exercise.dueDate || participation.initializationDate?.isBefore(exercise.dueDate!))
                             ) {
                                 // 4 = NOT_GRADED
                                 series[4].value = 100;
@@ -434,10 +434,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.overallPointsPerExercise.set(ExerciseType.MODELING, modelingExerciseTotalScore);
         this.overallPointsPerExercise.set(ExerciseType.TEXT, textExerciseTotalScore);
         this.overallPointsPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExerciseTotalScore);
-        this.ngxDoughnutData = [];
+        const ngxDoughnutDataTemp: YourOverallPointsEntry[] = [];
         scores.forEach((score, index) => {
             if (score > 0) {
-                this.ngxDoughnutData.push({
+                ngxDoughnutDataTemp.push({
                     name: 'artemisApp.courseOverview.statistics.' + this.labels[index],
                     value: this.roundScoreSpecifiedByCourseSettings(score, this.course),
                     color: this.doughnutChartColors[index],
@@ -446,7 +446,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             }
         });
 
-        this.ngxDoughnutData = [...this.ngxDoughnutData];
+        this.ngxDoughnutData = [...ngxDoughnutDataTemp];
     }
 
     /**

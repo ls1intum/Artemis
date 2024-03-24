@@ -1,6 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { BuildAction, PlatformAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
+import {
+    BuildAction,
+    DockerConfiguration,
+    PlatformAction,
+    ProgrammingExercise,
+    ProgrammingLanguage,
+    ProjectType,
+    ScriptAction,
+    WindFile,
+    WindMetadata,
+} from 'app/entities/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
@@ -33,6 +43,10 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         programmingExercise = new ProgrammingExercise(course, undefined);
         programmingExercise.customizeBuildPlanWithAeolus = true;
         windFile = new WindFile();
+        const metadata = new WindMetadata();
+        metadata.docker = new DockerConfiguration();
+        metadata.docker.image = 'testImage';
+        windFile.metadata = metadata;
         actions = [];
         gradleBuildAction = new ScriptAction();
         gradleBuildAction.name = 'gradle';
@@ -223,5 +237,15 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.programmingExercise.buildScript = undefined;
         comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
         expect(comp.code).toBe('');
+    });
+
+    it('should set docker image correctly', () => {
+        comp.programmingExercise.windFile = windFile;
+        comp.programmingExercise.windFile.metadata.docker.image = 'old';
+        comp.setDockerImage('testImage');
+        expect(comp.programmingExercise.windFile?.metadata.docker.image).toBe('testImage');
+        comp.programmingExercise.windFile = undefined;
+        comp.setDockerImage('testImage');
+        expect(comp.programmingExercise.windFile).toBeUndefined();
     });
 });

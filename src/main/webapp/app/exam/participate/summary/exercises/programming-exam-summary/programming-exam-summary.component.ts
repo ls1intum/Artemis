@@ -12,7 +12,7 @@ import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cac
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Result } from 'app/entities/result.model';
 import { createCommitUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { faCodeBranch } from '@fortawesome/free-solid-svg-icons/faCodeBranch';
+import { faCodeBranch } from '@fortawesome/free-solid-svg-icons';
 import { Router } from '@angular/router';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 

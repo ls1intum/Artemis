@@ -6,6 +6,8 @@
             "queuedBuildJobs": "Queued Build Jobs",
             "runningBuildJobs": "Running Build Jobs",
             "buildJob": {
+                "id": "ID",
+                "buildAgent": "Build Agent",
                 "name": "Name",
                 "participationId": "Participation ID",
                 "repositoryName": "Repository Name",
@@ -16,6 +18,7 @@
                 "courseId": "Course ID",
                 "priority": "Priority",
                 "buildCompletionDate": "Build Completion Date",
+                "buildDuration": "Build Duration",
                 "status": "Status"
             },
             "cancelAll": "Cancel All"

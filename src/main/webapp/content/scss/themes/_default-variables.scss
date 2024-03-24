@@ -48,7 +48,14 @@ $link-color: $primary;
 $border-color: #dee2e6;
 
 // Footer
-$footer-bg: #fff;
+$footer-bg: $white;
+$footer-height: 4rem;
+
+//Module and Navigationbar
+$module-bg: $white;
+$course-image-bg: $body-bg;
+$link-item-color: $primary;
+$link-item-bg: $gray-100;
 
 // Cards
 $card-bg: $white;
@@ -237,7 +244,6 @@ $update-footer-background: white;
 $quiz-mapping-letter-number-mixin-color: white;
 
 $edit-quiz-footer-background: white;
-$edit-quiz-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $quiz-exercise-detail-max-score-background: whitesmoke;
 $quiz-exercise-detail-max-score-color: black;
 $quiz-edit-question-border: lightgrey;

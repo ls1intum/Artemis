@@ -278,12 +278,12 @@ public class TestwiseCoverageService {
     /**
      * Return the test-wise coverage report for the latest solution submission for a programming exercise without the file reports.
      *
-     * @param programmingExercise the exercise for which the latest coverage report should be retrieved
+     * @param exerciseId the exercise id for which the latest coverage report should be retrieved
      * @return an Optional of the test-wise coverage report for the latest solution submission without the file reports
      *         if a report exists for the latest submission, otherwise an empty Optional
      */
-    public Optional<CoverageReport> getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
-        var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
+    public Optional<CoverageReport> getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(long exerciseId) {
+        var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(exerciseId, Pageable.ofSize(1));
         if (reports.isEmpty()) {
             return Optional.empty();
         }
@@ -293,13 +293,12 @@ public class TestwiseCoverageService {
     /**
      * Return the full test-wise coverage report for the latest solution submission for a programming exercise containing all file reports
      *
-     * @param programmingExercise the exercise for which the latest coverage report should be retrieved
+     * @param exerciseId the exercise id for which the latest coverage report should be retrieved
      * @return an Optional of the full test-wise coverage report for the latest solution submission with all file reports
      *         if a report exists for the latest submission, otherwise an empty Optional
      */
-    public Optional<CoverageReport> getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
-        var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(programmingExercise.getId(),
-                Pageable.ofSize(1));
+    public Optional<CoverageReport> getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(long exerciseId) {
+        var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(exerciseId, Pageable.ofSize(1));
         if (reports.isEmpty()) {
             return Optional.empty();
         }

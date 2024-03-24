@@ -303,7 +303,7 @@ It relays message between instances:
 
         sudo mkdir /opt/activemq-distribution
 
-2. Download ActiveMQ here: http://activemq.apache.org/components/artemis/download/
+2. Download ActiveMQ here: https://activemq.apache.org/components/artemis/download/
 
   .. code:: bash
 

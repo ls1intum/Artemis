@@ -142,7 +142,7 @@ For a description of the rules refer to the `Checkstyle documentation <https://c
 
 3. **PMD**
 
-For a description of the rules refer to the `PMD documentation <https://pmd.github.io/latest/pmd_rules_java.html>`__.
+For a description of the rules refer to the `PMD documentation <https://docs.pmd-code.org/latest/pmd_rules_java.html>`__.
 
 +-------------------------------+---------------------------------------------+
 | Category (Tool/Artemis)       | Rule                                        |
@@ -257,7 +257,7 @@ For a description of the rules refer to the `PMD documentation <https://pmd.gith
 4. **PMD CPD**
 
 Artemis uses the following default configuration to detect code duplications for the category **Copy/Paste Detection**.
-For a description of the various PMD CPD configuration parameters refer to the `PMD CPD documentation <https://pmd.github.io/latest/pmd_userdocs_cpd.html>`__.
+For a description of the various PMD CPD configuration parameters refer to the `PMD CPD documentation <https://docs.pmd-code.org/latest/pmd_userdocs_cpd.html>`__.
 
 .. code-block:: xml
 

@@ -238,7 +238,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 findWithParticipationsStub.mockReturnValue(of({ body: exercise }));
 
                 // Mock the ResizeObserver, which is not available in the test environment
-                global.ResizeObserver = jest.fn().mockImplementation((...args) => new MockResizeObserver(args));
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 
@@ -252,6 +254,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         const assessmentLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
         expect(assessmentLayout).toBeDefined();
     });
+
+    it('should load the grading criteria on initialisation', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+
+        expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id, false, true);
+    }));
 
     it('should update assessor correctly if the manual assessment is overridden', fakeAsync(() => {
         const user2 = <User>{ id: 100, groups: ['instructorGroup'] };

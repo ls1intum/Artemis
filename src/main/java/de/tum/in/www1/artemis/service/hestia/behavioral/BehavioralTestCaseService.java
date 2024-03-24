@@ -80,7 +80,7 @@ public class BehavioralTestCaseService {
             throw new BehavioralSolutionEntryGenerationException("Git-Diff Report has not been generated");
         }
 
-        var coverageReport = testwiseCoverageService.getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(programmingExercise).orElse(null);
+        var coverageReport = testwiseCoverageService.getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(programmingExercise.getId()).orElse(null);
         if (coverageReport == null) {
             throw new BehavioralSolutionEntryGenerationException("Testwise coverage report has not been generated");
         }

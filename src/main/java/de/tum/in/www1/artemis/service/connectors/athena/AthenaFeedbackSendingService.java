@@ -30,16 +30,16 @@ public class AthenaFeedbackSendingService {
 
     private final AthenaModuleService athenaModuleService;
 
-    private final AthenaDTOConverter athenaDTOConverter;
+    private final AthenaDTOConverterService athenaDTOConverterService;
 
     /**
      * Creates a new service to send feedback to the Athena service
      */
     public AthenaFeedbackSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
-            AthenaDTOConverter athenaDTOConverter) {
+            AthenaDTOConverterService athenaDTOConverterService) {
         connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
         this.athenaModuleService = athenaModuleService;
-        this.athenaDTOConverter = athenaDTOConverter;
+        this.athenaDTOConverterService = athenaDTOConverterService;
     }
 
     private record RequestDTO(ExerciseDTO exercise, SubmissionDTO submission, List<FeedbackDTO> feedbacks) {
@@ -87,8 +87,8 @@ public class AthenaFeedbackSendingService {
 
         try {
             // Only send manual feedback from tutors to Athena
-            final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission),
-                    feedbacks.stream().filter(Feedback::isManualFeedback).map((feedback) -> athenaDTOConverter.ofFeedback(exercise, submission.getId(), feedback)).toList());
+            final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
+                    feedbacks.stream().filter(Feedback::isManualFeedback).map((feedback) -> athenaDTOConverterService.ofFeedback(exercise, submission.getId(), feedback)).toList());
             ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedbacks", request, maxRetries);
             log.info("Athena responded to feedback: {}", response.data);
         }

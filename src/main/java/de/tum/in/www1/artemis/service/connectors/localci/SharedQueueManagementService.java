@@ -170,6 +170,22 @@ public class SharedQueueManagementService {
         finally {
             sharedLock.unlock();
         }
+
+    }
+
+    /**
+     * Cancel all running build jobs for an agent.
+     *
+     * @param agentName name of the agent
+     */
+    public void cancelAllRunningBuildJobsForAgent(String agentName) {
+        sharedLock.lock();
+        try {
+            processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), agentName)).forEach(job -> cancelBuildJob(job.id()));
+        }
+        finally {
+            sharedLock.unlock();
+        }
     }
 
     /**

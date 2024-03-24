@@ -13,7 +13,7 @@ export class LectureManagementPage {
         this.getLecture(lecture.id!).find('#delete-lecture').click();
         cy.get('#delete').should('be.disabled');
         cy.get('#confirm-entity-name').type(lecture.title!);
-        cy.intercept(DELETE, `${BASE_API}lectures/*`).as('deleteLecture');
+        cy.intercept(DELETE, `${BASE_API}/lectures/*`).as('deleteLecture');
         cy.get('#delete').click();
         return cy.wait('@deleteLecture');
     }
@@ -59,7 +59,7 @@ export class LectureManagementPage {
     }
 
     submitUnit(buttonId = '#submitButton') {
-        cy.intercept(POST, BASE_API + 'lectures/*/*').as('createUnit');
+        cy.intercept(POST, `${BASE_API}/lectures/*/*`).as('createUnit');
         cy.get(buttonId).click();
         return cy.wait('@createUnit');
     }

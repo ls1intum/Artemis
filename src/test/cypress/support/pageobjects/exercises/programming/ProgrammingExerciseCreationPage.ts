@@ -1,4 +1,4 @@
-import { BASE_API, POST, PROGRAMMING_EXERCISE_BASE, ProgrammingLanguage } from '../../../constants';
+import { POST, PROGRAMMING_EXERCISE_BASE, ProgrammingLanguage } from '../../../constants';
 import { Dayjs } from 'dayjs/esm';
 
 const OWL_DATEPICKER_ARIA_LABEL_DATE_FORMAT = 'MMMM D, YYYY';
@@ -54,14 +54,14 @@ export class ProgrammingExerciseCreationPage {
      * @returns the chainable of the request to make further verifications
      */
     generate() {
-        cy.intercept(POST, PROGRAMMING_EXERCISE_BASE + 'setup').as('createProgrammingExercise');
+        cy.intercept(POST, `${PROGRAMMING_EXERCISE_BASE}/setup`).as('createProgrammingExercise');
         cy.get('#save-entity').click();
         // Creating a programming exercise can take quite a while, so we increase the default timeout here
         return cy.wait('@createProgrammingExercise', { timeout: 60000 });
     }
 
     import() {
-        cy.intercept(POST, BASE_API + 'programming-exercises/import/*').as('programmingExerciseImport');
+        cy.intercept(POST, `${PROGRAMMING_EXERCISE_BASE}/import/*`).as('programmingExerciseImport');
         cy.get('#save-entity').click();
         // Creating a programming exercise can take quite a while, so we increase the default timeout here
         return cy.wait('@programmingExerciseImport', { timeout: 60000 });
