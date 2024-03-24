@@ -1,20 +1,49 @@
 <div class="d-flex flex-column h-100">
     <div>
-        <!-- TODO: header -->
-        <h4>{{ competency.title }}</h4>
-        @if (!isInEditMode) {
-            <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.edit'" [icon]="faEdit" (onClick)="edit()" />
-        }
-        <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.delete'" [icon]="faTrash" (onClick)="delete()" />
+        <!-- TODO: translation -->
+        <h4>Competency Details</h4>
+        <div>
+            @if (!isInEditMode) {
+                <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.edit'" [icon]="faEdit" (onClick)="edit()" />
+            }
+            <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.delete'" [icon]="faTrash" (onClick)="delete()" />
+        </div>
     </div>
-    <div class="d-flex h-100">
-        <!-- TODO: body, also allow changes on edit -->
-        <!-- TODO: form rows -->
-        {{ competency.description }}
-        {{ competency.taxonomy }}
-        {{ competency.version }}
-        {{ competency.knowledgeArea }}
-        {{ competency.source }}
+    <div class="d-flex h-100 flex-column" [formGroup]="form">
+        <div class="form-group">
+            <label for="title-input" jhiTranslate="artemisApp.standardizedCompetency.model.title"></label>
+            <input type="text" class="form-control" id="title-input" formControlName="title" />
+        </div>
+        <div class="form-group">
+            <label for="description-input" jhiTranslate="artemisApp.standardizedCompetency.model.description"></label>
+            @if (isInEditMode) {
+                <jhi-markdown-editor
+                    [markdown]="descriptionControl.value"
+                    (markdownChange)="updateDescriptionControl($event)"
+                    id="description-input"
+                    class="markdown-preview"
+                    [enableFileUpload]="false"
+                />
+            } @else {
+                <div id="description-input" disabled="true" class="markdown-preview border rounded p-1" [innerHTML]="descriptionControl.value | htmlForMarkdown"></div>
+            }
+        </div>
+        <div class="form-group">
+            <label for="taxonomy-select" jhiTranslate="artemisApp.standardizedCompetency.model.taxonomy"></label>
+            <jhi-taxonomy-select selectId="taxonomy-select" [form]="taxonomyControl" />
+        </div>
+        <div class="form-group">
+            <label for="knowledge-area-select" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
+            <select id="knowledge-area-select" class="form-select" formControlName="knowledgeArea">
+                <option [ngValue]="undefined"></option>
+                @for (knowledgeArea of knowledgeAreas; track knowledgeArea.id) {
+                    <option [ngValue]="knowledgeArea">
+                        {{ '&nbsp;'.repeat(knowledgeArea.level * 2) + knowledgeArea.title }}
+                    </option>
+                }
+            </select>
+        </div>
+        <!-- TODO: add source handling in follow-up PR -->
     </div>
     @if (isInEditMode) {
         <div>

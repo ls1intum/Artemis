@@ -13,16 +13,16 @@
     <h4 jhiTranslate="artemisApp.standardizedCompetency.manage.filter"></h4>
     <div class="row">
         <div class="form-group col">
-            <label for="title-input" jhiTranslate="artemisApp.standardizedCompetency.model.title"> </label>
-            <input id="title-input" class="form-control" [(ngModel)]="competencyTitleFilter" />
+            <label for="title-filter" jhiTranslate="artemisApp.standardizedCompetency.model.title"> </label>
+            <input id="title-filter" class="form-control" [(ngModel)]="competencyTitleFilter" />
         </div>
         <div class="form-group col">
-            <label for="knowledge-area-select" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
-            <select [(ngModel)]="knowledgeAreaFilter" class="form-select" id="knowledge-area-select">
+            <label for="knowledge-area-filter" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
+            <select [(ngModel)]="knowledgeAreaFilter" class="form-select" id="knowledge-area-filter">
                 <option [ngValue]="undefined"></option>
                 @for (knowledgeArea of knowledgeAreaArray; track knowledgeArea.id) {
                     <option [ngValue]="knowledgeArea">
-                        {{ knowledgeArea.title ?? '' }}
+                        {{ '&nbsp;'.repeat(knowledgeArea.level * 2) + knowledgeArea.title }}
                     </option>
                 }
             </select>
@@ -30,7 +30,7 @@
     </div>
     <button class="btn btn-primary" (click)="filterByKnowledgeArea()">FILTER KAs</button>
     <div class="d-flex">
-        <mat-tree [dataSource]="dataSourceNested" [treeControl]="treeControlNested" [trackBy]="trackBy" class="card d-flex flex-grow-1 me-1 example-tree">
+        <mat-tree [dataSource]="dataSourceNested" [treeControl]="treeControlNested" [trackBy]="trackBy" class="card d-flex flex-grow-1 me-1 example-tree w-50">
             <mat-nested-tree-node *matTreeNodeDef="let node">
                 <div class="card p-2 w-100 rounded-0">
                     <div class="d-flex align-items-center w-100 clickable">
@@ -55,8 +55,15 @@
         @if (selectedCompetency) {
             <!-- TODO: move the card into the detail thingy also maybe move p-2 into card -->
             <!-- TODO: bug that if selecting another comp -> dont go out of edit mode XD -->
-            <div class="card p-2 d-flex">
-                <jhi-standardized-competency-detail class="h-100" [competency]="selectedCompetency" (onDelete)="deleteCompetency($event)" (onSave)="updateCompetency($event)" />
+            <div class="card p-2 d-flex flex-grow-1">
+                <jhi-standardized-competency-detail
+                    class="h-100"
+                    [competency]="selectedCompetency"
+                    (onDelete)="deleteCompetency($event)"
+                    (onSave)="updateCompetency($event)"
+                    [(isInEditMode)]="isEditing"
+                    [knowledgeAreas]="knowledgeAreaArray"
+                />
             </div>
         }
     </div>

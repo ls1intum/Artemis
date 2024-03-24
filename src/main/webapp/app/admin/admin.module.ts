@@ -41,6 +41,9 @@ import { KnowledgeAreaTreeComponent } from 'app/admin/standardized-competencies/
 import { KnowledgeAreaDetailComponent } from 'app/admin/standardized-competencies/knowledge-area-detail.component';
 import { StandardizedCompetencyDetailComponent } from 'app/admin/standardized-competencies/standardized-competency-detail.component';
 import { StandardizedCompetencyManagementComponent } from 'app/admin/standardized-competencies/standardized-competency-management.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 
 const ENTITY_STATES = [...adminState];
 
@@ -62,6 +65,9 @@ const ENTITY_STATES = [...adminState];
         MatTreeModule,
         MatButtonModule,
         MatIconModule,
+        ArtemisMarkdownEditorModule,
+        ArtemisMarkdownModule,
+        ArtemisCompetenciesModule,
     ],
     declarations: [
         AuditsComponent,

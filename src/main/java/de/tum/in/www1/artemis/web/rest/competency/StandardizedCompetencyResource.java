@@ -68,7 +68,7 @@ public class StandardizedCompetencyResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<List<KnowledgeArea>> getAllForTreeView() {
         log.debug("REST request to all knowledge areas for tree view");
-        // TODO: this works, but it does not go through because of the json stuff :))
+
         List<KnowledgeArea> knowledgeAreas = standardizedCompetencyService.getAllForTreeView();
 
         return ResponseEntity.ok().body(knowledgeAreas);

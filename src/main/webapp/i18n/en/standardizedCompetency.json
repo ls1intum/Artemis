@@ -13,6 +13,7 @@
             "model": {
                 "title": "Title",
                 "description": "Description",
+                "taxonomy": "Taxonomy",
                 "knowledgeArea": "Knowledge Area",
                 "version": "Version"
             }

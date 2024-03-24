@@ -6,7 +6,7 @@ import { KnowledgeArea, StandardizedCompetency } from 'app/entities/competency/s
     providedIn: 'root',
 })
 export class AdminStandardizedCompetencyService {
-    private resourceURL = 'api/standardized-competencies';
+    private resourceURL = 'api/admin/standardized-competencies';
 
     constructor(private httpClient: HttpClient) {}
 
