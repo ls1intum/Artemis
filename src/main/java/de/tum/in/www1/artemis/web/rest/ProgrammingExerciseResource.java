@@ -765,10 +765,6 @@ public class ProgrammingExerciseResource {
         if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
             continuousIntegrationService.orElseThrow().recreateBuildPlansForExercise(programmingExercise);
-            if (profileService.isLocalCi()) {
-                // recreating the build plans for the exercise means we need to store the updated exercise in the database
-                programmingExercise = programmingExerciseRepository.save(programmingExercise);
-            }
         }
 
         if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {

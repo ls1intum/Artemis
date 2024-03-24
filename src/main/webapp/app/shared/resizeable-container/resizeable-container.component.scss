@@ -22,6 +22,11 @@
         font-weight: 500;
         min-height: 45px;
     }
+
+    .card-body {
+        max-height: 100vh;
+        overflow-y: auto;
+    }
 }
 
 .left-body {

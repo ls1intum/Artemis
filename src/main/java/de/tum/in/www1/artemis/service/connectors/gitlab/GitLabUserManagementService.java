@@ -10,14 +10,9 @@ import org.gitlab4j.api.UserApi;
 import org.gitlab4j.api.models.AccessLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -25,8 +20,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRequestDTO;
-import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
+import de.tum.in.www1.artemis.service.connectors.vcs.VcsTokenManagementService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 
 @Service
@@ -41,20 +35,17 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     private final GitLabApi gitlabApi;
 
-    protected final RestTemplate restTemplate;
+    private final VcsTokenManagementService vcsTokenManagementService;
 
     @Value("${gitlab.use-pseudonyms:#{false}}")
     private boolean usePseudonyms;
 
-    @Value("${artemis.version-control.version-control-access-token:#{false}}")
-    private Boolean versionControlAccessToken;
-
     public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, GitLabApi gitlabApi, UserRepository userRepository,
-            @Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
+            GitLabPersonalAccessTokenManagementService gitLabPersonalAccessTokenManagementService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitlabApi = gitlabApi;
         this.userRepository = userRepository;
-        this.restTemplate = restTemplate;
+        vcsTokenManagementService = gitLabPersonalAccessTokenManagementService;
     }
 
     @Override
@@ -486,7 +477,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(getUsersName(user)).withCanCreateGroup(false)
                     .withCanCreateProject(false).withSkipConfirmation(true);
             gitlabUser = gitlabApi.getUserApi().createUser(gitlabUser, password, false);
-            generateVersionControlAccessTokenIfNecessary(gitlabUser, user);
+            generateVersionControlAccessTokenIfNecessary(user);
             return gitlabUser;
         }
         catch (GitLabApiException e) {
@@ -505,37 +496,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param user the Artemis user (where the token will be stored)
      */
     public void generateVersionControlAccessTokenIfNecessary(User user) {
-        UserApi userApi = gitlabApi.getUserApi();
-
-        final org.gitlab4j.api.models.User gitlabUser;
-        try {
-            gitlabUser = userApi.getUser(user.getLogin());
-            if (gitlabUser == null) {
-                // No GitLab user is found -> Do nothing
-                return;
-            }
-
-            generateVersionControlAccessTokenIfNecessary(gitlabUser, user);
-        }
-        catch (GitLabApiException e) {
-            log.error("Could not generate a Gitlab access token for user {}", user.getLogin(), e);
-        }
-    }
-
-    /**
-     * Generate a version control access token and store it in the user object, if it is needed.
-     * It is needed if
-     * 1. the config option is enabled, and
-     * 2. the user does not yet have an access token
-     *
-     * @param gitlabUser the Gitlab user (for which the token will be created)
-     * @param user       the Artemis user (where the token will be stored)
-     */
-    private void generateVersionControlAccessTokenIfNecessary(org.gitlab4j.api.models.User gitlabUser, User user) {
-        if (versionControlAccessToken && user.getVcsAccessToken() == null) {
-            String personalAccessToken = createPersonalAccessToken(gitlabUser.getId());
-            user.setVcsAccessToken(personalAccessToken);
-            userRepository.save(user);
+        if (user.getVcsAccessToken() == null) {
+            vcsTokenManagementService.createAccessToken(user);
         }
     }
 
@@ -574,35 +536,6 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to get ID for user " + username, e);
-        }
-    }
-
-    /**
-     * Create a personal access token for the user with the given id.
-     * The token has scopes "read_repository" and "write_repository".
-     *
-     * @param userId the id of the user in Gitlab
-     * @return the personal access token created for that user
-     */
-    private String createPersonalAccessToken(Long userId) {
-        // TODO: Change this to Gitlab4J api once it's supported: https://github.com/gitlab4j/gitlab4j-api/issues/653
-        var body = new GitLabPersonalAccessTokenRequestDTO("Artemis-Automatic-Access-Token", userId, new String[] { "read_repository", "write_repository" });
-
-        var entity = new HttpEntity<>(body);
-
-        try {
-            var response = restTemplate.exchange(gitlabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens", HttpMethod.POST, entity,
-                    GitLabPersonalAccessTokenResponseDTO.class);
-            GitLabPersonalAccessTokenResponseDTO responseBody = response.getBody();
-            if (responseBody == null || responseBody.getToken() == null) {
-                log.error("Could not create Gitlab personal access token for user with id {}, response is null", userId);
-                throw new GitLabException("Error while creating personal access token");
-            }
-            return responseBody.getToken();
-        }
-        catch (HttpClientErrorException e) {
-            log.error("Could not create Gitlab personal access token for user with id {}, response is null", userId);
-            throw new GitLabException("Error while creating personal access token");
         }
     }
 }

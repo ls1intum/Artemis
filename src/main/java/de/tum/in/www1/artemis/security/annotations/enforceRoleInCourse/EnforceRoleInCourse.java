@@ -34,5 +34,5 @@ public @interface EnforceRoleInCourse {
      *
      * @return the name of the field in the method parameters that contains the course id
      */
-    String courseIdFieldName() default "courseId";
+    String resourceIdFieldName() default "courseId";
 }

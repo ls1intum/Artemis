@@ -6,7 +6,7 @@ Alternative: Docker Compose Setup
 Getting Started with Docker Compose
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1. Install `Docker Desktop <https://docs.docker.com/desktop/#docker-for-mac>`__ or
+1. Install `Docker Desktop <https://docs.docker.com/desktop/install/mac-install/>`__ or
    `Docker Engine and Docker CLI with the Docker Compose Plugin <https://docs.docker.com/compose/install/>`__
    (``docker compose`` command).
 

@@ -80,4 +80,45 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
         expect(createStub).toHaveBeenCalledWith(course.id!, configurationId, formDataToTutorialGroupFreePeriodDTO(formData));
         expect(closeSpy).toHaveBeenCalledOnce();
     });
+
+    it('should throw an error when date and alternativeDate are undefined', () => {
+        let undefinedDate: Date | undefined;
+        const time = new Date('2023-12-31T12:00:00');
+        expect(() => {
+            CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(undefinedDate, time, undefinedDate);
+        }).toThrow('date and time are undefined');
+    });
+
+    it('should correctly combine date and time for freePeriods+', () => {
+        const startDate = new Date('2021-01-01');
+        const endDate: Date | undefined = new Date('2021-01-07');
+        const startTime: Date | undefined = undefined;
+        const endTime: Date | undefined = undefined;
+        const combinedStart = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined);
+        const combinedEnd = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate);
+        expect(combinedStart).toEqual(new Date('2021-01-01T00:00:00'));
+        expect(combinedEnd).toEqual(new Date('2021-01-07T23:59:00'));
+    });
+
+    it('should correctly combine date and time for freeDay', () => {
+        const startDate = new Date('2021-01-01');
+        const endDate: Date | undefined = undefined;
+        const startTime: Date | undefined = undefined;
+        const endTime: Date | undefined = undefined;
+        const combinedStart = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined);
+        const combinedEnd = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate);
+        expect(combinedStart).toEqual(new Date('2021-01-01T00:00:00'));
+        expect(combinedEnd).toEqual(new Date('2021-01-01T23:59:00'));
+    });
+
+    it('should correctly combine date and time for freePeriodWithinDay', () => {
+        const startDate = new Date('2021-01-01');
+        const endDate: Date | undefined = undefined;
+        const startTime: Date | undefined = new Date('2023-12-31T16:00:00');
+        const endTime: Date | undefined = new Date('2023-12-31T18:00:00');
+        const combinedStart = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined);
+        const combinedEnd = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate);
+        expect(combinedStart).toEqual(new Date('2021-01-01T16:00:00'));
+        expect(combinedEnd).toEqual(new Date('2021-01-01T18:00:00'));
+    });
 });
