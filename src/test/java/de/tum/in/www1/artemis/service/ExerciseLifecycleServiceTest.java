@@ -9,6 +9,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -22,7 +23,7 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentT
     @Autowired
     private ExerciseLifecycleService exerciseLifecycleService;
 
-    @Test
+    @RepeatedTest(1000)
     void testScheduleExerciseOnReleaseTask() {
         final ZonedDateTime now = ZonedDateTime.now();
 
@@ -44,31 +45,19 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentT
         assertThat(dueFuture.isDone()).isFalse();
         assertThat(assessmentDueFuture.isDone()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
-            assertEqual(releaseTrigger, true);
-            assertEqual(dueTrigger, false);
-            assertEqual(assessmentDueTrigger, false);
-        });
+        await().pollInterval(50, TimeUnit.MILLISECONDS).until(() -> releaseTrigger.booleanValue() && !dueTrigger.booleanValue() && !assessmentDueTrigger.booleanValue());
 
         assertThat(releaseFuture.isDone()).isTrue();
         assertThat(dueFuture.isDone()).isFalse();
         assertThat(assessmentDueFuture.isDone()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
-            assertEqual(releaseTrigger, true);
-            assertEqual(dueTrigger, true);
-            assertEqual(assessmentDueTrigger, false);
-        });
+        await().pollInterval(50, TimeUnit.MILLISECONDS).until(() -> releaseTrigger.booleanValue() && dueTrigger.booleanValue() && !assessmentDueTrigger.booleanValue());
 
         assertThat(releaseFuture.isDone()).isTrue();
         assertThat(dueFuture.isDone()).isTrue();
         assertThat(assessmentDueFuture.isDone()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
-            assertEqual(releaseTrigger, true);
-            assertEqual(dueTrigger, true);
-            assertEqual(assessmentDueTrigger, true);
-        });
+        await().pollInterval(50, TimeUnit.MILLISECONDS).until(() -> releaseTrigger.booleanValue() && dueTrigger.booleanValue() && assessmentDueTrigger.booleanValue());
 
         assertThat(releaseFuture.isDone()).isTrue();
         assertThat(dueFuture.isDone()).isTrue();
@@ -90,22 +79,18 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentT
 
         assertThat(future.isDone()).isFalse();
         assertThat(future.isCancelled()).isFalse();
-        assertEqual(trigger, false);
+        assertThat(trigger.booleanValue()).isFalse();
 
         future.cancel(false);
 
         assertThat(future.isDone()).isTrue();
         assertThat(future.isCancelled()).isTrue();
-        assertEqual(trigger, false);
+        assertThat(trigger.booleanValue()).isFalse();
 
         await().untilAsserted(() -> {
             assertThat(future.isDone()).isTrue();
             assertThat(future.isCancelled()).isTrue();
-            assertEqual(trigger, false);
+            assertThat(trigger.booleanValue()).isFalse();
         });
-    }
-
-    private void assertEqual(MutableBoolean testBoolean, boolean expected) {
-        assertThat(testBoolean.toBoolean()).isEqualTo(expected);
     }
 }
