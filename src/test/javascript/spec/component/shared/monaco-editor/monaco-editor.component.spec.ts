@@ -51,24 +51,24 @@ describe('MonacoEditorComponent', () => {
     });
 
     it('should notify when the text changes', () => {
-        const valueCallbackSpy = jest.fn();
+        const valueCallbackStub = jest.fn();
         fixture.detectChanges();
-        comp.textChanged.subscribe(valueCallbackSpy);
+        comp.textChanged.subscribe(valueCallbackStub);
         comp.setText(singleLineText);
-        expect(valueCallbackSpy).toHaveBeenCalledExactlyOnceWith(singleLineText);
+        expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith(singleLineText);
     });
 
     it('should only send a notification once per delay interval', fakeAsync(() => {
         const delay = 1000;
-        const valueCallbackSpy = jest.fn();
+        const valueCallbackStub = jest.fn();
         comp.textChangedEmitDelay = delay;
         fixture.detectChanges();
-        comp.textChanged.subscribe(valueCallbackSpy);
+        comp.textChanged.subscribe(valueCallbackStub);
         comp.setText('too early');
         tick(1);
         comp.setText(singleLineText);
         tick(delay);
-        expect(valueCallbackSpy).toHaveBeenCalledExactlyOnceWith(singleLineText);
+        expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith(singleLineText);
     }));
 
     it('should be set to readOnly depending on the input', () => {
