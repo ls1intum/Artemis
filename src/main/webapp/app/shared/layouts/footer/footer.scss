@@ -1,6 +1,7 @@
 :host {
     display: block;
     position: fixed;
+    height: var(--footer-height);
     left: 0;
     bottom: 0;
     background-color: var(--footer-bg);

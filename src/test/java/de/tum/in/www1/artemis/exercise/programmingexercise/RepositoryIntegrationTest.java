@@ -542,7 +542,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
 
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-plagiarism-view", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
 
         // Check if all files exist
@@ -561,7 +561,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
@@ -576,7 +576,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.FORBIDDEN, byte[].class, params);
+        request.get(studentRepoBaseUrl + participation.getId() + "/file-plagiarism-view", HttpStatus.FORBIDDEN, byte[].class, params);
     }
 
     @Test
@@ -589,7 +589,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
@@ -610,7 +610,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
@@ -631,7 +631,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
@@ -651,7 +651,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // student1 is NOT notified yet.
         addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
 
-        request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
+        request.getMap(studentRepoBaseUrl + participation.getId() + "/files-plagiarism-view", HttpStatus.FORBIDDEN, String.class, FileType.class);
     }
 
     @Test
@@ -669,7 +669,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // student1 is notified.
         addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student2", TEST_PREFIX + "student1");
 
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-plagiarism-view", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
 
         // Check if all files exist
