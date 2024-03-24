@@ -379,8 +379,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaintResponse.getComplaint().setAccepted(true);
         // 26 characters, above course limit but valid for exam exercises (where complaint limits don't apply)
         complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("abcdefghijklmnopqrstuvwxyz", true, Action.RESOLVE_COMPLAINT);
 
-        request.putWithResponseBody("/api/complaints/" + examExerciseComplaint.getId() + "/response", complaintResponse, ComplaintResponse.class, HttpStatus.OK);
+        request.patch("/api/complaints/" + examExerciseComplaint.getId() + "/response", complaintResponseUpdate, HttpStatus.OK);
 
         assertThat(textSubmission.getLatestResult()).isNotNull();
         assertThat(complaintRepo.findByResultId(textSubmission.getLatestResult().getId())).isPresent();
@@ -885,7 +886,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final Exam exam = ExamFactory.generateExam(course);
         examRepository.save(exam);
         // The complaint is about a course exercise, not an exam exercise
-        request.post("api/complaints?examId=" + exam.getId().toString(), complaint, HttpStatus.BAD_REQUEST);
+        request.post("api/complaints?examId=" + exam.getId(), complaint, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -949,7 +950,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
         request.get("/api/complaints", HttpStatus.FORBIDDEN, List.class, params);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        var fetchedComplaints = request.getList("/api/complaints/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.OK, Complaint.class);
+        var fetchedComplaints = request.getList("/api/complaints", HttpStatus.OK, Complaint.class, params);
         assertThat(fetchedComplaints.get(0).getId()).isEqualTo(storedComplaint.orElseThrow().getId().intValue());
         assertThat(fetchedComplaints.get(0).getComplaintText()).isEqualTo(storedComplaint.get().getComplaintText());
     }
