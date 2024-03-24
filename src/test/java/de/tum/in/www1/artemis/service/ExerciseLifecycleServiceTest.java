@@ -43,24 +43,27 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentT
         assertThat(releaseFuture.isDone()).isFalse();
         assertThat(dueFuture.isDone()).isFalse();
         assertThat(assessmentDueFuture.isDone()).isFalse();
+        assertThat(releaseTrigger.booleanValue()).isFalse();
+        assertThat(dueTrigger.booleanValue()).isFalse();
+        assertThat(assessmentDueTrigger.booleanValue()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).until(() -> releaseTrigger.booleanValue() && !dueTrigger.booleanValue() && !assessmentDueTrigger.booleanValue());
+        await().pollInterval(50, TimeUnit.MILLISECONDS).until(releaseFuture::isDone);
 
-        assertThat(releaseFuture.isDone()).isTrue();
-        assertThat(dueFuture.isDone()).isFalse();
-        assertThat(assessmentDueFuture.isDone()).isFalse();
+        assertThat(releaseTrigger.booleanValue()).isTrue();
+        assertThat(dueTrigger.booleanValue()).isFalse();
+        assertThat(assessmentDueTrigger.booleanValue()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).until(() -> releaseTrigger.booleanValue() && dueTrigger.booleanValue() && !assessmentDueTrigger.booleanValue());
+        await().pollInterval(50, TimeUnit.MILLISECONDS).until(dueFuture::isDone);
 
-        assertThat(releaseFuture.isDone()).isTrue();
-        assertThat(dueFuture.isDone()).isTrue();
-        assertThat(assessmentDueFuture.isDone()).isFalse();
+        assertThat(releaseTrigger.booleanValue()).isTrue();
+        assertThat(dueTrigger.booleanValue()).isTrue();
+        assertThat(assessmentDueTrigger.booleanValue()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).until(() -> releaseTrigger.booleanValue() && dueTrigger.booleanValue() && assessmentDueTrigger.booleanValue());
+        await().pollInterval(50, TimeUnit.MILLISECONDS).until(assessmentDueFuture::isDone);
 
-        assertThat(releaseFuture.isDone()).isTrue();
-        assertThat(dueFuture.isDone()).isTrue();
-        assertThat(assessmentDueFuture.isDone()).isTrue();
+        assertThat(releaseTrigger.booleanValue()).isTrue();
+        assertThat(dueTrigger.booleanValue()).isTrue();
+        assertThat(assessmentDueTrigger.booleanValue()).isTrue();
 
         assertThat(releaseFuture.isCancelled()).isFalse();
         assertThat(dueFuture.isCancelled()).isFalse();
