@@ -15,7 +15,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Team } from 'app/entities/team.model';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
-import { HttpResponse } from '@angular/common/http';
 
 describe('AccountService', () => {
     let accountService: AccountService;
@@ -535,7 +534,8 @@ describe('AccountService', () => {
         let fetchStub: jest.SpyInstance;
 
         beforeEach(() => {
-            fetchStub = jest.spyOn(accountService, 'fetch').mockReturnValue(of(new HttpResponse({ body: user })));
+            // @ts-ignore spying on private method
+            fetchStub = jest.spyOn(accountService, 'fetch');
         });
 
         it('should retrieve user if vcs token is missing', () => {
