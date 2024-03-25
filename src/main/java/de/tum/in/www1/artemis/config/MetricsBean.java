@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -30,6 +31,8 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
 import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
+import com.hazelcast.cluster.Member;
+import com.hazelcast.core.HazelcastInstance;
 import com.zaxxer.hikari.HikariDataSource;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -43,6 +46,7 @@ import de.tum.in.www1.artemis.repository.StatisticsRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import io.micrometer.core.instrument.*;
 
 @Profile(PROFILE_CORE)
@@ -92,6 +96,10 @@ public class MetricsBean {
 
     private final StatisticsRepository statisticsRepository;
 
+    private final Optional<SharedQueueManagementService> localCIBuildJobQueueServiceOptional;
+
+    private final HazelcastInstance hazelcastInstance;
+
     /**
      * List that stores active usernames (users with a submission within the last 14 days) which is refreshed
      * every 60 minutes.
@@ -139,12 +147,16 @@ public class MetricsBean {
 
     private MultiGauge releaseExamStudentMultiplierGauge;
 
+    private MultiGauge localCIRunningBuildJobGauge;
+
+    private MultiGauge localCIQueuedBuildJobGauge;
+
     private boolean scheduledMetricsEnabled = false;
 
     public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
             StudentExamRepository studentExamRepository, ExamRepository examRepository, CourseRepository courseRepository, UserRepository userRepository,
-            StatisticsRepository statisticsRepository) {
+            StatisticsRepository statisticsRepository, Optional<SharedQueueManagementService> localCIBuildJobQueueServiceOptional, HazelcastInstance hazelcastInstance) {
         this.meterRegistry = meterRegistry;
         this.env = env;
         this.taskScheduler = taskScheduler;
@@ -157,6 +169,8 @@ public class MetricsBean {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.statisticsRepository = statisticsRepository;
+        this.localCIBuildJobQueueServiceOptional = localCIBuildJobQueueServiceOptional;
+        this.hazelcastInstance = hazelcastInstance;
 
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
@@ -170,6 +184,11 @@ public class MetricsBean {
 
             registerExerciseAndExamMetrics();
             registerPublicArtemisMetrics();
+
+            if (localCIBuildJobQueueServiceOptional.isPresent()) {
+                registerLocalCIMetrics();
+                updateLocalCIMetrics();
+            }
         }
 
         // the data source is optional as it is not used during testing
@@ -231,6 +250,11 @@ public class MetricsBean {
         // Publish the number of existing WS subscriptions
         Gauge.builder("artemis.global.websocket.subscriptions", userRegistry, MetricsBean::extractWebsocketSubscriptionCount).strongReference(true)
                 .description("Number of subscriptions created on all Artemis instances").register(meterRegistry);
+    }
+
+    private void registerLocalCIMetrics() {
+        localCIRunningBuildJobGauge = MultiGauge.builder("artemis.global.localci.running").description("Number of running builds").register(meterRegistry);
+        localCIQueuedBuildJobGauge = MultiGauge.builder("artemis.global.localci.queued").description("Number of queued builds").register(meterRegistry);
     }
 
     private static double extractWebsocketUserCount(SimpUserRegistry userRegistry) {
@@ -346,7 +370,31 @@ public class MetricsBean {
         updateMultiGaugeIntegerForMinuteRanges(releaseExamGauge, examRepository::countExamsWithStartDateBetween);
         updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, examRepository::countExamUsersInExamsWithStartDateBetween);
 
+        if (localCIBuildJobQueueServiceOptional.isPresent()) {
+            updateLocalCIMetrics();
+        }
+
         log.info("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
+    }
+
+    private void updateLocalCIMetrics() {
+        var localCIBuildJobQueueService = localCIBuildJobQueueServiceOptional.orElseThrow();
+
+        var localCIRunningMetrics = new ArrayList<MultiGauge.Row<?>>();
+        Set<Member> hazelcastMembers = hazelcastInstance.getCluster().getMembers();
+
+        for (Member hazelcastMember : hazelcastMembers) {
+            String address = hazelcastMember.getAddress().toString();
+            Long numberOfQueuedBuildJobs = localCIBuildJobQueueService.getQueuedJobs().stream().filter(buildJobQueueItem -> buildJobQueueItem.buildAgentAddress().equals(address))
+                    .count();
+            localCIRunningMetrics.add(MultiGauge.Row.of(Tags.of("host", address), numberOfQueuedBuildJobs));
+        }
+
+        localCIRunningBuildJobGauge.register(localCIRunningMetrics, true);
+
+        var localCIQueueMetrics = new ArrayList<MultiGauge.Row<?>>();
+        localCIQueueMetrics.add(MultiGauge.Row.of(Tags.of(new String[0]), localCIBuildJobQueueService.getQueuedJobs().size()));
+        localCIQueuedBuildJobGauge.register(localCIQueueMetrics, true);
     }
 
     @FunctionalInterface
