@@ -29,8 +29,8 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentT
         Exercise exercise = new TextExercise();
         exercise.setTitle("ExerciseLifecycleServiceTest:testScheduleExerciseOnReleaseTask");
         exercise.setReleaseDate(now.plus(200, ChronoUnit.MILLIS));
-        exercise.setDueDate(now.plus(400, ChronoUnit.MILLIS));
-        exercise.setAssessmentDueDate(now.plus(600, ChronoUnit.MILLIS));
+        exercise.setDueDate(now.plus(500, ChronoUnit.MILLIS));
+        exercise.setAssessmentDueDate(now.plus(1000, ChronoUnit.MILLIS));
 
         MutableBoolean releaseTrigger = new MutableBoolean(false);
         MutableBoolean dueTrigger = new MutableBoolean(false);
@@ -47,19 +47,19 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentT
         assertThat(dueTrigger.booleanValue()).isFalse();
         assertThat(assessmentDueTrigger.booleanValue()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).until(releaseFuture::isDone);
+        await().pollInterval(20, TimeUnit.MILLISECONDS).until(releaseFuture::isDone);
 
         assertThat(releaseTrigger.booleanValue()).isTrue();
         assertThat(dueTrigger.booleanValue()).isFalse();
         assertThat(assessmentDueTrigger.booleanValue()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).until(dueFuture::isDone);
+        await().pollInterval(20, TimeUnit.MILLISECONDS).until(dueFuture::isDone);
 
         assertThat(releaseTrigger.booleanValue()).isTrue();
         assertThat(dueTrigger.booleanValue()).isTrue();
         assertThat(assessmentDueTrigger.booleanValue()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).until(assessmentDueFuture::isDone);
+        await().pollInterval(20, TimeUnit.MILLISECONDS).until(assessmentDueFuture::isDone);
 
         assertThat(releaseTrigger.booleanValue()).isTrue();
         assertThat(dueTrigger.booleanValue()).isTrue();
