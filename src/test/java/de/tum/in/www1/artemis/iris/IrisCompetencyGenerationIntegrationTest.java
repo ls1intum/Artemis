@@ -71,6 +71,6 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     void testAllPreAuthorize() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/competencies/generate-from-description/", "a", HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course.getId() + "/competencies/generate-from-description", "a", HttpStatus.FORBIDDEN);
     }
 }
