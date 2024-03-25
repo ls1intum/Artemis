@@ -37,7 +37,8 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
     List<OneToOneChat> findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     @Query("""
-            SELECT o FROM OneToOneChat o
+            SELECT DISTINCT o
+            FROM OneToOneChat o
                 LEFT JOIN FETCH o.conversationParticipants p
                 LEFT JOIN FETCH p.user u
                 LEFT JOIN FETCH u.groups
