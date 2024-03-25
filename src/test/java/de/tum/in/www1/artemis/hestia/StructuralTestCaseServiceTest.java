@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -20,6 +19,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
+import de.tum.in.www1.artemis.localvcci.AbstractLocalCILocalVCIntegrationTest;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.hestia.structural.StructuralSolutionEntryGenerationException;
 import de.tum.in.www1.artemis.service.hestia.structural.StructuralTestCaseService;
@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.util.LocalRepository;
  * Tests for the StructuralTestCaseService
  * Test if solution entries are generated as expected for structural tests
  */
-class StructuralTestCaseServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTest {
 
     private static final String TEST_PREFIX = "structuraltestcaseservice";
 
