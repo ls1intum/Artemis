@@ -7,8 +7,6 @@ import java.util.*;
 
 import jakarta.annotation.PostConstruct;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -51,8 +49,6 @@ import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
 @Import(SecurityProblemSupport.class)
 @Profile(PROFILE_CORE)
 public class SecurityConfiguration {
-
-    private final static Logger log = LoggerFactory.getLogger(SecurityConfiguration.class);
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
@@ -154,11 +150,7 @@ public class SecurityConfiguration {
                 .requestMatchers(antMatcher("/websocket/**")).permitAll()
                 .requestMatchers(antMatcher("/.well-known/jwks.json")).permitAll()
                 .requestMatchers(antMatcher("/git/**")).permitAll()
-                .requestMatchers(antMatcher("/management/prometheus/**")).access((authentication, context) -> {
-                    log.info("Monitoring prometheus request from IP: " + context.getRequest().getRemoteAddr());
-                    log.info("Monitoring IP addresses: " + monitoringIpAddresses);
-                    return new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr()));
-                })
+                .requestMatchers(antMatcher("/management/prometheus/**")).access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
                 .requestMatchers(antMatcher("/**")).authenticated()
             )
             .with(securityConfigurerAdapter(), (c) -> c.configure(http));
