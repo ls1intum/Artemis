@@ -15,7 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 
-class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "programmingexercise";
 
@@ -66,15 +66,15 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
-        bambooRequestMockProvider.enableMockingOfRequests();
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        gitlabRequestMockProvider.enableMockingOfRequests();
         programmingExercise.setProblemStatement(newProblem);
         programmingExercise.setTitle(newTitle);
 
-        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getTemplateBuildPlanId(), true, false);
-        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getSolutionBuildPlanId(), true, false);
-        bitbucketRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
-        bitbucketRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(), programmingExercise.getProjectKey(), true);
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
+        gitlabRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), true);
+        gitlabRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(), true);
 
         var programmingExerciseCountBefore = programmingExerciseRepository.count();
 
@@ -164,12 +164,12 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
         programmingExercise.setAssessmentType(assessmentType);
 
         if (assessmentType == AssessmentType.AUTOMATIC) {
-            bambooRequestMockProvider.enableMockingOfRequests();
-            bitbucketRequestMockProvider.enableMockingOfRequests();
-            bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getTemplateBuildPlanId(), true, false);
-            bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getSolutionBuildPlanId(), true, false);
-            bitbucketRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
-            bitbucketRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(), programmingExercise.getProjectKey(), true);
+            jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+            gitlabRequestMockProvider.enableMockingOfRequests();
+            jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+            jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
+            gitlabRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), true);
+            gitlabRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(), true);
         }
 
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
