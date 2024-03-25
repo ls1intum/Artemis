@@ -43,8 +43,7 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
                 LEFT JOIN FETCH p.user u
                 LEFT JOIN FETCH u.groups
             WHERE o.course.id = :courseId
-                AND p.conversation = o
-                AND (p.user.id = :userIdA OR p.user.id = :userIdB)
+                AND (u.id = :userIdA OR u.id = :userIdB)
             """)
     Optional<OneToOneChat> findBetweenUsersWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
 
