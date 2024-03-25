@@ -7,7 +7,9 @@
             "numberOfCurrentBuildJobs": "Anzahl aktueller Build Jobs",
             "runningBuildJobs": "Laufende Build Jobs",
             "status": "Status",
-            "recentBuildJobs": "Letzte Build Jobs"
+            "recentBuildJobs": "Letzte Build Jobs",
+            "running": "Laufend",
+            "idle": "Inaktiv"
         }
     }
 }

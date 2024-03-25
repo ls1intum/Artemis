@@ -73,7 +73,8 @@ spotless {
                     "**/build/**",
                     "**/src/main/generated/**",
                     "**/src/main/resources/templates/**",
-                    "/docker/**"
+                    "/docker/**",
+                    "checked-out-repos/**"
                 )
             }
         }

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Competency } from 'app/entities/competency.model';
@@ -13,31 +13,44 @@ export interface VideoUnitFormData {
     competencies?: Competency[];
 }
 
-function videoUrlValidator(control: AbstractControl) {
-    if (control.value === undefined || control.value === null || control.value === '') {
-        return null;
-    }
-
-    const videoInfo = urlParser.parse(control.value);
-    return videoInfo ? null : { invalidVideoUrl: true };
+function isTumLiveUrl(url: URL): boolean {
+    return url.host === 'live.rbg.tum.de';
 }
 
-function urlValidator(control: AbstractControl) {
-    let validUrl = true;
+function isVideoOnlyTumUrl(url: URL): boolean {
+    return url?.searchParams.get('video_only') === '1';
+}
 
-    // for certain cases like embed links for vimeo
-    const regex = /^\/\/.*$/;
-    if (control.value && control.value.match(regex)) {
-        return null;
+function videoSourceTransformUrlValidator(control: AbstractControl): ValidationErrors | undefined {
+    const urlValue = control.value;
+    if (!urlValue) {
+        return undefined;
     }
-
+    let parsedUrl, url;
     try {
-        new URL(control.value);
+        url = new URL(urlValue);
+        parsedUrl = urlParser.parse(urlValue);
     } catch {
-        validUrl = false;
+        //intentionally empty
     }
+    // The URL is valid if it's a TUM-Live URL or if it can be parsed by the js-video-url-parser.
+    if ((url && isTumLiveUrl(url)) || parsedUrl) {
+        return undefined;
+    }
+    return { invalidVideoUrl: true };
+}
 
-    return validUrl ? null : { invalidUrl: true };
+function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | undefined {
+    let url;
+    try {
+        url = new URL(control.value);
+    } catch {
+        // intentionally empty
+    }
+    if (url && !(isTumLiveUrl(url) && !isVideoOnlyTumUrl(url))) {
+        return undefined;
+    }
+    return { invalidVideoUrl: true };
 }
 
 @Component({
@@ -61,8 +74,8 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
 
     faTimes = faTimes;
 
-    urlValidator = urlValidator;
-    videoUrlValidator = videoUrlValidator;
+    videoSourceUrlValidator = videoSourceUrlValidator;
+    videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
     // Icons
     faArrowLeft = faArrowLeft;
@@ -108,8 +121,8 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
             name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
             description: [undefined as string | undefined, [Validators.maxLength(1000)]],
             releaseDate: [undefined as dayjs.Dayjs | undefined],
-            source: [undefined as string | undefined, [Validators.required, this.urlValidator]],
-            urlHelper: [undefined as string | undefined, this.videoUrlValidator],
+            source: [undefined as string | undefined, [Validators.required, this.videoSourceUrlValidator]],
+            urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
             competencies: [undefined as Competency[] | undefined],
         });
     }
@@ -141,6 +154,11 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
     }
 
     extractEmbeddedUrl(videoUrl: string) {
+        const url = new URL(videoUrl);
+        if (isTumLiveUrl(url)) {
+            url.searchParams.set('video_only', '1');
+            return url.toString();
+        }
         return urlParser.create({
             videoInfo: urlParser.parse(videoUrl)!,
             format: 'embed',

@@ -22,7 +22,7 @@ public abstract class AbstractUMLDiagramTest {
 
     // TODO: we should not mock like this!
     protected ModelingPlagiarismDetectionService modelingPlagiarismDetectionService = new ModelingPlagiarismDetectionService(mock(PlagiarismWebsocketService.class),
-            mock(PlagiarismCacheService.class), new PlagiarismService(null, null, null, null, null));
+            mock(PlagiarismCacheService.class), new PlagiarismService(null, null, null, null, null, null));
 
     protected void compareSubmissions(ModelingSubmission modelingSubmission1, ModelingSubmission modelingSubmission2, double minimumSimilarity, double expectedSimilarity) {
         // not really necessary, but avoids issues.
