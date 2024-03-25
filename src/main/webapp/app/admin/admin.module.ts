@@ -35,6 +35,7 @@ import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-confi
 import { EditLtiConfigurationComponent } from 'app/admin/lti-configuration/edit-lti-configuration.component';
 import { BuildAgentsComponent } from 'app/localci/build-agents/build-agents.component';
 import { UserImportModule } from 'app/shared/user-import/user-import.module';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 const ENTITY_STATES = [...adminState];
 
@@ -54,6 +55,7 @@ const ENTITY_STATES = [...adminState];
         ArtemisSharedComponentModule,
         ReactiveFormsModule,
         UserImportModule,
+        SubmissionResultStatusModule,
     ],
     declarations: [
         AuditsComponent,
