@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.enumeration.BuildJobResult;
+import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -118,7 +118,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         BuildJob buildJob = buildJobOptional.orElseThrow();
 
-        assertThat(buildJob.getBuildJobResult()).isEqualTo(BuildJobResult.SUCCESSFUL);
+        assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
         assertThat(buildJob.getRepositoryType()).isEqualTo(RepositoryType.USER);
         assertThat(buildJob.getCommitHash()).isEqualTo(commitHash);
         assertThat(buildJob.getTriggeredByPushTo()).isEqualTo(RepositoryType.USER);

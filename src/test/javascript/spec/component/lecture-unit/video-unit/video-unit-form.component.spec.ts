@@ -43,8 +43,8 @@ describe('VideoUnitFormComponent', () => {
     });
 
     it('should not submit a form when name is missing', () => {
-        jest.spyOn(videoUnitFormComponent, 'urlValidator').mockReturnValue(null);
-        jest.spyOn(videoUnitFormComponent, 'videoUrlValidator').mockReturnValue(null);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceUrlValidator').mockReturnValue(undefined);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceTransformUrlValidator').mockReturnValue(undefined);
         videoUnitFormComponentFixture.detectChanges();
         const exampleDescription = 'lorem ipsum';
         videoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
@@ -67,8 +67,8 @@ describe('VideoUnitFormComponent', () => {
     });
 
     it('should not submit a form when source is missing', () => {
-        jest.spyOn(videoUnitFormComponent, 'urlValidator').mockReturnValue(null);
-        jest.spyOn(videoUnitFormComponent, 'videoUrlValidator').mockReturnValue(null);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceUrlValidator').mockReturnValue(undefined);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceTransformUrlValidator').mockReturnValue(undefined);
         videoUnitFormComponentFixture.detectChanges();
         const exampleName = 'test';
         videoUnitFormComponent.nameControl!.setValue(exampleName);
@@ -92,8 +92,8 @@ describe('VideoUnitFormComponent', () => {
     });
 
     it('should submit valid form', () => {
-        jest.spyOn(videoUnitFormComponent, 'urlValidator').mockReturnValue(null);
-        jest.spyOn(videoUnitFormComponent, 'videoUrlValidator').mockReturnValue(null);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceUrlValidator').mockReturnValue(undefined);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceTransformUrlValidator').mockReturnValue(undefined);
         videoUnitFormComponentFixture.detectChanges();
         const exampleName = 'test';
         videoUnitFormComponent.nameControl!.setValue(exampleName);
@@ -129,8 +129,8 @@ describe('VideoUnitFormComponent', () => {
 
     it('should correctly transform YouTube URL into embeddable format', () => {
         jest.spyOn(videoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(validYouTubeUrlInEmbeddableFormat);
-        jest.spyOn(videoUnitFormComponent, 'urlValidator').mockReturnValue(null);
-        jest.spyOn(videoUnitFormComponent, 'videoUrlValidator').mockReturnValue(null);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceUrlValidator').mockReturnValue(undefined);
+        jest.spyOn(videoUnitFormComponent, 'videoSourceTransformUrlValidator').mockReturnValue(undefined);
 
         videoUnitFormComponentFixture.detectChanges();
 
@@ -141,6 +141,22 @@ describe('VideoUnitFormComponent', () => {
 
         return videoUnitFormComponentFixture.whenStable().then(() => {
             expect(videoUnitFormComponent.sourceControl?.value).toEqual(validYouTubeUrlInEmbeddableFormat);
+        });
+    });
+
+    it('should correctly transform TUM-Live URL without video only into embeddable format', () => {
+        const tumLiveUrl = 'https://live.rbg.tum.de/w/test/26';
+        const expectedUrl = 'https://live.rbg.tum.de/w/test/26?video_only=1';
+
+        videoUnitFormComponentFixture.detectChanges();
+        videoUnitFormComponent.urlHelperControl!.setValue(tumLiveUrl);
+        videoUnitFormComponentFixture.detectChanges();
+
+        const transformButton = videoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#transformButton');
+        transformButton.click();
+
+        return videoUnitFormComponentFixture.whenStable().then(() => {
+            expect(videoUnitFormComponent.sourceControl?.value).toEqual(expectedUrl);
         });
     });
 
