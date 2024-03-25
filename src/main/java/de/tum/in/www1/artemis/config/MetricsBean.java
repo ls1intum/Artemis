@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -31,8 +30,6 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
 import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
-import com.hazelcast.cluster.Member;
-import com.hazelcast.core.HazelcastInstance;
 import com.zaxxer.hikari.HikariDataSource;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -47,6 +44,7 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import io.micrometer.core.instrument.*;
 
 @Profile(PROFILE_CORE)
@@ -97,8 +95,6 @@ public class MetricsBean {
     private final StatisticsRepository statisticsRepository;
 
     private final Optional<SharedQueueManagementService> localCIBuildJobQueueServiceOptional;
-
-    private final HazelcastInstance hazelcastInstance;
 
     /**
      * List that stores active usernames (users with a submission within the last 14 days) which is refreshed
@@ -156,7 +152,7 @@ public class MetricsBean {
     public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
             StudentExamRepository studentExamRepository, ExamRepository examRepository, CourseRepository courseRepository, UserRepository userRepository,
-            StatisticsRepository statisticsRepository, Optional<SharedQueueManagementService> localCIBuildJobQueueServiceOptional, HazelcastInstance hazelcastInstance) {
+            StatisticsRepository statisticsRepository, Optional<SharedQueueManagementService> localCIBuildJobQueueServiceOptional) {
         this.meterRegistry = meterRegistry;
         this.env = env;
         this.taskScheduler = taskScheduler;
@@ -170,7 +166,6 @@ public class MetricsBean {
         this.userRepository = userRepository;
         this.statisticsRepository = statisticsRepository;
         this.localCIBuildJobQueueServiceOptional = localCIBuildJobQueueServiceOptional;
-        this.hazelcastInstance = hazelcastInstance;
 
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
@@ -379,17 +374,12 @@ public class MetricsBean {
 
     private void updateLocalCIMetrics() {
         var localCIBuildJobQueueService = localCIBuildJobQueueServiceOptional.orElseThrow();
+        var buildAgents = localCIBuildJobQueueService.getBuildAgentInformation();
 
         var localCIRunningMetrics = new ArrayList<MultiGauge.Row<?>>();
-        Set<Member> hazelcastMembers = hazelcastInstance.getCluster().getMembers();
-
-        for (Member hazelcastMember : hazelcastMembers) {
-            String address = hazelcastMember.getAddress().toString();
-            Long numberOfQueuedBuildJobs = localCIBuildJobQueueService.getQueuedJobs().stream().filter(buildJobQueueItem -> buildJobQueueItem.buildAgentAddress().equals(address))
-                    .count();
-            localCIRunningMetrics.add(MultiGauge.Row.of(Tags.of("host", address), numberOfQueuedBuildJobs));
+        for (LocalCIBuildAgentInformation buildAgent : buildAgents) {
+            localCIRunningMetrics.add(MultiGauge.Row.of(Tags.of("host", buildAgent.name()), buildAgent.numberOfCurrentBuildJobs()));
         }
-
         localCIRunningBuildJobGauge.register(localCIRunningMetrics, true);
 
         var localCIQueueMetrics = new ArrayList<MultiGauge.Row<?>>();
