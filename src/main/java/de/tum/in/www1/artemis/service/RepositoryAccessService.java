@@ -2,10 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.time.ZonedDateTime;
-
-import javax.annotation.Nullable;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +15,6 @@ import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
 /**
@@ -29,27 +24,16 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 @Service
 public class RepositoryAccessService {
 
-    private final ParticipationAuthorizationCheckService participationAuthCheckService;
-
     private final PlagiarismService plagiarismService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final ExamSubmissionService examSubmissionService;
-
     private final ExerciseDateService exerciseDateService;
 
-    private final SubmissionPolicyService submissionPolicyService;
-
-    public RepositoryAccessService(ParticipationAuthorizationCheckService participationAuthCheckService, PlagiarismService plagiarismService,
-            AuthorizationCheckService authorizationCheckService, ExamSubmissionService examSubmissionService, ExerciseDateService exerciseDateService,
-            SubmissionPolicyService submissionPolicyService) {
-        this.participationAuthCheckService = participationAuthCheckService;
+    public RepositoryAccessService(PlagiarismService plagiarismService, AuthorizationCheckService authorizationCheckService, ExerciseDateService exerciseDateService) {
         this.plagiarismService = plagiarismService;
         this.authorizationCheckService = authorizationCheckService;
-        this.examSubmissionService = examSubmissionService;
         this.exerciseDateService = exerciseDateService;
-        this.submissionPolicyService = submissionPolicyService;
     }
 
     /**
@@ -60,159 +44,94 @@ public class RepositoryAccessService {
      * @param user                     The user who wants to access the repository.
      * @param programmingExercise      The programming exercise of the participation with the submission policy set.
      * @param repositoryActionType     The type of action that the user wants to perform on the repository (i.e. WRITE, READ or RESET).
+     * @throws AccessForbiddenException If the user is not allowed to access the repository.
      */
     public void checkAccessRepositoryElseThrow(ProgrammingExerciseParticipation programmingParticipation, User user, ProgrammingExercise programmingExercise,
-            RepositoryActionType repositoryActionType) {
+            RepositoryActionType repositoryActionType) throws AccessForbiddenException {
         boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        boolean isStudent = authorizationCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isTeachingAssistant = authorizationCheckService.isTeachingAssistantInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        boolean isStudentParticipation = programmingParticipation instanceof StudentParticipation;
-
-        // NOTE: the exerciseStartDate can be null, e.g. if no release and no start is defined for a course exercise
-        @Nullable
-        ZonedDateTime exerciseStartDate = programmingExercise.getParticipationStartDate();
+        boolean atLeastStudent = authorizationCheckService.isAtLeastStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
         // The user is allowed to access the repository in any way if they are at least an editor or if they are a teaching assistant and only want to read the repository.
         if (isAtLeastEditor || (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ)) {
             return;
         }
 
-        // Error case 1: The user does not have permissions to access the participation or the submission for plagiarism comparison.
-        checkHasParticipationPermissionsOrCanAccessSubmissionForPlagiarismComparisonElseThrow(programmingParticipation, user, programmingExercise);
-
-        // Error case 2: The user's participation is locked.
-        checkIsTryingToAccessLockedParticipation(programmingParticipation, programmingExercise, repositoryActionType);
-
-        // Error case 3: A user tries to push into a base repository (in that case the participation is not a StudentParticipation but Template or Solution)
-        if (repositoryActionType == RepositoryActionType.WRITE && !isStudentParticipation) {
-            throw new AccessUnauthorizedException();
+        // The user has to be at least a student in the course to access the repository.
+        // We also check if the user is the owner of the participation and if it's a student participation.
+        if (atLeastStudent && programmingParticipation instanceof StudentParticipation studentParticipation) {
+            boolean ownerOfParticipation = authorizationCheckService.isOwnerOfParticipation(studentParticipation, user);
+            if (ownerOfParticipation) {
+                if (hasAccessToOwnStudentParticipation(programmingExercise, repositoryActionType, studentParticipation, isTeachingAssistant, programmingParticipation.isLocked())) {
+                    return;
+                }
+            }
         }
 
-        // Error case 4: A student tries to push into a repository that does not belong to them.
-        if (repositoryActionType == RepositoryActionType.WRITE && !((StudentParticipation) programmingParticipation).isOwnedBy(user)) {
-            throw new AccessUnauthorizedException();
-        }
-
-        // Error case 5: The student can reset the repository only before and a tutor/instructor only after the due date has passed
-        if (repositoryActionType == RepositoryActionType.RESET) {
-            checkAccessRepositoryForReset(programmingParticipation, isStudent, programmingExercise);
-        }
-
-        // Error case 6: Check if the user is allowed to access the repository concerning the dates
-        if (isStudent) {
-            checkIsStudentAllowedToAccessRepositoryConcerningDates(programmingParticipation, repositoryActionType, exerciseStartDate);
-        }
-
-        // Error case 7: Check if the user is allowed to submit for the exam
-        if (repositoryActionType == RepositoryActionType.WRITE && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false)) {
-            throw new AccessForbiddenException();
-        }
+        throw new AccessForbiddenException("You are not allowed to access the repository of this programming exercise.");
     }
 
     /**
-     * Checks if the user has access to repository concerning the dates.
+     * Helper method to check if the student or teaching assistant has access to their own student participation.
      *
-     * @param programmingParticipation The participation for which the repository should be accessed.
-     * @param repositoryActionType     The type of action that the user wants to perform on the repository (i.e. WRITE, READ or RESET).
-     * @param exerciseStartDate        The start date of the exercise.
+     * @param programmingExercise  The programming exercise.
+     * @param repositoryActionType The type of action that the user wants to perform on the repository (i.e. WRITE, READ or RESET).
+     * @param studentParticipation The student participation.
+     * @param isTeachingAssistant  True if the user is a teaching assistant, false otherwise.
+     * @param isLocked             True if the participation is locked, false otherwise.
+     * @return True if the user has access to the repository, false otherwise.
      */
-    private void checkIsStudentAllowedToAccessRepositoryConcerningDates(ProgrammingExerciseParticipation programmingParticipation, RepositoryActionType repositoryActionType,
-            @Nullable ZonedDateTime exerciseStartDate) {
-        // if the exercise has not started yet, the student is not allowed to access the repository
-        if (exerciseStartDate != null && exerciseStartDate.isAfter(ZonedDateTime.now())) {
-            throw new AccessForbiddenException();
-        }
-        else {
-            // if the exercise has started, the student is allowed to access the repository for read actions
-            // for the other actions, the student is only allowed to access the repository if the due date has not passed yet
-            // or the student is in practice mode
-            if (repositoryActionType != RepositoryActionType.READ && exerciseDateService.isAfterDueDate(programmingParticipation)
-                    && !((StudentParticipation) programmingParticipation).isPracticeMode()) {
-                throw new AccessForbiddenException();
-            }
-        }
-    }
+    private boolean hasAccessToOwnStudentParticipation(ProgrammingExercise programmingExercise, RepositoryActionType repositoryActionType,
+            StudentParticipation studentParticipation, boolean isTeachingAssistant, boolean isLocked) {
+        boolean hasStarted = exerciseDateService.hasExerciseStarted(programmingExercise);
 
-    private void checkIsTryingToAccessLockedParticipation(ProgrammingExerciseParticipation programmingParticipation, ProgrammingExercise programmingExercise,
-            RepositoryActionType repositoryActionType) {
-        if (repositoryActionType == RepositoryActionType.WRITE && programmingParticipation.isLocked()) {
-            // Return a message to the client.
-            String errorMessage;
-            if (!programmingExercise.isReleased()) {
-                errorMessage = "submitBeforeStartDate";
-            }
-            else if (exerciseDateService.isAfterDueDate(programmingParticipation)) {
-                errorMessage = "submitAfterDueDate";
-            }
-            else if (programmingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy lockRepositoryPolicy
-                    && lockRepositoryPolicy.getSubmissionLimit() <= submissionPolicyService.getParticipationSubmissionCount((Participation) programmingParticipation)) {
-                errorMessage = "submitAfterReachingSubmissionLimit";
-            }
-            else {
-                throw new IllegalStateException("The participation is locked but the reason is unknown.");
-            }
-
-            throw new AccessForbiddenException(errorMessage);
+        if (!hasStarted) {
+            // Only teaching assistants have access to the repository before the exercise has started.
+            return isTeachingAssistant;
         }
+
+        return hasAccessAfterExerciseStart(studentParticipation, repositoryActionType, isLocked);
     }
 
     /**
-     * Checks if the user has permissions to access the participation.
-     * If not the there needs to exist a plagiarism comparison for the participation and the user needs to have access to the submission.
-     * If the user does have permissions for accessing the participation, the user needs to have access to the submission for plagiarism comparison if one exists.
-     * Throws an {@link AccessForbiddenException} otherwise.
+     * Checks if the student or teaching assistant has access to the repository of the given participation after the exercise has started.
      *
-     * @param programmingParticipation The participation for which the repository should be accessed.
-     * @param user                     The user who wants to access the repository.
-     * @param programmingExercise      The programming exercise of the participation with the submission policy set.
+     * @param studentParticipation The student participation.
+     * @param repositoryActionType The type of action that the user wants to perform on the repository (i.e. WRITE, READ or RESET).
+     * @return True if the user has access to the repository, false otherwise.
      */
-    private void checkHasParticipationPermissionsOrCanAccessSubmissionForPlagiarismComparisonElseThrow(ProgrammingExerciseParticipation programmingParticipation, User user,
-            ProgrammingExercise programmingExercise) {
-        boolean hasPermissions = participationAuthCheckService.canAccessParticipation(programmingParticipation, user);
-        var exerciseDueDate = programmingExercise.isExamExercise() ? programmingExercise.getExerciseGroup().getExam().getEndDate() : programmingExercise.getDueDate();
-        boolean hasAccessToSubmission = plagiarismService.hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), exerciseDueDate);
-        boolean hasPlagiarismComparison = plagiarismService.hasPlagiarismComparison(programmingParticipation.getId());
+    private boolean hasAccessAfterExerciseStart(StudentParticipation studentParticipation, RepositoryActionType repositoryActionType, boolean isLocked) {
+        // The user always has read permissions after the exercise has started.
+        if (repositoryActionType == RepositoryActionType.READ) {
+            return true;
+        }
+        if (isLocked) {
+            // The user does not have write or reset permissions if the participation is locked.
+            return false;
+        }
 
-        if (!hasPermissions) {
-            if (!(hasAccessToSubmission && hasPlagiarismComparison)) {
-                throw new AccessForbiddenException();
-            }
-        }
-        else if (!hasAccessToSubmission && hasPlagiarismComparison) {
-            throw new AccessForbiddenException();
-        }
+        // Check if the user has write or reset permissions.
+        return hasWriteOrResetPermissionsForUnlockedParticipation(studentParticipation);
     }
 
-    /*
-     * The student can reset the repository only before and a tutor/instructor only after the due date has passed
+    /**
+     * Helper method that checks if the student or teaching assistant has write or reset permissions
+     * for the given programming participation.
+     *
+     * @param studentParticipation The student participation.
+     * @return True if the user has write or reset permissions, false otherwise.
      */
-    private void checkAccessRepositoryForReset(ProgrammingExerciseParticipation programmingExerciseParticipation, boolean isStudent, ProgrammingExercise programmingExercise) {
-        boolean isOwner = true; // true for Solution- and TemplateProgrammingExerciseParticipation
-        if (programmingExerciseParticipation instanceof StudentParticipation studentParticipation) {
-            isOwner = authorizationCheckService.isOwnerOfParticipation(studentParticipation);
-        }
-        if (isStudent && programmingExerciseParticipation.isLocked()) {
-            throw new AccessForbiddenException();
-        }
-        // A tutor/instructor who is owner of the exercise should always be able to reset the repository
-        else if (!isStudent && !isOwner) {
-            // The user trying to reset the repository is at least a tutor in the course and the repository does not belong to them.
-            // This might be a tutor that resets the repository during assessment.
-            // If the student is still able to submit, don't allow for the tutor to reset the repository.
+    private boolean hasWriteOrResetPermissionsForUnlockedParticipation(StudentParticipation studentParticipation) {
+        boolean beforeDueDate = exerciseDateService.isBeforeDueDate(studentParticipation);
+        boolean isPracticeMode = studentParticipation.isPracticeMode();
 
-            // For a regular course exercise, the participation must be locked.
-            if (programmingExercise.isCourseExercise() && !programmingExerciseParticipation.isLocked()) {
-                throw new AccessForbiddenException();
-            }
-
-            // For an exam exercise, the student must not be allowed to submit anymore.
-            // Retrieving the student via this type cast is safe because isOwner is false here which means that "programmingExerciseParticipation instanceof StudentParticipation"
-            // must have been true in the check above.
-            var optStudent = ((StudentParticipation) programmingExerciseParticipation).getStudent();
-            if (optStudent.isPresent() && programmingExercise.isExamExercise() && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get(), false)) {
-                throw new AccessForbiddenException();
-            }
+        // The user has write or reset permissions if the due date has not passed yet.
+        if (beforeDueDate) {
+            return true;
         }
+
+        // The user has write or reset permissions if due date has passed, but the participation is in practice mode.
+        return isPracticeMode;
     }
 
     /**
@@ -235,6 +154,29 @@ public class RepositoryAccessService {
                 throw new AccessForbiddenException("You are not allowed to access the " + repositoryType + " repository of this programming exercise.");
             }
         }
+    }
+
+    /**
+     * Checks if the user has access to the plagiarism submission of the given programming participation.
+     *
+     * @param programmingParticipation The participation for which the plagiarism submission should be accessed.
+     * @param user                     The user who wants to access the plagiarism submission.
+     * @param repositoryActionType     The type of action that the user wants to perform on the plagiarism submission (i.e. READ, WRITE or RESET).
+     * @throws AccessForbiddenException If the user is not allowed to access the plagiarism submission.
+     */
+    public void checkHasAccessToPlagiarismSubmission(ProgrammingExerciseParticipation programmingParticipation, User user, RepositoryActionType repositoryActionType)
+            throws AccessForbiddenException {
+        if (repositoryActionType == RepositoryActionType.READ) {
+            boolean isAtLeastTeachingAssistant = authorizationCheckService
+                    .isAtLeastTeachingAssistantInCourse(programmingParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember(), user);
+            if (isAtLeastTeachingAssistant) {
+                return;
+            }
+            if (plagiarismService.hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), (Participation) programmingParticipation)) {
+                return;
+            }
+        }
+        throw new AccessForbiddenException("You are not allowed to access the plagiarism result of this programming exercise.");
     }
 
 }

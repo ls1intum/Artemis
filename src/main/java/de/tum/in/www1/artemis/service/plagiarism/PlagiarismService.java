@@ -4,20 +4,19 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 
-import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
@@ -27,6 +26,7 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Profile(PROFILE_CORE)
@@ -43,25 +43,28 @@ public class PlagiarismService {
 
     private final UserRepository userRepository;
 
+    private final ExerciseDateService exerciseDateService;
+
     public PlagiarismService(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService, AuthorizationCheckService authCheckService,
-            SubmissionRepository submissionRepository, UserRepository userRepository) {
+            SubmissionRepository submissionRepository, UserRepository userRepository, ExerciseDateService exerciseDateService) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.plagiarismCaseService = plagiarismCaseService;
         this.authCheckService = authCheckService;
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
      * Anonymize the submission for the student view.
      * A student should not see sensitive information but be able to retrieve both answers from both students for the comparison
      *
-     * @param submission      the submission to anonymize.
-     * @param userLogin       the user login of the student asking to see his plagiarism comparison.
-     * @param exerciseDueDate due date of the exercise.
+     * @param submission    the submission to anonymize.
+     * @param userLogin     the user login of the student asking to see his plagiarism comparison.
+     * @param participation the participation of the student asking to see his plagiarism comparison.
      */
-    public void checkAccessAndAnonymizeSubmissionForStudent(Submission submission, String userLogin, @Nullable ZonedDateTime exerciseDueDate) {
-        if (!hasAccessToSubmission(submission.getId(), userLogin, exerciseDueDate)) {
+    public void checkAccessAndAnonymizeSubmissionForStudent(Submission submission, String userLogin, Participation participation) {
+        if (!hasAccessToSubmission(submission.getId(), userLogin, participation)) {
             throw new AccessForbiddenException("This plagiarism submission is not related to the requesting user or the user has not been notified yet.");
         }
         submission.setParticipation(null);
@@ -70,36 +73,23 @@ public class PlagiarismService {
     }
 
     /**
-     * Check if there exists a plagiarism comparison for the given submission.
-     *
-     * @param submissionId the id of the submission to check.
-     * @return true if a plagiarism comparison exists for the given submission, otherwise false
-     */
-    public boolean hasPlagiarismComparison(long submissionId) {
-        var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
-        return comparisonOptional.filter(not(Set::isEmpty)).isPresent();
-    }
-
-    /**
      * A student should not see both answers from both students for the comparison before the due date
      *
-     * @param submissionId    the id of the submission to check.
-     * @param userLogin       the user login of the student asking to see his plagiarism comparison.
-     * @param exerciseDueDate due date of the exercise.
+     * @param submissionId  the id of the submission to check.
+     * @param userLogin     the user login of the student asking to see his plagiarism comparison.
+     * @param participation the participation of the student asking to see his plagiarism comparison.
      * @return true is the user has access to the submission
      */
-    public boolean hasAccessToSubmission(Long submissionId, String userLogin, @Nullable ZonedDateTime exerciseDueDate) {
+    public boolean hasAccessToSubmission(Long submissionId, String userLogin, Participation participation) {
         var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
-        return comparisonOptional.filter(not(Set::isEmpty)).isPresent()
-                && isOwnSubmissionOrIsAfterExerciseDueDate(submissionId, userLogin, comparisonOptional.get(), exerciseDueDate)
+        return comparisonOptional.filter(not(Set::isEmpty)).isPresent() && isOwnSubmissionOrIsAfterExerciseDueDate(submissionId, userLogin, comparisonOptional.get(), participation)
                 && wasUserNotifiedByInstructor(userLogin, comparisonOptional.get());
     }
 
-    private boolean isOwnSubmissionOrIsAfterExerciseDueDate(Long submissionId, String userLogin, Set<PlagiarismComparison<?>> comparisons,
-            @Nullable ZonedDateTime exerciseDueDate) {
+    private boolean isOwnSubmissionOrIsAfterExerciseDueDate(Long submissionId, String userLogin, Set<PlagiarismComparison<?>> comparisons, Participation participation) {
         var isOwnSubmission = comparisons.stream().flatMap(it -> Stream.of(it.getSubmissionA(), it.getSubmissionB())).filter(Objects::nonNull)
                 .filter(it -> it.getSubmissionId() == submissionId).findFirst().map(PlagiarismSubmission::getStudentLogin).filter(isEqual(userLogin)).isPresent();
-        return isOwnSubmission || exerciseDueDate == null || exerciseDueDate.isBefore(ZonedDateTime.now());
+        return isOwnSubmission || exerciseDateService.isAfterDueDate(participation);
     }
 
     /**
