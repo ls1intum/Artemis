@@ -205,7 +205,7 @@ public class ParticipantScoreScheduleService {
      * @param resultIdToBeDeleted the id of the result that is about to be deleted (or null, if result is created/updated)
      */
     private void scheduleTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
-        final int participantScoreHash = new ParticipantScoreId(exerciseId, participantId).hashCode();
+        final int participantScoreHash = hashCode(exerciseId, participantId);
         var task = scheduledTasks.get(participantScoreHash);
         if (task != null) {
             // If a task is already scheduled, cancel it and reschedule it with the latest result
@@ -320,7 +320,7 @@ public class ParticipantScoreScheduleService {
             log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);
         }
         finally {
-            scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId).hashCode());
+            scheduledTasks.remove(hashCode(exerciseId, participantId));
         }
         long end = System.currentTimeMillis();
         log.info("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);
@@ -441,11 +441,12 @@ public class ParticipantScoreScheduleService {
     }
 
     /**
-     * Each participant score can be uniquely identified by the combination of exercise id and participant id.
+     * Get hash code for the given exercise and participant to identify tasks during scheduling.
      *
      * @param exerciseId    the id of the exercise
      * @param participantId the id of the participant (user or team, depending on the exercise's setting)
      */
-    public record ParticipantScoreId(Long exerciseId, Long participantId) {
+    private int hashCode(Long exerciseId, Long participantId) {
+        return (exerciseId + "|" + participantId).hashCode();
     }
 }
