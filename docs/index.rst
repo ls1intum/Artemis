@@ -48,7 +48,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    :maxdepth: 3
 
    dev/setup
-   dev/development-process
+   dev/development-process/development-process
    dev/guidelines
    dev/system-design
    dev/migration
