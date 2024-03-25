@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTrigger
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
@@ -278,7 +277,7 @@ public class LocalVCServletService {
     }
 
     private void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType, boolean isPracticeRepository)
-            throws LocalVCAuthException, LocalVCForbiddenException {
+            throws LocalVCForbiddenException {
 
         if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString()) || auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
             // Test and auxiliary repositories are only accessible by instructors and higher.
@@ -302,9 +301,6 @@ public class LocalVCServletService {
 
         try {
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, repositoryActionType);
-        }
-        catch (AccessUnauthorizedException e) {
-            throw new LocalVCAuthException(e);
         }
         catch (AccessForbiddenException e) {
             throw new LocalVCForbiddenException(e);

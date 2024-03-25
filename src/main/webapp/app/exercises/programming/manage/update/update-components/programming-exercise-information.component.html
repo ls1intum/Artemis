@@ -158,7 +158,7 @@
                         type="checkbox"
                         name="recreateBuildPlans"
                         id="field_recreateBuildPlans"
-                        [(ngModel)]="programmingExerciseCreationConfig.recreateBuildPlans"
+                        [(ngModel)]="importOptions.recreateBuildPlans"
                         (change)="programmingExerciseCreationConfig.recreateBuildPlanOrUpdateTemplateChange()"
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title"></span>
@@ -179,7 +179,7 @@
                         type="checkbox"
                         name="updateTemplateFiles"
                         id="field_updateTemplateFiles"
-                        [(ngModel)]="programmingExerciseCreationConfig.updateTemplate"
+                        [(ngModel)]="importOptions.updateTemplate"
                         (change)="programmingExerciseCreationConfig.recreateBuildPlanOrUpdateTemplateChange()"
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.updateTemplate.title"></span>
