@@ -56,6 +56,8 @@ import { FileUploadExerciseCreationPage } from './pageobjects/exercises/file-upl
 import { FileUploadEditorPage } from './pageobjects/exercises/file-upload/FileUploadEditorPage';
 import { FileUploadExerciseAssessmentPage } from './pageobjects/assessment/FileUploadExerciseAssessmentPage';
 import { FileUploadExerciseFeedbackPage } from './pageobjects/exercises/file-upload/FileUploadExerciseFeedbackPage';
+import { ProgrammingExerciseOverviewPage } from './pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
+import { RepositoryPage } from './pageobjects/exercises/programming/RepositoryPage';
 
 /*
  * Define custom types for fixtures
@@ -103,6 +105,8 @@ export type ArtemisPageObjects = {
     programmingExerciseCreation: ProgrammingExerciseCreationPage;
     programmingExerciseEditor: OnlineEditorPage;
     programmingExerciseFeedback: ProgrammingExerciseFeedbackPage;
+    programmingExerciseOverview: ProgrammingExerciseOverviewPage;
+    programmingExerciseRepository: RepositoryPage;
     programmingExercisesScaConfig: CodeAnalysisGradingPage;
     programmingExerciseScaFeedback: ScaFeedbackModal;
     quizExerciseCreation: QuizExerciseCreationPage;
@@ -262,6 +266,12 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     programmingExerciseFeedback: async ({ page }, use) => {
         await use(new ProgrammingExerciseFeedbackPage(page));
+    },
+    programmingExerciseOverview: async ({ page, courseList, courseOverview }, use) => {
+        await use(new ProgrammingExerciseOverviewPage(page, courseList, courseOverview));
+    },
+    programmingExerciseRepository: async ({ page }, use) => {
+        await use(new RepositoryPage(page));
     },
     programmingExercisesScaConfig: async ({ page }, use) => {
         await use(new CodeAnalysisGradingPage(page));

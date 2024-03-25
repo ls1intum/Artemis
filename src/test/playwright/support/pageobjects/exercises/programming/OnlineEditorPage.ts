@@ -1,21 +1,13 @@
 import { Page, expect } from '@playwright/test';
-import { BASE_API, ExerciseCommit } from '../../../constants';
+import { BASE_API } from '../../../constants';
 import { getExercise } from '../../../utils';
-import { Commands } from '../../../commands';
-import { UserCredentials } from '../../../users';
-import { CoursesPage } from '../../course/CoursesPage';
-import { CourseOverviewPage } from '../../course/CourseOverviewPage';
 import { Fixtures } from '../../../../fixtures/fixtures';
 
 export class OnlineEditorPage {
     private readonly page: Page;
-    private readonly courseList: CoursesPage;
-    private readonly courseOverview: CourseOverviewPage;
 
-    constructor(page: Page, courseList: CoursesPage, courseOverview: CourseOverviewPage) {
+    constructor(page: Page) {
         this.page = page;
-        this.courseList = courseList;
-        this.courseOverview = courseOverview;
     }
 
     findFileBrowser(exerciseID: number) {
@@ -106,8 +98,9 @@ export class OnlineEditorPage {
     }
 
     async getResultScore() {
-        await this.page.locator('.tab-bar-exercise-details').locator('#result-score').waitFor({ state: 'visible' });
-        return this.page.locator('.tab-bar-exercise-details').locator('#result-score');
+        const resultScore = this.page.locator('#result-score');
+        await resultScore.waitFor({ state: 'visible' });
+        return resultScore;
     }
 
     getResultScoreFromExercise(exerciseID: number) {
@@ -132,60 +125,6 @@ export class OnlineEditorPage {
         await this.typeSubmission(exerciseID, submission);
         await this.submit(exerciseID);
         await verifyOutput();
-    }
-
-    async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
-        await Commands.login(this.page, credentials, '/');
-        await this.page.waitForURL(/\/courses/);
-        await this.courseList.openCourse(courseId!);
-        await this.courseOverview.startExercise(exerciseId);
-    }
-
-    async openCodeEditor(exerciseId: number) {
-        await Commands.reloadUntilFound(this.page, '#open-exercise-' + exerciseId);
-        await this.courseOverview.openRunningProgrammingExercise(exerciseId);
-    }
-
-    async getRepoUrl() {
-        const cloneRepoSelector = '.clone-repository';
-        await Commands.reloadUntilFound(this.page, cloneRepoSelector);
-        await this.page.locator(cloneRepoSelector).click();
-        await this.page.locator('.popover-body').waitFor({ state: 'visible' });
-        return await this.page.locator('.clone-url').innerText();
-    }
-
-    async openRepository() {
-        const repositoryPage = this.page.context().waitForEvent('page');
-        await this.page.locator('a', { hasText: 'Open repository' }).click();
-        return await repositoryPage;
-    }
-
-    async openCommitHistory(repositoryPage: Page) {
-        await repositoryPage.locator('a', { hasText: 'Open Commit History' }).click();
-    }
-
-    async checkCommit(repositoryPage: Page, message: string, result?: string, commits?: ExerciseCommit[]) {
-        const commitHistory = repositoryPage.locator('.card-body', { hasText: 'Commit History' });
-        // await expect(commitHistory.locator('td').getByText(message)).toBeVisible();
-        // if (result) {
-        //     await expect(commitHistory.locator('#result-score', { hasText: result })).toBeVisible();
-        // } else {
-        //     await expect(commitHistory.locator('td', { hasText: 'No result' })).toBeVisible();
-        // }
-
-        if (commits) {
-            const commitCount = commits.length;
-            for (let index = 0; index < commitCount; index++) {
-                const commit = commits[index];
-                const commitRow = commitHistory.locator('tbody').locator('tr').nth(index);
-                await expect(commitRow.locator('td').getByText(commit.message)).toBeVisible();
-                if (commit.result) {
-                    await expect(commitRow.locator('#result-score', { hasText: commit.result })).toBeVisible();
-                } else {
-                    await expect(commitRow.locator('td', { hasText: 'No result' })).toBeVisible();
-                }
-            }
-        }
     }
 }
 
