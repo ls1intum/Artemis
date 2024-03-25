@@ -442,6 +442,9 @@ public class ParticipantScoreScheduleService {
 
     /**
      * Get hash code for the given exercise and participant to identify tasks during scheduling.
+     * <p>
+     * Required, as calculating the hash code out of a record causes too many collisions. The separator char is used to avoid unnecessary collisions by certain number combinations
+     * (e.g. 155,13 and 15,513 resulting in the same string and hence the same hash code).
      *
      * @param exerciseId    the id of the exercise
      * @param participantId the id of the participant (user or team, depending on the exercise's setting)
