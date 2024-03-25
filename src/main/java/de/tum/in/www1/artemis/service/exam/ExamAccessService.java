@@ -14,7 +14,10 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.authorization.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -122,8 +125,7 @@ public class ExamAccessService {
      * @param courseId The id of the course
      */
     public void checkCourseAccessForEditorElseThrow(Long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastEditorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastEditorInCourse(courseId)) {
             throw new AccessForbiddenException("You are not allowed to manage exams in this course!");
         }
     }
@@ -134,8 +136,7 @@ public class ExamAccessService {
      * @param courseId The id of the course
      */
     public void checkCourseAccessForInstructorElseThrow(Long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(courseId)) {
             throw new AccessForbiddenException("You are not allowed to manage exams in this course!");
         }
     }
@@ -146,8 +147,7 @@ public class ExamAccessService {
      * @param courseId The id of the course
      */
     public void checkCourseAccessForTeachingAssistantElseThrow(Long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId)) {
             throw new AccessForbiddenException("You are not allowed to access exams in this course!");
         }
     }
@@ -231,7 +231,7 @@ public class ExamAccessService {
             throw new ConflictException("Given exercise does not belong to an exam", "Exercise", "notExamExercise");
         }
         Exam exam = examExercise.getExerciseGroup().getExam();
-        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(exam.getCourse(), null)) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(exam.getCourse().getId())) {
             checkCourseAndExamAccessForStudentElseThrow(exam.getCourse().getId(), exam.getId());
         }
         if (!examExercise.isExampleSolutionPublished()) {
