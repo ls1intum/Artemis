@@ -101,7 +101,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         addUsersToConversation(channel.getId(), "tutor1");
         var groupChat = createGroupChat("tutor1");
         hideConversation(groupChat.getId(), "tutor1");
-        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
         this.resetWebsocketMock();
@@ -161,7 +161,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var groupChat = createGroupChat("tutor1");
         hideConversation(groupChat.getId(), "tutor1");
 
-        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
         this.resetWebsocketMock();
@@ -192,7 +192,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var groupChat = createGroupChat("tutor1");
         hideConversation(groupChat.getId(), "tutor1");
 
-        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
         this.resetWebsocketMock();
@@ -509,7 +509,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void unreadMessages_shouldReturnCorrectValue_Message() throws Exception {
-        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
         this.postInConversation(oneToOneChat.getId(), "instructor1");
 
