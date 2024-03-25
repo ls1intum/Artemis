@@ -168,7 +168,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
         }
         catch (Exception e) {
-            log.error("Could not generate feedback");
+            log.error("Could not generate feedback", e);
             automaticResult.setSuccessful(false);
             automaticResult.setCompletionDate(ZonedDateTime.now());
             this.resultRepository.save(automaticResult);
