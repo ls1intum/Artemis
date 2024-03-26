@@ -502,8 +502,8 @@ public class ParticipationResource {
         if (!updatedParticipations.isEmpty() && exercise instanceof ProgrammingExercise programmingExercise) {
             log.info("Updating scheduling for exercise {} (id {}) due to changed individual due dates.", exercise.getTitle(), exercise.getId());
             instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
-            List<StudentParticipation> participationsBeforeDueDate = participations.stream().filter(exerciseDateService::isBeforeDueDate).toList();
-            List<StudentParticipation> participationsAfterDueDate = participations.stream().filter(exerciseDateService::isAfterDueDate).toList();
+            List<StudentParticipation> participationsBeforeDueDate = updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).toList();
+            List<StudentParticipation> participationsAfterDueDate = updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).toList();
 
             if (exercise.isTeamMode()) {
                 participationService.initializeTeamParticipations(participationsBeforeDueDate);
