@@ -32,7 +32,7 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
                 LEFT JOIN FETCH user.groups
             WHERE oneToOneChat.course.id = :courseId
                 AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :userId)
-                AND allParticipants.user.id = :userId
+                AND matchingParticipant.user.id = :userId
             ORDER BY oneToOneChat.lastMessageDate DESC
             """)
     List<OneToOneChat> findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
