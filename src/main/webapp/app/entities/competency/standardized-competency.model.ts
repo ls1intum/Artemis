@@ -13,6 +13,16 @@ export interface StandardizedCompetency {
     linkedCompetencies?: Competency[];
 }
 
+export interface StandardizedCompetencyDTO {
+    id?: number;
+    title?: string;
+    description?: string;
+    taxonomy?: CompetencyTaxonomy;
+    version?: string;
+    knowledgeAreaId?: number;
+    sourceId?: number;
+}
+
 export interface KnowledgeArea {
     id?: number;
     title?: string;
@@ -20,6 +30,15 @@ export interface KnowledgeArea {
     parent?: KnowledgeArea;
     children?: KnowledgeArea[];
     competencies?: StandardizedCompetency[];
+}
+
+export interface KnowledgeAreaDTO {
+    id?: number;
+    title?: string;
+    description?: string;
+    parentId?: number;
+    children?: KnowledgeAreaDTO[];
+    competencies?: StandardizedCompetencyDTO[];
 }
 
 export interface Source {

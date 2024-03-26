@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.BadRequestException;
 
@@ -18,6 +19,8 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
+import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.StandardizedCompetencyDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -125,11 +128,12 @@ public class StandardizedCompetencyService {
      *
      * @return the list of knowledge areas with no parent, containing all their descendants and competencies
      */
-    public List<KnowledgeArea> getAllForTreeView() {
+    public List<KnowledgeAreaDTO> getAllForTreeView() {
         var knowledgeAreasForTreeView = new ArrayList<KnowledgeArea>();
         var idMap = new HashMap<Long, KnowledgeArea>();
 
         var knowledgeAreas = knowledgeAreaRepository.findAllWithCompetenciesByOrderByTitleAsc();
+
         for (var knowledgeArea : knowledgeAreas) {
             knowledgeArea.setChildren(new HashSet<>());
             idMap.put(knowledgeArea.getId(), knowledgeArea);
@@ -149,7 +153,7 @@ public class StandardizedCompetencyService {
             parent.addToChildren(knowledgeArea);
         }
 
-        return knowledgeAreasForTreeView;
+        return knowledgeAreasForTreeView.stream().map(this::knowledgeAreaToDTO).toList();
     }
 
     /**
@@ -161,5 +165,33 @@ public class StandardizedCompetencyService {
         if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
             throw new BadRequestException();
         }
+    }
+
+    /**
+     * Converts a standardized competency to a {@link StandardizedCompetencyDTO}
+     *
+     * @param competency the standardized competency to convert
+     * @return the resulting StandardizedCompetencyDTO
+     */
+    private StandardizedCompetencyDTO standardizedCompetencyToDTO(StandardizedCompetency competency) {
+        Long sourceId = competency.getSource() == null ? null : competency.getSource().getId();
+        Long knowledgeAreaId = competency.getKnowledgeArea() == null ? null : competency.getKnowledgeArea().getId();
+
+        return new StandardizedCompetencyDTO(competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getVersion(), knowledgeAreaId, sourceId);
+    }
+
+    // TODO: add DTOs to client, and check if I want to add it to endpoints!
+    /**
+     * Converts a knowledge area to a {@link KnowledgeAreaDTO}. This includes recursively converting its children.
+     *
+     * @param knowledgeArea the knowledge area to convert
+     * @return the resulting KnowledgeAreaDTO
+     */
+    private KnowledgeAreaDTO knowledgeAreaToDTO(KnowledgeArea knowledgeArea) {
+        Long parentId = knowledgeArea.getParent() == null ? null : knowledgeArea.getParent().getId();
+        var children = knowledgeArea.getChildren().stream().map(this::knowledgeAreaToDTO).collect(Collectors.toSet());
+        var competencies = knowledgeArea.getCompetencies().stream().map(this::standardizedCompetencyToDTO).collect(Collectors.toSet());
+
+        return new KnowledgeAreaDTO(knowledgeArea.getTitle(), knowledgeArea.getDescription(), parentId, children, competencies);
     }
 }

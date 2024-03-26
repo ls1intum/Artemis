@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { KnowledgeArea, StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeAreaDTO, StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
 
 @Injectable({
     providedIn: 'root',
@@ -15,7 +15,7 @@ export class StandardizedCompetencyService {
     }
 
     getAllForTreeView() {
-        return this.httpClient.get<KnowledgeArea[]>(`${this.resourceURL}/for-tree-view`, { observe: 'response' });
+        return this.httpClient.get<KnowledgeAreaDTO[]>(`${this.resourceURL}/for-tree-view`, { observe: 'response' });
     }
 
     getKnowledgeArea(knowledgeAreaId: number) {
