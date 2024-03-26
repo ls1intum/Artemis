@@ -26,24 +26,29 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
     @Query("""
             SELECT DISTINCT oneToOneChat
             FROM OneToOneChat oneToOneChat
-                LEFT JOIN FETCH oneToOneChat.conversationParticipants conversationParticipant
-                LEFT JOIN FETCH conversationParticipant.user user
+                LEFT JOIN oneToOneChat.conversationParticipants matchingParticipant
+                LEFT JOIN FETCH oneToOneChat.conversationParticipants allParticipants
+                LEFT JOIN FETCH allParticipants.user user
                 LEFT JOIN FETCH user.groups
             WHERE oneToOneChat.course.id = :courseId
                 AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :userId)
-                AND user.id = :userId
+                AND matchingParticipant.user.id = :userId
             ORDER BY oneToOneChat.lastMessageDate DESC
             """)
     List<OneToOneChat> findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     @Query("""
-            SELECT o FROM OneToOneChat o
-                LEFT JOIN FETCH o.conversationParticipants p
-                LEFT JOIN FETCH p.user u
-                LEFT JOIN FETCH u.groups
+            SELECT DISTINCT o
+            FROM OneToOneChat o
+                LEFT JOIN FETCH o.conversationParticipants p1
+                LEFT JOIN FETCH o.conversationParticipants p2
+                LEFT JOIN FETCH p1.user u1
+                LEFT JOIN FETCH p2.user u2
+                LEFT JOIN FETCH u1.groups
+                LEFT JOIN FETCH u2.groups
             WHERE o.course.id = :courseId
-                AND p.conversation = o
-                AND (p.user.id = :userIdA OR p.user.id = :userIdB)
+                AND u1.id = :userIdA
+                AND u2.id = :userIdB
             """)
     Optional<OneToOneChat> findBetweenUsersWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
 
