@@ -16,10 +16,9 @@ public class UMLActivity extends UMLActivityElement implements Serializable {
     private final List<UMLActivityElement> childElements;
 
     /**
-     * to make mockito happy
+     * empty constructor used to make mockito happy
      */
     public UMLActivity() {
-        super();
         childElements = new ArrayList<>();
     }
 

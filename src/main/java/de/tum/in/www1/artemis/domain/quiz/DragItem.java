@@ -4,7 +4,16 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.PostPersist;
+import javax.persistence.PostRemove;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -98,6 +107,14 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
 
     public void setInvalid(Boolean invalid) {
         this.invalid = invalid;
+    }
+
+    public Set<DragAndDropMapping> getMappings() {
+        return mappings;
+    }
+
+    public void setMappings(Set<DragAndDropMapping> dragAndDropMappings) {
+        this.mappings = dragAndDropMappings;
     }
 
     /**

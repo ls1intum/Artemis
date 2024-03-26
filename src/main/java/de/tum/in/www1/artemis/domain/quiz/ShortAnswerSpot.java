@@ -3,7 +3,13 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -86,6 +92,14 @@ public class ShortAnswerSpot extends TempIdObject implements QuizQuestionCompone
 
     public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {
         this.question = shortAnswerQuestion;
+    }
+
+    public Set<ShortAnswerMapping> getMappings() {
+        return mappings;
+    }
+
+    public void setMappings(Set<ShortAnswerMapping> shortAnswerMappings) {
+        this.mappings = shortAnswerMappings;
     }
 
     @Override

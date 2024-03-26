@@ -34,7 +34,7 @@ public class UMLClass extends UMLElement implements Serializable {
      * empty constructor used to make mockito happy
      */
     public UMLClass() {
-        super();
+        // default empty constructor
     }
 
     public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methods, String jsonElementID, UMLClassType classType) {
