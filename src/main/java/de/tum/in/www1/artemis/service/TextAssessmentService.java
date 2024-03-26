@@ -6,7 +6,7 @@ import static org.hibernate.Hibernate.isInitialized;
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;

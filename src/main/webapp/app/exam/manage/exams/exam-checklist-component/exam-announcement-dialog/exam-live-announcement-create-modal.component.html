@@ -1,6 +1,6 @@
 <form name="makeLiveExamAnnouncementForm">
     <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="artemisApp.examManagement.announcementCreate.title">Make Live Exam Announcement</h4>
+        <h4 class="modal-title" jhiTranslate="artemisApp.examManagement.announcementCreate.title"></h4>
         @if (status !== 'submitting') {
             <button type="button" class="btn-close" aria-label="Close" (click)="clear()"></button>
         }
@@ -8,7 +8,7 @@
     @if (status === 'not_submitted') {
         <div class="modal-body">
             <div class="form-group">
-                <div class="mb-4" jhiTranslate="artemisApp.examManagement.announcementCreate.task">Enter your announcement below. You can use Markdown text formatting.</div>
+                <div class="mb-4" jhiTranslate="artemisApp.examManagement.announcementCreate.task"></div>
                 <jhi-markdown-editor
                     #markdownEditor
                     class="markdown-editor"
@@ -22,7 +22,7 @@
                 />
             </div>
             @if (announcement) {
-                <h3 class="p-2" jhiTranslate="artemisApp.examManagement.announcementCreate.preview">Preview</h3>
+                <h3 class="p-2" jhiTranslate="artemisApp.examManagement.announcementCreate.preview"></h3>
                 <jhi-exam-live-event [event]="announcement!" />
             }
         </div>
@@ -31,7 +31,7 @@
         <div class="modal-body">
             <h2 class="mb-0">
                 <fa-icon [icon]="faSpinner" [spin]="true" />
-                <span jhiTranslate="artemisApp.examManagement.announcementCreate.sending">Sending announcement...</span>
+                <span jhiTranslate="artemisApp.examManagement.announcementCreate.sending"></span>
             </h2>
         </div>
     }
@@ -39,7 +39,7 @@
         <div class="modal-body">
             <h2 class="mb-4">
                 <fa-icon [icon]="faCheckCircle" class="success-color" />
-                <span jhiTranslate="artemisApp.examManagement.announcementCreate.sent">Announcement sent!</span>
+                <span jhiTranslate="artemisApp.examManagement.announcementCreate.sent"></span>
             </h2>
             @if (announcement) {
                 <jhi-exam-live-event [event]="announcement!" />
@@ -47,7 +47,7 @@
         </div>
     }
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" [class.btn-primary]="status === 'submitted'" (click)="clear()" jhiTranslate="entity.action.close">Close</button>
+        <button type="button" class="btn btn-secondary" [class.btn-primary]="status === 'submitted'" (click)="clear()" jhiTranslate="entity.action.close"></button>
         @if (status !== 'submitted') {
             <button
                 [disabled]="status === 'submitting' || !textContent"
@@ -55,9 +55,7 @@
                 class="btn btn-primary"
                 (click)="submitAnnouncement()"
                 jhiTranslate="artemisApp.examManagement.announcementCreate.sendButton"
-            >
-                Make announcement
-            </button>
+            ></button>
         }
     </div>
 </form>

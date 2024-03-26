@@ -5,29 +5,38 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LearningPathRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.*;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyProgressForLearningPathDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -37,6 +46,8 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 public class LearningPathResource {
 
     private static final Logger log = LoggerFactory.getLogger(LearningPathResource.class);
+
+    private final CourseService courseService;
 
     private final CourseRepository courseRepository;
 
@@ -50,8 +61,10 @@ public class LearningPathResource {
 
     private final CompetencyProgressService competencyProgressService;
 
-    public LearningPathResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, LearningPathService learningPathService,
-            LearningPathRepository learningPathRepository, UserRepository userRepository, CompetencyProgressService competencyProgressService) {
+    public LearningPathResource(CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
+            LearningPathService learningPathService, LearningPathRepository learningPathRepository, UserRepository userRepository,
+            CompetencyProgressService competencyProgressService) {
+        this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.learningPathService = learningPathService;
@@ -68,11 +81,10 @@ public class LearningPathResource {
      */
     @PutMapping("courses/{courseId}/learning-paths/enable")
     @FeatureToggle(Feature.LearningPaths)
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to enable learning paths for course with id: {}", courseId);
         Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are already enabled for this course.");
         }
@@ -90,12 +102,11 @@ public class LearningPathResource {
      */
     @PutMapping("courses/{courseId}/learning-paths/generate-missing")
     @FeatureToggle(Feature.LearningPaths)
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> generateMissingLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to generate missing learning paths for course with id: {}", courseId);
         Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        checkLearningPathsEnabledElseThrow(course);
+        courseService.checkLearningPathsEnabledElseThrow(course);
         learningPathService.generateLearningPaths(course);
         return ResponseEntity.ok().build();
     }
@@ -109,14 +120,11 @@ public class LearningPathResource {
      */
     @GetMapping("courses/{courseId}/learning-paths")
     @FeatureToggle(Feature.LearningPaths)
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<SearchResultPageDTO<LearningPathInformationDTO>> getLearningPathsOnPage(@PathVariable long courseId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        checkLearningPathsEnabledElseThrow(course);
-
-        return ResponseEntity.ok(learningPathService.getAllOfCourseOnPageWithSize(search, course));
+        courseService.checkLearningPathsEnabledElseThrow(courseId);
+        return ResponseEntity.ok(learningPathService.getAllOfCourseOnPageWithSize(search, courseId));
     }
 
     /**
@@ -127,15 +135,10 @@ public class LearningPathResource {
      */
     @GetMapping("courses/{courseId}/learning-path-health")
     @FeatureToggle(Feature.LearningPaths)
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<LearningPathHealthDTO> getHealthStatusForCourse(@PathVariable long courseId) {
         log.debug("REST request to get health status of learning paths in course with id: {}", courseId);
-
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null) && !authorizationCheckService.isAdmin()) {
-            throw new AccessForbiddenException("You are not allowed to access the health status of learning paths for this course.");
-        }
-
         return ResponseEntity.ok(learningPathService.getHealthStatusForCourse(course));
     }
 
@@ -159,7 +162,7 @@ public class LearningPathResource {
     }
 
     /**
-     * GET /learning-path/:learningPathId/graph : Gets the ngx representation of the learning path as a graph.
+     * GET learning-path/:learningPathId/graph : Gets the ngx representation of the learning path as a graph.
      *
      * @param learningPathId the id of the learning path that should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
@@ -173,7 +176,7 @@ public class LearningPathResource {
     }
 
     /**
-     * GET /learning-path/:learningPathId/path : Gets the ngx representation of the learning path as a sequential path.
+     * GET learning-path/:learningPathId/path : Gets the ngx representation of the learning path as a sequential path.
      *
      * @param learningPathId the id of the learning path that should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
@@ -189,7 +192,7 @@ public class LearningPathResource {
     private ResponseEntity<NgxLearningPathDTO> getLearningPathNgx(@PathVariable long learningPathId, NgxRequestType type) {
         LearningPath learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
         Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
-        checkLearningPathsEnabledElseThrow(course);
+        courseService.checkLearningPathsEnabledElseThrow(course);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authorizationCheckService.isAtLeastStudentInCourse(course, user) && !authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
             if (!user.getId().equals(learningPath.getUser().getId())) {
@@ -208,28 +211,24 @@ public class LearningPathResource {
     }
 
     /**
-     * GET /courses/:courseId/learning-path-id : Gets the id of the learning path.
+     * GET courses/:courseId/learning-path-id : Gets the id of the learning path.
      * If the learning path has not been generated although the course has learning paths enabled, the corresponding learning path will be created.
      *
      * @param courseId the id of the course from which the learning path id should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the id of the learning path
      */
     @GetMapping("courses/{courseId}/learning-path-id")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<Long> getLearningPathId(@PathVariable long courseId) {
         log.debug("REST request to get learning path id for course with id: {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastStudentInCourse(course, null)) {
-            throw new AccessForbiddenException("You are not a student in this course.");
-        }
-        checkLearningPathsEnabledElseThrow(course);
+        courseService.checkLearningPathsEnabledElseThrow(courseId);
 
         // generate learning path if missing
         User user = userRepository.getUser();
-        final var learningPathOptional = learningPathRepository.findByCourseIdAndUserId(course.getId(), user.getId());
+        final var learningPathOptional = learningPathRepository.findByCourseIdAndUserId(courseId, user.getId());
         LearningPath learningPath;
         if (learningPathOptional.isEmpty()) {
-            course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+            final var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
             learningPath = learningPathService.generateLearningPathForUser(course, user);
         }
         else {
@@ -239,7 +238,7 @@ public class LearningPathResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies/:competencyId/learning-path/:learningPathId : Gets the competency progress in a learning path
+     * GET learning-path/:learningPathId : Gets the competency progress in a learning path
      *
      * @param learningPathId the id of the learning path for which to get the progress
      * @return the ResponseEntity with status 200 (OK) and with the progress in the body
@@ -261,17 +260,6 @@ public class LearningPathResource {
             return new CompetencyProgressForLearningPathDTO(competency.getId(), competency.getMasteryThreshold(), progress.getProgress(), progress.getConfidence());
         }).collect(Collectors.toSet());
         return ResponseEntity.ok(progressDTOs);
-    }
-
-    /**
-     * Checks if learning paths are enabled for the given course. If not, a BadRequestException is thrown.
-     *
-     * @param course the course to check
-     */
-    private void checkLearningPathsEnabledElseThrow(@NotNull Course course) {
-        if (!course.getLearningPathsEnabled()) {
-            throw new BadRequestException("Learning paths are not enabled for this course.");
-        }
     }
 
     /**

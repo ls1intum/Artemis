@@ -1,74 +1,61 @@
 <div class="guided-tour modeling-editor">
     <ng-template #help let-close="close" let-dismiss="dismiss">
         <div class="modal-header">
-            <h4 class="modal-title" jhiTranslate="artemisApp.modelingEditor.helpModal.title">How to use the modeling editor</h4>
+            <h4 class="modal-title" jhiTranslate="artemisApp.modelingEditor.helpModal.title"></h4>
             <button type="button" class="btn-close" aria-label="Close" (click)="dismiss()"><span aria-hidden="true"></span></button>
         </div>
         <div class="modal-body">
             <table class="table">
                 <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.createElement.title">Add Class</th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.createElement.text">
-                        To add a class, simply drag and drop one of the elements on the right side into the editor area on the left side.
-                    </td>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.createElement.title"></th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.createElement.text"></td>
                     <td><img width="300" src="/content/images/help-create-element.png" /></td>
                 </tr>
                 <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.createRelationship.title">Add Association</th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.createRelationship.text">
-                        To add an association, select the source class with a single click and you will see four blue circles. Those are the possible connection points for
-                        associations. Click and hold on one of those and drag it to another blue circle to create an association.
-                    </td>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.createRelationship.title"></th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.createRelationship.text"></td>
                     <td><img width="300" src="/content/images/help-create-relationship.jpg" /></td>
                 </tr>
                 <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.updateElement.title">Edit Class</th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.updateElement.text">
-                        To edit a class, double click it and a popup will open up, in which you can edit its components, e.g. name, attributes, methods, etc.
-                    </td>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.updateElement.title"></th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.updateElement.text"></td>
                     <td><img width="300" src="/content/images/help-update-element.jpg" /></td>
                 </tr>
                 <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.deleteElement.title">Delete Class</th>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.deleteElement.title"></th>
                     <td jhiTranslate="artemisApp.modelingEditor.helpModal.deleteElement.text" colspan="2">
                         To delete a class, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard.
                     </td>
                 </tr>
                 <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.moveElement.title">Move Class</th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.moveElement.text">
-                        To move a class, select it with a single click and either use your keyboard arrows or drag and drop it.
-                    </td>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.moveElement.title"></th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.moveElement.text"></td>
                     <td><img width="300" src="/content/images/help-move-element.jpg" /></td>
                 </tr>
                 <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.resizeElement.title">Move Class</th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.resizeElement.text">
-                        To move a class, select it with a single click and either use your keyboard arrows or drag and drop it.
-                    </td>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.resizeElement.title"></th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.resizeElement.text"></td>
                     <td><img width="300" src="/content/images/help-resize-element.jpg" /></td>
                 </tr>
                 <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.reconnectRelationship.title">Move Class</th>
-                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.reconnectRelationship.text">
-                        To move a class, select it with a single click and either use your keyboard arrows or drag and drop it.
-                    </td>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.reconnectRelationship.title"></th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.reconnectRelationship.text"></td>
                     <td><img width="300" src="/content/images/help-reconnect-relationship.jpg" /></td>
                 </tr>
                 <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.select.title">Undo & Redo</th>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.select.title"></th>
                     <td jhiTranslate="artemisApp.modelingEditor.helpModal.select.text" colspan="2">
                         With <code>Ctrl+Z</code> and <code>Ctrl+Y</code> you can undo and redo your changes.
                     </td>
                 </tr>
                 <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.duplicate.title">Undo & Redo</th>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.duplicate.title"></th>
                     <td jhiTranslate="artemisApp.modelingEditor.helpModal.duplicate.text" colspan="2">
                         With <code>Ctrl+Z</code> and <code>Ctrl+Y</code> you can undo and redo your changes.
                     </td>
                 </tr>
                 <tr>
-                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.undo.title">Undo & Redo</th>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.undo.title"></th>
                     <td jhiTranslate="artemisApp.modelingEditor.helpModal.undo.text" colspan="2">
                         With <code>Ctrl+Z</code> and <code>Ctrl+Y</code> you can undo and redo your changes.
                     </td>
@@ -76,7 +63,7 @@
             </table>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-outline" (click)="close()" jhiTranslate="entity.action.close">Close</button>
+            <button type="button" class="btn btn-outline" (click)="close()" jhiTranslate="entity.action.close"></button>
         </div>
     </ng-template>
     @if (!readOnly && !isFullScreen) {
@@ -84,25 +71,25 @@
             @if (!readOnly && showHelpButton) {
                 <button class="btn btn-warning" (click)="open(help)">
                     <fa-icon [icon]="farQuestionCircle" />&nbsp;
-                    <span jhiTranslate="artemisApp.modelingEditor.helpModal.help">Help</span>
+                    <span jhiTranslate="artemisApp.modelingEditor.helpModal.help"></span>
                 </button>
             }
             @if (savedStatus && !savedStatus.isChanged && !savedStatus.isSaving) {
                 <div class="status-hint text-success">
                     <fa-icon [icon]="faCheck" />
-                    <span jhiTranslate="artemisApp.modelingEditor.allSaved">All changes saved</span>
+                    <span jhiTranslate="artemisApp.modelingEditor.allSaved"></span>
                 </div>
             }
             @if (savedStatus && savedStatus.isChanged && !savedStatus.isSaving) {
                 <div class="status-hint text-warning">
                     <fa-icon [icon]="faTimes" />
-                    <span jhiTranslate="artemisApp.modelingEditor.unsavedChanges">Unsaved changes</span>
+                    <span jhiTranslate="artemisApp.modelingEditor.unsavedChanges"></span>
                 </div>
             }
             @if (savedStatus && savedStatus.isSaving) {
                 <div class="status-hint text-info">
                     <fa-icon class="spin" [icon]="faCircleNotch" />
-                    <span jhiTranslate="artemisApp.modelingEditor.saving">Saving...</span>
+                    <span jhiTranslate="artemisApp.modelingEditor.saving"></span>
                 </div>
             }
         </div>

@@ -23,7 +23,7 @@
 }
 <div class="row mb-3 justify-content-between">
     <div class="col-sm-8">
-        <h3 class="fw-medium" jhiTranslate="artemisApp.studentDashboard.title">Your current courses</h3>
+        <h3 class="fw-medium" jhiTranslate="artemisApp.studentDashboard.title"></h3>
     </div>
     <div class="col-sm-auto d-flex">
         <a class="btn btn-primary" [routerLink]="['/courses/enroll']">{{ 'artemisApp.studentDashboard.enroll.title' | artemisTranslate }}</a>
@@ -31,7 +31,7 @@
 </div>
 @if (recentlyAccessedCourses.length > 0) {
     <div class="row">
-        <h4 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.recentlyAccessed">Recently Accessed Courses</h4>
+        <h4 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.recentlyAccessed"></h4>
     </div>
     <div class="row">
         @for (course of recentlyAccessedCourses; track course) {
@@ -40,7 +40,7 @@
     </div>
     @if (regularCourses.length > 0) {
         <div class="row">
-            <h4 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.otherCourses">Other Courses</h4>
+            <h4 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.otherCourses"></h4>
         </div>
     }
 }

@@ -120,7 +120,7 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
         // var llmMessage = new IrisMessage();
         // llmMessage.setSender(IrisMessageSender.LLM);
         // llmMessage.addContent(new IrisJsonMessageContent(response.content()));
-        // irisMessageService.saveMessage(llmMessage, session, IrisMessageSender.LLM);
+        // irisSessionRepository.save(session);
         // return toCompetencies(response.content());
         // }
         // catch (InterruptedException | ExecutionException e) {

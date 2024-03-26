@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
-import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 
 /**
@@ -32,8 +31,6 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
 
     private final PyrisConnectorService pyrisConnectorService;
 
-    private final IrisMessageService irisMessageService;
-
     private final IrisSettingsService irisSettingsService;
 
     private final AuthorizationCheckService authCheckService;
@@ -42,10 +39,9 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
 
     private final IrisHestiaSessionRepository irisHestiaSessionRepository;
 
-    public IrisHestiaSessionService(PyrisConnectorService pyrisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
-            AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisHestiaSessionRepository irisHestiaSessionRepository) {
+    public IrisHestiaSessionService(PyrisConnectorService pyrisConnectorService, IrisSettingsService irisSettingsService, AuthorizationCheckService authCheckService,
+            IrisSessionRepository irisSessionRepository, IrisHestiaSessionRepository irisHestiaSessionRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
-        this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
@@ -104,7 +100,7 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
         // var llmMessage = new IrisMessage();
         // llmMessage.setSender(IrisMessageSender.LLM);
         // llmMessage.addContent(new IrisJsonMessageContent(response.content()));
-        // irisMessageService.saveMessage(llmMessage, irisSession, IrisMessageSender.LLM);
+        // irisSessionRepository.save(session);
 
         // codeHint.setDescription(shortDescription);
         // codeHint.setContent(longDescription);

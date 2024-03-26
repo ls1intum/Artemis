@@ -1,10 +1,9 @@
 <div class="row mt-3 g-3">
     <div class="col-12 col-md-6 col-lg-7 mt-0">
-        @if (!isExamMode) {
-            <span style="font-size: 16px" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.courseInformation"></span>
-        }
         @if (isExamMode) {
             <span style="font-size: 16px" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.examInformation"></span>
+        } @else {
+            <span style="font-size: 16px" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.courseInformation"></span>
         }
         <!-- chart -->
         @if (numberOfSubmissions.total !== 0) {

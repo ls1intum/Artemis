@@ -1,10 +1,11 @@
-<section class="mb-5">
-    <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle">
-        Language
-    </h3>
-    <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepMessage">Set language.</p>
+<section>
+    <h3
+        jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle"
+        id="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle"
+    ></h3>
+    <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepMessage"></p>
     <div class="form-group">
-        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
+        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage"></label>
         <select
             #select="ngModel"
             required
@@ -24,7 +25,7 @@
     </div>
     @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.projectTypes && programmingExerciseCreationConfig.projectTypes.length > 0) {
         <div class="form-group mt-2">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType">Project Type</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType"></label>
             <jhi-mode-picker
                 required
                 [options]="programmingExerciseCreationConfig.modePickerOptions"
@@ -51,7 +52,7 @@
                         (ngModelChange)="programmingExerciseCreationConfig.onWithDependenciesChanged($event)"
                         checked
                     />
-                    <span jhiTranslate="artemisApp.programmingExercise.withDependencies">With Dependencies</span>
+                    <span jhiTranslate="artemisApp.programmingExercise.withDependencies"></span>
                     <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.withDependenciesTooltip" />
                 </div>
             }
@@ -59,7 +60,7 @@
     }
     @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.packageNameRequired && programmingExercise.projectType !== ProjectType.XCODE) {
         <div class="form-group">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName"></label>
             <input
                 required
                 type="text"
@@ -88,7 +89,7 @@
     }
     @if (programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && programmingExercise.projectType === ProjectType.XCODE) {
         <div class="form-group">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName">App Name</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName"></label>
             <input
                 required
                 type="text"
@@ -167,9 +168,7 @@
                 [(ngModel)]="programmingExercise.testwiseCoverageEnabled"
                 checked
             />
-            <label class="form-check-label custom-control-label" for="field_testwiseCoverageEnabled" jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage"
-                >Record Testwise Coverage
-            </label>
+            <label class="form-check-label custom-control-label" for="field_testwiseCoverageEnabled" jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage"></label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recordTestwiseCoverageTooltip" />
         </div>
     }

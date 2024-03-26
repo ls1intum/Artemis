@@ -1,8 +1,10 @@
 @if (quizExercise) {
     <div>
         <h1>
-            <span jhiTranslate="artemisApp.quizExercise.re-evaluate.title" [translateValues]="{ param: quizExercise.course?.title || quizExercise.exerciseGroup?.exam?.title }">
-            </span>
+            <span
+                jhiTranslate="artemisApp.quizExercise.re-evaluate.title"
+                [translateValues]="{ param: quizExercise.course?.title || quizExercise.exerciseGroup?.exam?.title }"
+            ></span>
         </h1>
         @if (!quizExercise.course) {
             <h5>
@@ -15,7 +17,7 @@
             <div class="quiz-options">
                 <div class="row form-group" style="width: 100%">
                     <div class="row">
-                        <label for="quiz-title" jhiTranslate="artemisApp.exercise.title">Title</label>
+                        <label for="quiz-title" jhiTranslate="artemisApp.exercise.title"></label>
                     </div>
                     <div class="row">
                         <div class="col-11">
@@ -55,7 +57,7 @@
                         </div>
                         <div class="row">
                             <div class="form-group quiz-duration">
-                                <label for="quiz-duration-minutes" jhiTranslate="artemisApp.quizExercise.duration">Duration</label>
+                                <label for="quiz-duration-minutes" jhiTranslate="artemisApp.quizExercise.duration"></label>
                                 <div class="d-flex align-items-center">
                                     <input id="quiz-duration-minutes" class="form-control me-2" title="Duration" [value]="duration.minutes" type="number" disabled />
                                     <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
@@ -83,7 +85,7 @@
                         <div class="row">
                             <div class="form-group custom-control custom-checkbox">
                                 <input type="checkbox" id="cbRandomizeOrder" class="form-check-input custom-control-input" [(ngModel)]="quizExercise.randomizeQuestionOrder" />
-                                <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"> </label>
+                                <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
                             </div>
                         </div>
                     </div>
@@ -142,13 +144,13 @@
                     <div></div>
                     <div class="form-group">
                         @if (!pendingChanges() && !isSaving) {
-                            <span jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge bg-success"> </span>
+                            <span jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge bg-success"></span>
                         }
                         @if (pendingChanges() && isValidQuiz() && !isSaving) {
-                            <span jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge bg-primary"> </span>
+                            <span jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge bg-primary"></span>
                         }
                         @if (isSaving) {
-                            <span jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-primary"> </span>
+                            <span jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-primary"></span>
                         }
                         <ng-template #tooltipTranslate>
                             @for (reason of invalidReasons; track reason) {

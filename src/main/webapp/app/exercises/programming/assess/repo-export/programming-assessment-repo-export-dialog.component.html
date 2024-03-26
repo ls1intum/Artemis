@@ -1,7 +1,7 @@
 @if (!isLoading) {
     <form name="exportForm" role="form" (ngSubmit)="exportRepos()" #exportForm="ngForm">
         <div class="modal-header">
-            <h4 class="modal-title" jhiTranslate="entity.exportRepos.title">Confirm export operation</h4>
+            <h4 class="modal-title" jhiTranslate="entity.exportRepos.title"></h4>
             <button type="button" class="btn-close" data-dismiss="modal" (click)="clear()"></button>
         </div>
         <div class="modal-body">
@@ -55,7 +55,7 @@
                 <div class="checkbox">
                     <label class="control-label">
                         <input class="form-check-input" type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.repositoryExportOptions.filterLateSubmissions" />
-                        <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissions.title">Filter late submissions</strong>
+                        <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissions.title"></strong>
                         <jhi-help-icon text="artemisApp.programmingExercise.export.filterLateSubmissions.tooltip" />
                     </label>
                 </div>
@@ -76,7 +76,7 @@
                 <div class="checkbox">
                     <label class="control-label">
                         <input class="form-check-input" type="checkbox" name="excludePracticeSubmissions" [(ngModel)]="this.repositoryExportOptions.excludePracticeSubmissions" />
-                        <strong jhiTranslate="artemisApp.programmingExercise.export.excludePracticeSubmissions.title">Exclude practice submissions</strong>
+                        <strong jhiTranslate="artemisApp.programmingExercise.export.excludePracticeSubmissions.title"></strong>
                         <jhi-help-icon text="artemisApp.programmingExercise.export.excludePracticeSubmissions.tooltip" />
                     </label>
                 </div>
@@ -105,7 +105,7 @@
             <div class="checkbox">
                 <label class="control-label">
                     <input class="form-check-input" type="checkbox" name="combineStudentCommits" [(ngModel)]="this.repositoryExportOptions.combineStudentCommits" />
-                    <strong jhiTranslate="artemisApp.programmingExercise.export.combineStudentCommits.title">Combine all changes after instructor into one commit</strong>
+                    <strong jhiTranslate="artemisApp.programmingExercise.export.combineStudentCommits.title"></strong>
                     <jhi-help-icon text="artemisApp.programmingExercise.export.combineStudentCommits.tooltip" />
                 </label>
             </div>
@@ -119,7 +119,7 @@
                             [(ngModel)]="this.repositoryExportOptions.anonymizeRepository"
                             [disabled]="!isAtLeastInstructor"
                         />
-                        <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeRepository.title">Anonymize repository</strong>
+                        <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeRepository.title"></strong>
                         <jhi-help-icon text="artemisApp.programmingExercise.export.anonymizeRepository.tooltip" />
                     </label>
                 </div>
@@ -127,7 +127,7 @@
             <div class="checkbox">
                 <label class="control-label">
                     <input class="form-check-input" type="checkbox" name="normalizeCodeStyle" [(ngModel)]="this.repositoryExportOptions.normalizeCodeStyle" />
-                    <strong jhiTranslate="artemisApp.programmingExercise.export.normalizeCodeStyle.title">Normalize code style (line endings, encoding)</strong>
+                    <strong jhiTranslate="artemisApp.programmingExercise.export.normalizeCodeStyle.title"></strong>
                     <jhi-help-icon text="artemisApp.programmingExercise.export.normalizeCodeStyle.tooltip" />
                 </label>
             </div>
@@ -141,7 +141,7 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
-                <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
             <button
                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -152,7 +152,7 @@
                 @if (this.exportInProgress) {
                     <span class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true" /></span>
                 }
-                <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
+                <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export"></span>
             </button>
         </div>
     </form>

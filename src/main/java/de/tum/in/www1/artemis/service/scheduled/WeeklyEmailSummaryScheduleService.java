@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.scheduled;
 
 import java.time.*;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

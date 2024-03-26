@@ -109,14 +109,10 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
             plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 
             plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
-            plagiarismComparison = plagiarismComparisonRepository.save(plagiarismComparison);
-
             plagiarismSubmission1.setStudentLogin(TEST_PREFIX + "student" + (i + 1));
             plagiarismSubmission1.setPlagiarismCase(plagiarismCase);
-            plagiarismSubmission1.setPlagiarismComparison(plagiarismComparison);
             plagiarismSubmission2.setStudentLogin(TEST_PREFIX + "student" + (i + 2));
             plagiarismSubmission2.setPlagiarismCase(plagiarismCase);
-            plagiarismSubmission2.setPlagiarismComparison(plagiarismComparison);
             plagiarismComparison.setSubmissionA(plagiarismSubmission1);
             plagiarismComparison.setSubmissionB(plagiarismSubmission2);
             plagiarismComparisonRepository.save(plagiarismComparison);
@@ -313,10 +309,10 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetMultiplePlagiarismCaseInfosForStudent() throws Exception {
-        var emptyPlagiarismCaseInfosResponse = request.get(
-                "/api/courses/" + course.getId() + "/plagiarism-case?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, String.class);
-
-        assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isNullOrEmpty();
+        var emptyPlagiarismCaseInfosResponse = request.getMap(
+                "/api/courses/" + course.getId() + "/plagiarism-cases?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, Long.class,
+                PlagiarismCaseInfoDTO.class);
+        assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isEmpty();
 
         addPost();
 
@@ -336,16 +332,16 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetMultiplePlagiarismCaseInfosForStudent_conflict() throws Exception {
         long wrongCourseId = course.getId() + 1;
-        var emptyPlagiarismCaseInfosResponse = request.get(
-                "/api/courses/" + wrongCourseId + "/plagiarism-case?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, String.class);
+        var emptyPlagiarismCaseInfosResponse = request.getMap(
+                "/api/courses/" + wrongCourseId + "/plagiarism-cases?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, Long.class,
+                PlagiarismCaseInfoDTO.class);
 
-        assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isNullOrEmpty();
+        assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isEmpty();
 
         addPost();
 
         request.getMap("/api/courses/" + wrongCourseId + "/plagiarism-cases?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.CONFLICT,
                 Long.class, PlagiarismCaseInfoDTO.class);
-
     }
 
     @Test

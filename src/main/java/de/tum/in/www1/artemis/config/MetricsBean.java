@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.config;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -13,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -192,7 +194,7 @@ public class MetricsBean {
                 final var subscriptionCount = connectedUsers.stream().flatMap(simpUser -> simpUser.getSessions().stream()).map(simpSession -> simpSession.getSubscriptions().size())
                         .reduce(0, Integer::sum);
                 log.info("Currently connect users {} with active websocket subscriptions: {}", connectedUsers.size(), subscriptionCount);
-            }, LOGGING_DELAY_SECONDS * 1000L);
+            }, Duration.of(LOGGING_DELAY_SECONDS, ChronoUnit.SECONDS));
         }
     }
 

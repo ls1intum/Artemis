@@ -24,11 +24,6 @@ public class UserPageableSearchDTO extends SearchTermPageableSearchDTO<String> {
     private Set<String> status = new HashSet<>();
 
     /**
-     * Set of courseIds users need to be part in.
-     */
-    private Set<Long> courseIds = new HashSet<>();
-
-    /**
      * Set of registrationNumbers users need to match
      */
     private Set<String> registrationNumbers;
@@ -55,14 +50,6 @@ public class UserPageableSearchDTO extends SearchTermPageableSearchDTO<String> {
 
     public void setStatus(Set<String> status) {
         this.status = status;
-    }
-
-    public Set<Long> getCourseIds() {
-        return courseIds;
-    }
-
-    public void setCourseIds(Set<Long> courseIds) {
-        this.courseIds = courseIds;
     }
 
     public Set<String> getRegistrationNumbers() {

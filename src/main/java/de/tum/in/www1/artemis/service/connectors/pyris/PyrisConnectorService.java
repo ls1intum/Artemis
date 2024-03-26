@@ -93,10 +93,10 @@ public class PyrisConnectorService {
     }
 
     private IrisException toIrisException(HttpStatusCodeException e) {
-        return switch (e.getStatusCode()) {
-            case UNAUTHORIZED, FORBIDDEN -> new IrisForbiddenException();
-            case BAD_REQUEST -> new IrisInvalidTemplateException(tryExtractErrorMessage(e));
-            case INTERNAL_SERVER_ERROR -> new IrisInternalPyrisErrorException(tryExtractErrorMessage(e));
+        return switch (e.getStatusCode().value()) {
+            case 401, 403 -> new IrisForbiddenException();
+            case 400 -> new IrisInvalidTemplateException(tryExtractErrorMessage(e));
+            case 500 -> new IrisInternalPyrisErrorException(tryExtractErrorMessage(e));
             default -> new IrisInternalPyrisErrorException(e.getMessage());
         };
     }
