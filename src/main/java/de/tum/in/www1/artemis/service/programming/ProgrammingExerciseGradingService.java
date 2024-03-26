@@ -128,7 +128,9 @@ public class ProgrammingExerciseGradingService {
         try {
             ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
             var buildResult = ciResultService.convertBuildResult(requestBody);
+
             checkCorrectBranchElseThrow(participation, buildResult);
+            checkHasCommitHashElseThrow(buildResult);
 
             ProgrammingExercise exercise = participation.getProgrammingExercise();
 
@@ -199,6 +201,18 @@ public class ProgrammingExerciseGradingService {
                 throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
             }
         });
+    }
+
+    /**
+     * Build notifications need to provide an assignment commit hash to find the related submission.
+     * If the information is missing, the result will not be processed further.
+     *
+     * @param buildResult The build result received from the CI system.
+     */
+    private void checkHasCommitHashElseThrow(final AbstractBuildResultNotificationDTO buildResult) {
+        if (buildResult.getCommitHashFromAssignmentRepo().isEmpty()) {
+            throw new IllegalArgumentException("The provided result does not specify the assignment commit hash. The result will not get processed.");
+        }
     }
 
     /**
