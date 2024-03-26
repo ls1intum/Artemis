@@ -1,7 +1,9 @@
 <div class="d-flex flex-column h-100">
-    <div>
-        <!-- TODO: translation -->
-        <h4>Competency Details</h4>
+    <div class="mb-2">
+        <div class="d-flex justify-content-between">
+            <h4 jhiTranslate="artemisApp.standardizedCompetency.details.title"></h4>
+            <button type="button" class="btn-close" (click)="close()"></button>
+        </div>
         <div>
             @if (!isInEditMode) {
                 <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.edit'" [icon]="faEdit" (onClick)="edit()" />
@@ -9,46 +11,72 @@
             <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.delete'" [icon]="faTrash" (onClick)="delete()" />
         </div>
     </div>
-    <div class="d-flex h-100 flex-column" [formGroup]="form">
+    <div class="d-flex h-100 flex-column border-0" [formGroup]="form">
         <div class="form-group">
             <label for="title-input" jhiTranslate="artemisApp.standardizedCompetency.model.title"></label>
             <input type="text" class="form-control" id="title-input" formControlName="title" />
+            @if (form.controls.title.invalid && (form.controls.title.dirty || form.controls.title.touched)) {
+                <div class="alert alert-danger">
+                    @if (form.controls.title.errors?.required) {
+                        <div jhiTranslate="artemisApp.standardizedCompetency.details.titleRequiredError"></div>
+                    }
+                    @if (form.controls.title.errors?.maxlength) {
+                        <div jhiTranslate="artemisApp.standardizedCompetency.details.titleMaxLengthError" [translateValues]="{ max: validators.TITLE_MAX }"></div>
+                    }
+                </div>
+            }
         </div>
         <div class="form-group">
             <label for="description-input" jhiTranslate="artemisApp.standardizedCompetency.model.description"></label>
             @if (isInEditMode) {
                 <jhi-markdown-editor
-                    [markdown]="descriptionControl.value"
+                    [markdown]="form.controls.description.value"
                     (markdownChange)="updateDescriptionControl($event)"
                     id="description-input"
                     class="markdown-preview"
                     [enableFileUpload]="false"
                 />
             } @else {
-                <div id="description-input" disabled="true" class="markdown-preview border rounded p-1" [innerHTML]="descriptionControl.value | htmlForMarkdown"></div>
+                <div id="description-input" disabled="true" class="markdown-preview border rounded p-1" [innerHTML]="form.controls.description.value | htmlForMarkdown"></div>
+            }
+            @if (form.controls.description.invalid && form.controls.description.dirty) {
+                <div
+                    class="alert alert-danger"
+                    jhiTranslate="artemisApp.standardizedCompetency.details.descriptionMaxLengthError"
+                    [translateValues]="{ max: validators.DESCRIPTION_MAX }"
+                ></div>
             }
         </div>
         <div class="form-group">
             <label for="taxonomy-select" jhiTranslate="artemisApp.standardizedCompetency.model.taxonomy"></label>
-            <jhi-taxonomy-select selectId="taxonomy-select" [form]="taxonomyControl" />
+            <jhi-taxonomy-select selectId="taxonomy-select" [form]="form.controls.taxonomy" />
         </div>
         <div class="form-group">
             <label for="knowledge-area-select" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
-            <select id="knowledge-area-select" class="form-select" formControlName="knowledgeArea">
-                <option [ngValue]="undefined"></option>
+            <select id="knowledge-area-select" class="form-select" formControlName="knowledgeAreaId">
                 @for (knowledgeArea of knowledgeAreas; track knowledgeArea.id) {
-                    <option [ngValue]="knowledgeArea">
-                        {{ '&nbsp;'.repeat(knowledgeArea.level * 2) + knowledgeArea.title }}
+                    <option [ngValue]="knowledgeArea.id">
+                        {{ knowledgeArea.title }}
                     </option>
                 }
             </select>
+            @if (form.controls.knowledgeAreaId.invalid && (form.controls.knowledgeAreaId.dirty || form.controls.knowledgeAreaId.touched)) {
+                <div class="alert alert-danger" jhiTranslate="artemisApp.standardizedCompetency.details.knowledgeAreaRequiredError"></div>
+            }
         </div>
         <!-- TODO: add source handling in follow-up PR -->
     </div>
     @if (isInEditMode) {
         <div>
-            <jhi-button [btnType]="ButtonType.PRIMARY" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.save'" [icon]="faSave" (onClick)="save()" />
             <jhi-button [btnType]="ButtonType.SECONDARY" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
+            <jhi-button
+                [btnType]="ButtonType.PRIMARY"
+                [btnSize]="ButtonSize.SMALL"
+                [title]="'entity.action.save'"
+                [icon]="faSave"
+                (onClick)="save()"
+                [disabled]="this.form.invalid"
+            />
         </div>
     }
 </div>

@@ -16,6 +16,13 @@
                 "taxonomy": "Taxonomy",
                 "knowledgeArea": "Knowledge Area",
                 "version": "Version"
+            },
+            "details": {
+                "title": "Standardized Competency Details",
+                "titleRequiredError": "A standardized competency needs to have a title",
+                "titleMaxLengthError": "The title of a standardized competency is limited to {{max}} characters",
+                "descriptionMaxLengthError": "The description of a standardized competency is limited to {{max}} characters",
+                "knowledgeAreaRequiredError": "A standardized competency needs to have a knowledge area"
             }
         },
         "knowledgeArea": {
@@ -23,7 +30,8 @@
                 "competenciesButton": "Manage Standardized Competencies",
                 "createButton": "Create Knowledge Area",
                 "editButton": "Edit Knowledge Area",
-                "deleteButton": "Delete Knowledge Area"
+                "deleteButton": "Delete Knowledge Area",
+                "details": "Knowledge Area Details"
             },
             "model": {
                 "title": "Title",

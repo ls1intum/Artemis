@@ -22,7 +22,7 @@
                 <option [ngValue]="undefined"></option>
                 @for (knowledgeArea of knowledgeAreaArray; track knowledgeArea.id) {
                     <option [ngValue]="knowledgeArea">
-                        {{ '&nbsp;'.repeat(knowledgeArea.level * 2) + knowledgeArea.title }}
+                        {{ knowledgeArea.title }}
                     </option>
                 }
             </select>
@@ -46,7 +46,7 @@
                         <!-- TODO: if we do the filter here it is very expensive i guess -->
                         <div class="card p-2 w-100 rounded-0 mat-tree-node">
                             <span>{{ competency.title }}</span>
-                            <button class="btn btn-primary" (click)="selectCompetency(competency)">SELECT</button>
+                            <button class="btn btn-primary" (click)="selectCompetency(competency, node)">SELECT</button>
                         </div>
                     }
                 </div>
@@ -59,10 +59,11 @@
                 <jhi-standardized-competency-detail
                     class="h-100"
                     [competency]="selectedCompetency"
-                    (onDelete)="deleteCompetency($event)"
-                    (onSave)="updateCompetency($event)"
-                    [(isInEditMode)]="isEditing"
                     [knowledgeAreas]="knowledgeAreaArray"
+                    [(isInEditMode)]="isEditing"
+                    (onDelete)="deleteCompetency()"
+                    (onSave)="updateCompetency($event)"
+                    (onClose)="closeCompetency()"
                 />
             </div>
         }

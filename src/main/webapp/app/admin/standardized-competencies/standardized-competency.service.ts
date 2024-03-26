@@ -15,7 +15,7 @@ export class StandardizedCompetencyService {
     }
 
     getAllForTreeView() {
-        return this.httpClient.get<KnowledgeArea[]>(`${this.resourceURL}/knowledge-areas/for-tree-view`, { observe: 'response' });
+        return this.httpClient.get<KnowledgeArea[]>(`${this.resourceURL}/for-tree-view`, { observe: 'response' });
     }
 
     getKnowledgeArea(knowledgeAreaId: number) {

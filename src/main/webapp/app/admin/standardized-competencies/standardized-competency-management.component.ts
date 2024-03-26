@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { KnowledgeArea, KnowledgeAreaWithLevel, StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeArea, StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
 import { StandardizedCompetencyService } from 'app/admin/standardized-competencies/standardized-competency.service';
@@ -31,7 +31,8 @@ export class StandardizedCompetencyManagementComponent implements OnInit {
     isEditing = false;
 
     //TODO: do this with nesting? > rename
-    knowledgeAreaArray: KnowledgeAreaWithLevel[];
+    knowledgeAreaArray: KnowledgeArea[];
+    knowledgeAreaMap = new Map<number, KnowledgeArea>();
 
     //TODO: maybe make this listen?
     //the original data (to restore after resetting filters)
@@ -61,24 +62,44 @@ export class StandardizedCompetencyManagementComponent implements OnInit {
             .pipe(map((response) => response.body!))
             .subscribe({
                 next: (knowledgeAreas) => {
+                    //set the knowledgeArea for all competencies (since it has to be @JsonIgnored)
+                    //this is needed to detect if a competency was moved on update
+                    for (const knowledgeArea of knowledgeAreas) {
+                        const minimalKnowledgeArea: KnowledgeArea = {
+                            id: knowledgeArea.id,
+                        };
+                        knowledgeArea.competencies?.forEach((competency) => (competency.knowledgeArea = minimalKnowledgeArea));
+                    }
                     this.knowledgeAreas = knowledgeAreas;
                     this.dataSourceNested.data = knowledgeAreas;
-                    this.knowledgeAreaArray = knowledgeAreas.flatMap((knowledgeArea) => this.getSelfAndChildrenAsArrayMinimizedWithLevel(knowledgeArea, 0));
+                    this.knowledgeAreaArray = knowledgeAreas.flatMap((knowledgeArea) => this.getSelfAndChildrenAsArrayMinimizedWithIndent(knowledgeArea, 0));
+                    knowledgeAreas.forEach((knowledgeArea) => this.addSelfAndChildrenToMap(knowledgeArea));
                     this.isLoading = false;
+                    console.log(knowledgeAreas);
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
     }
 
+    private addSelfAndChildrenToMap(knowledgeArea: KnowledgeArea) {
+        if (knowledgeArea.id !== undefined) {
+            this.knowledgeAreaMap.set(knowledgeArea.id, knowledgeArea);
+        }
+        for (const child of knowledgeArea.children ?? []) {
+            this.addSelfAndChildrenToMap(child);
+        }
+    }
+
     filterByKnowledgeArea() {
-        if (this.knowledgeAreaFilter == undefined || this.knowledgeAreaFilter.id == undefined) {
+        //TODO: redo with map!
+        /*if (this.knowledgeAreaFilter == undefined || this.knowledgeAreaFilter.id == undefined) {
             this.dataSourceNested.data = this.knowledgeAreas;
         } else {
             //TODO: this code needs to be replaced!
             const foundKa: KnowledgeArea = this.knowledgeAreaArray.find((ka) => ka.id == this.knowledgeAreaFilter!.id)!;
             this.dataSourceNested.data = [foundKa];
             this.treeControlNested.expand(foundKa);
-        }
+        }*/
     }
 
     filterByCompetencyName() {
@@ -86,21 +107,16 @@ export class StandardizedCompetencyManagementComponent implements OnInit {
         //TODO: if competency name is not empty ->
     }
 
-    getSelfAndChildrenAsArrayMinimizedWithLevel(knowledgeArea: KnowledgeArea, level: number): KnowledgeAreaWithLevel[] {
-        const knowledgeAreaWithLevel = this.minimizeAndAddLevel(knowledgeArea, level);
-        if (knowledgeArea.children) {
-            const childrenWithLevel = knowledgeArea.children.map((child) => this.getSelfAndChildrenAsArrayMinimizedWithLevel(child, level + 1)).flat();
-            return [knowledgeAreaWithLevel, ...childrenWithLevel];
-        }
-        return [knowledgeAreaWithLevel];
-    }
-
-    minimizeAndAddLevel(knowledgeArea: KnowledgeArea, level: number): KnowledgeAreaWithLevel {
-        return {
+    getSelfAndChildrenAsArrayMinimizedWithIndent(knowledgeArea: KnowledgeArea, level: number): KnowledgeArea[] {
+        const knowledgeAreaMinimizedWithIndent = {
             id: knowledgeArea.id,
-            title: knowledgeArea.title,
-            level: level,
+            title: '\xa0'.repeat(level * 2) + knowledgeArea.title,
         };
+        if (knowledgeArea.children) {
+            const childrenWithLevel = knowledgeArea.children.map((child) => this.getSelfAndChildrenAsArrayMinimizedWithIndent(child, level + 1)).flat();
+            return [knowledgeAreaMinimizedWithIndent, ...childrenWithLevel];
+        }
+        return [knowledgeAreaMinimizedWithIndent];
     }
 
     refreshTree() {
@@ -126,21 +142,81 @@ export class StandardizedCompetencyManagementComponent implements OnInit {
         } else {
             this.selectedCompetency = competency;
         }
+        console.log(this.selectedCompetency);
     }
 
-    deleteCompetency(competencyId: number) {
-        console.log(competencyId);
-        //TODO: only if successful
+    deleteCompetency() {
+        //TODO: call server
+
+        if (this.selectedCompetency?.knowledgeArea?.id === undefined) {
+            //TODO: error :)
+            return;
+        }
+        const knowldgeArea = this.knowledgeAreaMap.get(this.selectedCompetency?.knowledgeArea.id);
+
+        if (!knowldgeArea) {
+            //TODO: error
+            return;
+        }
+        knowldgeArea.competencies = knowldgeArea.competencies?.filter((c) => c.id !== this.selectedCompetency?.id);
+        this.isEditing = false;
         this.selectedCompetency = undefined;
-        //TODO: also delete from other stuff and co (and de-select)
     }
 
     updateCompetency(competency: StandardizedCompetency) {
-        //TODO: send to server
-        //TODO: what if no knowledge area is given -> it may not be null so ignore it??
-        competency.title = '^^';
+        if (competency.knowledgeArea?.id === undefined || this.selectedCompetency?.knowledgeArea?.id === undefined) {
+            console.log('competency has no knowledge area set, cannot update.');
+            //TODO: alert service
+            return;
+        }
+
+        //TODO call server.
+        //TODO: exclamation marks ^^
+
+        const previousKnowledgeArea = this.knowledgeAreaMap.get(this.selectedCompetency!.knowledgeArea!.id!)!;
+        //if the knowledge area changed, move the competency to the new knowledge area
+        if (competency.knowledgeArea.id !== previousKnowledgeArea?.id) {
+            const newKnowledgeArea = this.knowledgeAreaMap.get(competency.knowledgeArea.id);
+            if (newKnowledgeArea?.id === undefined) {
+                //TODO: alert service
+                return;
+            }
+            if (previousKnowledgeArea === undefined) {
+                return;
+            }
+            previousKnowledgeArea.competencies = previousKnowledgeArea?.competencies?.filter((c) => c.id !== competency.id);
+            newKnowledgeArea.competencies = (newKnowledgeArea.competencies ?? []).concat(competency);
+            this.selectedCompetency = competency;
+        } else {
+            //if the knowlege area stayed the same insert the new competency/replace the existing one
+            const index = previousKnowledgeArea.competencies?.findIndex((c) => c.id === competency.id);
+            if (index === undefined || index === -1) {
+                previousKnowledgeArea.competencies = (previousKnowledgeArea.competencies ?? []).concat(competency);
+            } else {
+                previousKnowledgeArea.competencies!.splice(index, 1, competency);
+            }
+            this.selectedCompetency = competency;
+        }
         console.log(competency);
+        console.log(this.selectedCompetency);
         this.refreshTree();
-        //TODO: other stuff
     }
+
+    closeCompetency() {
+        if (this.isEditing) {
+            //TODO: also display closing warning!
+            //maybe do private method performCloseCompetency, which gets handed to method that creates dialog.
+        }
+        this.selectedCompetency = undefined;
+        this.isEditing = false;
+    }
+
+    //TODO: maybe utility method that checks it has id and it is save in map
+    //TODO: kaDTO: parentId, competencyDTO
+    //TODO: compDTO: kaId, sourceId
+    //TODO: add create button
+    //TODO: make competencies look nice on the left side
+    //TODO: check things about ka with level and stuff
+    //TODO: do something about all the errors
+    //TODO: make both components re-sizeable?
 }

@@ -64,7 +64,7 @@ public class StandardizedCompetencyResource {
      *
      * @return the ResponseEntity with status 200 (OK) and with body containing the knowledge areas
      */
-    @GetMapping("knowledge-areas/for-tree-view")
+    @GetMapping("for-tree-view")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<KnowledgeArea>> getAllForTreeView() {
         log.debug("REST request to all knowledge areas for tree view");

@@ -22,10 +22,6 @@ export interface KnowledgeArea {
     competencies?: StandardizedCompetency[];
 }
 
-export interface KnowledgeAreaWithLevel extends KnowledgeArea {
-    level: number;
-}
-
 export interface Source {
     title?: string;
     author?: string;
