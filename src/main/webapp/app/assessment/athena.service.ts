@@ -9,6 +9,8 @@ import { TextBlock } from 'app/entities/text-block.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { PROFILE_ATHENA } from 'app/app.constants';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { UMLModel, findElement } from '@ls1intum/apollon';
 
 @Injectable({ providedIn: 'root' })
 export class AthenaService {
@@ -155,24 +157,51 @@ export class AthenaService {
     }
 
     /**
-     * Get feedback suggestions for the given programming submission from Athena
+     * Get feedback suggestions for the given programming submission from Athena.
      *
-     * @param exercise
-     * @param submissionId the id of the submission
+     * @param exercise The exercise for which a submission is assessed
+     * @param submission The assessed submission
      * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:" prefix
      */
-    public getModelingFeedbackSuggestions(exercise: Exercise, submissionId: number): Observable<Feedback[]> {
-        return this.getFeedbackSuggestions<ModelingFeedbackSuggestion>(exercise, submissionId).pipe(
+    public getModelingFeedbackSuggestions(exercise: Exercise, submission: ModelingSubmission): Observable<Feedback[]> {
+        return this.getFeedbackSuggestions<ModelingFeedbackSuggestion>(exercise, submission.id!).pipe(
             map((suggestions) => {
-                return suggestions.map((suggestion) => {
-                    const feedback = new Feedback();
-                    feedback.credits = suggestion.credits;
-                    feedback.text = FEEDBACK_SUGGESTION_IDENTIFIER + suggestion.title;
-                    feedback.detailText = suggestion.description;
+                const referencedElementIDs = new Set();
 
-                    // As we currently have no way to annotate structured feedback in Apollon, we treat all feedback as unreferenced
-                    feedback.type = FeedbackType.MANUAL_UNREFERENCED;
-                    feedback.reference = undefined;
+                const model: UMLModel | undefined = submission.model ? JSON.parse(submission.model) : undefined;
+
+                return suggestions.map((suggestion, index) => {
+                    const feedback = new Feedback();
+                    feedback.id = index;
+                    feedback.credits = suggestion.credits;
+                    feedback.positive = suggestion.credits >= 1;
+
+                    // Even though Athena can reference multiple elements for the same feedback item, Apollon can only
+                    // attach feedback to one element, so we select the first element ID mentioned. To ensure that not
+                    // more than one feedback item is attached to the same element, we additionally ensure that the
+                    // same element is only referenced once.
+                    const referenceId: string | undefined = suggestion.elementIds.filter((id) => !referencedElementIDs.has(id))[0];
+
+                    if (referenceId) {
+                        feedback.type = FeedbackType.AUTOMATIC;
+                        feedback.text = suggestion.description;
+
+                        feedback.referenceId = referenceId;
+
+                        referencedElementIDs.add(referenceId);
+
+                        if (model) {
+                            if (feedback.referenceId) {
+                                const element = findElement(model, feedback.referenceId);
+                                feedback.referenceType = element?.type;
+                                feedback.reference = `${element?.type}:${referenceId}`;
+                            }
+                        }
+                    } else {
+                        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+                        feedback.text = `${FEEDBACK_SUGGESTION_IDENTIFIER}${suggestion.title}`;
+                        feedback.detailText = suggestion.description;
+                    }
 
                     // Load grading instruction from exercise, if available
                     if (suggestion.structuredGradingInstructionId != undefined) {

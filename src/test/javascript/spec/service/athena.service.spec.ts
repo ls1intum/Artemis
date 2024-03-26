@@ -11,6 +11,7 @@ import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedback
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
 describe('AthenaService', () => {
     let athenaService: AthenaService;
@@ -90,7 +91,7 @@ describe('AthenaService', () => {
 
         tick();
 
-        athenaService.getModelingFeedbackSuggestions(modelingExercise, 2).subscribe((suggestions: Feedback[]) => {
+        athenaService.getModelingFeedbackSuggestions(modelingExercise, { id: 2 } as ModelingSubmission).subscribe((suggestions: Feedback[]) => {
             modelingResponse = suggestions;
         });
         const requestWrapperModeling = httpTestingController.expectOne({ url: 'api/athena/modeling-exercises/2/submissions/2/feedback-suggestions' });
