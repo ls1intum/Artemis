@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
+import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;

@@ -34,7 +34,6 @@
 #### Changes affecting Programming Exercises
 - [ ] **High priority**: I tested **all** changes and their related features with **all** corresponding user types on a test server configured with the **integrated lifecycle setup** (LocalVC and LocalCI).
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server configured with **Gitlab** and **Jenkins**.
-- [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server configured with **Bitbucket** and **Bamboo**.
 
 
 ### Motivation and Context

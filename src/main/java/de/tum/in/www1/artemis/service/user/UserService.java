@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,6 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
-import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
@@ -135,19 +135,7 @@ public class UserService {
                 }
                 else {
                     log.info("Create internal admin user {}", artemisInternalAdminUsername.get());
-                    ManagedUserVM userDto = new ManagedUserVM();
-                    userDto.setLogin(artemisInternalAdminUsername.get());
-                    userDto.setPassword(artemisInternalAdminPassword.get());
-                    userDto.setActivated(true);
-                    userDto.setFirstName("Administrator");
-                    userDto.setLastName("Administrator");
-                    userDto.setEmail(artemisInternalAdminEmail.orElse("admin@localhost"));
-                    userDto.setLangKey("en");
-                    userDto.setCreatedBy("system");
-                    userDto.setLastModifiedBy("system");
-                    // needs to be mutable --> new HashSet<>(Set.of(...))
-                    userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), STUDENT.getAuthority())));
-                    userDto.setGroups(new HashSet<>());
+                    final var userDto = createInternalAdminUser();
                     userCreationService.createUser(userDto);
                 }
             }
@@ -155,6 +143,24 @@ public class UserService {
         catch (Exception ex) {
             log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", ex);
         }
+    }
+
+    @NotNull
+    private ManagedUserVM createInternalAdminUser() {
+        ManagedUserVM userDto = new ManagedUserVM();
+        userDto.setLogin(artemisInternalAdminUsername.get());
+        userDto.setPassword(artemisInternalAdminPassword.get());
+        userDto.setActivated(true);
+        userDto.setFirstName("Administrator");
+        userDto.setLastName("Administrator");
+        userDto.setEmail(artemisInternalAdminEmail.orElse("admin@localhost"));
+        userDto.setLangKey("en");
+        userDto.setCreatedBy("system");
+        userDto.setLastModifiedBy("system");
+        // needs to be mutable --> new HashSet<>(Set.of(...))
+        userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), STUDENT.getAuthority())));
+        userDto.setGroups(new HashSet<>());
+        return userDto;
     }
 
     /**
@@ -419,7 +425,7 @@ public class UserService {
 
     /**
      * Updates the user (and synchronizes its password) and its groups in the connected version control system (e.g. GitLab if available).
-     * Also updates the user groups in the used authentication provider (like {@link JiraAuthenticationProvider}.
+     * Also updates the user groups in the used authentication provider.
      *
      * @param oldUserLogin The username of the user. If the username is updated in the user object, it must be the one before the update in order to find the user in the VCS
      * @param user         The updated user in Artemis (this method assumes that the user including its groups was already saved to the Artemis database)

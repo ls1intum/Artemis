@@ -20,7 +20,7 @@ Enable the ``iris`` Spring profile:
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,iris
+   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,core,iris
 
 Configure Pyris API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
