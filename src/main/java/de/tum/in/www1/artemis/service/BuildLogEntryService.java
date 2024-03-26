@@ -357,8 +357,8 @@ public class BuildLogEntryService {
     }
 
     public boolean resultHasLogFile(String resultId) {
-        Path buildLogsPath = Path.of("buildLogs");
-        Path logPath = buildLogsPath.resolve(resultId + ".log");
+        Path buildLogs = Path.of(buildLogsPath);
+        Path logPath = buildLogs.resolve(resultId + ".log");
         return Files.exists(logPath);
     }
 
