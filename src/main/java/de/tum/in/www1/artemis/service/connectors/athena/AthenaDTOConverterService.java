@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.service.dto.athena.*;
  */
 @Profile(PROFILE_CORE)
 @Service
-public class AthenaDTOConverter {
+public class AthenaDTOConverterService {
 
     @Value("${server.url}")
     private String artemisServerUrl;
@@ -32,8 +32,8 @@ public class AthenaDTOConverter {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
-    public AthenaDTOConverter(TextBlockRepository textBlockRepository, TextExerciseRepository textExerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ModelingExerciseRepository modelingExerciseRepository) {
+    public AthenaDTOConverterService(TextBlockRepository textBlockRepository, TextExerciseRepository textExerciseRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, ModelingExerciseRepository modelingExerciseRepository) {
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
