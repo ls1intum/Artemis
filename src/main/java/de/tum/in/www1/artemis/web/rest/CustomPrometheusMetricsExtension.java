@@ -34,6 +34,8 @@ public class CustomPrometheusMetricsExtension extends PrometheusScrapeEndpoint {
     /**
      * Expands the Prometheus metrics call with custom metrics.
      *
+     * @param format        the format for the response
+     * @param includedNames names of the samples included in the result
      * @return WebEndpointResponse with current metrics
      */
     @ReadOperation(producesFrom = TextOutputFormat.class)
