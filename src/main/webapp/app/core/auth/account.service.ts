@@ -47,11 +47,7 @@ export class AccountService implements IAccountService {
         private websocketService: JhiWebsocketService,
         private featureToggleService: FeatureToggleService,
         private profileService: ProfileService,
-    ) {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken ?? false;
-        });
-    }
+    ) {}
 
     get userIdentity() {
         return this.userIdentityValue;
@@ -138,6 +134,12 @@ export class AccountService implements IAccountService {
     identity(force?: boolean): Promise<User | undefined> {
         if (force) {
             this.userIdentity = undefined;
+        }
+
+        if (this.versionControlAccessTokenRequired === undefined) {
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken ?? false;
+            });
         }
 
         // check and see if we have retrieved the userIdentity data from the server.
