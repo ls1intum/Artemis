@@ -4,6 +4,8 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.awt.Rectangle;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +24,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUsersNotFoundDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ImageDTO;
@@ -106,26 +109,31 @@ public class ExamUserService {
         List<String> notFoundExamUsersRegistrationNumbers = new ArrayList<>();
         List<ExamUserWithImageDTO> examUserWithImageDTOs = parsePDF(file);
 
-        examUserWithImageDTOs.forEach(examUserWithImageDTO -> {
+        for (var examUserWithImageDTO : examUserWithImageDTOs) {
             Optional<User> user = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(examUserWithImageDTO.studentRegistrationNumber());
-            if (user.isPresent()) {
-                Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(examId, user.get().getId());
-                if (examUserOptional.isPresent()) {
-                    ExamUser examUser = examUserOptional.get();
-                    MultipartFile studentImageFile = fileService.convertByteArrayToMultipart(examUserWithImageDTO.studentRegistrationNumber() + "_student_image", ".png",
-                            examUserWithImageDTO.image().imageInBytes());
-                    String responsePath = fileService.handleSaveFile(studentImageFile, false, false).toString();
-                    examUser.setStudentImagePath(responsePath);
-                    examUserRepository.save(examUser);
-                }
-                else {
-                    notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
-                }
-            }
-            else {
+            if (user.isEmpty()) {
                 notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
+                continue;
             }
-        });
+            Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(examId, user.get().getId());
+            if (examUserOptional.isEmpty()) {
+                notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
+                continue;
+            }
+
+            ExamUser examUser = examUserOptional.get();
+            String oldPathString = examUser.getStudentImagePath();
+            Path pathToSave = FilePathService.getStudentImageFilePath().resolve(examUserWithImageDTO.studentRegistrationNumber() + "_student_image.png");
+            Path savedPath = fileService.saveFile(file, pathToSave);
+
+            examUser.setStudentImagePath(FilePathService.publicPathForActualPathOrThrow(savedPath, examUser.getId()).toString());
+            examUserRepository.save(examUser);
+
+            if (oldPathString != null) {
+                Path oldPath = FilePathService.actualPathForPublicPath(URI.create(examUser.getStudentImagePath()));
+                fileService.schedulePathForDeletion(oldPath, 0);
+            }
+        }
 
         return new ExamUsersNotFoundDTO(notFoundExamUsersRegistrationNumbers.size(), examUserWithImageDTOs.size() - notFoundExamUsersRegistrationNumbers.size(),
                 notFoundExamUsersRegistrationNumbers);
