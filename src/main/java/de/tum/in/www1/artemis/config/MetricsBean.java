@@ -311,7 +311,7 @@ public class MetricsBean {
     /**
      * Calculate active users (active within the last 14 days) and store them in a List.
      * The calculation is performed every 60 minutes.
-     * The initial calculation is done in the constructor to ensure it is done BEFORE {@link #recalculateMetrics()}
+     * The initial calculation is done in the constructor to ensure it is done BEFORE {@link #recalculateScheduledMetrics()}
      * is called.
      */
     @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 60 * 60 * 1000) // Every 60 minutes
@@ -332,7 +332,7 @@ public class MetricsBean {
      * Only executed if the "scheduling"-profile is present.
      */
     @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 0) // Every 5 minutes
-    public void recalculateMetrics() {
+    public void recalculateScheduledMetrics() {
         if (!scheduledMetricsEnabled) {
             return;
         }
@@ -365,11 +365,21 @@ public class MetricsBean {
         updateMultiGaugeIntegerForMinuteRanges(releaseExamGauge, examRepository::countExamsWithStartDateBetween);
         updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, examRepository::countExamUsersInExamsWithStartDateBetween);
 
+        log.info("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
+    }
+
+    /**
+     * Recalculate all live metrics.
+     * This is executed on every request to the Prometheus endpoint.
+     */
+    public void recalculateLiveMetrics() {
+        if (!scheduledMetricsEnabled) {
+            return;
+        }
+
         if (localCIBuildJobQueueServiceOptional.isPresent()) {
             updateLocalCIMetrics();
         }
-
-        log.info("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
 
     private void updateLocalCIMetrics() {
