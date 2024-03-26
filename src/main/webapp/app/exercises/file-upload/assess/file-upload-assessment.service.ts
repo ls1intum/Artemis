@@ -8,6 +8,7 @@ import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/utils/date.utils';
 
 export type EntityResponseType = HttpResponse<Result>;
+type FileUploadAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string };
 
 @Injectable({
     providedIn: 'root',
@@ -17,20 +18,22 @@ export class FileUploadAssessmentService {
 
     constructor(private http: HttpClient) {}
 
-    saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
+    saveAssessment(feedbacks: Feedback[], submissionId: number, assessmentNote: string | undefined, submit = false): Observable<Result> {
         let params = new HttpParams();
         if (submit) {
             params = params.set('submit', 'true');
         }
+        const body: FileUploadAssessmentDTO = { feedbacks, assessmentNote };
         const url = `${this.resourceUrl}/file-upload-submissions/${submissionId}/feedback`;
-        return this.http.put<Result>(url, feedbacks, { params });
+        return this.http.put<Result>(url, body, { params });
     }
 
-    updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
+    updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number, assessmentNote?: string): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/file-upload-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             complaintResponse,
+            assessmentNote,
         };
         return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }

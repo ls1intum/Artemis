@@ -64,7 +64,7 @@ public abstract class AssessmentResource {
      */
     ResponseEntity<Result> getAssessmentBySubmissionId(Long submissionId) {
         log.debug("REST request to get assessment for submission with id {}", submissionId);
-        Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+        Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
 
@@ -80,7 +80,7 @@ public abstract class AssessmentResource {
         // remove sensitive information for students
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             exercise.filterSensitiveInformation();
-            result.setAssessor(null);
+            result.filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(result);
@@ -89,13 +89,14 @@ public abstract class AssessmentResource {
     /**
      * Save or submit manual assessment depending on the submit flag.
      *
-     * @param submission   the submission containing the assessment
-     * @param feedbackList list of feedbacks
-     * @param submit       if true the assessment is submitted, else only saved
-     * @param resultId     resultId of the result we save the feedbackList to, null of no results exists yet
+     * @param submission     the submission containing the assessment
+     * @param feedbackList   list of feedbacks
+     * @param submit         if true the assessment is submitted, else only saved
+     * @param resultId       resultId of the result we save the feedbackList to, null of no results exists yet
+     * @param assessmentNote the assessment note of the result
      * @return result after saving/submitting modeling assessment
      */
-    ResponseEntity<Result> saveAssessment(Submission submission, boolean submit, List<Feedback> feedbackList, Long resultId) {
+    ResponseEntity<Result> saveAssessment(Submission submission, boolean submit, List<Feedback> feedbackList, Long resultId, String assessmentNote) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
@@ -108,7 +109,7 @@ public abstract class AssessmentResource {
             throw new AccessForbiddenException("The user is not allowed to override the assessment");
         }
 
-        Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbackList, resultId, submit);
+        Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbackList, resultId, assessmentNote, submit);
 
         var participation = result.getParticipation();
         // remove information about the student for tutors to ensure double-blind assessment
@@ -132,10 +133,10 @@ public abstract class AssessmentResource {
         // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
         Result result;
         if (submission.getLatestResult() == null) {
-            result = assessmentService.saveManualAssessment(submission, feedbacks, null);
+            result = assessmentService.saveManualAssessment(submission, feedbacks, null, null);
         }
         else {
-            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId());
+            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId(), null);
         }
         return resultRepository.submitResult(result, exercise);
     }

@@ -676,6 +676,23 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         cancelAssessment(HttpStatus.OK);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testSaveAssessmentNote() throws Exception {
+        AssessmentNote assessmentNote = new AssessmentNote();
+        assessmentNote.setNote("note");
+        manualResult.setAssessmentNote(assessmentNote);
+
+        User user = userRepository.getUser();
+        manualResult.setAssessor(user);
+
+        manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
+        manualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(manualResult.getId());
+        assessmentNote = manualResult.getAssessmentNote();
+        assertThat(assessmentNote.getCreatedDate()).isNotNull();
+        assertThat(assessmentNote.getLastModifiedDate()).isNotNull();
+    }
+
     private void assessmentDueDatePassed() {
         exerciseUtilService.updateAssessmentDueDate(programmingExercise.getId(), ZonedDateTime.now().minusSeconds(10));
     }
@@ -1028,7 +1045,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         // we will only delete the middle automatic result at index 2
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/" + midResult.getId(),
                 HttpStatus.OK);
-        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(4);
         assertThat(submission.getResults().get(0)).isEqualTo(firstResult);
         assertThat(submission.getResults().get(2)).isEqualTo(firstSemiAutomaticResult);

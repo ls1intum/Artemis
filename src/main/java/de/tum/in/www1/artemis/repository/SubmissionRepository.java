@@ -405,7 +405,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * @param submissionId the submission id we are interested in
-     * @return the submission with its feedback and assessor
+     * @return the submission with its feedback, assessor and assessment note
      */
     @Query("""
             SELECT DISTINCT submission
@@ -414,9 +414,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 LEFT JOIN FETCH r.feedbacks f
                 LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH r.assessmentNote
             WHERE submission.id = :submissionId
             """)
-    Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
+    Optional<Submission> findWithEagerResultAndFeedbackAndAssessmentNoteById(@Param("submissionId") long submissionId);
 
     /**
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
@@ -467,14 +468,15 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
+     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the
+     * result and the assessment note of the result. Throws an EntityNotFoundException if no submission could be found for the given id.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
      */
-    default Submission findOneWithEagerResultAndFeedback(long submissionId) {
-        return this.findWithEagerResultAndFeedbackById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    default Submission findOneWithEagerResultAndFeedbackAndAssessmentNote(long submissionId) {
+        return this.findWithEagerResultAndFeedbackAndAssessmentNoteById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 
     /**

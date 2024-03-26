@@ -156,4 +156,19 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(result.getFeedbacks()).hasSize(2).allMatch(feedback -> feedback.getTestCase().getTestName() != null);
     }
+
+    @Test
+    void filterSensitiveInformation() {
+        Result result = new Result();
+        result.setAssessor(new User());
+        result.setAssessmentNote(new AssessmentNote());
+
+        assertThat(result.getAssessor()).isNotNull();
+        assertThat(result.getAssessmentNote()).isNotNull();
+
+        result.filterSensitiveInformation();
+
+        assertThat(result.getAssessor()).isNull();
+        assertThat(result.getAssessmentNote()).isNull();
+    }
 }

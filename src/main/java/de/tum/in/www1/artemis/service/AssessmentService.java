@@ -89,7 +89,9 @@ public class AssessmentService {
         ComplaintResponse complaintResponse = complaintResponseService.resolveComplaint(assessmentUpdate.getComplaintResponse());
 
         // Create a new result which is a copy of the original result.
-        Result newResult = submissionService.createResultAfterComplaintResponse(originalResult.getSubmission(), originalResult, assessmentUpdate.getFeedbacks());
+        Result newResult = submissionService.createResultAfterComplaintResponse(originalResult.getSubmission(), originalResult, assessmentUpdate.getFeedbacks(),
+                assessmentUpdate.getAssessmentNote());
+
         newResult.setAssessor(complaintResponse.getReviewer());
         newResult.setAssessmentType(originalResult.getAssessmentType());
 
@@ -214,7 +216,7 @@ public class AssessmentService {
 
     /**
      * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date, sets the assessment type
-     * to MANUAL and sets the assessor attribute. Afterwards, it saves the update result in the database again.
+     * to MANUAL and sets the assessor attribute. Afterward, it saves the update result in the database again.
      * <p>
      * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment(Result)}.
      *
@@ -223,7 +225,7 @@ public class AssessmentService {
      * @return the saved result
      */
     private Result submitManualAssessment(long resultId, Exercise exercise) {
-        Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(resultId);
+        Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorAndAssessmentNoteByIdElseThrow(resultId);
         result.setRatedIfNotAfterDueDate();
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.submitResult(result, exercise);
@@ -242,13 +244,17 @@ public class AssessmentService {
      * <p>
      * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result, User)}.
      *
-     * @param submission   the submission to which the feedback belongs to
-     * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
-     * @param resultId     id of the result we want to save the feedbackList to, null if no result exists
+     * @param submission         the submission to which the feedback belongs to
+     * @param feedbackList       the assessment as a feedback list that should be added to the result of the corresponding submission
+     * @param resultId           id of the result we want to save the feedbackList to, null if no result exists
+     * @param assessmentNoteText the text of the assessment note of the result
      * @return the saved result
      */
-    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId) {
-        Result result = submission.getResults().stream().filter(res -> res.getId().equals(resultId)).findAny().orElse(null);
+    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText) {
+        Result result = null;
+        if (resultId != null) {
+            result = resultRepository.findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(resultId).orElse(null);
+        }
 
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission);
@@ -267,6 +273,13 @@ public class AssessmentService {
         result.updateAllFeedbackItems(feedbackList, false);
         result.determineAssessmentType();
 
+        if (assessmentNoteText != null) {
+            AssessmentNote assessmentNote = new AssessmentNote();
+            assessmentNote.setNote(assessmentNoteText);
+            assessmentNote.setCreator(user);
+            result.setAssessmentNote(assessmentNote);
+        }
+
         if (result.getSubmission() == null) {
             result.setSubmission(submission);
             submission.addResult(result);
@@ -283,15 +296,17 @@ public class AssessmentService {
      * Saves a new manual assessment. Submits the result if the submit-parameter is set to true.
      * Also notifies the student about the assessment if it is visible (after the assessment due date).
      *
-     * @param exercise     the exercise this assessment belongs to
-     * @param submission   the assessed submission
-     * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
-     * @param resultId     if of the result we want to save the feedbackList to, null if no result exists
-     * @param submit       true if the result should also be submitted
+     * @param exercise           the exercise this assessment belongs to
+     * @param submission         the assessed submission
+     * @param feedbackList       the assessment as a feedback list that should be added to the result of the corresponding submission
+     * @param resultId           if of the result we want to save the feedbackList to, null if no result exists
+     * @param assessmentNoteText the text of the assessment note for from result
+     * @param submit             true if the result should also be submitted
      * @return the saved result
      */
-    public Result saveAndSubmitManualAssessment(final Exercise exercise, final Submission submission, final List<Feedback> feedbackList, Long resultId, boolean submit) {
-        Result result = saveManualAssessment(submission, feedbackList, resultId);
+    public Result saveAndSubmitManualAssessment(final Exercise exercise, final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText,
+            boolean submit) {
+        Result result = saveManualAssessment(submission, feedbackList, resultId, assessmentNoteText);
         if (!submit) {
             return result;
         }

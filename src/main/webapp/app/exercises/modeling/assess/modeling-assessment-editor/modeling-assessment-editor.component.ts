@@ -125,6 +125,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound, this.resultId).subscribe({
             next: (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
+                this.validateFeedback();
             },
             error: (error: HttpErrorResponse) => {
                 this.handleErrorResponse(error);
@@ -142,7 +143,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 }
 
                 this.handleReceivedSubmission(submission);
-
+                this.validateFeedback();
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
                 this.location.go(newUrl);
@@ -303,7 +304,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!).subscribe({
+        this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, this.result!.assessmentNote?.note).subscribe({
             next: (result: Result) => {
                 this.result = result;
                 this.handleFeedback(this.result.feedbacks);
@@ -344,7 +345,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
             return;
         }
-        this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, true).subscribe({
+        this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, this.result!.assessmentNote?.note, true).subscribe({
             next: (result: Result) => {
                 result.participation!.results = [result];
                 this.result = result;
@@ -363,7 +364,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.alertService.error(errorMessage);
             },
         });
-        this.assessmentsAreValid = false;
     }
 
     /**
@@ -379,26 +379,28 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             assessmentAfterComplaint.onError();
             return;
         }
-        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, assessmentAfterComplaint.complaintResponse, this.submission!.id!).subscribe({
-            next: (response) => {
-                assessmentAfterComplaint.onSuccess();
-                this.result = response.body!;
-                // reconnect
-                this.result.participation!.results = [this.result];
-                this.alertService.closeAll();
-                this.alertService.success('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
-            },
-            error: (httpErrorResponse: HttpErrorResponse) => {
-                assessmentAfterComplaint.onError();
-                this.alertService.closeAll();
-                const error = httpErrorResponse.error;
-                if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                    this.alertService.error(error.message, error.params);
-                } else {
-                    this.alertService.error('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
-                }
-            },
-        });
+        this.modelingAssessmentService
+            .updateAssessmentAfterComplaint(this.feedback, assessmentAfterComplaint.complaintResponse, this.submission!.id!, this.result?.assessmentNote?.note)
+            .subscribe({
+                next: (response) => {
+                    assessmentAfterComplaint.onSuccess();
+                    this.result = response.body!;
+                    // reconnect
+                    this.result.participation!.results = [this.result];
+                    this.alertService.closeAll();
+                    this.alertService.success('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
+                },
+                error: (httpErrorResponse: HttpErrorResponse) => {
+                    assessmentAfterComplaint.onError();
+                    this.alertService.closeAll();
+                    const error = httpErrorResponse.error;
+                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                        this.alertService.error(error.message, error.params);
+                    } else {
+                        this.alertService.error('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                    }
+                },
+            });
     }
 
     /**
