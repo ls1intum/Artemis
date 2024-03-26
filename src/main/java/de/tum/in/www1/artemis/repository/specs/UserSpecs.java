@@ -146,6 +146,15 @@ public class UserSpecs {
     }
 
     /**
+     * Creates the specification to find all users that are assigned no user groups.
+     *
+     * @return specification used to chain database operations
+     */
+    public static Specification<User> getAllUsersWithoutUserGroups() {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.GROUPS));
+    }
+
+    /**
      * Creates the specification to get distinct results.
      *
      * @return specification used to chain database operations

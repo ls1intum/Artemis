@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.distinct;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getActivatedOrDeactivatedSpecification;
+import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getAllUsersWithoutUserGroups;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getAuthoritySpecification;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getInternalOrExternalSpecification;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getSearchTermSpecification;
@@ -572,6 +573,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         Specification<User> specification = Specification.where(distinct()).and(notSoftDeleted()).and(getSearchTermSpecification(searchTerm))
                 .and(getInternalOrExternalSpecification(internal, external)).and(getActivatedOrDeactivatedSpecification(activated, deactivated))
                 .and(getAuthoritySpecification(modifiedAuthorities)).and(getWithOrWithoutRegistrationNumberSpecification(noRegistrationNumber, withRegistrationNumber));
+
+        if (userSearch.isFindWithoutUserGroups()) {
+            specification = specification.and(getAllUsersWithoutUserGroups());
+        }
 
         return findAll(specification, sorted).map(user -> {
             user.setVisibleRegistrationNumber();
