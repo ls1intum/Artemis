@@ -2,6 +2,7 @@ import { AfterViewInit, Component, Input, OnDestroy, QueryList, ViewChild, ViewC
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
+import { ImportOptions } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 import { Subject, Subscription } from 'rxjs';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
@@ -18,11 +19,11 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     @Input() isLocal: boolean;
+    @Input() importOptions: ImportOptions;
 
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelComponent: ExerciseTitleChannelNameComponent;
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
-    @ViewChild('shortName')
-    shortNameField: NgModel;
+    @ViewChild('shortName') shortNameField: NgModel;
     @ViewChild('checkoutSolutionRepository') checkoutSolutionRepositoryField?: NgModel;
     @ViewChild('recreateBuildPlans') recreateBuildPlansField?: NgModel;
     @ViewChild('updateTemplateFiles') updateTemplateFilesField?: NgModel;
@@ -45,7 +46,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         });
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         for (const subscription of this.inputFieldSubscriptions) {
             subscription?.unsubscribe();
         }

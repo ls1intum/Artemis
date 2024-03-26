@@ -17,7 +17,7 @@
     height: 90px;
     position: fixed;
     padding: 0 10px;
-    bottom: 0;
+    bottom: var(--footer-height);
     left: 0;
     right: 0;
     z-index: 10;

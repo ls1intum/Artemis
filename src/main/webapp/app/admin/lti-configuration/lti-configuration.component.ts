@@ -8,6 +8,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { Subject } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
+import { LTI_URLS } from 'app/admin/lti-configuration/lti-configuration.urls';
 
 @Component({
     selector: 'jhi-lti-configuration',
@@ -55,42 +56,42 @@ export class LtiConfigurationComponent implements OnInit {
      * Gets the dynamic registration url
      */
     getDynamicRegistrationUrl(): string {
-        return `${location.origin}/lti/dynamic-registration`; // Needs to match url in lti.route
+        return LTI_URLS.LTI13_DYNAMIC_REGISTRATION_URL; // Needs to match url in lti.route
     }
 
     /**
      * Gets the deep linking url
      */
     getDeepLinkingUrl(): string {
-        return `${location.origin}/api/public/lti13/deep-link`; // Needs to match url in CustomLti13Configurer
+        return LTI_URLS.LTI13_DEEPLINK_REDIRECT_PATH; // Needs to match url in CustomLti13Configurer
     }
 
     /**
      * Gets the tool url
      */
     getToolUrl(): string {
-        return `${location.origin}/courses`; // Needs to match url in CustomLti13Configurer
+        return LTI_URLS.TOOL_URL; // Needs to match url in CustomLti13Configurer
     }
 
     /**
      * Gets the keyset url
      */
     getKeysetUrl(): string {
-        return `${location.origin}/.well-known/jwks.json`; // Needs to match url in CustomLti13Configurer
+        return LTI_URLS.KEYSET_URI; // Needs to match url in CustomLti13Configurer
     }
 
     /**
      * Gets the initiate login url
      */
     getInitiateLoginUrl(): string {
-        return `${location.origin}/api/public/lti13/initiate-login`; // Needs to match uri in CustomLti13Configurer
+        return LTI_URLS.LTI13_LOGIN_INITIATION_PATH; // Needs to match uri in CustomLti13Configurer
     }
 
     /**
      * Gets the redirect uri
      */
     getRedirectUri(): string {
-        return `${location.origin}/api/public/lti13/auth-callback`; // Needs to match uri in CustomLti13Configurer
+        return LTI_URLS.LTI13_LOGIN_REDIRECT_PROXY_PATH; // Needs to match uri in CustomLti13Configurer
     }
 
     /**
