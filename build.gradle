@@ -240,13 +240,15 @@ dependencies {
     implementation "org.apache.logging.log4j:log4j-to-slf4j:2.23.1"
 
     // Note: spring-security-lti13 does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
-//    implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.11"
+    // implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.11"
     implementation files("libs/spring-security-lti13-0.1.12.jar")
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
-//    implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
+    // Note: jgit.htt.server is not compatible with jakarta yet and neither is there a timeline. Hence, we had to add the sourcefiles to our repository. Once the compatibility is given, we can switch back to the maven dependency.
+    // implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
+
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "oauth.signpost:signpost-core:2.1.1"
     implementation "oauth.signpost:signpost-commonshttp4:2.1.1"
