@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.open;
 
+import static de.tum.in.www1.artemis.config.lti.CustomLti13Configurer.LTI13_DEEPLINK_REDIRECT_PATH;
+import static de.tum.in.www1.artemis.config.lti.CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH;
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.time.Instant;
@@ -14,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -28,7 +30,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 @Profile("lti")
 @RestController
 // TODO: should we adapt the mapping based on the profile?
-@RequestMapping("api/public/")
 public class PublicLtiResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicLtiResource.class);
@@ -46,7 +47,7 @@ public class PublicLtiResource {
      * @param response HTTP response
      * @throws IOException If an input or output exception occurs
      */
-    @PostMapping({ "lti13/auth-callback", "lti13/deep-link" })
+    @PostMapping({ LTI13_LOGIN_REDIRECT_PROXY_PATH, LTI13_DEEPLINK_REDIRECT_PATH })
     @EnforceNothing
     public void lti13LaunchRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String state = request.getParameter("state");
