@@ -1,0 +1,23 @@
+<div class="modal-header justify-between">
+    <h4 class="modal-title">
+        <span>{{ 'artemisApp.course.imageCropper.title' | artemisTranslate }}</span>
+    </h4>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <image-cropper
+            [imageFile]="courseImageUploadFile"
+            [maintainAspectRatio]="true"
+            [aspectRatio]="1"
+            [resizeToWidth]="200"
+            [cropperMinWidth]="100"
+            [onlyScaleDown]="true"
+            [roundCropper]="true"
+            (imageCropped)="imageCropped($event)"
+        />
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-secondary" (click)="onCancel()"><span jhiTranslate="entity.action.cancel"></span></button>
+    <button type="button" class="btn btn-primary" style="margin-left: 10px" (click)="onSave()">&nbsp;<span jhiTranslate="entity.action.save"></span></button>
+</div>
