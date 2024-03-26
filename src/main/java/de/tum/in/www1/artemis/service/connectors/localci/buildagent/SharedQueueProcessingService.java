@@ -24,7 +24,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 
-import de.tum.in.www1.artemis.domain.enumeration.BuildJobResult;
+import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
 
@@ -42,8 +42,6 @@ public class SharedQueueProcessingService {
     private final ThreadPoolExecutor localCIBuildExecutorService;
 
     private final BuildJobManagementService buildJobManagementService;
-
-    private final List<LocalCIBuildJobQueueItem> recentBuildJobs = new ArrayList<>();
 
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
@@ -193,8 +191,16 @@ public class SharedQueueProcessingService {
             int numberOfCurrentBuildJobs = processingJobsOfMember.size();
             int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
             boolean active = numberOfCurrentBuildJobs > 0;
-            LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember,
-                    active, recentBuildJobs);
+            LocalCIBuildAgentInformation agent = buildAgentInformation.get(memberAddress);
+            List<LocalCIBuildJobQueueItem> recentBuildJobs;
+            if (agent != null) {
+                recentBuildJobs = agent.recentBuildJobs();
+            }
+            else {
+                recentBuildJobs = new ArrayList<>();
+            }
+            LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active,
+                    recentBuildJobs);
             try {
                 buildAgentInformation.lock(memberAddress);
                 buildAgentInformation.put(memberAddress, info);
@@ -245,8 +251,8 @@ public class SharedQueueProcessingService {
             JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
 
             LocalCIBuildJobQueueItem finishedJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
-                    buildJob.courseId(), buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildJobResult.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo,
-                    buildJob.buildConfig());
+                    buildJob.courseId(), buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo,
+                    buildJob.buildConfig(), null);
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, null);
             resultQueue.add(resultQueueItem);
@@ -264,17 +270,17 @@ public class SharedQueueProcessingService {
             ZonedDateTime completionDate = ZonedDateTime.now();
 
             LocalCIBuildJobQueueItem job;
-            BuildJobResult result;
+            BuildStatus status;
 
             if (!(ex.getCause() instanceof CancellationException) || !ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-                result = BuildJobResult.FAILED;
+                status = BuildStatus.FAILED;
                 log.error("Error while processing build job: {}", buildJob, ex);
             }
             else {
-                result = BuildJobResult.CANCELLED;
+                status = BuildStatus.CANCELLED;
             }
 
-            job = new LocalCIBuildJobQueueItem(buildJob, completionDate, result);
+            job = new LocalCIBuildJobQueueItem(buildJob, completionDate, status);
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(null, job, ex);
             resultQueue.add(resultQueueItem);
@@ -295,10 +301,16 @@ public class SharedQueueProcessingService {
      * @param buildJob The build job to add to the list of recent build jobs
      */
     private void addToRecentBuildJobs(LocalCIBuildJobQueueItem buildJob) {
-        if (recentBuildJobs.size() >= 20) {
-            recentBuildJobs.remove(0);
+        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        LocalCIBuildAgentInformation agent = buildAgentInformation.get(memberAddress);
+        if (agent != null) {
+            List<LocalCIBuildJobQueueItem> recentBuildJobs = agent.recentBuildJobs();
+            if (recentBuildJobs.size() >= 20) {
+                recentBuildJobs.remove(0);
+            }
+            recentBuildJobs.add(buildJob);
+            buildAgentInformation.put(memberAddress, new LocalCIBuildAgentInformation(agent, recentBuildJobs));
         }
-        recentBuildJobs.add(buildJob);
         updateLocalBuildAgentInformation();
     }
 
