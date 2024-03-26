@@ -120,7 +120,7 @@ management:
         export:
             # Prometheus is the default metrics server
             prometheus:
-                enabled: false
+                enabled: true
                 step: 60
         enable:
             http: true
