@@ -26,12 +26,13 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
     @Query("""
             SELECT DISTINCT oneToOneChat
             FROM OneToOneChat oneToOneChat
-                LEFT JOIN FETCH oneToOneChat.conversationParticipants conversationParticipant
-                LEFT JOIN FETCH conversationParticipant.user user
+                LEFT JOIN oneToOneChat.conversationParticipants matchingParticipant
+                LEFT JOIN FETCH oneToOneChat.conversationParticipants allParticipants
+                LEFT JOIN FETCH allParticipants.user user
                 LEFT JOIN FETCH user.groups
             WHERE oneToOneChat.course.id = :courseId
                 AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :userId)
-                AND user.id = :userId
+                AND allParticipants.user.id = :userId
             ORDER BY oneToOneChat.lastMessageDate DESC
             """)
     List<OneToOneChat> findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
