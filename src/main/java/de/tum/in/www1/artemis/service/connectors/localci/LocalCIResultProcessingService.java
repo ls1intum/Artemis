@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
@@ -16,10 +17,11 @@ import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
+import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.enumeration.BuildJobResult;
+import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -28,6 +30,7 @@ import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultQueueItem;
@@ -59,6 +62,8 @@ public class LocalCIResultProcessingService {
 
     private IQueue<ResultQueueItem> resultQueue;
 
+    private IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
+
     private FencedLock lock;
 
     private UUID listenerId;
@@ -78,6 +83,7 @@ public class LocalCIResultProcessingService {
     @PostConstruct
     public void init() {
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
+        this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.lock = this.hazelcastInstance.getCPSubsystem().getLock("resultQueueLock");
         this.listenerId = resultQueue.addItemListener(new ResultQueueListener(), true);
     }
@@ -116,10 +122,11 @@ public class LocalCIResultProcessingService {
                 if (participation.getProgrammingExercise() == null) {
                     participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
                 }
+                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
 
-                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultQueueItem.buildResult());
                 if (result != null) {
                     programmingMessagingService.notifyUserAboutNewResult(result, participation);
+                    addResultToBuildAgentsRecentBuildJobs(buildJob, result);
                 }
                 else {
                     programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
@@ -130,7 +137,7 @@ public class LocalCIResultProcessingService {
                 log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
             }
             // save build job to database
-            saveFinishedBuildJob(buildJob, BuildJobResult.SUCCESSFUL);
+            saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL);
         }
         else {
             if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
@@ -141,7 +148,7 @@ public class LocalCIResultProcessingService {
                             new BuildTriggerWebsocketError("Build job was cancelled", participation.getId()));
                 }
 
-                saveFinishedBuildJob(buildJob, BuildJobResult.CANCELLED);
+                saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED);
             }
             else {
                 log.error("Error while processing build job: {}", buildJob, ex);
@@ -155,7 +162,7 @@ public class LocalCIResultProcessingService {
                     log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", buildJob.participationId());
                 }
 
-                saveFinishedBuildJob(buildJob, BuildJobResult.FAILED);
+                saveFinishedBuildJob(buildJob, BuildStatus.FAILED);
             }
         }
 
@@ -176,12 +183,32 @@ public class LocalCIResultProcessingService {
     }
 
     /**
+     * Adds the given result to the recent build jobs of the build agent that processed the build job.
+     *
+     * @param buildJob the build job
+     * @param result   the result of the build job
+     */
+    private void addResultToBuildAgentsRecentBuildJobs(LocalCIBuildJobQueueItem buildJob, Result result) {
+        LocalCIBuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
+        if (buildAgent != null) {
+            List<LocalCIBuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
+            for (int i = 0; i < recentBuildJobs.size(); i++) {
+                if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
+                    recentBuildJobs.set(i, new LocalCIBuildJobQueueItem(buildJob, result));
+                    break;
+                }
+            }
+            buildAgentInformation.put(buildJob.buildAgentAddress(), new LocalCIBuildAgentInformation(buildAgent, recentBuildJobs));
+        }
+    }
+
+    /**
      * Save a finished build job to the database.
      *
      * @param queueItem the build job object from the queue
      * @param result    the result of the build job (SUCCESSFUL, FAILED, CANCELLED)
      */
-    public void saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildJobResult result) {
+    public void saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus result) {
         try {
             BuildJob buildJob = new BuildJob(queueItem, result);
             buildJobRepository.save(buildJob);
