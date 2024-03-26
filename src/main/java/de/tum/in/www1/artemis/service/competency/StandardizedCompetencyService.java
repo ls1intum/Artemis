@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.ws.rs.BadRequestException;
 
@@ -177,10 +176,11 @@ public class StandardizedCompetencyService {
         Long sourceId = competency.getSource() == null ? null : competency.getSource().getId();
         Long knowledgeAreaId = competency.getKnowledgeArea() == null ? null : competency.getKnowledgeArea().getId();
 
-        return new StandardizedCompetencyDTO(competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getVersion(), knowledgeAreaId, sourceId);
+        return new StandardizedCompetencyDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getVersion(),
+                knowledgeAreaId, sourceId);
     }
 
-    // TODO: add DTOs to client, and check if I want to add it to endpoints!
+    // TODO: check if I want to add dtos to endpoints!
     /**
      * Converts a knowledge area to a {@link KnowledgeAreaDTO}. This includes recursively converting its children.
      *
@@ -189,9 +189,9 @@ public class StandardizedCompetencyService {
      */
     private KnowledgeAreaDTO knowledgeAreaToDTO(KnowledgeArea knowledgeArea) {
         Long parentId = knowledgeArea.getParent() == null ? null : knowledgeArea.getParent().getId();
-        var children = knowledgeArea.getChildren().stream().map(this::knowledgeAreaToDTO).collect(Collectors.toSet());
-        var competencies = knowledgeArea.getCompetencies().stream().map(this::standardizedCompetencyToDTO).collect(Collectors.toSet());
+        var children = knowledgeArea.getChildren().stream().map(this::knowledgeAreaToDTO).toList();
+        var competencies = knowledgeArea.getCompetencies().stream().map(this::standardizedCompetencyToDTO).toList();
 
-        return new KnowledgeAreaDTO(knowledgeArea.getTitle(), knowledgeArea.getDescription(), parentId, children, competencies);
+        return new KnowledgeAreaDTO(knowledgeArea.getId(), knowledgeArea.getTitle(), knowledgeArea.getDescription(), parentId, children, competencies);
     }
 }

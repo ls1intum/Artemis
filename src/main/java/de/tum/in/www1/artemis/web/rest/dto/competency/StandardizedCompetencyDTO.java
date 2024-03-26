@@ -5,6 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record StandardizedCompetencyDTO(String title, String description, CompetencyTaxonomy taxonomy, String version, Long knowledgeAreaId, Long sourceId) {
+public record StandardizedCompetencyDTO(long id, String title, String description, CompetencyTaxonomy taxonomy, String version, Long knowledgeAreaId, Long sourceId) {
 
 }

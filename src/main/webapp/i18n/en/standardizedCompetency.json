@@ -8,7 +8,10 @@
                 "knowledgeAreasButton": "Manage Knowledge Areas",
                 "createButton": "Create Standardized Competency",
                 "editButton": "Edit Standardized Competency",
-                "deleteButton": "Delete Standardized Competency"
+                "deleteButton": "Delete Standardized Competency",
+                "cancelModalTitle": "Warning: Unsaved Changes",
+                "cancelModalText": "Are you sure you want to cancel editing {{entityName}}? Press Cancel to go back, or Confirm to proceed.",
+                "updateTreeError": "Something went wrong when updating the UI. Please reload the page."
             },
             "model": {
                 "title": "Title",

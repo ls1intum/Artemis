@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faBan, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { KnowledgeArea, StandardizedCompetency, StandardizedCompetencyValidators } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeArea, StandardizedCompetencyDTO, StandardizedCompetencyValidators } from 'app/entities/competency/standardized-competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
@@ -13,13 +13,13 @@ import { CompetencyTaxonomy } from 'app/entities/competency.model';
 export class StandardizedCompetencyDetailComponent {
     //values for the knowledge area select
     @Input() knowledgeAreas: KnowledgeArea[] = [];
-    @Input({ required: true }) set competency(competency: StandardizedCompetency) {
+    @Input({ required: true }) set competency(competency: StandardizedCompetencyDTO) {
         this._competency = competency;
         this.form = this.formBuilder.nonNullable.group({
             title: [competency.title, [Validators.required, Validators.maxLength(StandardizedCompetencyValidators.TITLE_MAX)]],
             description: [competency.description, [Validators.maxLength(StandardizedCompetencyValidators.DESCRIPTION_MAX)]],
             taxonomy: [competency.taxonomy],
-            knowledgeAreaId: [competency.knowledgeArea?.id, [Validators.required]],
+            knowledgeAreaId: [competency.knowledgeAreaId, [Validators.required]],
         });
         if (!this.isInEditMode) {
             this.form.disable();
@@ -44,13 +44,13 @@ export class StandardizedCompetencyDetailComponent {
         return this._isInEditMode;
     }
 
-    @Output() onSave = new EventEmitter<StandardizedCompetency>();
+    @Output() onSave = new EventEmitter<StandardizedCompetencyDTO>();
     @Output() onDelete = new EventEmitter<void>();
     @Output() onClose = new EventEmitter<void>();
     @Output() isInEditModeChange = new EventEmitter<boolean>();
 
     private _isInEditMode: boolean;
-    private _competency: StandardizedCompetency;
+    private _competency: StandardizedCompetencyDTO;
     form: FormGroup<{
         title: FormControl<string | undefined>;
         description: FormControl<string | undefined>;
@@ -72,15 +72,7 @@ export class StandardizedCompetencyDetailComponent {
 
     save() {
         const updatedValues = this.form.getRawValue();
-        let knowledgeArea: KnowledgeArea | undefined;
-        if (updatedValues.knowledgeAreaId === undefined) {
-            knowledgeArea = undefined;
-        } else {
-            knowledgeArea = {
-                id: updatedValues.knowledgeAreaId,
-            };
-        }
-        const updatedCompetency: StandardizedCompetency = { ...this.competency, ...updatedValues, knowledgeArea: knowledgeArea };
+        const updatedCompetency: StandardizedCompetencyDTO = { ...this.competency, ...updatedValues };
         this.isInEditMode = false;
         this.onSave.emit(updatedCompetency);
     }
