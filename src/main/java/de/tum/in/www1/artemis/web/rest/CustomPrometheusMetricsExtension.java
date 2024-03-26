@@ -33,7 +33,7 @@ public class CustomPrometheusMetricsExtension extends PrometheusScrapeEndpoint {
     /**
      * Expands the Prometheus metrics call with custom metrics.
      *
-     * @return extended jhimetrics
+     * @return WebEndpointResponse with current metrics
      */
     @ReadOperation(producesFrom = TextOutputFormat.class)
     public WebEndpointResponse<String> scrape(TextOutputFormat format, @Nullable Set<String> includedNames) {
