@@ -157,7 +157,7 @@ public class Lti13Service {
 
     private Lti13LaunchRequest launchRequestFrom(OidcIdToken ltiIdToken, String clientRegistrationId) {
         try {
-            return new Lti13LaunchRequest(ltiIdToken, clientRegistrationId);
+            return Lti13LaunchRequest.from(ltiIdToken, clientRegistrationId);
         }
         catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Could not create LTI 1.3 launch request with provided idToken: " + ex.getMessage());
@@ -293,21 +293,21 @@ public class Lti13Service {
     }
 
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {
-        Optional<LtiResourceLaunch> launchOpt = launchRepository.findByIssAndSubAndDeploymentIdAndResourceLinkId(launchRequest.getIss(), launchRequest.getSub(),
-                launchRequest.getDeploymentId(), launchRequest.getResourceLinkId());
+        Optional<LtiResourceLaunch> launchOpt = launchRepository.findByIssAndSubAndDeploymentIdAndResourceLinkId(launchRequest.iss(), launchRequest.sub(),
+                launchRequest.deploymentId(), launchRequest.resourceLinkId());
 
         LtiResourceLaunch launch = launchOpt.orElse(LtiResourceLaunch.from(launchRequest));
 
-        Lti13AgsClaim agsClaim = launchRequest.getAgsClaim();
+        Lti13AgsClaim agsClaim = launchRequest.agsClaim();
         // we do support LTI 1.3 Assigment and Grading Services SCORE publish service
         if (agsClaim != null) {
-            launch.setScoreLineItemUrl(agsClaim.getLineItem());
+            launch.setScoreLineItemUrl(agsClaim.lineItem());
         }
 
         launch.setExercise(exercise);
         launch.setUser(user);
 
-        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(launchRequest.getClientRegistrationId());
+        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(launchRequest.clientRegistrationId());
         if (ltiPlatformConfiguration.isPresent()) {
             launch.setLtiPlatformConfiguration(ltiPlatformConfiguration.get());
         }
