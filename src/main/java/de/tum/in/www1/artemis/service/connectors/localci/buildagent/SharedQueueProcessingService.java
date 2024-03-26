@@ -199,8 +199,8 @@ public class SharedQueueProcessingService {
             else {
                 recentBuildJobs = new ArrayList<>();
             }
-            LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active,
-                    recentBuildJobs);
+            LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember,
+                    active, recentBuildJobs);
             try {
                 buildAgentInformation.lock(memberAddress);
                 buildAgentInformation.put(memberAddress, info);
