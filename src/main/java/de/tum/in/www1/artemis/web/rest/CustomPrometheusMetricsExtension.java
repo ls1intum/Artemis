@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.web.WebEndpointResponse;
+import org.springframework.boot.actuate.endpoint.web.annotation.WebEndpoint;
 import org.springframework.boot.actuate.metrics.export.prometheus.PrometheusScrapeEndpoint;
 import org.springframework.boot.actuate.metrics.export.prometheus.TextOutputFormat;
 import org.springframework.context.annotation.Profile;
@@ -22,6 +23,7 @@ import io.prometheus.client.CollectorRegistry;
  */
 @Component
 @Profile(PROFILE_CORE)
+@WebEndpoint(id = "prometheus")
 public class CustomPrometheusMetricsExtension extends PrometheusScrapeEndpoint {
 
     private final MetricsBean metricsBean;
