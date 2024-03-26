@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -26,10 +27,15 @@ import io.prometheus.client.CollectorRegistry;
 @WebEndpoint(id = "prometheus")
 public class CustomPrometheusMetricsExtension extends PrometheusScrapeEndpoint {
 
+    private final Optional<CollectorRegistry> optionalCollectorRegistry;
+
     private final MetricsBean metricsBean;
 
-    public CustomPrometheusMetricsExtension(CollectorRegistry collectorRegistry, MetricsBean metricsBean) {
-        super(collectorRegistry);
+    public CustomPrometheusMetricsExtension(Optional<CollectorRegistry> optionalCollectorRegistry, MetricsBean metricsBean) {
+        // If Prometheus is disabled, the optionalCollectorRegistry is empty, and we return an empty WebEndpointResponse in scrape().
+        // Thus, we can safely initialise the super class with null, as we will never use it when Prometheus is disabled.
+        super(optionalCollectorRegistry.orElse(null));
+        this.optionalCollectorRegistry = optionalCollectorRegistry;
         this.metricsBean = metricsBean;
     }
 
@@ -42,6 +48,10 @@ public class CustomPrometheusMetricsExtension extends PrometheusScrapeEndpoint {
      */
     @ReadOperation(producesFrom = TextOutputFormat.class)
     public WebEndpointResponse<String> scrape(TextOutputFormat format, @Nullable Set<String> includedNames) {
+        if (optionalCollectorRegistry.isEmpty()) {
+            return new WebEndpointResponse<>();
+        }
+
         metricsBean.recalculateLiveMetrics();
         return super.scrape(format, includedNames);
     }
