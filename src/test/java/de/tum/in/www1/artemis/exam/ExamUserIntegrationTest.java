@@ -9,7 +9,7 @@ import java.io.FileInputStream;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;

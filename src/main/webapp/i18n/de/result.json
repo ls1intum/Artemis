@@ -119,7 +119,10 @@
             "notExecutedTests": "{{numberOfNotExecutedTests}} Tests wurden nicht ausgeführt.",
             "notExecutedTestsTooltip": "Diese Tests werden eventuell nur nach der Einreichungsfrist ausgeführt oder es gab ein Problem während der Ausführung der Tests.",
             "scaIssueCount": "Du hast {{issues}} Code-Issues.",
-            "manualFeedbackCount": "Du hast {{feedbacks}} manuelle Feedbacks bekommen."
+            "manualFeedbackCount": "Du hast {{feedbacks}} manuelle Feedbacks bekommen.",
+            "buildLogs": {
+                "viewLogs": "Build-Logs anzeigen"
+            }
         }
     }
 }

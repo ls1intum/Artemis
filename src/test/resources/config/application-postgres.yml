@@ -2,7 +2,7 @@
 # It can be activated e.g. by setting the environment variable SPRING_PROFILES_INCLUDE=postgres
 spring:
     jpa:
-        database-platform: org.hibernate.dialect.PostgreSQL10Dialect
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
         database: POSTGRESQL
 
 zonky:

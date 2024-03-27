@@ -8,8 +8,8 @@ import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.util.Optional;
 
-import javax.validation.Valid;
-import javax.ws.rs.BadRequestException;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

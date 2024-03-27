@@ -60,6 +60,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     submission?: Submission;
     badge: Badge;
     resultTooltip?: string;
+    logsAvailable?: boolean;
 
     latestDueDate: dayjs.Dayjs | undefined;
 
@@ -132,6 +133,8 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         }
         // Note: it can still happen here that this.result is undefined, e.g. when this.participation.results.length == 0
         this.submission = this.result?.submission;
+
+        this.logsAvailable = this.result?.logsAvailable;
 
         this.evaluate();
 

@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +122,8 @@ public class LocalCIResultProcessingService {
                 if (participation.getProgrammingExercise() == null) {
                     participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
                 }
-                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultQueueItem.buildResult());
+                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
+
                 if (result != null) {
                     programmingMessagingService.notifyUserAboutNewResult(result, participation);
                     addResultToBuildAgentsRecentBuildJobs(buildJob, result);
