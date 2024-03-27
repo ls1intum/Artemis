@@ -36,12 +36,13 @@ public class BuildLogResource {
      * @param resultId the id of the result for which to retrieve the build log
      * @return the ResponseEntity with status 200 (OK) and the build log in the body, or with status 404 (Not Found) if the build log could not be found
      */
+    // TODO: Adapt
     @GetMapping("/build-log/{resultId}")
     @EnforceAtLeastEditor
     public ResponseEntity<Resource> getBuildLogForSubmission(@PathVariable long resultId) {
         log.debug("REST request to get the build log for result {}", resultId);
         HttpHeaders responseHeaders = new HttpHeaders();
-        FileSystemResource buildLog = buildLogEntryService.retrieveBuildLogsFromFileForResult(String.valueOf(resultId));
+        FileSystemResource buildLog = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(String.valueOf(resultId));
         if (buildLog == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

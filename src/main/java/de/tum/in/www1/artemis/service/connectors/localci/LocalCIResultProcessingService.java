@@ -20,6 +20,7 @@ import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
@@ -60,6 +62,8 @@ public class LocalCIResultProcessingService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
+    private final BuildLogEntryService buildLogEntryService;
+
     private IQueue<ResultQueueItem> resultQueue;
 
     private IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
@@ -70,7 +74,7 @@ public class LocalCIResultProcessingService {
 
     public LocalCIResultProcessingService(HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService) {
+            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService) {
         this.hazelcastInstance = hazelcastInstance;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
@@ -78,6 +82,7 @@ public class LocalCIResultProcessingService {
         this.programmingMessagingService = programmingMessagingService;
         this.buildJobRepository = buildJobRepository;
         this.programmingTriggerService = programmingTriggerService;
+        this.buildLogEntryService = buildLogEntryService;
     }
 
     @PostConstruct
@@ -109,6 +114,7 @@ public class LocalCIResultProcessingService {
 
         LocalCIBuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         LocalCIBuildResult buildResult = resultQueueItem.buildResult();
+        List<BuildLogEntry> buildLogs = resultQueueItem.buildLogs();
         Throwable ex = resultQueueItem.exception();
 
         SecurityUtils.setAuthorizationObject();
@@ -164,6 +170,10 @@ public class LocalCIResultProcessingService {
 
                 saveFinishedBuildJob(buildJob, BuildStatus.FAILED);
             }
+        }
+
+        if (!buildLogs.isEmpty()) {
+            buildLogEntryService.saveBuildLogsToFile(buildLogs, buildJob.id());
         }
 
         // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository

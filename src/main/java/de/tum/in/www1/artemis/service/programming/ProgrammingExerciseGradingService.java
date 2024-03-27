@@ -167,7 +167,7 @@ public class ProgrammingExerciseGradingService {
             newResult.setSubmission(latestSubmission);
             newResult.setRatedIfNotAfterDueDate();
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
-            return processNewProgrammingExerciseResult(participation, newResult, buildResult.extractBuildLogs());
+            return processNewProgrammingExerciseResult(participation, newResult);
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Result for participation {} could not be created", participation.getId(), ex);
@@ -255,7 +255,7 @@ public class ProgrammingExerciseGradingService {
      * @param newResult     that contains the build result with its feedbacks.
      * @return the result after processing and persisting.
      */
-    private Result processNewProgrammingExerciseResult(final ProgrammingExerciseParticipation participation, final Result newResult, final List<BuildLogEntry> buildLogs) {
+    private Result processNewProgrammingExerciseResult(final ProgrammingExerciseParticipation participation, final Result newResult) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
         boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
@@ -284,12 +284,7 @@ public class ProgrammingExerciseGradingService {
                 // Adding back dropped submission
                 updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
                 programmingSubmissionRepository.save(programmingSubmission);
-                Result result = resultRepository.save(updatedLatestSemiAutomaticResult);
-
-                // Save the build logs to the file system
-                if (buildLogs != null && !buildLogs.isEmpty()) {
-                    buildLogService.saveBuildLogsToFile(buildLogs, result.getId().toString());
-                }
+                resultRepository.save(updatedLatestSemiAutomaticResult);
 
                 return updatedLatestSemiAutomaticResult;
             }
@@ -307,10 +302,6 @@ public class ProgrammingExerciseGradingService {
         processedResult.setParticipation((Participation) participation);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
-
-        if (buildLogs != null && !buildLogs.isEmpty()) {
-            buildLogService.saveBuildLogsToFile(buildLogs, processedResult.getId().toString());
-        }
 
         return processedResult;
     }

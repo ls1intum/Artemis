@@ -413,9 +413,11 @@ public class ResultService {
      * @return a map of result ids to their availability of build log files
      */
     public Map<Long, Boolean> getLogsAvailabilityForResults(List<Result> results) {
+
+        // TODO: Adapt
         Map<Long, Boolean> logsAvailability = new HashMap<>();
         for (Result result : results) {
-            if (buildLogEntryService.resultHasLogFile(result.getId().toString())) {
+            if (buildLogEntryService.buildJobHasLogFile(result.getId().toString())) {
                 logsAvailability.put(result.getId(), true);
             }
             else {
