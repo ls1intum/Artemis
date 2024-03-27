@@ -343,6 +343,18 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     List<Result> findAllByLastModifiedDateAfter(Instant lastModifiedDate);
 
+    @Query("""
+            SELECT s
+            FROM StudentParticipation p
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE p.exercise.exerciseGroup.exam.id = :examId
+                AND p.testRun IS FALSE
+                AND s.submitted IS TRUE
+                AND r.completionDate IS NULL
+            """)
+    List<Submission> getUnfinishedAssessmentsByExamId(@Param("examId") long examId);
+
     /**
      * Checks if a result for the given participation exists.
      *
@@ -757,5 +769,16 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             }
         }
         return results;
+    }
+
+    /**
+     * Gets all the submissions for an exam that are not evaluated yet.
+     *
+     * @param examId the id of the participation to check.
+     * @return list of unfinished submissions
+     */
+
+    default List<Submission> getUnfinishedAssessmentsForExam(long examId) {
+        return getUnfinishedAssessmentsByExamId(examId);
     }
 }

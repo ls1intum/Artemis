@@ -462,8 +462,29 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                            <jhi-checklist-check [checkAttribute]="!!exam.publishResultsDate" />
-                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.pulishingdateset' | artemisTranslate }}</span>
+                                            <li class="list-group-item border-1">
+                                                <jhi-checklist-check [checkAttribute]="!!exam.publishResultsDate" />
+                                                <span>{{ 'artemisApp.examManagement.checklist.textitems.pulishingdateset' | artemisTranslate }}</span>
+                                            </li>
+                                            <li class="list-group-item border-1">
+                                                <jhi-checklist-check [checkAttribute]="allAssessmentsFinished" />
+                                                <span>{{ 'artemisApp.examManagement.checklist.textitems.exercisesAssessed' | artemisTranslate }}</span>
+                                            </li>
+                                            @if (!allAssessmentsFinished) {
+                                                <ng-container>
+                                                    <span style="text-decoration: underline; margin-left: 20px"
+                                                        >{{ 'artemisApp.examManagement.checklist.textitems.exercisesAttention' | artemisTranslate }}:</span
+                                                    >
+                                                    <div style="margin-left: 20px">
+                                                        @for (assessment of assessmentsWithDetails; track assessment; let lastAssessment = $last) {
+                                                            <a [routerLink]="assessment.details.url">{{ assessment.details.title }}</a>
+                                                            @if (!lastAssessment) {
+                                                                ,
+                                                            }
+                                                        }
+                                                    </div>
+                                                </ng-container>
+                                            }
                                         </span>
                                     </li>
                                 </ul>

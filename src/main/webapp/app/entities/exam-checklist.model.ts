@@ -1,3 +1,5 @@
+import { Submission } from 'app/entities/submission.model';
+
 export class ExamChecklist {
     public numberOfGeneratedStudentExams?: number; // transient
 
@@ -16,4 +18,6 @@ export class ExamChecklist {
     public numberOfAllComplaintsDone?: number;
 
     public allExamExercisesAllStudentsPrepared?: boolean;
+
+    public unfinishedAssessments: Submission[];
 }
