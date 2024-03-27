@@ -71,16 +71,19 @@ public class BuildJobExecutionService {
 
     private final GitService gitService;
 
+    private final BuildLogsMap buildLogsMap;
+
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, XMLInputFactory localCIXMLInputFactory, GitService gitService) {
+    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, XMLInputFactory localCIXMLInputFactory, GitService gitService, BuildLogsMap buildLogsMap) {
         this.buildJobContainerService = buildJobContainerService;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
         this.gitService = gitService;
+        this.buildLogsMap = buildLogsMap;
     }
 
     /**
@@ -191,7 +194,7 @@ public class BuildJobExecutionService {
         buildJobContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths,
                 buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildJob.buildConfig().programmingLanguage());
 
-        List<BuildLogEntry> buildLogEntries = buildJobContainerService.runScriptInContainer(containerId);
+        buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
 
         log.info("Finished running the build script in container {}", containerName);
 
@@ -235,7 +238,7 @@ public class BuildJobExecutionService {
         LocalCIBuildResult buildResult;
         try {
             buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
-            buildResult.setBuildLogEntries(buildLogEntries);
+            buildResult.setBuildLogEntries(buildLogsMap.getBuildLogs(buildJob.id()));
         }
         catch (IOException | XMLStreamException | IllegalStateException e) {
             throw new LocalCIException("Error while parsing test results", e);

@@ -43,6 +43,8 @@ public class BuildJobManagementService {
 
     private final HazelcastInstance hazelcastInstance;
 
+    private final BuildLogsMap buildLogsMap;
+
     @Value("${artemis.continuous-integration.timeout-seconds:120}")
     private int timeoutSeconds;
 
@@ -66,12 +68,13 @@ public class BuildJobManagementService {
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
     public BuildJobManagementService(HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService, ExecutorService localCIBuildExecutorService,
-            BuildJobContainerService buildJobContainerService, LocalCIDockerService localCIDockerService) {
+            BuildJobContainerService buildJobContainerService, LocalCIDockerService localCIDockerService, BuildLogsMap buildLogsMap) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.buildJobContainerService = buildJobContainerService;
         this.localCIDockerService = localCIDockerService;
         this.hazelcastInstance = hazelcastInstance;
+        this.buildLogsMap = buildLogsMap;
     }
 
     /**
@@ -134,7 +137,10 @@ public class BuildJobManagementService {
                 }
             }
         });
-        futureResult.whenComplete(((result, throwable) -> runningFutures.remove(buildJobItem.id())));
+        futureResult.whenComplete(((result, throwable) -> {
+            runningFutures.remove(buildJobItem.id());
+            buildLogsMap.removeBuildLogs(buildJobItem.id());
+        }));
 
         return futureResult;
     }
