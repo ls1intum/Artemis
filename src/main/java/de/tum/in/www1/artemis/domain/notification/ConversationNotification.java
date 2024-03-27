@@ -2,10 +2,10 @@ package de.tum.in.www1.artemis.domain.notification;
 
 import java.time.ZonedDateTime;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
