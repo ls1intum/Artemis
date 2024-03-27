@@ -43,6 +43,9 @@ public class BuildLogEntryService {
     @Value("${artemis.continuous-integration.build-log.file-expiry-days:30}")
     private int expiryDays;
 
+    @Value("${artemis.build-logs-path:./build-logs}")
+    private Path buildLogsPath;
+
     public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.buildLogEntryRepository = buildLogEntryRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -282,11 +285,9 @@ public class BuildLogEntryService {
      */
     public void saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String buildJobId) {
 
-        Path buildLogsPath = Path.of("buildLogs");
-
         if (!Files.exists(buildLogsPath)) {
             try {
-                Files.createDirectory(buildLogsPath);
+                Files.createDirectories(buildLogsPath);
             }
             catch (Exception e) {
                 throw new IllegalStateException("Could not create directory for build logs", e);
@@ -315,8 +316,7 @@ public class BuildLogEntryService {
      * @param buildJobId the id of the build job for which to retrieve the build logs
      * @return the build logs as a string or null if the file could not be found (e.g. if the build logs have been deleted)
      */
-    public FileSystemResource retrieveBuildLogsFromFileForBuildJob(String buildJobId) {
-        Path buildLogsPath = Path.of("buildLogs");
+    public FileSystemResource retrieveBuildLogsFromFileForResult(String buildJobId) {
         Path logPath = buildLogsPath.resolve(buildJobId + ".log");
 
         FileSystemResource fileSystemResource = new FileSystemResource(logPath);
@@ -337,7 +337,6 @@ public class BuildLogEntryService {
     public void deleteOldBuildLogsFiles() {
         log.info("Deleting old build log files");
         ZonedDateTime now = ZonedDateTime.now();
-        Path buildLogsPath = Path.of("buildLogs");
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(buildLogsPath)) {
             for (Path file : stream) {
@@ -353,8 +352,7 @@ public class BuildLogEntryService {
         }
     }
 
-    public boolean buildJobHasLogFile(String buildJobId) {
-        Path buildLogsPath = Path.of("buildLogs");
+    public boolean resultHasLogFile(String buildJobId) {
         Path logPath = buildLogsPath.resolve(buildJobId + ".log");
         return Files.exists(logPath);
     }
