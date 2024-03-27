@@ -20,15 +20,6 @@ export class UserService {
     }
 
     /**
-     * Find a user on the server.
-     * @param login The login of the user to find.
-     * @return Observable<HttpResponse<User>> with the found user as body.
-     */
-    find(login: string): Observable<User> {
-        return this.http.get<User>(`${this.resourceUrl}/${login}`);
-    }
-
-    /**
      * Search for a user on the server by login or name.
      * @param loginOrName The login or name to search for.
      * @return Observable<HttpResponse<User[]>> with the list of found users as body.

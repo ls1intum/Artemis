@@ -18,18 +18,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.crypto.codec.Utf8;
 import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
@@ -56,6 +59,8 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     protected ExerciseUtilService exerciseUtilService;
+
+    private static final String NON_EXISTING_USERNAME = TEST_PREFIX + "na";
 
     private static final String USERNAME = TEST_PREFIX + "student1";
 
@@ -103,6 +108,16 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = { "ADMIN" })
+    void testImportUsers() throws Exception {
+        StudentDTO existingUser = new StudentDTO(new User((long) 1, USERNAME, "", "", "de", ""));
+        StudentDTO nonExistingUser = new StudentDTO(new User((long) 1, NON_EXISTING_USERNAME, "", "", "de", ""));
+        var output = request.postListWithResponseBody("/api/admin/users/import", List.of(existingUser, nonExistingUser), StudentDTO.class, HttpStatus.OK);
+        assertThat(output).hasSize(1);
+        assertThat(output.get(0).login()).isEqualTo(NON_EXISTING_USERNAME);
     }
 
     @Test

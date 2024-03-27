@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
+import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
@@ -39,6 +40,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
+import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing users.
@@ -177,12 +179,45 @@ public class AdminUserResource {
     }
 
     /**
-     * PUT ldap : Updates an existing User based on the info available in the LDAP server.
+     * GET users/:login : get the "login" user.
+     *
+     * @param login the login of the user to find
+     * @return the ResponseEntity with status 200 (OK) and with body the "login" user, or with status 404 (Not Found)
+     */
+    @GetMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
+    @EnforceAdmin
+    public ResponseEntity<UserDTO> getUser(@PathVariable String login) {
+        log.debug("REST request to get User : {}", login);
+        return ResponseUtil.wrapOrNotFound(userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).map(user -> {
+            user.setVisibleRegistrationNumber();
+            return new UserDTO(user);
+        }));
+    }
+
+    /**
+     * POST users/import : Import multiple users to the user management
+     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
+     * <p>
+     * This method first tries to find the user in the internal Artemis user database (because the user is probably already using Artemis).
+     * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
+     *
+     * @param userDtos the list of users (with at one unique user identifier) who should be imported to Artemis
+     * @return the list of users who could not be imported, because they could NOT be found in the Artemis database and could NOT be found in the connected LDAP
+     */
+    @PostMapping("users/import")
+    @EnforceAdmin
+    public ResponseEntity<List<StudentDTO>> importUsers(@RequestBody List<StudentDTO> userDtos) {
+        log.debug("REST request to import {} to Artemis", userDtos);
+        List<StudentDTO> notFoundStudentsDtos = userService.importUsers(userDtos);
+        return ResponseEntity.ok().body(notFoundStudentsDtos);
+    }
+
+    /**
+     * PUT users/:userId/sync-ldap : Updates an existing User based on the info available in the LDAP server.
      *
      * @param userId of the user to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated user
      */
-    // TODO: move into LdapResource
     @PutMapping("users/{userId}/sync-ldap")
     @EnforceAdmin
     @Profile("ldap | ldap-only")
