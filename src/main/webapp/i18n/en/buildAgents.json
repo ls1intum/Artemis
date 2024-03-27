@@ -7,7 +7,9 @@
             "numberOfCurrentBuildJobs": "# of current build jobs",
             "runningBuildJobs": "Running build jobs",
             "status": "Status",
-            "recentBuildJobs": "Recent build jobs"
+            "recentBuildJobs": "Recent build jobs",
+            "running": "Running",
+            "idle": "Idle"
         }
     }
 }

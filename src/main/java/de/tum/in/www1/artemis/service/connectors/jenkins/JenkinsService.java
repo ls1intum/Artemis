@@ -124,7 +124,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         if (windfile != null) {
             exercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
         }
-        if (profileService.isAeolus()) {
+        if (profileService.isAeolusActive()) {
             programmingExerciseRepository.save(exercise);
         }
     }

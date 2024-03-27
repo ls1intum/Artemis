@@ -101,7 +101,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
      */
     private loadProgrammingExercise(currentPlagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>) {
         const domain: DomainChange = [DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }];
-        this.repositoryService.getRepositoryContent(domain).subscribe({
+        this.repositoryService.getRepositoryContentForPlagiarismView(domain).subscribe({
             next: (files) => {
                 this.cannotLoadFiles = false;
                 this.isProgrammingExercise = true;
@@ -183,7 +183,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 this.loading = false;
             } else {
                 this.binaryFile = false;
-                this.repositoryService.getFile(file, domain).subscribe({
+                this.repositoryService.getFileForPlagiarismView(file, domain).subscribe({
                     next: ({ fileContent }) => {
                         this.loading = false;
                         this.fileContent = this.insertMatchTokens(fileContent);

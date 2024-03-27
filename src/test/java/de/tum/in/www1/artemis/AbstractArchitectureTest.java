@@ -18,15 +18,18 @@ public abstract class AbstractArchitectureTest {
 
     protected static JavaClasses allClasses;
 
+    protected static JavaClasses allClassesWithHazelcast;
+
     protected static JavaClasses productionClasses;
 
     @BeforeAll
     static void loadClasses() {
         if (allClasses == null) {
             testClasses = new ClassFileImporter().withImportOption(new ImportOption.OnlyIncludeTests()).importPackages(ARTEMIS_PACKAGE);
+            productionClasses = new ClassFileImporter().withImportOption(new ImportOption.DoNotIncludeTests()).importPackages(ARTEMIS_PACKAGE);
+            allClasses = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE);
             // Also include hazelcast to find usages of hazelcast methods. (see testNoHazelcastUsageInConstructors)
-            productionClasses = new ClassFileImporter().withImportOption(new ImportOption.DoNotIncludeTests()).importPackages(ARTEMIS_PACKAGE, "com.hazelcast.core");
-            allClasses = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE, "com.hazelcast.core");
+            allClassesWithHazelcast = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE, "com.hazelcast.core");
         }
         ensureClassSetsNonEmpty();
         ensureAllClassesFound();
