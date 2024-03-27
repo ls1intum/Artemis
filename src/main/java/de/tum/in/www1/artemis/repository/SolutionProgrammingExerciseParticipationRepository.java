@@ -25,9 +25,9 @@ public interface SolutionProgrammingExerciseParticipationRepository extends JpaR
     @Query("""
             SELECT p
             FROM SolutionProgrammingExerciseParticipation p
-                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH p.results
                 LEFT JOIN FETCH p.programmingExercise e
-                LEFT JOIN FETCH e.templateParticipation tp
+                LEFT JOIN FETCH e.templateParticipation
             WHERE p.buildPlanId = :buildPlanId
             """)
     Optional<SolutionProgrammingExerciseParticipation> findByBuildPlanIdWithResults(@Param("buildPlanId") String buildPlanId);
