@@ -62,7 +62,7 @@ class Lti13TokenRetrieverTest {
         lti13TokenRetriever = new Lti13TokenRetriever(oAuth2JWKSService, restTemplate);
 
         clientRegistration = ClientRegistration.withRegistrationId("regId") //
-                .authorizationGrantType(AuthorizationGrantType.IMPLICIT) //
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE) //
                 .redirectUri("redirectUri") //
                 .authorizationUri("authUri") //
                 .tokenUri("tokenUri").clientId("clientId") //
