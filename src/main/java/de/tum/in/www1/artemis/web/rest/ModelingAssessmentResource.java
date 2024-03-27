@@ -186,7 +186,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
     @Override
-    String getEntityName() {
+    public String getEntityName() {
         return ENTITY_NAME;
     }
 }

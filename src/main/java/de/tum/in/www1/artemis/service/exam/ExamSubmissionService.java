@@ -72,40 +72,40 @@ public class ExamSubmissionService {
      *         TODO: Simplify this method and potentially usages of it by using {@link ProgrammingExerciseStudentParticipation#isLocked()}.
      */
     public boolean isAllowedToSubmitDuringExam(Exercise exercise, User user, boolean withGracePeriod) {
-        if (exercise.isExamExercise()) {
-            // Get the student exam if it was not passed to the function
-            Exam exam = exercise.getExerciseGroup().getExam();
-            // Step 1: Find real exam
-            Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId(), IS_TEST_RUN);
-            if (optionalStudentExam.isEmpty()) {
-                // Step 2: Find latest (=the highest id) unsubmitted test exam
-                optionalStudentExam = studentExamRepository.findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(exam.getId(), user.getId()).stream()
-                        .max(Comparator.comparing(StudentExam::getId));
-            }
-            if (optionalStudentExam.isEmpty()) {
-                // Step 3: We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
-                // isAllowedToSubmitDuringExam is called everytime an exercise is saved (e.g. auto save every 30 seconds for every student) therefore it is best to limit
-                // unnecessary database calls
-                if (!isExamTestRunSubmission(exercise, user, exam)) {
-                    throw new EntityNotFoundException("Student exam with for userId \"" + user.getId() + "\" and examId \"" + exam.getId() + "\" does not exist");
-                }
-                return true;
-            }
-            StudentExam studentExam = optionalStudentExam.get();
-            // Check that the current user is allowed to submit to this exercise
-            if (!studentExam.getExercises().contains(exercise)) {
-                return false;
-            }
-
-            // if the student exam was already submitted, the user cannot save anymore
-            if (Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.getSubmissionDate() != null) {
-                return false;
-            }
-
-            // Check that the submission is in time
-            return isSubmissionInTime(exercise, studentExam, withGracePeriod);
+        if (!exercise.isExamExercise()) {
+            return true;
         }
-        return true;
+        // Get the student exam if it was not passed to the function
+        Exam exam = exercise.getExerciseGroup().getExam();
+        // Step 1: Find real exam
+        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId(), IS_TEST_RUN);
+        if (optionalStudentExam.isEmpty()) {
+            // Step 2: Find latest (=the highest id) unsubmitted test exam
+            optionalStudentExam = studentExamRepository.findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(exam.getId(), user.getId()).stream()
+                    .max(Comparator.comparing(StudentExam::getId));
+        }
+        if (optionalStudentExam.isEmpty()) {
+            // Step 3: We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
+            // isAllowedToSubmitDuringExam is called everytime an exercise is saved (e.g. auto save every 30 seconds for every student) therefore it is best to limit
+            // unnecessary database calls
+            if (!isExamTestRunSubmission(exercise, user, exam)) {
+                throw new EntityNotFoundException("Student exam with for userId \"" + user.getId() + "\" and examId \"" + exam.getId() + "\" does not exist");
+            }
+            return true;
+        }
+        StudentExam studentExam = optionalStudentExam.get();
+        // Check that the current user is allowed to submit to this exercise
+        if (!studentExam.getExercises().contains(exercise)) {
+            return false;
+        }
+
+        // if the student exam was already submitted, the user cannot save anymore
+        if (Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.getSubmissionDate() != null) {
+            return false;
+        }
+
+        // Check that the submission is in time
+        return isSubmissionInTime(exercise, studentExam, withGracePeriod);
     }
 
     /**
