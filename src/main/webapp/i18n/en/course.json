@@ -127,6 +127,7 @@
             "exercise": {
                 "search": {
                     "searchButton": "Search",
+                    "searchPlaceholder": "Search...",
                     "resetButton": "Reset",
                     "toggleButton": {
                         "true": "Hide Advanced Search",

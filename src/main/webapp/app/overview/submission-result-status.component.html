@@ -10,37 +10,13 @@
                 [showUngradedResults]="showUngradedResults"
                 [showBadge]="showBadge"
                 [showIcon]="showIcon"
+                [isInSidebarCard]="isInSidebarCard"
                 [short]="short"
                 [personalParticipation]="true"
             />
         </span>
     } @else {
-        <!-- On desktop -->
-        <div class="d-none d-sm-inline">
-            @if (exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.userNotAssignedToTeam' | artemisTranslate }}</span>
-            }
-            @if (uninitialized) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | artemisTranslate }}</span>
-            }
-            @if (exerciseMissedDueDate) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDueDate' | artemisTranslate }}</span>
-            }
-            @if (notSubmitted) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmitted' | artemisTranslate }}</span>
-            }
-            @if (!notSubmitted && studentParticipation?.initializationState === InitializationState.FINISHED) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.userSubmitted' | artemisTranslate }}</span>
-            }
-            @if (studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.userParticipating' | artemisTranslate }}</span>
-            }
-            @if (quizNotStarted) {
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.quizNotStarted' | artemisTranslate }}</span>
-            }
-        </div>
-        <!-- On mobile -->
-        <div class="d-sm-none">
+        <div>
             @if (exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId) {
                 <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.userNotAssignedToTeamShort' | artemisTranslate }}</span>
             }

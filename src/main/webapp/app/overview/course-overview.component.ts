@@ -1,4 +1,17 @@
-import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    EmbeddedViewRef,
+    HostListener,
+    OnDestroy,
+    OnInit,
+    QueryList,
+    TemplateRef,
+    ViewChild,
+    ViewChildren,
+    ViewContainerRef,
+} from '@angular/core';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
@@ -21,6 +34,7 @@ import {
     faClipboard,
     faComment,
     faComments,
+    faDoorOpen,
     faEye,
     faFilePdf,
     faFlag,
@@ -41,8 +55,14 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { animate, style, transition, trigger } from '@angular/animations';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 
+interface CourseActionItem {
+    icon?: IconDefinition;
+    translation: string;
+    action?: (item?: CourseActionItem) => void;
+}
 interface SidebarItem {
     routerLink: string;
     icon?: IconDefinition;
@@ -60,30 +80,27 @@ interface SidebarItem {
     templateUrl: './course-overview.component.html',
     styleUrls: ['course-overview.scss', 'course-overview.component.scss'],
     providers: [MetisConversationService],
-    animations: [
-        trigger('slideIn', [
-            transition(':enter', [style({ width: 'translateX(-100%)' }), animate(0, style({ transform: 'translateX(0)' }))]),
-            transition(':leave', [animate(0, style({ transform: 'translateX(-100%)' }))]),
-        ]),
-    ],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private ngUnsubscribe = new Subject<void>();
 
     private courseId: number;
     private subscription: Subscription;
-    public course?: Course;
-    public refreshingCourse = false;
+    course?: Course;
+    refreshingCourse = false;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
-    public hasUnreadMessages: boolean;
-    public messagesRouteLoaded: boolean;
-    public communicationRouteLoaded: boolean;
-    public isProduction = true;
-    public isTestServer = false;
-    public pageTitle: string;
-    public sidebarItems: SidebarItem[];
-    public isNotManagementView: boolean;
+    hasUnreadMessages: boolean;
+    messagesRouteLoaded: boolean;
+    communicationRouteLoaded: boolean;
+    isProduction = true;
+    isTestServer = false;
+    pageTitle: string;
+    hasSidebar: boolean = false;
+    sidebarItems: SidebarItem[];
+    courseActionItems: CourseActionItem[];
+    isNotManagementView: boolean;
+    canUnenroll: boolean;
     isCollapsed = false;
 
     private conversationServiceInstantiated = false;
@@ -126,6 +143,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faChalkboardUser = faChalkboardUser;
     faChevronRight = faChevronRight;
     faListCheck = faListCheck;
+    faDoorOpen = faDoorOpen;
 
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
@@ -147,16 +165,18 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private router: Router,
         private courseAccessStorageService: CourseAccessStorageService,
         private profileService: ProfileService,
+        private modalService: NgbModal,
     ) {}
 
     async ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
+            this.courseId = parseInt(params.courseId, 10);
         });
         this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
         });
+        this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
@@ -165,8 +185,18 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
         this.sidebarItems = this.getSidebarItems();
+        this.courseActionItems = this.getCourseActionItems();
     }
 
+    getCourseActionItems(): CourseActionItem[] {
+        const courseActionItems = [];
+        this.canUnenroll = this.canStudentUnenroll();
+        if (this.canUnenroll) {
+            const unenrollItem: CourseActionItem = this.getUnenrollItem();
+            courseActionItems.push(unenrollItem);
+        }
+        return courseActionItems;
+    }
     getSidebarItems(): SidebarItem[] {
         const sidebarItems = this.getDefaultItems();
         if (this.course?.lectures) {
@@ -204,6 +234,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         return sidebarItems;
     }
 
+    getUnenrollItem() {
+        const unenrollItem: CourseActionItem = {
+            icon: faDoorOpen,
+            translation: 'artemisApp.courseOverview.exerciseList.details.unenrollmentButton',
+            action: () => this.openUnenrollStudentModal(),
+        };
+        return unenrollItem;
+    }
     getLecturesItems() {
         const lecturesItem: SidebarItem = {
             routerLink: 'lectures',
@@ -334,6 +372,21 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    canStudentUnenroll(): boolean {
+        return !!this.course?.unenrollmentEnabled && dayjs().isBefore(this.course?.unenrollmentEndDate);
+    }
+
+    courseActionItemClick(item?: CourseActionItem) {
+        if (item?.action) {
+            item.action(item);
+        }
+    }
+
+    openUnenrollStudentModal() {
+        const modalRef = this.modalService.open(CourseUnenrollmentModalComponent, { size: 'xl' });
+        modalRef.componentInstance.course = this.course;
+    }
+
     ngAfterViewInit() {
         // Check if controls mount point is available, if not, wait for it
         if (this.controlsViewContainer) {
@@ -361,6 +414,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.setUpConversationService();
 
+        this.hasSidebar = this.getHasSidebar();
+
         if (componentRef.controlConfiguration) {
             const provider = componentRef as BarControlConfigurationProvider;
             this.controlConfiguration = provider.controlConfiguration as BarControlConfiguration;
@@ -379,7 +434,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         const routePageTitle: string = this.route.snapshot.firstChild?.data?.pageTitle;
         this.pageTitle = routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
     }
-
+    getHasSidebar(): boolean {
+        return this.route.snapshot.firstChild?.data?.hasSidebar;
+    }
     /**
      * Removes the controls component from the DOM and cancels the listener for controls changes.
      * Called by the router outlet as soon as the currently mounted component is removed
@@ -498,7 +555,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.controlsSubscription?.unsubscribe();
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
-        this.ngUnsubscribe.next(undefined);
+        this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
 
@@ -560,5 +617,21 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 exercise.studentParticipations = teamAssignment.studentParticipations;
             }
         });
+    }
+
+    @HostListener('window:keydown.Control.y', ['$event'])
+    onKeyDownControlY(event: KeyboardEvent) {
+        event.preventDefault();
+        this.toggleCollapseState();
+    }
+
+    getCollapseStateFromStorage() {
+        const storedCollapseState: string | null = localStorage.getItem('sidebar.collapseState');
+        if (storedCollapseState) this.isCollapsed = JSON.parse(storedCollapseState);
+    }
+
+    toggleCollapseState() {
+        this.isCollapsed = !this.isCollapsed;
+        localStorage.setItem('navbar.collapseState', JSON.stringify(this.isCollapsed));
     }
 }

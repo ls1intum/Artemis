@@ -31,6 +31,9 @@
             "showLess": "Weniger anzeigen",
             "manage": "Verwalten",
             "studentView": "Studentenansicht",
+            "general": {
+                "noDataFound": "Keine Einträge gefunden."
+            },
             "menu": {
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",
@@ -63,6 +66,7 @@
                 "current": "Aktuell",
                 "future": "Zukünftig",
                 "noDueDate": "Unbefristet",
+                "noDate": "Ohne Datum",
                 "view": "Ansicht",
                 "timeframeView": "Zeitliche Ansicht",
                 "weeklyView": "Wochenansicht",
@@ -83,13 +87,13 @@
                 "userNotParticipated": "Du hast bei diesem Live-Quiz nicht teilgenommen.",
                 "userParticipating": "Du nimmst gerade an diesem Quiz teil.",
                 "userSubmitted": "Du hast bereits abgegeben.",
-                "userNotStartedExerciseShort": "Noch nicht angefangen.",
-                "exerciseNotSubmittedShort": "Noch nicht abgegeben",
-                "exerciseMissedDueDateShort": "Einreichungsfrist abgelaufen",
-                "quizNotStartedShort": "Noch nicht begonnen.",
-                "userNotParticipatedShort": "Nicht teilgenommen.",
+                "userNotStartedExerciseShort": "Nicht angefangen",
+                "exerciseNotSubmittedShort": "Nicht abgegeben",
+                "exerciseMissedDueDateShort": "Frist abgelaufen",
+                "quizNotStartedShort": "Nicht begonnen",
+                "userNotParticipatedShort": "Nicht teilgenommen",
                 "userParticipatingShort": "Aktuelle Teilnahme",
-                "userSubmittedShort": "Bereits abgegeben.",
+                "userSubmittedShort": "Bereits abgegeben",
                 "noDateAssociated": "Ohne Datum",
                 "details": {
                     "courseInformation": "Kursinformationen:",

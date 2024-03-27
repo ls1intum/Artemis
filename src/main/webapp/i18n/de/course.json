@@ -127,6 +127,7 @@
             "exercise": {
                 "search": {
                     "searchButton": "Suchen",
+                    "searchPlaceholder": "Suche...",
                     "resetButton": "Zurücksetzen",
                     "toggleButton": {
                         "true": "Verstecke erweiterte Suche",
