@@ -36,8 +36,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import javax.imageio.ImageIO;
-import javax.validation.constraints.NotNull;
 
 import org.assertj.core.data.Offset;
 import org.mockito.MockedStatic;

@@ -9,10 +9,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 
-import javax.annotation.Nullable;
-import javax.persistence.criteria.Fetch;
-import javax.persistence.criteria.JoinType;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.criteria.Fetch;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Profile;
@@ -395,10 +395,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT COUNT (DISTINCT p)
             FROM ProgrammingExerciseStudentParticipation p
-            JOIN p.submissions s
+                JOIN p.submissions s
             WHERE p.exercise.assessmentType <> de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
                 AND p.exercise.exerciseGroup.exam.id = :examId
-                AND s IS NOT EMPTY
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     long countLegalSubmissionsByExamIdSubmitted(@Param("examId") long examId);

@@ -1,19 +1,16 @@
 package de.tum.in.www1.artemis.service.iris;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
+import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
-import de.tum.in.www1.artemis.repository.iris.IrisMessageContentRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 
 /**
@@ -25,19 +22,13 @@ public class IrisMessageService {
 
     private final IrisSessionRepository irisSessionRepository;
 
-    private final IrisMessageRepository irisMessageRepository;
-
-    private final IrisMessageContentRepository irisMessageContentRepository;
-
-    public IrisMessageService(IrisSessionRepository irisSessionRepository, IrisMessageRepository irisMessageRepository, IrisMessageContentRepository irisMessageContentRepository) {
+    public IrisMessageService(IrisSessionRepository irisSessionRepository) {
         this.irisSessionRepository = irisSessionRepository;
-        this.irisMessageRepository = irisMessageRepository;
-        this.irisMessageContentRepository = irisMessageContentRepository;
     }
 
     /**
-     * Saves a new message to the database. The message must have a session and a sender.
-     * This method ensures that the message is saved in the session and the contents are saved.
+     * Saves a new message to the database. The method sets session and a sender to the message.
+     * This method ensures that the message and the contents are saved to the session.
      *
      * @param message The message to save
      * @param session The session the message belongs to
@@ -49,28 +40,22 @@ public class IrisMessageService {
             throw new BadRequestException("Message must have at least one content element");
         }
 
-        message.setSession(null);
+        if (!Hibernate.isInitialized(session.getMessages())) {
+            session = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+        }
+
         message.setSender(sender);
         message.setSentAt(ZonedDateTime.now());
-        var contents = message.getContent();
-        message.setContent(new ArrayList<>());
-        var savedMessage = irisMessageRepository.saveAndFlush(message);
+        message.setSession(session);
+        message.getContent().forEach(content -> content.setMessage(message));
+
+        session.getMessages().add(message);
+        irisSessionRepository.save(session);
+
         var sessionWithMessages = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
-        message.setSession(sessionWithMessages);
-        sessionWithMessages.getMessages().add(savedMessage);
-        irisSessionRepository.save(sessionWithMessages);
+        session.setMessages(sessionWithMessages.getMessages()); // Make sure we keep the session up to date as we overrode it. We do this to avoid unnecessarily fetching the
+                                                                // session again.
 
-        // Save contents of message
-        for (IrisMessageContent content : contents) {
-            content.setMessage(null);
-        }
-        contents = irisMessageContentRepository.saveAllAndFlush(contents);
-        for (IrisMessageContent content : contents) {
-            content.setMessage(message);
-        }
-        message.getContent().addAll(contents);
-        savedMessage = irisMessageRepository.save(message);
-
-        return savedMessage;
+        return sessionWithMessages.getMessages().get(sessionWithMessages.getMessages().size() - 1);
     }
 }
