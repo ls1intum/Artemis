@@ -167,7 +167,7 @@ public class ConversationService {
         var conversationsOfUser = new ArrayList<Conversation>();
         List<Channel> channelsOfUser;
         if (course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
-            var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(course.getId(), requestingUser.getId());
+            var oneToOneChatsOfUser = oneToOneChatRepository.findAllWithParticipantsAndUserGroupsByCourseIdAndUserId(course.getId(), requestingUser.getId());
             conversationsOfUser.addAll(oneToOneChatsOfUser);
 
             var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(course.getId(), requestingUser.getId());
