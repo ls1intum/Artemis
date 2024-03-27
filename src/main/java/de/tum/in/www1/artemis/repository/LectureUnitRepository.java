@@ -1,15 +1,11 @@
 package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -76,11 +72,4 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
         return findWithCompetenciesAndSlidesById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "completedUsers" })
-    Optional<LectureUnit> findWithEagerCompletedUsersById(long lectureUnitId);
-
-    @NotNull
-    default LectureUnit findWithEagerCompletedUsersByIdElseThrow(long lectureUnitId) {
-        return findWithEagerCompletedUsersById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
-    }
 }

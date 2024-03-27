@@ -466,25 +466,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     }
 
     /**
-     * Generates the student exams randomly based on the exam configuration and the exercise groups
-     * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
-     *
-     * @param exam                       with eagerly loaded registered users, exerciseGroups and exercises loaded
-     * @param examQuizQuestionsGenerator generator to generate quiz questions for the exam
-     * @return the list of student exams with their corresponding users
-     */
-    default List<StudentExam> generateStudentExams(final Exam exam, ExamQuizQuestionsGenerator examQuizQuestionsGenerator) {
-        final var existingStudentExams = findByExamId(exam.getId());
-        // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
-        deleteAll(existingStudentExams);
-
-        Set<User> users = exam.getRegisteredUsers();
-
-        // StudentExams are saved in the called method
-        return createRandomStudentExams(exam, users, examQuizQuestionsGenerator);
-    }
-
-    /**
      * Get all student exams for the given exam id with quiz questions.
      *
      * @param ids the ids of the student exams

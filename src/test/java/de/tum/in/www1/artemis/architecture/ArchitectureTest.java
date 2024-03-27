@@ -67,6 +67,7 @@ import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.domain.JavaParameter;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -121,6 +122,22 @@ class ArchitectureTest extends AbstractArchitectureTest {
         classes().that().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(RestController.class).check(allClasses);
         classes().that().areAnnotatedWith(Service.class).should().notHaveModifier(FINAL).check(allClasses);
 
+    }
+
+    @Test
+    void testNoUnusedRepositoryMethods() {
+        ArchRule unusedMethods = noMethods().that().areAnnotatedWith(Query.class).and().areDeclaredInClassesThat().areInterfaces().and().areDeclaredInClassesThat()
+                .areAnnotatedWith(Repository.class).should(new ArchCondition<>("not be referenced") {
+
+                    @Override
+                    public void check(JavaMethod javaMethod, ConditionEvents conditionEvents) {
+                        Set<JavaMethodCall> calls = javaMethod.getCallsOfSelf();
+                        if (calls.isEmpty()) {
+                            conditionEvents.add(SimpleConditionEvent.violated(javaMethod, "Method is not used"));
+                        }
+                    }
+                }).because("unused methods should be removed from repositories to keep a clean code base.");
+        unusedMethods.check(productionClasses);
     }
 
     @Test

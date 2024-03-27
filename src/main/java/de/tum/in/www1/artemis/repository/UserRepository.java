@@ -630,17 +630,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     /**
-     * Get user with authorities of currently logged-in user
-     *
-     * @return currently logged-in user
-     */
-    default User getUserWithAuthorities() {
-        String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = findOneWithAuthoritiesByLogin(currentUserLogin);
-        return unwrapOptionalUser(user, currentUserLogin);
-    }
-
-    /**
      * Get user with user groups, authorities and organizations of currently logged-in user
      *
      * @return currently logged-in user

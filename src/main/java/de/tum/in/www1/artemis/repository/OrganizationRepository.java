@@ -30,22 +30,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     @Query("""
             SELECT organization
             FROM Organization organization
-                LEFT JOIN FETCH organization.courses
-            WHERE organization.id = :organizationId
-            """)
-    Optional<Organization> findByIdWithEagerCourses(@Param("organizationId") long organizationId);
-
-    @Query("""
-            SELECT organization
-            FROM Organization organization
-                LEFT JOIN FETCH organization.users
-            WHERE organization.id = :organizationId
-            """)
-    Optional<Organization> findByIdWithEagerUsers(@Param("organizationId") long organizationId);
-
-    @Query("""
-            SELECT organization
-            FROM Organization organization
                 LEFT JOIN FETCH organization.users
                 LEFT JOIN FETCH organization.courses
             WHERE organization.id = :organizationId

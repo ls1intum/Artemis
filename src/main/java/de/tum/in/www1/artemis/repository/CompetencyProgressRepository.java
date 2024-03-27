@@ -27,10 +27,6 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             """)
     void deleteAllByCompetencyId(@Param("competencyId") long competencyId);
 
-    @Transactional // ok because of delete
-    @Modifying
-    void deleteAllByUserId(Long userId);
-
     List<CompetencyProgress> findAllByCompetencyId(long competencyId);
 
     @Query("""
