@@ -59,7 +59,7 @@ public class DataExportScheduleService {
      */
     @Scheduled(cron = "${artemis.scheduling.data-export-creation-time: 0 0 4 * * *}")
     public void createDataExportsAndDeleteOldOnes() throws InterruptedException {
-        if (profileService.isDev()) {
+        if (profileService.isDevActive()) {
             // do not execute this in a development environment
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;

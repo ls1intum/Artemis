@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -34,9 +34,9 @@ public class EntityFileHelper {
      * @param keepFilename   whether to keep the filename or generate a new one
      * @return the new file path as string
      */
-    @Nonnull
+    @NotNull
     @Deprecated(forRemoval = true)
-    public String moveTempFileBeforeEntityPersistence(@Nonnull String entityFilePath, @Nonnull Path targetFolder, boolean keepFilename) {
+    public String moveTempFileBeforeEntityPersistence(@NotNull String entityFilePath, @NotNull Path targetFolder, boolean keepFilename) {
         return moveFileBeforeEntityPersistenceWithIdIfIsTemp(entityFilePath, targetFolder, keepFilename, null);
     }
 
@@ -49,9 +49,9 @@ public class EntityFileHelper {
      * @param entityId       the id of the entity that is being persisted, if null, a placeholder gets used
      * @return the new file path as string
      */
-    @Nonnull
+    @NotNull
     @Deprecated(forRemoval = true)
-    public String moveFileBeforeEntityPersistenceWithIdIfIsTemp(@Nonnull String entityFilePath, @Nonnull Path targetFolder, boolean keepFilename, @Nullable Long entityId) {
+    public String moveFileBeforeEntityPersistenceWithIdIfIsTemp(@NotNull String entityFilePath, @NotNull Path targetFolder, boolean keepFilename, @Nullable Long entityId) {
         URI filePath = URI.create(entityFilePath);
         String filename = Path.of(entityFilePath).getFileName().toString();
         try {
@@ -91,8 +91,8 @@ public class EntityFileHelper {
      */
     @Nullable
     @Deprecated(forRemoval = true)
-    public String handlePotentialFileUpdateBeforeEntityPersistence(@Nonnull Long entityId, @Nullable String oldEntityFilePath, @Nullable String newEntityFilePath,
-            @Nonnull Path targetFolder, boolean keepFilename) {
+    public String handlePotentialFileUpdateBeforeEntityPersistence(@NotNull Long entityId, @Nullable String oldEntityFilePath, @Nullable String newEntityFilePath,
+            @NotNull Path targetFolder, boolean keepFilename) {
         String resultingPath = newEntityFilePath;
         if (newEntityFilePath != null) {
             resultingPath = moveFileBeforeEntityPersistenceWithIdIfIsTemp(newEntityFilePath, targetFolder, keepFilename, entityId);
