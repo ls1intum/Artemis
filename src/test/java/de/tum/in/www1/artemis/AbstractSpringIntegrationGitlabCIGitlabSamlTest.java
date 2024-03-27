@@ -17,6 +17,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.actuate.metrics.AutoConfigureMetrics;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -49,6 +50,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractSpringIntegrationGitlabCIGitlabSamlTest")
 @AutoConfigureEmbeddedDatabase
+@AutoConfigureMetrics
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlabci", "gitlab", "saml2", "scheduling", "lti", PROFILE_CORE })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })

@@ -45,6 +45,8 @@ import de.tum.in.www1.artemis.repository.StatisticsRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import io.micrometer.core.instrument.*;
 
 @Profile(PROFILE_CORE)
@@ -94,6 +96,8 @@ public class MetricsBean {
 
     private final StatisticsRepository statisticsRepository;
 
+    private final Optional<SharedQueueManagementService> localCIBuildJobQueueServiceOptional;
+
     /**
      * List that stores active usernames (users with a submission within the last 14 days) which is refreshed
      * every 60 minutes.
@@ -141,12 +145,16 @@ public class MetricsBean {
 
     private MultiGauge releaseExamStudentMultiplierGauge;
 
+    private MultiGauge localCIRunningBuildJobGauge;
+
+    private MultiGauge localCIQueuedBuildJobGauge;
+
     private boolean scheduledMetricsEnabled = false;
 
     public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
             StudentExamRepository studentExamRepository, ExamRepository examRepository, CourseRepository courseRepository, UserRepository userRepository,
-            StatisticsRepository statisticsRepository) {
+            StatisticsRepository statisticsRepository, Optional<SharedQueueManagementService> localCIBuildJobQueueServiceOptional) {
         this.meterRegistry = meterRegistry;
         this.env = env;
         this.taskScheduler = taskScheduler;
@@ -159,6 +167,7 @@ public class MetricsBean {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.statisticsRepository = statisticsRepository;
+        this.localCIBuildJobQueueServiceOptional = localCIBuildJobQueueServiceOptional;
 
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
@@ -172,6 +181,11 @@ public class MetricsBean {
 
             registerExerciseAndExamMetrics();
             registerPublicArtemisMetrics();
+
+            if (localCIBuildJobQueueServiceOptional.isPresent()) {
+                registerLocalCIMetrics();
+                updateLocalCIMetrics();
+            }
         }
 
         // the data source is optional as it is not used during testing
@@ -235,6 +249,11 @@ public class MetricsBean {
                 .description("Number of subscriptions created on all Artemis instances").register(meterRegistry);
     }
 
+    private void registerLocalCIMetrics() {
+        localCIRunningBuildJobGauge = MultiGauge.builder("artemis.global.localci.running").description("Number of running builds").register(meterRegistry);
+        localCIQueuedBuildJobGauge = MultiGauge.builder("artemis.global.localci.queued").description("Number of queued builds").register(meterRegistry);
+    }
+
     private static double extractWebsocketUserCount(SimpUserRegistry userRegistry) {
         return userRegistry.getUserCount();
     }
@@ -294,7 +313,7 @@ public class MetricsBean {
     /**
      * Calculate active users (active within the last 14 days) and store them in a List.
      * The calculation is performed every 60 minutes.
-     * The initial calculation is done in the constructor to ensure it is done BEFORE {@link #recalculateMetrics()}
+     * The initial calculation is done in the constructor to ensure it is done BEFORE {@link #recalculateScheduledMetrics()}
      * is called.
      */
     @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 60 * 60 * 1000) // Every 60 minutes
@@ -315,7 +334,7 @@ public class MetricsBean {
      * Only executed if the "scheduling"-profile is present.
      */
     @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 0) // Every 5 minutes
-    public void recalculateMetrics() {
+    public void recalculateScheduledMetrics() {
         if (!scheduledMetricsEnabled) {
             return;
         }
@@ -349,6 +368,35 @@ public class MetricsBean {
         updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, examRepository::countExamUsersInExamsWithStartDateBetween);
 
         log.info("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
+    }
+
+    /**
+     * Recalculate all live metrics.
+     * This is executed on every request to the Prometheus endpoint.
+     */
+    public void recalculateLiveMetrics() {
+        if (!scheduledMetricsEnabled) {
+            return;
+        }
+
+        if (localCIBuildJobQueueServiceOptional.isPresent()) {
+            updateLocalCIMetrics();
+        }
+    }
+
+    private void updateLocalCIMetrics() {
+        var localCIBuildJobQueueService = localCIBuildJobQueueServiceOptional.orElseThrow();
+        var buildAgents = localCIBuildJobQueueService.getBuildAgentInformation();
+
+        var localCIRunningMetrics = new ArrayList<MultiGauge.Row<?>>();
+        for (LocalCIBuildAgentInformation buildAgent : buildAgents) {
+            localCIRunningMetrics.add(MultiGauge.Row.of(Tags.of("host", buildAgent.name()), buildAgent.numberOfCurrentBuildJobs()));
+        }
+        localCIRunningBuildJobGauge.register(localCIRunningMetrics, true);
+
+        var localCIQueueMetrics = new ArrayList<MultiGauge.Row<?>>();
+        localCIQueueMetrics.add(MultiGauge.Row.of(Tags.of(new String[0]), localCIBuildJobQueueService.getQueuedJobs().size()));
+        localCIQueuedBuildJobGauge.register(localCIQueueMetrics, true);
     }
 
     @FunctionalInterface
