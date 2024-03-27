@@ -122,7 +122,8 @@ public class LocalCIResultProcessingService {
                 if (participation.getProgrammingExercise() == null) {
                     participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
                 }
-                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultQueueItem.buildResult());
+                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
+
                 if (result != null) {
                     programmingMessagingService.notifyUserAboutNewResult(result, participation);
                     addResultToBuildAgentsRecentBuildJobs(buildJob, result);

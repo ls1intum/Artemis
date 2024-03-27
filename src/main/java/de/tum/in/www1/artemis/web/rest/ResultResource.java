@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -152,6 +153,27 @@ public class ResultResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         return new ResponseEntity<>(resultService.filterFeedbackForClient(result), HttpStatus.OK);
+    }
+
+    /**
+     * GET /participations/:participationId/results/logs-available : get the logs availability for the results of a participation.
+     *
+     * @param participationId the id of the participation to the results
+     * @return the ResponseEntity with status 200 (OK) and with body the map of resultId and log availability, status 404 (Not Found) if the participation does not exist or 403
+     *         (forbidden) if the user does not have permissions to access the participation.
+     */
+    @GetMapping("participations/{participationId}/results/logs-available")
+    @EnforceAtLeastTutor
+    public ResponseEntity<Map<Long, Boolean>> getLogsAvailabilityForResultsOfParticipation(@PathVariable long participationId) {
+        log.debug("REST request to get logs availability for results of participation : {}", participationId);
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
+        List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
+
+        Map<Long, Boolean> logsAvailable = resultService.getLogsAvailabilityForResults(results);
+
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        return new ResponseEntity<>(logsAvailable, HttpStatus.OK);
     }
 
     /**
