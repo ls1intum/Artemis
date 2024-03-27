@@ -149,6 +149,14 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testOnlySpringTransactionalAnnotation() {
+        ArchRule onlySpringTransactionalAnnotation = noMethods().should().beAnnotatedWith(javax.transaction.Transactional.class).orShould()
+                .beAnnotatedWith(jakarta.transaction.Transactional.class)
+                .because("Only Spring's Transactional annotation should be used as the usage of the other two is not reliable.");
+        onlySpringTransactionalAnnotation.check(allClasses);
+    }
+
+    @Test
     void testNoCollectorsToList() {
         ArchRule toListUsage = noClasses().should().callMethod(Collectors.class, "toList")
                 .because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
@@ -157,11 +165,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNullnessAnnotations() {
-        var notNullPredicate = and(not(resideInPackageAnnotation("javax.validation.constraints")), simpleNameAnnotation("NotNull"));
+        var notNullPredicate = and(not(resideInPackageAnnotation("jakarta.validation.constraints")), simpleNameAnnotation("NotNull"));
         var nonNullPredicate = simpleNameAnnotation("NonNull");
-        var nullablePredicate = and(not(resideInPackageAnnotation("javax.annotation")), simpleNameAnnotation("Nullable"));
+        var nonnullPredicate = simpleNameAnnotation("Nonnull");
+        var nullablePredicate = and(not(resideInPackageAnnotation("jakarta.annotation")), simpleNameAnnotation("Nullable"));
 
-        Set<DescribedPredicate<? super JavaAnnotation<?>>> allPredicates = Set.of(notNullPredicate, nonNullPredicate, nullablePredicate);
+        Set<DescribedPredicate<? super JavaAnnotation<?>>> allPredicates = Set.of(notNullPredicate, nonNullPredicate, nonnullPredicate, nullablePredicate);
 
         for (var predicate : allPredicates) {
             ArchRule units = noCodeUnits().should().beAnnotatedWith(predicate);
@@ -249,7 +258,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         var exceptions = or(declaredClassSimpleName("QuizCache"), declaredClassSimpleName("CacheHandler"));
         var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
                 .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
-        notUseHazelcastInConstructor.check(allClasses);
+        notUseHazelcastInConstructor.check(allClassesWithHazelcast);
     }
 
     @Test
@@ -456,7 +465,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
                 for (var word : queryWords) {
                     if (SQL_KEYWORDS.contains(word.toUpperCase()) && !StringUtils.isAllUpperCase(word)) {
-                        events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), word)));
+                        events.add(violated(item, "In the Query of %s the keyword \"%s\" should be written in upper case.".formatted(item.getFullName(), word)));
                     }
                 }
             }
