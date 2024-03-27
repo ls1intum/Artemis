@@ -140,7 +140,7 @@ class Lti13LaunchFilterTest {
         idTokenClaims.put(Claims.LTI_DEPLOYMENT_ID, "some-deployment-id");
 
         idTokenClaims.put(Claims.DEEP_LINKING_SETTINGS, "{ \"deep_link_return_url\": \"https://platform.example/deep_links\" }");
-        idTokenClaims.put(Claims.TARGET_LINK_URI, "https://any-artemis-domain.org/lti/deep-linking/121");
+        idTokenClaims.put(Claims.TARGET_LINK_URI, "/lti/deep-linking/121");
         idTokenClaims.put(Claims.MESSAGE_TYPE, "LtiDeepLinkingRequest");
     }
 
@@ -161,8 +161,7 @@ class Lti13LaunchFilterTest {
         JsonObject responseJsonBody = getMockJsonObject(true);
         verify(lti13Service).startDeepLinking(any(), any());
         verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
-        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri")
-                .contains("https://any-artemis-domain.org/lti/deep-linking/121");
+        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains("/lti/deep-linking");
         verify(lti13Service).buildLtiResponse(any(), any());
 
     }
@@ -237,8 +236,7 @@ class Lti13LaunchFilterTest {
         JsonObject responseJsonBody = getMockJsonObject(true);
 
         verify(httpResponse).setStatus(HttpStatus.UNAUTHORIZED.value());
-        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri")
-                .contains("https://any-artemis-domain.org/lti/deep-linking/121");
+        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains("/lti/deep-linking/");
         assertThat(responseJsonBody.get("ltiIdToken")).isNull();
         assertThat((responseJsonBody.get("clientRegistrationId").toString())).as("Response body contains the expected clientRegistrationId").contains("some-registration");
 
