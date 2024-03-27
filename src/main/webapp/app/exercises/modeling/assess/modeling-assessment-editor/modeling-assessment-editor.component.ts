@@ -75,13 +75,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private cancelConfirmationText: string;
 
     /**
-     * Get all referenced feedback including feedback suggestions
-     */
-    get referencedFeedbackAndFeedbackSuggestions(): Feedback[] {
-        return this.result?.feedbacks || [];
-    }
-
-    /**
      * Get all feedback suggestions without a reference. They will be shown in cards below the modeling editor.
      */
     get unreferencedFeedbackSuggestions(): Feedback[] {
