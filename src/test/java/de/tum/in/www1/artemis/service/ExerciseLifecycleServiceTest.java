@@ -29,8 +29,8 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentT
         Exercise exercise = new TextExercise();
         exercise.setTitle("ExerciseLifecycleServiceTest:testScheduleExerciseOnReleaseTask");
         exercise.setReleaseDate(now.plus(200, ChronoUnit.MILLIS));
-        exercise.setDueDate(now.plus(400, ChronoUnit.MILLIS));
-        exercise.setAssessmentDueDate(now.plus(600, ChronoUnit.MILLIS));
+        exercise.setDueDate(now.plus(500, ChronoUnit.MILLIS));
+        exercise.setAssessmentDueDate(now.plus(1000, ChronoUnit.MILLIS));
 
         MutableBoolean releaseTrigger = new MutableBoolean(false);
         MutableBoolean dueTrigger = new MutableBoolean(false);
@@ -43,36 +43,27 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentT
         assertThat(releaseFuture.isDone()).isFalse();
         assertThat(dueFuture.isDone()).isFalse();
         assertThat(assessmentDueFuture.isDone()).isFalse();
+        assertThat(releaseTrigger.booleanValue()).isFalse();
+        assertThat(dueTrigger.booleanValue()).isFalse();
+        assertThat(assessmentDueTrigger.booleanValue()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
-            assertEqual(releaseTrigger, true);
-            assertEqual(dueTrigger, false);
-            assertEqual(assessmentDueTrigger, false);
-        });
+        await().pollInterval(20, TimeUnit.MILLISECONDS).until(releaseFuture::isDone);
 
-        assertThat(releaseFuture.isDone()).isTrue();
-        assertThat(dueFuture.isDone()).isFalse();
-        assertThat(assessmentDueFuture.isDone()).isFalse();
+        assertThat(releaseTrigger.booleanValue()).isTrue();
+        assertThat(dueTrigger.booleanValue()).isFalse();
+        assertThat(assessmentDueTrigger.booleanValue()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
-            assertEqual(releaseTrigger, true);
-            assertEqual(dueTrigger, true);
-            assertEqual(assessmentDueTrigger, false);
-        });
+        await().pollInterval(20, TimeUnit.MILLISECONDS).until(dueFuture::isDone);
 
-        assertThat(releaseFuture.isDone()).isTrue();
-        assertThat(dueFuture.isDone()).isTrue();
-        assertThat(assessmentDueFuture.isDone()).isFalse();
+        assertThat(releaseTrigger.booleanValue()).isTrue();
+        assertThat(dueTrigger.booleanValue()).isTrue();
+        assertThat(assessmentDueTrigger.booleanValue()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
-            assertEqual(releaseTrigger, true);
-            assertEqual(dueTrigger, true);
-            assertEqual(assessmentDueTrigger, true);
-        });
+        await().pollInterval(20, TimeUnit.MILLISECONDS).until(assessmentDueFuture::isDone);
 
-        assertThat(releaseFuture.isDone()).isTrue();
-        assertThat(dueFuture.isDone()).isTrue();
-        assertThat(assessmentDueFuture.isDone()).isTrue();
+        assertThat(releaseTrigger.booleanValue()).isTrue();
+        assertThat(dueTrigger.booleanValue()).isTrue();
+        assertThat(assessmentDueTrigger.booleanValue()).isTrue();
 
         assertThat(releaseFuture.isCancelled()).isFalse();
         assertThat(dueFuture.isCancelled()).isFalse();
@@ -90,22 +81,18 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentT
 
         assertThat(future.isDone()).isFalse();
         assertThat(future.isCancelled()).isFalse();
-        assertEqual(trigger, false);
+        assertThat(trigger.booleanValue()).isFalse();
 
         future.cancel(false);
 
         assertThat(future.isDone()).isTrue();
         assertThat(future.isCancelled()).isTrue();
-        assertEqual(trigger, false);
+        assertThat(trigger.booleanValue()).isFalse();
 
         await().untilAsserted(() -> {
             assertThat(future.isDone()).isTrue();
             assertThat(future.isCancelled()).isTrue();
-            assertEqual(trigger, false);
+            assertThat(trigger.booleanValue()).isFalse();
         });
-    }
-
-    private void assertEqual(MutableBoolean testBoolean, boolean expected) {
-        assertThat(testBoolean.toBoolean()).isEqualTo(expected);
     }
 }
