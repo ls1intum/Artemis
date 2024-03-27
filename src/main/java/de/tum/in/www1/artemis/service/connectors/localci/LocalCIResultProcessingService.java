@@ -124,7 +124,9 @@ public class LocalCIResultProcessingService {
                 }
                 Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
                 System.err.println("Result of build job with id " + buildJob.id() + " is " + result);
+                System.err.println("Participation of build job with id " + buildJob.id() + " is " + participation);
                 if (result != null) {
+                    System.err.println("Submission of build job with id " + buildJob.id() + " is " + result.getSubmission());
                     programmingMessagingService.notifyUserAboutNewResult(result, participation);
                     addResultToBuildAgentsRecentBuildJobs(buildJob, result);
                 }
