@@ -53,6 +53,7 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
         this.websocketService.subscribe(this.channel);
         this.websocketSubscription = this.websocketService.receive(this.channel).subscribe((buildAgents) => {
             this.buildAgents = buildAgents;
+            console.log('Build agents, ', buildAgents);
             this.setRecentBuildJobsDuration(buildAgents);
         });
     }
@@ -63,6 +64,7 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
     load() {
         this.restSubscription = this.buildAgentsService.getBuildAgents().subscribe((buildAgents) => {
             this.buildAgents = buildAgents;
+            console.log('Build agents, ', buildAgents);
             this.setRecentBuildJobsDuration(buildAgents);
         });
     }
