@@ -44,7 +44,7 @@ public class BuildLogEntryService {
     private int expiryDays;
 
     @Value("${artemis.build-logs-path:./build-logs}")
-    private String buildLogsPath;
+    private Path buildLogsPath;
 
     public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.buildLogEntryRepository = buildLogEntryRepository;
@@ -285,18 +285,16 @@ public class BuildLogEntryService {
      */
     public void saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String resultId) {
 
-        Path buildLogs = Path.of(buildLogsPath);
-
-        if (!Files.exists(buildLogs)) {
+        if (!Files.exists(buildLogsPath)) {
             try {
-                Files.createDirectory(buildLogs);
+                Files.createDirectories(buildLogsPath);
             }
             catch (Exception e) {
                 throw new IllegalStateException("Could not create directory for build logs", e);
             }
         }
 
-        Path logPath = buildLogs.resolve(resultId + ".log");
+        Path logPath = buildLogsPath.resolve(resultId + ".log");
 
         StringBuilder logsStringBuilder = new StringBuilder();
         for (BuildLogEntry buildLogEntry : buildLogEntries) {
@@ -319,8 +317,7 @@ public class BuildLogEntryService {
      * @return the build logs as a string or null if the file could not be found (e.g. if the build logs have been deleted)
      */
     public FileSystemResource retrieveBuildLogsFromFileForResult(String resultId) {
-        Path buildLogs = Path.of(buildLogsPath);
-        Path logPath = buildLogs.resolve(resultId + ".log");
+        Path logPath = buildLogsPath.resolve(resultId + ".log");
 
         FileSystemResource fileSystemResource = new FileSystemResource(logPath);
         if (fileSystemResource.exists()) {
@@ -340,9 +337,8 @@ public class BuildLogEntryService {
     public void deleteOldBuildLogsFiles() {
         log.info("Deleting old build log files");
         ZonedDateTime now = ZonedDateTime.now();
-        Path buildLogs = Path.of(buildLogsPath);
 
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(buildLogs)) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(buildLogsPath)) {
             for (Path file : stream) {
                 ZonedDateTime lastModified = ZonedDateTime.ofInstant(Files.getLastModifiedTime(file).toInstant(), now.getZone());
                 if (lastModified.isBefore(now.minusDays(expiryDays))) {
@@ -357,8 +353,7 @@ public class BuildLogEntryService {
     }
 
     public boolean resultHasLogFile(String resultId) {
-        Path buildLogs = Path.of(buildLogsPath);
-        Path logPath = buildLogs.resolve(resultId + ".log");
+        Path logPath = buildLogsPath.resolve(resultId + ".log");
         return Files.exists(logPath);
     }
 
