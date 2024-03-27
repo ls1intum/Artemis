@@ -9,6 +9,7 @@ import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsC
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
@@ -117,6 +118,7 @@ public class SingleUserNotificationService {
      *
      * @param exercise which assessmentDueDate is the trigger for the notification process
      */
+    // TODO: Should by a general method and not be in the single user service
     public void notifyUsersAboutAssessedExerciseSubmission(Exercise exercise) {
         // This process can not be replaces via a GroupNotification (can only notify ALL students of the course)
         // because we want to notify only the students that have a valid assessed submission.
@@ -129,7 +131,13 @@ public class SingleUserNotificationService {
         exercise.setStudentParticipations(filteredStudentParticipations);
 
         // Extract all users that should be notified from the previously loaded student participations
-        Set<User> relevantStudents = filteredStudentParticipations.stream().map(participation -> participation.getStudent().orElseThrow()).collect(Collectors.toSet());
+        Set<User> relevantStudents = filteredStudentParticipations.stream().flatMap(participation -> {
+            if (participation.getParticipant() instanceof Team team) {
+                return team.getStudents().stream();
+            }
+
+            return Stream.of(participation.getStudent().orElseThrow());
+        }).collect(Collectors.toSet());
 
         // notify all relevant users
         relevantStudents.forEach(student -> notifyUserAboutAssessedExerciseSubmission(exercise, student));

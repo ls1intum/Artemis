@@ -223,7 +223,7 @@ public class AssessmentService {
      * @return the saved result
      */
     private Result submitManualAssessment(long resultId, Exercise exercise) {
-        Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(resultId);
+        Result result = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsByIdElseThrow(resultId);
         result.setRatedIfNotAfterDueDate();
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.submitResult(result, exercise);
