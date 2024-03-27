@@ -8,8 +8,8 @@ import java.util.concurrent.Executors;
 import java.util.function.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
