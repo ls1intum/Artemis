@@ -10,10 +10,8 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -21,29 +19,13 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 @Entity
 @Table(name = "competency")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class Competency extends DomainObject {
-
-    @Column(name = "title", nullable = false)
-    private String title;
-
-    @Column(name = "description")
-    private String description;
+public class Competency extends BaseCompetency {
 
     @Column(name = "soft_due_date")
     private ZonedDateTime softDueDate;
 
     @Column(name = "mastery_threshold")
     private Integer masteryThreshold;
-
-    /**
-     * The type of competency according to Bloom's revised taxonomy.
-     *
-     * @see <a href="https://en.wikipedia.org/wiki/Bloom%27s_taxonomy">Wikipedia</a>
-     */
-    @Column(name = "taxonomy")
-    @Convert(converter = CompetencyTaxonomy.TaxonomyConverter.class)
-    @JsonInclude
-    private CompetencyTaxonomy taxonomy;
 
     @Column(name = "optional")
     private boolean optional;
@@ -78,32 +60,19 @@ public class Competency extends DomainObject {
     @JsonIgnoreProperties({ "competencies", "course" })
     private Set<LearningPath> learningPaths = new HashSet<>();
 
+    @ManyToOne
+    @JoinColumn(name = "linked_standardized_competency_id")
+    @JsonIgnoreProperties({ "competencies" })
+    private StandardizedCompetency linkedStandardizedCompetency;
+
     public Competency() {
     }
 
     public Competency(String title, String description, ZonedDateTime softDueDate, Integer masteryThreshold, CompetencyTaxonomy taxonomy, boolean optional) {
-        this.title = title;
-        this.description = description;
+        super(title, description, taxonomy);
         this.softDueDate = softDueDate;
         this.masteryThreshold = masteryThreshold;
-        this.taxonomy = taxonomy;
         this.optional = optional;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public ZonedDateTime getSoftDueDate() {
@@ -120,14 +89,6 @@ public class Competency extends DomainObject {
 
     public void setMasteryThreshold(Integer masteryThreshold) {
         this.masteryThreshold = masteryThreshold;
-    }
-
-    public CompetencyTaxonomy getTaxonomy() {
-        return taxonomy;
-    }
-
-    public void setTaxonomy(CompetencyTaxonomy taxonomy) {
-        this.taxonomy = taxonomy;
     }
 
     public boolean isOptional() {
@@ -224,6 +185,14 @@ public class Competency extends DomainObject {
 
     public void setLearningPaths(Set<LearningPath> learningPaths) {
         this.learningPaths = learningPaths;
+    }
+
+    public StandardizedCompetency getLinkedStandardizedCompetency() {
+        return linkedStandardizedCompetency;
+    }
+
+    public void setLinkedStandardizedCompetency(StandardizedCompetency linkedStandardizedCompetency) {
+        this.linkedStandardizedCompetency = linkedStandardizedCompetency;
     }
 
     /**
