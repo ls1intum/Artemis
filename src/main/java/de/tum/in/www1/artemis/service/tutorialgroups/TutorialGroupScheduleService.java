@@ -6,7 +6,7 @@ import static de.tum.in.www1.artemis.web.rest.util.DateUtil.getFirstDateOfWeekDa
 import java.time.*;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;

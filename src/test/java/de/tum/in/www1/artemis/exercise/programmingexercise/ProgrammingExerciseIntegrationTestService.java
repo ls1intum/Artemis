@@ -22,7 +22,7 @@ import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
