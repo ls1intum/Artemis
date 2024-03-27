@@ -22,6 +22,8 @@
             },
             "details": {
                 "title": "Standardized Competency Details",
+                "titleCreate": "Create Standardized Competency",
+                "titleEdit": "Edit Standardized Competency",
                 "titleRequiredError": "A standardized competency needs to have a title",
                 "titleMaxLengthError": "The title of a standardized competency is limited to {{max}} characters",
                 "descriptionMaxLengthError": "The description of a standardized competency is limited to {{max}} characters",

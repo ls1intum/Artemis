@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { faBan, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faPencil, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, StandardizedCompetencyDTO, StandardizedCompetencyValidators } from 'app/entities/competency/standardized-competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-standardized-competency-detail',
@@ -44,6 +45,8 @@ export class StandardizedCompetencyDetailComponent {
         return this._isInEditMode;
     }
 
+    @Input() dialogError: Observable<string>;
+
     @Output() onSave = new EventEmitter<StandardizedCompetencyDTO>();
     @Output() onDelete = new EventEmitter<void>();
     @Output() onClose = new EventEmitter<void>();
@@ -59,7 +62,7 @@ export class StandardizedCompetencyDetailComponent {
     }>;
 
     //icons
-    readonly faEdit = faEdit;
+    readonly faPencil = faPencil;
     readonly faTrash = faTrash;
     readonly faBan = faBan;
     readonly faSave = faSave;
@@ -92,6 +95,11 @@ export class StandardizedCompetencyDetailComponent {
     cancel() {
         this.form.reset();
         this.isInEditMode = false;
+
+        //canceling when creating a new competency closes it
+        if (this.competency.id === undefined) {
+            this.onClose.emit();
+        }
     }
 
     /**

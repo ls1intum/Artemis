@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.competency.StandardizedCompetencyService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/standardized-competencies/")
+@RequestMapping("api/admin/")
 public class AdminStandardizedCompetencyResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminStandardizedCompetencyResource.class);
@@ -51,7 +51,7 @@ public class AdminStandardizedCompetencyResource {
      * @return the ResponseEntity with status 201 (Created) and with body containing the new standardized competency
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("")
+    @PostMapping("standardized-competencies")
     @EnforceAdmin
     public ResponseEntity<StandardizedCompetency> createStandardizedCompetency(@RequestBody StandardizedCompetency competency) throws URISyntaxException {
         log.debug("REST request to create standardized competency : {}", competency);
@@ -68,7 +68,7 @@ public class AdminStandardizedCompetencyResource {
      * @param competency   the updated competency
      * @return the ResponseEntity with status 200 (OK) and with body the updated standardized competency
      */
-    @PutMapping("{competencyId}")
+    @PutMapping("standardized-competencies/{competencyId}")
     @EnforceAdmin
     public ResponseEntity<StandardizedCompetency> updateStandardizedCompetency(@PathVariable long competencyId, @RequestBody StandardizedCompetency competency) {
         log.debug("REST request to update standardized competency : {}", competency);
@@ -88,7 +88,7 @@ public class AdminStandardizedCompetencyResource {
      * @param competencyId the id of the competency that should be deleted
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("{competencyId}")
+    @DeleteMapping("standardized-competencies/{competencyId}")
     @EnforceAdmin
     public ResponseEntity<Void> deleteStandardizedCompetency(@PathVariable long competencyId) {
         log.debug("REST request to delete standardized competency : {}", competencyId);
@@ -105,7 +105,7 @@ public class AdminStandardizedCompetencyResource {
      * @return the ResponseEntity with status 201 (Created) and with body containing the new knowledge area
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("knowledge-areas")
+    @PostMapping("standardized-competencies/knowledge-areas")
     @EnforceAdmin
     public ResponseEntity<KnowledgeArea> createKnowledgeArea(@RequestBody KnowledgeArea knowledgeArea) throws URISyntaxException {
         log.debug("REST request to create knowledge area : {}", knowledgeArea);

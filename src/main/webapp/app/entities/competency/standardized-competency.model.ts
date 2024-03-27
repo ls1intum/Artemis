@@ -1,7 +1,7 @@
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
-export interface StandardizedCompetency {
-    id?: number;
+export interface StandardizedCompetency extends BaseEntity {
     title?: string;
     description?: string;
     taxonomy?: CompetencyTaxonomy;
@@ -13,8 +13,7 @@ export interface StandardizedCompetency {
     linkedCompetencies?: Competency[];
 }
 
-export interface StandardizedCompetencyDTO {
-    id?: number;
+export interface StandardizedCompetencyDTO extends BaseEntity {
     title?: string;
     description?: string;
     taxonomy?: CompetencyTaxonomy;
@@ -23,8 +22,7 @@ export interface StandardizedCompetencyDTO {
     sourceId?: number;
 }
 
-export interface KnowledgeArea {
-    id?: number;
+export interface KnowledgeArea extends BaseEntity {
     title?: string;
     description?: string;
     parent?: KnowledgeArea;
@@ -32,8 +30,7 @@ export interface KnowledgeArea {
     competencies?: StandardizedCompetency[];
 }
 
-export interface KnowledgeAreaDTO {
-    id?: number;
+export interface KnowledgeAreaDTO extends BaseEntity {
     title?: string;
     description?: string;
     parentId?: number;
@@ -41,7 +38,7 @@ export interface KnowledgeAreaDTO {
     competencies?: StandardizedCompetencyDTO[];
 }
 
-export interface Source {
+export interface Source extends BaseEntity {
     title?: string;
     author?: string;
     uri?: string;
@@ -51,4 +48,40 @@ export interface Source {
 export enum StandardizedCompetencyValidators {
     TITLE_MAX = 255,
     DESCRIPTION_MAX = 2000,
+}
+
+export function convertToStandardizedCompetencyDTO(competency: StandardizedCompetency) {
+    const competencyDTO: StandardizedCompetencyDTO = {
+        id: competency.id,
+        title: competency.title,
+        description: competency.description,
+        taxonomy: competency.taxonomy,
+        version: competency.version,
+        knowledgeAreaId: competency.knowledgeArea?.id,
+        sourceId: competency.source?.id,
+    };
+    return competencyDTO;
+}
+
+export function convertToStandardizedCompetency(competencyDTO: StandardizedCompetencyDTO) {
+    const competency: StandardizedCompetency = {
+        id: competencyDTO.id,
+        title: competencyDTO.title,
+        description: competencyDTO.description,
+        taxonomy: competencyDTO.taxonomy,
+        version: competencyDTO.version,
+    };
+
+    if (competencyDTO.knowledgeAreaId) {
+        competency.knowledgeArea = {
+            id: competencyDTO.knowledgeAreaId,
+        };
+    }
+    if (competencyDTO.sourceId) {
+        competency.source = {
+            id: competencyDTO.sourceId,
+        };
+    }
+
+    return competency;
 }

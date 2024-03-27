@@ -1,24 +1,32 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { KnowledgeAreaDTO, StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
+import { faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons';
+import {
+    KnowledgeArea,
+    KnowledgeAreaDTO,
+    StandardizedCompetencyDTO,
+    convertToStandardizedCompetency,
+    convertToStandardizedCompetencyDTO,
+} from 'app/entities/competency/standardized-competency.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
 import { StandardizedCompetencyService } from 'app/admin/standardized-competencies/standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { map } from 'rxjs';
+import { Subject, map } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { getIcon } from 'app/entities/competency.model';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
     styleUrls: ['standardized-competency-management.component.scss'],
 })
-export class StandardizedCompetencyManagementComponent implements OnInit {
+export class StandardizedCompetencyManagementComponent implements OnInit, OnDestroy {
     //TODO: add a debounce to the search
     //TODO: differentiate between tree and original data source, so i can filter =)
     //TODO: display hierarchy in the select
@@ -39,6 +47,8 @@ export class StandardizedCompetencyManagementComponent implements OnInit {
 
     //Icons
     protected readonly faChevronRight = faChevronRight;
+    protected readonly faPlus = faPlus;
+    getIcon = getIcon;
 
     //TODO: also check if I need trackBy.
     readonly trackBy = (_: number, node: KnowledgeAreaDTO) => node.id;
@@ -58,7 +68,6 @@ export class StandardizedCompetencyManagementComponent implements OnInit {
             .pipe(map((response) => response.body!))
             .subscribe({
                 next: (knowledgeAreas) => {
-                    console.log(knowledgeAreas);
                     this.dataSource.data = knowledgeAreas;
                     knowledgeAreas.forEach((knowledgeArea) => {
                         this.addSelfAndChildrenToMap(knowledgeArea);
@@ -68,6 +77,10 @@ export class StandardizedCompetencyManagementComponent implements OnInit {
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
+    }
+
+    ngOnDestroy(): void {
+        this.dialogErrorSource.unsubscribe();
     }
 
     private addSelfAndChildrenToMap(knowledgeArea: KnowledgeAreaDTO) {
@@ -106,11 +119,22 @@ export class StandardizedCompetencyManagementComponent implements OnInit {
         //TODO: if competency name is not empty ->
     }
 
-    //TODO: probably remove this :)
-    refreshTree() {
-        const _data = this.dataSource.data;
-        this.dataSource.data = [];
-        this.dataSource.data = _data;
+    //Callback methods for the competency detail component
+
+    openNewCompetency(knowledgeArea?: KnowledgeArea) {
+        const newCompetency: StandardizedCompetencyDTO = {
+            knowledgeAreaId: knowledgeArea?.id,
+        };
+
+        if (this.isEditing) {
+            this.openCancelModal(this.selectedCompetency?.title ?? '', () => {
+                this.isEditing = true;
+                this.selectedCompetency = newCompetency;
+            });
+        } else {
+            this.isEditing = true;
+            this.selectedCompetency = newCompetency;
+        }
     }
 
     selectCompetency(competency: StandardizedCompetencyDTO) {
@@ -127,77 +151,6 @@ export class StandardizedCompetencyManagementComponent implements OnInit {
         }
     }
 
-    deleteCompetency() {
-        //TODO: call server
-        const knowledgeArea = this.getKnowledgeAreaByIdIfExists(this.selectedCompetency?.knowledgeAreaId);
-        if (!knowledgeArea) {
-            this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');
-            return;
-        }
-        knowledgeArea.competencies = knowledgeArea.competencies?.filter((c) => c.id !== this.selectedCompetency?.id);
-        this.isEditing = false;
-        this.selectedCompetency = undefined;
-    }
-
-    saveCompetency(competency: StandardizedCompetencyDTO) {
-        if (competency.id === undefined) {
-            this.createCompetency(competency);
-        } else {
-            this.updateCompetency(competency);
-        }
-    }
-
-    createCompetency(competency: StandardizedCompetencyDTO) {
-        //TODO: call server
-        //TODO: then:
-        const knowledgeArea = this.getKnowledgeAreaByIdIfExists(competency.knowledgeAreaId);
-        if (!knowledgeArea) {
-            this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');
-            return;
-        }
-        knowledgeArea.competencies = (knowledgeArea.competencies ?? []).concat(competency);
-        this.selectedCompetency = competency;
-    }
-
-    getKnowledgeAreaByIdIfExists(id: number | undefined) {
-        if (id === undefined) {
-            return undefined;
-        }
-        return this.knowledgeAreaMap.get(id);
-    }
-
-    updateCompetency(competency: StandardizedCompetencyDTO) {
-        if (!this.updateDisplayIsSuccessful(competency)) {
-            this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');
-        }
-    }
-
-    updateDisplayIsSuccessful(competency: StandardizedCompetencyDTO) {
-        const previousKnowledgeArea = this.getKnowledgeAreaByIdIfExists(this.selectedCompetency?.knowledgeAreaId);
-        if (previousKnowledgeArea?.competencies === undefined) {
-            return false;
-        }
-
-        //if the knowledge area changed, move the competency to the new knowledge area
-        if (competency.knowledgeAreaId !== previousKnowledgeArea.id) {
-            const newKnowledgeArea = this.getKnowledgeAreaByIdIfExists(competency.knowledgeAreaId);
-            if (newKnowledgeArea === undefined) {
-                return false;
-            }
-            previousKnowledgeArea.competencies = previousKnowledgeArea.competencies.filter((c) => c.id !== competency.id);
-            newKnowledgeArea.competencies = (newKnowledgeArea.competencies ?? []).concat(competency);
-        } else {
-            //if the knowlege area stayed the same insert the new competency/replace the existing one
-            const index = previousKnowledgeArea.competencies.findIndex((c) => c.id === competency.id);
-            if (index === -1) {
-                return false;
-            }
-            previousKnowledgeArea.competencies.splice(index, 1, competency);
-        }
-        this.selectedCompetency = competency;
-        return true;
-    }
-
     closeCompetency() {
         if (this.isEditing) {
             this.openCancelModal(this.selectedCompetency?.title ?? '', () => {
@@ -210,10 +163,124 @@ export class StandardizedCompetencyManagementComponent implements OnInit {
         }
     }
 
+    dialogErrorSource = new Subject<string>();
+    dialogError = this.dialogErrorSource.asObservable();
+
+    deleteCompetency() {
+        //if the competency does not exist just close the detail component
+        if (this.selectedCompetency?.id === undefined) {
+            this.isEditing = false;
+            this.selectedCompetency = undefined;
+            return;
+        }
+
+        this.adminStandardizedCompetencyService.deleteStandardizedCompetency(this.selectedCompetency.id).subscribe({
+            next: () => {
+                this.updateTreeAfterDelete();
+                this.dialogErrorSource.next('');
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    saveCompetency(competencyDTO: StandardizedCompetencyDTO) {
+        const competency = convertToStandardizedCompetency(competencyDTO);
+
+        if (competency.id === undefined) {
+            this.adminStandardizedCompetencyService
+                .createStandardizedCompetency(competency)
+                .pipe(map((response) => response.body!))
+                .subscribe({
+                    next: (resultCompetency) => {
+                        this.updateTreeAfterCreate(convertToStandardizedCompetencyDTO(resultCompetency));
+                    },
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
+        } else {
+            this.adminStandardizedCompetencyService
+                .updateStandardizedCompetency(competency)
+                .pipe(map((response) => response.body!))
+                .subscribe({
+                    next: (resultCompetency) => {
+                        this.updateTreeAfterUpdate(convertToStandardizedCompetencyDTO(resultCompetency));
+                    },
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
+        }
+    }
+
+    //functions that update the tree in the user interface
+
+    private updateTreeAfterDelete() {
+        const knowledgeArea = this.getKnowledgeAreaByIdIfExists(this.selectedCompetency?.knowledgeAreaId);
+        if (!knowledgeArea) {
+            this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');
+            return;
+        }
+        knowledgeArea.competencies = knowledgeArea.competencies?.filter((c) => c.id !== this.selectedCompetency?.id);
+        this.isEditing = false;
+        this.selectedCompetency = undefined;
+    }
+
+    private updateTreeAfterCreate(competency: StandardizedCompetencyDTO) {
+        const knowledgeArea = this.getKnowledgeAreaByIdIfExists(competency.knowledgeAreaId);
+        if (!knowledgeArea) {
+            this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');
+            return;
+        }
+        knowledgeArea.competencies = (knowledgeArea.competencies ?? []).concat(competency);
+        this.selectedCompetency = competency;
+    }
+
+    private updateTreeAfterUpdate(competency: StandardizedCompetencyDTO) {
+        const previousKnowledgeArea = this.getKnowledgeAreaByIdIfExists(this.selectedCompetency?.knowledgeAreaId);
+        if (previousKnowledgeArea?.competencies === undefined) {
+            this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');
+            return;
+        }
+
+        //if the knowledge area changed, move the competency to the new knowledge area
+        if (competency.knowledgeAreaId !== previousKnowledgeArea.id) {
+            const newKnowledgeArea = this.getKnowledgeAreaByIdIfExists(competency.knowledgeAreaId);
+            if (newKnowledgeArea === undefined) {
+                this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');
+                return;
+            }
+            previousKnowledgeArea.competencies = previousKnowledgeArea.competencies.filter((c) => c.id !== competency.id);
+            newKnowledgeArea.competencies = (newKnowledgeArea.competencies ?? []).concat(competency);
+        } else {
+            //if the knowlege area stayed the same insert the new competency/replace the existing one
+            const index = previousKnowledgeArea.competencies.findIndex((c) => c.id === competency.id);
+            if (index === -1) {
+                this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');
+                return;
+            }
+            previousKnowledgeArea.competencies.splice(index, 1, competency);
+        }
+        this.selectedCompetency = competency;
+        return true;
+    }
+
+    //TODO: probably remove this :)
+    refreshTree() {
+        const _data = this.dataSource.data;
+        this.dataSource.data = [];
+        this.dataSource.data = _data;
+    }
+
+    //utility functions
+
+    getKnowledgeAreaByIdIfExists(id: number | undefined) {
+        if (id === undefined) {
+            return undefined;
+        }
+        return this.knowledgeAreaMap.get(id);
+    }
+
     private openCancelModal(entityName: string, callback: () => void) {
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
         modalRef.componentInstance.title = 'artemisApp.standardizedCompetency.manage.cancelModalTitle';
-        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.standardizedCompetency.manage.cancelModalText', { title: entityName });
+        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.standardizedCompetency.manage.cancelModalText', { entityName: entityName });
         modalRef.result.then(() => callback());
     }
 
@@ -224,4 +291,6 @@ export class StandardizedCompetencyManagementComponent implements OnInit {
     //TODO: make both components re-sizeable?
 
     //TODO: make knowledge areas mandatory!
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 }

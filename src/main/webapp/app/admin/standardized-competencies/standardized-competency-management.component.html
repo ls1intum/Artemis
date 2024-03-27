@@ -28,33 +28,38 @@
             </select>
         </div>
     </div>
-    <button class="btn btn-primary" (click)="filterByKnowledgeArea()">FILTER KAs</button>
+    <button class="btn btn-primary btn-sm" (click)="filterByKnowledgeArea()"></button>
     <div class="d-flex">
-        <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" [trackBy]="trackBy" class="card d-flex flex-grow-1 me-1 example-tree w-50">
+        <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" [trackBy]="trackBy" class="card d-flex flex-grow-1 w-50 me-1">
             <mat-nested-tree-node *matTreeNodeDef="let node">
-                <div class="card p-2 w-100 rounded-0">
-                    <div class="d-flex align-items-center w-100 clickable">
+                <div class="card tree-card">
+                    <div class="tree-card-row clickable me-2" matTreeNodeToggle>
                         <div class="icon-container me-2">
-                            <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="treeControl.isExpanded(node)" matTreeNodeToggle />
+                            <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="treeControl.isExpanded(node)" />
                         </div>
-                        <h6 class="mb-0">{{ node.title }}</h6>
+                        <h5 class="mb-0">{{ node.title }}</h5>
+                    </div>
+                    <div class="tree-card-row">
+                        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faPlus" (onClick)="openNewCompetency(node)" />
                     </div>
                 </div>
-                <div [class.example-tree-invisible]="!treeControl.isExpanded(node)" role="group">
+                <div [class.hidden]="!treeControl.isExpanded(node)" class="tree-indent">
                     <ng-container matTreeNodeOutlet />
+                    <!-- TODO: maybe use @if(treeControlExpandend) to get better performace? -->
                     @for (competency of node.competencies; track competency.id) {
                         <!-- TODO: if we do the filter here it is very expensive i guess -->
-                        <div class="card p-2 w-100 rounded-0 mat-tree-node">
-                            <span>{{ competency.title }}</span>
-                            <button class="btn btn-primary" (click)="selectCompetency(competency)">SELECT</button>
+                        <div class="card tree-card">
+                            <div class="tree-card-row clickable" (click)="selectCompetency(competency)">
+                                <fa-icon class="me-2" [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
+                                <h6 class="mb-0">{{ competency.title }}</h6>
+                            </div>
                         </div>
                     }
                 </div>
             </mat-nested-tree-node>
         </mat-tree>
         @if (selectedCompetency) {
-            <!-- TODO: move the card into the detail thingy also maybe move p-2 into card -->
-            <div class="card p-2 d-flex flex-grow-1">
+            <div class="card p-3 d-flex flex-grow-1 w-100">
                 <jhi-standardized-competency-detail
                     class="h-100"
                     [competency]="selectedCompetency"
@@ -63,6 +68,7 @@
                     (onSave)="saveCompetency($event)"
                     (onDelete)="deleteCompetency()"
                     (onClose)="closeCompetency()"
+                    [dialogError]="dialogError"
                 />
             </div>
         }

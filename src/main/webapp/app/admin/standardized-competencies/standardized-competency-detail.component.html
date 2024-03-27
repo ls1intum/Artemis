@@ -1,14 +1,30 @@
 <div class="d-flex flex-column h-100">
     <div class="mb-2">
         <div class="d-flex justify-content-between">
-            <h4 jhiTranslate="artemisApp.standardizedCompetency.details.title"></h4>
+            @if (competency.id !== undefined) {
+                <h4 [jhiTranslate]="'artemisApp.standardizedCompetency.details.' + (isInEditMode ? 'editTitle' : 'title')"></h4>
+            } @else {
+                <h4 jhiTranslate="artemisApp.standardizedCompetency.details.createTitle"></h4>
+            }
             <button type="button" class="btn-close" (click)="close()"></button>
         </div>
         <div>
             @if (!isInEditMode) {
-                <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.edit'" [icon]="faEdit" (onClick)="edit()" />
+                <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.edit'" [icon]="faPencil" (onClick)="edit()" />
             }
-            <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.delete'" [icon]="faTrash" (onClick)="delete()" />
+            <!-- do not display the delete button when creating new competencies -->
+            @if (competency.id) {
+                <button
+                    jhiDeleteButton
+                    [entityTitle]="competency.title ?? ''"
+                    [deleteQuestion]="'artemisApp.competency.competencyCard.delete.question'"
+                    [deleteConfirmationText]="'artemisApp.competency.competencyCard.delete.typeNameToConfirm'"
+                    (delete)="delete()"
+                    [dialogError]="dialogError"
+                >
+                    <fa-icon [icon]="faTrash" />
+                </button>
+            }
         </div>
     </div>
     <div class="d-flex h-100 flex-column border-0" [formGroup]="form">
