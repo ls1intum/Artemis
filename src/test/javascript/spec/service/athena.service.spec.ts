@@ -157,8 +157,8 @@ describe('AthenaService', () => {
 
         // Unreferenced feedback
         expect(modelingResponse![1].type).toEqual(FeedbackType.MANUAL_UNREFERENCED);
-        expect(modelingResponse![1].text).toBe('FeedbackSuggestion:Test Modeling');
-        expect(modelingResponse![1].text).toBe('Test Modeling Description 1');
+        expect(modelingResponse![1].text).toBe('FeedbackSuggestion:Test Modeling 2');
+        expect(modelingResponse![1].detailText).toBe('Test Modeling Description 2');
         expect(modelingResponse![1].credits).toBe(1.0);
         expect(modelingResponse![1].reference).toBeUndefined();
     }));
