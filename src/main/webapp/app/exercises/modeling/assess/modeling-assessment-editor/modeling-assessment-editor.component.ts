@@ -206,6 +206,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.alertService.warning('artemisApp.modelingAssessmentEditor.messages.noModel');
         }
 
+        this.checkPermissions();
         this.getComplaint();
 
         if (this.result && this.submission?.participation) {
@@ -229,7 +230,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.feedbackSuggestions = await this.loadFeedbackSuggestions(this.modelingExercise, this.submission);
 
             if (this.result) {
-                this.result.feedbacks = [...(this.result?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => feedback.reference)];
+                this.result.feedbacks = [...(this.result?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
             }
         }
 
@@ -239,7 +240,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.alertService.closeAll();
             this.alertService.info('artemisApp.modelingAssessmentEditor.messages.lock');
         }
-        this.checkPermissions();
 
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
 
