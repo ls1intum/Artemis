@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism.text;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 import de.jplag.JPlagResult;
 import de.tum.in.www1.artemis.domain.Exercise;
