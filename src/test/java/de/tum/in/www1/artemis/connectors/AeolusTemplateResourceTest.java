@@ -47,6 +47,8 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?sequentialRuns=true", 2);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true", 2);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true&testCoverage=true", 3);
+        templatesWithExpectedScriptActions.put("JAVA/MAVEN_BLACKBOX", 5);
+        templatesWithExpectedScriptActions.put("JAVA/MAVEN_BLACKBOX?staticAnalysis=true", 6);
         templatesWithExpectedScriptActions.put("ASSEMBLER", 4);
         templatesWithExpectedScriptActions.put("C/FACT", 2);
         templatesWithExpectedScriptActions.put("C/GCC", 3);
