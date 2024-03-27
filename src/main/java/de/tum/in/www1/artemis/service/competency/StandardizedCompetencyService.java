@@ -80,6 +80,7 @@ public class StandardizedCompetencyService {
      * @return the updated standardized competency
      */
     public StandardizedCompetency updateStandardizedCompetency(StandardizedCompetency competency) {
+        standardizedCompetencyIsValidOrElseThrow(competency);
         var existingCompetency = standardizedCompetencyRepository.findByIdElseThrow(competency.getId());
 
         if (competency.getVersion() != null && !competency.getVersion().equals(existingCompetency.getVersion())) {
@@ -156,12 +157,13 @@ public class StandardizedCompetencyService {
     }
 
     /**
-     * Verifies that a standardized competency that should be created is valid or throws a BadRequestException
+     * Verifies that a standardized competency that is valid or throws a BadRequestException
      *
      * @param competency the standardized competency to verify
      */
     private void standardizedCompetencyIsValidOrElseThrow(StandardizedCompetency competency) throws BadRequestException {
-        if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
+        if (competency.getTitle() == null || competency.getTitle().trim().isEmpty() || competency.getTitle().length() > StandardizedCompetency.MAX_TITLE_LENGTH
+                || competency.getDescription().length() > StandardizedCompetency.MAX_DESCRIPTION_LENGTH) {
             throw new BadRequestException();
         }
     }
@@ -180,7 +182,6 @@ public class StandardizedCompetencyService {
                 knowledgeAreaId, sourceId);
     }
 
-    // TODO: check if I want to add dtos to endpoints!
     /**
      * Converts a knowledge area to a {@link KnowledgeAreaDTO}. This includes recursively converting its children.
      *
