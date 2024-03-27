@@ -3,7 +3,8 @@ package de.tum.in.www1.artemis.config;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
 
@@ -13,7 +14,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
 
@@ -64,14 +65,14 @@ public class SecurityConfiguration {
 
     private final SecurityProblemSupport problemSupport;
 
-    private final Environment env;
+    private final ProfileService profileService;
 
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
             PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider, CorsFilter corsFilter, SecurityProblemSupport problemSupport,
-            Environment env) {
+            ProfileService profileService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
@@ -79,22 +80,25 @@ public class SecurityConfiguration {
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
         this.corsFilter = corsFilter;
         this.problemSupport = problemSupport;
-        this.env = env;
+        this.profileService = profileService;
     }
 
     /**
-     * initialize the security configuration by specifying that the (internal) user details service and (if available) an external authentication provider (e.g. JIRA)
-     * should be used
+     * Initialize the security configuration by specifying the user details service for internal users and, optionally, an external authentication provider
+     * (e.g., {@link de.tum.in.www1.artemis.service.connectors.ldap.LdapAuthenticationProvider}).
+     * Spring Security will attempt to authenticate with the providers in the order they're added. If an external provider is configured, it will be queried
+     * first; the internal database is used as a fallback if external authentication fails or is not configured.
      */
     @PostConstruct
     public void init() {
         try {
-            // here we configure 2 authentication provider: 1) the user details service for internal authentication using the Artemis database...
+            // Configure the user details service for internal authentication using the Artemis database.
             authenticationManagerBuilder.userDetailsService(userDetailsService);
-            // ... and 2), if specified a remote (or external) user authentication provider (e.g. JIRA)
+            // Optionally configure an external authentication provider (e.g., {@link de.tum.in.www1.artemis.service.connectors.ldap.LdapAuthenticationProvider}) for remote user
+            // authentication.
             remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
-            // When users try to authenticate, Spring will always first ask the remote user authentication provider (e.g. JIRA) if available, and only if this one fails,
-            // it will ask the user details service (internal DB) for authentication.
+            // Spring Security processes authentication providers in the order they're added. If an external provider is configured,
+            // it will be tried first. The internal database-backed provider serves as a fallback if external authentication is not available or fails.
         }
         catch (Exception e) {
             throw new BeanInitializationException("Security configuration failed", e);
@@ -106,6 +110,18 @@ public class SecurityConfiguration {
         return this.passwordService.getPasswordEncoder();
     }
 
+    /**
+     * Creates and configures a {@link DefaultMethodSecurityExpressionHandler} bean for handling security expressions.
+     * <p>
+     * This method sets up a {@link DefaultMethodSecurityExpressionHandler} with a role hierarchy,
+     * enhancing Spring Security's method security expression handling capabilities. By setting a role hierarchy,
+     * it allows the application to interpret security expressions in a way that respects the hierarchy of roles,
+     * making authorization decisions more flexible and intuitive.
+     * </p>
+     *
+     * @return A fully configured {@link DefaultMethodSecurityExpressionHandler} instance ready for use
+     *         in securing methods based on security expressions.
+     */
     @Bean
     public DefaultMethodSecurityExpressionHandler methodExpressionHandler() {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
@@ -113,15 +129,47 @@ public class SecurityConfiguration {
         return expressionHandler;
     }
 
+    /**
+     * Defines the hierarchy of roles within the application's security context.
+     * <p>
+     * This method configures and returns a {@link RoleHierarchy} bean that establishes a clear hierarchy among
+     * different user roles. By setting this hierarchy, the application can enforce security rules in a nuanced manner,
+     * acknowledging that some roles inherently include the permissions of others beneath them.
+     * The hierarchy defined here starts with the most privileged role, 'ROLE_ADMIN', and cascades down to the least,
+     * 'ROLE_ANONYMOUS', ensuring a structured and scalable approach to role-based access control.
+     * </p>
+     *
+     * @return A {@link RoleHierarchy} instance with a predefined hierarchy of roles, ready to be used by the
+     *         Spring Security framework to evaluate permissions across the application.
+     */
     @Bean
-    RoleHierarchy roleHierarchy() {
+    public RoleHierarchy roleHierarchy() {
         var roleHierarchy = new RoleHierarchyImpl();
         roleHierarchy.setHierarchy("ROLE_ADMIN > ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS");
         return roleHierarchy;
     }
 
+    /**
+     * Configures the {@link SecurityFilterChain} for the application's security, specifying how requests should be secured.
+     * <p>
+     * Through a fluent API, this method configures {@link HttpSecurity} to establish security constraints on HTTP requests.
+     * Among the configurations, it disables CSRF protection (as this might be handled client-side or deemed unnecessary),
+     * sets up CORS filtering, and customizes exception handling for authentication and access denial. It also defines a
+     * content security policy, frame options, and other header settings for enhanced security. Session management is set
+     * to stateless to support RESTful and SPA-oriented architectures.
+     * </p>
+     * <p>
+     * Specific access rules for various endpoints are declared, allowing for fine-grained control over who can access
+     * what resources, with certain paths being publicly accessible and others requiring specific roles. Additionally,
+     * custom security configurations may be added, such as support for LTI if active.
+     * </p>
+     *
+     * @param http The {@link HttpSecurity} to configure.
+     * @return The configured {@link SecurityFilterChain}.
+     * @throws Exception If an error occurs during the configuration.
+     */
     @Bean
-    protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // @formatter:off
         http
             .csrf(AbstractHttpConfigurer::disable)
@@ -143,7 +191,7 @@ public class SecurityConfiguration {
                 .requestMatchers(antMatcher("/management/info"), antMatcher("/management/health")).permitAll()
                 .requestMatchers(antMatcher("/api/admin/**")).hasAuthority(Role.ADMIN.getAuthority())
                 .requestMatchers(antMatcher("/api/public/**")).permitAll()
-                // TODO: Remove the following three lines in June 2024 together with LegacyResource
+                // TODO: Remove the following three lines in April 2024 together with LegacyResource
                 .requestMatchers(antMatcher(HttpMethod.POST, "/api/programming-exercises/new-result")).permitAll()
                 .requestMatchers(antMatcher(HttpMethod.POST, "/api/programming-submissions/*")).permitAll()
                 .requestMatchers(antMatcher(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*")).permitAll()
@@ -153,12 +201,11 @@ public class SecurityConfiguration {
                 .requestMatchers(antMatcher("/management/prometheus/**")).access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
                 .requestMatchers(antMatcher("/**")).authenticated()
             )
-            .with(securityConfigurerAdapter(), (c) -> c.configure(http));
+            .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
         // @formatter:on
 
-        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains("lti")) {
-            http.with(new CustomLti13Configurer(), (c) -> c.configure(http));
+        if (profileService.isLtiActive()) {
+            http.with(new CustomLti13Configurer(), configurer -> configurer.configure(http));
         }
 
         return http.build();

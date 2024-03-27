@@ -978,7 +978,7 @@ public class ExamResource {
     public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
         // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
         // LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
+        if (profileService.isLocalVcsCiActive()) {
             return ResponseEntity.badRequest().build();
         }
 
@@ -1005,7 +1005,7 @@ public class ExamResource {
     public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
         // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
         // LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
+        if (profileService.isLocalVcsCiActive()) {
             return ResponseEntity.badRequest().build();
         }
 
