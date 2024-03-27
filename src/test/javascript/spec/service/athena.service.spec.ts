@@ -62,12 +62,47 @@ describe('AthenaService', () => {
             });
     });
 
+    const elementID = 'd3184916-e518-45ac-87ca-259ad61e2562';
+
+    const model = {
+        version: '3.0.0',
+        type: 'BPMN',
+        size: {
+            width: 1740,
+            height: 960,
+        },
+        interactive: {
+            elements: {},
+            relationships: {},
+        },
+        elements: {
+            [elementID]: {
+                id: elementID,
+                name: 'Task',
+                type: 'BPMNTask',
+                owner: null,
+                bounds: {
+                    x: 290,
+                    y: 580,
+                    width: 180,
+                    height: 60,
+                },
+                taskType: 'default',
+                marker: 'none',
+            },
+        },
+        relationships: {},
+        assessments: {},
+    };
+
     it('should get feedback suggestions when athena is enabled', fakeAsync(() => {
         const textFeedbackSuggestions = [new TextFeedbackSuggestion(0, 1, 2, 'Test Text', 'Test Text Description', 0.0, 4321, 5, 10)];
         const programmingFeedbackSuggestions: ProgrammingFeedbackSuggestion[] = [
             new ProgrammingFeedbackSuggestion(0, 2, 2, 'Test Programming', 'Test Programming Description', -1.0, 4321, 'src/Test.java', 4, undefined),
         ];
-        const modelingFeedbackSuggestions: ModelingFeedbackSuggestion[] = [new ModelingFeedbackSuggestion(0, 2, 2, 'Test Modeling', 'Test Modeling Description', 0.0, 4321, [])];
+        const modelingFeedbackSuggestions: ModelingFeedbackSuggestion[] = [
+            new ModelingFeedbackSuggestion(0, 2, 2, 'Test Modeling', 'Test Modeling Description', 0.0, 4321, [elementID]),
+        ];
         let textResponse: TextBlockRef[] | null = null;
         let programmingResponse: Feedback[] | null = null;
         let modelingResponse: Feedback[] | null = null;
@@ -91,7 +126,7 @@ describe('AthenaService', () => {
 
         tick();
 
-        athenaService.getModelingFeedbackSuggestions(modelingExercise, { id: 2 } as ModelingSubmission).subscribe((suggestions: Feedback[]) => {
+        athenaService.getModelingFeedbackSuggestions(modelingExercise, { id: 2, model: JSON.stringify(model) } as ModelingSubmission).subscribe((suggestions: Feedback[]) => {
             modelingResponse = suggestions;
         });
         const requestWrapperModeling = httpTestingController.expectOne({ url: 'api/athena/modeling-exercises/2/submissions/2/feedback-suggestions' });
@@ -112,11 +147,10 @@ describe('AthenaService', () => {
         expect(programmingResponse![0].credits).toBe(-1.0);
         expect(programmingResponse![0].reference).toBe('file:src/Test.java_line:4');
         expect(requestWrapperModeling.request.method).toBe('GET');
-        expect(modelingResponse![0].type).toEqual(FeedbackType.MANUAL_UNREFERENCED);
-        expect(modelingResponse![0].text).toBe('FeedbackSuggestion:Test Modeling');
-        expect(modelingResponse![0].detailText).toBe('Test Modeling Description');
+        expect(modelingResponse![0].type).toEqual(FeedbackType.AUTOMATIC);
+        expect(modelingResponse![0].text).toBe('Test Modeling Description');
         expect(modelingResponse![0].credits).toBe(0.0);
-        expect(modelingResponse![0].reference).toBeUndefined();
+        expect(modelingResponse![0].reference).toBe(`BPMNTask:${elementID}`);
     }));
 
     it('should return no feedback suggestions when feedback suggestions are disabled on the exercise', fakeAsync(() => {
