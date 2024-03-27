@@ -77,6 +77,10 @@ spring:
         password:
         hikari:
             auto-commit: false
+            pool-name: Hikari
+    h2:
+        console:
+            enabled: false
     data:
         jpa:
             repositories:
@@ -87,16 +91,18 @@ spring:
     jmx:
         enabled: false
     jpa:
-        database-platform: org.hibernate.dialect.H2Dialect # Alternatives org.hibernate.dialect.H2Dialect / org.hibernate.dialect.PostgreSQL10Dialect / org.hibernate.dialect.MySQL8Dialect
+        database-platform: org.hibernate.dialect.H2Dialect # Alternatives org.hibernate.dialect.H2Dialect / org.hibernate.dialect.PostgreSQLDialect / org.hibernate.dialect.MySQLDialect
         database: h2        # Alternatives h2 / POSTGRESQL / MYSQL
         open-in-view: false
         show-sql: false
         hibernate:
             ddl-auto: none
             naming:
-                physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+                physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
                 implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
         properties:
+            hibernate.format_sql: false
+            hibernate.use_sql_comments: false
             hibernate.id.new_generator_mappings: true
             hibernate.connection.provider_disables_autocommit: false
             hibernate.connection.autocommit: false
@@ -115,6 +121,8 @@ spring:
             hibernate.jdbc.batch_size: 25
             hibernate.jdbc.time_zone: UTC
             hibernate.jdbc.lob.non_contextual_creation: true
+            # limit fetch depth to prevent queries from getting too large because of eager fetching
+            hibernate.max_fetch_depth: 2
     liquibase:
         contexts: tests
         enabled: true

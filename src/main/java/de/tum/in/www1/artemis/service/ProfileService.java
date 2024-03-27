@@ -22,20 +22,20 @@ public class ProfileService {
         this.environment = environment;
     }
 
-    public boolean isDev() {
+    public boolean isDevActive() {
         return isProfileActive(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT);
     }
 
-    public boolean isLocalVcsCi() {
-        return isLocalVcs() || isLocalCi();
+    public boolean isLocalVcsCiActive() {
+        return isLocalVcsActive() || isLocalCiActive();
     }
 
-    public boolean isBamboo() {
+    public boolean isBambooActive() {
         return isProfileActive("bamboo");
     }
 
-    public boolean isGitlabCiOrJenkins() {
-        return isProfileActive("gitlabci") || isJenkins();
+    public boolean isGitlabCiOrJenkinsActive() {
+        return isProfileActive("gitlabci") || isJenkinsActive();
     }
 
     /**
@@ -43,7 +43,7 @@ public class ProfileService {
      *
      * @return true if the local CI profile is active, false otherwise
      */
-    public boolean isLocalCi() {
+    public boolean isLocalCiActive() {
         return isProfileActive(Constants.PROFILE_LOCALCI);
     }
 
@@ -52,11 +52,11 @@ public class ProfileService {
      *
      * @return true if the local VC profile is active, false otherwise
      */
-    public boolean isLocalVcs() {
+    public boolean isLocalVcsActive() {
         return isProfileActive(Constants.PROFILE_LOCALVC);
     }
 
-    public boolean isAeolus() {
+    public boolean isAeolusActive() {
         return isProfileActive(Constants.PROFILE_AEOLUS);
     }
 
@@ -65,11 +65,15 @@ public class ProfileService {
      *
      * @return true if the jenkins profile is active, false otherwise
      */
-    public boolean isJenkins() {
+    public boolean isJenkinsActive() {
         return isProfileActive("jenkins");
     }
 
     private boolean isProfileActive(String profile) {
         return Set.of(this.environment.getActiveProfiles()).contains(profile);
+    }
+
+    public boolean isLtiActive() {
+        return isProfileActive(Constants.PROFILE_LTI);
     }
 }

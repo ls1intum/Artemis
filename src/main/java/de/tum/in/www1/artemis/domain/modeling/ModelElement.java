@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.domain.modeling;
 import java.io.Serial;
 import java.io.Serializable;
 
-import javax.persistence.*;
-import javax.validation.constraints.Size;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
