@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
@@ -28,11 +30,14 @@ public class AthenaDTOConverterService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ModelingExerciseRepository modelingExerciseRepository;
+
     public AthenaDTOConverterService(TextBlockRepository textBlockRepository, TextExerciseRepository textExerciseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ModelingExerciseRepository modelingExerciseRepository) {
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.modelingExerciseRepository = modelingExerciseRepository;
     }
 
     /**
@@ -53,6 +58,11 @@ public class AthenaDTOConverterService {
                 var programmingExercise = programmingExerciseRepository.findByIdWithGradingCriteriaElseThrow(exercise.getId());
                 return ProgrammingExerciseDTO.of(programmingExercise, artemisServerUrl);
             }
+            case MODELING -> {
+                // Fetch modeling exercise with grading criteria
+                var modelingExercise = modelingExerciseRepository.findByIdWithGradingCriteriaElseThrow(exercise.getId());
+                return ModelingExerciseDTO.of(modelingExercise);
+            }
         }
         throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
     }
@@ -70,6 +80,9 @@ public class AthenaDTOConverterService {
         }
         else if (submission instanceof ProgrammingSubmission programmingSubmission) {
             return ProgrammingSubmissionDTO.of(exerciseId, programmingSubmission, artemisServerUrl);
+        }
+        else if (submission instanceof ModelingSubmission modelingSubmission) {
+            return ModelingSubmissionDTO.of(exerciseId, modelingSubmission);
         }
         throw new IllegalArgumentException("Submission type not supported: " + submission.getType());
     }
@@ -93,6 +106,9 @@ public class AthenaDTOConverterService {
             }
             case PROGRAMMING -> {
                 return ProgrammingFeedbackDTO.of(exercise.getId(), submissionId, feedback);
+            }
+            case MODELING -> {
+                return ModelingFeedbackDTO.of(exercise.getId(), submissionId, feedback);
             }
         }
         throw new IllegalArgumentException("Feedback type not supported: " + exercise.getId());

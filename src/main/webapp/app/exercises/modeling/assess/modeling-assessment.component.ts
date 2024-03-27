@@ -78,24 +78,30 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
-        if (changes.model && changes.model.currentValue && this.apollonEditor) {
-            this.apollonEditor!.model = changes.model.currentValue;
+        if (changes.umlModel && changes.umlModel.currentValue && this.apollonEditor) {
+            this.apollonEditor!.model = changes.umlModel.currentValue;
             this.handleFeedback();
         }
+
         if (changes.feedbacks && changes.feedbacks.currentValue && this.umlModel) {
             this.feedbacks = changes.feedbacks.currentValue;
             this.handleFeedback();
-            await this.applyStateConfiguration();
         }
+
         if (changes.highlightedElements) {
             this.highlightedElements = changes.highlightedElements.currentValue;
 
             if (this.apollonEditor) {
+                await this.updateApollonAssessments(this.referencedFeedbacks);
                 await this.applyStateConfiguration();
             }
         }
+
         if (changes.highlightDifferences) {
-            await this.updateApollonAssessments(this.referencedFeedbacks);
+            if (this.apollonEditor) {
+                await this.updateApollonAssessments(this.referencedFeedbacks);
+                await this.applyStateConfiguration();
+            }
         }
     }
 
