@@ -5,12 +5,12 @@ export enum Action {
 
 export class ComplaintResponseUpdateDTO {
     public responseText?: string;
-    public accepted?: boolean;
+    public complaintIsAccepted?: boolean;
     public action?: Action;
 
-    constructor(action: Action, responseText?: string, accepted?: boolean) {
+    constructor(action: Action, responseText?: string, complaintIsAccepted?: boolean) {
         this.responseText = responseText;
-        this.accepted = accepted;
+        this.complaintIsAccepted = complaintIsAccepted;
         this.action = action;
     }
 }
