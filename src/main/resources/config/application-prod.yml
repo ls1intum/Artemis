@@ -14,9 +14,9 @@
 # ===================================================================
 
 management:
-    metrics:
-        export:
-            prometheus:
+    prometheus:
+        metrics:
+            export:
                 enabled: false
 
 artemis:
@@ -42,7 +42,7 @@ spring:
                 prepStmtCacheSqlLimit: 2048
                 useServerPrepStmts: true
     jpa:
-        database-platform: org.hibernate.dialect.MySQL8Dialect
+        database-platform: org.hibernate.dialect.MySQLDialect
         database: MYSQL
         show-sql: false
     mail:

@@ -8,7 +8,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.temporal.ChronoUnit;
 
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
