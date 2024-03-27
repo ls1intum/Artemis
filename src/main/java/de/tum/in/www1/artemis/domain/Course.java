@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
+import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
+import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_TEXT_LIMIT;
+import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;

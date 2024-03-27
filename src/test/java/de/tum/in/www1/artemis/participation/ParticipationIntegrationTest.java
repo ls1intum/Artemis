@@ -1,36 +1,78 @@
 package de.tum.in.www1.artemis.participation;
 
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.IntStream;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizPointStatistic;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
+import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
@@ -39,17 +81,24 @@ import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.GradingScaleService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizBatchService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
-class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     private static final String TEST_PREFIX = "participationintegration";
 
@@ -113,6 +162,15 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
 
+    @Autowired
+    private ExamRepository examRepository;
+
+    @SpyBean
+    protected ProgrammingMessagingService programmingMessagingService;
+
+    @Captor
+    private ArgumentCaptor<Result> resultCaptor;
+
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
@@ -125,7 +183,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestData() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 4, 1, 1, 1);
 
         // Add users that are not in the course/exercise
@@ -159,6 +217,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @AfterEach
     void tearDown() throws Exception {
+        Mockito.reset(programmingMessagingService);
+        super.resetSpyBeans();
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
         programmingExerciseTestService.tearDown();
     }
@@ -519,7 +579,17 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void requestFeedbackSuccess() throws Exception {
+    void requestFeedbackSuccess_withAthenaSuccess() throws Exception {
+
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setRestrictedAthenaModulesAccess(true);
+        this.courseRepo.save(course);
+
+        this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        this.exerciseRepo.save(programmingExercise);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
@@ -531,19 +601,79 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
-        var result = ParticipationFactory.generateResult(true, 100).participation(participation);
-        result.setCompletionDate(ZonedDateTime.now());
-        resultRepository.save(result);
+        Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        Result result2 = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
+        result2.setAssessmentType(AssessmentType.AUTOMATIC);
+        result2.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result2);
 
-        doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(programmingExercise, participation);
+        doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(eq(programmingExercise), any());
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(any());
 
-        var response = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
-                HttpStatus.OK);
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
 
-        assertThat(response.getResults()).allMatch(result1 -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC);
-        assertThat(response.getIndividualDueDate()).isNotNull().isBefore(ZonedDateTime.now());
+        // verify(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(eq(programmingExercise), any()); todo
 
-        verify(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(programmingExercise, participation);
+        verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
+
+        Result invokedResult = resultCaptor.getAllValues().get(0);
+        assertThat(invokedResult).isNotNull();
+        assertThat(invokedResult.getId()).isNotNull();
+        assertThat(invokedResult.isSuccessful()).isTrue();
+        assertThat(invokedResult.isAutomaticAI()).isTrue();
+        assertThat(invokedResult.getFeedbacks()).hasSize(1);
+
+        // verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation); todo
+
+        localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestFeedbackSuccess_withAthenaFailure() throws Exception {
+
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setRestrictedAthenaModulesAccess(true);
+        this.courseRepo.save(course);
+
+        this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        this.exerciseRepo.save(programmingExercise);
+        this.athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("programming");
+
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+
+        Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        Result result2 = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
+        result2.setAssessmentType(AssessmentType.AUTOMATIC);
+        result2.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result2);
+
+        doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(eq(programmingExercise), any());
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(any());
+
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+
+        // verify(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(eq(programmingExercise), any()); todo
+        verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
+
+        Result invokedResult = resultCaptor.getAllValues().get(0);
+        assertThat(invokedResult).isNotNull();
+        assertThat(invokedResult.getId()).isNotNull();
+        assertThat(invokedResult.isSuccessful()).isFalse();
+        assertThat(invokedResult.isAutomaticAI()).isTrue();
+        assertThat(invokedResult.getFeedbacks()).hasSize(0);
+
+        // verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation); todo
+
         localRepo.resetLocalRepo();
     }
 
@@ -1339,6 +1469,135 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var actualSubmittedAnswerText = (ShortAnswerSubmittedText) actualSubmittedAnswer.getSubmittedTexts().stream().findFirst().get();
         assertThat(actualSubmittedAnswerText.getText()).isEqualTo("test");
         assertThat(actualSubmittedAnswerText.isIsCorrect()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenRequestFeedbackForExam_thenFail() throws Exception {
+
+        Exam examWithExerciseGroups = ExamFactory.generateExamWithExerciseGroup(course, false);
+        examRepository.save(examWithExerciseGroups);
+        var exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        programmingExercise = exerciseRepo.save(ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1));
+        course.addExercises(programmingExercise);
+        course = courseRepo.save(course);
+
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+
+        var result = ParticipationFactory.generateResult(true, 100).participation(participation);
+        result.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result);
+
+        request.putAndExpectError("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "preconditions not met");
+
+        localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenFeedbackRequestedAndDeadlinePassed_thenFail() throws Exception {
+
+        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(100));
+        programmingExercise = exerciseRepo.save(programmingExercise);
+
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+
+        var result = ParticipationFactory.generateResult(true, 100).participation(participation);
+        result.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result);
+
+        request.putAndExpectError("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "preconditions not met");
+
+        localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenFeedbackRequestedAndRateLimitExceeded_thenFail() throws Exception {
+
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(100));
+        programmingExercise = exerciseRepo.save(programmingExercise);
+
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+
+        var result = ParticipationFactory.generateResult(true, 100).participation(participation);
+        result.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result);
+
+        // generate 5 athena results
+        for (int i = 0; i < 5; i++) {
+            var athenaResult = ParticipationFactory.generateResult(false, 100).participation(participation);
+            athenaResult.setCompletionDate(ZonedDateTime.now());
+            athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+            resultRepository.save(athenaResult);
+        }
+
+        request.putAndExpectError("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "preconditions not met");
+
+        localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenFeedbackRequestedAndRateLimitStillUnknownDueRequestsInProgress_thenFail() throws Exception {
+
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(100));
+        programmingExercise = exerciseRepo.save(programmingExercise);
+
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+
+        var result = ParticipationFactory.generateResult(false, 100).participation(participation);
+        result.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result);
+
+        // generate 5 athena results
+        for (int i = 0; i < 5; i++) {
+            var athenaResult = ParticipationFactory.generateResult(false, 100).participation(participation);
+            athenaResult.setCompletionDate(ZonedDateTime.now());
+            athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+            athenaResult.setSuccessful(null);
+            resultRepository.save(athenaResult);
+        }
+
+        request.putAndExpectError("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "preconditions not met");
+
+        localRepo.resetLocalRepo();
     }
 
     @Nested

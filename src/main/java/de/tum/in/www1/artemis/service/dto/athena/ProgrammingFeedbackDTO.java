@@ -11,12 +11,12 @@ public record ProgrammingFeedbackDTO(long id, long exerciseId, long submissionId
         String filePath, Integer lineStart, Integer lineEnd) implements FeedbackDTO {
 
     /**
-     * Creates a TextFeedbackDTO from a Feedback object
+     * Creates a ProgrammingFeedbackDTO from a Feedback object
      *
      * @param exerciseId   the id of the exercise the feedback is given for
      * @param submissionId the id of the submission the feedback is given for
      * @param feedback     the feedback object
-     * @return the TextFeedbackDTO
+     * @return the ProgrammingFeedbackDTO
      */
     public static ProgrammingFeedbackDTO of(long exerciseId, long submissionId, @NotNull Feedback feedback) {
         // Referenced feedback has a reference looking like this: "file:src/main/java/SomeFile.java_line:42"

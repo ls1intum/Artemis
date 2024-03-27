@@ -7,7 +7,13 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundToNDecimalPl
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.*;
@@ -18,7 +24,10 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -558,6 +567,16 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnore
     public boolean isAutomatic() {
         return AssessmentType.AUTOMATIC == assessmentType;
+    }
+
+    /**
+     * Checks whether the result is an automatic AI result: AUTOMATIC_ATHENA
+     *
+     * @return true if the result is an automatic ai result
+     */
+    @JsonIgnore
+    public boolean isAutomaticAI() {
+        return AssessmentType.AUTOMATIC_ATHENA == assessmentType;
     }
 
     @Override
