@@ -101,7 +101,8 @@ describe('AthenaService', () => {
             new ProgrammingFeedbackSuggestion(0, 2, 2, 'Test Programming', 'Test Programming Description', -1.0, 4321, 'src/Test.java', 4, undefined),
         ];
         const modelingFeedbackSuggestions: ModelingFeedbackSuggestion[] = [
-            new ModelingFeedbackSuggestion(0, 2, 2, 'Test Modeling', 'Test Modeling Description', 0.0, 4321, [elementID]),
+            new ModelingFeedbackSuggestion(0, 2, 2, 'Test Modeling 1', 'Test Modeling Description 1', 0.0, 4321, [elementID]),
+            new ModelingFeedbackSuggestion(0, 2, 2, 'Test Modeling 2', 'Test Modeling Description 2', 1.0, 4321, []),
         ];
         let textResponse: TextBlockRef[] | null = null;
         let programmingResponse: Feedback[] | null = null;
@@ -147,10 +148,19 @@ describe('AthenaService', () => {
         expect(programmingResponse![0].credits).toBe(-1.0);
         expect(programmingResponse![0].reference).toBe('file:src/Test.java_line:4');
         expect(requestWrapperModeling.request.method).toBe('GET');
+
+        // Referenced feedback
         expect(modelingResponse![0].type).toEqual(FeedbackType.AUTOMATIC);
-        expect(modelingResponse![0].text).toBe('Test Modeling Description');
+        expect(modelingResponse![0].text).toBe('Test Modeling Description 1');
         expect(modelingResponse![0].credits).toBe(0.0);
         expect(modelingResponse![0].reference).toBe(`BPMNTask:${elementID}`);
+
+        // Unreferenced feedback
+        expect(modelingResponse![1].type).toEqual(FeedbackType.MANUAL_UNREFERENCED);
+        expect(modelingResponse![1].text).toBe('FeedbackSuggestion:Test Modeling');
+        expect(modelingResponse![1].text).toBe('Test Modeling Description 1');
+        expect(modelingResponse![1].credits).toBe(1.0);
+        expect(modelingResponse![1].reference).toBeUndefined();
     }));
 
     it('should return no feedback suggestions when feedback suggestions are disabled on the exercise', fakeAsync(() => {
