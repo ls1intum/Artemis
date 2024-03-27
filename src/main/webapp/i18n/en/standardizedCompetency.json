@@ -1,0 +1,47 @@
+{
+    "artemisApp": {
+        "standardizedCompetency": {
+            "title": "Standardized Competencies",
+            "manage": {
+                "title": "Standardized Competency Management",
+                "filter": "Filter competencies",
+                "knowledgeAreasButton": "Manage Knowledge Areas",
+                "createButton": "Create Standardized Competency",
+                "editButton": "Edit Standardized Competency",
+                "deleteButton": "Delete Standardized Competency",
+                "cancelModalTitle": "Warning: Unsaved Changes",
+                "cancelModalText": "Are you sure you want to cancel editing {{entityName}}? Press Cancel to go back, or Confirm to proceed.",
+                "updateTreeError": "Something went wrong when updating the UI. Please reload the page."
+            },
+            "model": {
+                "title": "Title",
+                "description": "Description",
+                "taxonomy": "Taxonomy",
+                "knowledgeArea": "Knowledge Area",
+                "version": "Version"
+            },
+            "details": {
+                "title": "Standardized Competency Details",
+                "titleCreate": "Create Standardized Competency",
+                "titleEdit": "Edit Standardized Competency",
+                "titleRequiredError": "A standardized competency needs to have a title",
+                "titleMaxLengthError": "The title of a standardized competency is limited to {{max}} characters",
+                "descriptionMaxLengthError": "The description of a standardized competency is limited to {{max}} characters",
+                "knowledgeAreaRequiredError": "A standardized competency needs to have a knowledge area"
+            }
+        },
+        "knowledgeArea": {
+            "manage": {
+                "competenciesButton": "Manage Standardized Competencies",
+                "createButton": "Create Knowledge Area",
+                "editButton": "Edit Knowledge Area",
+                "deleteButton": "Delete Knowledge Area",
+                "details": "Knowledge Area Details"
+            },
+            "model": {
+                "title": "Title",
+                "description": "Description"
+            }
+        }
+    }
+}
