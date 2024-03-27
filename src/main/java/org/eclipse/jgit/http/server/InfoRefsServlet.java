@@ -8,28 +8,24 @@
 
 package org.eclipse.jgit.http.server;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
-
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.RefAdvertiser;
 import org.eclipse.jgit.util.HttpSupport;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
 
 /** Send a complete list of current refs, including peeled values for tags. */
 class InfoRefsServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public void doGet(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
+    @Override public void doGet(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
         // Assume a dumb client and send back the dumb client
         // version of the info/refs file.
         rsp.setContentType(HttpSupport.TEXT_PLAIN);
@@ -39,16 +35,14 @@ class InfoRefsServlet extends HttpServlet {
         try (OutputStreamWriter out = new OutputStreamWriter(new SmartOutputStream(req, rsp, true), UTF_8)) {
             final RefAdvertiser adv = new RefAdvertiser() {
 
-                @Override
-                protected void writeOne(CharSequence line) throws IOException {
+                @Override protected void writeOne(CharSequence line) throws IOException {
                     // Whoever decided that info/refs should use a different
                     // delimiter than the native git:// protocol shouldn't
                     // be allowed to design this sort of stuff. :-(
                     out.append(line.toString().replace(' ', '\t'));
                 }
 
-                @Override
-                protected void end() {
+                @Override protected void end() {
                     // No end marker required for info/refs format.
                 }
             };

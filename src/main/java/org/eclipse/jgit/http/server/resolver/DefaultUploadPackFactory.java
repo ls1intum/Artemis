@@ -9,15 +9,13 @@
 package org.eclipse.jgit.http.server.resolver;
 
 import java.util.Arrays;
-
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.UploadPack;
 import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
 import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 import org.eclipse.jgit.transport.resolver.UploadPackFactory;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Create and configure {@link org.eclipse.jgit.transport.UploadPack} service
@@ -37,8 +35,7 @@ public class DefaultUploadPackFactory implements UploadPackFactory<HttpServletRe
         }
     }
 
-    @Override
-    public UploadPack create(HttpServletRequest req, Repository db) throws ServiceNotEnabledException, ServiceNotAuthorizedException {
+    @Override public UploadPack create(HttpServletRequest req, Repository db) throws ServiceNotEnabledException, ServiceNotAuthorizedException {
         if (db.getConfig().get(ServiceConfig::new).enabled) {
             UploadPack up = new UploadPack(db);
             String header = req.getHeader("Git-Protocol"); //$NON-NLS-1$

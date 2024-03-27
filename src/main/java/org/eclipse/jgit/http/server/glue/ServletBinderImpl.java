@@ -10,12 +10,10 @@ package org.eclipse.jgit.http.server.glue;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import org.eclipse.jgit.http.server.HttpServerText;
 import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.eclipse.jgit.http.server.HttpServerText;
 
 abstract class ServletBinderImpl implements ServletBinder {
 
@@ -27,20 +25,21 @@ abstract class ServletBinderImpl implements ServletBinder {
         this.filters = new ArrayList<>();
     }
 
-    @Override
-    public ServletBinder through(Filter filter) {
-        if (filter == null)
+    @Override public ServletBinder through(Filter filter) {
+        if (filter == null) {
             throw new NullPointerException(HttpServerText.get().filterMustNotBeNull);
+        }
         filters.add(filter);
         return this;
     }
 
-    @Override
-    public void with(HttpServlet servlet) {
-        if (servlet == null)
+    @Override public void with(HttpServlet servlet) {
+        if (servlet == null) {
             throw new NullPointerException(HttpServerText.get().servletMustNotBeNull);
-        if (httpServlet != null)
+        }
+        if (httpServlet != null) {
             throw new IllegalStateException(HttpServerText.get().servletWasAlreadyBound);
+        }
         httpServlet = servlet;
     }
 

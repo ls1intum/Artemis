@@ -8,18 +8,16 @@
 
 package org.eclipse.jgit.http.server.glue;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
-import static org.eclipse.jgit.http.server.glue.MetaFilter.REGEX_GROUPS;
-
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import jakarta.servlet.Filter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static org.eclipse.jgit.http.server.glue.MetaFilter.REGEX_GROUPS;
 
 /**
  * Selects requests by matching the URI against a regular expression.
@@ -62,8 +60,7 @@ class RegexPipeline extends UrlPipeline {
             pattern = p;
         }
 
-        @Override
-        UrlPipeline create() {
+        @Override UrlPipeline create() {
             return new RegexPipeline(pattern, getFilters(), getServlet());
         }
     }
@@ -75,14 +72,12 @@ class RegexPipeline extends UrlPipeline {
         this.pattern = pattern;
     }
 
-    @Override
-    boolean match(HttpServletRequest req) {
+    @Override boolean match(HttpServletRequest req) {
         final String pathInfo = req.getPathInfo();
         return pathInfo != null && pattern.matcher(pathInfo).matches();
     }
 
-    @Override
-    void service(HttpServletRequest req, HttpServletResponse rsp) throws ServletException, IOException {
+    @Override void service(HttpServletRequest req, HttpServletResponse rsp) throws ServletException, IOException {
         final String reqInfo = req.getPathInfo();
         if (reqInfo == null) {
             rsp.sendError(SC_NOT_FOUND);
@@ -124,15 +119,16 @@ class RegexPipeline extends UrlPipeline {
             }
         }
         finally {
-            if (old != null)
+            if (old != null) {
                 req.setAttribute(REGEX_GROUPS, old);
-            else
+            }
+            else {
                 req.removeAttribute(REGEX_GROUPS);
+            }
         }
     }
 
-    @Override
-    public String toString() {
+    @Override public String toString() {
         return "Pipeline[regex: " + pattern + " ]";
     }
 }

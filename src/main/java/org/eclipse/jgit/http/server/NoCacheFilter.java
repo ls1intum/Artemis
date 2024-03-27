@@ -8,12 +8,7 @@
 
 package org.eclipse.jgit.http.server;
 
-import static org.eclipse.jgit.util.HttpSupport.HDR_CACHE_CONTROL;
-import static org.eclipse.jgit.util.HttpSupport.HDR_EXPIRES;
-import static org.eclipse.jgit.util.HttpSupport.HDR_PRAGMA;
-
 import java.io.IOException;
-
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -21,22 +16,22 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletResponse;
+import static org.eclipse.jgit.util.HttpSupport.HDR_CACHE_CONTROL;
+import static org.eclipse.jgit.util.HttpSupport.HDR_EXPIRES;
+import static org.eclipse.jgit.util.HttpSupport.HDR_PRAGMA;
 
 /** Add HTTP response headers to prevent caching by proxies/browsers. */
 class NoCacheFilter implements Filter {
 
-    @Override
-    public void init(FilterConfig config) throws ServletException {
+    @Override public void init(FilterConfig config) throws ServletException {
         // Do nothing.
     }
 
-    @Override
-    public void destroy() {
+    @Override public void destroy() {
         // Do nothing.
     }
 
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+    @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletResponse rsp = (HttpServletResponse) response;
 
         rsp.setHeader(HDR_EXPIRES, "Fri, 01 Jan 1980 00:00:00 GMT");

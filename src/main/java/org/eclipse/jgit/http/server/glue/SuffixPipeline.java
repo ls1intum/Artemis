@@ -9,7 +9,6 @@
 package org.eclipse.jgit.http.server.glue;
 
 import java.io.IOException;
-
 import jakarta.servlet.Filter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -38,8 +37,7 @@ class SuffixPipeline extends UrlPipeline {
             this.suffix = suffix;
         }
 
-        @Override
-        UrlPipeline create() {
+        @Override UrlPipeline create() {
             return new SuffixPipeline(suffix, getFilters(), getServlet());
         }
     }
@@ -54,22 +52,19 @@ class SuffixPipeline extends UrlPipeline {
         this.suffixLen = suffix.length();
     }
 
-    @Override
-    boolean match(HttpServletRequest req) {
+    @Override boolean match(HttpServletRequest req) {
         final String pathInfo = req.getPathInfo();
         return pathInfo != null && pathInfo.endsWith(suffix);
     }
 
-    @Override
-    void service(HttpServletRequest req, HttpServletResponse rsp) throws ServletException, IOException {
+    @Override void service(HttpServletRequest req, HttpServletResponse rsp) throws ServletException, IOException {
         String curInfo = req.getPathInfo();
         String newPath = req.getServletPath() + curInfo;
         String newInfo = curInfo.substring(0, curInfo.length() - suffixLen);
         super.service(new WrappedRequest(req, newPath, newInfo), rsp);
     }
 
-    @Override
-    public String toString() {
+    @Override public String toString() {
         return "Pipeline[ *" + suffix + " ]";
     }
 }

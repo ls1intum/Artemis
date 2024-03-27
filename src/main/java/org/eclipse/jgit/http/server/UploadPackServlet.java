@@ -8,34 +8,9 @@
 
 package org.eclipse.jgit.http.server;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
-import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
-import static jakarta.servlet.http.HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE;
-import static org.eclipse.jgit.http.server.GitSmartHttpTools.UPLOAD_PACK;
-import static org.eclipse.jgit.http.server.GitSmartHttpTools.UPLOAD_PACK_REQUEST_TYPE;
-import static org.eclipse.jgit.http.server.GitSmartHttpTools.UPLOAD_PACK_RESULT_TYPE;
-import static org.eclipse.jgit.http.server.GitSmartHttpTools.sendError;
-import static org.eclipse.jgit.http.server.ServletUtils.ATTRIBUTE_HANDLER;
-import static org.eclipse.jgit.http.server.ServletUtils.consumeRequestBody;
-import static org.eclipse.jgit.http.server.ServletUtils.getInputStream;
-import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
-import static org.eclipse.jgit.http.server.UploadPackErrorHandler.statusCodeForThrowable;
-import static org.eclipse.jgit.util.HttpSupport.HDR_USER_AGENT;
-
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.List;
-
-import jakarta.servlet.Filter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.FilterConfig;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.eclipse.jgit.annotations.Nullable;
 import org.eclipse.jgit.errors.PackProtocolException;
 import org.eclipse.jgit.http.server.UploadPackErrorHandler.UploadPackRunnable;
@@ -49,6 +24,28 @@ import org.eclipse.jgit.transport.UploadPackInternalServerErrorException;
 import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
 import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 import org.eclipse.jgit.transport.resolver.UploadPackFactory;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.UPLOAD_PACK;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.UPLOAD_PACK_REQUEST_TYPE;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.UPLOAD_PACK_RESULT_TYPE;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.sendError;
+import static org.eclipse.jgit.http.server.ServletUtils.ATTRIBUTE_HANDLER;
+import static org.eclipse.jgit.http.server.ServletUtils.consumeRequestBody;
+import static org.eclipse.jgit.http.server.ServletUtils.getInputStream;
+import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
+import static org.eclipse.jgit.http.server.UploadPackErrorHandler.statusCodeForThrowable;
+import static org.eclipse.jgit.util.HttpSupport.HDR_USER_AGENT;
 
 /** Server side implementation of smart fetch over HTTP. */
 class UploadPackServlet extends HttpServlet {
@@ -64,15 +61,13 @@ class UploadPackServlet extends HttpServlet {
             this.uploadPackFactory = uploadPackFactory;
         }
 
-        @Override
-        protected void begin(HttpServletRequest req, Repository db) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
+        @Override protected void begin(HttpServletRequest req, Repository db) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
             UploadPack up = uploadPackFactory.create(req, db);
             InternalHttpServerGlue.setPeerUserAgent(up, req.getHeader(HDR_USER_AGENT));
             req.setAttribute(ATTRIBUTE_HANDLER, up);
         }
 
-        @Override
-        protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
+        @Override protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
             UploadPack up = (UploadPack) req.getAttribute(ATTRIBUTE_HANDLER);
             try {
                 up.setBiDirectionalPipe(false);
@@ -86,8 +81,8 @@ class UploadPackServlet extends HttpServlet {
             }
         }
 
-        @Override
-        protected void respond(HttpServletRequest req, PacketLineOut pckOut, String serviceName) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
+        @Override protected void respond(HttpServletRequest req, PacketLineOut pckOut, String serviceName)
+            throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
             UploadPack up = (UploadPack) req.getAttribute(ATTRIBUTE_HANDLER);
             try {
                 up.setBiDirectionalPipe(false);
@@ -110,8 +105,7 @@ class UploadPackServlet extends HttpServlet {
             this.uploadPackFactory = uploadPackFactory;
         }
 
-        @Override
-        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
             HttpServletRequest req = (HttpServletRequest) request;
             HttpServletResponse rsp = (HttpServletResponse) response;
             UploadPack rp;
@@ -136,13 +130,11 @@ class UploadPackServlet extends HttpServlet {
             }
         }
 
-        @Override
-        public void init(FilterConfig filterConfig) throws ServletException {
+        @Override public void init(FilterConfig filterConfig) throws ServletException {
             // Nothing.
         }
 
-        @Override
-        public void destroy() {
+        @Override public void destroy() {
             // Nothing.
         }
     }
@@ -153,8 +145,7 @@ class UploadPackServlet extends HttpServlet {
         this.handler = handler != null ? handler : this::defaultUploadPackHandler;
     }
 
-    @Override
-    public void doPost(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+    @Override public void doPost(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
         if (!UPLOAD_PACK_REQUEST_TYPE.equals(req.getContentType())) {
             rsp.sendError(SC_UNSUPPORTED_MEDIA_TYPE);
             return;
@@ -167,13 +158,11 @@ class UploadPackServlet extends HttpServlet {
         handler.upload(req, rsp, r);
     }
 
-    private void upload(HttpServletRequest req, HttpServletResponse rsp) throws IOException, ServiceMayNotContinueException {
+    private void upload(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
         // to be explicitly closed by caller
-        @SuppressWarnings("resource")
-        SmartOutputStream out = new SmartOutputStream(req, rsp, false) {
+        @SuppressWarnings("resource") SmartOutputStream out = new SmartOutputStream(req, rsp, false) {
 
-            @Override
-            public void flush() throws IOException {
+            @Override public void flush() throws IOException {
                 doFlush();
             }
         };

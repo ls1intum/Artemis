@@ -12,13 +12,6 @@ import java.io.File;
 import java.text.MessageFormat;
 import java.util.LinkedList;
 import java.util.List;
-
-import jakarta.servlet.Filter;
-import jakarta.servlet.FilterConfig;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.eclipse.jgit.http.server.glue.ErrorServlet;
 import org.eclipse.jgit.http.server.glue.MetaFilter;
 import org.eclipse.jgit.http.server.glue.RegexGroupFilter;
@@ -32,6 +25,11 @@ import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
 import org.eclipse.jgit.transport.resolver.RepositoryResolver;
 import org.eclipse.jgit.transport.resolver.UploadPackFactory;
 import org.eclipse.jgit.util.StringUtils;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Handles Git repository access over HTTP.
@@ -113,8 +111,7 @@ public class GitFilter extends MetaFilter {
      *              {@link org.eclipse.jgit.transport.UploadPack} session when a
      *              fetch or clone is requested by a client.
      */
-    @SuppressWarnings("unchecked")
-    public void setUploadPackFactory(UploadPackFactory<HttpServletRequest> f) {
+    @SuppressWarnings("unchecked") public void setUploadPackFactory(UploadPackFactory<HttpServletRequest> f) {
         assertNotInitialized();
         this.uploadPackFactory = f != null ? f : (UploadPackFactory<HttpServletRequest>) UploadPackFactory.DISABLED;
     }
@@ -152,8 +149,7 @@ public class GitFilter extends MetaFilter {
      *              {@link org.eclipse.jgit.transport.ReceivePack} session when a
      *              push is requested by a client.
      */
-    @SuppressWarnings("unchecked")
-    public void setReceivePackFactory(ReceivePackFactory<HttpServletRequest> f) {
+    @SuppressWarnings("unchecked") public void setReceivePackFactory(ReceivePackFactory<HttpServletRequest> f) {
         assertNotInitialized();
         this.receivePackFactory = f != null ? f : (ReceivePackFactory<HttpServletRequest>) ReceivePackFactory.DISABLED;
     }
@@ -184,12 +180,12 @@ public class GitFilter extends MetaFilter {
     }
 
     private void assertNotInitialized() {
-        if (initialized)
+        if (initialized) {
             throw new IllegalStateException(HttpServerText.get().alreadyInitializedByContainer);
+        }
     }
 
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
+    @Override public void init(FilterConfig filterConfig) throws ServletException {
         super.init(filterConfig);
 
         if (resolver == null) {
@@ -203,16 +199,18 @@ public class GitFilter extends MetaFilter {
         if (uploadPackFactory != UploadPackFactory.DISABLED) {
             ServletBinder b = serve("*/" + GitSmartHttpTools.UPLOAD_PACK);
             b = b.through(new UploadPackServlet.Factory(uploadPackFactory));
-            for (Filter f : uploadPackFilters)
+            for (Filter f : uploadPackFilters) {
                 b = b.through(f);
+            }
             b.with(new UploadPackServlet(uploadPackErrorHandler));
         }
 
         if (receivePackFactory != ReceivePackFactory.DISABLED) {
             ServletBinder b = serve("*/" + GitSmartHttpTools.RECEIVE_PACK);
             b = b.through(new ReceivePackServlet.Factory(receivePackFactory));
-            for (Filter f : receivePackFilters)
+            for (Filter f : receivePackFilters) {
                 b = b.through(f);
+            }
             b.with(new ReceivePackServlet(receivePackErrorHandler));
         }
 
@@ -228,70 +226,74 @@ public class GitFilter extends MetaFilter {
             refs = refs.through(new AsIsFileFilter(asIs));
             refs.with(new InfoRefsServlet());
         }
-        else
+        else {
             refs.with(new ErrorServlet(HttpServletResponse.SC_NOT_ACCEPTABLE));
+        }
 
         if (asIs != AsIsFileService.DISABLED) {
             final IsLocalFilter mustBeLocal = new IsLocalFilter();
             final AsIsFileFilter enabled = new AsIsFileFilter(asIs);
 
             serve("*/" + Constants.HEAD)//
-                    .through(mustBeLocal)//
-                    .through(enabled)//
-                    .with(new TextFileServlet(Constants.HEAD));
+                .through(mustBeLocal)//
+                .through(enabled)//
+                .with(new TextFileServlet(Constants.HEAD));
 
             final String info_alternates = Constants.OBJECTS + "/" + Constants.INFO_ALTERNATES;
             serve("*/" + info_alternates)//
-                    .through(mustBeLocal)//
-                    .through(enabled)//
-                    .with(new TextFileServlet(info_alternates));
+                .through(mustBeLocal)//
+                .through(enabled)//
+                .with(new TextFileServlet(info_alternates));
 
             final String http_alternates = Constants.OBJECTS + "/" + Constants.INFO_HTTP_ALTERNATES;
             serve("*/" + http_alternates)//
-                    .through(mustBeLocal)//
-                    .through(enabled)//
-                    .with(new TextFileServlet(http_alternates));
+                .through(mustBeLocal)//
+                .through(enabled)//
+                .with(new TextFileServlet(http_alternates));
 
             serve("*/objects/info/packs")//
-                    .through(mustBeLocal)//
-                    .through(enabled)//
-                    .with(new InfoPacksServlet());
+                .through(mustBeLocal)//
+                .through(enabled)//
+                .with(new InfoPacksServlet());
 
             serveRegex("^/(.*)/objects/([0-9a-f]{2}/[0-9a-f]{38})$")//
-                    .through(mustBeLocal)//
-                    .through(enabled)//
-                    .through(new RegexGroupFilter(2))//
-                    .with(new ObjectFileServlet.Loose());
+                .through(mustBeLocal)//
+                .through(enabled)//
+                .through(new RegexGroupFilter(2))//
+                .with(new ObjectFileServlet.Loose());
 
             serveRegex("^/(.*)/objects/(pack/pack-[0-9a-f]{40}\\.pack)$")//
-                    .through(mustBeLocal)//
-                    .through(enabled)//
-                    .through(new RegexGroupFilter(2))//
-                    .with(new ObjectFileServlet.Pack());
+                .through(mustBeLocal)//
+                .through(enabled)//
+                .through(new RegexGroupFilter(2))//
+                .with(new ObjectFileServlet.Pack());
 
             serveRegex("^/(.*)/objects/(pack/pack-[0-9a-f]{40}\\.idx)$")//
-                    .through(mustBeLocal)//
-                    .through(enabled)//
-                    .through(new RegexGroupFilter(2))//
-                    .with(new ObjectFileServlet.PackIdx());
+                .through(mustBeLocal)//
+                .through(enabled)//
+                .through(new RegexGroupFilter(2))//
+                .with(new ObjectFileServlet.PackIdx());
         }
     }
 
     private static File getFile(FilterConfig cfg, String param) throws ServletException {
         String n = cfg.getInitParameter(param);
-        if (n == null || "".equals(n))
+        if (n == null || "".equals(n)) {
             throw new ServletException(MessageFormat.format(HttpServerText.get().parameterNotSet, param));
+        }
 
         File path = new File(n);
-        if (!path.exists())
+        if (!path.exists()) {
             throw new ServletException(MessageFormat.format(HttpServerText.get().pathForParamNotFound, path, param));
+        }
         return path;
     }
 
     private static boolean getBoolean(FilterConfig cfg, String param) throws ServletException {
         String n = cfg.getInitParameter(param);
-        if (n == null)
+        if (n == null) {
             return false;
+        }
         try {
             return StringUtils.toBoolean(n);
         }
@@ -300,10 +302,10 @@ public class GitFilter extends MetaFilter {
         }
     }
 
-    @Override
-    protected ServletBinder register(ServletBinder binder) {
-        if (resolver == null)
+    @Override protected ServletBinder register(ServletBinder binder) {
+        if (resolver == null) {
             throw new IllegalStateException(HttpServerText.get().noResolverAvailable);
+        }
         binder = binder.through(new NoCacheFilter());
         binder = binder.through(new RepositoryFilter(resolver));
         return binder;

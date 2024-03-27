@@ -8,16 +8,14 @@
 
 package org.eclipse.jgit.http.server;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
-import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
-import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
-import static org.eclipse.jgit.http.server.GitSmartHttpTools.sendError;
-import static org.eclipse.jgit.http.server.ServletUtils.ATTRIBUTE_REPOSITORY;
-
 import java.io.IOException;
 import java.text.MessageFormat;
-
+import org.eclipse.jgit.errors.RepositoryNotFoundException;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.transport.ServiceMayNotContinueException;
+import org.eclipse.jgit.transport.resolver.RepositoryResolver;
+import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
+import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -27,13 +25,12 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.eclipse.jgit.errors.RepositoryNotFoundException;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.transport.ServiceMayNotContinueException;
-import org.eclipse.jgit.transport.resolver.RepositoryResolver;
-import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
-import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.sendError;
+import static org.eclipse.jgit.http.server.ServletUtils.ATTRIBUTE_REPOSITORY;
 
 /**
  * Open a repository named by the path info through
@@ -70,18 +67,15 @@ public class RepositoryFilter implements Filter {
         this.resolver = resolver;
     }
 
-    @Override
-    public void init(FilterConfig config) throws ServletException {
+    @Override public void init(FilterConfig config) throws ServletException {
         context = config.getServletContext();
     }
 
-    @Override
-    public void destroy() {
+    @Override public void destroy() {
         context = null;
     }
 
-    @Override
-    public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain) throws IOException, ServletException {
+    @Override public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain) throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
 
@@ -92,8 +86,9 @@ public class RepositoryFilter implements Filter {
         }
 
         String name = req.getPathInfo();
-        while (name != null && 0 < name.length() && name.charAt(0) == '/')
+        while (name != null && 0 < name.length() && name.charAt(0) == '/') {
             name = name.substring(1);
+        }
         if (name == null || name.length() == 0) {
             sendError(req, res, SC_NOT_FOUND);
             return;
@@ -105,19 +100,15 @@ public class RepositoryFilter implements Filter {
         }
         catch (RepositoryNotFoundException e) {
             sendError(req, res, SC_NOT_FOUND);
-            return;
         }
         catch (ServiceNotEnabledException e) {
             sendError(req, res, SC_FORBIDDEN, e.getMessage());
-            return;
         }
         catch (ServiceNotAuthorizedException e) {
             res.sendError(SC_UNAUTHORIZED, e.getMessage());
-            return;
         }
         catch (ServiceMayNotContinueException e) {
             sendError(req, res, e.getStatusCode(), e.getMessage());
-            return;
         }
         finally {
             request.removeAttribute(ATTRIBUTE_REPOSITORY);

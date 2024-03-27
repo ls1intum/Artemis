@@ -8,6 +8,16 @@
 
 package org.eclipse.jgit.http.server;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.time.Instant;
+import org.eclipse.jgit.internal.storage.file.ObjectDirectory;
+import org.eclipse.jgit.lib.Repository;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 import static jakarta.servlet.http.HttpServletResponse.SC_NOT_MODIFIED;
 import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
@@ -15,19 +25,6 @@ import static org.eclipse.jgit.util.HttpSupport.HDR_ETAG;
 import static org.eclipse.jgit.util.HttpSupport.HDR_IF_MODIFIED_SINCE;
 import static org.eclipse.jgit.util.HttpSupport.HDR_IF_NONE_MATCH;
 import static org.eclipse.jgit.util.HttpSupport.HDR_LAST_MODIFIED;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.time.Instant;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
-import org.eclipse.jgit.internal.storage.file.ObjectDirectory;
-import org.eclipse.jgit.lib.Repository;
 
 /** Sends any object from {@code GIT_DIR/objects/??/0 38}, or any pack file. */
 abstract class ObjectFileServlet extends HttpServlet {
@@ -42,8 +39,7 @@ abstract class ObjectFileServlet extends HttpServlet {
             super("application/x-git-loose-object");
         }
 
-        @Override
-        String etag(FileSender sender) throws IOException {
+        @Override String etag(FileSender sender) throws IOException {
             Instant lastModified = sender.getLastModified();
             return Long.toHexString(lastModified.getEpochSecond()) + Long.toHexString(lastModified.getNano());
         }
@@ -57,8 +53,7 @@ abstract class ObjectFileServlet extends HttpServlet {
             super(contentType);
         }
 
-        @Override
-        String etag(FileSender sender) throws IOException {
+        @Override String etag(FileSender sender) throws IOException {
             return sender.getTailChecksum();
         }
     }
@@ -89,13 +84,11 @@ abstract class ObjectFileServlet extends HttpServlet {
 
     abstract String etag(FileSender sender) throws IOException;
 
-    @Override
-    public void doGet(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
+    @Override public void doGet(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
         serve(req, rsp, true);
     }
 
-    @Override
-    protected void doHead(final HttpServletRequest req, final HttpServletResponse rsp) throws ServletException, IOException {
+    @Override protected void doHead(final HttpServletRequest req, final HttpServletResponse rsp) throws ServletException, IOException {
         serve(req, rsp, false);
     }
 
@@ -128,10 +121,12 @@ abstract class ObjectFileServlet extends HttpServlet {
                 return;
             }
 
-            if (etag != null)
+            if (etag != null) {
                 rsp.setHeader(HDR_ETAG, etag);
-            if (0 < lastModified)
+            }
+            if (0 < lastModified) {
                 rsp.setDateHeader(HDR_LAST_MODIFIED, lastModified);
+            }
             rsp.setContentType(contentType);
             sender.serve(req, rsp, sendBody);
         }

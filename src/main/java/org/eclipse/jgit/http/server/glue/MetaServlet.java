@@ -8,10 +8,7 @@
 
 package org.eclipse.jgit.http.server.glue;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
-
 import java.io.IOException;
-
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
@@ -20,6 +17,7 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 
 /**
  * Generic container servlet to manage routing to different pipelines.
@@ -87,20 +85,17 @@ public class MetaServlet extends HttpServlet {
         return filter.serveRegex(expression);
     }
 
-    @Override
-    public void init(ServletConfig config) throws ServletException {
+    @Override public void init(ServletConfig config) throws ServletException {
         String name = filter.getClass().getName();
         ServletContext ctx = config.getServletContext();
         filter.init(new NoParameterFilterConfig(name, ctx));
     }
 
-    @Override
-    public void destroy() {
+    @Override public void destroy() {
         filter.destroy();
     }
 
-    @Override
-    protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+    @Override protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         filter.doFilter(req, res, (ServletRequest request, ServletResponse response) -> {
             ((HttpServletResponse) response).sendError(SC_NOT_FOUND);
         });

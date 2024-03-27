@@ -33,8 +33,9 @@ public class ClientVersionUtil {
      *         the version string cannot be parsed.
      */
     public static int[] parseVersion(String version) {
-        if (version != null && version.startsWith("git/"))
+        if (version != null && version.startsWith("git/")) {
             return splitVersion(version.substring("git/".length()));
+        }
         return invalidVersion();
     }
 
@@ -50,8 +51,9 @@ public class ClientVersionUtil {
                 acc += c - '0';
             }
             else if (c == '.') {
-                if (end == ver.length)
+                if (end == ver.length) {
                     ver = grow(ver);
+                }
                 ver[end++] = acc;
                 acc = 0;
             }
@@ -64,21 +66,25 @@ public class ClientVersionUtil {
             }
             else if (c == '-' && (i + 2) < str.length && str[i + 1] == 'r' && str[i + 2] == 'c') {
                 // Release candidates aren't the same as a final release.
-                if (acc > 0)
+                if (acc > 0) {
                     acc--;
+                }
                 break;
             }
-            else
+            else {
                 break;
+            }
         }
         if (acc != 0) {
-            if (end == ver.length)
+            if (end == ver.length) {
                 ver = grow(ver);
+            }
             ver[end++] = acc;
         }
         else {
-            while (0 < end && ver[end - 1] == 0)
+            while (0 < end && ver[end - 1] == 0) {
                 end--;
+            }
         }
         if (end < ver.length) {
             int[] n = new int[end];
@@ -106,8 +112,9 @@ public class ClientVersionUtil {
     public static int compare(int[] a, int[] b) {
         for (int i = 0; i < a.length && i < b.length; i++) {
             int cmp = a[i] - b[i];
-            if (cmp != 0)
+            if (cmp != 0) {
                 return cmp;
+            }
         }
         return a.length - b.length;
     }
@@ -122,8 +129,9 @@ public class ClientVersionUtil {
     public static String toString(int[] ver) {
         StringBuilder b = new StringBuilder();
         for (int v : ver) {
-            if (b.length() > 0)
+            if (b.length() > 0) {
                 b.append('.');
+            }
             b.append(v);
         }
         return b.toString();
@@ -140,8 +148,7 @@ public class ClientVersionUtil {
      * @return true if the bug is present.
      * @deprecated no widely used Git versions need this any more
      */
-    @Deprecated
-    public static boolean hasPushStatusBug(int[] version) {
+    @Deprecated public static boolean hasPushStatusBug(int[] version) {
         return false;
     }
 
@@ -158,8 +165,7 @@ public class ClientVersionUtil {
      * @return true if the client has the chunked encoding bug.
      * @deprecated no widely used Git versions need this any more
      */
-    @Deprecated
-    public static boolean hasChunkedEncodingRequestBug(int[] version, HttpServletRequest request) {
+    @Deprecated public static boolean hasChunkedEncodingRequestBug(int[] version, HttpServletRequest request) {
         return false;
     }
 

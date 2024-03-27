@@ -8,8 +8,6 @@
 
 package org.eclipse.jgit.http.server.resolver;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
@@ -17,6 +15,7 @@ import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
 import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
 import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Create and configure {@link org.eclipse.jgit.transport.ReceivePack} service
@@ -46,22 +45,23 @@ public class DefaultReceivePackFactory implements ReceivePackFactory<HttpServlet
         }
     }
 
-    @Override
-    public ReceivePack create(HttpServletRequest req, Repository db) throws ServiceNotEnabledException, ServiceNotAuthorizedException {
+    @Override public ReceivePack create(HttpServletRequest req, Repository db) throws ServiceNotEnabledException, ServiceNotAuthorizedException {
         final ServiceConfig cfg = db.getConfig().get(ServiceConfig::new);
         String user = req.getRemoteUser();
 
         if (cfg.set) {
             if (cfg.enabled) {
-                if (user == null || "".equals(user))
+                if (user == null || "".equals(user)) {
                     user = "anonymous";
+                }
                 return createFor(req, db, user);
             }
             throw new ServiceNotEnabledException();
         }
 
-        if (user != null && !"".equals(user))
+        if (user != null && !"".equals(user)) {
             return createFor(req, db, user);
+        }
         throw new ServiceNotAuthorizedException();
     }
 
