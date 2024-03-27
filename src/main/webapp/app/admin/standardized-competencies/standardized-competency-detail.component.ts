@@ -9,7 +9,6 @@ import { Observable } from 'rxjs';
 @Component({
     selector: 'jhi-standardized-competency-detail',
     templateUrl: './standardized-competency-detail.component.html',
-    styleUrls: ['./standardized-competency-detail.component.scss'],
 })
 export class StandardizedCompetencyDetailComponent {
     //values for the knowledge area select

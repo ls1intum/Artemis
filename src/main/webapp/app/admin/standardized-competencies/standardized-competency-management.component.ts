@@ -27,9 +27,9 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
     styleUrls: ['standardized-competency-management.component.scss'],
 })
 export class StandardizedCompetencyManagementComponent implements OnInit, OnDestroy {
-    //TODO: add a debounce to the search
-    //TODO: differentiate between tree and original data source, so i can filter =)
-    //TODO: display hierarchy in the select
+    //TODO: add a debounce to the search -> no. Do a button since at least the title search is very expensive!
+    //TODO: add a new type that is basically dto + visible. transform everything into this.
+    //TODO: filters set visible = true/false. (and while going through the tree we also mark if we had a hit in this subtree and then open it up.)
 
     competencyTitleFilter?: string;
     knowledgeAreaFilter?: KnowledgeAreaDTO;
@@ -38,17 +38,22 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
     //true if a competency is getting edited
     isEditing = false;
 
-    //TODO: rename so its obvious this is for selects.
     knowledgeAreasForSelect: KnowledgeAreaDTO[] = [];
     knowledgeAreaMap = new Map<number, KnowledgeAreaDTO>();
+    knowledgeAreas: KnowledgeAreaDTO[] = [];
 
     treeControl = new NestedTreeControl<KnowledgeAreaDTO>((node) => node.children);
     dataSource = new MatTreeNestedDataSource<KnowledgeAreaDTO>();
+    dialogErrorSource = new Subject<string>();
+    dialogError = this.dialogErrorSource.asObservable();
 
     //Icons
     protected readonly faChevronRight = faChevronRight;
     protected readonly faPlus = faPlus;
-    getIcon = getIcon;
+    //Other constants for template
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly getIcon = getIcon;
 
     //TODO: also check if I need trackBy.
     readonly trackBy = (_: number, node: KnowledgeAreaDTO) => node.id;
@@ -69,6 +74,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
             .subscribe({
                 next: (knowledgeAreas) => {
                     this.dataSource.data = knowledgeAreas;
+                    this.knowledgeAreas = knowledgeAreas;
                     knowledgeAreas.forEach((knowledgeArea) => {
                         this.addSelfAndChildrenToMap(knowledgeArea);
                         this.addSelfAndChildrenToSelectArray(knowledgeArea, 0);
@@ -92,7 +98,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         }
     }
 
-    addSelfAndChildrenToSelectArray(knowledgeArea: KnowledgeAreaDTO, level: number) {
+    private addSelfAndChildrenToSelectArray(knowledgeArea: KnowledgeAreaDTO, level: number) {
         this.knowledgeAreasForSelect.push({
             id: knowledgeArea.id,
             title: '\xa0'.repeat(level * 2) + knowledgeArea.title,
@@ -103,20 +109,30 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
     }
 
     filterByKnowledgeArea() {
-        //TODO: redo with map!
-        /*if (this.knowledgeAreaFilter == undefined || this.knowledgeAreaFilter.id == undefined) {
-            this.dataSourceNested.data = this.knowledgeAreas;
+        const filteredKnowledgeArea = this.getKnowledgeAreaByIdIfExists(this.knowledgeAreaFilter?.id);
+        if (!filteredKnowledgeArea) {
+            this.dataSource.data = this.knowledgeAreas;
+            this.treeControl.collapseAll();
         } else {
-            //TODO: this code needs to be replaced!
-            const foundKa: KnowledgeArea = this.knowledgeAreaArray.find((ka) => ka.id == this.knowledgeAreaFilter!.id)!;
-            this.dataSourceNested.data = [foundKa];
-            this.treeControlNested.expand(foundKa);
-        }*/
+            this.dataSource.data = [filteredKnowledgeArea];
+            this.treeControl.expand(filteredKnowledgeArea);
+        }
     }
 
-    filterByCompetencyName() {
-        //TODO: if competency name is empty do nothing
-        //TODO: if competency name is not empty ->
+    filterByCompetencyTitle() {
+        const trimmedFilter = this.competencyTitleFilter?.trim();
+
+        if (!trimmedFilter) {
+            this.dataSource.data = this.knowledgeAreas;
+            this.treeControl.collapseAll();
+        }
+    }
+
+    private filterCompetenciesByTitleForSelfAndChildren(knowledgeArea: KnowledgeAreaDTO, titleFilter: string) {
+        if (knowledgeArea && titleFilter) {
+            console.log('i just do this so i can commit:)))');
+        }
+        //TODO: implement title filer
     }
 
     //Callback methods for the competency detail component
@@ -162,9 +178,6 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
             this.selectedCompetency = undefined;
         }
     }
-
-    dialogErrorSource = new Subject<string>();
-    dialogError = this.dialogErrorSource.asObservable();
 
     deleteCompetency() {
         //if the competency does not exist just close the detail component
@@ -284,13 +297,6 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         modalRef.result.then(() => callback());
     }
 
-    //TODO: add create button
-    //TODO: make competencies look nice on the left side
-    //TODO: check things about ka with level and stuff
-    //TODO: do something about all the errors
     //TODO: make both components re-sizeable?
-
-    //TODO: make knowledge areas mandatory!
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
+    //TODO: make knowledge areas mandatory! > discuss this with max.
 }

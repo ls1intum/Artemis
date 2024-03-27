@@ -28,7 +28,8 @@
             </select>
         </div>
     </div>
-    <button class="btn btn-primary btn-sm" (click)="filterByKnowledgeArea()"></button>
+    <button class="btn btn-primary btn-sm" (click)="filterByKnowledgeArea()">FILTER BY KA</button>
+    <button class="btn btn-primary btn-sm" (click)="filterByCompetencyTitle()">FILTER BY TITLE</button>
     <div class="d-flex">
         <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" [trackBy]="trackBy" class="card d-flex flex-grow-1 w-50 me-1">
             <mat-nested-tree-node *matTreeNodeDef="let node">
@@ -43,11 +44,9 @@
                         <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faPlus" (onClick)="openNewCompetency(node)" />
                     </div>
                 </div>
-                <div [class.hidden]="!treeControl.isExpanded(node)" class="tree-indent">
+                <div [ngbCollapse]="!treeControl.isExpanded(node)" class="tree-indent">
                     <ng-container matTreeNodeOutlet />
-                    <!-- TODO: maybe use @if(treeControlExpandend) to get better performace? -->
                     @for (competency of node.competencies; track competency.id) {
-                        <!-- TODO: if we do the filter here it is very expensive i guess -->
                         <div class="card tree-card">
                             <div class="tree-card-row clickable" (click)="selectCompetency(competency)">
                                 <fa-icon class="me-2" [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />

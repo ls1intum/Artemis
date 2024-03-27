@@ -53,7 +53,12 @@
                     [enableFileUpload]="false"
                 />
             } @else {
-                <div id="description-input" disabled="true" class="markdown-preview border rounded p-1" [innerHTML]="form.controls.description.value | htmlForMarkdown"></div>
+                <div
+                    id="description-input"
+                    disabled="true"
+                    class="markdown-preview border rounded p-1"
+                    [innerHTML]="form.controls.description.value ?? '&nbsp;' | htmlForMarkdown"
+                ></div>
             }
             @if (form.controls.description.invalid && form.controls.description.dirty) {
                 <div
