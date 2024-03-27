@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.util;
 
-import org.hibernate.EmptyInterceptor;
+import org.hibernate.resource.jdbc.spi.StatementInspector;
 import org.springframework.stereotype.Component;
 
 @Component
-public class HibernateQueryInterceptor extends EmptyInterceptor {
+public class HibernateQueryInterceptor implements StatementInspector {
 
     private final transient ThreadLocal<Long> threadQueryCount = new ThreadLocal<>();
 
@@ -31,11 +31,11 @@ public class HibernateQueryInterceptor extends EmptyInterceptor {
      * @return Query to be executed
      */
     @Override
-    public String onPrepareStatement(String sql) {
+    public String inspect(String sql) {
         Long count = threadQueryCount.get();
         if (count != null) {
             threadQueryCount.set(count + 1);
         }
-        return super.onPrepareStatement(sql);
+        return sql;
     }
 }

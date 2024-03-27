@@ -101,6 +101,18 @@ export class BuildQueueService {
     }
 
     /**
+     * Cancel all running build jobs for a specific agent
+     * @param agentName the name of the agent
+     */
+    cancelAllRunningBuildJobsForAgent(agentName: string): Observable<void> {
+        return this.http.delete<void>(`${this.adminResourceUrl}/cancel-all-running-jobs-for-agent`, { params: { agentName } }).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to cancel all running build jobs for agent ${agentName}\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
      * Cancel all running build jobs associated with a course
      */
     cancelAllRunningBuildJobsInCourse(courseId: number): Observable<void> {

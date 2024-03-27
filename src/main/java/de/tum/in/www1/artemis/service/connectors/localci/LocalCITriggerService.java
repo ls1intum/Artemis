@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -128,7 +128,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         BuildConfig buildConfig = getBuildConfig(participation, commitHash);
 
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId,
-                programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig);
+                programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
         queue.add(buildJobQueueItem);
 

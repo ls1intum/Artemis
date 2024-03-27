@@ -6,7 +6,7 @@ import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
