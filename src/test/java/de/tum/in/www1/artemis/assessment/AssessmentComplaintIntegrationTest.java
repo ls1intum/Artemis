@@ -465,19 +465,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getComplaintsForTutor_tutor_sensitiveDataHidden() throws Exception {
-        complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        complaintRepo.save(complaint);
-
-        final var params = new LinkedMultiValueMap<String, String>();
-        params.add("complaintType", ComplaintType.COMPLAINT.name());
-        final var complaints = request.getList("/api/complaints", HttpStatus.OK, Complaint.class, params);
-
-        complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsByCourseIdTutorIsNotTutorForCourse() throws Exception {
         complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);

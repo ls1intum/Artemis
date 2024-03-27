@@ -253,25 +253,6 @@ public class ComplaintResource {
     }
 
     /**
-     * GET complaints: get all the complaints for tutor.
-     *
-     * @param complaintType the type of complaints we are interested in
-     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
-     */
-    @GetMapping(value = "complaints", params = { "complaintType" })
-    @EnforceAtLeastTutor
-    public ResponseEntity<List<Complaint>> getComplaintsForTutor(@RequestParam ComplaintType complaintType) {
-        // Only tutors can retrieve all their own complaints without filter by course or exerciseId. Instructors need
-        // to filter by at least exerciseId or courseId, to be sure they are really instructors for that course /
-        // exercise.
-        // Of course tutors cannot ask for complaints about other tutors.
-        User user = userRepository.getUser();
-        List<Complaint> complaints = complaintService.getAllComplaintsByTutorId(user.getId());
-        filterOutUselessDataFromComplaints(complaints, true);
-        return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
-    }
-
-    /**
      * GET complaints: get all the complaints filtered by courseId, complaintType and optionally tutorId.
      *
      * @param tutorId               the id of the tutor by which we want to filter
