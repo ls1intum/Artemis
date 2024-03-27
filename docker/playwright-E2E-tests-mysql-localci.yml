@@ -21,6 +21,8 @@ services:
             - ./artemis/config/cypress-local.env
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
+        expose:
+            - "443"
 
     nginx:
         extends:
