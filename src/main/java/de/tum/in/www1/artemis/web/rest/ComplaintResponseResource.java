@@ -86,7 +86,7 @@ public class ComplaintResponseResource {
      */
     @PatchMapping("complaints/{complaintId}/response")
     @EnforceAtLeastTutor
-    public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponseUpdateDTO complaintResponseUpdate, @PathVariable long complaintId) {
+    public ResponseEntity<ComplaintResponse> refreshLockOrResolveComplaint(@RequestBody ComplaintResponseUpdateDTO complaintResponseUpdate, @PathVariable long complaintId) {
         if (complaintResponseUpdate == null || complaintResponseUpdate.action() == null) {
             return ResponseEntity.badRequest().build();
         }
@@ -94,8 +94,8 @@ public class ComplaintResponseResource {
         Action action = complaintResponseUpdate.action();
 
         return switch (action) {
-            case REFRESH_LOCK -> refreshComplaintResponse(complaintId);
-            case RESOLVE_COMPLAINT -> resolveComplaintResponse(complaintResponseUpdate, complaintId);
+            case REFRESH_LOCK -> refreshLockOnComplaint(complaintId);
+            case RESOLVE_COMPLAINT -> resolveComplaint(complaintResponseUpdate, complaintId);
         };
     }
 
@@ -108,7 +108,7 @@ public class ComplaintResponseResource {
      * @param complaintId The ID of the complaint to refresh.
      * @return A ResponseEntity containing the refreshed ComplaintResponse representing the updated complaint with HTTP status CREATED.
      */
-    private ResponseEntity<ComplaintResponse> refreshComplaintResponse(long complaintId) {
+    private ResponseEntity<ComplaintResponse> refreshLockOnComplaint(long complaintId) {
         log.debug("REST request to refresh empty complaint response for complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
         ComplaintResponse savedComplaintResponse = complaintResponseService.refreshComplaintResponseRepresentingLock(complaint);
@@ -126,7 +126,7 @@ public class ComplaintResponseResource {
      * @param complaintId             The ID of the complaint to resolve.
      * @return A ResponseEntity containing the updated ComplaintResponse representing the resolved complaint with HTTP status OK.
      */
-    private ResponseEntity<ComplaintResponse> resolveComplaintResponse(ComplaintResponseUpdateDTO complaintResponseUpdate, long complaintId) {
+    private ResponseEntity<ComplaintResponse> resolveComplaint(ComplaintResponseUpdateDTO complaintResponseUpdate, long complaintId) {
         log.debug("REST request to resolve the complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
         ComplaintResponse updatedComplaintResponse = complaintResponseService.resolveComplaint(complaintResponseUpdate, complaint.getComplaintResponse().getId());
