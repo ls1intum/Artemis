@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class ProgrammingExerciseTestCaseResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestCaseResource.class);

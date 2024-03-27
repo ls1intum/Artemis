@@ -7,7 +7,6 @@ import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,7 +29,6 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class StatisticsResource {
 
     private final StatisticsService statisticsService;

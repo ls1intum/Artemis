@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.web.rest.errors.*;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class AccountResource {
 
     private final UserRepository userRepository;

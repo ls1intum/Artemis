@@ -18,8 +18,6 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
@@ -40,14 +38,10 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
-@SpringBootTest
-@AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractSpringIntegrationJenkinsGitlabTest")
-@AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "gitlab", "jenkins", "athena", "scheduling", "lti", "aeolus" })
 @TestPropertySource(properties = { "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors", "info.guided-tour.course-group-students=artemis-artemistutorial-students",

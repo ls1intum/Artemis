@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminSystemNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminSystemNotificationResource.class);

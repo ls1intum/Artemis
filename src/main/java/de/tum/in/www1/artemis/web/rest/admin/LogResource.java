@@ -13,6 +13,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
+import de.tum.in.www1.artemis.versioning.IgnoreGlobalMapping;
 import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 
 /**
@@ -28,6 +29,7 @@ public class LogResource {
      *
      * @return A list of all loggers with their log level
      */
+    @IgnoreGlobalMapping
     @GetMapping("logs")
     @EnforceAdmin
     public ResponseEntity<List<LoggerVM>> getList() {
@@ -41,6 +43,7 @@ public class LogResource {
      * @param jsonLogger The logger with the new log level
      * @return The updated logger
      */
+    @IgnoreGlobalMapping
     @PutMapping("logs")
     @EnforceAdmin
     public ResponseEntity<LoggerVM> changeLevel(@RequestBody LoggerVM jsonLogger) {

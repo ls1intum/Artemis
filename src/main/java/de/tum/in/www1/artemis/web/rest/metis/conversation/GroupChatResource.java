@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/courses")
 public class GroupChatResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(GroupChatResource.class);
@@ -66,13 +65,13 @@ public class GroupChatResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/group-chats/: Starts a new group chat in a course
+     * POST /courses/:courseId/group-chats/: Starts a new group chat in a course
      *
      * @param courseId                    the id of the course
      * @param otherChatParticipantsLogins logins of the starting members of the group chat (excluding the requesting user)
      * @return ResponseEntity with status 201 (Created) and with body containing the created group chat
      */
-    @PostMapping("{courseId}/group-chats")
+    @PostMapping("courses/{courseId}/group-chats")
     @EnforceAtLeastStudent
     public ResponseEntity<GroupChatDTO> startGroupChat(@PathVariable Long courseId, @RequestBody List<String> otherChatParticipantsLogins) throws URISyntaxException {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -100,14 +99,14 @@ public class GroupChatResource extends ConversationManagementResource {
     }
 
     /**
-     * PUT /api/courses/:courseId/group-chats/:groupChatId: Updates a group chat in a course
+     * PUT /courses/:courseId/group-chats/:groupChatId: Updates a group chat in a course
      *
      * @param courseId     the id of the course
      * @param groupChatId  the id of the group chat to be updated
      * @param groupChatDTO dto containing the properties of the group chat to be updated
      * @return ResponseEntity with status 200 (Ok) and with body containing the updated group chat
      */
-    @PutMapping("{courseId}/group-chats/{groupChatId}")
+    @PutMapping("courses/{courseId}/group-chats/{groupChatId}")
     @EnforceAtLeastStudent
     public ResponseEntity<GroupChatDTO> updateGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody GroupChatDTO groupChatDTO) {
         log.debug("REST request to update groupChat {} with properties : {}", groupChatId, groupChatDTO);
@@ -124,14 +123,14 @@ public class GroupChatResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/group-chats/:groupChatId/register : Registers users to a group chat of a course
+     * POST /courses/:courseId/group-chats/:groupChatId/register : Registers users to a group chat of a course
      *
      * @param courseId    the id of the course
      * @param groupChatId the id of the group chat
      * @param userLogins  the logins of the course users to be registered to a group chat
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("{courseId}/group-chats/{groupChatId}/register")
+    @PostMapping("courses/{courseId}/group-chats/{groupChatId}/register")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> registerUsersToGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody List<String> userLogins) {
         log.debug("REST request to register {} users to group chat: {}", userLogins.size(), groupChatId);
@@ -152,14 +151,14 @@ public class GroupChatResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/group-chats/:groupChatId/deregister : Deregisters users from a group chat of a course
+     * POST /courses/:courseId/group-chats/:groupChatId/deregister : Deregisters users from a group chat of a course
      *
      * @param courseId    the id of the course
      * @param groupChatId the id of the group chat
      * @param userLogins  the logins of the course users to be deregistered from a group chat
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("{courseId}/group-chats/{groupChatId}/deregister")
+    @PostMapping("courses/{courseId}/group-chats/{groupChatId}/deregister")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deregisterUsersFromGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody List<String> userLogins) {
         log.debug("REST request to deregister {} users from the group chat : {}", userLogins.size(), groupChatId);

@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminTextAssessmentEventResource {
 
     private final TextAssessmentEventRepository textAssessmentEventRepository;

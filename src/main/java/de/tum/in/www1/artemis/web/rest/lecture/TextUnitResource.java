@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class TextUnitResource {
 
     private static final Logger log = LoggerFactory.getLogger(TextUnitResource.class);

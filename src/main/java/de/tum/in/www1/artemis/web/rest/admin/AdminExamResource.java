@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminExamResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminExamResource.class);

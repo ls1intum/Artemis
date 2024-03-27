@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class ApollonDiagramResource {
 
     private static final Logger log = LoggerFactory.getLogger(ApollonDiagramResource.class);

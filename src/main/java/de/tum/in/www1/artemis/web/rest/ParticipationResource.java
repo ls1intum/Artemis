@@ -59,7 +59,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class ParticipationResource {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationResource.class);

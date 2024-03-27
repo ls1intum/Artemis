@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class StaticCodeAnalysisResource {
 
     private static final String ENTITY_NAME = "StaticCodeAnalysisCategory";

@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class QuizSubmissionResource {
 
     private static final Logger log = LoggerFactory.getLogger(QuizSubmissionResource.class);

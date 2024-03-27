@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class NotificationSettingsResource {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);

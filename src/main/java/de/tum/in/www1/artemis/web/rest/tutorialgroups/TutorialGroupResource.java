@@ -52,7 +52,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class TutorialGroupResource {
 
     private static final String TITLE_REGEX = "^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$";

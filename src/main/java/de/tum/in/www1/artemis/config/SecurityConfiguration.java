@@ -190,7 +190,9 @@ public class SecurityConfiguration {
                 .requestMatchers(antMatcher("/content/**"), antMatcher("/i18n/*.json"), antMatcher("/logo/*")).permitAll()
                 .requestMatchers(antMatcher("/management/info"), antMatcher("/management/health")).permitAll()
                 .requestMatchers(antMatcher("/api/admin/**")).hasAuthority(Role.ADMIN.getAuthority())
+                .requestMatchers(antMatcher("/api/{version:v\\d+}/admin/**")).hasAuthority(Role.ADMIN.getAuthority())
                 .requestMatchers(antMatcher("/api/public/**")).permitAll()
+                .requestMatchers(antMatcher("/api/{version:v\\d+}/public/**")).permitAll()
                 // TODO: Remove the following three lines in April 2024 together with LegacyResource
                 .requestMatchers(antMatcher(HttpMethod.POST, "/api/programming-exercises/new-result")).permitAll()
                 .requestMatchers(antMatcher(HttpMethod.POST, "/api/programming-submissions/*")).permitAll()

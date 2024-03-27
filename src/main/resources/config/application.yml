@@ -243,9 +243,11 @@ hazelcast:
 springdoc:
     api-docs:
         path: /api-docs
+        enabled: false
     swagger-ui:
         path: /api.html
         operationsSorter: method
+        enabled: false
 
 server:
     servlet:

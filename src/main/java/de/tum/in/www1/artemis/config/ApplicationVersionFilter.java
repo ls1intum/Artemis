@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.filter;
+package de.tum.in.www1.artemis.config;
 
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 
 @Profile({ SPRING_PROFILE_PRODUCTION, SPRING_PROFILE_TEST })
 @Component
-public class ApiVersionFilter implements Filter {
+public class ApplicationVersionFilter implements Filter {
 
     private static final Logger log = LoggerFactory.getLogger(ApiVersionFilter.class);
 

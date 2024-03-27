@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class TutorialGroupFreePeriodResource {
 
     private static final String ENTITY_NAME = "tutorialGroupFreePeriod";

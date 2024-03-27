@@ -40,7 +40,6 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class AttachmentResource {
 
     private static final Logger log = LoggerFactory.getLogger(AttachmentResource.class);

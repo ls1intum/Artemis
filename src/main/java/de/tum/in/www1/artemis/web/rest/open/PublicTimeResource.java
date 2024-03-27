@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
+import de.tum.in.www1.artemis.versioning.IgnoreGlobalMapping;
 
 @Profile(PROFILE_CORE)
 @RestController
@@ -22,6 +23,7 @@ public class PublicTimeResource {
      *
      * @return the current server time as Instant
      */
+    @IgnoreGlobalMapping
     @GetMapping("time")
     @EnforceNothing
     public ResponseEntity<Instant> time() {

@@ -12,14 +12,12 @@ import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
@@ -27,7 +25,6 @@ import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.github.dockerjava.api.DockerClient;
 
@@ -52,17 +49,13 @@ import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
 // Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
 // Note: Cannot use WebEnvironment.RANDOM_PORT here because artemis.version-control.url must be set to the correct port in the @TestPropertySource annotation.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-@AutoConfigureMockMvc
-@ExtendWith(SpringExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
-@AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "localci", "localvc", "scheduling", "ldap-only", "lti", "aeolus", PROFILE_BUILDAGENT })
 

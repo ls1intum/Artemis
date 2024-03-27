@@ -59,7 +59,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(ROOT)
 public class ProgrammingExerciseExportImportResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportImportResource.class);

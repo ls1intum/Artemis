@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.web.filter.ApiVersionFilter;
+import de.tum.in.www1.artemis.web.filter.ApplicationVersionFilter;
 
 class ContentVersionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -32,7 +32,7 @@ class ContentVersionIntegrationTest extends AbstractSpringIntegrationIndependent
     void testContentVersionHeaderIsSetCorrectly() throws Exception {
         MvcResult res = request.getMvc().perform(MockMvcRequestBuilders.get(new URI("/api/public/account"))).andReturn();
         final MockHttpServletResponse response = res.getResponse();
-        final String contentVersionHeader = response.getHeader(ApiVersionFilter.CONTENT_VERSION_HEADER);
+        final String contentVersionHeader = response.getHeader(ApplicationVersionFilter.CONTENT_VERSION_HEADER);
         assertThat(contentVersionHeader).isEqualTo("1.3.3-beta7");
     }
 

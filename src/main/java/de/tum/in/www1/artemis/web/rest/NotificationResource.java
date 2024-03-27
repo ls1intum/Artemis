@@ -17,7 +17,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -29,7 +28,7 @@ import de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunic
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -37,7 +36,6 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class NotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationResource.class);
@@ -71,7 +69,7 @@ public class NotificationResource {
      */
     @GetMapping("notifications")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@Parameter Pageable pageable) {
         long start = System.nanoTime();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.info("REST request to get notifications page {} with size {} for current user {} filtered by settings", pageable.getPageNumber(), pageable.getPageSize(),

@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(ROOT)
 public class ProgrammingExercisePlagiarismResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercisePlagiarismResource.class);

@@ -41,7 +41,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class TestRepositoryResource extends RepositoryResource {
 
     public TestRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,

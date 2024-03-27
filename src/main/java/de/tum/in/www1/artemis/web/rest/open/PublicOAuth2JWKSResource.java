@@ -11,6 +11,7 @@ import com.google.gson.GsonBuilder;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.security.annotations.ManualConfig;
+import de.tum.in.www1.artemis.versioning.IgnoreGlobalMapping;
 
 /**
  * REST controller to serve the public JWKSet related to all OAuth2 clients.
@@ -26,6 +27,7 @@ public class PublicOAuth2JWKSResource {
         this.jwksService = jwksService;
     }
 
+    @IgnoreGlobalMapping
     @GetMapping("/.well-known/jwks.json")
     @EnforceNothing
     @ManualConfig

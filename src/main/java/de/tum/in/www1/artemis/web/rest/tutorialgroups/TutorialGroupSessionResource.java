@@ -41,7 +41,6 @@ import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.SessionOverlapsWith
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class TutorialGroupSessionResource {
 
     private static final String ENTITY_NAME = "tutorialGroupSession";

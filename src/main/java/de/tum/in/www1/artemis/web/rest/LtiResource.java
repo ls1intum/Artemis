@@ -10,7 +10,6 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,7 +31,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @Profile("lti")
 @RestController
-@RequestMapping("api/")
 public class LtiResource {
 
     private final LtiDeepLinkingService ltiDeepLinkingService;

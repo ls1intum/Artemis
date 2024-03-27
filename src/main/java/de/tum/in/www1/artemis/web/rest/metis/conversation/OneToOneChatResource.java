@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/courses")
 public class OneToOneChatResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(OneToOneChatResource.class);
@@ -64,7 +63,7 @@ public class OneToOneChatResource extends ConversationManagementResource {
      * @param otherChatParticipantLogins logins of other participants (must be 1 for one to one chat) excluding the requesting user
      * @return ResponseEntity with status 201 (Created) and with body containing the created one to one chat
      */
-    @PostMapping("{courseId}/one-to-one-chats")
+    @PostMapping("courses/{courseId}/one-to-one-chats")
     @EnforceAtLeastStudent
     public ResponseEntity<OneToOneChatDTO> startOneToOneChat(@PathVariable Long courseId, @RequestBody List<String> otherChatParticipantLogins) throws URISyntaxException {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();

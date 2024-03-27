@@ -14,7 +14,6 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.REEVALUATE_EXERCISE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.RESET;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.ROOT;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.SETUP;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.SOLUTION_REPOSITORY_FILES_WITH_CONTENT;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.SOLUTION_REPOSITORY_FILE_NAMES;
@@ -51,7 +50,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
@@ -115,7 +113,6 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(ROOT)
 public class ProgrammingExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResource.class);

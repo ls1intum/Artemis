@@ -281,7 +281,6 @@ dependencies {
     implementation "org.jsoup:jsoup:1.17.2"
     implementation "commons-codec:commons-codec:1.16.1"   // needed for spring security saml2
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.8.0"
     implementation "com.vdurmont:semver4j:3.1.0"
 
     implementation "com.github.docker-java:docker-java-core:${docker_java_version}"
@@ -371,10 +370,7 @@ dependencies {
     implementation "org.bouncycastle:bcpkix-jdk18on:1.77"
     implementation "org.bouncycastle:bcprov-jdk18on:1.77"
 
-    implementation ("io.springfox:springfox-swagger2:3.0.0") {
-        exclude module: "mapstruct"
-    }
-    implementation "io.springfox:springfox-bean-validators:3.0.0"
+    implementation ":org.springdoc:springdoc-openapi-ui:1.8.0"
     implementation "com.mysql:mysql-connector-j:8.3.0"
     implementation "org.postgresql:postgresql:42.7.3"
     implementation "com.h2database:h2:2.2.224"

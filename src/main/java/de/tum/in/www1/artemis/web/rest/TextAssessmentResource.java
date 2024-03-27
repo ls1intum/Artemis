@@ -32,15 +32,14 @@ import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * REST controller for managing TextAssessment.
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class TextAssessmentResource extends AssessmentResource {
 
     @Value("${jhipster.clientApp.name}")
@@ -133,7 +132,8 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return result after saving example text assessment
      */
     @ResponseStatus(HttpStatus.OK)
-    @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
+    @ApiResponses({ @ApiResponse(responseCode = "403", description = ErrorConstants.REQ_403_REASON),
+            @ApiResponse(responseCode = "404", description = ErrorConstants.REQ_404_REASON) })
     @PutMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/example-text-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId, @RequestBody TextAssessmentDTO textAssessment) {

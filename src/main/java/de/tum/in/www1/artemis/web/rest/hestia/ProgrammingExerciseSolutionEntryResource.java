@@ -40,7 +40,6 @@ import tech.jhipster.web.util.HeaderUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class ProgrammingExerciseSolutionEntryResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseSolutionEntryResource.class);

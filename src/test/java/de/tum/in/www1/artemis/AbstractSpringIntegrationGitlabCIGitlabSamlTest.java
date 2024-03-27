@@ -11,21 +11,17 @@ import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.PipelineStatus;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -41,14 +37,9 @@ import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIService;
 import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCITriggerService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ExtendWith(SpringExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractSpringIntegrationGitlabCIGitlabSamlTest")
-@AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlabci", "gitlab", "saml2", "scheduling", "lti", PROFILE_CORE })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })

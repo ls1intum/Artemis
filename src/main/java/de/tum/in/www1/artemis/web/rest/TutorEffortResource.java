@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.service.TutorEffortService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class TutorEffortResource {
 
     private static final Logger log = LoggerFactory.getLogger(TutorEffortResource.class);

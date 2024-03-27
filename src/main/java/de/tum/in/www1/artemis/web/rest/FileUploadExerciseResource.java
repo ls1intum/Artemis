@@ -45,7 +45,6 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(FileUploadExerciseResource.Endpoints.ROOT)
 public class FileUploadExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(FileUploadExerciseResource.class);
