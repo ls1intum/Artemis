@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -38,7 +39,6 @@ import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
-import de.tum.in.www1.artemis.security.lti.Lti13LaunchFilter;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import de.tum.in.www1.artemis.web.filter.Lti13LaunchFilter;
 import uk.ac.ox.ctl.lti13.lti.Claims;
@@ -147,23 +147,11 @@ class Lti13LaunchFilterTest {
     @Test
     void authenticatedLogin() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
-        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
-        doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
-        doReturn(responseWriter).when(httpResponse).getWriter();
-        initValidIdToken();
-
-        launchFilter.doFilter(httpRequest, httpResponse, filterChain);
-
-        verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
-        verify(httpResponse).setContentType("application/json");
-        verify(httpResponse).setCharacterEncoding("UTF-8");
+        JsonObject responseJsonBody = getMockJsonObject(false);
         verify(lti13Service).performLaunch(any(), any());
-
-        ArgumentCaptor<JsonObject> argument = ArgumentCaptor.forClass(JsonObject.class);
-        verify(responseWriter).print(argument.capture());
-        JsonObject responseJsonBody = argument.getValue();
-        verify(lti13Service).buildLtiResponse(any(), any());
+        verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
         assertThat((responseJsonBody.get("targetLinkUri").getAsString())).as("Response body contains the expected targetLinkUri").contains(this.targetLinkUri);
+        verify(lti13Service).buildLtiResponse(any(), any());
     }
 
     @Test
@@ -173,7 +161,7 @@ class Lti13LaunchFilterTest {
         JsonObject responseJsonBody = getMockJsonObject(true);
         verify(lti13Service).startDeepLinking(any(), any());
         verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
-        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains("/lti/deep-linking");
+        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains("/lti/select-course");
         verify(lti13Service).buildLtiResponse(any(), any());
 
     }
@@ -216,7 +204,7 @@ class Lti13LaunchFilterTest {
     }
 
     @Test
-    void emailAddressAlreadyInUseServiceLaunchFailed() throws ServletException, IOException {
+    void emailAddressAlreadyInUseServiceLaunchFailed() throws ServletException, IOException, ServletException {
         StringWriter stringWriter = new StringWriter();
         PrintWriter printWriter = new PrintWriter(stringWriter);
         doReturn(printWriter).when(httpResponse).getWriter();
@@ -248,7 +236,7 @@ class Lti13LaunchFilterTest {
         JsonObject responseJsonBody = getMockJsonObject(true);
 
         verify(httpResponse).setStatus(HttpStatus.UNAUTHORIZED.value());
-        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains("/lti/deep-linking/");
+        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains("/lti/select-course");
         assertThat(responseJsonBody.get("ltiIdToken")).isNull();
         assertThat((responseJsonBody.get("clientRegistrationId").toString())).as("Response body contains the expected clientRegistrationId").contains("some-registration");
 
