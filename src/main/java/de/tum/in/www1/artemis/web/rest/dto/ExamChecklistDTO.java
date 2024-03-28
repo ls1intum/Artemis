@@ -32,7 +32,7 @@ public class ExamChecklistDTO {
 
     private List<Submission> unfinishedAssessments;
 
-    public List<?> getUnfinishedAssessments() {
+    public List<Submission> getUnfinishedAssessments() {
         return unfinishedAssessments;
     }
 
