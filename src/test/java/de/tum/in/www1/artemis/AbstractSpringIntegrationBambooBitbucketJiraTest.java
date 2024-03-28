@@ -24,7 +24,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.actuate.metrics.AutoConfigureMetrics;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -67,7 +67,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractSpringIntegrationBambooBitbucketJiraTest")
 @AutoConfigureEmbeddedDatabase
-@AutoConfigureMetrics
+@AutoConfigureObservability
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athena", "apollon", "iris", "lti", "aeolus", PROFILE_CORE })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends AbstractArtemisIntegrationTest {

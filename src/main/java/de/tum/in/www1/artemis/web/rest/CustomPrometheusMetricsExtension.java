@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.web.WebEndpointResponse;
