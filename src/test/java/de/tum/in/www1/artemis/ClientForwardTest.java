@@ -29,34 +29,34 @@ class ClientForwardTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testClientEndpoint() throws Exception {
-        ResultActions perform = request.getMvc().perform(get("/non-existent-mapping"));
+        ResultActions perform = request.performMvcRequest(get("/non-existent-mapping"));
         perform.andExpect(status().isOk()).andExpect(forwardedUrl("/"));
     }
 
     @Test
     void testNestedClientEndpoint() throws Exception {
-        request.getMvc().perform(get("/admin/user-management")).andExpect(status().isOk()).andExpect(forwardedUrl("/"));
+        request.performMvcRequest(get("/admin/user-management")).andExpect(status().isOk()).andExpect(forwardedUrl("/"));
     }
 
     @Test
     void getUnmappedNestedDottedEndpoint() throws Exception {
-        request.getMvc().perform(get("/foo/bar.js")).andExpect(status().isUnauthorized());
+        request.performMvcRequest(get("/foo/bar.js")).andExpect(status().isUnauthorized());
     }
 
     @Test
     void getWebsocketInfoEndpoint() throws Exception {
-        request.getMvc().perform(get("/websocket/info")).andExpect(status().isOk());
+        request.performMvcRequest(get("/websocket/info")).andExpect(status().isOk());
     }
 
     @Test
     void getWebsocketEndpointFailedHandshakeNoCookie() throws Exception {
-        request.getMvc().perform(get("/websocket/308/sessionId/websocket")).andExpect(status().isOk()); // Failed handshake without cookie returns 200
+        request.performMvcRequest(get("/websocket/308/sessionId/websocket")).andExpect(status().isOk()); // Failed handshake without cookie returns 200
     }
 
     @Test
     void getWebsocketEndpointWithInvalidCookie() throws Exception {
         Cookie cookie = new Cookie(JWTFilter.JWT_COOKIE_NAME, "invalidCookie");
-        request.getMvc().perform(get("/websocket/308/sessionId/websocket").cookie(cookie)).andExpect(status().isOk()); // Failed handshake with invalid cookie returns 200
+        request.performMvcRequest(get("/websocket/308/sessionId/websocket").cookie(cookie)).andExpect(status().isOk()); // Failed handshake with invalid cookie returns 200
     }
 
     @Test
@@ -64,12 +64,12 @@ class ClientForwardTest extends AbstractSpringIntegrationIndependentTest {
     void getWebsocketEndpointWithCookie() throws Exception {
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
         Cookie cookie = new Cookie(responseCookie.getName(), responseCookie.getValue());
-        request.getMvc().perform(get("/websocket/308/sessionId/websocket").cookie(cookie)).andExpect(status().isBadRequest())
+        request.performMvcRequest(get("/websocket/308/sessionId/websocket").cookie(cookie)).andExpect(status().isBadRequest())
                 .andExpect(content().string("Can \"Upgrade\" only to \"WebSocket\".")); // Handshake is successfull but connection fails to upgrade using MockMvc
     }
 
     @Test
     void getWebsocketFallbackEndpoint() throws Exception {
-        request.getMvc().perform(get("/websocket/308/sessionId/xhr_streaming")).andExpect(status().isNotFound());
+        request.performMvcRequest(get("/websocket/308/sessionId/xhr_streaming")).andExpect(status().isNotFound());
     }
 }
