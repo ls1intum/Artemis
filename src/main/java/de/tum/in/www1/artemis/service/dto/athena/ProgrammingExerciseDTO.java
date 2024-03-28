@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.ATHENA_PROGRAMMING_EXERCIS
 
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.service.dto.GradingCriterionDTO;

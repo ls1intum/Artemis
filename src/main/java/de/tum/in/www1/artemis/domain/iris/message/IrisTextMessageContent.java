@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.domain.iris.message;
 
-import javax.annotation.Nullable;
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
