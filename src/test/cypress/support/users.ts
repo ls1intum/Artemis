@@ -110,7 +110,7 @@ export class CypressUserManagement {
     }
 
     public getUserInfo(username: string, func: (response: any) => void) {
-        cy.request({ method: GET, url: `${BASE_API}/users/${username}`, log: false }).then((response) => {
+        cy.request({ method: GET, url: `${BASE_API}/admin/users/${username}`, log: false }).then((response) => {
             func(response.body);
         });
     }
