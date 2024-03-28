@@ -667,7 +667,7 @@ public class UserTestService {
     // Test
     public void getUser_asAdmin_isSuccessful() throws Exception {
         final String userLogin = TEST_PREFIX + "student1";
-        UserDTO userDTO = request.get("/api/users/" + userLogin, HttpStatus.OK, UserDTO.class);
+        UserDTO userDTO = request.get("/api/admin/users/" + userLogin, HttpStatus.OK, UserDTO.class);
         assertThat(userDTO.getLogin()).isEqualTo(userLogin);
     }
 
