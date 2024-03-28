@@ -403,11 +403,30 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             """)
     <T extends Submission> List<T> findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "results.assessor" })
+    @Query("""
+            SELECT DISTINCT submission
+            FROM Submission submission
+                LEFT JOIN FETCH submission.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+                LEFT JOIN FETCH r.assessor
+            WHERE submission.id = :submissionId
+            """)
     Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "results.assessor", "participation.team.students" })
-    Optional<Submission> findWithEagerResultAndFeedbackAndTeamStudentsById(long submissionId);
+    @Query("""
+            SELECT DISTINCT submission
+            FROM Submission submission
+                LEFT JOIN FETCH submission.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+                LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH submission.participation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE submission.id = :submissionId
+            """)
+    Optional<Submission> findWithEagerResultAndFeedbackAndTeamStudentsById(@Param("submissionId") long submissionId);
 
     /**
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
