@@ -141,7 +141,7 @@ class Lti13LaunchFilterTest {
 
         idTokenClaims.put(Claims.DEEP_LINKING_SETTINGS, "{ \"deep_link_return_url\": \"https://platform.example/deep_links\" }");
         idTokenClaims.put(Claims.TARGET_LINK_URI, "/lti/deep-linking/121");
-        idTokenClaims.put(Claims.MESSAGE_TYPE, "LtiDeepLinkingRequest");
+        idTokenClaims.put(Claims.MESSAGE_TYPE, CustomLti13Configurer.LTI13_DEEPLINK_MESSAGE_REQUEST);
     }
 
     @Test
