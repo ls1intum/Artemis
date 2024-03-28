@@ -14,8 +14,8 @@ import de.tum.in.www1.artemis.web.rest.open.PublicProgrammingSubmissionResource;
 import de.tum.in.www1.artemis.web.rest.open.PublicResultResource;
 
 /**
- * TODO: Remove this class in June 2024
- * Together with the lines from {@link SecurityConfiguration#configure(HttpSecurity)}
+ * TODO: Remove this class in April 2024
+ * Together with the lines from {@link SecurityConfiguration#filterChain(HttpSecurity)}
  */
 @Profile(PROFILE_CORE)
 @RestController
