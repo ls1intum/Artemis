@@ -194,7 +194,8 @@ public class LocalCIResultProcessingService {
     private void addResultToBuildAgentsRecentBuildJobs(LocalCIBuildJobQueueItem buildJob, Result result) {
         try {
             buildAgentUpdateLock.lock();
-            LocalCIBuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
+            String buildAgentAddress = buildJob.buildAgentAddress();
+            LocalCIBuildAgentInformation buildAgent = buildAgentInformation.get(buildAgentAddress);
             if (buildAgent != null) {
                 List<LocalCIBuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
                 for (int i = 0; i < recentBuildJobs.size(); i++) {
@@ -203,7 +204,16 @@ public class LocalCIResultProcessingService {
                         break;
                     }
                 }
-                buildAgentInformation.put(buildJob.buildAgentAddress(), new LocalCIBuildAgentInformation(buildAgent, recentBuildJobs));
+                try {
+                    buildAgentInformation.lock(buildAgentAddress);
+                    buildAgentInformation.put(buildAgentAddress, new LocalCIBuildAgentInformation(buildAgent, recentBuildJobs));
+                }
+                catch (Exception e) {
+                    log.error("Could not update build agent information", e);
+                }
+                finally {
+                    buildAgentInformation.unlock(buildAgentAddress);
+                }
             }
         }
         finally {
