@@ -10,10 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +40,7 @@ import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.security.lti.Lti13LaunchFilter;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
+import de.tum.in.www1.artemis.web.filter.Lti13LaunchFilter;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
@@ -147,11 +147,23 @@ class Lti13LaunchFilterTest {
     @Test
     void authenticatedLogin() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
-        JsonObject responseJsonBody = getMockJsonObject(false);
-        verify(lti13Service).performLaunch(any(), any());
+        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
+        doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
+        doReturn(responseWriter).when(httpResponse).getWriter();
+        initValidIdToken();
+
+        launchFilter.doFilter(httpRequest, httpResponse, filterChain);
+
         verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
-        assertThat((responseJsonBody.get("targetLinkUri").getAsString())).as("Response body contains the expected targetLinkUri").contains(this.targetLinkUri);
+        verify(httpResponse).setContentType("application/json");
+        verify(httpResponse).setCharacterEncoding("UTF-8");
+        verify(lti13Service).performLaunch(any(), any());
+
+        ArgumentCaptor<JsonObject> argument = ArgumentCaptor.forClass(JsonObject.class);
+        verify(responseWriter).print(argument.capture());
+        JsonObject responseJsonBody = argument.getValue();
         verify(lti13Service).buildLtiResponse(any(), any());
+        assertThat((responseJsonBody.get("targetLinkUri").getAsString())).as("Response body contains the expected targetLinkUri").contains(this.targetLinkUri);
     }
 
     @Test
