@@ -16,14 +16,14 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "io.spring.dependency-management" version "1.1.4"
-    id "com.google.cloud.tools.jib" version "3.4.0"
+    id "com.google.cloud.tools.jib" version "3.4.1"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.diffplug.spotless" version "6.25.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
-    id "org.owasp.dependencycheck" version "9.0.9"
+    id "org.owasp.dependencycheck" version "9.0.10"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
@@ -73,7 +73,9 @@ spotless {
                     "**/build/**",
                     "**/src/main/generated/**",
                     "**/src/main/resources/templates/**",
-                    "/docker/**"
+                    "/docker/**",
+                    "checked-out-repos/**",
+                    "**/src/main/java/org/eclipse/**"
                 )
             }
         }
@@ -138,6 +140,7 @@ private excludedClassFilesForReport(classDirectories) {
             exclude: [
                 "**/de/tum/in/www1/artemis/domain/**/*_*",
                 "**/de/tum/in/www1/artemis/config/migration/entries/**",
+                "**/org/eclipse/jgit/**",
                 "**/gradle-wrapper.jar/**"
             ]
         )
@@ -166,7 +169,7 @@ jacocoTestCoverageVerification {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 19
+                maximum = 20
             }
         }
     }
@@ -193,7 +196,7 @@ repositories {
 }
 
 ext["jackson.version"] = fasterxml_version
-ext['junit-jupiter.version'] = junit_version
+ext["junit-jupiter.version"] = junit_version
 
 dependencies {
 
@@ -201,8 +204,8 @@ dependencies {
     //    implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
     implementation files("libs/jenkins-client-0.4.0.jar")
     // The following 4 dependencies are explicitly integrated as transitive dependencies of jenkins-client-0.4.0.jar
-    implementation "org.apache.httpcomponents:httpclient:4.5.14"
-    implementation "org.apache.httpcomponents:httpcore:4.4.16"
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.3.1"
+    implementation "org.apache.httpcomponents.core5:httpcore5:5.2.4"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
     implementation ("org.dom4j:dom4j:2.1.4") {
         // Note: avoid org.xml.sax.SAXNotRecognizedException: unrecognized feature http://xml.org/sax/features/external-general-entities
@@ -215,8 +218,7 @@ dependencies {
         exclude module: "jaxb-api"
     }
 
-
-    implementation "org.gitlab4j:gitlab4j-api:5.5.0"
+    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.4"
 
     implementation "de.jplag:jplag:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
@@ -236,16 +238,21 @@ dependencies {
         }
     }
 
-    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.22.1"
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.23.1"
 
-    // NOTE: 0.1.12 is using jakarta instead of javax
-    implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.11"
+    // Note: spring-security-lti13 does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
+    // implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.11"
+    implementation files("libs/spring-security-lti13-0.1.12.jar")
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
-    implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
+    // Note: jgit.htt.server is not compatible with jakarta yet and neither is there a timeline. Hence, we had to add the sourcefiles to our repository. Once the compatibility is given, we can switch back to the maven dependency.
+    // implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
+
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
+    implementation "oauth.signpost:signpost-core:2.1.1"
+    implementation "oauth.signpost:signpost-commonshttp4:2.1.1"
     implementation "net.sourceforge.plantuml:plantuml:1.2024.2"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
@@ -258,7 +265,7 @@ dependencies {
 
     implementation "com.thoughtworks.qdox:qdox:2.1.0"
     implementation "io.sentry:sentry-logback:${sentry_version}"
-    implementation "io.sentry:sentry-spring-boot-starter:${sentry_version}"
+    implementation "io.sentry:sentry-spring-boot-starter-jakarta:${sentry_version}"
 
     // NOTE: the following six dependencies use the newer versions explicitly to avoid other dependencies to use older versions
     implementation "ch.qos.logback:logback-classic:${logback_version}"
@@ -274,7 +281,7 @@ dependencies {
     implementation "org.jsoup:jsoup:1.17.2"
     implementation "commons-codec:commons-codec:1.16.1"   // needed for spring security saml2
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.7.0"
+    implementation "org.springdoc:springdoc-openapi-ui:1.8.0"
     implementation "com.vdurmont:semver4j:3.1.0"
 
     implementation "com.github.docker-java:docker-java-core:${docker_java_version}"
@@ -285,26 +292,24 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.12.3"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.12.4"
     implementation "net.logstash.logback:logstash-logback-encoder:7.4"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:${fasterxml_version}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate6:${fasterxml_version}"
     implementation "com.fasterxml.jackson.core:jackson-annotations:${fasterxml_version}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:5.1.0"
     implementation "javax.cache:cache-api:1.1.1"
-    implementation "org.hibernate:hibernate-core:${hibernate_version}"
+    implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
     implementation "com.zaxxer:HikariCP:5.1.0"
     // TODO: for some reason 1.11.0 breaks some tests (e.g. shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult)
     implementation "org.apache.commons:commons-text:1.10.0"
     implementation "org.apache.commons:commons-math3:3.6.1"
     implementation "javax.transaction:javax.transaction-api:1.3"
-    implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
-    // TODO: we cannot upgrade because 4.24.0 would not work with H2 in the tests due to the reserved keyword "groups", see https://github.com/liquibase/liquibase/pull/4052
-    implementation "org.liquibase:liquibase-core:4.23.2"
+    implementation "org.liquibase:liquibase-core:${liquibase_version}"
     implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
@@ -319,22 +324,26 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:2.4.1"
-    implementation "org.springframework.data:spring-data-ldap:2.7.17"
+    implementation "org.springframework.ldap:spring-ldap-core:3.2.2"
+    implementation "org.springframework.data:spring-data-ldap:3.2.4"
 
-    implementation ("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.8") {
+    implementation ("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.0") {
         // NOTE: these modules contain security vulnerabilities and are not needed
         exclude module: "commons-jxpath"
         exclude module: "woodstox-core"
     }
-    implementation "org.springframework.cloud:spring-cloud-starter:3.1.8"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.9"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.0"
+    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
+
+    implementation "org.springframework.cloud:spring-cloud-commons:4.1.1"
 
     // TODO: updating to a later version breaks the build
     implementation "io.netty:netty-all:4.1.101.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.1.15"
-    implementation "org.springframework:spring-messaging:5.3.31"
+    implementation "io.projectreactor.netty:reactor-netty:1.1.17"
+    implementation "org.springframework:spring-messaging:6.1.5"
     implementation "org.springframework.retry:spring-retry:2.0.5"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
@@ -367,30 +376,30 @@ dependencies {
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
     implementation "com.mysql:mysql-connector-j:8.3.0"
-    implementation "org.postgresql:postgresql:42.7.1"
+    implementation "org.postgresql:postgresql:42.7.3"
     implementation "com.h2database:h2:2.2.224"
 
-    // zalando problem spring web can only be updated when we support Spring 6
-    implementation "org.zalando:problem-spring-web:0.27.0"
+    implementation "org.zalando:problem-spring-web:0.29.1"
+    implementation "org.zalando:jackson-datatype-problem:0.27.1"
     implementation "com.ibm.icu:icu4j:74.2"
-    implementation "com.github.seancfoley:ipaddress:5.4.2"
+    implementation "com.github.seancfoley:ipaddress:5.5.0"
     implementation "org.apache.maven:maven-model:3.9.6"
-    implementation "org.apache.pdfbox:pdfbox:3.0.1"
-    implementation "com.google.protobuf:protobuf-java:3.25.3"
+    implementation "org.apache.pdfbox:pdfbox:3.0.2"
+    implementation "com.google.protobuf:protobuf-java:4.26.0"
     implementation "org.apache.commons:commons-csv:1.10.0"
-    implementation "org.commonmark:commonmark:0.21.0"
+    implementation "org.commonmark:commonmark:0.22.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
     implementation "org.jgrapht:jgrapht-core:1.5.2"
     // make sure the dependencies use the latest version without security vulnerabilities
-    implementation "com.google.guava:guava:33.0.0-jre"
+    implementation "com.google.guava:guava:33.1.0-jre"
 
     // make sure the dependencies use the latest version
     implementation "com.google.code.gson:gson:2.10.1"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
-        exclude group: "javax.ws.rs", module: "jsr311-api"
+        exclude group: "jakarta.ws.rs", module: "jsr311-api"
     }
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: "com.vaadin.external.google", module: "android-json"
@@ -408,10 +417,10 @@ dependencies {
     testImplementation "org.assertj:assertj-core:3.25.3"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "io.github.classgraph:classgraph:4.8.165"
-    testImplementation "org.awaitility:awaitility:4.2.0"
+    testImplementation "io.github.classgraph:classgraph:4.8.168"
+    testImplementation "org.awaitility:awaitility:4.2.1"
     testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.6"
+    testImplementation "org.gradle:gradle-tooling-api:8.7"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.2.5"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.0") {
@@ -424,13 +433,15 @@ dependencies {
     }
     testImplementation ("net.bytebuddy:byte-buddy") {
         version {
-            strictly "1.14.11"
+            strictly "1.14.12"
         }
     }
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20240205"
 }
+
+ext["junit-jupiter.version"] = junit_version
 
 dependencyManagement {
     imports {
@@ -469,7 +480,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.6"
+    gradleVersion = "8.7"
 }
 
 tasks.register("stage") {

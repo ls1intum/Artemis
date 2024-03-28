@@ -318,14 +318,8 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUserWithoutGroups() throws Exception {
-        userTestService.testUserWithoutGroups();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUserWithGroups() throws Exception {
-        userTestService.testUserWithGroups();
+    void testUser() throws Exception {
+        userTestService.testUser();
     }
 
     @Test

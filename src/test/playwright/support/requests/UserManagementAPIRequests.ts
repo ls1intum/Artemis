@@ -33,6 +33,6 @@ export class UserManagementAPIRequests {
     }
 
     async getUser(username: string): Promise<APIResponse> {
-        return await this.page.request.get(`${BASE_API}/users/${username}`);
+        return await this.page.request.get(`${BASE_API}/admin/users/${username}`);
     }
 }

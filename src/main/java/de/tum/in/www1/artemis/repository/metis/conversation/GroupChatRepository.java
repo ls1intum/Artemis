@@ -17,14 +17,24 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface GroupChatRepository extends JpaRepository<GroupChat, Long> {
 
+    /**
+     * Find all group chats of a given user in a given course.
+     * <p>
+     * We join the conversionParticipants twice, once to filter the chats and bind it to the user ID. The second time, we fetch all participants.
+     *
+     * @param courseId the ID of the course to search in
+     * @param userId   the ID of the user to search for
+     * @return a list of group chats
+     */
     @Query("""
             SELECT DISTINCT groupChat
             FROM GroupChat groupChat
-                LEFT JOIN FETCH groupChat.conversationParticipants conversationParticipant
-                LEFT JOIN FETCH conversationParticipant.user user
+                LEFT JOIN groupChat.conversationParticipants conversationParticipant
+                LEFT JOIN FETCH groupChat.conversationParticipants conversationParticipants
+                LEFT JOIN FETCH conversationParticipants.user user
                 LEFT JOIN FETCH user.groups
             WHERE groupChat.course.id = :courseId
-                AND user.id = :userId
+                AND conversationParticipant.user.id = :userId
             ORDER BY groupChat.lastMessageDate DESC
             """)
     List<GroupChat> findGroupChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
