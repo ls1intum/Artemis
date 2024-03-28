@@ -22,6 +22,15 @@ export class AdminUserService {
     }
 
     /**
+     * Import a list of users from ldap to artemis
+     * @param users The list of users to be imported.
+     * @return Observable<HttpResponse<User[]>> with not found Users
+     */
+    importAll(users: Partial<User>[]): Observable<HttpResponse<User[]>> {
+        return this.http.post<User[]>(`${this.resourceUrl}/import`, users, { observe: 'response' });
+    }
+
+    /**
      * Update a user on the server.
      * @param user The user to update.
      * @return Observable<HttpResponse<User>> with the updated user as body.
@@ -42,6 +51,15 @@ export class AdminUserService {
             options = filter.adjustOptions(options);
         }
         return this.http.get<User[]>(this.resourceUrl, { params: options, observe: 'response' });
+    }
+
+    /**
+     * Find a user on the server.
+     * @param login The login of the user to find.
+     * @return Observable<HttpResponse<User>> with the found user as body.
+     */
+    findUser(login: string): Observable<User> {
+        return this.http.get<User>(`${this.resourceUrl}/${login}`);
     }
 
     /**
