@@ -117,6 +117,7 @@ public class RequestUtilService {
                 builder = builder.file(file);
             }
         }
+        builder = builder.file(json);
         MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(builder)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
