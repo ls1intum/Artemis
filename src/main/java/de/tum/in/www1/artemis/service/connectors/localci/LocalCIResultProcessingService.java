@@ -64,7 +64,9 @@ public class LocalCIResultProcessingService {
 
     private IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
-    private FencedLock lock;
+    private FencedLock resultQueueLock;
+
+    private FencedLock buildAgentUpdateLock;
 
     private UUID listenerId;
 
@@ -84,7 +86,8 @@ public class LocalCIResultProcessingService {
     public void init() {
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
-        this.lock = this.hazelcastInstance.getCPSubsystem().getLock("resultQueueLock");
+        this.resultQueueLock = this.hazelcastInstance.getCPSubsystem().getLock("resultQueueLock");
+        this.buildAgentUpdateLock = this.hazelcastInstance.getCPSubsystem().getLock("buildAgentUpdateLock");
         this.listenerId = resultQueue.addItemListener(new ResultQueueListener(), true);
     }
 
@@ -98,9 +101,9 @@ public class LocalCIResultProcessingService {
     public void processResult() {
 
         // set lock to prevent multiple nodes from processing the same build job
-        lock.lock();
+        resultQueueLock.lock();
         ResultQueueItem resultQueueItem = resultQueue.poll();
-        lock.unlock();
+        resultQueueLock.unlock();
 
         if (resultQueueItem == null) {
             return;
@@ -189,17 +192,24 @@ public class LocalCIResultProcessingService {
      * @param result   the result of the build job
      */
     private void addResultToBuildAgentsRecentBuildJobs(LocalCIBuildJobQueueItem buildJob, Result result) {
-        LocalCIBuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
-        if (buildAgent != null) {
-            List<LocalCIBuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
-            for (int i = 0; i < recentBuildJobs.size(); i++) {
-                if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
-                    recentBuildJobs.set(i, new LocalCIBuildJobQueueItem(buildJob, result));
-                    break;
+        try {
+            buildAgentUpdateLock.lock();
+            LocalCIBuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
+            if (buildAgent != null) {
+                List<LocalCIBuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
+                for (int i = 0; i < recentBuildJobs.size(); i++) {
+                    if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
+                        recentBuildJobs.set(i, new LocalCIBuildJobQueueItem(buildJob, result));
+                        break;
+                    }
                 }
+                buildAgentInformation.put(buildJob.buildAgentAddress(), new LocalCIBuildAgentInformation(buildAgent, recentBuildJobs));
             }
-            buildAgentInformation.put(buildJob.buildAgentAddress(), new LocalCIBuildAgentInformation(buildAgent, recentBuildJobs));
         }
+        finally {
+            buildAgentUpdateLock.unlock();
+        }
+
     }
 
     /**
