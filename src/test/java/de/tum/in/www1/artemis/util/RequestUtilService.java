@@ -13,8 +13,10 @@ import java.util.*;
 import java.util.function.Function;
 
 import jakarta.annotation.Nullable;
+import jakarta.servlet.ServletException;
 
 import org.apache.commons.io.FileUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -30,6 +32,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -48,9 +51,13 @@ public class RequestUtilService {
 
     private final ObjectMapper mapper;
 
-    public RequestUtilService(MockMvc mvc, ObjectMapper mapper) {
+    private final RequestPostProcessor requestPostProcessor;
+
+    public RequestUtilService(MockMvc mvc, ObjectMapper mapper, @Autowired(required = false) FixMissingServletPathProcessor fixMissingServletPathProcessor)
+            throws ServletException {
         this.mvc = mvc;
         this.mapper = mapper;
+        this.requestPostProcessor = fixMissingServletPathProcessor;
     }
 
     public MockMvc getMvc() {
@@ -59,6 +66,13 @@ public class RequestUtilService {
 
     public ObjectMapper getObjectMapper() {
         return mapper;
+    }
+
+    private MockHttpServletRequestBuilder addRequestPostProcessorIfAvailable(MockHttpServletRequestBuilder request) {
+        if (requestPostProcessor != null) {
+            return request.with(requestPostProcessor);
+        }
+        return request;
     }
 
     /**
@@ -103,8 +117,7 @@ public class RequestUtilService {
                 builder = builder.file(file);
             }
         }
-        builder.file(json);
-        MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(builder)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
@@ -130,7 +143,7 @@ public class RequestUtilService {
         if (httpHeaders != null) {
             requestBuilder = requestBuilder.headers(httpHeaders);
         }
-        MvcResult res = mvc.perform(requestBuilder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(requestBuilder)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (withLocation && !expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
@@ -146,7 +159,8 @@ public class RequestUtilService {
         });
         final var content = new LinkedMultiValueMap<String, String>();
         content.setAll(jsonMap);
-        MvcResult result = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(content)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult result = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.post(new URI(path)).params(content)))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         return new URI(result.getResponse().getHeader("location"));
     }
@@ -157,7 +171,7 @@ public class RequestUtilService {
         });
         final var content = new LinkedMultiValueMap<String, String>();
         content.setAll(jsonMap);
-        mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(content)).andExpect(status().is(expectedStatus.value())).andReturn();
+        mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.post(new URI(path))).params(content)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
     }
 
@@ -181,12 +195,13 @@ public class RequestUtilService {
         if (httpHeaders != null) {
             request = request.headers(httpHeaders);
         }
-        mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        mvc.perform(addRequestPostProcessorIfAvailable(request)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
     }
 
     public MockHttpServletResponse postWithoutResponseBody(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.post(new URI(path)).params(params))).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
         restoreSecurityContext();
         return res.getResponse();
     }
@@ -206,7 +221,7 @@ public class RequestUtilService {
         if (httpHeaders != null) {
             request.headers(httpHeaders);
         }
-        MvcResult res = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(request)).andExpect(status().is(expectedStatus.value())).andReturn();
         verifyExpectedResponseHeaders(expectedResponseHeaders, res);
         restoreSecurityContext();
         return res.getResponse();
@@ -223,7 +238,7 @@ public class RequestUtilService {
         if (httpHeaders != null) {
             request = request.headers(httpHeaders);
         }
-        MvcResult res = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(request)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
@@ -302,7 +317,7 @@ public class RequestUtilService {
         if (params != null) {
             request = request.params(params);
         }
-        MvcResult res = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(request)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
@@ -348,7 +363,9 @@ public class RequestUtilService {
 
     public File postWithResponseBodyFile(String path, Object body, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).accept(MediaType.APPLICATION_OCTET_STREAM))
+        MvcResult res = mvc
+                .perform(addRequestPostProcessorIfAvailable(
+                        MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).accept(MediaType.APPLICATION_OCTET_STREAM)))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
@@ -363,7 +380,8 @@ public class RequestUtilService {
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody)).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody)))
+                .andReturn();
         restoreSecurityContext();
         if (res.getResponse().getStatus() >= 299) {
             return null;
@@ -423,7 +441,7 @@ public class RequestUtilService {
         if (params != null) {
             builder.params(params);
         }
-        MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(builder)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
@@ -443,7 +461,8 @@ public class RequestUtilService {
     public <T, R> R putWithResponseBodyAndParams(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable MultiValueMap<String, String> params,
             Map<String, String> expectedResponseHeaders) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).params(params))
+        MvcResult res = mvc
+                .perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).params(params)))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
@@ -461,7 +480,8 @@ public class RequestUtilService {
     }
 
     public <R> R patchWithResponseBody(String path, String body, Class<R> responseType, HttpStatus expectedStatus, MediaType mediaType) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.patch(new URI(path)).contentType(mediaType).content(body)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.patch(new URI(path)).contentType(mediaType).content(body)))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
         if (res.getResponse().getStatus() >= 299) {
@@ -484,7 +504,7 @@ public class RequestUtilService {
 
     public <T, R> List<R> patchWithResponseBodyList(String path, T body, Class<R> listElementType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.patch(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.patch(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody)))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
@@ -497,14 +517,14 @@ public class RequestUtilService {
             requestBuilder = requestBuilder.content(jsonBody);
         }
 
-        mvc.perform(requestBuilder).andExpect(status().is(expectedStatus.value()));
+        mvc.perform(addRequestPostProcessorIfAvailable(requestBuilder)).andExpect(status().is(expectedStatus.value()));
         restoreSecurityContext();
 
     }
 
     public <T, R> List<R> putWithResponseBodyList(String path, T body, Class<R> listElementType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody)))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
@@ -517,13 +537,13 @@ public class RequestUtilService {
             requestBuilder = requestBuilder.content(jsonBody);
         }
 
-        mvc.perform(requestBuilder).andExpect(status().is(expectedStatus.value()));
+        mvc.perform(addRequestPostProcessorIfAvailable(requestBuilder)).andExpect(status().is(expectedStatus.value()));
         restoreSecurityContext();
     }
 
     public void putAndExpectError(String path, Object body, HttpStatus expectedStatus, String expectedErrorKey) throws Exception {
         final var jsonBody = mapper.writeValueAsString(body);
-        final var response = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
+        final var response = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody)))
                 .andExpect(status().is(expectedStatus.value())).andReturn().getResponse();
         restoreSecurityContext();
 
@@ -572,7 +592,8 @@ public class RequestUtilService {
 
     public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params, HttpHeaders headers, @Nullable Map<String, String> expectedResponseHeaders)
             throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(headers)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(headers)))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
@@ -589,7 +610,8 @@ public class RequestUtilService {
 
     @SuppressWarnings("unchecked")
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params, HttpHeaders httpHeaders) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders)))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
         // default charset is iso-8859-1 since v5.2.0 but we want utf-8
@@ -620,7 +642,8 @@ public class RequestUtilService {
     }
 
     public byte[] getPng(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
-        final var res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        final var res = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.get(new URI(path)).params(params))).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
         restoreSecurityContext();
         return res.getResponse().getContentAsByteArray();
     }
@@ -634,7 +657,8 @@ public class RequestUtilService {
     }
 
     public <T> SearchResultPageDTO<T> getSearchResult(String path, HttpStatus expectedStatus, Class<T> searchElementType, MultiValueMap<String, String> params) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.get(new URI(path)).params(params))).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
         restoreSecurityContext();
 
         if (!expectedStatus.is2xxSuccessful()) {
@@ -648,7 +672,8 @@ public class RequestUtilService {
     }
 
     public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType, MultiValueMap<String, String> params) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.get(new URI(path)).params(params))).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
         restoreSecurityContext();
 
         if (!expectedStatus.is2xxSuccessful()) {
@@ -662,7 +687,8 @@ public class RequestUtilService {
     }
 
     public <T> Set<T> getSet(String path, HttpStatus expectedStatus, Class<T> setElementType, MultiValueMap<String, String> params) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.get(new URI(path)).params(params))).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
         restoreSecurityContext();
 
         if (!expectedStatus.is2xxSuccessful()) {
@@ -680,7 +706,8 @@ public class RequestUtilService {
     }
 
     public <K, V> Map<K, V> getMap(String path, HttpStatus expectedStatus, Class<K> keyType, Class<V> valueType, MultiValueMap<String, String> params) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.get(new URI(path)).params(params))).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
         restoreSecurityContext();
 
         if (!expectedStatus.is2xxSuccessful()) {
@@ -694,29 +721,30 @@ public class RequestUtilService {
     }
 
     public void getWithForwardedUrl(String path, HttpStatus expectedStatus, String expectedRedirectedUrl) throws Exception {
-        mvc.perform(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andExpect(forwardedUrl(expectedRedirectedUrl)).andReturn();
+        mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.get(new URI(path)))).andExpect(status().is(expectedStatus.value()))
+                .andExpect(forwardedUrl(expectedRedirectedUrl)).andReturn();
         restoreSecurityContext();
     }
 
     public String getRedirectTarget(String path, HttpStatus expectedStatus) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.get(new URI(path)))).andExpect(status().is(expectedStatus.value())).andReturn();
         return res.getResponse().getRedirectedUrl();
     }
 
     public void delete(String path, HttpStatus expectedStatus) throws Exception {
-        mvc.perform(MockMvcRequestBuilders.delete(new URI(path))).andExpect(status().is(expectedStatus.value())).andReturn();
+        mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.delete(new URI(path)))).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
     }
 
     public void delete(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
-        mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.delete(new URI(path)).params(params))).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
     }
 
     public <T> void delete(String path, HttpStatus expectedStatus, T body) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
-        mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody)).andExpect(status().is(expectedStatus.value()))
-                .andReturn();
+        mvc.perform(addRequestPostProcessorIfAvailable(MockMvcRequestBuilders.delete(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody)))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
     }
 

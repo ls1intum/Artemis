@@ -11,7 +11,7 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import de.tum.in.www1.artemis.*;
-import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
+import de.tum.in.www1.artemis.AbstractArtemisIntegrationTest;
 
 /**
  * This custom appender is used to capture the logs of multiple tests running in parallel.

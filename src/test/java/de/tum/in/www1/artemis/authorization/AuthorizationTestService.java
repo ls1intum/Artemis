@@ -91,7 +91,7 @@ public class AuthorizationTestService {
      */
     private void checkForPath(RequestMappingInfo info, HandlerMethod method, Map<Method, Set<String>> methodReports) {
         Method javaMethod = method.getMethod();
-        Set<String> patterns = Objects.requireNonNull(info.getPatternsCondition()).getPatterns();
+        Set<String> patterns = Objects.requireNonNull(info.getPathPatternsCondition()).getPatternValues();
         Annotation annotation = getSingleAuthAnnotation(javaMethod);
         if (annotation == null) {
             // We already logged an error in this case
