@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.PostConstruct;
 
@@ -67,6 +68,11 @@ public class LocalCIResultProcessingService {
     private FencedLock lock;
 
     private UUID listenerId;
+
+    /**
+     * Lock for operations to update build agent.
+     */
+    private final ReentrantLock updateAgentLock = new ReentrantLock();
 
     public LocalCIResultProcessingService(HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
@@ -189,16 +195,32 @@ public class LocalCIResultProcessingService {
      * @param result   the result of the build job
      */
     private void addResultToBuildAgentsRecentBuildJobs(LocalCIBuildJobQueueItem buildJob, Result result) {
-        LocalCIBuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
-        if (buildAgent != null) {
-            List<LocalCIBuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
-            for (int i = 0; i < recentBuildJobs.size(); i++) {
-                if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
-                    recentBuildJobs.set(i, new LocalCIBuildJobQueueItem(buildJob, result));
-                    break;
+        try {
+            updateAgentLock.lock();
+            String memberAddress = buildJob.buildAgentAddress();
+            LocalCIBuildAgentInformation buildAgent = buildAgentInformation.get(memberAddress);
+            if (buildAgent != null) {
+                List<LocalCIBuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
+                for (int i = 0; i < recentBuildJobs.size(); i++) {
+                    if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
+                        recentBuildJobs.set(i, new LocalCIBuildJobQueueItem(buildJob, result));
+                        break;
+                    }
+                }
+                try {
+                    buildAgentInformation.lock(memberAddress);
+                    buildAgentInformation.put(memberAddress, new LocalCIBuildAgentInformation(buildAgent, recentBuildJobs));
+                }
+                catch (Exception e) {
+                    log.error("Error while updating build agent information for agent {}", memberAddress, e);
+                }
+                finally {
+                    buildAgentInformation.unlock(memberAddress);
                 }
             }
-            buildAgentInformation.put(buildJob.buildAgentAddress(), new LocalCIBuildAgentInformation(buildAgent, recentBuildJobs));
+        }
+        finally {
+            updateAgentLock.unlock();
         }
     }
 

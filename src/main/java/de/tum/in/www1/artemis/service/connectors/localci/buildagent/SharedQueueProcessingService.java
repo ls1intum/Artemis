@@ -301,17 +301,32 @@ public class SharedQueueProcessingService {
      * @param buildJob The build job to add to the list of recent build jobs
      */
     private void addToRecentBuildJobs(LocalCIBuildJobQueueItem buildJob) {
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        LocalCIBuildAgentInformation agent = buildAgentInformation.get(memberAddress);
-        if (agent != null) {
-            List<LocalCIBuildJobQueueItem> recentBuildJobs = agent.recentBuildJobs();
-            if (recentBuildJobs.size() >= 20) {
-                recentBuildJobs.remove(0);
+        try {
+            updateAgentLock.lock();
+            String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+            LocalCIBuildAgentInformation agent = buildAgentInformation.get(memberAddress);
+            if (agent != null) {
+                List<LocalCIBuildJobQueueItem> recentBuildJobs = agent.recentBuildJobs();
+                if (recentBuildJobs.size() >= 20) {
+                    recentBuildJobs.remove(0);
+                }
+                recentBuildJobs.add(buildJob);
+                try {
+                    buildAgentInformation.lock(memberAddress);
+                    buildAgentInformation.put(memberAddress, new LocalCIBuildAgentInformation(agent, recentBuildJobs));
+                }
+                catch (Exception e) {
+                    log.error("Error while updating recent build jobs for agent {}", memberAddress, e);
+                }
+                finally {
+                    buildAgentInformation.unlock(memberAddress);
+                }
             }
-            recentBuildJobs.add(buildJob);
-            buildAgentInformation.put(memberAddress, new LocalCIBuildAgentInformation(agent, recentBuildJobs));
         }
-        updateLocalBuildAgentInformation();
+        finally {
+            updateAgentLock.unlock();
+            updateLocalBuildAgentInformation();
+        }
     }
 
     /**
