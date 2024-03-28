@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +72,7 @@ public class SharedQueueManagementService {
     /**
      * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo
      */
-    @Scheduled(fixedRate = 90000, initialDelay = Long.MAX_VALUE)
+    @Scheduled(fixedRate = 90000, initialDelay = 1000 * 60 * 10)
     public void pushDockerImageCleanupInfo() {
         dockerImageCleanupInfo.clear();
         Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findAllLastBuildDatesForDockerImages();
@@ -166,6 +166,22 @@ public class SharedQueueManagementService {
             for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
                 cancelBuildJob(buildJob.id());
             }
+        }
+        finally {
+            sharedLock.unlock();
+        }
+
+    }
+
+    /**
+     * Cancel all running build jobs for an agent.
+     *
+     * @param agentName name of the agent
+     */
+    public void cancelAllRunningBuildJobsForAgent(String agentName) {
+        sharedLock.lock();
+        try {
+            processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), agentName)).forEach(job -> cancelBuildJob(job.id()));
         }
         finally {
             sharedLock.unlock();
