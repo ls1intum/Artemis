@@ -66,8 +66,6 @@ public class LocalCIResultProcessingService {
 
     private FencedLock resultQueueLock;
 
-    private FencedLock buildAgentUpdateLock;
-
     private UUID listenerId;
 
     public LocalCIResultProcessingService(HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
@@ -82,12 +80,14 @@ public class LocalCIResultProcessingService {
         this.programmingTriggerService = programmingTriggerService;
     }
 
+    /**
+     * Initializes the result queue, build agent information map and the locks.
+     */
     @PostConstruct
     public void init() {
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.resultQueueLock = this.hazelcastInstance.getCPSubsystem().getLock("resultQueueLock");
-        this.buildAgentUpdateLock = this.hazelcastInstance.getCPSubsystem().getLock("buildAgentUpdateLock");
         this.listenerId = resultQueue.addItemListener(new ResultQueueListener(), true);
     }
 
@@ -193,7 +193,7 @@ public class LocalCIResultProcessingService {
      */
     private void addResultToBuildAgentsRecentBuildJobs(LocalCIBuildJobQueueItem buildJob, Result result) {
         try {
-            buildAgentUpdateLock.lock();
+            buildAgentInformation.lock(buildJob.buildAgentAddress());
             LocalCIBuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
             if (buildAgent != null) {
                 List<LocalCIBuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
@@ -207,7 +207,7 @@ public class LocalCIResultProcessingService {
             }
         }
         finally {
-            buildAgentUpdateLock.unlock();
+            buildAgentInformation.unlock(buildJob.buildAgentAddress());
         }
 
     }

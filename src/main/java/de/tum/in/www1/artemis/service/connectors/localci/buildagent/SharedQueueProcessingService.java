@@ -50,8 +50,6 @@ public class SharedQueueProcessingService {
      */
     private FencedLock sharedLock;
 
-    private FencedLock buildAgentUpdateLock;
-
     private IQueue<LocalCIBuildJobQueueItem> queue;
 
     private IQueue<ResultQueueItem> resultQueue;
@@ -88,7 +86,6 @@ public class SharedQueueProcessingService {
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
-        this.buildAgentUpdateLock = this.hazelcastInstance.getCPSubsystem().getLock("buildAgentUpdateLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
         this.listenerId = this.queue.addItemListener(new SharedQueueProcessingService.QueuedBuildJobItemListener(), true);
@@ -189,23 +186,20 @@ public class SharedQueueProcessingService {
     }
 
     private void updateLocalBuildAgentInformationWithRecentJob(LocalCIBuildJobQueueItem recentBuildJob) {
+        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         try {
-            buildAgentUpdateLock.lock();
+            buildAgentInformation.lock(memberAddress);
             // Add/update
             LocalCIBuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob);
             try {
-                buildAgentInformation.lock(info.name());
                 buildAgentInformation.put(info.name(), info);
             }
             catch (Exception e) {
                 log.error("Error while updating build agent information for agent {}", info.name(), e);
             }
-            finally {
-                buildAgentInformation.unlock(info.name());
-            }
         }
         finally {
-            buildAgentUpdateLock.unlock();
+            buildAgentInformation.unlock(memberAddress);
         }
     }
 
