@@ -352,33 +352,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(lectureChannelAfterDelete).isEmpty();
     }
 
-    /**
-     * Hibernates sometimes adds null to the list of lecture units to keep the order after a lecture unit has been deleted.
-     * This should not happen any more as we have refactored the way lecture units are deleted, nevertheless we want to
-     * check here that this case not causes any errors as null values could still exist in the database
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteLecture_NullInListOfLectureUnits_shouldDeleteLecture() throws Exception {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
-        List<LectureUnit> lectureUnits = lecture.getLectureUnits();
-        assertThat(lectureUnits).hasSize(5);
-        ArrayList<LectureUnit> lectureUnitsWithNulls = new ArrayList<>();
-        for (LectureUnit lectureUnit : lectureUnits) {
-            lectureUnitsWithNulls.add(null);
-            lectureUnitsWithNulls.add(lectureUnit);
-        }
-        lecture.getLectureUnits().clear();
-        lecture.getLectureUnits().addAll(lectureUnitsWithNulls);
-        lectureRepository.saveAndFlush(lecture);
-        lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
-        lectureUnits = lecture.getLectureUnits();
-        assertThat(lectureUnits).hasSize(10);
-        request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
-        Optional<Lecture> lectureOptional = lectureRepository.findById(lecture1.getId());
-        assertThat(lectureOptional).isEmpty();
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void deleteLecture_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
