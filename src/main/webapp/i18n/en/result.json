@@ -50,7 +50,7 @@
                 "automaticAIFeedbackFailed": "Feedback",
                 "automaticAIFeedbackInProgress": "AI Feedback request is being processed",
                 "automaticAIFeedbackTimedOut": "Feedback timed out.",
-                "automaticAIFeedbackSuccessfulTooltip": "AI Feedback request was successful. AI-based feedback can include mistakes. Consider checking important information.",
+                "automaticAIFeedbackSuccessfulTooltip": "AI-based feedback can include mistakes. Consider checking important information.",
                 "automaticAIFeedbackFailedTooltip": "AI Feedback Request failed due to an internal error. Please try again shortly or contact the Artemis administrators if the issue persists.",
                 "automaticAIFeedbackInProgressTooltip": "AI Feedback is being generated.",
                 "automaticAIFeedbackTimedOutTooltip": "Time for generating AI Feedback has expired. Please try again shortly or contact Artemis administrators if the issue persists."
