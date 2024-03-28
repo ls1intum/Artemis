@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { User } from 'app/core/user/user.model';
-import { UserService } from 'app/core/user/user.service';
 import { Observable, of } from 'rxjs';
+import { AdminUserService } from 'app/core/user/admin-user.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserManagementResolve implements Resolve<User> {
-    constructor(private userService: UserService) {}
+    constructor(private adminUserService: AdminUserService) {}
 
     /**
      * Resolve route to find the user before the route is activated
@@ -14,7 +14,7 @@ export class UserManagementResolve implements Resolve<User> {
      */
     resolve(route: ActivatedRouteSnapshot): Observable<User> {
         if (route.params['login']) {
-            return this.userService.find(route.params['login']);
+            return this.adminUserService.findUser(route.params['login']);
         }
         return of(new User());
     }

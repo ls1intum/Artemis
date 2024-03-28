@@ -111,7 +111,7 @@ public class ProgrammingExerciseFeedbackCreationService {
             var messageWithoutStackTrace = message.lines().takeWhile(IS_NOT_STACK_TRACE_LINE).collect(Collectors.joining("\n")).trim();
 
             // the feedback from gradle test result is duplicated on bamboo therefore it's cut in half
-            if (projectType != null && projectType.isGradle() && profileService.isBamboo()) {
+            if (projectType != null && projectType.isGradle() && profileService.isBambooActive()) {
                 long numberOfLines = messageWithoutStackTrace.lines().count();
                 messageWithoutStackTrace = messageWithoutStackTrace.lines().skip(numberOfLines / 2).collect(Collectors.joining("\n")).trim();
             }
