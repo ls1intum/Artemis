@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.net.URI;
 import java.util.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Cache;

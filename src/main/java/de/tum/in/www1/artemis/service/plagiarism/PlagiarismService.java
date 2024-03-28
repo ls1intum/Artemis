@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;

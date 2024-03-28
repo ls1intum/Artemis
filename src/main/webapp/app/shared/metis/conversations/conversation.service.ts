@@ -70,7 +70,7 @@ export class ConversationService {
             } else {
                 return (
                     `${getUserLabel(membersWithoutUser[0], false)}, ${getUserLabel(membersWithoutUser[1], false)}, ` +
-                    this.translationService.instant('artemisApp.conversationsLayout.others', { count: members.length - 2 })
+                    this.translationService.instant('artemisApp.conversationsLayout.others', { count: membersWithoutUser.length - 2 })
                 );
             }
         } else {

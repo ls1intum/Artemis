@@ -41,7 +41,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
 
     private static final String TEST_PREFIX = "progexserviceintegration";
 
-    private static final String BASE_RESOURCE = "/api/programming-exercises/";
+    private static final String BASE_RESOURCE = "/api/programming-exercises";
 
     @Autowired
     ProgrammingExerciseService programmingExerciseService;
