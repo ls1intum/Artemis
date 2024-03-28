@@ -418,7 +418,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        this.modelingAssessmentService.saveAssessment(this.result!.id!, [], this.submission!.id!, true).subscribe({
+        this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, true).subscribe({
             next: (result: Result) => {
                 result.participation!.results = [result];
                 this.result = result;
