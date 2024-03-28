@@ -105,8 +105,14 @@ public interface StructuralElement {
      * @return The parameter source code
      */
     default String generateParametersString(List<String> parameterTypes, JavaExecutable javaExecutable) {
-        List<JavaParameter> solutionParameters = javaExecutable != null ? javaExecutable.getParameters() : Collections.emptyList();
-        String result = "(";
+        List<JavaParameter> solutionParameters;
+        if (javaExecutable != null) {
+            solutionParameters = javaExecutable.getParameters();
+        }
+        else {
+            solutionParameters = Collections.emptyList();
+        }
+        final StringBuilder result = new StringBuilder("(");
         if (parameterTypes != null) {
             for (int i = 0; i < parameterTypes.size(); i++) {
                 if (solutionParameters.size() > i) {
@@ -118,9 +124,10 @@ public interface StructuralElement {
                     parameterTypes.set(i, parameterTypes.get(i) + " var" + i);
                 }
             }
-            result += String.join(", ", parameterTypes);
+
+            result.append(String.join(", ", parameterTypes));
         }
-        result += ")";
-        return result;
+        result.append(")");
+        return result.toString();
     }
 }

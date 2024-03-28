@@ -31,30 +31,39 @@ class StructuralMethod implements StructuralElement {
     @Override
     public String getSourceCode(StructuralClassElements structuralClassElements, JavaClass solutionClass) {
         JavaMethod solutionMethod = getSolutionMethod(solutionClass);
-        String methodSolutionCode = "";
+        StringBuilder methodSolutionCode = new StringBuilder();
         boolean isAbstract = this.getModifiers().contains("abstract");
 
         if (!this.getAnnotations().isEmpty()) {
-            methodSolutionCode += getAnnotationsString(this.getAnnotations(), solutionMethod);
+            methodSolutionCode.append(getAnnotationsString(this.getAnnotations(), solutionMethod));
         }
 
-        methodSolutionCode += formatModifiers(structuralClassElements, isAbstract);
+        methodSolutionCode.append(formatModifiers(structuralClassElements, isAbstract));
 
         // Generics
         if (solutionMethod != null && !solutionMethod.getTypeParameters().isEmpty()) {
-            methodSolutionCode += getGenericTypesString(solutionMethod.getTypeParameters()) + " ";
+            methodSolutionCode.append(getGenericTypesString(solutionMethod.getTypeParameters())).append(" ");
         }
 
         // Return type
-        methodSolutionCode += solutionMethod != null ? solutionMethod.getReturnType().getGenericValue() + " " : this.getReturnType() + " ";
-        // Name
-        methodSolutionCode += this.getName();
-        // Parameters
-        methodSolutionCode += generateParametersString(this.getParameters(), solutionMethod);
-        // Body
-        methodSolutionCode += isAbstract ? ";" : " {\n" + SINGLE_INDENTATION + "\n}";
+        if (solutionMethod != null) {
+            methodSolutionCode.append(solutionMethod.getReturnType().getGenericValue());
+        }
+        else {
+            methodSolutionCode.append(this.getReturnType());
+        }
+        methodSolutionCode.append(" ").append(this.getName()) // Name
+                .append(generateParametersString(this.getParameters(), solutionMethod)); // Parameters
 
-        return methodSolutionCode;
+        // Body
+        if (isAbstract) {
+            methodSolutionCode.append(";");
+        }
+        else {
+            methodSolutionCode.append(" {\n").append(SINGLE_INDENTATION).append("\n}");
+        }
+
+        return methodSolutionCode.toString();
     }
 
     /**
@@ -102,39 +111,19 @@ class StructuralMethod implements StructuralElement {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public List<String> getModifiers() {
         return modifiers;
-    }
-
-    public void setModifiers(List<String> modifiers) {
-        this.modifiers = modifiers;
     }
 
     public List<String> getParameters() {
         return parameters;
     }
 
-    public void setParameters(List<String> parameters) {
-        this.parameters = parameters;
-    }
-
     public List<String> getAnnotations() {
         return annotations;
     }
 
-    public void setAnnotations(List<String> annotations) {
-        this.annotations = annotations;
-    }
-
     public String getReturnType() {
         return returnType;
-    }
-
-    public void setReturnType(String returnType) {
-        this.returnType = returnType;
     }
 }

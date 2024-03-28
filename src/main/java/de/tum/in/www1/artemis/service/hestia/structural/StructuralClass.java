@@ -22,7 +22,7 @@ class StructuralClass implements StructuralElement {
 
     private String superclass;
 
-    private List<String> modifiers = new ArrayList<>();
+    private final List<String> modifiers = new ArrayList<>();
 
     @JsonProperty(defaultValue = "false")
     private boolean isInterface;
@@ -30,116 +30,91 @@ class StructuralClass implements StructuralElement {
     @JsonProperty(defaultValue = "false")
     private boolean isEnum;
 
-    private List<String> interfaces = new ArrayList<>();
+    private final List<String> interfaces = new ArrayList<>();
 
-    private List<String> annotations = new ArrayList<>();
+    private final List<String> annotations = new ArrayList<>();
 
     @Override
     public String getSourceCode(StructuralClassElements structuralClassElements, JavaClass solutionClass) {
-        String classSolutionCode = "package " + this.getPackageName() + ";\n\n";
+        StringBuilder classSolutionCode = new StringBuilder("package ").append(this.getPackageName()).append(";\n\n");
 
         if (!this.getAnnotations().isEmpty()) {
-            classSolutionCode += getAnnotationsString(this.getAnnotations(), solutionClass);
+            classSolutionCode.append(getAnnotationsString(this.getAnnotations(), solutionClass));
         }
-        classSolutionCode += getClassHeaderCode(solutionClass);
-        // Class Body
-        classSolutionCode += "{\n";
-        classSolutionCode += SINGLE_INDENTATION;
+        classSolutionCode.append(getClassHeaderCode(solutionClass)).append("{\n").append(SINGLE_INDENTATION);  // Class Body
         if (this.isEnum()) {
-            classSolutionCode += String.join(", ", structuralClassElements.getEnumValues());
+            classSolutionCode.append(String.join(", ", structuralClassElements.getEnumValues()));
         }
-        classSolutionCode += "\n}";
+        classSolutionCode.append("\n}");
 
-        return classSolutionCode;
+        return classSolutionCode.toString();
     }
 
     private String getClassHeaderCode(JavaClass solutionClass) {
-        String classHeaderCode = "";
+        StringBuilder classHeaderCode = new StringBuilder();
         if (!this.getModifiers().isEmpty()) {
-            classHeaderCode += formatModifiers(this.getModifiers()) + " ";
+            classHeaderCode.append(formatModifiers(this.getModifiers())).append(" ");
         }
-        classHeaderCode += (this.isInterface() ? "interface" : (this.isEnum() ? "enum" : "class")) + " ";
-        classHeaderCode += this.getName();
+
+        if (this.isInterface) {
+            classHeaderCode.append("interface ");
+        }
+        else if (this.isEnum) {
+            classHeaderCode.append("enum ");
+        }
+        else {
+            classHeaderCode.append("class ");
+        }
+        classHeaderCode.append(this.getName());
+
         if (solutionClass != null && !solutionClass.getTypeParameters().isEmpty()) {
-            classHeaderCode += getGenericTypesString(solutionClass.getTypeParameters());
+            classHeaderCode.append(getGenericTypesString(solutionClass.getTypeParameters()));
         }
-        classHeaderCode += " ";
-        classHeaderCode += getInheritanceCode();
-        return classHeaderCode;
+        classHeaderCode.append(" ");
+        classHeaderCode.append(getInheritanceCode());
+        return classHeaderCode.toString();
     }
 
     private String getInheritanceCode() {
-        String inheritanceCode = "";
+        StringBuilder inheritanceCode = new StringBuilder();
         if (this.getSuperclass() != null) {
-            inheritanceCode += "extends " + this.getSuperclass() + " ";
+            inheritanceCode.append("extends ").append(this.getSuperclass()).append(" ");
         }
         if (!this.getInterfaces().isEmpty()) {
-            inheritanceCode += "implements " + String.join(", ", this.getInterfaces()) + " ";
+            inheritanceCode.append("implements ").append(String.join(", ", this.getInterfaces())).append(" ");
         }
-        return inheritanceCode;
+        return inheritanceCode.toString();
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public String getSuperclass() {
+        return superclass;
     }
 
     public String getPackageName() {
         return packageName;
     }
 
-    public void setPackageName(String packageName) {
-        this.packageName = packageName;
-    }
-
-    public String getSuperclass() {
-        return superclass;
-    }
-
-    public void setSuperclass(String superclass) {
-        this.superclass = superclass;
-    }
-
     public boolean isInterface() {
         return isInterface;
-    }
-
-    public void setIsInterface(boolean anInterface) {
-        isInterface = anInterface;
     }
 
     public boolean isEnum() {
         return isEnum;
     }
 
-    public void setIsEnum(boolean anEnum) {
-        isEnum = anEnum;
-    }
-
     public List<String> getInterfaces() {
         return interfaces;
-    }
-
-    public void setInterfaces(List<String> interfaces) {
-        this.interfaces = interfaces;
     }
 
     public List<String> getModifiers() {
         return modifiers;
     }
 
-    public void setModifiers(List<String> modifiers) {
-        this.modifiers = modifiers;
-    }
-
     public List<String> getAnnotations() {
         return annotations;
-    }
-
-    public void setAnnotations(List<String> annotations) {
-        this.annotations = annotations;
     }
 }

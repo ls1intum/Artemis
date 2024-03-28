@@ -14,26 +14,25 @@ import com.thoughtworks.qdox.model.JavaConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 class StructuralConstructor implements StructuralElement {
 
-    private List<String> modifiers = new ArrayList<>();
+    private final List<String> modifiers = new ArrayList<>();
 
-    private List<String> parameters = new ArrayList<>();
+    private final List<String> parameters = new ArrayList<>();
 
-    private List<String> annotations = new ArrayList<>();
+    private final List<String> annotations = new ArrayList<>();
 
     @Override
     public String getSourceCode(StructuralClassElements structuralClassElements, JavaClass solutionClass) {
         JavaConstructor solutionConstructor = getSolutionConstructor(solutionClass);
-        String constructorSolutionCode = "";
+        StringBuilder constructorSolutionCode = new StringBuilder();
         if (!this.getAnnotations().isEmpty()) {
-            constructorSolutionCode += getAnnotationsString(this.getAnnotations(), solutionConstructor);
+            constructorSolutionCode.append(getAnnotationsString(this.getAnnotations(), solutionConstructor));
         }
         if (!this.getModifiers().isEmpty()) {
-            constructorSolutionCode += formatModifiers(this.getModifiers()) + " ";
+            constructorSolutionCode.append(formatModifiers(this.getModifiers())).append(" ");
         }
-        constructorSolutionCode += structuralClassElements.getStructuralClass().getName();
-        constructorSolutionCode += generateParametersString(this.getParameters(), solutionConstructor) + " ";
-        constructorSolutionCode += "{\n" + SINGLE_INDENTATION + "\n}";
-        return constructorSolutionCode;
+        constructorSolutionCode.append(structuralClassElements.getStructuralClass().getName()).append(generateParametersString(this.getParameters(), solutionConstructor))
+                .append(" {\n").append(SINGLE_INDENTATION).append("\n}");
+        return constructorSolutionCode.toString();
     }
 
     /**
@@ -55,23 +54,11 @@ class StructuralConstructor implements StructuralElement {
         return modifiers;
     }
 
-    public void setModifiers(List<String> modifiers) {
-        this.modifiers = modifiers;
-    }
-
     public List<String> getParameters() {
         return parameters;
     }
 
-    public void setParameters(List<String> parameters) {
-        this.parameters = parameters;
-    }
-
     public List<String> getAnnotations() {
         return annotations;
-    }
-
-    public void setAnnotations(List<String> annotations) {
-        this.annotations = annotations;
     }
 }

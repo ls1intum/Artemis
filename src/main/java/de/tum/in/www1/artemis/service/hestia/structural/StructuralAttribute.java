@@ -21,59 +21,50 @@ class StructuralAttribute implements StructuralElement {
     @JsonProperty(required = true)
     private String type;
 
-    private List<String> modifiers = new ArrayList<>();
+    private final List<String> modifiers = new ArrayList<>();
 
-    private List<String> annotations = new ArrayList<>();
+    private final List<String> annotations = new ArrayList<>();
 
     @Override
     public String getSourceCode(StructuralClassElements structuralClassElements, JavaClass solutionClass) {
         JavaField solutionAttribute = getSolutionAttribute(solutionClass);
-        String attributeCode = "";
+        StringBuilder attributeCode = new StringBuilder();
         if (!this.getAnnotations().isEmpty()) {
-            attributeCode += getAnnotationsString(this.getAnnotations(), solutionAttribute);
+            attributeCode.append(getAnnotationsString(this.getAnnotations(), solutionAttribute));
         }
         if (!this.getModifiers().isEmpty()) {
-            attributeCode += formatModifiers(this.getModifiers()) + " ";
+            attributeCode.append(formatModifiers(this.getModifiers())).append(" ");
         }
-        attributeCode += (solutionAttribute == null ? this.getType() : solutionAttribute.getType().getGenericValue()) + " ";
-        attributeCode += this.getName();
-        attributeCode += ";";
-        return attributeCode;
+        if (solutionAttribute != null) {
+            attributeCode.append(solutionAttribute.getType().getGenericValue());
+        }
+        else {
+            attributeCode.append(this.getType());
+        }
+        attributeCode.append(" ").append(this.getName()).append(";");
+        return attributeCode.toString();
     }
 
     private JavaField getSolutionAttribute(JavaClass solutionClass) {
-        return solutionClass == null ? null : solutionClass.getFields().stream().filter(field -> field.getName().equals(this.getName())).findFirst().orElse(null);
+        if (solutionClass == null) {
+            return null;
+        }
+        return solutionClass.getFields().stream().filter(field -> field.getName().equals(this.getName())).findFirst().orElse(null);
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public List<String> getModifiers() {
         return modifiers;
-    }
-
-    public void setModifiers(List<String> modifiers) {
-        this.modifiers = modifiers;
     }
 
     public String getType() {
         return type;
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
     public List<String> getAnnotations() {
         return annotations;
-    }
-
-    public void setAnnotations(List<String> annotations) {
-        this.annotations = annotations;
     }
 }
