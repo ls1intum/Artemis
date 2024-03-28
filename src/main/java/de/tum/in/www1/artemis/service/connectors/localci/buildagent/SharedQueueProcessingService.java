@@ -24,7 +24,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
@@ -51,6 +50,8 @@ public class SharedQueueProcessingService {
      */
     private FencedLock sharedLock;
 
+    private FencedLock buildAgentUpdateLock;
+
     private IQueue<LocalCIBuildJobQueueItem> queue;
 
     private IQueue<ResultQueueItem> resultQueue;
@@ -70,7 +71,6 @@ public class SharedQueueProcessingService {
     /**
      * Lock for operations to update build agent.
      */
-    private final ReentrantLock updateAgentLock = new ReentrantLock();
 
     private UUID listenerId;
 
@@ -88,6 +88,7 @@ public class SharedQueueProcessingService {
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
+        this.buildAgentUpdateLock = this.hazelcastInstance.getCPSubsystem().getLock("buildAgentUpdateLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
         this.listenerId = this.queue.addItemListener(new SharedQueueProcessingService.QueuedBuildJobItemListener(), true);
@@ -184,38 +185,53 @@ public class SharedQueueProcessingService {
     }
 
     private void updateLocalBuildAgentInformation() {
+        updateLocalBuildAgentInformationWithRecentJob(null);
+    }
+
+    private void updateLocalBuildAgentInformationWithRecentJob(LocalCIBuildJobQueueItem recentBuildJob) {
         try {
-            updateAgentLock.lock();
+            buildAgentUpdateLock.lock();
             // Add/update
-            String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-            List<LocalCIBuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
-            int numberOfCurrentBuildJobs = processingJobsOfMember.size();
-            int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
-            boolean active = numberOfCurrentBuildJobs > 0;
-            LocalCIBuildAgentInformation agent = buildAgentInformation.get(memberAddress);
-            List<LocalCIBuildJobQueueItem> recentBuildJobs;
-            if (agent != null) {
-                recentBuildJobs = agent.recentBuildJobs();
-            }
-            else {
-                recentBuildJobs = new ArrayList<>();
-            }
-            LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember,
-                    active, recentBuildJobs);
+            LocalCIBuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob);
             try {
-                buildAgentInformation.lock(memberAddress);
-                buildAgentInformation.put(memberAddress, info);
+                buildAgentInformation.lock(info.name());
+                buildAgentInformation.put(info.name(), info);
             }
             catch (Exception e) {
-                log.error("Error while updating build agent information for agent {}", memberAddress, e);
+                log.error("Error while updating build agent information for agent {}", info.name(), e);
             }
             finally {
-                buildAgentInformation.unlock(memberAddress);
+                buildAgentInformation.unlock(info.name());
             }
         }
         finally {
-            updateAgentLock.unlock();
+            buildAgentUpdateLock.unlock();
         }
+    }
+
+    private LocalCIBuildAgentInformation getUpdatedLocalBuildAgentInformation(LocalCIBuildJobQueueItem recentBuildJob) {
+        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        List<LocalCIBuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
+        int numberOfCurrentBuildJobs = processingJobsOfMember.size();
+        int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
+        boolean active = numberOfCurrentBuildJobs > 0;
+        LocalCIBuildAgentInformation agent = buildAgentInformation.get(memberAddress);
+        List<LocalCIBuildJobQueueItem> recentBuildJobs;
+        if (agent != null) {
+            recentBuildJobs = agent.recentBuildJobs();
+        }
+        else {
+            recentBuildJobs = new ArrayList<>();
+        }
+        // TODO: Make this number configurable
+        if (recentBuildJob != null) {
+            if (recentBuildJobs.size() >= 20) {
+                recentBuildJobs.remove(0);
+            }
+            recentBuildJobs.add(recentBuildJob);
+        }
+
+        return new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active, recentBuildJobs);
     }
 
     private List<LocalCIBuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
@@ -261,7 +277,7 @@ public class SharedQueueProcessingService {
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            addToRecentBuildJobs(finishedJob);
+            updateLocalBuildAgentInformationWithRecentJob(finishedJob);
 
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
@@ -288,82 +304,11 @@ public class SharedQueueProcessingService {
 
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            addToRecentBuildJobs(job);
+            updateLocalBuildAgentInformationWithRecentJob(job);
 
             checkAvailabilityAndProcessNextBuild();
             return null;
         });
-    }
-
-    /**
-     * Add a build job to the list of recent build jobs. Only the last 20 build jobs are needed.
-     * TODO: make the number configurable
-     *
-     * @param buildJob The build job to add to the list of recent build jobs
-     */
-    private void addToRecentBuildJobs(LocalCIBuildJobQueueItem buildJob) {
-        try {
-            updateAgentLock.lock();
-            String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-            LocalCIBuildAgentInformation agent = buildAgentInformation.get(memberAddress);
-            if (agent != null) {
-                List<LocalCIBuildJobQueueItem> recentBuildJobs = agent.recentBuildJobs();
-                if (recentBuildJobs.size() >= 20) {
-                    recentBuildJobs.remove(0);
-                }
-                recentBuildJobs.add(buildJob);
-                try {
-                    buildAgentInformation.lock(memberAddress);
-                    buildAgentInformation.put(memberAddress, new LocalCIBuildAgentInformation(agent, recentBuildJobs));
-                }
-                catch (Exception e) {
-                    log.error("Error while updating recent build jobs for agent {}", memberAddress, e);
-                }
-                finally {
-                    buildAgentInformation.unlock(memberAddress);
-                }
-            }
-        }
-        finally {
-            updateAgentLock.unlock();
-            updateLocalBuildAgentInformation();
-        }
-    }
-
-    /**
-     * Adds the given result to the recent build jobs of the build agent that processed the build job.
-     *
-     * @param buildJob the build job
-     * @param result   the result of the build job
-     */
-    public void addResultToBuildAgentsRecentBuildJobs(LocalCIBuildJobQueueItem buildJob, Result result) {
-        try {
-            updateAgentLock.lock();
-            String memberAddress = buildJob.buildAgentAddress();
-            LocalCIBuildAgentInformation buildAgent = buildAgentInformation.get(memberAddress);
-            if (buildAgent != null) {
-                List<LocalCIBuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
-                for (int i = 0; i < recentBuildJobs.size(); i++) {
-                    if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
-                        recentBuildJobs.set(i, new LocalCIBuildJobQueueItem(buildJob, result));
-                        break;
-                    }
-                }
-                try {
-                    buildAgentInformation.lock(memberAddress);
-                    buildAgentInformation.put(memberAddress, new LocalCIBuildAgentInformation(buildAgent, recentBuildJobs));
-                }
-                catch (Exception e) {
-                    log.error("Error while updating build agent information for agent {}", memberAddress, e);
-                }
-                finally {
-                    buildAgentInformation.unlock(memberAddress);
-                }
-            }
-        }
-        finally {
-            updateAgentLock.unlock();
-        }
     }
 
     /**
