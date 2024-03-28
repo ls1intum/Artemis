@@ -71,16 +71,20 @@ public class BuildJobExecutionService {
 
     private final GitService gitService;
 
+    private final LocalCIDockerService localCIDockerService;
+
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, XMLInputFactory localCIXMLInputFactory, GitService gitService) {
+    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, XMLInputFactory localCIXMLInputFactory, GitService gitService,
+            LocalCIDockerService localCIDockerService) {
         this.buildJobContainerService = buildJobContainerService;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
         this.gitService = gitService;
+        this.localCIDockerService = localCIDockerService;
     }
 
     /**
@@ -96,6 +100,14 @@ public class BuildJobExecutionService {
      * @throws LocalCIException If some error occurs while preparing or running the build job.
      */
     public LocalCIBuildResult runBuildJob(LocalCIBuildJobQueueItem buildJob, String containerName) {
+
+        // Check if the Docker image is available. If not, pull it.
+        try {
+            localCIDockerService.pullDockerImage(buildJob.buildConfig().dockerImage());
+        }
+        catch (LocalCIException e) {
+            throw new LocalCIException("Could not pull Docker image " + buildJob.buildConfig().dockerImage(), e);
+        }
 
         boolean isPushToTestOrAuxRepository = buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.TESTS
                 || buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.AUXILIARY;
