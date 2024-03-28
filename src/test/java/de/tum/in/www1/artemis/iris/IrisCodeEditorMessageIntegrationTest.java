@@ -108,15 +108,11 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetMessages() throws Exception {
         var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
-        IrisMessage message1 = createDefaultMockMessage(irisSession);
-        IrisMessage message2 = createDefaultMockMessage(irisSession);
-        IrisMessage message3 = createDefaultMockMessage(irisSession);
-        IrisMessage message4 = createDefaultMockMessage(irisSession);
 
-        message1 = irisMessageService.saveMessage(message1, irisSession, IrisMessageSender.USER);
-        message2 = irisMessageService.saveMessage(message2, irisSession, IrisMessageSender.LLM);
-        message3 = irisMessageService.saveMessage(message3, irisSession, IrisMessageSender.USER);
-        message4 = irisMessageService.saveMessage(message4, irisSession, IrisMessageSender.LLM);
+        IrisMessage message1 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.USER);
+        IrisMessage message2 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.LLM);
+        IrisMessage message3 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.USER);
+        IrisMessage message4 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.LLM);
 
         var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
         assertThat(messages).hasSize(4).containsAll(List.of(message1, message2, message3, message4));
@@ -287,9 +283,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         String randomNoun = nouns[rdm.nextInt(nouns.length)];
 
         var text = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
-        var content = new IrisTextMessageContent(text);
-        content.setId(rdm.nextLong());
-        return content;
+        return new IrisTextMessageContent(text);
     }
 
     private IrisExercisePlan createMockExercisePlanContent() {
@@ -302,7 +296,6 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 new IrisExercisePlanStep(ExerciseComponent.TEST_REPOSITORY, "I will edit the test repository.")
         ));
         // @formatter:on
-        content.setId(ThreadLocalRandom.current().nextLong());
         return content;
     }
 

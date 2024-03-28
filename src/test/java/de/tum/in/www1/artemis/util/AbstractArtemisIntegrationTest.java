@@ -6,7 +6,7 @@ import static org.mockito.Mockito.doReturn;
 
 import java.util.*;
 
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
