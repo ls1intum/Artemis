@@ -380,7 +380,7 @@ public class ParticipationResource {
 
         var studentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
         var result = studentParticipation.findLatestLegalResult();
-        if (result == null || result.getScore() < 100) {
+        if (result == null) {
             throw new BadRequestAlertException("User has not reached the conditions to submit a feedback request", "participation", "preconditions not met");
         }
 

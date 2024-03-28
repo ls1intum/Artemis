@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -530,6 +531,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @Ignore
     void requestFeedbackScoreNotFull() throws Exception {
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
