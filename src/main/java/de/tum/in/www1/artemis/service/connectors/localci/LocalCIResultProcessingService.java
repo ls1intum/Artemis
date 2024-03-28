@@ -1,10 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.annotation.PostConstruct;
 
@@ -18,7 +16,6 @@ import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
-import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.Result;
@@ -31,7 +28,7 @@ import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
+import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultQueueItem;
@@ -63,20 +60,15 @@ public class LocalCIResultProcessingService {
 
     private IQueue<ResultQueueItem> resultQueue;
 
-    private IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
+    private final SharedQueueProcessingService sharedQueueManagementService;
 
     private FencedLock lock;
 
     private UUID listenerId;
 
-    /**
-     * Lock for operations to update build agent.
-     */
-    private final ReentrantLock updateAgentLock = new ReentrantLock();
-
     public LocalCIResultProcessingService(HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService) {
+            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, SharedQueueProcessingService sharedQueueManagementService) {
         this.hazelcastInstance = hazelcastInstance;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
@@ -84,12 +76,12 @@ public class LocalCIResultProcessingService {
         this.programmingMessagingService = programmingMessagingService;
         this.buildJobRepository = buildJobRepository;
         this.programmingTriggerService = programmingTriggerService;
+        this.sharedQueueManagementService = sharedQueueManagementService;
     }
 
     @PostConstruct
     public void init() {
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
-        this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.lock = this.hazelcastInstance.getCPSubsystem().getLock("resultQueueLock");
         this.listenerId = resultQueue.addItemListener(new ResultQueueListener(), true);
     }
@@ -132,7 +124,7 @@ public class LocalCIResultProcessingService {
 
                 if (result != null) {
                     programmingMessagingService.notifyUserAboutNewResult(result, participation);
-                    addResultToBuildAgentsRecentBuildJobs(buildJob, result);
+                    sharedQueueManagementService.addResultToBuildAgentsRecentBuildJobs(buildJob, result);
                 }
                 else {
                     programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
@@ -185,42 +177,6 @@ public class LocalCIResultProcessingService {
                 // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
                 log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
             }
-        }
-    }
-
-    /**
-     * Adds the given result to the recent build jobs of the build agent that processed the build job.
-     *
-     * @param buildJob the build job
-     * @param result   the result of the build job
-     */
-    private void addResultToBuildAgentsRecentBuildJobs(LocalCIBuildJobQueueItem buildJob, Result result) {
-        try {
-            updateAgentLock.lock();
-            String memberAddress = buildJob.buildAgentAddress();
-            LocalCIBuildAgentInformation buildAgent = buildAgentInformation.get(memberAddress);
-            if (buildAgent != null) {
-                List<LocalCIBuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
-                for (int i = 0; i < recentBuildJobs.size(); i++) {
-                    if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
-                        recentBuildJobs.set(i, new LocalCIBuildJobQueueItem(buildJob, result));
-                        break;
-                    }
-                }
-                try {
-                    buildAgentInformation.lock(memberAddress);
-                    buildAgentInformation.put(memberAddress, new LocalCIBuildAgentInformation(buildAgent, recentBuildJobs));
-                }
-                catch (Exception e) {
-                    log.error("Error while updating build agent information for agent {}", memberAddress, e);
-                }
-                finally {
-                    buildAgentInformation.unlock(memberAddress);
-                }
-            }
-        }
-        finally {
-            updateAgentLock.unlock();
         }
     }
 

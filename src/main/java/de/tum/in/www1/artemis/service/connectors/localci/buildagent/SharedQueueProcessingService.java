@@ -24,6 +24,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
@@ -326,6 +327,42 @@ public class SharedQueueProcessingService {
         finally {
             updateAgentLock.unlock();
             updateLocalBuildAgentInformation();
+        }
+    }
+
+    /**
+     * Adds the given result to the recent build jobs of the build agent that processed the build job.
+     *
+     * @param buildJob the build job
+     * @param result   the result of the build job
+     */
+    public void addResultToBuildAgentsRecentBuildJobs(LocalCIBuildJobQueueItem buildJob, Result result) {
+        try {
+            updateAgentLock.lock();
+            String memberAddress = buildJob.buildAgentAddress();
+            LocalCIBuildAgentInformation buildAgent = buildAgentInformation.get(memberAddress);
+            if (buildAgent != null) {
+                List<LocalCIBuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
+                for (int i = 0; i < recentBuildJobs.size(); i++) {
+                    if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
+                        recentBuildJobs.set(i, new LocalCIBuildJobQueueItem(buildJob, result));
+                        break;
+                    }
+                }
+                try {
+                    buildAgentInformation.lock(memberAddress);
+                    buildAgentInformation.put(memberAddress, new LocalCIBuildAgentInformation(buildAgent, recentBuildJobs));
+                }
+                catch (Exception e) {
+                    log.error("Error while updating build agent information for agent {}", memberAddress, e);
+                }
+                finally {
+                    buildAgentInformation.unlock(memberAddress);
+                }
+            }
+        }
+        finally {
+            updateAgentLock.unlock();
         }
     }
 
