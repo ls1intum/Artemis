@@ -113,6 +113,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * EntityNotFoundException if no submission could be found for the given id.
      *
      * @param submissionId the id of the submission that should be loaded from the database
+     * @param exerciseId   the id of the exercise that should be loaded from the database
      * @return the file upload submission with the given id
      */
     @NotNull
