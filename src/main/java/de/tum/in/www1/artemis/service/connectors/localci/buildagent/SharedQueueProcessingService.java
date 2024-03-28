@@ -66,10 +66,6 @@ public class SharedQueueProcessingService {
      */
     private final ReentrantLock instanceLock = new ReentrantLock();
 
-    /**
-     * Lock for operations to update build agent.
-     */
-
     private UUID listenerId;
 
     public SharedQueueProcessingService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService, BuildJobManagementService buildJobManagementService) {
