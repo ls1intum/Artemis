@@ -13,11 +13,13 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
 import { Submission } from 'app/entities/submission.model';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { SubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { SubmissionPatchPayload } from 'app/entities/submission-patch-payload.model';
+import { SubmissionPatch } from 'app/entities/submission-patch.model';
 
 describe('Team Submission Sync Component', () => {
     let fixture: ComponentFixture<TeamSubmissionSyncComponent>;
@@ -97,5 +99,35 @@ describe('Team Submission Sync Component', () => {
         expect(textSubmissionWithParticipation?.participation?.submissions).toBeEmpty();
         expect(websocketSendSpy).toHaveBeenCalledOnce();
         expect(websocketSendSpy).toHaveBeenCalledWith(expectedWebsocketTopic + '/update', textSubmissionWithParticipation);
+    });
+
+    it('should handle submission patch payloads.', () => {
+        const mockEmitter = new Subject<SubmissionPatchPayload>();
+        const receiver = jest.fn();
+        jest.spyOn(websocketService, 'receive').mockReturnValue(mockEmitter);
+
+        component.ngOnInit();
+        component.receiveSubmissionPatch.subscribe(receiver);
+
+        mockEmitter.next({
+            submissionPatch: { patch: [{ op: 'replace', path: '/text', value: 'new text' }] },
+            sender: currentUser.login!,
+        });
+
+        expect(receiver).toHaveBeenCalledWith({ patch: [{ op: 'replace', path: '/text', value: 'new text' }] });
+    });
+
+    it('should properly send submission patches.', () => {
+        const sendSpy = jest.spyOn(websocketService, 'send');
+        jest.spyOn(websocketService, 'receive').mockReturnValue(of());
+        const mockEmitter = new Subject<SubmissionPatch>();
+
+        component.submissionPatchObservable = mockEmitter;
+        component.ngOnInit();
+
+        const expectedTopic = '/topic/participations/3/team/text-submissions/patch';
+        const patch: SubmissionPatch = { patch: [{ op: 'replace', path: '/text', value: 'new text' }] };
+        mockEmitter.next(patch);
+        expect(sendSpy).toHaveBeenCalledWith(expectedTopic, patch);
     });
 });
