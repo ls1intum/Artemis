@@ -476,8 +476,8 @@
                                                         >{{ 'artemisApp.examManagement.checklist.textitems.exercisesAttention' | artemisTranslate }}:</span
                                                     >
                                                     <div style="margin-left: 20px">
-                                                        @for (assessment of assessmentsWithDetails; track assessment; let lastAssessment = $last) {
-                                                            <a [routerLink]="assessment.details.url">{{ assessment.details.title }}</a>
+                                                        @for (assessment of unfinishedAssessments; track assessment; let lastAssessment = $last) {
+                                                            <a [routerLink]="getAssessmentLinkBySubmission(assessment)">{{ getAssessmentTitle(assessment) }}</a>
                                                             @if (!lastAssessment) {
                                                                 ,
                                                             }

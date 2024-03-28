@@ -105,7 +105,7 @@
                 <hr />
                 @if (exam?.course?.isAtLeastInstructor) {
                     <div>
-                        <jhi-exam-checklist [getExamRoutesByIdentifier]="getExamRoutesByIdentifier" [exam]="exam" />
+                        <jhi-exam-checklist [getExamRoutesByIdentifier]="getExamRoutesByIdentifier" [exam]="exam" [getAssessmentLinkBySubmission]="getAssessmentLinkBySubmission" />
                     </div>
                 }
                 @if (examDetailSections) {

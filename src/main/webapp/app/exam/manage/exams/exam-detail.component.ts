@@ -17,6 +17,8 @@ import { GradeType } from 'app/entities/grading-scale.model';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { Submission } from 'app/entities/submission.model';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -159,5 +161,18 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
+    }
+
+    /**
+     * Generates and returns the link that leads to the assessment editor
+     * @param submission Either submission or 'new'
+     */
+    getAssessmentLinkBySubmission(submission: Submission): string[] {
+        const exerciseType = submission.participation?.exercise?.type;
+        const exerciseId = submission.participation?.exercise?.id;
+        const participationId = submission.participation?.id;
+        const exerciseGroupId = submission.participation?.exercise?.exerciseGroup?.id;
+
+        return getLinkToSubmissionAssessment(exerciseType!, this.exam.course?.id!, exerciseId!, participationId, submission.id!, this.exam.id!, exerciseGroupId);
     }
 }
