@@ -84,7 +84,7 @@
                     </div>
                 }
 
-                @if (showScoreChart && result.participation?.exercise) {
+                @if (result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && showScoreChart && result.participation?.exercise) {
                     <div class="result-score-chart">
                         <div id="feedback-chart" #containerRef class="chart-space">
                             <ngx-charts-bar-horizontal-stacked
@@ -130,7 +130,7 @@
 
                 <div class="d-flex justify-content-start m-1">
                     @if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
-                        <p jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip"></p>
+                        <p jhiTranslate="artemisApp.result.resultString.requestAutomaticFeedbackTooltip"></p>
                     }
                 </div>
 
