@@ -255,7 +255,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     /**
      * Show a set of feedbacks and feedback suggestions in the Apollon modeling editor
      * @param feedbacks The feedbacks to show in the editor
-     * @param feedbackSuggestions The feedback suggestions to show in the editor
      */
     private updateApollonEditorWithFeedback(feedbacks: Feedback[]): void {
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference);
