@@ -299,7 +299,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     /**
      * Get all courses that use one of the given management group names. Management group names are groups names for TA, editor or instructor groups.
      *
-     * @param managementGroupNames list of management group names
+     * @param userGroups list of management group names
      * @return a list of courses that use one of the given management group names
      */
     @Query("""
