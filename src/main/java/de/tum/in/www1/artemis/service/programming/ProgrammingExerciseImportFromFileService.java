@@ -107,7 +107,7 @@ public class ProgrammingExerciseImportFromFileService {
             importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName, user);
             importedProgrammingExercise.setCourse(course);
             // It doesn't make sense to import a build plan on a bamboo or local CI setup.
-            if (profileService.isGitlabCiOrJenkins()) {
+            if (profileService.isGitlabCiOrJenkinsActive()) {
                 importBuildPlanIfExisting(importedProgrammingExercise, pathToDirectoryWithImportedContent);
             }
         }

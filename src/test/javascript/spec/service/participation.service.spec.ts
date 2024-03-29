@@ -245,6 +245,24 @@ describe('Participation Service', () => {
         tick();
     }));
 
+    it('should get logs availability for participation results', fakeAsync(() => {
+        let resultGetLogsAvailability: any;
+        const logsAvailability: { [key: string]: boolean } = { '1': true, '2': false };
+        const returnedFromService = logsAvailability;
+        const expected = { ...returnedFromService };
+
+        service
+            .getLogsAvailabilityForResultsOfParticipation(1)
+            .pipe(take(1))
+            .subscribe((resp) => (resultGetLogsAvailability = resp));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(resultGetLogsAvailability).toEqual(expected);
+    }));
+
     it.each<any>([
         ['attachment; filename="FixArtifactDownload-Tests-1.0.jar"', 'FixArtifactDownload-Tests-1.0.jar'],
         ['', 'artifact'],

@@ -694,7 +694,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
         // Locking and unlocking repositories is not supported when using the local version control system.
         // Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
+        if (profileService.isLocalVcsCiActive()) {
             return ResponseEntity.badRequest().build();
         }
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -715,7 +715,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
         // Locking and unlocking repositories is not supported when using the local version control system.
         // Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
+        if (profileService.isLocalVcsCiActive()) {
             return ResponseEntity.badRequest().build();
         }
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -765,10 +765,6 @@ public class ProgrammingExerciseResource {
         if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
             continuousIntegrationService.orElseThrow().recreateBuildPlansForExercise(programmingExercise);
-            if (profileService.isLocalCi()) {
-                // recreating the build plans for the exercise means we need to store the updated exercise in the database
-                programmingExercise = programmingExerciseRepository.save(programmingExercise);
-            }
         }
 
         if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {

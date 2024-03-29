@@ -8,8 +8,8 @@ import java.util.concurrent.Executors;
 import java.util.function.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -766,7 +766,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable unlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
-        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepository,
+        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation,
                 participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
 
@@ -780,7 +780,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable unlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
-        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation,
+        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepository,
                 participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
 
