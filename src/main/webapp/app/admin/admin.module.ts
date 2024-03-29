@@ -40,6 +40,7 @@ import { StandardizedCompetencyManagementComponent } from 'app/admin/standardize
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
+import { UserImportModule } from 'app/shared/user-import/user-import.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 const ENTITY_STATES = [...adminState];
@@ -63,6 +64,7 @@ const ENTITY_STATES = [...adminState];
         ArtemisMarkdownEditorModule,
         ArtemisMarkdownModule,
         ArtemisCompetenciesModule,
+        UserImportModule,
         SubmissionResultStatusModule,
     ],
     declarations: [
