@@ -309,7 +309,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 OR c.editorGroupName IN :userGroups
                 OR c.instructorGroupName IN :userGroups
             """)
-    List<Course> findAllCoursesByManagementGroupNames(List<String> managementGroupNames);
+    List<Course> findAllCoursesByManagementGroupNames(@Param("userGroups") List<String> userGroups);
 
     /**
      * Get all courses that use one of the given management group names and are not ended yet or have no end date.
