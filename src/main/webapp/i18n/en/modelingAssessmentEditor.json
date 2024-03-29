@@ -25,7 +25,8 @@
                 "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again.",
                 "noConflicts": "Conflicts could not be loaded",
                 "conflictsResolved": "All conflicts have been processed.",
-                "feedbackTextTooLong": "Failed to save assessment. Feedback text must be no longer than 500 characters."
+                "feedbackTextTooLong": "Failed to save assessment. Feedback text must be no longer than 500 characters.",
+                "loadFeedbackSuggestionsFailed": "Retrieving automatically generated feedback suggestions failed."
             },
             "automaticAssessmentAvailable": "Congratulations! To save you some time, parts of this model were already assessed automatically. Please review the automatic assessment and assess the rest of the model afterwards. By submitting the assessment you also confirm the automatic assessment. Please be aware that you are responsible for the whole assessment.",
             "highlightingColors": {
