@@ -283,28 +283,54 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     /**
-     * Fetches the courses to display for the management overview
+     * Get all courses that are not ended yet or have no end date
      *
-     * @param now        ZonedDateTime of the current time. If an end date is set only courses before this time are returned. May be null to return all
-     * @param isAdmin    whether the user to fetch the courses for is an admin (which gets all courses)
-     * @param userGroups the user groups of the user to fetch the courses for (ignored if the user is an admin)
-     * @return a list of courses for the overview
+     * @param now the current time
+     * @return a list of courses that are not ended yet
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE c.endDate IS NULL
+                OR c.endDate >= CAST(:now AS timestamp)
+            """)
+    List<Course> findAllNotEnded(@Param("now") ZonedDateTime now);
+
+    /**
+     * Get all courses that use one of the given management group names. Management group names are groups names for TA, editor or instructor groups.
+     *
+     * @param managementGroupNames list of management group names
+     * @return a list of courses that use one of the given management group names
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE c.teachingAssistantGroupName IN :userGroups
+                OR c.editorGroupName IN :userGroups
+                OR c.instructorGroupName IN :userGroups
+            """)
+    List<Course> findAllCoursesByManagementGroupNames(List<String> managementGroupNames);
+
+    /**
+     * Get all courses that use one of the given management group names and are not ended yet or have no end date.
+     *
+     * @param now        the current time
+     * @param userGroups list of management group names
+     * @return a list of courses that use one of the given management group names and are not ended yet
      */
     @Query("""
             SELECT c
             FROM Course c
             WHERE (
                 c.endDate IS NULL
-                OR CAST(:now AS timestamp) IS NULL
                 OR c.endDate >= CAST(:now AS timestamp)
             ) AND (
-                :isAdmin = TRUE
-                OR c.teachingAssistantGroupName IN :userGroups
+                c.teachingAssistantGroupName IN :userGroups
                 OR c.editorGroupName IN :userGroups
                 OR c.instructorGroupName IN :userGroups
             )
             """)
-    List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
+    List<Course> findAllNotEndedCoursesByManagementGroupNames(@Param("now") ZonedDateTime now, @Param("userGroups") List<String> userGroups);
 
     /**
      * Counts the number of members of a course, i.e. users that are a member of the course's student, tutor, editor or instructor group.
