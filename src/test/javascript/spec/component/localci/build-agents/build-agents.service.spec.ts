@@ -7,7 +7,7 @@ import { BuildJob } from 'app/entities/build-job.model';
 import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { BuildAgent } from 'app/entities/build-agent.model';
-import { RepositoryInfo } from 'app/entities/repository-info.model';
+import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/build-config.model';
 
@@ -19,7 +19,7 @@ describe('BuildAgentsService', () => {
     const repositoryInfo: RepositoryInfo = {
         repositoryName: 'repo2',
         repositoryType: 'USER',
-        triggeredByPushTo: 'USER',
+        triggeredByPushTo: TriggeredByPushTo.USER,
         assignmentRepositoryUri: 'https://some.uri',
         testRepositoryUri: 'https://some.uri',
         solutionRepositoryUri: 'https://some.uri',

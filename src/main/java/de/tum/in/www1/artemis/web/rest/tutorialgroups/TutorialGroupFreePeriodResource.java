@@ -7,8 +7,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
 
-import javax.validation.Valid;
-import javax.ws.rs.BadRequestException;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +94,7 @@ public class TutorialGroupFreePeriodResource {
             @PathVariable Long tutorialGroupFreePeriodId, @RequestBody @Valid TutorialGroupFreePeriodDTO tutorialGroupFreePeriod) throws URISyntaxException {
         log.debug("REST request to update TutorialGroupFreePeriod: {} for tutorial group configuration: {} of course: {}", tutorialGroupFreePeriodId, tutorialGroupsConfigurationId,
                 courseId);
-        if (tutorialGroupFreePeriod.endDate.isBefore(tutorialGroupFreePeriod.startDate)) {
+        if (tutorialGroupFreePeriod.endDate().isBefore(tutorialGroupFreePeriod.startDate())) {
             throw new BadRequestException("The start date must be before the end date");
         }
         var existingFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
@@ -110,11 +110,11 @@ public class TutorialGroupFreePeriodResource {
         TutorialGroupFreePeriod updatedFreePeriod = new TutorialGroupFreePeriod();
         updatedFreePeriod.setId(existingFreePeriod.getId());
         updatedFreePeriod.setTutorialGroupsConfiguration(configuration);
-        updatedFreePeriod.setReason(tutorialGroupFreePeriod.reason);
+        updatedFreePeriod.setReason(tutorialGroupFreePeriod.reason());
         updatedFreePeriod.setStart(
-                interpretInTimeZone(tutorialGroupFreePeriod.startDate.toLocalDate(), tutorialGroupFreePeriod.startDate.toLocalTime(), configuration.getCourse().getTimeZone()));
-        updatedFreePeriod
-                .setEnd(interpretInTimeZone(tutorialGroupFreePeriod.endDate.toLocalDate(), tutorialGroupFreePeriod.endDate.toLocalTime(), configuration.getCourse().getTimeZone()));
+                interpretInTimeZone(tutorialGroupFreePeriod.startDate().toLocalDate(), tutorialGroupFreePeriod.startDate().toLocalTime(), configuration.getCourse().getTimeZone()));
+        updatedFreePeriod.setEnd(
+                interpretInTimeZone(tutorialGroupFreePeriod.endDate().toLocalDate(), tutorialGroupFreePeriod.endDate().toLocalTime(), configuration.getCourse().getTimeZone()));
         isValidTutorialGroupPeriod(updatedFreePeriod);
 
         // activate previously cancelled sessions
@@ -142,7 +142,7 @@ public class TutorialGroupFreePeriodResource {
             @RequestBody @Valid TutorialGroupFreePeriodDTO tutorialGroupFreePeriod) throws URISyntaxException {
         log.debug("REST request to create TutorialGroupFreePeriod: {} for tutorial group configuration: {} of course: {}", tutorialGroupFreePeriod, tutorialGroupsConfigurationId,
                 courseId);
-        if (tutorialGroupFreePeriod.endDate.isBefore(tutorialGroupFreePeriod.startDate)) {
+        if (tutorialGroupFreePeriod.endDate().isBefore(tutorialGroupFreePeriod.startDate())) {
             throw new BadRequestException("The start date must be before the end date");
         }
         TutorialGroupsConfiguration tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository
@@ -154,11 +154,11 @@ public class TutorialGroupFreePeriodResource {
 
         TutorialGroupFreePeriod newTutorialGroupFreePeriod = new TutorialGroupFreePeriod();
         newTutorialGroupFreePeriod.setTutorialGroupsConfiguration(tutorialGroupsConfiguration);
-        newTutorialGroupFreePeriod.setReason(tutorialGroupFreePeriod.reason);
+        newTutorialGroupFreePeriod.setReason(tutorialGroupFreePeriod.reason());
 
-        newTutorialGroupFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.startDate.toLocalDate(), tutorialGroupFreePeriod.startDate.toLocalTime(),
+        newTutorialGroupFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.startDate().toLocalDate(), tutorialGroupFreePeriod.startDate().toLocalTime(),
                 tutorialGroupsConfiguration.getCourse().getTimeZone()));
-        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.endDate.toLocalDate(), tutorialGroupFreePeriod.endDate.toLocalTime(),
+        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.endDate().toLocalDate(), tutorialGroupFreePeriod.endDate().toLocalTime(),
                 tutorialGroupsConfiguration.getCourse().getTimeZone()));
 
         checkEntityIdMatchesPathIds(newTutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
