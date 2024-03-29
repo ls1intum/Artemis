@@ -209,7 +209,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         return new Promise((resolve, reject) => {
             parse(csvFile, {
                 header: true,
-                transformHeader: (header: string) => header.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', ''),
+                transformHeader: (header) => String(header).toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', ''),
                 skipEmptyLines: true,
                 complete: (results) => resolve(results.data as CsvUser[]),
                 error: (error) => reject(error),
