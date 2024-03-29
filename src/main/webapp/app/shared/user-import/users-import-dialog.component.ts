@@ -14,6 +14,7 @@ import { parse } from 'papaparse';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { AdminUserService } from 'app/core/user/admin-user.service';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
@@ -41,10 +42,11 @@ export class UsersImportDialogComponent implements OnDestroy {
     @Input() exam: Exam | undefined;
     @Input() tutorialGroup: TutorialGroup | undefined;
     @Input() examUserMode: boolean;
+    @Input() adminUserMode: boolean;
 
     usersToImport: StudentDTO[] = [];
     examUsersToImport: ExamUserDTO[] = [];
-    notFoundUsers: StudentDTO[] = [];
+    notFoundUsers: Partial<StudentDTO>[] = [];
 
     isParsing = false;
     validationError?: string;
@@ -68,6 +70,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         private alertService: AlertService,
         private examManagementService: ExamManagementService,
         private courseManagementService: CourseManagementService,
+        private adminUserService: AdminUserService,
         private tutorialGroupService: TutorialGroupsService,
     ) {}
 
@@ -237,6 +240,21 @@ export class UsersImportDialogComponent implements OnDestroy {
                 next: (res) => this.onSaveSuccess(res),
                 error: () => this.onSaveError(),
             });
+        } else if (this.adminUserMode) {
+            // convert StudentDTO to User
+            const artemisUsers = this.usersToImport.map((student) => ({ ...student, visibleRegistrationNumber: student.registrationNumber }));
+            this.adminUserService.importAll(artemisUsers).subscribe({
+                next: (res) => {
+                    const convertedRes = new HttpResponse({
+                        body: res.body?.map((user) => ({
+                            ...user,
+                            registrationNumber: user.visibleRegistrationNumber,
+                        })),
+                    });
+                    this.onSaveSuccess(convertedRes);
+                },
+                error: () => this.onSaveError(),
+            });
         } else {
             this.alertService.error('artemisApp.importUsers.genericErrorMessage');
         }
@@ -261,9 +279,9 @@ export class UsersImportDialogComponent implements OnDestroy {
 
         for (const notFound of this.notFoundUsers) {
             if (
-                (notFound.registrationNumber?.length > 0 && notFound.registrationNumber === user.registrationNumber) ||
-                (notFound.login?.length > 0 && notFound.login === user.login) ||
-                (notFound.email?.length > 0 && notFound.email === user.email)
+                (notFound.registrationNumber?.length && notFound.registrationNumber === user.registrationNumber) ||
+                (notFound.login?.length && notFound.login === user.login) ||
+                (notFound.email?.length && notFound.email === user.email)
             ) {
                 return true;
             }
@@ -298,7 +316,7 @@ export class UsersImportDialogComponent implements OnDestroy {
      * Callback method that is called when the import request was successful
      * @param {HttpResponse<StudentDTO[]>} notFoundUsers - List of users that could NOT be imported since they were not found
      */
-    onSaveSuccess(notFoundUsers: HttpResponse<StudentDTO[]>) {
+    onSaveSuccess(notFoundUsers: HttpResponse<Partial<StudentDTO>[]>) {
         this.isImporting = false;
         this.hasImported = true;
         this.notFoundUsers = notFoundUsers.body! || [];
