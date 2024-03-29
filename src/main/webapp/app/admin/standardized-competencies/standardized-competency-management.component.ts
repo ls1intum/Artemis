@@ -29,8 +29,6 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
     styleUrls: ['standardized-competency-management.component.scss'],
 })
 export class StandardizedCompetencyManagementComponent implements OnInit, OnDestroy {
-    //TODO: loading spinner, success alerts
-
     protected isLoading = false;
     //true if a competency is getting edited in the detail component
     protected isEditing = false;
@@ -123,7 +121,6 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         const trimmedFilter = this.competencyTitleFilter?.trim();
 
         if (!trimmedFilter) {
-            this.treeControl.collapseAll();
             this.setVisiblityOfAllCompetencies(true);
         } else {
             this.treeControl.collapseAll();
@@ -214,6 +211,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
 
         this.adminStandardizedCompetencyService.deleteStandardizedCompetency(this.selectedCompetency.id).subscribe({
             next: () => {
+                this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.delete', { competencyTitle: this.selectedCompetency?.title });
                 this.updateTreeAfterDelete();
                 this.dialogErrorSource.next('');
                 //close the detail component
@@ -237,9 +235,11 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                 .pipe(map((response) => response.body!))
                 .subscribe({
                     next: (resultCompetency) => {
-                        this.updateTreeAfterCreate(convertToStandardizedCompetencyDTO(resultCompetency));
+                        resultCompetency = convertToStandardizedCompetencyDTO(resultCompetency);
+                        this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.create', { competencyTitle: resultCompetency.title });
+                        this.updateTreeAfterCreate(resultCompetency);
                         //update the detail view
-                        this.selectedCompetency = competency;
+                        this.selectedCompetency = resultCompetency;
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -249,9 +249,11 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                 .pipe(map((response) => response.body!))
                 .subscribe({
                     next: (resultCompetency) => {
-                        this.updateTreeAfterUpdate(convertToStandardizedCompetencyDTO(resultCompetency));
+                        resultCompetency = convertToStandardizedCompetencyDTO(resultCompetency);
+                        this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.update', { competencyTitle: resultCompetency.title });
+                        this.updateTreeAfterUpdate(resultCompetency);
                         //update the detail view
-                        this.selectedCompetency = competency;
+                        this.selectedCompetency = resultCompetency;
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });

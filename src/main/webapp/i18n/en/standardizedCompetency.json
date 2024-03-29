@@ -7,11 +7,14 @@
                 "filter": "Filter competencies",
                 "knowledgeAreasButton": "Manage Knowledge Areas",
                 "createButton": "Create Standardized Competency",
-                "editButton": "Edit Standardized Competency",
-                "deleteButton": "Delete Standardized Competency",
                 "cancelModalTitle": "Warning: Unsaved Changes",
-                "cancelModalText": "Are you sure you want to cancel editing {{entityName}}? Press Cancel to go back, or Confirm to proceed.",
-                "updateTreeError": "Something went wrong when updating the UI. Please reload the page."
+                "cancelModalText": "Are you sure you want to cancel editing \"{{entityName}}\"? Press Cancel to go back, or Confirm to proceed.",
+                "successAlerts": {
+                    "create": "Successfully created standardized competency \"{{competencyTitle}}\"",
+                    "update": "Successfully updated standardized competency \"{{competencyTitle}}\"",
+                    "delete": "Successfully deleted standardized competency \"{{competencyTitle}}\""
+                },
+                "updateTreeError": "Something went wrong when updating the knowledge area tree. Please reload the page."
             },
             "model": {
                 "title": "Title",
@@ -31,13 +34,6 @@
             }
         },
         "knowledgeArea": {
-            "manage": {
-                "competenciesButton": "Manage Standardized Competencies",
-                "createButton": "Create Knowledge Area",
-                "editButton": "Edit Knowledge Area",
-                "deleteButton": "Delete Knowledge Area",
-                "details": "Knowledge Area Details"
-            },
             "model": {
                 "title": "Title",
                 "description": "Description"

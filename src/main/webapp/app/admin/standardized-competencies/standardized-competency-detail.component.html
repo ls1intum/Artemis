@@ -2,9 +2,9 @@
     <div class="mb-2">
         <div class="d-flex justify-content-between">
             @if (competency.id !== undefined) {
-                <h4 [jhiTranslate]="'artemisApp.standardizedCompetency.details.' + (isInEditMode ? 'editTitle' : 'title')"></h4>
+                <h4 [jhiTranslate]="'artemisApp.standardizedCompetency.details.title' + (isInEditMode ? 'Edit' : '')"></h4>
             } @else {
-                <h4 jhiTranslate="artemisApp.standardizedCompetency.details.createTitle"></h4>
+                <h4 jhiTranslate="artemisApp.standardizedCompetency.details.titleCreate"></h4>
             }
             <button type="button" class="btn-close" (click)="close()"></button>
         </div>
@@ -27,7 +27,7 @@
             }
         </div>
     </div>
-    <div class="d-flex h-100 flex-column border-0" [formGroup]="form">
+    <div class="d-flex flex-column border-0" [formGroup]="form">
         <div class="form-group">
             <label for="title-input" jhiTranslate="artemisApp.standardizedCompetency.model.title"></label>
             <input type="text" class="form-control" id="title-input" formControlName="title" />

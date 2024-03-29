@@ -28,8 +28,6 @@
             </select>
         </div>
     </div>
-    <button class="btn btn-primary btn-sm" (click)="filterByKnowledgeArea()">FILTER BY KA</button>
-    <button class="btn btn-primary btn-sm" (click)="filterByCompetencyTitle()">FILTER BY TITLE</button>
     <div class="d-flex">
         <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" [trackBy]="trackBy" class="card d-flex flex-grow-1 w-50 me-1">
             <mat-nested-tree-node *matTreeNodeDef="let node" [class.d-none]="!node.isVisible">
@@ -42,7 +40,12 @@
                         <!-- TODO: add #children, #competencies -->
                     </div>
                     <div class="tree-card-row">
-                        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faPlus" (onClick)="openNewCompetency(node)" />
+                        <jhi-button
+                            [btnSize]="ButtonSize.SMALL"
+                            [icon]="faPlus"
+                            (onClick)="openNewCompetency(node)"
+                            tooltip="artemisApp.standardizedCompetency.manage.createButton"
+                        />
                     </div>
                 </div>
                 <div [ngbCollapse]="!treeControl.isExpanded(node)" class="tree-indent">
