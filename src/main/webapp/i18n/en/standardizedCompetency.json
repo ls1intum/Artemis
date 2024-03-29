@@ -5,8 +5,10 @@
             "manage": {
                 "title": "Standardized Competency Management",
                 "filter": "Filter competencies",
-                "knowledgeAreasButton": "Manage Knowledge Areas",
-                "createButton": "Create Standardized Competency",
+                "knowledgeAreasButton": "Manage knowledge areas",
+                "createButtonTooltip": "Create standardized competency",
+                "expandButtonTooltip": "Expand all knowledge areas",
+                "collapseButtonTooltip": "Collapse all knowledge areas",
                 "cancelModalTitle": "Warning: Unsaved Changes",
                 "cancelModalText": "Are you sure you want to cancel editing \"{{entityName}}\"? Press Cancel to go back, or Confirm to proceed.",
                 "successAlerts": {

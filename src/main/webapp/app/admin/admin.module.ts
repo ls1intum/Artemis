@@ -29,16 +29,12 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatTreeModule } from '@angular/material/tree';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ReactiveFormsModule } from '@angular/forms';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
 import { EditLtiConfigurationComponent } from 'app/admin/lti-configuration/edit-lti-configuration.component';
 import { BuildAgentsComponent } from 'app/localci/build-agents/build-agents.component';
-import { KnowledgeAreaTreeComponent } from 'app/admin/standardized-competencies/knowledge-area-tree.component';
-import { KnowledgeAreaDetailComponent } from 'app/admin/standardized-competencies/knowledge-area-detail.component';
 import { StandardizedCompetencyDetailComponent } from 'app/admin/standardized-competencies/standardized-competency-detail.component';
 import { StandardizedCompetencyManagementComponent } from 'app/admin/standardized-competencies/standardized-competency-management.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -63,8 +59,6 @@ const ENTITY_STATES = [...adminState];
         ArtemisSharedComponentModule,
         ReactiveFormsModule,
         MatTreeModule,
-        MatButtonModule,
-        MatIconModule,
         ArtemisMarkdownEditorModule,
         ArtemisMarkdownModule,
         ArtemisCompetenciesModule,
@@ -91,8 +85,6 @@ const ENTITY_STATES = [...adminState];
         LtiConfigurationComponent,
         EditLtiConfigurationComponent,
         BuildAgentsComponent,
-        KnowledgeAreaTreeComponent,
-        KnowledgeAreaDetailComponent,
         StandardizedCompetencyDetailComponent,
         StandardizedCompetencyManagementComponent,
     ],

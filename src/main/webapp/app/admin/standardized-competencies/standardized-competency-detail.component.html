@@ -1,4 +1,4 @@
-<div class="d-flex flex-column h-100">
+<div class="d-flex flex-column">
     <div class="mb-2">
         <div class="d-flex justify-content-between">
             @if (competency.id !== undefined) {
@@ -43,22 +43,16 @@
             }
         </div>
         <div class="form-group">
-            <label for="description-input" jhiTranslate="artemisApp.standardizedCompetency.model.description"></label>
+            <label jhiTranslate="artemisApp.standardizedCompetency.model.description"></label>
             @if (isInEditMode) {
                 <jhi-markdown-editor
                     [markdown]="form.controls.description.value"
                     (markdownChange)="updateDescriptionControl($event)"
-                    id="description-input"
                     class="markdown-preview"
                     [enableFileUpload]="false"
                 />
             } @else {
-                <div
-                    id="description-input"
-                    disabled="true"
-                    class="markdown-preview border rounded p-1"
-                    [innerHTML]="form.controls.description.value ?? '&nbsp;' | htmlForMarkdown"
-                ></div>
+                <div disabled="true" class="markdown-preview border rounded p-1" [innerHTML]="form.controls.description.value ?? '&nbsp;' | htmlForMarkdown"></div>
             }
             @if (form.controls.description.invalid && form.controls.description.dirty) {
                 <div

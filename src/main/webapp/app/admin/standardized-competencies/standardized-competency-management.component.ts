@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
-import { faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faDownLeftAndUpRightToCenter, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeArea,
     KnowledgeAreaDTO,
@@ -56,6 +56,8 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
     //Icons
     protected readonly faChevronRight = faChevronRight;
     protected readonly faPlus = faPlus;
+    protected readonly faMinimize = faDownLeftAndUpRightToCenter;
+    protected readonly faMaximize = faUpRightAndDownLeftFromCenter;
     //Other constants for template
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
@@ -79,6 +81,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                 next: (knowledgeAreas) => {
                     const knowledgeAreasForTree = knowledgeAreas.map((knowledgeArea) => this.getSelfAndDescendantsAsKnowledgeAreaForTree(knowledgeArea, 0));
                     this.dataSource.data = knowledgeAreasForTree;
+                    this.treeControl.dataNodes = knowledgeAreasForTree;
                     knowledgeAreasForTree.forEach((knowledgeArea) => {
                         this.addSelfAndDescendantsToMap(knowledgeArea);
                         this.addSelfAndDescendantsToSelectArray(knowledgeArea);
@@ -407,6 +410,12 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         }
     }
 
+    /**
+     * Recursively sets visible a knowledge area aswell as all its descendants.
+     *
+     * @param knowledgeArea the knowledge area to set visible
+     * @private
+     */
     private setVisibleSelfAndDescendants(knowledgeArea: KnowledgeAreaForTree) {
         knowledgeArea.isVisible = true;
         knowledgeArea.children?.forEach((knowledgeArea) => this.setVisibleSelfAndDescendants(knowledgeArea));
@@ -453,8 +462,4 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
 
         return titleLower.includes(filterLower);
     }
-
-    //TODO: make both components re-sizeable?
-    //TODO: make knowledge areas mandatory! > discuss this with max.
-    //TODO: take selected BORDER from competency relations component?
 }
