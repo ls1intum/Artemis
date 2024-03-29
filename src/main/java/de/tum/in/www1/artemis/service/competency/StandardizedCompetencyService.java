@@ -2,12 +2,7 @@ package de.tum.in.www1.artemis.service.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
