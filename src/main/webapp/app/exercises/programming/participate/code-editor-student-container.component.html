@@ -22,10 +22,9 @@
             <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"></span>
         </div>
     }
-    <jhi-code-editor-switch-editor-button (usingMonacoChange)="useMonacoEditor = $event" />
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
         <jhi-code-editor-container
-            [useMonacoEditor]="useMonacoEditor"
+            [allowSwitchEditor]="true"
             [editable]="!repositoryIsLocked"
             [participation]="participation"
             [showEditorInstructions]="showEditorInstructions"

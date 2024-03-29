@@ -70,7 +70,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @Input()
     disableAutoSave = false;
     @Input()
-    useMonacoEditor = false;
+    allowSwitchEditor = false;
 
     @Output()
     onResizeEditorInstructions = new EventEmitter<void>();
@@ -107,6 +107,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     errorFiles: string[] = [];
     annotations: Array<Annotation> = [];
+
+    useMonacoEditor = false;
 
     constructor(
         private translateService: TranslateService,
@@ -301,5 +303,11 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     onAnnotations(annotations: Array<Annotation>) {
         this.annotations = annotations;
         this.errorFiles = uniq(annotations.filter((a) => a.type === 'error').map((a) => a.fileName));
+    }
+
+    toggleMonacoEditor(): void {
+        if (this.allowSwitchEditor) {
+            this.useMonacoEditor = !this.useMonacoEditor;
+        }
     }
 }

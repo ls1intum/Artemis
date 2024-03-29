@@ -61,8 +61,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
 
-    useMonacoEditor = false;
-
     constructor(
         private resultService: ResultService,
         private domainService: DomainService,
