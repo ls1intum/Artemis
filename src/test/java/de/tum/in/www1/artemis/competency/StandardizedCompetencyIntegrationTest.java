@@ -55,11 +55,14 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
 
     private void testAllPreAuthorizeInstructor() throws Exception {
         request.get("/api/standardized-competencies/1", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
+        request.get("/api/standardized-competencies/for-tree-view", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
         request.get("/api/standardized-competencies/knowledge-areas/1", HttpStatus.FORBIDDEN, KnowledgeArea.class);
     }
 
     private void testAllPreAuthorizeAdmin() throws Exception {
         request.post("/api/admin/standardized-competencies", new StandardizedCompetency(), HttpStatus.FORBIDDEN);
+        request.put("/api/admin/standardized-competencies/1", new StandardizedCompetency(), HttpStatus.FORBIDDEN);
+        request.delete("/api/admin/standardized-competencies/1", HttpStatus.FORBIDDEN);
         request.post("/api/admin/standardized-competencies/knowledge-areas", new KnowledgeArea(), HttpStatus.FORBIDDEN);
     }
 
@@ -137,6 +140,16 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
                 request.post("/api/admin/standardized-competencies", expectedCompetency, HttpStatus.BAD_REQUEST);
             }
         }
+
+        @Nested
+        class UpdateStandardizedCompetency {
+            // TODO: bad request, 404
+        }
+
+        @Nested
+        class DeleteStandardizedCompetency {
+            // TODO: 404, normal
+        }
     }
 
     @Nested
@@ -202,6 +215,11 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
 
                 request.get("/api/standardized-competencies/" + competencyNotExisting.getId(), HttpStatus.NOT_FOUND, StandardizedCompetency.class);
             }
+        }
+
+        @Nested
+        class GetAllForTreeView {
+            // normal
         }
 
         @Nested
