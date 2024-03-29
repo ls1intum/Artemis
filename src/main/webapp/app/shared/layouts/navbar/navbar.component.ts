@@ -58,6 +58,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { onError } from 'app/shared/util/global.utils';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -90,6 +91,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     irisEnabled: boolean;
     localCIActive: boolean = false;
     ltiEnabled: boolean;
+    standardizedCompetenciesEnabled = false;
 
     // Icons
     faBars = faBars;
@@ -148,6 +150,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private organisationService: OrganizationManagementService,
         public themeService: ThemeService,
         private entityTitleService: EntityTitleService,
+        private featureToggleService: FeatureToggleService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
@@ -201,6 +204,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
                 this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
             }
+        });
+
+        this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
+            this.standardizedCompetenciesEnabled = isActive;
         });
 
         this.subscribeForGuidedTourAvailability();
