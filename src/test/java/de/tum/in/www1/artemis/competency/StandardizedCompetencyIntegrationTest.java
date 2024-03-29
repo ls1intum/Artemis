@@ -44,13 +44,13 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         knowledgeArea = new KnowledgeArea("Knowledge Area 0", "KA description");
-        knowledgeAreaRepository.save(knowledgeArea);
+        knowledgeArea = knowledgeAreaRepository.save(knowledgeArea);
 
         standardizedCompetency = new StandardizedCompetency("Competency 0", "SC description", CompetencyTaxonomy.ANALYZE, "1.0.0");
-        standardizedCompetencyRepository.save(standardizedCompetency);
+        standardizedCompetency = standardizedCompetencyRepository.save(standardizedCompetency);
 
         source = new Source("Source 0", "Author 0", "http:localhost:8000");
-        sourceRepository.save(source);
+        source = sourceRepository.save(source);
     }
 
     private void testAllPreAuthorizeInstructor() throws Exception {
@@ -59,7 +59,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
     }
 
     private void testAllPreAuthorizeAdmin() throws Exception {
-        request.post("/api/admin/standardized-competencies/", new StandardizedCompetency(), HttpStatus.FORBIDDEN);
+        request.post("/api/admin/standardized-competencies", new StandardizedCompetency(), HttpStatus.FORBIDDEN);
         request.post("/api/admin/standardized-competencies/knowledge-areas", new KnowledgeArea(), HttpStatus.FORBIDDEN);
     }
 
@@ -104,7 +104,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
                 expectedCompetency.setKnowledgeArea(knowledgeArea);
                 expectedCompetency.setSource(source);
 
-                var actualCompetency = request.postWithResponseBody("/api/admin/standardized-competencies/", expectedCompetency, StandardizedCompetency.class, HttpStatus.CREATED);
+                var actualCompetency = request.postWithResponseBody("/api/admin/standardized-competencies", expectedCompetency, StandardizedCompetency.class, HttpStatus.CREATED);
 
                 assertThat(actualCompetency).usingRecursiveComparison().ignoringFields("id", "version").isEqualTo(expectedCompetency);
             }
@@ -118,14 +118,14 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
                 knowlegeAreaNotExisting.setId(-1000L);
                 expectedCompetency.setKnowledgeArea(knowlegeAreaNotExisting);
 
-                request.post("/api/admin/standardized-competencies/", expectedCompetency, HttpStatus.NOT_FOUND);
+                request.post("/api/admin/standardized-competencies", expectedCompetency, HttpStatus.NOT_FOUND);
 
                 expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, null);
                 var sourceNotExisting = new Source();
                 sourceNotExisting.setId(-1000L);
                 expectedCompetency.setSource(sourceNotExisting);
 
-                request.post("/api/admin/standardized-competencies/", expectedCompetency, HttpStatus.NOT_FOUND);
+                request.post("/api/admin/standardized-competencies", expectedCompetency, HttpStatus.NOT_FOUND);
             }
 
             @Test
@@ -134,7 +134,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
                 // empty title is not allowed
                 var expectedCompetency = new StandardizedCompetency("  ", "description", CompetencyTaxonomy.ANALYZE, null);
 
-                request.post("/api/admin/standardized-competencies/", expectedCompetency, HttpStatus.BAD_REQUEST);
+                request.post("/api/admin/standardized-competencies", expectedCompetency, HttpStatus.BAD_REQUEST);
             }
         }
     }
