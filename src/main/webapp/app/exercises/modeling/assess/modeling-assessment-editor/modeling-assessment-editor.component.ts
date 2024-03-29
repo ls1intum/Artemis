@@ -150,6 +150,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         } catch (error) {
             this.alertService.closeAll();
             this.alertService.error('artemisApp.modelingAssessmentEditor.messages.loadFeedbackSuggestionsFailed');
+            return [];
         }
     }
 
