@@ -1,0 +1,45 @@
+{
+    "artemisApp": {
+        "standardizedCompetency": {
+            "title": "Standardisierte Kompetenzen",
+            "manage": {
+                "title": "Standardisierter Kompetenzen Verwalten",
+                "filter": "Kompetenzen Filtern",
+                "knowledgeAreasButton": "Wissensgebiete verwalten",
+                "createButtonTooltip": "Standardisierte Kompetenz erstellen",
+                "expandButtonTooltip": "Alle Wissensgebiete ausklappen",
+                "collapseButtonTooltip": "Alle Wissensgebiete einklappen",
+                "cancelModalTitle": "Warnung: Ungespeicherte Änderungen",
+                "cancelModalText": "Willst du wirklich die Bearbeitung von \"{{entityName}}\" abbrechen? Klicke auf Abbrechen, um zurückzugehen, oder Bestätigen, um fortzufahren.",
+                "successAlerts": {
+                    "create": "Erfolgreich die standardisierte Kompetenz \"{{competencyTitle}}\" erstellt",
+                    "update": "Erfolgreich die standardisierte Kompetenz \"{{competencyTitle}}\" aktualisiert",
+                    "delete": "Erfolgreich die standardisierte Kompetenz \"{{competencyTitle}}\" gelöscht"
+                },
+                "updateTreeError": "Bei der Aktualisierung des Wissensbereichsbaums ist ein Fehler aufgetreten. Bitte lade die Seite neu"
+            },
+            "model": {
+                "title": "Titel",
+                "description": "Beschreibung",
+                "taxonomy": "Taxonomie",
+                "knowledgeArea": "Wissensgebiet",
+                "version": "Version"
+            },
+            "details": {
+                "title": "Standardisierte Kompetenz",
+                "titleCreate": "Standardisierte Kompetenz Erstellen",
+                "titleEdit": "Standardisierte Kompetenz Bearbeiten",
+                "titleRequiredError": "Eine standardisierte Kompetenz muss einen Titel haben",
+                "titleMaxLengthError": "Der Titel einer standardisierten Kompetenz darf maximal {{max}} Zeichen lang sein",
+                "descriptionMaxLengthError": "Die Beschreibung einer standardisierten Kompetenz darf maximal {{max}} Zeichen lang sein",
+                "knowledgeAreaRequiredError": "Eine standardisierte Kompetenz muss ein Wissensgebiet haben"
+            }
+        },
+        "knowledgeArea": {
+            "model": {
+                "title": "Titel",
+                "description": "Beschreibung"
+            }
+        }
+    }
+}
