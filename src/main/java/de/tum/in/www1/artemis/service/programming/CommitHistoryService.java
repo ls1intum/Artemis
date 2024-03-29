@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.localvc;
+package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffFormatter;
@@ -16,19 +16,17 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.GitDiffReportParserService;
 
 @Profile(PROFILE_CORE)
-@RestController
-@RequestMapping("api/")
+@Service
 public class CommitHistoryService {
 
     private static final Logger log = LoggerFactory.getLogger(CommitHistoryService.class);
@@ -43,18 +41,16 @@ public class CommitHistoryService {
     }
 
     /**
-     * Creates a new ProgrammingExerciseGitDiffReport containing the git-diff for a participation and two commit hashes.
+     * Creates a new ProgrammingExerciseGitDiffReport containing the git-diff for a repository and two commit hashes.
      *
-     * @param participation The participation for which the report should be created
+     * @param repositoryUri The repository for which the report should be created
      * @param commitHash1   The first commit hash
      * @param commitHash2   The second commit hash
      * @return The report with the changes between the two commits
      * @throws GitAPIException If an error occurs while accessing the git repository
      * @throws IOException     If an error occurs while accessing the file system
      */
-    public ProgrammingExerciseGitDiffReport generateReportForCommits(ProgrammingExerciseParticipation participation, String commitHash1, String commitHash2)
-            throws GitAPIException, IOException {
-        var repositoryUri = participation.getVcsRepositoryUri();
+    public ProgrammingExerciseGitDiffReport generateReportForCommits(VcsRepositoryUri repositoryUri, String commitHash1, String commitHash2) throws GitAPIException, IOException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
         RevCommit commitOld = repository.parseCommit(repository.resolve(commitHash1));
         RevCommit commitNew = repository.parseCommit(repository.resolve(commitHash2));

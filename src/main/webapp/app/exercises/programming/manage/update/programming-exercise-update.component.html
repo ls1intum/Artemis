@@ -18,14 +18,19 @@
                 [isExamMode]="isExamMode"
                 [isImport]="isImportFromExistingExercise || isImportFromFile"
                 [isLocal]="isLocal"
+                [importOptions]="importOptions"
             />
+            <hr class="mb-5" />
             <jhi-programming-exercise-difficulty [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()" />
+            <hr class="mb-5" />
             <jhi-programming-exercise-language [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()" />
+            <hr class="mb-5" />
             <jhi-programming-exercise-problem
                 [(exercise)]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 (problemStatementChange)="calculateFormStatusSections()"
             />
+            <hr class="mb-5" />
             <jhi-programming-exercise-grading
                 class="form-step"
                 [programmingExercise]="programmingExercise"

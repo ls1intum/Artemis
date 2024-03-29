@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import javax.servlet.http.Cookie;
+import jakarta.servlet.http.Cookie;
 
 public class AuthenticationIntegrationTestHelper {
 

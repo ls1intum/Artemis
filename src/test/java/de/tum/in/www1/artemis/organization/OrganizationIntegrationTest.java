@@ -151,15 +151,15 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course1 = courseRepo.save(course1);
 
         Organization organization = organizationUtilService.createOrganization();
-        organization.getCourses().add(course1);
-        organization = organizationRepo.save(organization);
+        courseRepo.addOrganizationToCourse(course1.getId(), organization);
 
-        assertThat(organization.getCourses()).contains(course1);
+        Organization originalOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        assertThat(originalOrganization.getCourses()).contains(course1);
 
-        request.delete("/api/admin/organizations/course/" + course1.getId() + "/organization/" + organization.getId(), HttpStatus.OK);
+        request.delete("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), HttpStatus.OK);
+
         Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
-
-        assertThat(updatedOrganization.getCourses()).doesNotContain(course1);
+        assertThat(updatedOrganization.getCourses()).isEmpty();
     }
 
     /**
