@@ -9,7 +9,7 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;

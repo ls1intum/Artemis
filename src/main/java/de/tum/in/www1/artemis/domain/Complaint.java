@@ -5,8 +5,8 @@ import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_TEXT_LIMIT;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import javax.persistence.*;
-import javax.validation.constraints.Size;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;

@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
