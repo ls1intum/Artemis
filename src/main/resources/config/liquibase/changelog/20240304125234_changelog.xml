@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="basak-akan" id="20240304125234">
+        <!-- Drop the original_url column -->
+        <dropColumn tableName="online_course_configuration" columnName="original_url"/>
+        <!-- Drop the registration_id column -->
+        <dropColumn tableName="online_course_configuration" columnName="registration_id"/>
+        <!-- Drop the client_id column -->
+        <dropColumn tableName="online_course_configuration" columnName="client_id"/>
+        <!-- Drop the authorization_uri column -->
+        <dropColumn tableName="online_course_configuration" columnName="authorization_uri"/>
+        <!-- Drop the jkw_set_uri column -->
+        <dropColumn tableName="online_course_configuration" columnName="jkw_set_uri"/>
+        <!-- Drop the token_uri column -->
+        <dropColumn tableName="online_course_configuration" columnName="token_uri"/>
+    </changeSet>
+</databaseChangeLog>

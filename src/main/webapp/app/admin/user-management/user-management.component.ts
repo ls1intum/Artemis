@@ -14,7 +14,7 @@ import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination
 import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 import { UserService } from 'app/core/user/user.service';
@@ -125,6 +125,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     faWrench = faWrench;
 
     readonly medium = ButtonSize.MEDIUM;
+    readonly ButtonType = ButtonType;
 
     constructor(
         private adminUserService: AdminUserService,
