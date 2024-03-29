@@ -50,6 +50,26 @@ export enum StandardizedCompetencyValidators {
     DESCRIPTION_MAX = 2000,
 }
 
+/**
+ * KnowledgeAreaDTO with additional information for the tree view:
+ * isVisible: if it should be shown or not (used for filters)
+ * level: nesting level (used for indentations)
+ */
+export interface KnowledgeAreaForTree extends KnowledgeAreaDTO {
+    isVisible: boolean;
+    level: number;
+    children?: KnowledgeAreaForTree[];
+    competencies?: StandardizedCompetencyForTree[];
+}
+
+/**
+ * StandardizedCompetencyDTO with additional information for the tree view
+ * isVisible: if it should be shown or not (used for filters)
+ */
+export interface StandardizedCompetencyForTree extends StandardizedCompetencyDTO {
+    isVisible: boolean;
+}
+
 export function convertToStandardizedCompetencyDTO(competency: StandardizedCompetency) {
     const competencyDTO: StandardizedCompetencyDTO = {
         id: competency.id,
@@ -84,4 +104,9 @@ export function convertToStandardizedCompetency(competencyDTO: StandardizedCompe
     }
 
     return competency;
+}
+
+export function convertToStandardizedCompetencyForTree(competencyDTO: StandardizedCompetencyDTO, isVisible: boolean) {
+    const competencyForTree: StandardizedCompetencyForTree = { ...competencyDTO, isVisible: isVisible };
+    return competencyForTree;
 }

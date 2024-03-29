@@ -14,11 +14,11 @@
     <div class="row">
         <div class="form-group col">
             <label for="title-filter" jhiTranslate="artemisApp.standardizedCompetency.model.title"> </label>
-            <input id="title-filter" class="form-control" [(ngModel)]="competencyTitleFilter" />
+            <input id="title-filter" class="form-control" [(ngModel)]="competencyTitleFilter" (input)="titleFilterSubject.next()" />
         </div>
         <div class="form-group col">
             <label for="knowledge-area-filter" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
-            <select [(ngModel)]="knowledgeAreaFilter" class="form-select" id="knowledge-area-filter">
+            <select [(ngModel)]="knowledgeAreaFilter" (ngModelChange)="filterByKnowledgeArea()" class="form-select" id="knowledge-area-filter">
                 <option [ngValue]="undefined"></option>
                 @for (knowledgeArea of knowledgeAreasForSelect; track knowledgeArea.id) {
                     <option [ngValue]="knowledgeArea">
@@ -32,13 +32,14 @@
     <button class="btn btn-primary btn-sm" (click)="filterByCompetencyTitle()">FILTER BY TITLE</button>
     <div class="d-flex">
         <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" [trackBy]="trackBy" class="card d-flex flex-grow-1 w-50 me-1">
-            <mat-nested-tree-node *matTreeNodeDef="let node">
+            <mat-nested-tree-node *matTreeNodeDef="let node" [class.d-none]="!node.isVisible">
                 <div class="card tree-card">
                     <div class="tree-card-row clickable me-2" matTreeNodeToggle>
                         <div class="icon-container me-2">
                             <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="treeControl.isExpanded(node)" />
                         </div>
                         <h5 class="mb-0">{{ node.title }}</h5>
+                        <!-- TODO: add #children, #competencies -->
                     </div>
                     <div class="tree-card-row">
                         <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faPlus" (onClick)="openNewCompetency(node)" />
@@ -47,7 +48,7 @@
                 <div [ngbCollapse]="!treeControl.isExpanded(node)" class="tree-indent">
                     <ng-container matTreeNodeOutlet />
                     @for (competency of node.competencies; track competency.id) {
-                        <div class="card tree-card">
+                        <div class="card tree-card" [class.d-none]="!competency.isVisible">
                             <div class="tree-card-row clickable" (click)="selectCompetency(competency)">
                                 <fa-icon class="me-2" [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
                                 <h6 class="mb-0">{{ competency.title }}</h6>

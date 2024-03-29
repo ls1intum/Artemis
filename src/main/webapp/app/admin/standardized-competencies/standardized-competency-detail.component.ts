@@ -109,6 +109,4 @@ export class StandardizedCompetencyDetailComponent {
         this.form.controls.description.setValue(content);
         this.form.controls.description.markAsDirty();
     }
-
-    //TODO: see what i did with recommendations where I removed the description. (Dont show this mini field)
 }
