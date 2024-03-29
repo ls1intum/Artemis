@@ -130,7 +130,7 @@ async function generateDragAndDropItem(
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
-async function generateDragAndDropItemForElement(
+export async function generateDragAndDropItemForElement(
     element: UMLModelElement,
     model: UMLModel,
     svgSize: { width: number; height: number },
@@ -140,7 +140,6 @@ async function generateDragAndDropItemForElement(
     const image = await convertRenderedSVGToPNG(renderedElement);
     const imageName = `element-${element.id}.png`;
     files.set(imageName, image);
-
     const dragItem = new DragItem();
     dragItem.pictureFilePath = imageName;
     const dropLocation = computeDropLocation(renderedElement.clip, svgSize);
@@ -216,7 +215,7 @@ async function generateDragAndDropItemForRelationship(
  *
  * @return {DropLocation} A Drag and Drop Quiz Exercise `DropLocation`.
  */
-function computeDropLocation(
+export function computeDropLocation(
     elementLocation: { x: number; y: number; width: number; height: number },
     totalSize: { x?: number; y?: number; width: number; height: number },
 ): DropLocation {
