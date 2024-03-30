@@ -266,6 +266,8 @@ public class ExamRegistrationService {
         examRepository.save(exam);
         examUserRepository.delete(registeredExamUser);
 
+        examUserService.deleteAvailableExamUserImages(registeredExamUser);
+
         // The student exam might already be generated, then we need to delete it
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), IS_TEST_RUN);
         optionalStudentExam.ifPresent(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
