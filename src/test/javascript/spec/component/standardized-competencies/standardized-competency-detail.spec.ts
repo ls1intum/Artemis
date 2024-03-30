@@ -11,7 +11,6 @@ import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { KnowledgeAreaDTO, StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
 
@@ -44,13 +43,12 @@ describe('StandardizedCompetencyDetailComponent', () => {
             imports: [ArtemisTestModule, ReactiveFormsModule, NgbTooltipMocksModule],
             declarations: [
                 StandardizedCompetencyDetailComponent,
-                ButtonComponent,
+                MockComponent(ButtonComponent),
                 TranslatePipeMock,
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(MarkdownEditorComponent),
                 MockComponent(TaxonomySelectComponent),
                 MockDirective(TranslateDirective),
-                MockDirective(FeatureToggleDirective),
                 MockDirective(DeleteButtonDirective),
             ],
             providers: [],

@@ -6,9 +6,9 @@ import { Observable } from 'rxjs';
     selector: 'jhi-standardized-competency-detail',
     template: '',
 })
-export class StandardizedCompetencyDetailComponent {
+export class StandardizedCompetencyDetailStubComponent {
     @Input() knowledgeAreas: KnowledgeArea[] = [];
-    @Input({ required: true }) competency: StandardizedCompetencyDTO;
+    @Input() competency: StandardizedCompetencyDTO;
     @Input() isInEditMode = false;
     @Input() dialogError: Observable<string>;
 
