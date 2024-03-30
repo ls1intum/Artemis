@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.localvcci;
 
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.ROOT;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -55,8 +52,8 @@ class LocalVCServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         // Locking and unlocking repositories is not available for the local version control system.
         // However, the ClientForwardResource will pick up these requests.
-        request.postWithoutLocation(ROOT + LOCK_ALL_REPOSITORIES.replace("{exerciseId}", programmingExercise.getId().toString()), null, HttpStatus.OK, null);
-        request.postWithoutLocation(ROOT + UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", programmingExercise.getId().toString()), null, HttpStatus.OK, null);
+        request.postWithoutLocation("/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories", null, HttpStatus.OK, null);
 
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lock-all-repositories", null, HttpStatus.OK, null);

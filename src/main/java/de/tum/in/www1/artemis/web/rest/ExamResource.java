@@ -230,7 +230,8 @@ public class ExamResource {
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
         if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
             int workingTimeChange = savedExam.getDuration() - originalExamDuration;
-            examService.updateStudentExamsAndRescheduleExercises(examWithExercises, originalExamDuration, workingTimeChange);
+            Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
+            examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
         }
 
         if (updatedChannel != null) {
@@ -259,8 +260,9 @@ public class ExamResource {
             throw new BadRequestException();
         }
 
-        // NOTE: We have to get exercise groups as `scheduleModelingExercises` needs them
-        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
+        // NOTE: We have to get exercise groups as `scheduleModelingExercises` needs them.
+        // We also need all student exams for updateStudentExamsAndRescheduleExercises.
+        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         var originalExamDuration = exam.getDuration();
 
         // 1. Update the end date & working time of the exam

@@ -46,10 +46,6 @@ public final class ProgrammingExerciseResourceEndpoints {
 
     public static final String TEST_CASE_STATE = PROGRAMMING_EXERCISE + "/test-case-state";
 
-    public static final String UNLOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/unlock-all-repositories";
-
-    public static final String LOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/lock-all-repositories";
-
     public static final String AUXILIARY_REPOSITORY = PROGRAMMING_EXERCISE + "/auxiliary-repository";
 
     public static final String RESET = PROGRAMMING_EXERCISE + "/reset";

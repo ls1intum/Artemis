@@ -38,8 +38,6 @@ public class ExamSubmissionService {
 
     private final ExamRepository examRepository;
 
-    private static final boolean IS_TEST_RUN = false;
-
     public ExamSubmissionService(StudentExamRepository studentExamRepository, ExamRepository examRepository, ParticipationService participationService,
             AuthorizationCheckService authorizationCheckService) {
         this.studentExamRepository = studentExamRepository;
@@ -75,17 +73,11 @@ public class ExamSubmissionService {
         if (!exercise.isExamExercise()) {
             return true;
         }
-        // Get the student exam if it was not passed to the function
+
         Exam exam = exercise.getExerciseGroup().getExam();
-        // Step 1: Find real exam
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId(), IS_TEST_RUN);
+        Optional<StudentExam> optionalStudentExam = findStudentExamForUser(user, exam);
         if (optionalStudentExam.isEmpty()) {
-            // Step 2: Find latest (=the highest id) unsubmitted test exam
-            optionalStudentExam = studentExamRepository.findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(exam.getId(), user.getId()).stream()
-                    .max(Comparator.comparing(StudentExam::getId));
-        }
-        if (optionalStudentExam.isEmpty()) {
-            // Step 3: We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
+            // We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
             // isAllowedToSubmitDuringExam is called everytime an exercise is saved (e.g. auto save every 30 seconds for every student) therefore it is best to limit
             // unnecessary database calls
             if (!isExamTestRunSubmission(exercise, user, exam)) {
@@ -94,7 +86,8 @@ public class ExamSubmissionService {
             return true;
         }
         StudentExam studentExam = optionalStudentExam.get();
-        // Check that the current user is allowed to submit to this exercise
+
+        // Users are only allowed to access exercises that are part of their own student exam
         if (!studentExam.getExercises().contains(exercise)) {
             return false;
         }
@@ -106,6 +99,17 @@ public class ExamSubmissionService {
 
         // Check that the submission is in time
         return isSubmissionInTime(exercise, studentExam, withGracePeriod);
+    }
+
+    private Optional<StudentExam> findStudentExamForUser(User user, Exam exam) {
+        // Step 1: Find real exam
+        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId(), false);
+        if (optionalStudentExam.isEmpty()) {
+            // Step 2: Find latest (=the highest id) unsubmitted test exam
+            optionalStudentExam = studentExamRepository.findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(exam.getId(), user.getId()).stream()
+                    .max(Comparator.comparing(StudentExam::getId));
+        }
+        return optionalStudentExam;
     }
 
     /**

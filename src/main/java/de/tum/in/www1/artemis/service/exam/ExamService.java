@@ -1409,17 +1409,16 @@ public class ExamService {
      * Additionally, if the current time is before the latest individual exam end date, it potentially triggers a rescheduling of the clustering of modeling submissions,
      * considering the use of Compass.
      *
-     * @param exam                 The exam entity for which the student exams and exercises need to be updated and rescheduled.
+     * @param exam                 The exam entity for which the student exams and exercises need to be updated and rescheduled. The student exams must be already loaded.
      * @param originalExamDuration The original duration of the exam, in minutes, before any changes.
      * @param workingTimeChange    The amount of time, in minutes, to add or subtract from the exam's original duration and the student's working time. This value can be positive
      *                                 (to extend time) or negative (to reduce time).
      */
     public void updateStudentExamsAndRescheduleExercises(Exam exam, Integer originalExamDuration, Integer workingTimeChange) {
         var now = now();
-
         User instructor = userRepository.getUser();
 
-        var studentExams = studentExamRepository.findByExamId(exam.getId());
+        var studentExams = exam.getStudentExams();
         for (var studentExam : studentExams) {
             Integer originalStudentWorkingTime = studentExam.getWorkingTime();
             int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
@@ -1434,14 +1433,13 @@ public class ExamService {
                 int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
                 studentExam.setWorkingTime(adjustedWorkingTime);
             }
-            // TODO: probably batch these updates?
-            var savedStudentExam = studentExamRepository.save(studentExam);
 
             // NOTE: if the exam is already visible, notify the student about the working time change
             if (now.isAfter(exam.getVisibleDate())) {
-                examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, savedStudentExam.getWorkingTime(), originalStudentWorkingTime, true, instructor);
+                examLiveEventsService.createAndSendWorkingTimeUpdateEvent(studentExam, studentExam.getWorkingTime(), originalStudentWorkingTime, true, instructor);
             }
         }
+        studentExamRepository.saveAll(studentExams);
 
         // NOTE: if the exam is already visible, notify instances about the working time change
         if (now.isAfter(exam.getVisibleDate())) {

@@ -1701,12 +1701,12 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void lockAllRepositories_asStudent_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
         request.post(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     void lockAllRepositories_asTutor_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
         request.post(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
@@ -1721,7 +1721,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation1.getStudents());
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation2.getStudents());
 
-        final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
         request.postWithoutLocation(ROOT + endpoint, null, HttpStatus.OK, null);
 
         verify(versionControlService, timeout(300)).setRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUri(), programmingExercise.getProjectKey(),
@@ -1739,12 +1739,12 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void unlockAllRepositories_asStudent_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
         request.post(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     void unlockAllRepositories_asTutor_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
         request.post(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
@@ -1759,7 +1759,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockConfigureRepository(programmingExercise);
         mockDelegate.mockDefaultBranch(programmingExercise);
 
-        final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
         request.postWithoutLocation(ROOT + endpoint, null, HttpStatus.OK, null);
 
         verify(versionControlService, timeout(300)).addMemberToRepository(participation1.getVcsRepositoryUri(), participation1.getStudent().orElseThrow(),
