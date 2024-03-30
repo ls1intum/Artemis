@@ -265,7 +265,7 @@
                         </dd>
                     }
                     @case (DetailType.ModelingEditor) {
-                        <dd id="detail-value-{{ detail.title }}">
+                        <dd class="p-3 border" id="detail-value-{{ detail.title }}">
                             @if (!!detail.data.umlModel?.elements?.length && detail.data.isApollonProfileActive) {
                                 <button
                                     (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"

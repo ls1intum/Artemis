@@ -94,7 +94,7 @@
             }
         </div>
     }
-    <div #resizeContainer class="modeling-editor" [class.resizable]="resizeOptions" [ngStyle]="{ marginTop: isFullScreen ? '30px' : '' }">
+    <div #resizeContainer [hidden]="readOnly" class="modeling-editor" [class.resizable]="resizeOptions" [ngStyle]="{ marginTop: isFullScreen ? '30px' : '' }">
         <div #editorContainer class="apollon-container"></div>
         @if (resizeOptions && resizeOptions.horizontalResize) {
             <div class="draggable-right">
@@ -107,6 +107,10 @@
             </div>
         }
     </div>
+    @if (readOnly) {
+        <div class="d-flex align-items-center justify-content-center" [innerHtml]="readOnlySVG"></div>
+    }
+
     @if (withExplanation) {
         <jhi-modeling-explanation-editor [explanation]="explanation" (explanationChange)="onExplanationInput($event)" [readOnly]="readOnly" />
     }
