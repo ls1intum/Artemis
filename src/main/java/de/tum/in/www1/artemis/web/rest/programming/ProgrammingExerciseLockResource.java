@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.programming;
 
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.ROOT;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -17,7 +15,7 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 // only available for external version control services
 @Profile("!localvc & core")
 @RestController
-@RequestMapping(ROOT)
+@RequestMapping("api/")
 public class ProgrammingExerciseLockResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseLockResource.class);
@@ -36,7 +34,7 @@ public class ProgrammingExerciseLockResource {
      * @param exerciseId of the exercise
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
-    @PostMapping("/programming-exercises/{exerciseId}/unlock-all-repositories")
+    @PostMapping("programming-exercises/{exerciseId}/unlock-all-repositories")
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
         instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipations(exerciseId);
@@ -52,7 +50,7 @@ public class ProgrammingExerciseLockResource {
      * @param exerciseId of the exercise
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
-    @PostMapping("/programming-exercises/{exerciseId}/lock-all-repositories")
+    @PostMapping("programming-exercises/{exerciseId}/lock-all-repositories")
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
         instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipations(exerciseId);
