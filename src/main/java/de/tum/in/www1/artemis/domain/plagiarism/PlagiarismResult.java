@@ -62,7 +62,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
      */
     @CollectionTable(name = "plagiarism_result_similarity_distribution", joinColumns = @JoinColumn(name = "plagiarism_result_id"))
     @MapKeyColumn(name = "idx")
-    @Column(name = "`value`")
+    @Column(name = "frequency")
     @ElementCollection(fetch = FetchType.EAGER)
     protected Map<Integer, Integer> similarityDistribution;
 
