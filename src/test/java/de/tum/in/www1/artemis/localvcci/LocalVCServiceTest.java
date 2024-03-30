@@ -51,13 +51,12 @@ class LocalVCServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         // Locking and unlocking repositories is not available for the local version control system.
-        // However, the ClientForwardResource will pick up these requests.
-        request.postWithoutLocation("/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories", null, HttpStatus.OK, null);
-        request.postWithoutLocation("/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories", null, HttpStatus.OK, null);
+        request.post("/api/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories", null, HttpStatus.NOT_FOUND);
+        request.post("/api/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories", null, HttpStatus.NOT_FOUND);
 
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        request.postWithoutLocation("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lock-all-repositories", null, HttpStatus.OK, null);
-        request.postWithoutLocation("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/unlock-all-repositories", null, HttpStatus.OK, null);
+        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lock-all-repositories", null, HttpStatus.NOT_FOUND);
+        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/unlock-all-repositories", null, HttpStatus.NOT_FOUND);
 
         verifyNoInteractions(versionControlService);
         verifyNoInteractions(instanceMessageSendService);

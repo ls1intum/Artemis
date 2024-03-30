@@ -1721,7 +1721,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation1.getStudents());
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation2.getStudents());
 
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
         request.postWithoutLocation(ROOT + endpoint, null, HttpStatus.OK, null);
 
         verify(versionControlService, timeout(300)).setRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUri(), programmingExercise.getProjectKey(),
