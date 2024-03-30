@@ -271,7 +271,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             SELECT c
             FROM Course c
             WHERE c.endDate IS NULL
-                OR c.endDate >= CAST(:now AS timestamp)
+                OR c.endDate >= :now
             """)
     List<Course> findAllNotEnded(@Param("now") ZonedDateTime now);
 
@@ -302,7 +302,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             FROM Course c
             WHERE (
                 c.endDate IS NULL
-                OR c.endDate >= CAST(:now AS timestamp)
+                OR c.endDate >= :now
             ) AND (
                 c.teachingAssistantGroupName IN :userGroups
                 OR c.editorGroupName IN :userGroups
