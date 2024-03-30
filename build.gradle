@@ -16,7 +16,7 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "io.spring.dependency-management" version "1.1.4"
-    id "com.google.cloud.tools.jib" version "3.4.1"
+    id "com.google.cloud.tools.jib" version "3.4.2"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.diffplug.spotless" version "6.25.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
@@ -250,10 +250,11 @@ dependencies {
     // Note: jgit.htt.server is not compatible with jakarta yet and neither is there a timeline. Hence, we had to add the sourcefiles to our repository. Once the compatibility is given, we can switch back to the maven dependency.
     // implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
 
-    // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "oauth.signpost:signpost-core:2.1.1"
     implementation "oauth.signpost:signpost-commonshttp4:2.1.1"
-    implementation "net.sourceforge.plantuml:plantuml:1.2024.2"
+
+    // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
+    implementation "net.sourceforge.plantuml:plantuml:1.2024.3"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation "com.atlassian.bamboo:bamboo-specs:9.4.2"
@@ -330,18 +331,17 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core:3.2.2"
     implementation "org.springframework.data:spring-data-ldap:3.2.4"
 
-    implementation ("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.0") {
+    implementation ("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.1") {
         // NOTE: these modules contain security vulnerabilities and are not needed
         exclude module: "commons-jxpath"
         exclude module: "woodstox-core"
     }
-    implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.0"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.1"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "org.springframework.cloud:spring-cloud-commons:4.1.1"
+    implementation "org.springframework.cloud:spring-cloud-commons:4.1.2"
 
-    // TODO: updating to a later version breaks the build
-    implementation "io.netty:netty-all:4.1.101.Final"
+    implementation "io.netty:netty-all:4.1.108.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.17"
     implementation "org.springframework:spring-messaging:6.1.5"
     implementation "org.springframework.retry:spring-retry:2.0.5"
@@ -385,7 +385,7 @@ dependencies {
     implementation "com.github.seancfoley:ipaddress:5.5.0"
     implementation "org.apache.maven:maven-model:3.9.6"
     implementation "org.apache.pdfbox:pdfbox:3.0.2"
-    implementation "com.google.protobuf:protobuf-java:4.26.0"
+    implementation "com.google.protobuf:protobuf-java:4.26.1"
     implementation "org.apache.commons:commons-csv:1.10.0"
     implementation "org.commonmark:commonmark:0.22.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
@@ -433,7 +433,7 @@ dependencies {
     }
     testImplementation ("net.bytebuddy:byte-buddy") {
         version {
-            strictly "1.14.12"
+            strictly "1.14.13"
         }
     }
 
