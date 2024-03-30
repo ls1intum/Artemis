@@ -8,9 +8,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
-import javax.validation.constraints.Size;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -129,6 +129,7 @@ public class ProgrammingExercise extends Exercise {
     private SubmissionPolicy submissionPolicy;
 
     @Nullable
+    @Enumerated(EnumType.ORDINAL)
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
 

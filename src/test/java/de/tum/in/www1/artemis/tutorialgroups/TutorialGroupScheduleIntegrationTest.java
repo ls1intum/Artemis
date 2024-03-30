@@ -63,7 +63,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createNewTutorialGroupWithSchedule_everyTwoWeeks_shouldCreateWithOneWeekPauseInBetween() throws Exception {
         // given
-        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, thirdAugustMonday, "tutor1");
+        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, THIRD_AUGUST_MONDAY, "tutor1");
         newTutorialGroup.getTutorialGroupSchedule().setRepetitionFrequency(2); // repeat every two weeks
 
         // when
@@ -78,16 +78,16 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var thirdAugustMondaySession = sessions.get(1);
 
         var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(newTutorialGroup.getId()).orElseThrow();
-        this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, firstAugustMonday, persistedTutorialGroupId, persistedSchedule);
-        this.assertScheduledSessionIsActiveOnDate(thirdAugustMondaySession, thirdAugustMonday, persistedTutorialGroupId, persistedSchedule);
+        this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, FIRST_AUGUST_MONDAY, persistedTutorialGroupId, persistedSchedule);
+        this.assertScheduledSessionIsActiveOnDate(thirdAugustMondaySession, THIRD_AUGUST_MONDAY, persistedTutorialGroupId, persistedSchedule);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createNewTutorialGroupWithSchedule_sessionFallsOnTutorialGroupFreeDay_shouldCreateCancelledSession() throws Exception {
         // given
-        var freeDay = tutorialGroupUtilService.addTutorialGroupFreeDay(exampleConfigurationId, secondAugustMonday, "Holiday");
-        var newTutorialGroupCoveringHoliday = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, "tutor1");
+        var freeDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, SECOND_AUGUST_MONDAY_00_00, SECOND_AUGUST_MONDAY_23_59, "Holiday");
+        var newTutorialGroupCoveringHoliday = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         var scheduleToCreate = newTutorialGroupCoveringHoliday.getTutorialGroupSchedule();
 
         // when
@@ -105,8 +105,8 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var normalSession = sessions.get(0);
         var holidaySession = sessions.get(1);
 
-        this.assertScheduledSessionIsActiveOnDate(normalSession, firstAugustMonday, persistedTutorialGroupId, persistedSchedule);
-        this.assertScheduledSessionIsCancelledOnDate(holidaySession, secondAugustMonday, persistedTutorialGroupId, persistedSchedule);
+        this.assertScheduledSessionIsActiveOnDate(normalSession, FIRST_AUGUST_MONDAY, persistedTutorialGroupId, persistedSchedule);
+        this.assertScheduledSessionIsCancelledOnDate(holidaySession, SECOND_AUGUST_MONDAY, persistedTutorialGroupId, persistedSchedule);
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(holidaySession.getId());
@@ -117,25 +117,25 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createNewTutorialGroupWithSchedule_wrongDateFormatInSchedule_shouldReturnBadRequest() throws Exception {
         // given
-        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, "tutor1");
+        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         var scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
         // wrong format as not uuuu-MM-dd
         scheduleToCreate.setValidFromInclusive("2022-11-25T23:00:00.000Z");
         request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), newTutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
 
-        newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, "tutor1");
+        newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
         // wrong format as not uuuu-MM-dd
         scheduleToCreate.setValidToInclusive("2022-11-25T23:00:00.000Z");
         request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), newTutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
 
-        newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, "tutor1");
+        newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
         // wrong format as not hh:mm:ss
         scheduleToCreate.setStartTime("23:00:00.000Z");
         request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), newTutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
 
-        newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, "tutor1");
+        newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
         // wrong format as not hh:mm:ss
         scheduleToCreate.setEndTime("23:00:00.000Z");
@@ -147,12 +147,12 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
     void addScheduleToTutorialGroupWithoutSchedule_asInstructor_shouldAddScheduleAndCreateSessions() throws Exception {
         // given
         var tutorialGroup = this.buildAndSaveTutorialGroupWithoutSchedule("tutor1");
-        var newSchedule = this.buildExampleSchedule(firstAugustMonday, secondAugustMonday);
+        var newSchedule = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(newSchedule);
 
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         // when
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
 
         // then
         var persistedTutorialGroup = tutorialGroupRepository.findByIdElseThrow(tutorialGroup.getId());
@@ -163,8 +163,8 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
 
         var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(persistedTutorialGroup.getId()).orElseThrow();
 
-        this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, firstAugustMonday, tutorialGroup.getId(), persistedSchedule);
-        this.assertScheduledSessionIsActiveOnDate(secondAugustMondaySession, secondAugustMonday, tutorialGroup.getId(), persistedSchedule);
+        this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
+        this.assertScheduledSessionIsActiveOnDate(secondAugustMondaySession, SECOND_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
     }
 
     @Test
@@ -172,13 +172,13 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
     void addScheduleToTutorialGroupWithoutSchedule_scheduledSessionFallsOnAlreadyExistingSession_shouldReturnBadRequest() throws Exception {
         // given
         var tutorialGroup = this.buildAndSaveTutorialGroupWithoutSchedule("tutor1");
-        this.buildAndSaveExampleIndividualTutorialGroupSession(tutorialGroup.getId(), firstAugustMonday);
-        var newSchedule = this.buildExampleSchedule(firstAugustMonday, secondAugustMonday);
+        this.buildAndSaveExampleIndividualTutorialGroupSession(tutorialGroup.getId(), FIRST_AUGUST_MONDAY_00_00);
+        var newSchedule = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(newSchedule);
 
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         // when
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.BAD_REQUEST);
 
         // then
         assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId())).hasSize(1);
@@ -189,7 +189,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTutorialGroupWithSchedule_NoChangesToSchedule_ShouldNotRecreateSessionsOrSchedule() throws Exception {
         // given
-        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, "tutor1");
+        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
         tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
         var sessionIds = tutorialGroup.getTutorialGroupSessions().stream().map(DomainObject::getId).collect(Collectors.toSet());
@@ -199,7 +199,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
         tutorialGroup.setCapacity(2000);
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
 
         // then
         tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
@@ -212,7 +212,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTutorialGroupWithSchedule_OnlyLocationChanged_ShouldNotRecreateSessionsOrScheduleButUpdateLocation() throws Exception {
         // given
-        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, "tutor1");
+        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
         tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
         var sessionIds = tutorialGroup.getTutorialGroupSessions().stream().map(DomainObject::getId).collect(Collectors.toSet());
@@ -222,7 +222,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
         tutorialGroup.getTutorialGroupSchedule().setLocation("updated");
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
 
         // then
         tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
@@ -238,13 +238,13 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void modifyExistingScheduleOfTutorialGroup_shouldRecreateScheduledSessionsButKeepIndividualSessions() throws Exception {
         // given
-        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, "tutor1");
+        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
         tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
 
-        this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, fourthAugustMonday);
+        this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, FOURTH_AUGUST_MONDAY_00_00);
 
-        var newSchedule = this.buildExampleSchedule(firstAugustMonday, thirdAugustMonday);
+        var newSchedule = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, THIRD_AUGUST_MONDAY);
         newSchedule.setId(tutorialGroup.getTutorialGroupSchedule().getId());
         newSchedule.setRepetitionFrequency(2); // repeat every two weeks
         tutorialGroup.setTutorialGroupSchedule(newSchedule);
@@ -252,7 +252,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
 
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         // when
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
 
         // then
         tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
@@ -264,43 +264,43 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
 
         var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
 
-        this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, firstAugustMonday, tutorialGroup.getId(), persistedSchedule);
-        this.assertScheduledSessionIsActiveOnDate(thirdAugustMondaySession, thirdAugustMonday, tutorialGroup.getId(), persistedSchedule);
+        this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
+        this.assertScheduledSessionIsActiveOnDate(thirdAugustMondaySession, THIRD_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
         // individual session
-        this.assertIndividualSessionIsActiveOnDate(fourthAugustMondaySession, fourthAugustMonday, tutorialGroup.getId());
+        this.assertIndividualSessionIsActiveOnDate(fourthAugustMondaySession, FOURTH_AUGUST_MONDAY_00_00, tutorialGroup.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteScheduleOfTutorialGroup_shouldDeleteAllScheduledSessionsButKeepIndividualSessions() throws Exception {
         // given
-        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, "tutor1");
+        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
-        this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, thirdAugustMonday);
+        this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, THIRD_AUGUST_MONDAY_00_00);
         tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
         // when
         tutorialGroup.setTutorialGroupSchedule(null);
 
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        tutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.OK);
+        tutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         assertThat(sessions).hasSize(1);
         var thirdAugustMondaySession = sessions.get(0);
-        this.assertIndividualSessionIsActiveOnDate(thirdAugustMondaySession, thirdAugustMonday, tutorialGroup.getId());
+        this.assertIndividualSessionIsActiveOnDate(thirdAugustMondaySession, THIRD_AUGUST_MONDAY_00_00, tutorialGroup.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteTutorialGroupWithSchedule_shouldDeleteScheduleAndSessions() throws Exception {
         // given
-        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, "tutor1");
+        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
-        this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, thirdAugustMonday);
+        this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, THIRD_AUGUST_MONDAY_00_00);
         tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
 
         // when
-        request.delete(getTutorialGroupsPath(exampleCourseId) + tutorialGroup.getId(), HttpStatus.NO_CONTENT);
+        request.delete(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), HttpStatus.NO_CONTENT);
 
         // then
         assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId())).isEmpty();

@@ -216,7 +216,7 @@
                         <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate }}</h4>
                         @if (!localVCEnabled) {
                             <a jhiSecureLink [href]="programmingExercise.solutionParticipation?.repositoryUri || ''">
-                                <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution"> Example solution repository </jhi-button>
+                                <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution" />
                             </a>
                         } @else {
                             <jhi-clone-repo-button [smallButtons]="true" [repositoryUri]="programmingExercise.solutionParticipation?.repositoryUri || ''" />
@@ -271,8 +271,7 @@
                                     toRead: stats.toReview.total,
                                     toAssess: stats.toAssess.total
                                 }"
-                            >
-                            </span>
+                            ></span>
                         </div>
                     }
 
@@ -554,14 +553,12 @@
                                                         notYetAssessed: notYetAssessed[correctionRound],
                                                         lockedSubmissionsByOtherTutor: lockedSubmissionsByOtherTutor[correctionRound]
                                                     }"
-                                                >
-                                                </span>
+                                                ></span>
                                                 @if (correctionRound === 1) {
                                                     <span
                                                         jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsInfoSecondCorrection"
                                                         [translateValues]="{ firstRoundAssessments: firstRoundAssessments }"
-                                                    >
-                                                    </span>
+                                                    ></span>
                                                 }
                                             </div>
                                         }

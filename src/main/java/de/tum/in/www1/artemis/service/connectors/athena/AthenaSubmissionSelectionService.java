@@ -31,9 +31,9 @@ public class AthenaSubmissionSelectionService {
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
-    private final AthenaModuleUrlHelper athenaModuleUrlHelper;
+    private final AthenaModuleService athenaModuleService;
 
-    private final AthenaDTOConverter athenaDTOConverter;
+    private final AthenaDTOConverterService athenaDTOConverterService;
 
     private record RequestDTO(ExerciseDTO exercise, List<Long> submissionIds// Athena just needs submission IDs => quicker request, because less data is sent
     ) {
@@ -48,10 +48,10 @@ public class AthenaSubmissionSelectionService {
      * Responses should be fast, and it's not too bad if it fails. Therefore, we use a very short timeout for requests.
      */
     public AthenaSubmissionSelectionService(@Qualifier("veryShortTimeoutAthenaRestTemplate") RestTemplate veryShortTimeoutAthenaRestTemplate,
-            AthenaModuleUrlHelper athenaModuleUrlHelper, AthenaDTOConverter athenaDTOConverter) {
+            AthenaModuleService athenaModuleService, AthenaDTOConverterService athenaDTOConverterService) {
         connector = new AthenaConnector<>(veryShortTimeoutAthenaRestTemplate, ResponseDTO.class);
-        this.athenaModuleUrlHelper = athenaModuleUrlHelper;
-        this.athenaDTOConverter = athenaDTOConverter;
+        this.athenaModuleService = athenaModuleService;
+        this.athenaDTOConverterService = athenaDTOConverterService;
     }
 
     /**
@@ -64,7 +64,7 @@ public class AthenaSubmissionSelectionService {
      * @throws IllegalArgumentException if exercise isn't automatically assessable
      */
     public Optional<Long> getProposedSubmissionId(Exercise exercise, List<Long> submissionIds) {
-        if (!exercise.getFeedbackSuggestionsEnabled()) {
+        if (!exercise.areFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
         }
         if (submissionIds.isEmpty()) {
@@ -76,9 +76,9 @@ public class AthenaSubmissionSelectionService {
         log.info("Calling Athena to calculate next proposed submissions for {} submissions.", submissionIds.size());
 
         try {
-            final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), submissionIds);
+            final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), submissionIds);
             // allow no retries because this should be fast and it's not too bad if it fails
-            ResponseDTO response = connector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/select_submission", request, 0);
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/select_submission", request, 0);
             log.info("Athena to calculate next proposes submissions responded: {}", response.submissionId);
             if (response.submissionId == -1) {
                 return Optional.empty();

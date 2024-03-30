@@ -82,17 +82,17 @@
                         }
                         @if (submission?.submitted && (!isActive || result)) {
                             <div class="col-3 pt-5">
-                                <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title">Assessment</h4>
+                                <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title"></h4>
                                 @if (!assessmentResult || !assessmentResult!.feedbacks || assessmentResult!.feedbacks!.length === 0) {
-                                    <p jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment">There is no assessment available yet.</p>
+                                    <p jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"></p>
                                 }
                                 @if (assessmentResult && assessmentResult!.feedbacks && assessmentResult!.feedbacks!.length > 0) {
-                                    <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions">Select elements in the editor to filter the assessment.</p>
+                                    <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions"></p>
                                     <table class="table" id="component-feedback-table">
                                         <thead class="thead-light">
                                             <tr>
-                                                <th jhiTranslate="artemisApp.modelingSubmission.assessment.element">Element</th>
-                                                <th class="text-center" jhiTranslate="artemisApp.modelingSubmission.assessment.score">Score</th>
+                                                <th jhiTranslate="artemisApp.modelingSubmission.assessment.element"></th>
+                                                <th class="text-center" jhiTranslate="artemisApp.modelingSubmission.assessment.score"></th>
                                             </tr>
                                         </thead>
                                         @if (assessmentsNames) {
@@ -157,7 +157,7 @@
             <!--endregion-->
             <!--region Right Panel-->
             <fa-icon right-header [icon]="farListAlt" />&nbsp;
-            <span right-header id="problem-statement" jhiTranslate="artemisApp.modelingSubmission.problemStatement">Problem Statement</span>
+            <span right-header id="problem-statement" jhiTranslate="artemisApp.modelingSubmission.problemStatement"></span>
             <p right-body class="mb-3 markdown-preview">
                 @if (modelingExercise!.problemStatement) {
                     <span [innerHTML]="modelingExercise!.problemStatement! | htmlForMarkdown"></span>

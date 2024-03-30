@@ -22,7 +22,7 @@ import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
@@ -159,6 +159,9 @@ class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private TeamRepository teamRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     private Course course;
 
@@ -736,13 +739,24 @@ class ProgrammingExerciseIntegrationTestService {
         assertThat(programmingExerciseServer.getStudentParticipations()).isEmpty();
     }
 
-    void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults) throws Exception {
+    void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults, boolean withGradingCriteria) throws Exception {
         AuxiliaryRepository auxiliaryRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(programmingExercise);
+        Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
+        gradingCriteria = Set.copyOf(gradingCriterionRepository.saveAll(gradingCriteria));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
         var path = ROOT + PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION.replace("{exerciseId}", String.valueOf(programmingExercise.getId()))
-                + "?withSubmissionResults=" + withSubmissionResults;
+                + "?withSubmissionResults=" + withSubmissionResults + "&withGradingCriteria=" + withGradingCriteria;
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
+
         checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
         assertThat(programmingExerciseServer.getAuxiliaryRepositories()).hasSize(1).containsExactly(auxiliaryRepository);
+        if (withGradingCriteria) {
+            assertThat(programmingExerciseServer.getGradingCriteria()).containsAll(gradingCriteria);
+        }
+        else {
+            assertThat(programmingExerciseServer.getGradingCriteria()).isEmpty();
+        }
     }
 
     private void checkTemplateAndSolutionParticipationsFromServer(ProgrammingExercise programmingExerciseServer) {
@@ -1614,9 +1628,8 @@ class ProgrammingExerciseIntegrationTestService {
         updates.get(0).setBonusMultiplier(-1.0);
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
 
-        request.getMvc()
-                .perform(MockMvcRequestBuilders.patch(new URI(ROOT + endpoint)).contentType(MediaType.APPLICATION_JSON)
-                        .content(request.getObjectMapper().writeValueAsString(updates)))
+        request.performMvcRequest(
+                MockMvcRequestBuilders.patch(new URI(ROOT + endpoint)).contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsString(updates)))
                 .andExpect(status().isBadRequest()) //
                 .andExpect(jsonPath("$.errorKey").value("settingNegative")) //
                 .andExpect(jsonPath("$.testCase").value(testCases.get(0).getTestName()));

@@ -7,9 +7,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import javax.annotation.CheckReturnValue;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
@@ -123,6 +124,30 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the current user is at least an editor in the given course.
+     *
+     * @param courseId the id of the course that needs to be checked
+     * @return true if the user is at least an editor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastEditorInCourse(long courseId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastEditorInCourse(s, courseId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an editor in the given course.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param courseId the id of the course that needs to be checked
+     */
+    public void isAtLeastEditorInCourseElseThrow(long courseId) {
+        if (!isAtLeastEditorInCourse(courseId)) {
+            throw new AccessForbiddenException("Course", courseId);
+        }
+    }
+
+    /**
      * Given any type of exercise, the method returns if the current user is at least TA for the course the exercise belongs to. If exercise is not present, it will return false,
      * because the optional will be empty, and therefore `isPresent()` will return false This is due how `filter` works: If a value is present, apply the provided mapping function
      * to it, and if the result is non-null, return an Optional describing the result. Otherwise, return an empty Optional.
@@ -211,6 +236,30 @@ public class AuthorizationCheckService {
     public boolean isAtLeastTeachingAssistantInCourse(@NotNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
+    }
+
+    /**
+     * Checks if the current user is at least a teaching assistant in the given course.
+     *
+     * @param courseId the id of the course that needs to be checked
+     * @return true if the user is at least a teaching assistant in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastTeachingAssistantInCourse(long courseId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastTeachingAssistantInCourse(s, courseId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least a teaching assistant in the given course.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param courseId the id of the course that needs to be checked
+     */
+    public void isAtLeastTeachingAssistantInCourseElseThrow(long courseId) {
+        if (!isAtLeastTeachingAssistantInCourse(courseId)) {
+            throw new AccessForbiddenException("Course", courseId);
+        }
     }
 
     /**
@@ -362,6 +411,30 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the current user is at least a student in the given course.
+     *
+     * @param courseId the id of the course that needs to be checked
+     * @return true if the user is at least a student in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastStudentInCourse(long courseId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastStudentInCourse(s, courseId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least a student in the given course.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param courseId the id of the course that needs to be checked
+     */
+    public void isAtLeastStudentInCourseElseThrow(long courseId) {
+        if (!isAtLeastStudentInCourse(courseId)) {
+            throw new AccessForbiddenException("Course", courseId);
+        }
+    }
+
+    /**
      * Checks if the currently logged-in user is at least an instructor in the course of the given exercise.
      * The course is identified from either exercise. Course or exercise.exerciseGroup.exam.course
      *
@@ -455,6 +528,30 @@ public class AuthorizationCheckService {
     public boolean isAtLeastInstructorInCourse(@NotNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin(user);
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given course.
+     *
+     * @param courseId the id of the course that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastInstructorInCourse(long courseId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastInstructorInCourse(s, courseId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given course.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param courseId the id of the course that needs to be checked
+     */
+    public void isAtLeastInstructorInCourseElseThrow(long courseId) {
+        if (!isAtLeastInstructorInCourse(courseId)) {
+            throw new AccessForbiddenException("Course", courseId);
+        }
     }
 
     /**
@@ -774,4 +871,101 @@ public class AuthorizationCheckService {
         return user;
     }
 
+    /**
+     * Checks if the current user has at least the given role in the given course.
+     *
+     * @param role     the role that should be checked
+     * @param courseId the id of the course that needs to be checked
+     * @return true if the user has at least the role in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastRoleInCourse(Role role, long courseId) {
+        return switch (role) {
+            case ADMIN -> isAdmin();
+            case INSTRUCTOR -> isAtLeastInstructorInCourse(courseId);
+            case EDITOR -> isAtLeastEditorInCourse(courseId);
+            case TEACHING_ASSISTANT -> isAtLeastTeachingAssistantInCourse(courseId);
+            case STUDENT -> isAtLeastStudentInCourse(courseId);
+            case ANONYMOUS -> false;
+        };
+    }
+
+    public void checkIsAtLeastRoleInCourseElseThrow(Role role, long courseId) {
+        if (!isAtLeastRoleInCourse(role, courseId)) {
+            throw new AccessForbiddenException("Course", courseId);
+        }
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given exercise.
+     *
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastStudentInExercise(long exerciseId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastStudentInExercise(s, exerciseId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given exercise.
+     *
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastTeachingAssistantInExercise(long exerciseId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastTeachingAssistantInExercise(s, exerciseId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an editor in the given exercise.
+     *
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastEditorInExercise(long exerciseId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastEditorInExercise(s, exerciseId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given exercise.
+     *
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastInstructorInExercise(long exerciseId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastInstructorInExercise(s, exerciseId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user has at least the given role in the given exercise.
+     *
+     * @param role       the role that should be checked
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user has at least the role in the exercise, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastRoleInExercise(Role role, long exerciseId) {
+        return switch (role) {
+            case ADMIN -> isAdmin();
+            case INSTRUCTOR -> isAtLeastInstructorInExercise(exerciseId);
+            case EDITOR -> isAtLeastEditorInExercise(exerciseId);
+            case TEACHING_ASSISTANT -> isAtLeastTeachingAssistantInExercise(exerciseId);
+            case STUDENT -> isAtLeastStudentInExercise(exerciseId);
+            case ANONYMOUS -> false;
+        };
+    }
+
+    public void checkIsAtLeastRoleInExerciseElseThrow(Role role, long exerciseId) {
+        if (!isAtLeastRoleInExercise(role, exerciseId)) {
+            throw new AccessForbiddenException("Exercise", exerciseId);
+        }
+    }
 }

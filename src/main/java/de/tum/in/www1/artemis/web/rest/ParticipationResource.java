@@ -10,8 +10,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -515,6 +515,10 @@ public class ParticipationResource {
     private Set<StudentParticipation> findParticipationWithLatestResults(Exercise exercise) {
         if (exercise.getExerciseType() == ExerciseType.QUIZ) {
             return studentParticipationRepository.findByExerciseIdWithLatestAndManualRatedResults(exercise.getId());
+        }
+        if (exercise.isTeamMode()) {
+            // For team exercises the students need to be eagerly fetched
+            return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
         }
         return studentParticipationRepository.findByExerciseIdWithLatestAndManualResults(exercise.getId());
     }

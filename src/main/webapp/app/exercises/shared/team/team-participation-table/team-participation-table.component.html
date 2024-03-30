@@ -18,7 +18,7 @@
             <ngx-datatable-column prop="title" [minWidth]="180" [width]="200" [maxWidth]="240" [frozenLeft]="true">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('title')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.exercise"> Exercise </span>
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.exercise"></span>
                         <fa-icon [icon]="controls.iconForSortPropField('title')" />
                     </span>
                 </ng-template>
@@ -31,7 +31,7 @@
             <ngx-datatable-column prop="releaseDate" [minWidth]="160" [width]="160" [maxWidth]="160" [frozenLeft]="true">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('releaseDate')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.releaseDate"> Release Date </span>
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.releaseDate"></span>
                         <fa-icon [icon]="controls.iconForSortPropField('releaseDate')" />
                     </span>
                 </ng-template>
@@ -42,7 +42,7 @@
             <ngx-datatable-column prop="individualDueDate" [minWidth]="160" [width]="160" [maxWidth]="160" [frozenLeft]="true">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('dueDate')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.dueDate"> Due Date </span>
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.dueDate"></span>
                         <fa-icon [icon]="controls.iconForSortPropField('individualDueDate')" />
                     </span>
                 </ng-template>
@@ -103,7 +103,7 @@
             <ngx-datatable-column prop="participation.initializationDate" [minWidth]="190" [width]="190" [maxWidth]="190">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.initializationDate')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationDate"> Initialization Date </span>
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationDate"></span>
                         <fa-icon [icon]="controls.iconForSortPropField('participation.initializationDate')" />
                     </span>
                 </ng-template>
@@ -119,7 +119,7 @@
                 <ngx-datatable-column [minWidth]="200" [width]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper">
-                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.detail.participationsTable.columns.assessment.label"> Assessment </span>
+                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.detail.participationsTable.columns.assessment.label"></span>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="row">

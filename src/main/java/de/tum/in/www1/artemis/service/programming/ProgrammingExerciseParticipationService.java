@@ -8,7 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -469,12 +469,29 @@ public class ProgrammingExerciseParticipationService {
      * @param participation the participation for which to get the commits.
      * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
      */
-    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseStudentParticipation participation) {
+    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseParticipation participation) {
         try {
             return gitService.getCommitInfos(participation.getVcsRepositoryUri());
         }
         catch (GitAPIException e) {
             log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
+            return List.of();
+        }
+    }
+
+    /**
+     * Get the commits information for the test repository of the given participation's exercise.
+     *
+     * @param participation the participation for which to get the commits.
+     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
+     */
+    public List<CommitInfoDTO> getCommitInfosTestRepo(ProgrammingExerciseParticipation participation) {
+        ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
+        try {
+            return gitService.getCommitInfos(exercise.getVcsTestRepositoryUri());
+        }
+        catch (GitAPIException e) {
+            log.error("Could not get commit infos for test repository with participation id {}", participation.getId());
             return List.of();
         }
     }

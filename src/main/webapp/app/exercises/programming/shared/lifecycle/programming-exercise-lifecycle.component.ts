@@ -118,7 +118,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
             this.exercise.assessmentDueDate = undefined;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
-            this.exercise.feedbackSuggestionsEnabled = false;
+            this.exercise.feedbackSuggestionModule = undefined;
         } else {
             this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             this.exercise.allowComplaintsForAutomaticAssessments = false;

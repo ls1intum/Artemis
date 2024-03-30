@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.interpretInTimeZone;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.interpretInTimeZone;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -11,12 +11,12 @@ import java.time.ZoneId;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import javax.ws.rs.BadRequestException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
@@ -116,15 +117,8 @@ public class TutorialGroupSessionResource {
         var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToUpdate.getTutorialGroup(), null);
-        var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
-        if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration");
-        }
-        var configuration = configurationOptional.get();
-        if (configuration.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
-        }
 
+        TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
         var updatedSession = tutorialGroupSessionDTO.toEntity(configuration);
         sessionToUpdate.setStart(updatedSession.getStart());
         sessionToUpdate.setEnd(updatedSession.getEnd());
@@ -140,18 +134,9 @@ public class TutorialGroupSessionResource {
             sessionToUpdate.setTutorialGroupSchedule(null);
         }
 
-        var overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(),
-                sessionToUpdate.getEnd());
-        if (overlappingPeriodOptional.isPresent()) {
-            sessionToUpdate.setStatus(TutorialGroupSessionStatus.CANCELLED);
-            sessionToUpdate.setStatusExplanation(null);
-            sessionToUpdate.setTutorialGroupFreePeriod(overlappingPeriodOptional.get());
-        }
-        else {
-            sessionToUpdate.setStatus(TutorialGroupSessionStatus.ACTIVE);
-            sessionToUpdate.setStatusExplanation(null);
-            sessionToUpdate.setTutorialGroupFreePeriod(null);
-        }
+        Optional<TutorialGroupFreePeriod> overlappingPeriodOptional = tutorialGroupFreePeriodRepository
+                .findFirstOverlappingInSameCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(), sessionToUpdate.getEnd());
+        updateTutorialGroupSession(sessionToUpdate, overlappingPeriodOptional);
 
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
@@ -218,35 +203,49 @@ public class TutorialGroupSessionResource {
         tutorialGroupSessionDTO.validityCheck();
         var tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(tutorialGroupId);
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(tutorialGroup, null);
-        var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
-        if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration");
-        }
-        var configuration = configurationOptional.get();
-        if (configuration.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
-        }
-
+        TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
         TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(configuration);
         newSession.setTutorialGroup(tutorialGroup);
         checkEntityIdMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
         isValidTutorialGroupSession(newSession, ZoneId.of(configuration.getCourse().getTimeZone()));
 
-        var overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroup.getCourse(), newSession.getStart(), newSession.getEnd());
-        if (overlappingPeriodOptional.isPresent()) {
+        Optional<TutorialGroupFreePeriod> overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findFirstOverlappingInSameCourse(tutorialGroup.getCourse(),
+                newSession.getStart(), newSession.getEnd());
+        updateTutorialGroupSession(newSession, overlappingPeriodOptional);
+        newSession = tutorialGroupSessionRepository.save(newSession);
+
+        return ResponseEntity.created(URI.create("/api/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
+                .body(TutorialGroupSession.preventCircularJsonConversion(newSession));
+    }
+
+    /**
+     * Updates the status and associated free period of a tutorial group session based on the presence of an overlapping free period.
+     *
+     * @param newSession        the tutorial group session to be updated.
+     * @param overlappingPeriod an Optional that may contain a TutorialGroupFreePeriod if there is an overlapping free period.
+     */
+    public static void updateTutorialGroupSession(TutorialGroupSession newSession, Optional<TutorialGroupFreePeriod> overlappingPeriod) {
+        if (overlappingPeriod.isPresent()) {
             newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
+            // the status explanation is set to null, as it is specified in the TutorialGroupFreePeriod
             newSession.setStatusExplanation(null);
-            newSession.setTutorialGroupFreePeriod(overlappingPeriodOptional.get());
+            newSession.setTutorialGroupFreePeriod(overlappingPeriod.get());
         }
         else {
             newSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
             newSession.setStatusExplanation(null);
             newSession.setTutorialGroupFreePeriod(null);
         }
-        newSession = tutorialGroupSessionRepository.save(newSession);
+    }
 
-        return ResponseEntity.created(URI.create("/api/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
-                .body(TutorialGroupSession.preventCircularJsonConversion(newSession));
+    private TutorialGroupsConfiguration validateTutorialGroupConfiguration(@PathVariable Long courseId) {
+        var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
+        var configuration = configurationOptional.orElseThrow(() -> new BadRequestException("The course has no tutorial groups configuration"));
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
+
+        return configuration;
     }
 
     /**

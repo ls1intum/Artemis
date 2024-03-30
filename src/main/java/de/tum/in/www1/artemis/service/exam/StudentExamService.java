@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -806,7 +806,7 @@ public class StudentExamService {
      * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
      * @return the list of student exams with their corresponding users
      */
-    @Transactional
+    @Transactional // TODO: NOT OK --> remove @Transactional
     public List<StudentExam> generateStudentExams(final Exam exam) {
         final var existingStudentExams = studentExamRepository.findByExamId(exam.getId());
         // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
@@ -827,7 +827,7 @@ public class StudentExamService {
      * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
      * @return the list of student exams with their corresponding users
      */
-    @Transactional
+    @Transactional // TODO: NOT OK --> remove @Transactional
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
 
         // Get all users who already have an individual exam

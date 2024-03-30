@@ -21,16 +21,23 @@ Use appropriate and descriptive names for test cases so developers can easily un
 Instead of naming your variables ``int a``, ``double b``, ``String c``, you should use meaningful names that elucidate their purpose.
 To increase readability, prefix variable names with ``actual`` and ``expected``.
 
-For example, if you want to test the method ``borrow`` in the class ``Book``, ``testBorrowInBook()`` would be an appropriate name for the test case.
+We want to follow the naming convention ``should<ExpectedBehavior>When<StateUnderTest>``.
+For example, if you want to test that an unknown user should not be able to ``borrow`` a ``Book``, ``BookIntegrationTest.shouldReturnForbiddenWhenUserUnknown()`` would be an appropriate name for the test case.
+Utilizing a nested class can improve the readability of the test names as well as the structure of the test class.
 When comparing two books in the test, use meaningful names such as ``actualBook`` and ``expectedBook``.
 
 .. code-block:: java
 
-    @Test
-    void testBorrowInBook() {
-        [...]
+    @Nested
+    class BorrowBook {
 
-        assertThat(actualBook).isEqualTo(expectedBook);
+        @Test
+        void shouldReturnForbiddenWhenUserUnknown() {
+            [...]
+            assertThat(actualBook).isEqualTo(expectedBook);
+        }
+
+        [...]
     }
 
 Try to follow best practices for Java testing:
@@ -40,7 +47,7 @@ Try to follow best practices for Java testing:
 * Write dumb tests by avoiding the reuse of production code and focusing on comparing output values with hard-coded values.
 * Invest in a testable implementation by avoiding static access, using constructor injection, and separating business logic from asynchronous execution.
 * Instead of using random, use fixed test data to make error messages better understandable.
-* Make use of `JUnit 5 <https://junit.org/junit5/docs/current/user-guide/#writing-tests>`__ features such as parameterized tests.
+* Make use of `JUnit 5 <https://junit.org/junit5/docs/current/user-guide/#writing-tests>`__ features such as parameterized tests and nested test classes.
 * Follow `best practices <https://www.baeldung.com/spring-tests>`__ related to spring testing.
 
 For a more detailed overview check out `modern best testing practices <https://phauer.com/2019/modern-best-practices-testing-java/>`__.

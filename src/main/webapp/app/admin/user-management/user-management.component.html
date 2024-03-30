@@ -1,11 +1,18 @@
 <div>
-    <h2>
-        <span id="user-management-page-heading" jhiTranslate="artemisApp.userManagement.home.title">Users</span>
-        <a class="btn btn-primary float-end jh-create-entity" [routerLink]="['./new']">
-            <fa-icon [icon]="faPlus" />
-            <span jhiTranslate="artemisApp.userManagement.home.createLabel">Create a new User</span>
-        </a>
-    </h2>
+    <div>
+        <div class="d-flex justify-content-between">
+            <h2>
+                <span id="user-management-page-heading" jhiTranslate="artemisApp.userManagement.home.title"></span>
+            </h2>
+            <div>
+                <jhi-user-import-button class="me-1" [adminUserMode]="true" [buttonType]="ButtonType.PRIMARY_OUTLINE" />
+                <a class="btn btn-primary jh-create-entity" [routerLink]="['./new']">
+                    <fa-icon [icon]="faPlus" />
+                    <span jhiTranslate="artemisApp.userManagement.home.createLabel"></span>
+                </a>
+            </div>
+        </div>
+    </div>
     @if (users) {
         <div class="table-responsive">
             <form [formGroup]="userSearchForm">
@@ -13,7 +20,7 @@
                     <div class="row">
                         <div class="col">
                             <div class="form-group form-inline">
-                                <label for="field_searchTerm" class="form-control-label" jhiTranslate="artemisApp.userManagement.searchForUser">Search for User: </label>
+                                <label for="field_searchTerm" class="form-control-label" jhiTranslate="artemisApp.userManagement.searchForUser"></label>
                                 <input
                                     class="form-control ms-3"
                                     type="text"
@@ -24,15 +31,15 @@
                                     (focusout)="loadAll()"
                                 />
                                 <button class="btn btn-primary ms-3" (click)="loadAll()">
-                                    <span jhiTranslate="artemisApp.userManagement.search">Search</span>
+                                    <span jhiTranslate="artemisApp.userManagement.search"></span>
                                 </button>
                                 @if (searchControl.invalid && (searchControl.dirty || searchControl.touched)) {
                                     <div class="alert alert-danger ms-3 mb-0">
-                                        <div jhiTranslate="artemisApp.userManagement.searchError">Search term must be empty or at least 3 character.</div>
+                                        <div jhiTranslate="artemisApp.userManagement.searchError"></div>
                                     </div>
                                 }
                                 @if (loadingSearchResult) {
-                                    <span class="ms-3" jhiTranslate="artemisApp.userManagement.loading">Loading...</span>
+                                    <span class="ms-3" jhiTranslate="artemisApp.userManagement.loading"></span>
                                 }
                             </div>
                         </div>
@@ -69,7 +76,7 @@
                 <thead>
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
                         <th class="user-management-select-all">
-                            <span class="pe-1" jhiTranslate="artemisApp.userManagement.batch.all">All</span>
+                            <span class="pe-1" jhiTranslate="artemisApp.userManagement.batch.all"></span>
                             <input
                                 class="form-check-input"
                                 [checked]="this.selectedUsers.length === this.usersWithoutCurrentUser.length"
@@ -78,42 +85,42 @@
                             />
                         </th>
                         <th jhiSortBy="id">
-                            <span jhiTranslate="global.field.id">ID</span>
+                            <span jhiTranslate="global.field.id"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="login">
-                            <span jhiTranslate="artemisApp.userManagement.login">Login</span>
+                            <span jhiTranslate="artemisApp.userManagement.login"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="email">
-                            <span jhiTranslate="artemisApp.userManagement.email">Email</span>
+                            <span jhiTranslate="artemisApp.userManagement.email"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="registrationNumber">
-                            <span jhiTranslate="artemisApp.userManagement.registrationNumber">Registration Number</span>
+                            <span jhiTranslate="artemisApp.userManagement.registrationNumber"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="lastName">
-                            <span jhiTranslate="artemisApp.userManagement.name">Name</span>
+                            <span jhiTranslate="artemisApp.userManagement.name"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th></th>
                         <th jhiSortBy="langKey">
-                            <span jhiTranslate="artemisApp.userManagement.langKey">Lang Key</span>
+                            <span jhiTranslate="artemisApp.userManagement.langKey"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
-                        <th><span jhiTranslate="artemisApp.userManagement.profiles">Profiles</span></th>
+                        <th><span jhiTranslate="artemisApp.userManagement.profiles"></span></th>
                         <th><span>Groups</span></th>
                         <th jhiSortBy="createdDate">
-                            <span jhiTranslate="artemisApp.userManagement.createdDate">Created Date</span>
+                            <span jhiTranslate="artemisApp.userManagement.createdDate"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="lastModifiedBy">
-                            <span jhiTranslate="artemisApp.userManagement.lastModifiedBy">Last Modified By</span>
+                            <span jhiTranslate="artemisApp.userManagement.lastModifiedBy"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="lastModifiedDate">
-                            <span jhiTranslate="artemisApp.userManagement.lastModifiedDate">Last Modified Date</span>
+                            <span jhiTranslate="artemisApp.userManagement.lastModifiedDate"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th></th>
@@ -148,20 +155,15 @@
                                     <ngb-highlight [result]="user.name" [term]="searchTerm" />
                                 </td>
                                 <td>
-                                    @if (!user.activated) {
-                                        <button class="btn btn-danger btn-sm" (click)="setActive(user, true)" jhiTranslate="artemisApp.userManagement.deactivated">
-                                            Deactivated
-                                        </button>
-                                    }
                                     @if (user.activated) {
                                         <button
                                             class="btn btn-success btn-sm"
                                             (click)="setActive(user, false)"
                                             [disabled]="!currentAccount || currentAccount.login === user.login"
                                             jhiTranslate="artemisApp.userManagement.activated"
-                                        >
-                                            Activated
-                                        </button>
+                                        ></button>
+                                    } @else {
+                                        <button class="btn btn-danger btn-sm" (click)="setActive(user, true)" jhiTranslate="artemisApp.userManagement.deactivated"></button>
                                     }
                                 </td>
                                 <td>{{ user.langKey }}</td>
@@ -186,11 +188,11 @@
                                     <div class="btn-group flex-btn-group-container">
                                         <a [routerLink]="['./', user.login]" class="btn btn-info btn-sm">
                                             <fa-icon [icon]="faEye" />
-                                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
                                         </a>
                                         <a [routerLink]="['./', user.login, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
                                             <fa-icon [icon]="faWrench" />
-                                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                         </a>
                                         @if (isLdapProfileActive) {
                                             <button class="btn btn-success btn-sm" (click)="ldapSync(user.id!)" jhiTranslate="entity.action.ldap"></button>
@@ -409,7 +411,7 @@
             {{ 'artemisApp.userManagement.filter.modal.close' | artemisTranslate }}
         </button>
         <button class="btn btn-primary" (click)="applyFilter()">
-            <span jhiTranslate="artemisApp.userManagement.filter.apply">Apply</span>
+            <span jhiTranslate="artemisApp.userManagement.filter.apply"></span>
         </button>
     </div>
 </ng-template>

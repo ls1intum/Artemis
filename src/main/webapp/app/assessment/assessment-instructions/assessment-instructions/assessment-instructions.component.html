@@ -1,11 +1,15 @@
-@if (showAssessmentInstructions) {
+@if (showAssessmentInstructions && (gradingInstructions || (gradingCriteria && gradingCriteria.length > 0))) {
     <div class="border p-2">
-        <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions">
-            <p class="markdown-preview" [innerHTML]="gradingInstructions"></p>
-        </jhi-expandable-section>
-        <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.structuredGradingInstructions">
-            <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly" [criteria]="criteria" />
-        </jhi-expandable-section>
+        @if (gradingInstructions) {
+            <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions">
+                <p class="markdown-preview" [innerHTML]="gradingInstructions"></p>
+            </jhi-expandable-section>
+        }
+        @if (gradingCriteria && gradingCriteria.length > 0) {
+            <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.structuredGradingInstructions">
+                <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly" [criteria]="gradingCriteria" />
+            </jhi-expandable-section>
+        }
     </div>
 }
 <h3 *jhiExtensionPoint="overrideTitle">{{ exercise.title }}</h3>
@@ -28,7 +32,7 @@
         @case (ExerciseType.PROGRAMMING) {
             <div class="mb-3">
                 <a jhiSecureLink [href]="programmingExercise?.solutionParticipation?.repositoryUri">
-                    <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution">Example solution repository</jhi-button>
+                    <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution" />
                 </a>
             </div>
         }
