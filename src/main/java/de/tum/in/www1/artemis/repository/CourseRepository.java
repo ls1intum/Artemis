@@ -88,27 +88,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Course findCourseByStudentGroupName(@Param("name") String name);
 
     @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.instructorGroupName = :name
-            """)
-    List<Course> findCoursesByInstructorGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.teachingAssistantGroupName = :name
-            """)
-    List<Course> findCoursesByTeachingAssistantGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.studentGroupName = :name
-            """)
-    List<Course> findCoursesByStudentGroupName(@Param("name") String name);
-
-    @Query("""
             SELECT COUNT(c) > 0
             FROM Course c
             WHERE c.id = :courseId
@@ -484,17 +463,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     default boolean isMessagingEnabled(long courseId) {
         return informationSharingConfigurationIsOneOf(courseId,
                 Set.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
-    }
-
-    /**
-     * Checks if the communication feature is enabled for a course.
-     *
-     * @param courseId the id of the course
-     * @return true if the communication feature is enabled for the course, false otherwise
-     */
-    default boolean isCommunicationEnabled(long courseId) {
-        return informationSharingConfigurationIsOneOf(courseId,
-                Set.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
     }
 
     /**
