@@ -5,6 +5,7 @@ import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { MonacoEditorAnnotation, MonacoEditorAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-annotation.model';
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-line-widget.model';
+import { MonacoEditorInlineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
 
 export type EditorPosition = { row: number; column: number };
 export type MarkdownString = monaco.IMarkdownString;
@@ -22,6 +23,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     themeSubscription?: Subscription;
     models: monaco.editor.IModel[] = [];
     editorLineWidgets: MonacoEditorLineWidget[] = [];
+    inlineWidgets: MonacoEditorInlineWidget[] = [];
     editorAnnotations: MonacoEditorAnnotation[] = [];
 
     constructor(private themeService: ThemeService) {}
@@ -152,6 +154,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
         this.editorLineWidgets = [];
         this.disposeAnnotations();
+        this.inlineWidgets.forEach((i) => {
+            i.dispose();
+        });
     }
 
     disposeAnnotations() {
@@ -195,26 +200,41 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     addLineWidget(lineNumber: number, id: string, domNode: HTMLElement) {
-        const lineWidget = new MonacoEditorLineWidget(
-            id,
-            domNode,
-            lineNumber,
-            (viewZone) => {
-                let viewZoneId: string | undefined;
-                this._editor.changeViewZones((changeAccessor) => {
-                    viewZoneId = changeAccessor.addZone(viewZone);
-                });
-                if (!viewZoneId) throw new Error('Could not add a ViewZone to the editor.');
-                return viewZoneId;
-            },
-            (viewZoneId: string) => {
-                this._editor.changeViewZones((changeAccessor) => {
-                    changeAccessor.layoutZone(viewZoneId);
-                });
-            },
-        );
-
-        this._editor.addOverlayWidget(lineWidget);
-        this.editorLineWidgets.push(lineWidget);
+        const lineWidget = new MonacoEditorInlineWidget(this._editor, id, domNode, lineNumber);
+        lineWidget.addToEditor();
+        this.inlineWidgets.push(lineWidget);
     }
+
+    /*addLineWidget(lineNumber: number, id: string, domNode: HTMLElement) {
+        const lineWidget = new MonacoEditorLineWidget(id, domNode, lineNumber, this.registerViewZone.bind(this), this.layoutViewZone.bind(this), this.removeViewZone.bind(this));
+        this._editor.addOverlayWidget(lineWidget);
+        // TODO: This does not work! Make one global listener that updates the current elements.
+        const updateListener = this._editor.onDidChangeModelContent(() => {
+            lineWidget.updateWidget(this._editor.getModel()?.getLineCount() ?? 0);
+            lineWidget.setUpdateListener(updateListener);
+        });
+        lineWidget.setUpdateListener(updateListener);
+        this.editorLineWidgets.push(lineWidget);
+    }*/
+
+    /*private registerViewZone(viewZone: monaco.editor.IViewZone): string {
+        let viewZoneId: string | undefined;
+        this._editor.changeViewZones((changeAccessor) => {
+            viewZoneId = changeAccessor.addZone(viewZone);
+        });
+        if (!viewZoneId) throw new Error('Could not add a ViewZone to the editor.');
+        return viewZoneId;
+    }
+
+    private layoutViewZone(viewZoneId: string): void {
+        this._editor.changeViewZones((changeAccessor) => {
+            changeAccessor.layoutZone(viewZoneId);
+        });
+    }
+
+    private removeViewZone(viewZoneId: string): void {
+        this._editor.changeViewZones((changeAccessor) => {
+            changeAccessor.removeZone(viewZoneId);
+        });
+    }*/
 }
