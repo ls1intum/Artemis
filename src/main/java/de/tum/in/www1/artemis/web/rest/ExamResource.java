@@ -15,7 +15,6 @@ import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
@@ -122,7 +121,7 @@ public class ExamResource {
 
     private final StudentExamService studentExamService;
 
-    private final FileService fileService;
+    private final ExamUserService examUserService;
 
     public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
             ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
@@ -130,7 +129,7 @@ public class ExamResource {
             TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
             StudentExamRepository studentExamRepository, ExamImportService examImportService, CustomAuditEventRepository auditEventRepository, ChannelService channelService,
             ChannelRepository channelRepository, ExerciseRepository exerciseRepository, ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService,
-            StudentExamService studentExamService, FileService fileService) {
+            StudentExamService studentExamService, ExamUserService examUserService) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -154,7 +153,7 @@ public class ExamResource {
         this.examSessionService = examSessionRepository;
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
-        this.fileService = fileService;
+        this.examUserService = examUserService;
     }
 
     /**
@@ -803,8 +802,7 @@ public class ExamResource {
         examDeletionService.delete(examId);
 
         // delete all exam user signatures and images
-        exam.getExamUsers().stream().flatMap(examUser -> Stream.of(examUser.getSigningImagePath(), examUser.getStudentImagePath())).filter(Objects::nonNull).map(URI::create)
-                .map(FilePathService::actualPathForPublicPath).forEach(imagePath -> fileService.schedulePathForDeletion(imagePath, 0));
+        exam.getExamUsers().forEach(examUserService::deleteAvailableExamUserImages);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
     }

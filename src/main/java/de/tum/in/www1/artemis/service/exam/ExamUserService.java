@@ -8,7 +8,9 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -123,8 +125,8 @@ public class ExamUserService {
 
             ExamUser examUser = examUserOptional.get();
             String oldPathString = examUser.getStudentImagePath();
-            Path pathToSave = FilePathService.getStudentImageFilePath().resolve(examUserWithImageDTO.studentRegistrationNumber() + "_student_image.png");
-            Path savedPath = fileService.saveFile(file, pathToSave);
+            MultipartFile studentImageFile = fileService.convertByteArrayToMultipart("student_image", ".png", examUserWithImageDTO.image().imageInBytes());
+            Path savedPath = fileService.saveFile(studentImageFile, FilePathService.getStudentImageFilePath(), false);
 
             examUser.setStudentImagePath(FilePathService.publicPathForActualPathOrThrow(savedPath, examUser.getId()).toString());
             examUserRepository.save(examUser);
@@ -137,6 +139,16 @@ public class ExamUserService {
 
         return new ExamUsersNotFoundDTO(notFoundExamUsersRegistrationNumbers.size(), examUserWithImageDTOs.size() - notFoundExamUsersRegistrationNumbers.size(),
                 notFoundExamUsersRegistrationNumbers);
+    }
+
+    /**
+     * Deletes signature and student image of an exam user if they exist
+     *
+     * @param user the exam user whose images should be deleted
+     */
+    public void deleteAvailableExamUserImages(ExamUser user) {
+        Stream.of(user.getSigningImagePath(), user.getStudentImagePath()).filter(Objects::nonNull).map(URI::create).map(FilePathService::actualPathForPublicPath)
+                .forEach(path -> fileService.schedulePathForDeletion(path, 0));
     }
 
     /**
