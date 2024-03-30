@@ -3,9 +3,10 @@ import * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { MonacoEditorAnnotation, MonacoEditorAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-annotation.model';
+import { MonacoEditorAnnotation } from 'app/shared/monaco-editor/model/monaco-editor-annotation.model';
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-line-widget.model';
 import { MonacoEditorInlineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
+import { MonacoEditorAnnotationTypeEnum, MonacoEditorBuildAnnotation } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 
 export type EditorPosition = { row: number; column: number };
 export type MarkdownString = monaco.IMarkdownString;
@@ -25,6 +26,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     editorLineWidgets: MonacoEditorLineWidget[] = [];
     inlineWidgets: MonacoEditorInlineWidget[] = [];
     editorAnnotations: MonacoEditorAnnotation[] = [];
+    editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
 
     constructor(private themeService: ThemeService) {}
 
@@ -157,6 +159,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.inlineWidgets.forEach((i) => {
             i.dispose();
         });
+        this.inlineWidgets = [];
     }
 
     disposeAnnotations() {
@@ -165,6 +168,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             this._editor.removeGlyphMarginWidget(o);
         });
         this.editorAnnotations = [];
+        this.editorBuildAnnotations.forEach((o) => {
+            o.dispose();
+        });
+        this.editorBuildAnnotations = [];
     }
 
     changeTheme(artemisTheme: Theme): void {
@@ -173,7 +180,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
     }
 
-    setAnnotations(annotations: Array<Annotation>, markAsOutdated: boolean = false) {
+    /*setAnnotations(annotations: Array<Annotation>, markAsOutdated: boolean = false) {
         if (!this._editor) return;
         this.disposeAnnotations();
         for (const annotation of annotations) {
@@ -196,6 +203,22 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             });
             editorAnnotation.setUpdateListener(updateListener);
             this.editorAnnotations.push(editorAnnotation);
+        }
+    }*/
+
+    setAnnotations(annotations: Annotation[]) {
+        this.disposeAnnotations();
+        for (const annotation of annotations) {
+            const lineNumber = annotation.row + 1;
+            const editorBuildAnnotation = new MonacoEditorBuildAnnotation(
+                this._editor,
+                `${annotation.fileName}:${lineNumber}:${annotation.text}`,
+                lineNumber,
+                annotation.text,
+                MonacoEditorAnnotationTypeEnum.ERROR,
+            );
+            editorBuildAnnotation.addToEditor();
+            this.editorBuildAnnotations.push(editorBuildAnnotation);
         }
     }
 
