@@ -2,12 +2,8 @@ package de.tum.in.www1.artemis.repository.hestia;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.Set;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
@@ -19,11 +15,4 @@ import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
 @Repository
 public interface TestwiseCoverageReportEntryRepository extends JpaRepository<TestwiseCoverageReportEntry, Long> {
 
-    @Query("""
-            SELECT e
-            FROM TestwiseCoverageReportEntry e
-                LEFT JOIN FETCH ProgrammingExerciseTestCase t
-            WHERE t.id = :testCaseId
-            """)
-    Set<TestwiseCoverageReportEntry> findByTestCaseId(@Param("testCaseId") Long testCaseId);
 }

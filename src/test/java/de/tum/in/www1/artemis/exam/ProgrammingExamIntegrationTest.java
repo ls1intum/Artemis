@@ -338,7 +338,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
         doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
-        request.getMvc().perform(post("/api/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
+        request.performMvcRequest(post("/api/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertThat(result.getResolvedException()).hasMessage("Exam contains programming exercise(s) with invalid short name."));
     }

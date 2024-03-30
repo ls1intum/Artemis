@@ -60,7 +60,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         List<LtiPlatformConfiguration> expectedPlatforms = Arrays.asList(platform1, platform2);
         doReturn(expectedPlatforms).when(ltiPlatformConfigurationRepository).findAll();
 
-        MvcResult mvcResult = request.getMvc().perform(get("/api/lti-platforms")).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = request.performMvcRequest(get("/api/lti-platforms")).andExpect(status().isOk()).andReturn();
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         List<LtiPlatformConfiguration> actualPlatforms = objectMapper.readValue(jsonContent, new TypeReference<>() {
@@ -87,7 +87,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
         doReturn(expectedPlatform).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
 
-        MvcResult mvcResult = request.getMvc().perform(get("/api/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = request.performMvcRequest(get("/api/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk()).andReturn();
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         LtiPlatformConfiguration actualPlatform = objectMapper.readValue(jsonContent, LtiPlatformConfiguration.class);
@@ -102,7 +102,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         doReturn(new LtiPlatformConfiguration()).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
         doNothing().when(ltiPlatformConfigurationRepository).delete(any(LtiPlatformConfiguration.class));
 
-        request.getMvc().perform(delete("/api/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk());
+        request.performMvcRequest(delete("/api/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk());
 
         verify(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
         verify(ltiPlatformConfigurationRepository).delete(any(LtiPlatformConfiguration.class));
@@ -115,7 +115,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         platformToUpdate.setId(1L);
         fillLtiPlatformConfig(platformToUpdate);
 
-        request.getMvc().perform(put("/api/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToUpdate)))
+        request.performMvcRequest(put("/api/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToUpdate)))
                 .andExpect(status().isOk());
 
         verify(ltiPlatformConfigurationRepository).save(platformToUpdate);
@@ -129,7 +129,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         fillLtiPlatformConfig(platformToCreate);
         platformToCreate.setRegistrationId(null);
 
-        request.getMvc().perform(post("/api/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToCreate)))
+        request.performMvcRequest(post("/api/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToCreate)))
                 .andExpect(status().isOk());
 
         verify(ltiPlatformConfigurationRepository).save(any());
