@@ -57,7 +57,7 @@
                             <fa-icon id="code-issue-warnings-icon" class="result-orange" [icon]="faExclamationTriangle" />
                         </span>
                     }
-                    <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }} ) </span>
+                    <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }}) </span>
                 </span>
                 @if (hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING) {
                     <span>

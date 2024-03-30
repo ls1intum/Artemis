@@ -11,7 +11,7 @@
             "startExercise": "Aufgabe starten",
             "resumeExercise": "Aufgabe fortführen",
             "requestManualFeedback": "Feedback anfragen",
-            "requestManualFeedbackTooltip": "Sendet eine Feedbackanfrage vor der Einreichungsfrist. Diese Option ist erst möglich wenn 100% in den öffentlichen Tests erreicht wurden.",
+            "requestManualFeedbackTooltip": "Sendet eine Feedbackanfrage vor der Einreichungsfrist.",
             "requestAutomaticFeedback": "AI Feedback anfragen",
             "requestAutomaticFeedbackTooltip": "Das automatisch generierte Feedback kann Fehler beinhalten. Überprüfe wichtige Informationen.",
             "resumeExercisePractice": "Üben von Aufgabe fortführen",
