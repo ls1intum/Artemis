@@ -55,6 +55,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BambooBuildPlanUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -95,6 +96,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bitbucket using the corresponding RestTemplate.
     @SpyBean
     protected BitbucketService versionControlService;
+
+    @SpyBean
+    protected ProgrammingMessagingService programmingMessagingService;
 
     @SpyBean
     protected BambooServer bambooServer;

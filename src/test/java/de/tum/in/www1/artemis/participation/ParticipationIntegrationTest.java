@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.participation;
 
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.net.URI;
@@ -32,13 +35,12 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
@@ -91,12 +93,11 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizBatchService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
-class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     private static final String TEST_PREFIX = "participationintegration";
 
@@ -163,9 +164,6 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Autowired
     private ExamRepository examRepository;
 
-    @SpyBean
-    protected ProgrammingMessagingService programmingMessagingService;
-
     @Captor
     private ArgumentCaptor<Result> resultCaptor;
 
@@ -216,7 +214,6 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @AfterEach
     void tearDown() throws Exception {
         Mockito.reset(programmingMessagingService);
-        super.resetSpyBeans();
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
         programmingExerciseTestService.tearDown();
     }
@@ -576,98 +573,98 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 HttpStatus.BAD_REQUEST);
     }
 
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    // void requestFeedbackSuccess_withAthenaSuccess() throws Exception {
-    //
-    // var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-    // course.setRestrictedAthenaModulesAccess(true);
-    // this.courseRepo.save(course);
-    //
-    // this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-    // this.exerciseRepo.save(programmingExercise);
-    //
-    // athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
-    //
-    // var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
-    // userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-    //
-    // var localRepo = new LocalRepository(defaultBranch);
-    // localRepo.configureRepos("testLocalRepo", "testOriginRepo");
-    //
-    // participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
-    // participationRepo.save(participation);
-    //
-    // gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
-    //
-    // Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
-    // Result result2 = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
-    // result2.setAssessmentType(AssessmentType.AUTOMATIC);
-    // result2.setCompletionDate(ZonedDateTime.now());
-    // resultRepository.save(result2);
-    //
-    // doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(eq(programmingExercise), any());
-    // doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(any());
-    //
-    // request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
-    //
-    // verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
-    //
-    // Result invokedResult = resultCaptor.getAllValues().get(0);
-    // assertThat(invokedResult).isNotNull();
-    // assertThat(invokedResult.getId()).isNotNull();
-    // assertThat(invokedResult.isSuccessful()).isTrue();
-    // assertThat(invokedResult.isAutomaticAI()).isTrue();
-    // assertThat(invokedResult.getFeedbacks()).hasSize(1);
-    //
-    // localRepo.resetLocalRepo();
-    // }
-    //
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    // void requestFeedbackSuccess_withAthenaFailure() throws Exception {
-    //
-    // var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-    // course.setRestrictedAthenaModulesAccess(true);
-    // this.courseRepo.save(course);
-    //
-    // this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-    // this.exerciseRepo.save(programmingExercise);
-    // this.athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("programming");
-    //
-    // var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
-    // userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-    //
-    // var localRepo = new LocalRepository(defaultBranch);
-    // localRepo.configureRepos("testLocalRepo", "testOriginRepo");
-    //
-    // participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
-    // participationRepo.save(participation);
-    //
-    // gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
-    //
-    // Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
-    // Result result2 = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
-    // result2.setAssessmentType(AssessmentType.AUTOMATIC);
-    // result2.setCompletionDate(ZonedDateTime.now());
-    // resultRepository.save(result2);
-    //
-    // doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(any(), any());
-    // doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(any());
-    //
-    // request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
-    //
-    // verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
-    //
-    // Result invokedResult = resultCaptor.getAllValues().get(0);
-    // assertThat(invokedResult).isNotNull();
-    // assertThat(invokedResult.getId()).isNotNull();
-    // assertThat(invokedResult.isSuccessful()).isFalse();
-    // assertThat(invokedResult.isAutomaticAI()).isTrue();
-    // assertThat(invokedResult.getFeedbacks()).hasSize(0);
-    //
-    // localRepo.resetLocalRepo();
-    // }
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestFeedbackSuccess_withAthenaSuccess() throws Exception {
+
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setRestrictedAthenaModulesAccess(true);
+        this.courseRepo.save(course);
+
+        this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        this.exerciseRepo.save(programmingExercise);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+
+        Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        Result result2 = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
+        result2.setAssessmentType(AssessmentType.AUTOMATIC);
+        result2.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result2);
+
+        doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(eq(programmingExercise), any());
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(any());
+
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+
+        verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
+
+        Result invokedResult = resultCaptor.getAllValues().get(0);
+        assertThat(invokedResult).isNotNull();
+        assertThat(invokedResult.getId()).isNotNull();
+        assertThat(invokedResult.isSuccessful()).isTrue();
+        assertThat(invokedResult.isAutomaticAI()).isTrue();
+        assertThat(invokedResult.getFeedbacks()).hasSize(1);
+
+        localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestFeedbackSuccess_withAthenaFailure() throws Exception {
+
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setRestrictedAthenaModulesAccess(true);
+        this.courseRepo.save(course);
+
+        this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        this.exerciseRepo.save(programmingExercise);
+        this.athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("programming");
+
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+
+        Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        Result result2 = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
+        result2.setAssessmentType(AssessmentType.AUTOMATIC);
+        result2.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result2);
+
+        doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(any(), any());
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(any());
+
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+
+        verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
+
+        Result invokedResult = resultCaptor.getAllValues().get(0);
+        assertThat(invokedResult).isNotNull();
+        assertThat(invokedResult.getId()).isNotNull();
+        assertThat(invokedResult.isSuccessful()).isFalse();
+        assertThat(invokedResult.isAutomaticAI()).isTrue();
+        assertThat(invokedResult.getFeedbacks()).hasSize(0);
+
+        localRepo.resetLocalRepo();
+    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
