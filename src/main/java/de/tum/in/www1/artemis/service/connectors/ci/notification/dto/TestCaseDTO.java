@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.collections.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -36,7 +36,7 @@ public record TestCaseDTO(String name, String classname, double time, List<TestC
 
     @JsonIgnore
     public boolean isSuccessful() {
-        return CollectionUtils.isEmpty(errors) && CollectionUtils.isEmpty(failures);
+        return ObjectUtils.isEmpty(errors) && ObjectUtils.isEmpty(failures);
     }
 
     @Override
@@ -55,9 +55,9 @@ public record TestCaseDTO(String name, String classname, double time, List<TestC
      * @return the most helpful message that can be added to an automatic {@link Feedback}.
      */
     private Optional<String> extractMessage() {
-        boolean hasErrors = !CollectionUtils.isEmpty(errors());
-        boolean hasFailures = !CollectionUtils.isEmpty(failures());
-        boolean hasSuccessInfos = !CollectionUtils.isEmpty(successInfos());
+        boolean hasErrors = !ObjectUtils.isEmpty(errors());
+        boolean hasFailures = !ObjectUtils.isEmpty(failures());
+        boolean hasSuccessInfos = !ObjectUtils.isEmpty(successInfos());
         boolean successful = isSuccessful();
 
         if (successful && hasSuccessInfos && successInfos().get(0).getMostInformativeMessage() != null) {
