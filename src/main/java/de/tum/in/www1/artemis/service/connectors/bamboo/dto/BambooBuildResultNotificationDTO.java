@@ -62,16 +62,19 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     }
 
     @Override
+    @JsonIgnore
     public Optional<String> getCommitHashFromAssignmentRepo() {
         return getCommitHashFromRepo(ASSIGNMENT_REPO_NAME);
     }
 
     @Override
+    @JsonIgnore
     public Optional<String> getCommitHashFromTestsRepo() {
         return getCommitHashFromRepo(TEST_REPO_NAME);
     }
 
     @Override
+    @JsonIgnore
     public Optional<String> getBranchNameFromAssignmentRepo() {
         var repo = getBuild().vcs().stream().filter(vcs -> vcs.repositoryName().equalsIgnoreCase(ASSIGNMENT_REPO_NAME)).findFirst();
         return repo.map(BambooVCSDTO::branchName);

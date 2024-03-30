@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
@@ -55,6 +57,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO imple
     }
 
     @Override
+    @JsonIgnore
     public Optional<String> getCommitHashFromAssignmentRepo() {
         if (assignmentRepoCommitHash.isEmpty()) {
             return Optional.empty();
@@ -63,6 +66,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO imple
     }
 
     @Override
+    @JsonIgnore
     public Optional<String> getCommitHashFromTestsRepo() {
         if (testsRepoCommitHash.isEmpty()) {
             return Optional.empty();
@@ -71,6 +75,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO imple
     }
 
     @Override
+    @JsonIgnore
     public Optional<String> getBranchNameFromAssignmentRepo() {
         return Optional.of(assignmentRepoBranchName);
     }

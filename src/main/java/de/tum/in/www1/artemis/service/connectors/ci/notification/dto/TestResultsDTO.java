@@ -109,6 +109,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     }
 
     @Override
+    @JsonIgnore
     public Optional<String> getCommitHashFromAssignmentRepo() {
         final var testRepoNameSuffix = RepositoryType.TESTS.getName();
         final var firstCommit = getCommits().stream().filter(commit -> !commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
@@ -116,6 +117,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     }
 
     @Override
+    @JsonIgnore
     public Optional<String> getCommitHashFromTestsRepo() {
         final var testRepoNameSuffix = RepositoryType.TESTS.getName();
         final var firstCommit = getCommits().stream().filter(commit -> commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
@@ -123,6 +125,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     }
 
     @Override
+    @JsonIgnore
     public Optional<String> getBranchNameFromAssignmentRepo() {
         final var testRepoNameSuffix = RepositoryType.TESTS.getName();
         final var firstCommit = getCommits().stream().filter(commit -> !commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
