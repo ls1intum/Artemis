@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -86,27 +86,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             WHERE course.studentGroupName LIKE :name
             """)
     Course findCourseByStudentGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.instructorGroupName = :name
-            """)
-    List<Course> findCoursesByInstructorGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.teachingAssistantGroupName = :name
-            """)
-    List<Course> findCoursesByTeachingAssistantGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.studentGroupName = :name
-            """)
-    List<Course> findCoursesByStudentGroupName(@Param("name") String name);
 
     @Query("""
             SELECT COUNT(c) > 0
@@ -484,17 +463,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     default boolean isMessagingEnabled(long courseId) {
         return informationSharingConfigurationIsOneOf(courseId,
                 Set.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
-    }
-
-    /**
-     * Checks if the communication feature is enabled for a course.
-     *
-     * @param courseId the id of the course
-     * @return true if the communication feature is enabled for the course, false otherwise
-     */
-    default boolean isCommunicationEnabled(long courseId) {
-        return informationSharingConfigurationIsOneOf(courseId,
-                Set.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
     }
 
     /**

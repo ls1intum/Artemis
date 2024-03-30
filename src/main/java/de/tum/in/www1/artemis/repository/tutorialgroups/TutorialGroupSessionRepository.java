@@ -74,13 +74,11 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
     @Query("""
             SELECT session
             FROM TutorialGroupSession session
-            WHERE session.start <= :end
-                AND session.end >= :start
+            WHERE session.start < :end
+                AND session.end > :start
                 AND session.tutorialGroup.course = :course
             """)
     Set<TutorialGroupSession> findAllBetween(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
-
-    Set<TutorialGroupSession> findAllByTutorialGroupFreePeriodId(Long freePeriodId);
 
     default TutorialGroupSession findByIdElseThrow(long tutorialGroupSessionId) {
         return findById(tutorialGroupSessionId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupSession", tutorialGroupSessionId));

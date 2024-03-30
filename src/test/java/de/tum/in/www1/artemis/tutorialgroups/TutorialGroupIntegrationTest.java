@@ -112,15 +112,15 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     void testJustForInstructorEndpoints() throws Exception {
         request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupWithoutSchedule("tutor1"), TutorialGroup.class, HttpStatus.FORBIDDEN);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId,
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId),
                 new TutorialGroupResource.TutorialGroupUpdateDTO(
                         tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow(), "Lorem Ipsum", true),
                 TutorialGroup.class, HttpStatus.FORBIDDEN);
-        request.delete(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId, HttpStatus.FORBIDDEN);
-        request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/register-multiple", new HashSet<>(), StudentDTO.class,
+        request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), HttpStatus.FORBIDDEN);
+        request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register-multiple", new HashSet<>(), StudentDTO.class,
                 HttpStatus.FORBIDDEN);
-        request.getList(getTutorialGroupsPath(exampleCourseId) + "campus-values", HttpStatus.FORBIDDEN, String.class);
-        request.getList(getTutorialGroupsPath(exampleCourseId) + "language-values", HttpStatus.FORBIDDEN, String.class);
+        request.getList(getTutorialGroupsPath(exampleCourseId) + "/campus-values", HttpStatus.FORBIDDEN, String.class);
+        request.getList(getTutorialGroupsPath(exampleCourseId) + "/language-values", HttpStatus.FORBIDDEN, String.class);
 
     }
 
@@ -331,9 +331,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var tutorialGroupId = tutorialGroupUtilService
                 .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of()).getId();
         var sessionToSave = new ArrayList<TutorialGroupSession>();
-        var date = firstAugustMonday;
+        var date = FIRST_AUGUST_MONDAY_00_00;
         for (Integer att : attendance) {
-            var session = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(date), getExampleSessionEndOnDate(date), att);
+            var session = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(date.toLocalDate()),
+                    getExampleSessionEndOnDate(date.toLocalDate()), att);
             sessionToSave.add(session);
             date = date.plusDays(1);
         }
@@ -423,9 +424,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertThat(createdPost.getConversation().getId()).isEqualTo(channel.getId());
         userUtilService.changeUser(testPrefix + "instructor1");
 
-        request.delete(getTutorialGroupsPath(exampleCourseId) + persistedTutorialGroup.getId(), HttpStatus.NO_CONTENT);
+        request.delete(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroup.getId()), HttpStatus.NO_CONTENT);
         // then
-        request.get(getTutorialGroupsPath(exampleCourseId) + persistedTutorialGroup.getId(), HttpStatus.NOT_FOUND, TutorialGroup.class);
+        request.get(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroup.getId()), HttpStatus.NOT_FOUND, TutorialGroup.class);
         assertTutorialGroupChannelDoesNotExist(persistedTutorialGroup);
         persistedTutorialGroup.getRegistrations().forEach(registration -> {
             verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"),
@@ -445,7 +446,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         existingTutorialGroup.setTitle(newRandomTitle);
 
         // when
-        var updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId,
+        var updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId),
                 new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
 
         // then
@@ -461,7 +462,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         existingTutorialGroup.setTeachingAssistant(userUtilService.getUserByLogin(testPrefix + "tutor2"));
 
         // when
-        var updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId,
+        var updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId),
                 new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
 
         // then
@@ -470,7 +471,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         // reset teaching assistant to tutor 1
         existingTutorialGroup.setTeachingAssistant(userUtilService.getUserByLogin(testPrefix + "tutor1"));
-        updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId,
+        updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId),
                 new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
         assertThat(updatedTutorialGroup.getTeachingAssistant().getLogin()).isEqualTo(testPrefix + "tutor1");
         asserTutorialGroupChannelIsCorrectlyConfigured(updatedTutorialGroup);
@@ -492,7 +493,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var existingGroupTwo = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleTwoTutorialGroupId).orElseThrow();
         existingTutorialGroup.setTitle("  " + existingGroupTwo.getTitle() + " ");
         // when
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId,
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId),
                 new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.BAD_REQUEST);
         // then
         assertThat(tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow().getTitle()).isEqualTo(originalTitle);
@@ -503,7 +504,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void update_withoutId_shouldReturnBadRequest() throws Exception {
         // then
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId, buildTutorialGroupWithoutSchedule("tutor1"), TutorialGroup.class,
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), buildTutorialGroupWithoutSchedule("tutor1"), TutorialGroup.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -541,7 +542,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void registerStudent_studentNotFound_shouldReturnNotFound() throws Exception {
         // then
-        request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/register/" + "studentXX", HttpStatus.NOT_FOUND,
+        request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register/" + "studentXX", HttpStatus.NOT_FOUND,
                 new LinkedMultiValueMap<>());
     }
 
@@ -549,7 +550,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void registerStudent_studentRegistered_shouldReturnNoContent() throws Exception {
         // when
-        request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/register/" + student1.getLogin(), HttpStatus.NO_CONTENT,
+        request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register/" + student1.getLogin(), HttpStatus.NO_CONTENT,
                 new LinkedMultiValueMap<>());
         // then
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
@@ -591,7 +592,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deregisterStudent_studentNotRegistered_shouldReturnNoContent() throws Exception {
         // when
-        request.delete(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/deregister/" + student3.getLogin(), HttpStatus.NO_CONTENT,
+        request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + student3.getLogin(), HttpStatus.NO_CONTENT,
                 new LinkedMultiValueMap<>());
         // then
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
@@ -602,7 +603,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deregisterStudent_studentNotFound_shouldReturnNotFound() throws Exception {
         // then
-        request.delete(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/deregister/" + "studentXX", HttpStatus.NOT_FOUND);
+        request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + "studentXX", HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -619,7 +620,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         studentsToAdd.add(studentInCourse);
         studentsToAdd.add(studentNotInCourse);
         // when
-        List<StudentDTO> notFoundStudents = request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/register-multiple",
+        List<StudentDTO> notFoundStudents = request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register-multiple",
                 studentsToAdd, StudentDTO.class, HttpStatus.OK);
         // then
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
@@ -848,7 +849,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     private List<TutorialGroupRegistrationImportDTO> sendImportRequest(List<TutorialGroupRegistrationImportDTO> tutorialGroupRegistrations) throws Exception {
-        return request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId) + "import", tutorialGroupRegistrations, TutorialGroupRegistrationImportDTO.class,
+        return request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId) + "/import", tutorialGroupRegistrations, TutorialGroupRegistrationImportDTO.class,
                 HttpStatus.OK);
     }
 
@@ -939,7 +940,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private void registerStudentAllowedTest(String loginOfResponsibleUser, boolean expectTutorNotification) throws Exception {
         var responsibleUser = userUtilService.getUserByLogin(loginOfResponsibleUser);
-        request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/register/" + student3.getLogin(), HttpStatus.NO_CONTENT,
+        request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register/" + student3.getLogin(), HttpStatus.NO_CONTENT,
                 new LinkedMultiValueMap<>());
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student3);
@@ -960,13 +961,13 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     private void registerStudentForbiddenTest() throws Exception {
-        request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/register/" + student3.getLogin(), HttpStatus.FORBIDDEN,
+        request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register/" + student3.getLogin(), HttpStatus.FORBIDDEN,
                 new LinkedMultiValueMap<>());
     }
 
     private void deregisterStudentAllowedTest(String loginOfResponsibleUser, boolean expectTutorNotification) throws Exception {
         var responsibleUser = userUtilService.getUserByLogin(loginOfResponsibleUser);
-        request.delete(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.NO_CONTENT);
+        request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + student1.getLogin(), HttpStatus.NO_CONTENT);
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).doesNotContain(student1);
         verify(singleUserNotificationService).notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
@@ -987,7 +988,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     private void deregisterStudentForbiddenTest() throws Exception {
-        request.delete(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/deregister/" + student2.getLogin(), HttpStatus.FORBIDDEN);
+        request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + student2.getLogin(), HttpStatus.FORBIDDEN);
     }
 
 }

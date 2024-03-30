@@ -1,18 +1,18 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601DateString;
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601TimeString;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.isIso8601DateString;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.isIso8601TimeString;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
-import javax.annotation.Nullable;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import javax.ws.rs.BadRequestException;
+import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
