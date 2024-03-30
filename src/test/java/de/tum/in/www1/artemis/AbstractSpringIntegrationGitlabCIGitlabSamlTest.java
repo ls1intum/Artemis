@@ -11,8 +11,6 @@ import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.PipelineStatus;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,9 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIService;
 import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCITriggerService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 
-@Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractSpringIntegrationGitlabCIGitlabSamlTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlabci", "gitlab", "saml2", "scheduling", "lti", PROFILE_CORE })

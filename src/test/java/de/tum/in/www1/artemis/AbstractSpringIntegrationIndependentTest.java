@@ -6,8 +6,6 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,12 +17,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
  */
-@Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "scheduling", "lti", PROFILE_CORE })

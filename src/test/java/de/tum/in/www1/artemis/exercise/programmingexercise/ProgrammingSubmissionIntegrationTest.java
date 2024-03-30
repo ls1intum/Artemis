@@ -398,7 +398,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         doReturn(participation.getVcsRepositoryUri()).when(versionControlService).getCloneRepositoryUri(exercise.getProjectKey(), repoUri);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
 
-        doThrow(ContinuousIntegrationException.class).when(continuousIntegrationService).triggerBuild(participation);
+        doThrow(ContinuousIntegrationException.class).when(continuousIntegrationTriggerService).triggerBuild(participation);
         String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
     }

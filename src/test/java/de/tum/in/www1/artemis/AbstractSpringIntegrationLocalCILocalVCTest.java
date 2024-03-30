@@ -12,8 +12,6 @@ import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,23 +46,21 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
 // Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
 // Note: Cannot use WebEnvironment.RANDOM_PORT here because artemis.version-control.url must be set to the correct port in the @TestPropertySource annotation.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-@Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "localci", "localvc", "scheduling", "ldap-only", "lti", "aeolus", PROFILE_BUILDAGENT })
 
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.user-management.use-external=false",
-        "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}", "artemis.continuous-integration.specify-concurrent-builds=true",
-        "artemis.continuous-integration.concurrent-build-size=1", "artemis.continuous-integration.asynchronous=false",
-        "artemis.continuous-integration.build.images.java.default=dummy-docker-image", "artemis.continuous-integration.image-cleanup.enabled=true",
-        "spring.liquibase.enabled=true" })
+        "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}", "artemis.build-logs-path=${java.io.tmpdir}/build-logs",
+        "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
+        "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
+        "artemis.continuous-integration.image-cleanup.enabled=true", "spring.liquibase.enabled=true" })
 @ContextConfiguration(classes = LocalCITestConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 

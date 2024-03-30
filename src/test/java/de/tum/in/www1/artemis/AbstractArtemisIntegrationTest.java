@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.util;
+package de.tum.in.www1.artemis;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -11,6 +11,8 @@ import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,15 +42,19 @@ import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleServi
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserFactory;
+import de.tum.in.www1.artemis.util.HibernateQueryInterceptor;
+import de.tum.in.www1.artemis.util.QueryCountAssert;
+import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.ThrowingProducer;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
 /**
  * this test should be completely independent of any profiles or configurations (e.g. VCS, CIS)
  */
-
 @SpringBootTest
 @AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)
+@Execution(ExecutionMode.CONCURRENT)
 @AutoConfigureEmbeddedDatabase
 public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 

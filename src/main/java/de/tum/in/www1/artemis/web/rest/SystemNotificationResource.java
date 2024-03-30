@@ -20,6 +20,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import io.swagger.v3.oas.annotations.Parameter;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;

@@ -54,7 +54,7 @@ import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDT
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -493,7 +493,7 @@ public class ExamResource {
      */
     @GetMapping("exams/active")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Exam>> getAllActiveExams(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<Exam>> getAllActiveExams(@Parameter Pageable pageable) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         Page<Exam> page = examService.getAllActiveExams(pageable, user);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);

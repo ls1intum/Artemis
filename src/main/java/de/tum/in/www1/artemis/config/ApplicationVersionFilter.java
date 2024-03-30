@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ApplicationVersionFilter implements Filter {
 
-    private static final Logger log = LoggerFactory.getLogger(ApiVersionFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(ApplicationVersionFilter.class);
 
     public static final String CONTENT_VERSION_HEADER = "Content-Version";
 
