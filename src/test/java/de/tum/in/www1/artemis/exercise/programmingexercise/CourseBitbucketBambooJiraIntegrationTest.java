@@ -476,7 +476,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
-        request.getMvc().perform(courseTestService.buildUpdateCourse(1, course)).andExpect(status().isOk()).andReturn();
+        request.performMvcRequest(courseTestService.buildUpdateCourse(1, course)).andExpect(status().isOk()).andReturn();
 
         verifyNoInteractions(versionControlService);
     }

@@ -650,8 +650,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testDecreaseUnreadMessageCountAfterMessageRead() throws Exception {
         Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
 
-        ResultActions resultActions = request.getMvc()
-                .perform(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
+        ResultActions resultActions = request
+                .performMvcRequest(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postToSave1)).with(user(TEST_PREFIX + "student1").roles("USER")).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
 
@@ -659,11 +659,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String contentAsString = result.getResponse().getContentAsString();
         Post createdPost1 = objectMapper.readValue(contentAsString, Post.class);
 
-        request.getMvc()
-                .perform(MockMvcRequestBuilders.get("/api/courses/" + courseId + "/messages").param("conversationId", createdPost1.getConversation().getId().toString())
-                        .param("pagingEnabled", "true").param("size", String.valueOf(MAX_POSTS_PER_PAGE)).with(user(TEST_PREFIX + "student2").roles("USER"))
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/courses/" + courseId + "/messages").param("conversationId", createdPost1.getConversation().getId().toString())
+                .param("pagingEnabled", "true").param("size", String.valueOf(MAX_POSTS_PER_PAGE)).with(user(TEST_PREFIX + "student2").roles("USER"))
+                .accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
         await().untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
@@ -679,8 +677,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
         Post postToSave2 = createPostWithOneToOneChat(TEST_PREFIX);
 
-        ResultActions resultActions = request.getMvc()
-                .perform(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
+        ResultActions resultActions = request
+                .performMvcRequest(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postToSave1)).with(user(TEST_PREFIX + "student1").roles("USER")).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
 
@@ -688,8 +686,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String contentAsString = result.getResponse().getContentAsString();
         Post createdPost1 = objectMapper.readValue(contentAsString, Post.class);
 
-        ResultActions resultActions2 = request.getMvc()
-                .perform(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
+        ResultActions resultActions2 = request
+                .performMvcRequest(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postToSave2)).with(user(TEST_PREFIX + "student1").roles("USER")).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
 
@@ -697,7 +695,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String contentAsString2 = result2.getResponse().getContentAsString();
         Post createdPost2 = objectMapper.readValue(contentAsString2, Post.class);
 
-        request.getMvc().perform(MockMvcRequestBuilders.delete("/api/courses/" + courseId + "/messages/" + createdPost2.getId()).with(user(TEST_PREFIX + "student1").roles("USER"))
+        request.performMvcRequest(MockMvcRequestBuilders.delete("/api/courses/" + courseId + "/messages/" + createdPost2.getId()).with(user(TEST_PREFIX + "student1").roles("USER"))
                 .accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
