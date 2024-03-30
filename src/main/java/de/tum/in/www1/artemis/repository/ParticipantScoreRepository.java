@@ -54,22 +54,6 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     List<ParticipantScore> findAllByExercise(Exercise exercise);
 
     @Query("""
-            SELECT p
-            FROM ParticipantScore p
-                LEFT JOIN FETCH p.exercise
-                LEFT JOIN FETCH p.lastResult
-                LEFT JOIN FETCH p.lastRatedResult
-            """)
-    List<ParticipantScore> findAllEagerly();
-
-    @Query("""
-            SELECT AVG(p.lastRatedScore)
-            FROM ParticipantScore p
-            WHERE p.exercise IN :exercises
-            """)
-    Double findAvgRatedScore(@Param("exercises") Set<Exercise> exercises);
-
-    @Query("""
             SELECT AVG(p.lastScore)
             FROM ParticipantScore p
             WHERE p.exercise IN :exercises
