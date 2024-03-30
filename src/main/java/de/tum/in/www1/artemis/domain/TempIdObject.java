@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import java.util.Objects;
 
-import javax.persistence.Transient;
+import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

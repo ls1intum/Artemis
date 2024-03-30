@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -18,15 +17,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 @Repository
 public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
 
-    List<BuildJob> findAllByCourseId(Long courseId);
-
-    List<BuildJob> findAllByExerciseId(Long exerciseId);
-
-    List<BuildJob> findAllByParticipationId(Long participationId);
-
     Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(Long participationId);
-
-    List<BuildJob> findAllByBuildAgentAddress(String buildAgentAddress);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
