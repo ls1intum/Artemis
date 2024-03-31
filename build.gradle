@@ -444,7 +444,7 @@ dependencies {
     }
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20240205"
+    testImplementation "org.json:json:20240303"
 }
 
 ext["junit-jupiter.version"] = junit_version

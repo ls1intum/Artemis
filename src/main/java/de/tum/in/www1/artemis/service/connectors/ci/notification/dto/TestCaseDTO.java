@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.ci.notification.dto;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -17,10 +16,6 @@ import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
 public record TestCaseDTO(String name, String classname, double time, @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> failures,
         @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> errors, @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> successInfos)
         implements TestCaseDTOInterface {
-
-    public TestCaseDTO(String name, String classname, double time) {
-        this(name, classname, time, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-    }
 
     @JsonIgnore
     public boolean isSuccessful() {

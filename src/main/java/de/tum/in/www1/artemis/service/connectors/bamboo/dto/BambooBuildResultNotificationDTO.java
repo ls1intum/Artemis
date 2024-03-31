@@ -117,7 +117,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     @JsonIgnore
     @Override
     public List<? extends BuildJobDTOInterface> getBuildJobs() {
-        return (List<BuildJobDTOInterface>) (List<?>) getBuild().jobs();
+        return getBuild().jobs();
     }
 
     @JsonIgnore
@@ -172,11 +172,13 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
             implements BuildJobDTOInterface {
 
         @Override
+        @JsonInclude // intentionally deviated from the behavior specified in the implemented interface
         public List<? extends TestCaseDTOInterface> getFailedTests() {
             return failedTests;
         }
 
         @Override
+        @JsonInclude // intentionally deviated from the behavior specified in the implemented interface
         public List<? extends TestCaseDTOInterface> getSuccessfulTests() {
             return successfulTests;
         }
