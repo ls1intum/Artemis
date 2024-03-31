@@ -500,6 +500,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         }),
     );
 
+    // until a policy is set
     it.skip('assureConditionsSatisfied should alert and return false if not all hidden tests have passed', () => {
         jest.spyOn(window, 'alert').mockImplementation(() => {});
         comp.exercise = {
