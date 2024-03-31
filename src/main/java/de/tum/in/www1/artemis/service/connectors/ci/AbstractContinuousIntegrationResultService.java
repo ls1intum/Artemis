@@ -51,6 +51,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResult.isBuildSuccessful());
         result.setCompletionDate(buildResult.getBuildRunDate());
+        // this only sets the score to a temporary value, the real score is calculated in the grading service
         result.setScore(buildResult.getBuildScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
         result.setParticipation((Participation) participation);
 

@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.service.dto;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
+
+import jakarta.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -18,11 +19,14 @@ public abstract class AbstractBuildResultNotificationDTO {
 
     public abstract ZonedDateTime getBuildRunDate();
 
-    public abstract Optional<String> getCommitHashFromAssignmentRepo();
+    @Nullable
+    protected abstract String getCommitHashFromAssignmentRepo();
 
-    public abstract Optional<String> getCommitHashFromTestsRepo();
+    @Nullable
+    protected abstract String getCommitHashFromTestsRepo();
 
-    public abstract Optional<String> getBranchNameFromAssignmentRepo();
+    @Nullable
+    public abstract String getBranchNameFromAssignmentRepo();
 
     public abstract boolean isBuildSuccessful();
 
@@ -34,7 +38,8 @@ public abstract class AbstractBuildResultNotificationDTO {
      * @param submissionType describes why the build was started.
      * @return if the commit hash for the given submission type was found, otherwise empty.
      */
-    public Optional<String> getCommitHash(SubmissionType submissionType) {
+    @Nullable
+    public String getCommitHash(SubmissionType submissionType) {
         final var isAssignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR, SubmissionType.ILLEGAL).contains(submissionType);
         if (isAssignmentSubmission) {
             return getCommitHashFromAssignmentRepo();
@@ -42,9 +47,7 @@ public abstract class AbstractBuildResultNotificationDTO {
         else if (submissionType.equals(SubmissionType.TEST)) {
             return getCommitHashFromTestsRepo();
         }
-        else {
-            return Optional.empty();
-        }
+        return null;
     }
 
     public abstract boolean hasArtifact();
@@ -70,9 +73,9 @@ public abstract class AbstractBuildResultNotificationDTO {
     public abstract List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports();
 
     /**
-     * Gets the testwise coverage reports that are part of the build result.
+     * Gets the test-wise coverage reports that are part of the build result.
      *
-     * @return list of testwise coverage reports.
+     * @return list of test-wise coverage reports.
      */
     @JsonIgnore
     public abstract List<TestwiseCoverageReportDTO> getTestwiseCoverageReports();

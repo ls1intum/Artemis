@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseResultTestService.convertBuildResultToJsonObject;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
@@ -93,7 +94,8 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
         bitbucketRequestMockProvider.mockGetPushDate(programmingExercise.getProjectKey(), TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now());
         bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly((programmingExercise.getProjectKey() + "-" + participation.getParticipantIdentifier()).toLowerCase(),
                 programmingExercise.getProjectKey(), participation.getStudents());
-        programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, bambooBuildResult);
+        final var resultRequestBody = convertBuildResultToJsonObject(bambooBuildResult);
+        programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
 
         // Should throw an AccessForbiddenException because the submission limit is already reached.
         AccessForbiddenException exception = catchThrowableOfType(

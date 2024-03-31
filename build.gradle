@@ -295,11 +295,18 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
     implementation "io.micrometer:micrometer-registry-prometheus:1.12.4"
     implementation "net.logstash.logback:logstash-logback-encoder:7.4"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate6:${fasterxml_version}"
+
+    // Defines low-level streaming API, and includes JSON-specific implementations
+    implementation "com.fasterxml.jackson.core:jackson-core:${fasterxml_version}"
+    // Contains standard Jackson annotations
     implementation "com.fasterxml.jackson.core:jackson-annotations:${fasterxml_version}"
+    // Implements data-binding (and object serialization) support
     implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
+    // Support for "Java 8 Dates"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
+    // Support JSON serialization and deserialization of Hibernate (https://hibernate.org) specific data types and properties; especially lazy-loading aspects
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate6:${fasterxml_version}"
+
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:5.1.0"

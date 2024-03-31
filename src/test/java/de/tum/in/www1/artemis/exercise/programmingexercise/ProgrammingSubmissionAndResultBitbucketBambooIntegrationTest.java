@@ -938,7 +938,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         String longErrorMessage = "abc\nmultiline\nfeedback\nabc\nmultiline\nfeedback";
         BambooTestJobDTO testCase = new BambooTestJobDTO("test1", "test1", "Class", List.of(longErrorMessage));
-        ((List<BambooTestJobDTO>) notification.getBuildJobs().get(0).getFailedTests()).set(0, testCase);
+        notification.getBuild().jobs().get(0).failedTests().set(0, testCase);
 
         postResult(notification, HttpStatus.OK, false);
 

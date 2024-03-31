@@ -209,7 +209,7 @@ public class ProgrammingExerciseFactory {
         final var commitDTO = new CommitDTO(TestConstants.COMMIT_HASH_STRING, repoName, DEFAULT_BRANCH);
         final var staticCodeAnalysisReports = enableStaticAnalysisReports ? generateStaticCodeAnalysisReports(programmingLanguage) : new ArrayList<StaticCodeAnalysisReportDTO>();
 
-        return new TestResultsDTO(successfulTestNames.size(), 0, 0, failedTestNames.size(), fullName, commits != null && commits.size() > 0 ? commits : List.of(commitDTO),
+        return new TestResultsDTO(successfulTestNames.size(), 0, 0, failedTestNames.size(), fullName, commits != null && !commits.isEmpty() ? commits : List.of(commitDTO),
                 List.of(testSuiteDto != null ? testSuiteDto : testSuite), staticCodeAnalysisReports, List.of(), buildRunDate != null ? buildRunDate : now(), false, logs);
     }
 
@@ -313,7 +313,7 @@ public class ProgrammingExerciseFactory {
         final var plan = new BambooBuildPlanDTO(planKey != null ? planKey : "TEST201904BPROGRAMMINGEXERCISE6-STUDENT1");
 
         final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO(false, 42, "foobar", buildCompletionDate != null ? buildCompletionDate : now().minusSeconds(5),
-                successful, summary, vcsDtos != null && vcsDtos.size() > 0 ? vcsDtos : List.of(vcs), List.of(job));
+                successful, summary, vcsDtos != null && !vcsDtos.isEmpty() ? vcsDtos : List.of(vcs), List.of(job));
 
         return new BambooBuildResultNotificationDTO("secret", "TestNotification", plan, build);
     }
