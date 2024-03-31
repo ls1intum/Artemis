@@ -1,7 +1,7 @@
 import * as monaco from 'monaco-editor';
 
 export abstract class MonacoCodeEditorElement implements monaco.IDisposable {
-    id: string | undefined;
+    private id: string | undefined;
     private visible = true;
     protected readonly editor: monaco.editor.ICodeEditor;
 
@@ -29,7 +29,12 @@ export abstract class MonacoCodeEditorElement implements monaco.IDisposable {
         return this.visible;
     }
 
+    protected setupListeners(): void {}
     abstract addToEditor(): void;
+    updateInEditor(): void {
+        this.removeFromEditor();
+        this.addToEditor();
+    }
     abstract removeFromEditor(): void;
     /**
      * Removes this element from the editor. Override this to dispose of any additional listeners, subscribers etc.

@@ -206,7 +206,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
     }*/
 
-    setAnnotations(annotations: Annotation[]) {
+    setAnnotations(annotations: Annotation[], markAsOutdated: boolean): void {
+        if (!this._editor) {
+            return;
+        }
         this.disposeAnnotations();
         for (const annotation of annotations) {
             const lineNumber = annotation.row + 1;
@@ -218,6 +221,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 MonacoEditorAnnotationTypeEnum.ERROR,
             );
             editorBuildAnnotation.addToEditor();
+            editorBuildAnnotation.setOutdatedAndUpdate(markAsOutdated);
             this.editorBuildAnnotations.push(editorBuildAnnotation);
         }
     }
