@@ -6,7 +6,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
 import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 
-export type EditorPosition = { row: number; column: number };
+type EditorPosition = { row: number; column: number };
 @Component({
     selector: 'jhi-monaco-editor',
     templateUrl: 'monaco-editor.component.html',

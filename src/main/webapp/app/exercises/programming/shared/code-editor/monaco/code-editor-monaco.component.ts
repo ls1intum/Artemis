@@ -3,16 +3,14 @@ import { RepositoryFileService } from 'app/exercises/shared/result/repository.se
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { EditorPosition, MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { firstValueFrom } from 'rxjs';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { Annotation, FileSession } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { CommitState, CreateFileChange, DeleteFileChange, FileChange, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { fromPairs, pickBy } from 'lodash-es';
-
-export type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; loadingError: boolean } };
 
 @Component({
     selector: 'jhi-code-editor-monaco',
