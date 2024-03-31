@@ -72,4 +72,5 @@ Object.defineProperty(window, 'matchMedia', {
     })),
 });
 
+// Prevents an error with the monaco editor tests
 Object.assign(global, { TextDecoder, TextEncoder });
