@@ -22,26 +22,26 @@
     font-size: 19px;
 }
 
-.monaco-error-glyph {
-    color: red;
+.monaco-glyph-error {
+    color: var(--monaco-editor-build-annotation-error-glyph);
 }
 
-.monaco-error-line {
-    background: red;
-    opacity: 5%;
+.monaco-glyph-warning {
+    color: var(--monaco-editor-build-annotation-warning-glyph);
+}
+
+.monaco-glyph-outdated {
+    color: var(--monaco-editor-build-annotation-outdated-glyph);
 }
 
 .monaco-annotation-error {
-    background: red;
-    opacity: 20%;
+    background: var(--monaco-editor-build-annotation-error-background);
 }
 
 .monaco-annotation-warning {
-    background: yellow;
-    opacity: 20%;
+    background: var(--monaco-editor-build-annotation-warning-background);
 }
 
 .monaco-annotation-outdated {
-    background: gray;
-    opacity: 10%;
+    background: var(--monaco-editor-build-annotation-outdated-background);
 }
