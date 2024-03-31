@@ -529,7 +529,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deleteResult() throws Exception {
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(Long.MAX_VALUE));
 
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findByIdElseThrow(Long.MAX_VALUE));
 
