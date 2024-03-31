@@ -7,9 +7,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import javax.annotation.CheckReturnValue;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;

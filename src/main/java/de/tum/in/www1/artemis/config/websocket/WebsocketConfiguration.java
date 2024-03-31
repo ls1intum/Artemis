@@ -16,8 +16,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.Cookie;
-import javax.validation.constraints.NotNull;
+import jakarta.servlet.http.Cookie;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

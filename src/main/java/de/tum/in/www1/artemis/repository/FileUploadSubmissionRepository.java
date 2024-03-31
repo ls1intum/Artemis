@@ -5,7 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -37,19 +37,6 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
             WHERE submission.id = :submissionId
             """)
     Optional<FileUploadSubmission> findByIdWithEagerResultAndAssessorAndFeedback(@Param("submissionId") Long submissionId);
-
-    /**
-     * @param submissionId the submission id we are interested in
-     * @return the submission with its assessor
-     */
-    @Query("""
-            SELECT DISTINCT submission
-            FROM FileUploadSubmission submission
-                LEFT JOIN FETCH submission.results r
-                LEFT JOIN FETCH r.assessor
-            WHERE submission.id = :submissionId
-            """)
-    Optional<FileUploadSubmission> findByIdWithEagerResult(@Param("submissionId") Long submissionId);
 
     /**
      * Load the file upload submission with the given id together with its result, the feedback list of the result, the assessor of the result, its participation and all results of

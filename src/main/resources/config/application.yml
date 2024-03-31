@@ -116,12 +116,13 @@ management:
             enabled: false # Disabled to prevent periodic health checks that lead to null pointer exceptions if the ldap is not configured or not active
         config:
             enabled: false # Disabled because we do not use a Spring Cloud Config Server
-    metrics:
+    prometheus:
+        # Prometheus is the default metrics server
+      metrics:
         export:
-            # Prometheus is the default metrics server
-            prometheus:
-                enabled: true
-                step: 60
+            enabled: true
+            step: 60
+    metrics:
         enable:
             http: true
             jvm: true
@@ -135,11 +136,11 @@ management:
                 all: 0, 0.5, 0.75, 0.95, 0.99, 1.0
         tags:
             application: ${spring.application.name}
-        web:
+    observations:
+        http:
             server:
-                request:
-                    autotime:
-                        enabled: true
+                requests:
+                    name: http.server.requests
 
 spring:
     application:
@@ -160,7 +161,7 @@ spring:
         hibernate:
             ddl-auto: none
             naming:
-                physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+                physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
                 implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
         properties:
             hibernate.id.new_generator_mappings: true
@@ -180,6 +181,8 @@ spring:
             hibernate.jdbc.batch_size: 25
             hibernate.jdbc.time_zone: UTC
             hibernate.jdbc.lob.non_contextual_creation: true
+            # limit fetch depth to prevent queries from getting too large because of eager fetching
+            hibernate.max_fetch_depth: 2
     liquibase:
         contexts: prod
     messages:
@@ -188,9 +191,6 @@ spring:
         allow-bean-definition-overriding: true
         lazy-initialization: false
         allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
-    mvc:
-        pathmatch:
-            matching-strategy: ant_path_matcher # TODO: we should update all paths to support PathPatternParser, in particular ClientForwardResource
     task:
         execution:
             thread-name-prefix: artemis-task-
