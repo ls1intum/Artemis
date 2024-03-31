@@ -196,6 +196,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         participation.setIndividualDueDate(currentDate);
 
         participation = programmingExerciseStudentParticipationRepository.save(participation);
+        // Circumvent lazy loading after save
+        participation.setParticipant(participation.getParticipant());
         programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
 
         if (invalidatePreviousResults) {
