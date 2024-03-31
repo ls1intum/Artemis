@@ -5,13 +5,13 @@ import { MonacoEditorOverlayWidget } from 'app/shared/monaco-editor/model/monaco
 import * as monaco from 'monaco-editor';
 
 /**
- * Class representing an inline widget.
+ * Class representing a line widget.
  * These widgets consist of two elements:
  *   - a {@link MonacoEditorViewZone} that creates vertical space after the line in question.
  *   - a {@link MonacoEditorOverlayWidget} that contains the actual content of the widget.
  * The size of these two components is linked together.
  */
-export class MonacoEditorInlineWidget extends MonacoCodeEditorElement {
+export class MonacoEditorLineWidget extends MonacoCodeEditorElement {
     private viewZone: MonacoEditorViewZone;
     private overlayWidget: MonacoEditorOverlayWidget;
 

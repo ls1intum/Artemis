@@ -1,7 +1,7 @@
 import * as monaco from 'monaco-editor';
 
 /**
- * Abstract class representing an element in the Monaco editor, e.g. an inline widget.
+ * Abstract class representing an element in the Monaco editor, e.g. a line widget.
  */
 export abstract class MonacoCodeEditorElement implements monaco.IDisposable {
     static readonly CSS_HIDDEN_CLASS = 'monaco-hidden-element';

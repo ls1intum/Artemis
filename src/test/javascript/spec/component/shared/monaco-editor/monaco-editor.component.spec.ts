@@ -162,7 +162,7 @@ describe('MonacoEditorComponent', () => {
         comp.setAnnotations(buildAnnotationArray);
         comp.addLineWidget(1, 'widget', document.createElement('div'));
         const disposeAnnotationSpy = jest.spyOn(comp.editorBuildAnnotations[0], 'dispose');
-        const disposeWidgetSpy = jest.spyOn(comp.inlineWidgets[0], 'dispose');
+        const disposeWidgetSpy = jest.spyOn(comp.lineWidgets[0], 'dispose');
         comp.ngOnDestroy();
         expect(disposeWidgetSpy).toHaveBeenCalledOnce();
         expect(disposeAnnotationSpy).toHaveBeenCalledOnce();

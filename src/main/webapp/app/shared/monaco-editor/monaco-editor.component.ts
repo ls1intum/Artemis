@@ -3,7 +3,7 @@ import * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { MonacoEditorInlineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
+import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
 import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 
 export type EditorPosition = { row: number; column: number };
@@ -18,7 +18,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private _editor: monaco.editor.IStandaloneCodeEditor;
     themeSubscription?: Subscription;
     models: monaco.editor.IModel[] = [];
-    inlineWidgets: MonacoEditorInlineWidget[] = [];
+    lineWidgets: MonacoEditorLineWidget[] = [];
     editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
 
     constructor(private themeService: ThemeService) {}
@@ -150,10 +150,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     disposeWidgets() {
-        this.inlineWidgets.forEach((i) => {
+        this.lineWidgets.forEach((i) => {
             i.dispose();
         });
-        this.inlineWidgets = [];
+        this.lineWidgets = [];
     }
 
     disposeAnnotations() {
@@ -202,8 +202,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param domNode The content to display in the editor.
      */
     addLineWidget(lineNumber: number, id: string, domNode: HTMLElement) {
-        const lineWidget = new MonacoEditorInlineWidget(this._editor, id, domNode, lineNumber);
+        const lineWidget = new MonacoEditorLineWidget(this._editor, id, domNode, lineNumber);
         lineWidget.addToEditor();
-        this.inlineWidgets.push(lineWidget);
+        this.lineWidgets.push(lineWidget);
     }
 }
