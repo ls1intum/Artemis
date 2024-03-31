@@ -59,7 +59,6 @@ import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/sh
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { CodeEditorSwitchEditorButtonComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-switch-editor-button.component';
 
 describe('CodeEditorStudentIntegration', () => {
     // needed to make sure ace is defined
@@ -108,7 +107,6 @@ describe('CodeEditorStudentIntegration', () => {
                 MockComponent(CodeEditorFileBrowserFileComponent),
                 MockComponent(CodeEditorStatusComponent),
                 MockComponent(ExerciseHintButtonOverlayComponent),
-                MockComponent(CodeEditorSwitchEditorButtonComponent),
                 TreeviewComponent,
             ],
             providers: [
