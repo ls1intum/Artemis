@@ -99,9 +99,12 @@ public class LiquibaseConfiguration {
 
     String migrationPathVersion5_12_9_String = "5.12.9";
 
+    String migrationPathVersion6_9_6_String = "6.9.6";
+
     private void checkMigrationPath() {
         var currentVersion = new Semver(currentVersionString);
-        var migrationPathVersion = new Semver(migrationPathVersion5_12_9_String);
+        var migrationPathVersion600 = new Semver(migrationPathVersion5_12_9_String);
+        var migrationPathVersion700 = new Semver(migrationPathVersion6_9_6_String);
         var version600 = new Semver("6.0.0");
         var version700 = new Semver("7.0.0");
         var version800 = new Semver("8.0.0");
@@ -117,28 +120,28 @@ public class LiquibaseConfiguration {
             return;
         }
         var previousVersion = new Semver(previousVersionString);
+        // Migration check for 5.x -> 6.x
         if (currentVersion.isGreaterThanOrEqualTo(version600) && currentVersion.isLowerThan(version700)) {
-            if (previousVersion.isLowerThan(migrationPathVersion)) {
+            if (previousVersion.isLowerThan(migrationPathVersion600)) {
                 log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_12_9_String);
             }
-            else if (previousVersion.isEqualTo(migrationPathVersion)) {
+            else if (previousVersion.isEqualTo(migrationPathVersion600)) {
                 // this means this is the first start after the mandatory previous update, we need to set the checksum of the initial schema to null
-                updateInitialChecksum();
+                updateInitialChecksum(version600.toString());
                 log.info("Successfully cleaned up initial schema during migration");
             }
         }
+        // Migration check for 6.x -> 7.x
         if (currentVersion.isGreaterThanOrEqualTo(version700) && currentVersion.isLowerThan(version800)) {
-            // TODO: add the migration check for 6.9.X -> 7.0.0 once it is created.
-            if (previousVersion.isLowerThan(migrationPathVersion)) {
-                log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_12_9_String);
+            if (previousVersion.isLowerThan(migrationPathVersion700)) {
+                log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion6_9_6_String);
             }
-            else if (previousVersion.isEqualTo(migrationPathVersion)) {
+            else if (previousVersion.isEqualTo(migrationPathVersion700)) {
                 // this means this is the first start after the mandatory previous update, we need to set the checksum of the initial schema to null
-                updateInitialChecksum();
+                updateInitialChecksum(version700.toString());
                 log.info("Successfully cleaned up initial schema during migration");
             }
         }
-
     }
 
     private String getPreviousVersionElseThrow() {
@@ -164,11 +167,11 @@ public class LiquibaseConfiguration {
         }
     }
 
-    private void updateInitialChecksum() {
+    private void updateInitialChecksum(String newVersion) {
         try (var statement = createStatement()) {
             log.info("Set checksum of initial schema to null so that liquibase will recalculate it");
-            statement.executeUpdate(
-                    "UPDATE DATABASECHANGELOG SET MD5SUM = null, DATEEXECUTED = now(), DESCRIPTION = 'Initial schema generation for version 6.0.0', LIQUIBASE = '4.15.0', FILENAME = 'config/liquibase/changelog/00000000000000_initial_schema.xml' WHERE ID = '00000000000001';");
+            statement.executeUpdate("UPDATE DATABASECHANGELOG SET MD5SUM = null, DATEEXECUTED = now(), DESCRIPTION = 'Initial schema generation for version '" + newVersion
+                    + "', LIQUIBASE = '4.27.0', FILENAME = 'config/liquibase/changelog/00000000000000_initial_schema.xml' WHERE ID = '00000000000001';");
             statement.getConnection().commit();
             statement.closeOnCompletion();
         }
