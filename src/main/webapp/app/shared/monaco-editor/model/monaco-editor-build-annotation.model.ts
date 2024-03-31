@@ -8,6 +8,12 @@ export enum MonacoEditorBuildAnnotationType {
     ERROR = 'error',
 }
 
+/**
+ * Class representing a build annotation (error / warning with description) rendered on the margin of the Monaco editor.
+ * They remain fixed to their line even when the user makes edits.
+ * Annotations consist of a {@link MonacoEditorGlyphMarginWidget} to render an icon in the glyph margin and a separate
+ * decoration (managed by the {@link decorationsCollection}) to handle highlighting and the hover message.
+ */
 export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
     private glyphMarginWidget: MonacoEditorGlyphMarginWidget;
     private decorationsCollection: monaco.editor.IEditorDecorationsCollection;
@@ -16,6 +22,14 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
     private type: MonacoEditorBuildAnnotationType;
     private updateListener: monaco.IDisposable;
 
+    /**
+     * @param editor The editor to render this annotation in.
+     * @param id The id of this annotation.
+     * @param lineNumber The line this annotation refers to.
+     * @param hoverMessage The message to display when the user hovers over this annotation. Can have markdown elements, e.g. `**bold**`.
+     * @param type The type of this annotation: error or warning.
+     * @param outdated Whether this annotation is outdated and should be grayed out. Defaults to false.
+     */
     constructor(editor: monaco.editor.ICodeEditor, id: string, lineNumber: number, hoverMessage: string, type: MonacoEditorBuildAnnotationType, outdated = false) {
         super(editor, id);
         this.decorationsCollection = this.editor.createDecorationsCollection([]);
@@ -29,6 +43,10 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
         this.setupListeners();
     }
 
+    /**
+     * Returns an object (a delta decoration) detailing the position and styling of the annotation.
+     * @private
+     */
     private getAssociatedDeltaDecoration(): monaco.editor.IModelDeltaDecoration {
         const marginClassName = this.outdated ? 'monaco-annotation-outdated' : `monaco-annotation-${this.type}`;
         const lineNumber = this.getLineNumber();
@@ -44,9 +62,13 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
         };
     }
 
+    /**
+     * Updates the style of this annotation and its linked glyph margin widget according to whether the annotation is outdated.
+     * @param outdated Whether this annotation is outdated and should be grayed out.
+     */
     setOutdatedAndUpdate(outdated: boolean) {
         this.outdated = outdated;
-        const classList = this.glyphMarginWidget.getDomNode().classList;
+        const classList = this.getGlyphMarginDomNode().classList;
         if (outdated) {
             classList.remove(`monaco-glyph-${this.type}`);
             classList.add(`monaco-glyph-outdated`);
@@ -71,6 +93,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
 
     protected setupListeners() {
         this.updateListener = this.editor.onDidChangeModelContent(() => {
+            // The displayed annotations may not apply anymore if the files have changed. For convenience, we still display them for the user's reference.
             this.setOutdatedAndUpdate(true);
         });
     }
@@ -80,11 +103,13 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
         this.setVisible(inRange);
         if (inRange) {
             this.glyphMarginWidget.addToEditor();
+            // Appending to this collection immediately renders the associated decoration.
             this.decorationsCollection.append([this.getAssociatedDeltaDecoration()]);
         }
     }
     removeFromEditor(): void {
         this.glyphMarginWidget.removeFromEditor();
+        // Clearing the collection immediately removes all decorations from the editor.
         this.decorationsCollection.clear();
     }
 

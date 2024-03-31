@@ -3,12 +3,15 @@ import * as monaco from 'monaco-editor';
 
 // null is used by the monaco editor API
 type OverlayWidgetPosition = monaco.editor.IOverlayWidgetPosition | null;
+
+/**
+ * Class representing an overlay widget floating above the editor content.
+ */
 export class MonacoEditorOverlayWidget extends MonacoCodeEditorElement implements monaco.editor.IOverlayWidget {
     private readonly domNode: HTMLElement;
     private readonly position: OverlayWidgetPosition;
 
     /**
-     * Constructs an overlay widget.
      * @param editor The editor to render the widget in.
      * @param id A unique identifier for the widget.
      * @param domNode The content to render. The user will be able to interact with the widget.
@@ -24,6 +27,7 @@ export class MonacoEditorOverlayWidget extends MonacoCodeEditorElement implement
 
     setVisible(visible: boolean) {
         super.setVisible(visible);
+        // Ensure that the displayed content is visible if and only if this element is visble.
         this.setHtmlElementsVisible(visible, this.domNode);
     }
 

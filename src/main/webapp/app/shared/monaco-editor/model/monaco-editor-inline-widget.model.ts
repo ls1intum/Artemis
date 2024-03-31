@@ -4,10 +4,23 @@ import { MonacoEditorOverlayWidget } from 'app/shared/monaco-editor/model/monaco
 
 import * as monaco from 'monaco-editor';
 
+/**
+ * Class representing an inline widget.
+ * These widgets consist of two elements:
+ *   - a {@link MonacoEditorViewZone} that creates vertical space after the line in question.
+ *   - a {@link MonacoEditorOverlayWidget} that contains the actual content of the widget.
+ * The size of these two components is linked together.
+ */
 export class MonacoEditorInlineWidget extends MonacoCodeEditorElement {
     private viewZone: MonacoEditorViewZone;
     private overlayWidget: MonacoEditorOverlayWidget;
 
+    /**
+     * @param editor The editor to render this widget in.
+     * @param overlayWidgetId The ID to use for the overlay widget.
+     * @param contentDomNode The content to render.
+     * @param afterLineNumber The line after which this line widget should be rendered.
+     */
     constructor(editor: monaco.editor.ICodeEditor, overlayWidgetId: string, contentDomNode: HTMLElement, afterLineNumber: number) {
         super(editor, overlayWidgetId);
         this.overlayWidget = new MonacoEditorOverlayWidget(

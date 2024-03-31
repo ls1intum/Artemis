@@ -1,13 +1,13 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import * as monaco from 'monaco-editor';
 
+/**
+ * Class representing a view zone (i.e., vertical space after a certain line) in the Monaco editor.
+ */
 export class MonacoEditorViewZone extends MonacoCodeEditorElement implements monaco.editor.IViewZone {
     private linkedContentDomNode: HTMLElement;
     private resizeObserver: ResizeObserver;
 
-    /*
-     * From IViewZone
-     */
     afterLineNumber: number;
     heightInPx: number | undefined;
 
@@ -16,6 +16,12 @@ export class MonacoEditorViewZone extends MonacoCodeEditorElement implements mon
      */
     domNode: HTMLElement = document.createElement('div');
 
+    /**
+     * @param editor The editor to render this view zone in.
+     * @param afterLineNumber The line after which to insert the view zone.
+     * @param linkedContentDomNode The content to which this view zone should be linked. When the linked content
+     * resizes, so does this view zone. Note that the content must be rendered elsewhere, e.g. in an {@link MonacoEditorOverlayWidget}.
+     */
     constructor(editor: monaco.editor.ICodeEditor, afterLineNumber: number, linkedContentDomNode: HTMLElement) {
         // id is unavailable until the view zone is added to the editor.
         super(editor, undefined);

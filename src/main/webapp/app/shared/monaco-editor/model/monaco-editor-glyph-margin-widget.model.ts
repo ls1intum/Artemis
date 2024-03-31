@@ -1,5 +1,10 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import * as monaco from 'monaco-editor';
+
+/**
+ * Class representing a glyph margin widget in the Monaco editor.
+ * Glyph margin widgets refer to one line and can contain arbitrary DOM nodes.
+ */
 export class MonacoEditorGlyphMarginWidget extends MonacoCodeEditorElement implements monaco.editor.IGlyphMarginWidget {
     private readonly domNode: HTMLElement;
     private readonly lineNumber: number;
@@ -15,6 +20,7 @@ export class MonacoEditorGlyphMarginWidget extends MonacoCodeEditorElement imple
     }
     getPosition(): monaco.editor.IGlyphMarginWidgetPosition {
         return {
+            // The Center lane allows for rendering of hover messages above this widget.
             lane: monaco.editor.GlyphMarginLane.Center,
             zIndex: 10,
             range: new monaco.Range(this.lineNumber, 0, this.lineNumber, 0),
