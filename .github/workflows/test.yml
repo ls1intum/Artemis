@@ -41,7 +41,7 @@ concurrency:
 env:
   CI: true
   node: 20
-  java: 17
+  java: 21
 
 jobs:
 
