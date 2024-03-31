@@ -56,6 +56,7 @@ import { FileUploadExerciseCreationPage } from './pageobjects/exercises/file-upl
 import { FileUploadEditorPage } from './pageobjects/exercises/file-upload/FileUploadEditorPage';
 import { FileUploadExerciseAssessmentPage } from './pageobjects/assessment/FileUploadExerciseAssessmentPage';
 import { FileUploadExerciseFeedbackPage } from './pageobjects/exercises/file-upload/FileUploadExerciseFeedbackPage';
+import { ExamGradingPage } from './pageobjects/exam/ExamGradingPage';
 
 /*
  * Define custom types for fixtures
@@ -88,6 +89,7 @@ export type ArtemisPageObjects = {
     examDetails: ExamDetailsPage;
     examExerciseGroupCreation: ExamExerciseGroupCreationPage;
     examExerciseGroups: ExamExerciseGroupsPage;
+    examGradingPage: ExamGradingPage;
     examNavigation: ExamNavigationBar;
     examManagement: ExamManagementPage;
     examParticipation: ExamParticipation;
@@ -202,6 +204,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     examExerciseGroups: async ({ page }, use) => {
         await use(new ExamExerciseGroupsPage(page));
+    },
+    examGradingPage: async ({ page }, use) => {
+        await use(new ExamGradingPage(page));
     },
     examManagement: async ({ page }, use) => {
         await use(new ExamManagementPage(page));

@@ -81,6 +81,13 @@ export class ExamManagementPage {
         await this.page.locator(`#testrun-button`).click();
     }
 
+    /**
+     * Opens the exam grading system page.
+     */
+    async openGradingKey() {
+        await this.page.locator('a', { hasText: 'Grading Key' }).click();
+    }
+
     async verifySubmitted(courseID: number, examID: number, username: string) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/student-exams`);
         await expect(this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.submitted')).toHaveText('Yes');

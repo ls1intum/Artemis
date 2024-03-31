@@ -180,6 +180,44 @@ test.describe('Exam assessment', () => {
         });
     });
 
+    test.describe.serial('Instructor sets grades and student receives a grade', () => {
+        let exam: Exam;
+
+        test.beforeAll('Prepare exam', async ({ browser }) => {
+            examEnd = dayjs().add(40, 'seconds');
+            const page = await newBrowserPage(browser);
+            exam = await prepareExam(course, examEnd, ExerciseType.TEXT, page);
+        });
+
+        test('Set exam gradings', async ({ login, page, examManagement, examGradingPage }) => {
+            await login(instructor);
+            await page.goto(`course-management/${course.id}/exams/${exam.id}`);
+            await examManagement.openGradingKey();
+            await examGradingPage.addGradeStep(40, '5.0');
+            await examGradingPage.addGradeStep(15, '4.0');
+            await examGradingPage.addGradeStep(15, '3.0');
+            await examGradingPage.addGradeStep(15, '2.0');
+            await examGradingPage.enterLastGradeName('1.0');
+            await examGradingPage.selectFirstPassingGrade('4.0');
+            await examGradingPage.saveGradingKey();
+            await page.locator('button[deletequestion="artemisApp.gradingSystem.deleteQuestion"]').waitFor({ state: 'visible' });
+        });
+
+        test('Check student grade', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
+            await login(instructor);
+            await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+            await login(tutor);
+            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
+            await examAssessment.addNewFeedback(7, 'Good job');
+            const response = await examAssessment.submitTextAssessment();
+            expect(response.status()).toBe(200);
+            await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
+            await examParticipation.checkResultScore('70%');
+            textAssessmentSuccessful = true;
+            await examParticipation.verifyGradingKeyOnFinalPage('2.0');
+        });
+    });
+
     test.afterAll('Delete course', async ({ browser }) => {
         const page = await newBrowserPage(browser);
         const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
@@ -187,7 +225,7 @@ test.describe('Exam assessment', () => {
     });
 });
 
-async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseType, page: Page) {
+async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseType, page: Page): Promise<Exam> {
     const examAPIRequests = new ExamAPIRequests(page);
     const exerciseAPIRequests = new ExerciseAPIRequests(page);
     const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
@@ -238,11 +276,12 @@ async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: Exerc
             break;
     }
 
-    const response = await examExerciseGroupCreation.addGroupWithExercise(exam, exerciseType, additionalData);
+    const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, exerciseType, additionalData);
     await examAPIRequests.generateMissingIndividualExams(exam);
     await examAPIRequests.prepareExerciseStartForExam(exam);
-    response.additionalData = additionalData;
-    await makeExamSubmission(course, exam, response, page, examParticipation, examNavigation, examStartEnd);
+    exercise.additionalData = additionalData;
+    await makeExamSubmission(course, exam, exercise, page, examParticipation, examNavigation, examStartEnd);
+    return exam;
 }
 
 async function makeExamSubmission(
