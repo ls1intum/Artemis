@@ -4,7 +4,7 @@
         @if (selectedFile) {
             @for (feedback of filterFeedbackForFile(feedbacks); track feedback) {
                 <jhi-code-editor-tutor-assessment-inline-feedback
-                    style="display: none"
+                    class="monaco-hidden-element"
                     [selectedFile]="selectedFile"
                     [codeLine]="Feedback.getReferenceLine(feedback)!"
                     [feedback]="feedback"

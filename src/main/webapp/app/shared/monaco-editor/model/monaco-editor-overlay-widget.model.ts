@@ -17,13 +17,14 @@ export class MonacoEditorOverlayWidget extends MonacoCodeEditorElement implement
     constructor(editor: monaco.editor.ICodeEditor, id: string, domNode: HTMLElement, position: OverlayWidgetPosition) {
         super(editor, id);
         this.domNode = domNode;
+        // At the moment, the inline feedback nodes will only reach their maximum width with the following line. This workaround can be removed as soon as the Ace editor has been replaced.
+        this.domNode.style.width = '100%';
         this.position = position;
     }
 
     setVisible(visible: boolean) {
         super.setVisible(visible);
-        this.domNode.style.width = '100%';
-        this.domNode.style.display = visible ? 'unset' : 'none';
+        this.setHtmlElementsVisible(visible, this.domNode);
     }
 
     addToEditor(): void {
@@ -34,9 +35,6 @@ export class MonacoEditorOverlayWidget extends MonacoCodeEditorElement implement
         this.editor.removeOverlayWidget(this);
     }
 
-    /*
-     * From IOverlayWidget
-     */
     getDomNode(): HTMLElement {
         return this.domNode;
     }

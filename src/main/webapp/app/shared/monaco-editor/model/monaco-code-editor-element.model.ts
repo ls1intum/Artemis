@@ -1,6 +1,8 @@
 import * as monaco from 'monaco-editor';
 
 export abstract class MonacoCodeEditorElement implements monaco.IDisposable {
+    static readonly CSS_HIDDEN_CLASS = 'monaco-hidden-element';
+
     private id: string | undefined;
     private visible = true;
     protected readonly editor: monaco.editor.ICodeEditor;
@@ -41,5 +43,13 @@ export abstract class MonacoCodeEditorElement implements monaco.IDisposable {
      */
     dispose(): void {
         this.removeFromEditor();
+    }
+
+    setHtmlElementsVisible(visible: boolean, ...htmlElements: HTMLElement[]): void {
+        if (visible) {
+            htmlElements.forEach((element) => element.classList.remove(MonacoCodeEditorElement.CSS_HIDDEN_CLASS));
+        } else {
+            htmlElements.forEach((element) => element.classList.add(MonacoCodeEditorElement.CSS_HIDDEN_CLASS));
+        }
     }
 }

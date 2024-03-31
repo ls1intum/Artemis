@@ -7,6 +7,7 @@ import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { BehaviorSubject } from 'rxjs';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
+import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -104,12 +105,13 @@ describe('MonacoEditorComponent', () => {
 
     it('should display hidden line widgets', () => {
         const lineWidgetDiv = document.createElement('div');
-        lineWidgetDiv.style.display = 'none';
+        // This is the case e.g. for feedback items.
+        lineWidgetDiv.classList.add(MonacoCodeEditorElement.CSS_HIDDEN_CLASS);
         const widgetId = 'test-widget';
         fixture.detectChanges();
         comp.setText(multiLineText);
         comp.addLineWidget(2, widgetId, lineWidgetDiv);
-        expect(lineWidgetDiv.style.display).toBe('unset');
+        expect(lineWidgetDiv.classList).not.toContain(MonacoCodeEditorElement.CSS_HIDDEN_CLASS);
     });
 
     it('should display build annotations', () => {
