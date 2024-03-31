@@ -572,10 +572,10 @@ public class Result extends DomainObject implements Comparable<Result> {
     /**
      * Checks whether the result is an automatic AI result: AUTOMATIC_ATHENA
      *
-     * @return true if the result is an automatic ai result
+     * @return true if the result is an automatic AI result
      */
     @JsonIgnore
-    public boolean isAutomaticAI() {
+    public boolean isAi() {
         return AssessmentType.AUTOMATIC_ATHENA == assessmentType;
     }
 

@@ -164,7 +164,7 @@ export class ResultService implements IResultService {
      * @param short flag that indicates if the resultString should use the short format
      */
     private getBaseResultStringProgrammingExercise(result: Result, relativeScore: number, points: number, buildAndTestMessage: string, short: boolean | undefined): string {
-        if (Result.isAutomaticAIResult(result)) {
+        if (Result.isAthenaAIResult(result)) {
             return buildAndTestMessage;
         }
         if (short) {

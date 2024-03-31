@@ -119,19 +119,19 @@ export const getUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feed
 };
 
 export function isAIResultAndFailed(result: Result | undefined) {
-    return result && Result.isAutomaticAIResult(result) && result.successful === false;
+    return result && Result.isAthenaAIResult(result) && result.successful === false;
 }
 
 export function isAIResultAndTimedOut(result: Result | undefined) {
-    return result && Result.isAutomaticAIResult(result) && result.successful === undefined && result.completionDate && dayjs().isAfter(result.completionDate);
+    return result && Result.isAthenaAIResult(result) && result.successful === undefined && result.completionDate && dayjs().isAfter(result.completionDate);
 }
 
 export function isAIResultAndProcessed(result: Result | undefined) {
-    return result && Result.isAutomaticAIResult(result) && result.successful === true;
+    return result && Result.isAthenaAIResult(result) && result.successful === true;
 }
 
 export function isAIResultAndIsBeingProcessed(result: Result | undefined) {
-    return result && Result.isAutomaticAIResult(result) && result.successful === undefined && result.completionDate && dayjs().isSameOrBefore(result.completionDate);
+    return result && Result.isAthenaAIResult(result) && result.successful === undefined && result.completionDate && dayjs().isSameOrBefore(result.completionDate);
 }
 
 export const evaluateTemplateStatus = (

@@ -190,7 +190,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
         } else if (
             this.result &&
-            ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) || Result.isAutomaticAIResult(this.result))
+            ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) || Result.isAthenaAIResult(this.result))
         ) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
@@ -230,7 +230,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                 return 'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip';
             } else if (this.templateStatus === ResultTemplateStatus.IS_GENERATING_FEEDBACK) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip';
-            } else if (this.templateStatus === ResultTemplateStatus.HAS_RESULT && Result.isAutomaticAIResult(this.result)) {
+            } else if (this.templateStatus === ResultTemplateStatus.HAS_RESULT && Result.isAthenaAIResult(this.result)) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip';
             }
         }
