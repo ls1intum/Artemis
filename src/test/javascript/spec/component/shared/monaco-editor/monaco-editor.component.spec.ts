@@ -6,7 +6,7 @@ import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-o
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { BehaviorSubject } from 'rxjs';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { MonacoEditorAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-annotation.model';
+import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -16,7 +16,7 @@ describe('MonacoEditorComponent', () => {
     const singleLineText = 'public class Main { }';
     const multiLineText = ['public class Main {', 'static void main() {', 'foo();', '}', '}'].join('\n');
 
-    const buildAnnotationArray: Annotation[] = [{ fileName: 'example.java', row: 1, column: 0, timestamp: 0, type: MonacoEditorAnnotationType.ERROR, text: 'example error' }];
+    const buildAnnotationArray: Annotation[] = [{ fileName: 'example.java', row: 1, column: 0, timestamp: 0, type: MonacoEditorBuildAnnotationType.ERROR, text: 'example error' }];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -119,9 +119,9 @@ describe('MonacoEditorComponent', () => {
         comp.setAnnotations(buildAnnotationArray, false);
         comp.setText(multiLineText);
         const element = document.getElementById(buildAnnotationId);
-        expect(comp.editorAnnotations).toHaveLength(1);
+        expect(comp.editorBuildAnnotations).toHaveLength(1);
         expect(element).not.toBeNull();
-        expect(element).toEqual(comp.editorAnnotations[0].getDomNode());
+        expect(element).toEqual(comp.editorBuildAnnotations[0].getGlyphMarginDomNode());
         expect(element!.style.visibility).toBe('visible');
     });
 
@@ -132,9 +132,9 @@ describe('MonacoEditorComponent', () => {
         comp.setAnnotations(buildAnnotationArray, false);
         comp.setText(singleLineText);
         const element = document.getElementById(buildAnnotationId);
-        expect(comp.editorAnnotations).toHaveLength(1);
+        expect(comp.editorBuildAnnotations).toHaveLength(1);
         expect(element).not.toBeNull();
-        expect(element).toEqual(comp.editorAnnotations[0].getDomNode());
+        expect(element).toEqual(comp.editorBuildAnnotations[0].getGlyphMarginDomNode());
         expect(element!.style.visibility).toBe('hidden');
     });
 
@@ -142,26 +142,26 @@ describe('MonacoEditorComponent', () => {
         fixture.detectChanges();
         comp.setText(multiLineText);
         comp.setAnnotations(buildAnnotationArray, true);
-        expect(comp.editorAnnotations).toHaveLength(1);
-        expect(comp.editorAnnotations[0].isOutdated()).toBeTrue();
+        expect(comp.editorBuildAnnotations).toHaveLength(1);
+        expect(comp.editorBuildAnnotations[0].isOutdated()).toBeTrue();
     });
 
     it('should mark build annotations as outdated when a keyboard input is made', () => {
         fixture.detectChanges();
         comp.setText(multiLineText);
         comp.setAnnotations(buildAnnotationArray, false);
-        expect(comp.editorAnnotations).toHaveLength(1);
-        expect(comp.editorAnnotations[0].isOutdated()).toBeFalse();
+        expect(comp.editorBuildAnnotations).toHaveLength(1);
+        expect(comp.editorBuildAnnotations[0].isOutdated()).toBeFalse();
         comp.triggerKeySequence('typing');
-        expect(comp.editorAnnotations[0].isOutdated()).toBeTrue();
+        expect(comp.editorBuildAnnotations[0].isOutdated()).toBeTrue();
     });
 
     it('should dispose and destroy its widgets and annotations when destroyed', () => {
         fixture.detectChanges();
         comp.setAnnotations(buildAnnotationArray);
         comp.addLineWidget(1, 'widget', document.createElement('div'));
-        const disposeAnnotationSpy = jest.spyOn(comp.editorAnnotations[0], 'dispose');
-        const disposeWidgetSpy = jest.spyOn(comp.editorLineWidgets[0], 'dispose');
+        const disposeAnnotationSpy = jest.spyOn(comp.editorBuildAnnotations[0], 'dispose');
+        const disposeWidgetSpy = jest.spyOn(comp.inlineWidgets[0], 'dispose');
         comp.ngOnDestroy();
         expect(disposeWidgetSpy).toHaveBeenCalledOnce();
         expect(disposeAnnotationSpy).toHaveBeenCalledOnce();

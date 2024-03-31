@@ -3,15 +3,11 @@ import * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { MonacoEditorAnnotation } from 'app/shared/monaco-editor/model/monaco-editor-annotation.model';
-import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-line-widget.model';
 import { MonacoEditorInlineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
-import { MonacoEditorAnnotationTypeEnum, MonacoEditorBuildAnnotation } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
+import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 
 export type EditorPosition = { row: number; column: number };
 export type MarkdownString = monaco.IMarkdownString;
-export type GlyphDecoration = { lineNumber: number; glyphMarginClassName: string; hoverMessage: MarkdownString };
-export type EditorRange = monaco.Range;
 @Component({
     selector: 'jhi-monaco-editor',
     templateUrl: 'monaco-editor.component.html',
@@ -23,9 +19,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private _editor: monaco.editor.IStandaloneCodeEditor;
     themeSubscription?: Subscription;
     models: monaco.editor.IModel[] = [];
-    editorLineWidgets: MonacoEditorLineWidget[] = [];
     inlineWidgets: MonacoEditorInlineWidget[] = [];
-    editorAnnotations: MonacoEditorAnnotation[] = [];
     editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
 
     constructor(private themeService: ThemeService) {}
@@ -150,11 +144,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     disposeWidgets() {
-        this.editorLineWidgets.forEach((o) => {
-            o.dispose();
-            this._editor.removeOverlayWidget(o);
-        });
-        this.editorLineWidgets = [];
         this.disposeAnnotations();
         this.inlineWidgets.forEach((i) => {
             i.dispose();
@@ -163,11 +152,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     disposeAnnotations() {
-        this.editorAnnotations.forEach((o) => {
-            o.dispose();
-            this._editor.removeGlyphMarginWidget(o);
-        });
-        this.editorAnnotations = [];
         this.editorBuildAnnotations.forEach((o) => {
             o.dispose();
         });
@@ -180,33 +164,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
     }
 
-    /*setAnnotations(annotations: Array<Annotation>, markAsOutdated: boolean = false) {
-        if (!this._editor) return;
-        this.disposeAnnotations();
-        for (const annotation of annotations) {
-            const lineNumber = annotation.row + 1;
-            const editorAnnotation = new MonacoEditorAnnotation(
-                `${annotation.fileName}:${lineNumber}:${annotation.text}`,
-                lineNumber,
-                undefined,
-                { value: annotation.text },
-                annotation.type.toLowerCase() === 'error' ? MonacoEditorAnnotationType.ERROR : MonacoEditorAnnotationType.WARNING,
-                this._editor.createDecorationsCollection([]),
-            );
-            if (markAsOutdated) {
-                editorAnnotation.setOutdated(true);
-                editorAnnotation.updateDecoration(this.getNumberOfLines());
-            }
-            this._editor.addGlyphMarginWidget(editorAnnotation);
-            const updateListener = this._editor.onDidChangeModelContent(() => {
-                editorAnnotation.updateDecoration(this._editor.getModel()?.getLineCount() ?? 0);
-            });
-            editorAnnotation.setUpdateListener(updateListener);
-            this.editorAnnotations.push(editorAnnotation);
-        }
-    }*/
-
-    setAnnotations(annotations: Annotation[], markAsOutdated: boolean): void {
+    setAnnotations(annotations: Annotation[], markAsOutdated: boolean = false): void {
         if (!this._editor) {
             return;
         }
@@ -218,7 +176,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 `${annotation.fileName}:${lineNumber}:${annotation.text}`,
                 lineNumber,
                 annotation.text,
-                MonacoEditorAnnotationTypeEnum.ERROR,
+                annotation.type === 'error' ? MonacoEditorBuildAnnotationType.ERROR : MonacoEditorBuildAnnotationType.WARNING,
             );
             editorBuildAnnotation.addToEditor();
             editorBuildAnnotation.setOutdatedAndUpdate(markAsOutdated);
@@ -231,37 +189,4 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         lineWidget.addToEditor();
         this.inlineWidgets.push(lineWidget);
     }
-
-    /*addLineWidget(lineNumber: number, id: string, domNode: HTMLElement) {
-        const lineWidget = new MonacoEditorLineWidget(id, domNode, lineNumber, this.registerViewZone.bind(this), this.layoutViewZone.bind(this), this.removeViewZone.bind(this));
-        this._editor.addOverlayWidget(lineWidget);
-        // TODO: This does not work! Make one global listener that updates the current elements.
-        const updateListener = this._editor.onDidChangeModelContent(() => {
-            lineWidget.updateWidget(this._editor.getModel()?.getLineCount() ?? 0);
-            lineWidget.setUpdateListener(updateListener);
-        });
-        lineWidget.setUpdateListener(updateListener);
-        this.editorLineWidgets.push(lineWidget);
-    }*/
-
-    /*private registerViewZone(viewZone: monaco.editor.IViewZone): string {
-        let viewZoneId: string | undefined;
-        this._editor.changeViewZones((changeAccessor) => {
-            viewZoneId = changeAccessor.addZone(viewZone);
-        });
-        if (!viewZoneId) throw new Error('Could not add a ViewZone to the editor.');
-        return viewZoneId;
-    }
-
-    private layoutViewZone(viewZoneId: string): void {
-        this._editor.changeViewZones((changeAccessor) => {
-            changeAccessor.layoutZone(viewZoneId);
-        });
-    }
-
-    private removeViewZone(viewZoneId: string): void {
-        this._editor.changeViewZones((changeAccessor) => {
-            changeAccessor.removeZone(viewZoneId);
-        });
-    }*/
 }

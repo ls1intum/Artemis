@@ -3,7 +3,7 @@ import { MonacoEditorGlyphMarginWidget } from 'app/shared/monaco-editor/model/mo
 
 import * as monaco from 'monaco-editor';
 
-export enum MonacoEditorAnnotationTypeEnum {
+export enum MonacoEditorBuildAnnotationType {
     WARNING = 'warning',
     ERROR = 'error',
 }
@@ -13,10 +13,10 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
     private decorationsCollection: monaco.editor.IEditorDecorationsCollection;
     private outdated: boolean;
     private hoverMessage: string;
-    private type: MonacoEditorAnnotationTypeEnum;
+    private type: MonacoEditorBuildAnnotationType;
     private updateListener: monaco.IDisposable;
 
-    constructor(editor: monaco.editor.ICodeEditor, id: string, lineNumber: number, hoverMessage: string, type: MonacoEditorAnnotationTypeEnum, outdated = false) {
+    constructor(editor: monaco.editor.ICodeEditor, id: string, lineNumber: number, hoverMessage: string, type: MonacoEditorBuildAnnotationType, outdated = false) {
         super(editor, id);
         this.decorationsCollection = this.editor.createDecorationsCollection([]);
         this.hoverMessage = hoverMessage;
@@ -56,8 +56,16 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
         this.updateInEditor();
     }
 
+    isOutdated(): boolean {
+        return this.outdated;
+    }
+
     getLineNumber(): number {
         return this.glyphMarginWidget.getLineNumber();
+    }
+
+    getGlyphMarginDomNode(): HTMLElement {
+        return this.glyphMarginWidget.getDomNode();
     }
 
     protected setupListeners() {
