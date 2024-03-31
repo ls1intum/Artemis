@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
-import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
