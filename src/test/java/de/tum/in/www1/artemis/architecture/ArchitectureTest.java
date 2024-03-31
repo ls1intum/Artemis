@@ -14,6 +14,7 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameCo
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
 import static com.tngtech.archunit.core.domain.JavaModifier.ABSTRACT;
+import static com.tngtech.archunit.core.domain.JavaModifier.FINAL;
 import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
@@ -67,6 +68,7 @@ import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.domain.JavaParameter;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -115,10 +117,29 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
         classes().that().haveSimpleNameEndingWith("Service").should().notBeAnnotatedWith(Component.class).check(allClasses);
         classes().that().haveSimpleNameEndingWith("Service").should().notBeAnnotatedWith(RestController.class).check(allClasses);
+        classes().that().haveSimpleNameEndingWith("Service").should().notHaveModifier(FINAL).check(allClasses);
 
         classes().that().areAnnotatedWith(Service.class).should().haveSimpleNameEndingWith("Service").check(allClasses);
         classes().that().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(Component.class).check(allClasses);
         classes().that().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(RestController.class).check(allClasses);
+        classes().that().areAnnotatedWith(Service.class).should().notHaveModifier(FINAL).check(allClasses);
+
+    }
+
+    @Test
+    void testNoUnusedRepositoryMethods() {
+        ArchRule unusedMethods = noMethods().that().areAnnotatedWith(Query.class).and().areDeclaredInClassesThat().areInterfaces().and().areDeclaredInClassesThat()
+                .areAnnotatedWith(Repository.class).should(new ArchCondition<>("not be referenced") {
+
+                    @Override
+                    public void check(JavaMethod javaMethod, ConditionEvents conditionEvents) {
+                        Set<JavaMethodCall> calls = javaMethod.getCallsOfSelf();
+                        if (calls.isEmpty()) {
+                            conditionEvents.add(SimpleConditionEvent.violated(javaMethod, "Method is not used"));
+                        }
+                    }
+                }).because("unused methods should be removed from repositories to keep a clean code base.");
+        unusedMethods.check(productionClasses);
     }
 
     @Test
@@ -147,6 +168,14 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testOnlySpringTransactionalAnnotation() {
+        ArchRule onlySpringTransactionalAnnotation = noMethods().should().beAnnotatedWith(javax.transaction.Transactional.class).orShould()
+                .beAnnotatedWith(jakarta.transaction.Transactional.class)
+                .because("Only Spring's Transactional annotation should be used as the usage of the other two is not reliable.");
+        onlySpringTransactionalAnnotation.check(allClasses);
+    }
+
+    @Test
     void testNoCollectorsToList() {
         ArchRule toListUsage = noClasses().should().callMethod(Collectors.class, "toList")
                 .because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
@@ -155,11 +184,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNullnessAnnotations() {
-        var notNullPredicate = and(not(resideInPackageAnnotation("javax.validation.constraints")), simpleNameAnnotation("NotNull"));
+        var notNullPredicate = and(not(resideInPackageAnnotation("jakarta.validation.constraints")), simpleNameAnnotation("NotNull"));
         var nonNullPredicate = simpleNameAnnotation("NonNull");
-        var nullablePredicate = and(not(resideInPackageAnnotation("javax.annotation")), simpleNameAnnotation("Nullable"));
+        var nonnullPredicate = simpleNameAnnotation("Nonnull");
+        var nullablePredicate = and(not(resideInPackageAnnotation("jakarta.annotation")), simpleNameAnnotation("Nullable"));
 
-        Set<DescribedPredicate<? super JavaAnnotation<?>>> allPredicates = Set.of(notNullPredicate, nonNullPredicate, nullablePredicate);
+        Set<DescribedPredicate<? super JavaAnnotation<?>>> allPredicates = Set.of(notNullPredicate, nonNullPredicate, nonnullPredicate, nullablePredicate);
 
         for (var predicate : allPredicates) {
             ArchRule units = noCodeUnits().should().beAnnotatedWith(predicate);
@@ -247,7 +277,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         var exceptions = or(declaredClassSimpleName("QuizCache"), declaredClassSimpleName("CacheHandler"));
         var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
                 .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
-        notUseHazelcastInConstructor.check(allClasses);
+        notUseHazelcastInConstructor.check(allClassesWithHazelcast);
     }
 
     @Test
@@ -454,7 +484,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
                 for (var word : queryWords) {
                     if (SQL_KEYWORDS.contains(word.toUpperCase()) && !StringUtils.isAllUpperCase(word)) {
-                        events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), word)));
+                        events.add(violated(item, "In the Query of %s the keyword \"%s\" should be written in upper case.".formatted(item.getFullName(), word)));
                     }
                 }
             }

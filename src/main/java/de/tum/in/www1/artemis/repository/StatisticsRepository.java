@@ -9,7 +9,7 @@ import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.*;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -533,13 +533,6 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             WHERE e.course.id = :courseId
             """)
     List<Long> findExerciseIdsByCourseId(@Param("courseId") long courseId);
-
-    @Query("""
-            SELECT e
-            FROM Exercise e
-            WHERE e.course.id = :courseId
-            """)
-    Set<Exercise> findExercisesByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore(

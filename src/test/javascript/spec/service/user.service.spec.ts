@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -25,22 +24,6 @@ describe('User Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should call correct URL', () => {
-            service.find('user').subscribe(() => {});
-
-            const req = httpMock.expectOne({ method: 'GET' });
-            const resourceUrl = 'api/users';
-            expect(req.request.url).toBe(`${resourceUrl}/user`);
-        });
-        it('should return User', () => {
-            service.find('user').subscribe((received) => {
-                expect(received!.login).toBe('user');
-            });
-
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(new User(1, 'user'));
-        });
-
         it('should return Authorities', () => {
             adminService.authorities().subscribe((_authorities) => {
                 expect(_authorities).toEqual([Authority.USER, Authority.ADMIN]);
@@ -83,20 +66,6 @@ describe('User Service', () => {
             const req = httpMock.expectOne({ method: 'GET' });
             const resourceUrl = 'api/users/accept-iris';
             expect(req.request.url).toBe(`${resourceUrl}`);
-        });
-
-        it('should propagate not found response', () => {
-            service.find('user').subscribe({
-                error: (_error: any) => {
-                    expect(_error.status).toBe(404);
-                },
-            });
-
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush('Invalid request parameters', {
-                status: 404,
-                statusText: 'Bad Request',
-            });
         });
     });
 });

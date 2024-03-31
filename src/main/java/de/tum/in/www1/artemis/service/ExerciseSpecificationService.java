@@ -2,9 +2,9 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -50,7 +50,7 @@ public class ExerciseSpecificationService {
             Join<ExerciseGroup, Exam> joinExam = joinExerciseGroup.join(ExerciseGroup_.EXAM, JoinType.LEFT);
             Join<Exam, Course> joinExamCourse = joinExam.join(Exam_.COURSE, JoinType.LEFT);
 
-            Predicate idMatchesSearch = criteriaBuilder.equal(criteriaBuilder.concat(root.get(Exercise_.ID), ""), searchTerm);
+            Predicate idMatchesSearch = criteriaBuilder.equal(root.get(Exercise_.ID).as(String.class), searchTerm);
             Predicate exerciseTitleMatches = criteriaBuilder.like(root.get(Exercise_.TITLE), "%" + searchTerm + "%");
             Predicate courseTitleMatches = criteriaBuilder.like(joinCourse.get(Course_.TITLE), "%" + searchTerm + "%");
             Predicate examCourseTitleMatches = criteriaBuilder.like(joinExamCourse.get(Course_.TITLE), "%" + searchTerm + "%");
