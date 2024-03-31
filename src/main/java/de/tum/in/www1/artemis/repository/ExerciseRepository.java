@@ -624,9 +624,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT count(e) > 0
             FROM Exercise e
-                LEFT JOIN e.exerciseGroup eg
-            WHERE eg IS NOT NULL
-                AND e.id = :exerciseId
+            WHERE e.id = :exerciseId
+                AND e.exerciseGroup IS NOT NULL
             """)
     boolean isExamExercise(@Param("exerciseId") long exerciseId);
 }
