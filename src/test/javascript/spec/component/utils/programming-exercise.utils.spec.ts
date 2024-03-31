@@ -6,7 +6,6 @@ import {
     createBuildPlanUrl,
     createCommitUrl,
     hasDueDatePassed,
-    isLegacyResult,
     isProgrammingExerciseParticipation,
     isProgrammingExerciseStudentParticipation,
     isResultPreliminary,
@@ -201,27 +200,6 @@ describe('ProgrammingExerciseUtils URL utils', () => {
 });
 
 describe('ProgrammingExerciseUtils', () => {
-    describe('isLegacy', () => {
-        const legacyDate = dayjs('2019-05-10T22:12:27Z');
-
-        it('returns false when the completion date is not set', () => {
-            const result = new Result();
-            expect(isLegacyResult(result)).toBeFalse();
-        });
-
-        it('returns true on legacy result', () => {
-            const result = new Result();
-            result.completionDate = legacyDate;
-            expect(isLegacyResult(result)).toBeTrue();
-        });
-
-        it('returns false on non legacy result', () => {
-            const result = new Result();
-            result.completionDate = legacyDate.add(1, 'second');
-            expect(isLegacyResult(result)).toBeFalse();
-        });
-    });
-
     it('createBuildPlanUrl fills in buildPlanId and projectKey', () => {
         const template = '/job/{projectKey}/job/{buildPlanId}';
         const buildPlanId = 'BPID';
