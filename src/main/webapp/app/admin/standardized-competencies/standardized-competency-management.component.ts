@@ -380,7 +380,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
 
     //utility functions
 
-    getKnowledgeAreaByIdIfExists(id: number | undefined) {
+    private getKnowledgeAreaByIdIfExists(id: number | undefined) {
         if (id === undefined) {
             return undefined;
         }
