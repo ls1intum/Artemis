@@ -57,7 +57,6 @@ import com.google.common.collect.Iterators;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -106,11 +105,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
-    private final CourseRepository courseRepository;
-
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            UserRepository userRepository, ExamRepository examRepository, CourseRepository courseRepository) {
+            UserRepository userRepository, ExamRepository examRepository) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
@@ -119,7 +116,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.examRepository = examRepository;
-        this.courseRepository = courseRepository;
     }
 
     @Override
