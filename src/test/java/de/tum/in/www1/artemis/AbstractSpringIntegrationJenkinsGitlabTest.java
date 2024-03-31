@@ -10,6 +10,8 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
@@ -499,5 +501,35 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockUserExists(String username) throws Exception {
         gitlabRequestMockProvider.mockUserExists(username, true);
+    }
+
+    /**
+     * Configures the mock requests needed to delete a programming exercise in an exam.
+     *
+     * @param programmingExercise the programming exercise to delete
+     * @param registeredUsers     the users registered to the exam (users with repos)
+     * @throws Exception exception
+     */
+    public void mockDeleteProgrammingExercise(ProgrammingExercise programmingExercise, Set<User> registeredUsers) throws Exception {
+        final String projectKey = programmingExercise.getProjectKey();
+
+        List<String> studentLogins = registeredUsers.stream().map(User::getLogin).toList();
+        jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey, false);
+        List<String> planNames = new ArrayList<>(studentLogins);
+        planNames.add(TEMPLATE.getName());
+        planNames.add(SOLUTION.getName());
+        for (final String planName : planNames) {
+            jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+        List<String> repoNames = new ArrayList<>(studentLogins);
+
+        for (final var repoType : RepositoryType.values()) {
+            gitlabRequestMockProvider.mockDeleteRepository(programmingExercise.generateRepositoryName(repoType), false);
+        }
+
+        for (final var repoName : repoNames) {
+            gitlabRequestMockProvider.mockDeleteRepository((projectKey + "-" + repoName).toLowerCase(), false);
+        }
+        gitlabRequestMockProvider.mockDeleteProject(projectKey, false);
     }
 }
