@@ -7,7 +7,6 @@ import { MonacoEditorInlineWidget } from 'app/shared/monaco-editor/model/monaco-
 import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 
 export type EditorPosition = { row: number; column: number };
-export type MarkdownString = monaco.IMarkdownString;
 @Component({
     selector: 'jhi-monaco-editor',
     templateUrl: 'monaco-editor.component.html',
@@ -87,14 +86,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
     }
 
-    // The rest of the code uses { row, column }... Will have to refactor
-    toEditorPosition(position: monaco.Position | null): EditorPosition {
-        if (!position) return { row: 0, column: 0 };
-        return { row: position.lineNumber, column: position.column };
-    }
-
+    // Workaround: The rest of the code expects { row, column } - we have { lineNumber, column }. Can be removed when Ace is removed.
     getPosition(): EditorPosition {
-        return this.toEditorPosition(this._editor.getPosition());
+        const position = this._editor.getPosition() ?? new monaco.Position(0, 0);
+        return { row: position.lineNumber, column: position.column };
     }
 
     setPosition(position: EditorPosition) {
@@ -125,6 +120,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return this._editor.getOption(monaco.editor.EditorOption.readOnly);
     }
 
+    /**
+     * Switches to another model (representing files) in the editor and optionally sets its content.
+     * The editor's syntax highlighting will be set depending on the file extension.
+     * All elements currently rendered in the editor will be disposed.
+     * @param fileName The name of the file to switch to.
+     * @param newFileContent The content of the file (will be retrieved from the model if left out).
+     */
     changeModel(fileName: string, newFileContent?: string) {
         const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
         const model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(newFileContent ?? '', undefined, uri);
@@ -136,14 +138,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
 
         // Some elements remain when the model is changed - dispose of them.
-        this.disposeWidgets();
+        this.disposeEditorElements();
 
         monaco.editor.setModelLanguage(model, model.getLanguageId());
         this._editor.setModel(model);
     }
 
-    disposeWidgets() {
+    disposeEditorElements(): void {
         this.disposeAnnotations();
+        this.disposeWidgets();
+    }
+
+    disposeWidgets() {
         this.inlineWidgets.forEach((i) => {
             i.dispose();
         });
@@ -163,7 +169,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
     }
 
-    setAnnotations(annotations: Annotation[], markAsOutdated: boolean = false): void {
+    /**
+     * Sets the build annotations to display in the editor. They are fixed to their respective lines and will be marked
+     * as outdated.
+     * @param annotations The annotations to render in the editor.
+     * @param outdated Whether the specified annotations are already outdated and should be grayed out.
+     */
+    setAnnotations(annotations: Annotation[], outdated: boolean = false): void {
         if (!this._editor) {
             return;
         }
@@ -178,11 +190,17 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 annotation.type === 'error' ? MonacoEditorBuildAnnotationType.ERROR : MonacoEditorBuildAnnotationType.WARNING,
             );
             editorBuildAnnotation.addToEditor();
-            editorBuildAnnotation.setOutdatedAndUpdate(markAsOutdated);
+            editorBuildAnnotation.setOutdatedAndUpdate(outdated);
             this.editorBuildAnnotations.push(editorBuildAnnotation);
         }
     }
 
+    /**
+     * Renders a line widget after the specified line.
+     * @param lineNumber The line after which the widget should be rendered.
+     * @param id The ID to use for the widget.
+     * @param domNode The content to display in the editor.
+     */
     addLineWidget(lineNumber: number, id: string, domNode: HTMLElement) {
         const lineWidget = new MonacoEditorInlineWidget(this._editor, id, domNode, lineNumber);
         lineWidget.addToEditor();
