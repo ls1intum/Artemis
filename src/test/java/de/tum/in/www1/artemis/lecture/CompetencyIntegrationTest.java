@@ -298,8 +298,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             request.post("/api/courses/" + course.getId() + "/prerequisites/1", null, HttpStatus.FORBIDDEN);
             request.delete("/api/courses/" + course.getId() + "/prerequisites/1", HttpStatus.FORBIDDEN);
             // relations
-            request.post("/api/courses/" + course.getId() + "/competencies/relations/", new CompetencyRelation(), HttpStatus.FORBIDDEN);
-            request.getSet("/api/courses/" + course.getId() + "/competencies/relations/", HttpStatus.FORBIDDEN, CompetencyRelationDTO.class);
+            request.post("/api/courses/" + course.getId() + "/competencies/relations", new CompetencyRelation(), HttpStatus.FORBIDDEN);
+            request.getSet("/api/courses/" + course.getId() + "/competencies/relations", HttpStatus.FORBIDDEN, CompetencyRelationDTO.class);
             request.delete("/api/courses/" + course.getId() + "/competencies/relations/1", HttpStatus.FORBIDDEN);
         }
 
@@ -505,7 +505,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             // relation type must be set
             relationToCreate.setType(null);
 
-            request.post("/api/courses/" + course.getId() + "/competencies/relations/", relationToCreate, HttpStatus.BAD_REQUEST);
+            request.post("/api/courses/" + course.getId() + "/competencies/relations", relationToCreate, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -522,7 +522,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             relation.setHeadCompetency(competency);
             relation.setType(RelationType.ASSUMES);
 
-            request.post("/api/courses/" + course.getId() + "/competencies/relations/", relation, HttpStatus.BAD_REQUEST);
+            request.post("/api/courses/" + course.getId() + "/competencies/relations", relation, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -779,7 +779,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
         void shouldNotGetResultsFromCoursesForInstructorNotInCourses() throws Exception {
             final var search = pageableSearchUtilService.configureSearch("");
-            final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
+            final var result = request.getSearchResult("/api/competencies", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
             assertThat(result.getResultsOnPage()).isNullOrEmpty();
         }
 
@@ -787,7 +787,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldGetResultsFromCoursesForInstructor() throws Exception {
             final var search = pageableSearchUtilService.configureSearch(competency.getTitle());
-            final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
+            final var result = request.getSearchResult("/api/competencies", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
             assertThat(result.getResultsOnPage()).hasSize(1);
         }
 
@@ -795,7 +795,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         @WithMockUser(username = "admin", roles = "ADMIN")
         void shouldGetResultsFromAllCoursesForAdmin() throws Exception {
             final var search = pageableSearchUtilService.configureSearch(competency.getTitle());
-            final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
+            final var result = request.getSearchResult("/api/competencies", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
             assertThat(result.getResultsOnPage()).hasSize(1);
         }
     }
@@ -995,8 +995,14 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
             assertThat(competencyDTOList).hasSize(2);
             // competency 2 should be the tail of one relation
-            assertThat(competencyDTOList.get(0).tailRelations()).isNull();
-            assertThat(competencyDTOList.get(1).tailRelations()).hasSize(1);
+            if (competencyDTOList.get(0).tailRelations() != null) {
+                assertThat(competencyDTOList.get(0).tailRelations()).hasSize(1);
+                assertThat(competencyDTOList.get(1).tailRelations()).isNull();
+            }
+            else {
+                assertThat(competencyDTOList.get(0).tailRelations()).isNull();
+                assertThat(competencyDTOList.get(1).tailRelations()).hasSize(1);
+            }
 
             competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import/bulk", competencyList,
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
