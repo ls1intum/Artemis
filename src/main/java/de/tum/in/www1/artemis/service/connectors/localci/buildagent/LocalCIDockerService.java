@@ -103,6 +103,9 @@ public class LocalCIDockerService {
                 catch (InterruptedException ie) {
                     throw new LocalCIException("Interrupted while pulling docker image " + imageName, ie);
                 }
+                catch (Exception e3) {
+                    throw new LocalCIException("Error while pulling docker image " + imageName, e3);
+                }
             }
             finally {
                 lock.unlock();

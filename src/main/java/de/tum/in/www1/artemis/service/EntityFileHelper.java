@@ -1,33 +1,27 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
-import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
 
 /**
  * Service for handling file operations for entities.
  */
-@Profile(PROFILE_CORE)
-@Service
 @Deprecated(forRemoval = true)
-public class EntityFileService {
+public class EntityFileHelper {
 
-    private static final Logger log = LoggerFactory.getLogger(EntityFileService.class);
+    private static final Logger log = LoggerFactory.getLogger(EntityFileHelper.class);
 
     private final FileService fileService;
 
-    public EntityFileService(FileService fileService) {
+    public EntityFileHelper(FileService fileService) {
         this.fileService = fileService;
     }
 
@@ -40,9 +34,9 @@ public class EntityFileService {
      * @param keepFilename   whether to keep the filename or generate a new one
      * @return the new file path as string
      */
-    @Nonnull
+    @NotNull
     @Deprecated(forRemoval = true)
-    public String moveTempFileBeforeEntityPersistence(@Nonnull String entityFilePath, @Nonnull Path targetFolder, boolean keepFilename) {
+    public String moveTempFileBeforeEntityPersistence(@NotNull String entityFilePath, @NotNull Path targetFolder, boolean keepFilename) {
         return moveFileBeforeEntityPersistenceWithIdIfIsTemp(entityFilePath, targetFolder, keepFilename, null);
     }
 
@@ -55,9 +49,9 @@ public class EntityFileService {
      * @param entityId       the id of the entity that is being persisted, if null, a placeholder gets used
      * @return the new file path as string
      */
-    @Nonnull
+    @NotNull
     @Deprecated(forRemoval = true)
-    public String moveFileBeforeEntityPersistenceWithIdIfIsTemp(@Nonnull String entityFilePath, @Nonnull Path targetFolder, boolean keepFilename, @Nullable Long entityId) {
+    public String moveFileBeforeEntityPersistenceWithIdIfIsTemp(@NotNull String entityFilePath, @NotNull Path targetFolder, boolean keepFilename, @Nullable Long entityId) {
         URI filePath = URI.create(entityFilePath);
         String filename = Path.of(entityFilePath).getFileName().toString();
         try {
@@ -97,8 +91,8 @@ public class EntityFileService {
      */
     @Nullable
     @Deprecated(forRemoval = true)
-    public String handlePotentialFileUpdateBeforeEntityPersistence(@Nonnull Long entityId, @Nullable String oldEntityFilePath, @Nullable String newEntityFilePath,
-            @Nonnull Path targetFolder, boolean keepFilename) {
+    public String handlePotentialFileUpdateBeforeEntityPersistence(@NotNull Long entityId, @Nullable String oldEntityFilePath, @Nullable String newEntityFilePath,
+            @NotNull Path targetFolder, boolean keepFilename) {
         String resultingPath = newEntityFilePath;
         if (newEntityFilePath != null) {
             resultingPath = moveFileBeforeEntityPersistenceWithIdIfIsTemp(newEntityFilePath, targetFolder, keepFilename, entityId);

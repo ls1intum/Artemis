@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.architecture;
 
 import static com.tngtech.archunit.base.DescribedPredicate.and;
 import static com.tngtech.archunit.base.DescribedPredicate.equalTo;
@@ -13,6 +13,8 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleName;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameContaining;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
+import static com.tngtech.archunit.core.domain.JavaModifier.ABSTRACT;
+import static com.tngtech.archunit.core.domain.JavaModifier.FINAL;
 import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
@@ -72,6 +74,7 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.in.www1.artemis.AbstractArchitectureTest;
 import de.tum.in.www1.artemis.config.ApplicationConfiguration;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceRoleInCourse;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceRoleInExercise;
@@ -93,6 +96,31 @@ class ArchitectureTest extends AbstractArchitectureTest {
         noPublicTests.check(testClasses);
         classNames.check(testClasses);
         noPublicTestClasses.check(testClasses.that(are(not(simpleNameContaining("Abstract")))));
+    }
+
+    @Test
+    void testNoWrongServiceImports() {
+        ArchRule rule = noClasses().should().dependOnClassesThat().resideInAnyPackage("org.jvnet.hk2.annotations")
+                .because("this is the wrong service class, use org.springframework.stereotype.Service.");
+        rule.check(allClasses);
+    }
+
+    @Test
+    void testCorrectServiceAnnotation() {
+
+        classes().that().resideInAPackage("de.tum.in.www1.artemis.service..").and().haveSimpleNameEndingWith("Service").and().areNotInterfaces().and().doNotHaveModifier(ABSTRACT)
+                .should().beAnnotatedWith(org.springframework.stereotype.Service.class)
+                .because("services should be consistently managed by Spring's dependency injection container.").check(allClasses);
+
+        classes().that().haveSimpleNameEndingWith("Service").should().notBeAnnotatedWith(Component.class).check(allClasses);
+        classes().that().haveSimpleNameEndingWith("Service").should().notBeAnnotatedWith(RestController.class).check(allClasses);
+        classes().that().haveSimpleNameEndingWith("Service").should().notHaveModifier(FINAL).check(allClasses);
+
+        classes().that().areAnnotatedWith(Service.class).should().haveSimpleNameEndingWith("Service").check(allClasses);
+        classes().that().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(Component.class).check(allClasses);
+        classes().that().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(RestController.class).check(allClasses);
+        classes().that().areAnnotatedWith(Service.class).should().notHaveModifier(FINAL).check(allClasses);
+
     }
 
     @Test
@@ -121,6 +149,14 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testOnlySpringTransactionalAnnotation() {
+        ArchRule onlySpringTransactionalAnnotation = noMethods().should().beAnnotatedWith(javax.transaction.Transactional.class).orShould()
+                .beAnnotatedWith(jakarta.transaction.Transactional.class)
+                .because("Only Spring's Transactional annotation should be used as the usage of the other two is not reliable.");
+        onlySpringTransactionalAnnotation.check(allClasses);
+    }
+
+    @Test
     void testNoCollectorsToList() {
         ArchRule toListUsage = noClasses().should().callMethod(Collectors.class, "toList")
                 .because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
@@ -129,11 +165,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNullnessAnnotations() {
-        var notNullPredicate = and(not(resideInPackageAnnotation("javax.validation.constraints")), simpleNameAnnotation("NotNull"));
+        var notNullPredicate = and(not(resideInPackageAnnotation("jakarta.validation.constraints")), simpleNameAnnotation("NotNull"));
         var nonNullPredicate = simpleNameAnnotation("NonNull");
-        var nullablePredicate = and(not(resideInPackageAnnotation("javax.annotation")), simpleNameAnnotation("Nullable"));
+        var nonnullPredicate = simpleNameAnnotation("Nonnull");
+        var nullablePredicate = and(not(resideInPackageAnnotation("jakarta.annotation")), simpleNameAnnotation("Nullable"));
 
-        Set<DescribedPredicate<? super JavaAnnotation<?>>> allPredicates = Set.of(notNullPredicate, nonNullPredicate, nullablePredicate);
+        Set<DescribedPredicate<? super JavaAnnotation<?>>> allPredicates = Set.of(notNullPredicate, nonNullPredicate, nonnullPredicate, nullablePredicate);
 
         for (var predicate : allPredicates) {
             ArchRule units = noCodeUnits().should().beAnnotatedWith(predicate);
@@ -221,7 +258,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         var exceptions = or(declaredClassSimpleName("QuizCache"), declaredClassSimpleName("CacheHandler"));
         var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
                 .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
-        notUseHazelcastInConstructor.check(allClasses);
+        notUseHazelcastInConstructor.check(allClassesWithHazelcast);
     }
 
     @Test
@@ -428,7 +465,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
                 for (var word : queryWords) {
                     if (SQL_KEYWORDS.contains(word.toUpperCase()) && !StringUtils.isAllUpperCase(word)) {
-                        events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), word)));
+                        events.add(violated(item, "In the Query of %s the keyword \"%s\" should be written in upper case.".formatted(item.getFullName(), word)));
                     }
                 }
             }
