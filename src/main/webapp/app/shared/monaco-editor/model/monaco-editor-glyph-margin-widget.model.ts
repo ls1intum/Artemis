@@ -4,6 +4,12 @@ export class MonacoEditorGlyphMarginWidget extends MonacoCodeEditorElement imple
     private readonly domNode: HTMLElement;
     private readonly lineNumber: number;
 
+    constructor(editor: monaco.editor.ICodeEditor, id: string, domNode: HTMLElement, lineNumber: number) {
+        super(editor, id);
+        this.domNode = domNode;
+        this.lineNumber = lineNumber;
+    }
+
     getDomNode(): HTMLElement {
         return this.domNode;
     }
@@ -13,12 +19,6 @@ export class MonacoEditorGlyphMarginWidget extends MonacoCodeEditorElement imple
             zIndex: 10,
             range: new monaco.Range(this.lineNumber, 0, this.lineNumber, 0),
         };
-    }
-
-    constructor(editor: monaco.editor.ICodeEditor, id: string, domNode: HTMLElement, lineNumber: number) {
-        super(editor, id);
-        this.domNode = domNode;
-        this.lineNumber = lineNumber;
     }
 
     getLineNumber(): number {
