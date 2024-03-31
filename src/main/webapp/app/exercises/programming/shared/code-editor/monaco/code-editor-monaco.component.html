@@ -2,7 +2,7 @@
     <jhi-code-editor-header [showTabSizeSelector]="false" [filename]="selectedFile!" [isLoading]="isLoading" />
     <div class="card-body card-body-monaco">
         @if (selectedFile) {
-            @for (feedback of filterFeedbackForFile(feedbacks); track feedback) {
+            @for (feedback of filterFeedbackForSelectedFile(feedbacks); track feedback) {
                 <jhi-code-editor-tutor-assessment-inline-feedback
                     class="monaco-hidden-element"
                     [selectedFile]="selectedFile"

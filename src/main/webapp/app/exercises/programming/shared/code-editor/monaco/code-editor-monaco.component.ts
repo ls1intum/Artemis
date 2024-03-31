@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -56,7 +56,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
         private repositoryFileService: CodeEditorRepositoryFileService,
         private fileService: CodeEditorFileService,
         protected localStorageService: LocalStorageService,
-        private changeDetectorRef: ChangeDetectorRef,
     ) {}
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
@@ -90,7 +89,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     protected renderFeedbackWidgets() {
-        for (const feedback of this.filterFeedbackForFile([...this.feedbacks])) {
+        for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbacks])) {
             this.addLineWidgetWithFeedback(feedback);
         }
     }
@@ -104,19 +103,31 @@ export class CodeEditorMonacoComponent implements OnChanges {
         if (!line) {
             throw new Error('No line found for feedback ' + feedback.id);
         }
-        // TODO: Maybe there can be more than one feedback item per line.
+        // In the future, there may be more than one feedback node per line.
         const feedbackNode = this.getInlineFeedbackNode(line);
-        // TODO: The lines don't align with monaco (off by 1)
+        // The lines are 0-based for Ace, but 1-based for Monaco -> increase by 1 to ensure it works in both editors.
         this.editor.addLineWidget(line + 1, 'feedback-' + feedback.id, feedbackNode);
     }
 
-    filterFeedbackForFile(feedbacks: Feedback[]): Feedback[] {
+    /**
+     * Returns the feedbacks that refer to the currently selected file, or an empty array if no file is selected.
+     * @param feedbacks The feedbacks to filter.
+     */
+    filterFeedbackForSelectedFile(feedbacks: Feedback[]): Feedback[] {
         if (!this.selectedFile) {
             return [];
         }
         return feedbacks.filter((feedback) => feedback.reference && Feedback.getReferenceFilePath(feedback) === this.selectedFile);
     }
 
+    /**
+     * Updates the state of the fileSession based on a change made to the files themselves (not the content).
+     * - If a file was renamed, references to it are updated to use its new name.
+     * - If a file was deleted, references to it are removed.
+     * - If a file was created, a new reference is created.
+     * Afterwards, the build annotations are updated to reflect this new change.
+     * @param fileChange The change made: renaming, deleting, or creating a file.
+     */
     async onFileChange(fileChange: FileChange) {
         if (fileChange instanceof RenameFileChange) {
             this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
@@ -142,7 +153,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * Saves the updated annotations to local storage
      * @param savedFiles
      */
-    storeAnnotations(savedFiles: Array<string>) {
+    storeAnnotations(savedFiles: string[]) {
         const toUpdate = fromPairs(this.annotationsArray.filter((a) => savedFiles.includes(a.fileName)).map((a) => [a.hash, a]));
         const toKeep = pickBy(this.loadAnnotations(), (a) => !savedFiles.includes(a.fileName));
 
@@ -162,7 +173,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         return JSON.parse(this.localStorageService.retrieve('annotations-' + this.sessionId) || '{}');
     }
 
-    setBuildAnnotations(buildAnnotations: Array<Annotation>): void {
+    setBuildAnnotations(buildAnnotations: Annotation[]): void {
         if (buildAnnotations.length > 0 && this.selectedFile) {
             const sessionAnnotations = this.loadAnnotations();
             this.annotationsArray = buildAnnotations.map((a) => {
@@ -182,5 +193,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
         );
     }
 
+    // Expose to template
     protected readonly Feedback = Feedback;
 }
