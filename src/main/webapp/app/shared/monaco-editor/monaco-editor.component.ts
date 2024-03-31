@@ -47,7 +47,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this._editor = monaco.editor.create(this.monacoEditorContainer.nativeElement, {
             value: '',
-            theme: 'vs-dark',
             glyphMargin: true,
             minimap: { enabled: false },
             readOnly: this._readOnly,
