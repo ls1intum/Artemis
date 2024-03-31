@@ -13,9 +13,9 @@ import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TestCaseDTO(String name, String classname, double time, @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> failures,
-        @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> errors, @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> successInfos)
-        implements TestCaseDTOInterface {
+public record TestCaseDTO(String name, String classname, double time, @JsonProperty("failures") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> failures,
+        @JsonProperty("errors") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> errors,
+        @JsonProperty("successInfos") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> successInfos) implements TestCaseDTOInterface {
 
     @JsonIgnore
     public boolean isSuccessful() {
@@ -28,7 +28,7 @@ public record TestCaseDTO(String name, String classname, double time, @JsonSette
     }
 
     @Override
-    public List<String> getMessage() {
+    public List<String> getTestMessages() {
         return extractMessage().map(Collections::singletonList).orElse(Collections.emptyList());
     }
 

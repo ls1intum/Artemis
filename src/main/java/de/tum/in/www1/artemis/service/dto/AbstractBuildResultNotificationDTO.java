@@ -69,7 +69,6 @@ public abstract class AbstractBuildResultNotificationDTO {
      *
      * @return list of static code analysis reports.
      */
-    @JsonIgnore
     public abstract List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports();
 
     /**
@@ -77,6 +76,5 @@ public abstract class AbstractBuildResultNotificationDTO {
      *
      * @return list of test-wise coverage reports.
      */
-    @JsonIgnore
     public abstract List<TestwiseCoverageReportDTO> getTestwiseCoverageReports();
 }

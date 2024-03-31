@@ -186,7 +186,8 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record BambooTestJobDTO(String name, String methodName, String className, @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> errors) implements TestCaseDTOInterface {
+    public record BambooTestJobDTO(String name, String methodName, String className, @JsonProperty("errors") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> errors)
+            implements TestCaseDTOInterface {
 
         @Override
         public String getName() {
@@ -194,7 +195,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
         }
 
         @Override
-        public List<String> getMessage() {
+        public List<String> getTestMessages() {
             return errors;
         }
     }

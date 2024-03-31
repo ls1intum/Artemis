@@ -168,7 +168,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO imple
         }
 
         @Override
-        public List<String> getMessage() {
+        public List<String> getTestMessages() {
             return errors;
         }
     }

@@ -9,8 +9,8 @@ import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TestSuiteDTO(String name, double time, int errors, int skipped, int failures, int tests, @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDTO> testCases)
-        implements BuildJobDTOInterface {
+public record TestSuiteDTO(String name, double time, int errors, int skipped, int failures, int tests,
+        @JsonProperty("testCases") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDTO> testCases) implements BuildJobDTOInterface {
 
     @Override
     @JsonIgnore
