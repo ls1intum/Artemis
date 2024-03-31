@@ -103,29 +103,45 @@ public class LiquibaseConfiguration {
     }
 
     /**
-     * stores the current version in the database
+     * Stores the current version of the application in the database. This method is triggered
+     * after the application is fully started, as indicated by the {@link ApplicationReadyEvent}.
+     * It checks if the application is running under the test profile to avoid updating the version
+     * in test environments. If not in a test environment, it either inserts the current version into
+     * the database if it's the first run, or updates the existing version entry otherwise.
+     * <p>
+     * This operation ensures that the application's version is tracked in the database, allowing
+     * for future reference and potential migration checks.
      *
-     * @param event used to retrieve the application context and the used profiles
+     * @param event The {@link ApplicationReadyEvent} containing the application context, used to retrieve
+     *                  the environment and determine if the application is running with specific profiles.
      */
-    @EventListener()
+    @EventListener
     public void storeCurrentVersionToDatabase(ApplicationReadyEvent event) {
         if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
-            return;
+            return; // Do not perform any operations if the application is running in the test profile.
         }
-        try (var statement = createStatement()) {
+
+        String sqlStatement = this.databaseMigration.getPreviousVersionString() == null ? "INSERT INTO artemis_version (latest_version) VALUES(?);"
+                : "UPDATE artemis_version SET latest_version = ?;";
+
+        try (var connection = dataSource.getConnection(); var preparedStatement = connection.prepareStatement(sqlStatement)) {
+            preparedStatement.setString(1, currentVersionString);
+
+            // Logging the action based on whether it's an insert or an update.
             if (this.databaseMigration.getPreviousVersionString() == null) {
-                log.info("Insert latest version {} into database", currentVersionString);
-                statement.executeUpdate("INSERT INTO artemis_version (latest_version) VALUES('" + currentVersionString + "');");
+                log.info("Inserting latest version {} into database", currentVersionString);
             }
             else {
-                log.info("Update latest version to {} in database", currentVersionString);
-                statement.executeUpdate("UPDATE artemis_version SET latest_version = '" + currentVersionString + "';");
+                log.info("Updating latest version to {} in database", currentVersionString);
             }
-            statement.getConnection().commit();
-            statement.closeOnCompletion();
+
+            preparedStatement.executeUpdate();
+            connection.commit(); // Ensure the transaction is committed.
         }
         catch (SQLException e) {
-            throw new RuntimeException(e);
+            log.error("Failed to store the current version to the database", e);
+            throw new RuntimeException("Error updating the application version in the database", e);
         }
     }
+
 }
