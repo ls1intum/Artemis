@@ -114,7 +114,7 @@ describe('MonacoEditorComponent', () => {
 
     it('should display build annotations', () => {
         const annotation = buildAnnotationArray[0];
-        const buildAnnotationId = `monaco-editor-annotation-${annotation.fileName}:${annotation.row + 1}:${annotation.text}`;
+        const buildAnnotationId = `monaco-editor-glyph-margin-widget-${annotation.fileName}:${annotation.row + 1}:${annotation.text}`;
         fixture.detectChanges();
         comp.setAnnotations(buildAnnotationArray, false);
         comp.setText(multiLineText);
@@ -122,20 +122,19 @@ describe('MonacoEditorComponent', () => {
         expect(comp.editorBuildAnnotations).toHaveLength(1);
         expect(element).not.toBeNull();
         expect(element).toEqual(comp.editorBuildAnnotations[0].getGlyphMarginDomNode());
-        expect(element!.style.visibility).toBe('visible');
     });
 
-    it('should hide build annotations that are out of bounds', () => {
+    it('should not display build annotations that are out of bounds', () => {
         const annotation = buildAnnotationArray[0];
-        const buildAnnotationId = `monaco-editor-annotation-${annotation.fileName}:${annotation.row + 1}:${annotation.text}`;
+        const buildAnnotationId = `monaco-editor-glyph-margin-widget-${annotation.fileName}:${annotation.row + 1}:${annotation.text}`;
         fixture.detectChanges();
         comp.setAnnotations(buildAnnotationArray, false);
         comp.setText(singleLineText);
         const element = document.getElementById(buildAnnotationId);
         expect(comp.editorBuildAnnotations).toHaveLength(1);
-        expect(element).not.toBeNull();
-        expect(element).toEqual(comp.editorBuildAnnotations[0].getGlyphMarginDomNode());
-        expect(element!.style.visibility).toBe('hidden');
+        // Ensure that the element is actually there, but not displayed in the DOM.
+        expect(element).toBeNull();
+        expect(comp.editorBuildAnnotations[0].getGlyphMarginDomNode().id).toBe(buildAnnotationId);
     });
 
     it('should mark build annotations as outdated if specified', () => {

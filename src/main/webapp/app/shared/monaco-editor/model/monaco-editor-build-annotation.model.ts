@@ -22,9 +22,10 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
         this.hoverMessage = hoverMessage;
         this.type = type;
         this.outdated = outdated;
-        const marginGlyphDomNode = document.createElement('div');
-        marginGlyphDomNode.className = `codicon codicon-${this.type}`;
-        this.glyphMarginWidget = new MonacoEditorGlyphMarginWidget(editor, id, marginGlyphDomNode, lineNumber);
+        const glyphMarginDomNode = document.createElement('div');
+        glyphMarginDomNode.id = `monaco-editor-glyph-margin-widget-${id}`;
+        glyphMarginDomNode.className = `codicon codicon-${this.type}`;
+        this.glyphMarginWidget = new MonacoEditorGlyphMarginWidget(editor, id, glyphMarginDomNode, lineNumber);
         this.setupListeners();
     }
 
