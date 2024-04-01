@@ -216,9 +216,9 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
     private void unlockRepository(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
         if (programmingExercise.getDueDate() == null || now().isBefore(programmingExercise.getDueDate())) {
             programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
+            participation.setIndividualDueDate(null);
+            this.programmingExerciseStudentParticipationRepository.save(participation);
         }
-        participation.setIndividualDueDate(null);
-        this.programmingExerciseStudentParticipationRepository.save(participation);
     }
 
     private void checkRateLimitOrThrow(ProgrammingExerciseStudentParticipation participation) {
