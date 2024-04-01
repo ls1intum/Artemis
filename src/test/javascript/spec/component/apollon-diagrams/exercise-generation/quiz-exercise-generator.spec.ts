@@ -95,8 +95,8 @@ describe('QuizExercise Generator', () => {
 
         const dropLocation = computeDropLocation(elementLocation, totalSize);
 
-        expect(dropLocation.posX).toBe(12.5);
-        expect(dropLocation.posY).toBe(10);
+        expect(dropLocation.posX).toBe(5);
+        expect(dropLocation.posY).toBe(4);
         expect(dropLocation.width).toBe(200);
         expect(dropLocation.height).toBe(200);
     });
@@ -107,8 +107,8 @@ describe('QuizExercise Generator', () => {
 
         const dropLocation = computeDropLocation(elementLocation, totalSize);
 
-        expect(dropLocation.posX).toBe(12.5);
-        expect(dropLocation.posY).toBe(14);
+        expect(dropLocation.posX).toBe(5);
+        expect(dropLocation.posY).toBe(8);
         expect(dropLocation.width).toBe(200);
         expect(dropLocation.height).toBe(200);
     });
@@ -119,8 +119,8 @@ describe('QuizExercise Generator', () => {
 
         const dropLocation = computeDropLocation(elementLocation, totalSize);
 
-        expect(dropLocation.posX).toBe(-2.5);
-        expect(dropLocation.posY).toBe(-2);
+        expect(dropLocation.posX).toBe(-10);
+        expect(dropLocation.posY).toBe(-8);
         expect(dropLocation.width).toBe(200);
         expect(dropLocation.height).toBe(200);
     });
@@ -148,8 +148,8 @@ describe('QuizExercise Generator', () => {
 
         expect(fileMap.get(expectedFileName)).toBeDefined();
         expect(dragAndDropMapping.dragItem?.pictureFilePath).toEqual(expectedFileName);
-        expect(dragAndDropMapping.dropLocation?.posX).toBe(300);
-        expect(dragAndDropMapping.dropLocation?.posY).toBe(215);
+        expect(dragAndDropMapping.dropLocation?.posX).toBe(292.5);
+        expect(dragAndDropMapping.dropLocation?.posY).toBe(207.5);
         expect(dragAndDropMapping.dropLocation?.width).toBe(114.5);
         expect(dragAndDropMapping.dropLocation?.height).toBe(30);
 
