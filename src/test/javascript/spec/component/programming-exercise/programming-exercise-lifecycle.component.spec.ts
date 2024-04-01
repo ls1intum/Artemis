@@ -132,7 +132,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.exercise = { ...exercise, allowFeedbackRequests: false };
         expect(comp.exercise.allowFeedbackRequests).toBeFalse();
 
-        comp.toggleManualFeedbackRequests();
+        comp.toggleFeedbackRequests();
 
         expect(comp.exercise.allowFeedbackRequests).toBeTrue();
     });

@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -134,7 +136,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
             var athenaResponse = this.athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false);
 
-            var feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
+            List<Feedback> feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
                     .filter(individualFeedbackItem -> individualFeedbackItem.description() != null).map(individualFeedbackItem -> {
                         var feedback = new Feedback();
                         String feedbackText;
@@ -175,9 +177,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
         }
         finally {
-            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
-            participation.setIndividualDueDate(null);
-            this.programmingExerciseStudentParticipationRepository.save(participation);
+            unlockRepository(participation, programmingExercise);
         }
     }
 
@@ -190,10 +190,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      */
     private ProgrammingExerciseStudentParticipation setIndividualDueDateAndLockRepository(ProgrammingExerciseStudentParticipation participation,
             ProgrammingExercise programmingExercise, boolean invalidatePreviousResults) {
-        var currentDate = now();
-
         // The participations due date is a flag showing that a feedback request is sent
-        participation.setIndividualDueDate(currentDate);
+        participation.setIndividualDueDate(now());
 
         participation = programmingExerciseStudentParticipationRepository.save(participation);
         // Circumvent lazy loading after save
@@ -209,13 +207,27 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         return participation;
     }
 
+    /**
+     * Removes the individual due date for a participation. If the due date for an exercise is empty or is in the future, unlocks the repository,
+     *
+     * @param participation       the programming exercise student participation.
+     * @param programmingExercise the associated programming exercise.
+     */
+    private void unlockRepository(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
+        if (programmingExercise.getDueDate() == null || now().isBefore(programmingExercise.getDueDate())) {
+            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
+        }
+        participation.setIndividualDueDate(null);
+        this.programmingExerciseStudentParticipationRepository.save(participation);
+    }
+
     private void checkRateLimitOrThrow(ProgrammingExerciseStudentParticipation participation) {
 
-        var athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+        List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
 
-        var countOfAthenaResultsInProcessOrSuccessful = athenaResults.stream().filter(result -> result.isSuccessful() == null || result.isSuccessful() == Boolean.TRUE).count();
+        long countOfAthenaResultsInProcessOrSuccessful = athenaResults.stream().filter(result -> result.isSuccessful() == null || result.isSuccessful() == Boolean.TRUE).count();
 
-        var countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();
+        long countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();
 
         if (countOfAthenaResultsInProcessOrSuccessful >= 3) {
             throw new BadRequestAlertException("Cannot send additional AI feedback requests now. Try again later!", "participation", "preconditions not met");

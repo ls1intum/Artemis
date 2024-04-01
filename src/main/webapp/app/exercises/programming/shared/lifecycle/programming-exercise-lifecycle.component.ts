@@ -100,7 +100,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         }
     }
 
-    toggleManualFeedbackRequests() {
+    toggleFeedbackRequests() {
         this.exercise.allowFeedbackRequests = !this.exercise.allowFeedbackRequests;
         if (this.exercise.allowFeedbackRequests) {
             this.exercise.assessmentDueDate = undefined;

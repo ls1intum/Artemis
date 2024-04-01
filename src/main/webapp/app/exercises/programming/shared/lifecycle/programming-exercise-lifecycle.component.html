@@ -148,7 +148,7 @@
                         [checked]="exercise.allowFeedbackRequests"
                         [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC"
                         id="allowFeedbackRequests"
-                        (change)="toggleManualFeedbackRequests()"
+                        (change)="toggleFeedbackRequests()"
                     />
                     <label
                         [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
@@ -167,7 +167,7 @@
                         [checked]="exercise.allowFeedbackRequests"
                         [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC"
                         id="allowFeedbackRequests"
-                        (change)="toggleManualFeedbackRequests()"
+                        (change)="toggleFeedbackRequests()"
                     />
                     <label
                         [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
