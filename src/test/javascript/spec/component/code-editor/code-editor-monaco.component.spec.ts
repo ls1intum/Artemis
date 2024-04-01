@@ -78,8 +78,9 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should hide the editor if no file is selected', () => {
+        comp.sessionId = 'test';
         fixture.detectChanges();
-        const element = document.getElementById('monaco-editor');
+        const element = document.getElementById('monaco-editor-test');
         expect(element).not.toBeNull();
         expect(element!.hidden).toBeTrue();
     });
@@ -93,21 +94,23 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should hide the editor if a file is being loaded', () => {
+        comp.sessionId = 'test';
         comp.selectedFile = 'file';
         fixture.detectChanges();
         comp.isLoading = true;
         fixture.detectChanges();
-        const element = document.getElementById('monaco-editor');
+        const element = document.getElementById('monaco-editor-test');
         expect(element).not.toBeNull();
         expect(element!.hidden).toBeTrue();
     });
 
     it('should display the usable editor when a file is selected', () => {
+        comp.sessionId = 'test';
         comp.selectedFile = 'file';
         comp.isLoading = false;
         comp.isTutorAssessment = false;
         fixture.detectChanges();
-        const element = document.getElementById('monaco-editor');
+        const element = document.getElementById('monaco-editor-test');
         expect(element).not.toBeNull();
         expect(element!.hidden).toBeFalse();
         expect(comp.editor.isReadOnly()).toBeFalse();
