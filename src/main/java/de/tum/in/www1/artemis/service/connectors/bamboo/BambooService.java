@@ -8,8 +8,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -37,9 +38,7 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
-import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.*;
@@ -71,10 +70,12 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
+    private final TeamRepository teamRepository;
+
     public BambooService(ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService,
             BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository, @Qualifier("bambooRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper, UriService uriService, BuildLogEntryService buildLogService,
-            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TeamRepository teamRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
@@ -82,6 +83,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         this.uriService = uriService;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+        this.teamRepository = teamRepository;
     }
 
     @Override
@@ -116,6 +118,9 @@ public class BambooService extends AbstractContinuousIntegrationService {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && programmingExercise.isCourseExercise()) {
             Participant participant = ((StudentParticipation) participation).getParticipant();
+            if (participant instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                participant = teamRepository.findWithStudentsByIdElseThrow(team.getId());
+            }
             grantBuildPlanPermissions(buildPlanId, projectKey, participant, List.of(CIPermission.READ));
         }
     }

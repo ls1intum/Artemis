@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

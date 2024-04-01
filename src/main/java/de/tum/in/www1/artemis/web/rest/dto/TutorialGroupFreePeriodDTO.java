@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.time.LocalDateTime;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

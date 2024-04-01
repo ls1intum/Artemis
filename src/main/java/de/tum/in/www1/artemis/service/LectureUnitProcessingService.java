@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;

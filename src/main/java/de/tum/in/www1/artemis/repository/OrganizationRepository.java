@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -26,22 +26,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Profile(PROFILE_CORE)
 @Repository
 public interface OrganizationRepository extends JpaRepository<Organization, Long> {
-
-    @Query("""
-            SELECT organization
-            FROM Organization organization
-                LEFT JOIN FETCH organization.courses
-            WHERE organization.id = :organizationId
-            """)
-    Optional<Organization> findByIdWithEagerCourses(@Param("organizationId") long organizationId);
-
-    @Query("""
-            SELECT organization
-            FROM Organization organization
-                LEFT JOIN FETCH organization.users
-            WHERE organization.id = :organizationId
-            """)
-    Optional<Organization> findByIdWithEagerUsers(@Param("organizationId") long organizationId);
 
     @Query("""
             SELECT organization

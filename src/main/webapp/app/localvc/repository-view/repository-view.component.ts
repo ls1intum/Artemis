@@ -73,6 +73,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
+        this.routeCommitHistory = this.router.url + '/commit-history';
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
@@ -133,7 +134,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
      * @param participationId the id of the participation to load
      */
     private loadStudentParticipation(participationId: number) {
-        this.routeCommitHistory = this.router.url + '/commit-history';
         this.participationWithLatestResultSub = this.getParticipationWithLatestResult(participationId)
             .pipe(
                 tap((participationWithResults) => {

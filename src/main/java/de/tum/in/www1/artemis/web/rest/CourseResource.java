@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1165,7 +1165,7 @@ public class CourseResource {
             if (userToAddToGroup.isEmpty()) {
                 throw new EntityNotFoundException("User", userLogin);
             }
-            courseService.addUserToGroup(userToAddToGroup.get(), group, role);
+            courseService.addUserToGroup(userToAddToGroup.get(), group);
             if (role == Role.STUDENT && course.getLearningPathsEnabled()) {
                 Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesByIdElseThrow(course.getId());
                 learningPathService.generateLearningPathForUser(courseWithCompetencies, userToAddToGroup.get());

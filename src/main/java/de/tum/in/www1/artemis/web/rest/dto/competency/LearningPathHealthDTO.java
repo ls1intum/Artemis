@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest.dto.competency;
 
 import java.util.Set;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

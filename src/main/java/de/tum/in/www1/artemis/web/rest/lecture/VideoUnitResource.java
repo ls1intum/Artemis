@@ -7,7 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
