@@ -135,7 +135,17 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         // TODO search for other java installations
         Path allJavaInstallations = Path.of(javaHomeEnv).getParent().getParent();
         try (var stream = Files.find(allJavaInstallations, 3, (path, basicFileAttributes) -> path.toString().contains("17") && Files.isDirectory(path))) {
-            java17Home = stream.findFirst().orElseThrow().toFile();
+            Path folder = stream.findFirst().orElseThrow();
+            // This is a valid jdk if it contains /bin/java.
+            if (Files.exists(folder.resolve("bin/java"))) {
+                java17Home = folder.toFile();
+            }
+            else {
+                try (var subStream = Files.find(folder, 3, (path, basicFileAttributes) -> path.endsWith("bin/java") && Files.isDirectory(path))) {
+                    java17Home = subStream.findFirst().orElseThrow().toFile();
+                }
+            }
+
             log.debug("Set java 17 home to {}", java17Home);
         }
 
