@@ -295,17 +295,18 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             window.alert(testsNotPassedWarning);
             return false;
         }
-        const requestAlreadySent = (this.gradedParticipation?.individualDueDate && this.gradedParticipation.individualDueDate.isBefore(Date.now())) ?? false;
-        const requestAlreadySentWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAlreadySent');
-        if (requestAlreadySent) {
-            window.alert(requestAlreadySentWarning);
-            return false;
-        }
 
         const afterDueDate = !this.exercise.dueDate || dayjs().isSameOrAfter(this.exercise.dueDate);
         const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
         if (afterDueDate) {
             window.alert(dueDateWarning);
+            return false;
+        }
+
+        const requestAlreadySent = (this.gradedParticipation?.individualDueDate && this.gradedParticipation.individualDueDate.isBefore(Date.now())) ?? false;
+        const requestAlreadySentWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAlreadySent');
+        if (requestAlreadySent) {
+            window.alert(requestAlreadySentWarning);
             return false;
         }
 
