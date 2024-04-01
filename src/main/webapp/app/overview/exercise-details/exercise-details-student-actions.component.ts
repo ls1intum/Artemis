@@ -289,9 +289,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     assureConditionsSatisfied(): boolean {
         this.updateParticipations();
         const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
-        const allHiddenTestsPassed = latestResult?.score !== undefined;
+        const someHiddenTestsPassed = latestResult?.score !== undefined;
         const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.notEnoughPoints');
-        if (!allHiddenTestsPassed) {
+        if (!someHiddenTestsPassed) {
             window.alert(testsNotPassedWarning);
             return false;
         }
