@@ -157,7 +157,7 @@ export class AthenaService {
     }
 
     /**
-     * Get feedback suggestions for the given programming submission from Athena.
+     * Get feedback suggestions for the given modeling submission from Athena.
      *
      * @param exercise The exercise for which a submission is assessed
      * @param submission The assessed submission
