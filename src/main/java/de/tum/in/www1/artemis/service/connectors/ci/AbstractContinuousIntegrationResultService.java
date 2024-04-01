@@ -51,6 +51,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResult.isBuildSuccessful());
         result.setCompletionDate(buildResult.getBuildRunDate());
+        // this only sets the score to a temporary value, the real score is calculated in the grading service
         result.setScore(buildResult.getBuildScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
         result.setParticipation((Participation) participation);
 
@@ -82,13 +83,14 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
         var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
         for (final var job : jobs) {
             for (final var failedTest : job.getFailedTests()) {
-                result.addFeedback(feedbackCreationService.createFeedbackFromTestCase(failedTest.getName(), failedTest.getMessage(), false, programmingExercise, activeTestCases));
+                result.addFeedback(
+                        feedbackCreationService.createFeedbackFromTestCase(failedTest.getName(), failedTest.getTestMessages(), false, programmingExercise, activeTestCases));
             }
             result.setTestCaseCount(result.getTestCaseCount() + job.getFailedTests().size());
 
             for (final var successfulTest : job.getSuccessfulTests()) {
                 result.addFeedback(
-                        feedbackCreationService.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getMessage(), true, programmingExercise, activeTestCases));
+                        feedbackCreationService.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getTestMessages(), true, programmingExercise, activeTestCases));
             }
 
             result.setTestCaseCount(result.getTestCaseCount() + job.getSuccessfulTests().size());

@@ -248,17 +248,17 @@ You can find additional information on dependent sub-queries and how to identify
         SELECT DISTINCT user FROM jhi_user user
         CROSS JOIN course course
         LEFT OUTER JOIN user_groups groups ON user.id = groups.user_id
-        AND (course.student_group_name IN ( groups.`groups` )
-            OR course.teaching_assistant_group_name IN ( groups.`groups` )
-            OR course.editor_group_name IN ( groups.`groups` )
-            OR course.instructor_group_name IN ( groups.`groups` )
+        AND (course.student_group_name IN ( groups.user_groups )
+            OR course.teaching_assistant_group_name IN ( groups.user_groups )
+            OR course.editor_group_name IN ( groups.user_groups )
+            OR course.instructor_group_name IN ( groups.user_groups )
         WHERE (user.login LIKE ?
             OR user.email LIKE ?
             OR user.first_name LIKE ?
             OR user.last_name LIKE ?)
         AND ( course.id IN ( ? ) )
         GROUP BY user.id
-        HAVING Count(groups.`groups`) = ?
+        HAVING Count(groups.user_groups) = ?
         ORDER BY user.id ASC
         LIMIT ?
 
