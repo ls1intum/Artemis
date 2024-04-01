@@ -15,7 +15,9 @@ import { TriggeredByPushTo } from 'app/entities/repository-info.model';
 })
 export class BuildAgentsComponent implements OnInit, OnDestroy {
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
-    buildAgents: BuildAgent[];
+    buildAgents: BuildAgent[] = [];
+    buildCapacity = 0;
+    currentBuilds = 0;
     channel: string = '/topic/admin/build-agents';
     websocketSubscription: Subscription;
     restSubscription: Subscription;
@@ -52,9 +54,15 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
     initWebsocketSubscription() {
         this.websocketService.subscribe(this.channel);
         this.websocketSubscription = this.websocketService.receive(this.channel).subscribe((buildAgents) => {
-            this.buildAgents = buildAgents;
-            this.setRecentBuildJobsDuration(buildAgents);
+            this.updateBuildAgents(buildAgents);
         });
+    }
+
+    private updateBuildAgents(buildAgents: BuildAgent[]) {
+        this.buildAgents = buildAgents;
+        this.setRecentBuildJobsDuration(buildAgents);
+        this.buildCapacity = this.buildAgents.reduce((sum, agent) => sum + (agent.maxNumberOfConcurrentBuildJobs || 0), 0);
+        this.currentBuilds = this.buildAgents.reduce((sum, agent) => sum + (agent.numberOfCurrentBuildJobs || 0), 0);
     }
 
     /**
@@ -62,8 +70,7 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
      */
     load() {
         this.restSubscription = this.buildAgentsService.getBuildAgents().subscribe((buildAgents) => {
-            this.buildAgents = buildAgents;
-            this.setRecentBuildJobsDuration(buildAgents);
+            this.updateBuildAgents(buildAgents);
         });
     }
 

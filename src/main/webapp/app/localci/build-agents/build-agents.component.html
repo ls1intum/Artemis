@@ -1,5 +1,6 @@
 <div style="padding-bottom: 60px">
     <h3 id="build-agents-heading" jhiTranslate="artemisApp.buildAgents.title"></h3>
+    <p>{{ buildAgents.length }} online agent(s): {{ currentBuilds }} of {{ buildCapacity }} build jobs running</p>
     <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"></div>
     <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildAgent" [allEntities]="buildAgents!">
         <ng-template let-settings="settings" let-controls="controls">
@@ -41,7 +42,7 @@
                         }
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="maxNumberOfConcurrentBuildJobs" [minWidth]="150">
+                <ngx-datatable-column prop="maxNumberOfConcurrentBuildJobs" [minWidth]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('maxNumberOfConcurrentBuildJobs')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs"></span>
@@ -52,7 +53,7 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="numberOfCurrentBuildJobs" [minWidth]="150">
+                <ngx-datatable-column prop="numberOfCurrentBuildJobs" [minWidth]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('numberOfCurrentBuildJobs')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.numberOfCurrentBuildJobs"></span>
@@ -69,7 +70,7 @@
                         }
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="runningBuildJobs" [minWidth]="180">
+                <ngx-datatable-column prop="runningBuildJobs" [minWidth]="250">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('runningBuildJobs')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></span>
@@ -80,7 +81,7 @@
                         <div>
                             @for (job of value; track job.id) {
                                 <div style="display: flex; align-items: center">
-                                    <span style="width: 120px; margin-right: 10px; text-align: left">{{ job.id }}</span>
+                                    <span style="width: 200px; margin-right: 10px; text-align: left">{{ job.id }}</span>
                                     <button style="margin-bottom: 2px" class="btn btn-danger btn-sm" (click)="cancelBuildJob(job.id)">
                                         <fa-icon [icon]="faTimes" />
                                     </button>
