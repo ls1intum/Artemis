@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -23,28 +22,18 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount,
         Integer codeIssueCount) implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
-
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
             Visibility visibility, TestCaseDTO testCase) implements Serializable {
 
-        @Serial
-        private static final long serialVersionUID = 1L;
-
         public static FeedbackDTO of(Feedback feedback) {
             return new FeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
                     feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), TestCaseDTO.of(feedback.getTestCase()));
-
         }
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TestCaseDTO(String testName, Long id) implements Serializable {
-
-        @Serial
-        private static final long serialVersionUID = 1L;
 
         public static TestCaseDTO of(ProgrammingExerciseTestCase testCase) {
             if (testCase == null) {

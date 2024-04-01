@@ -4,9 +4,14 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LocalCIBuildJobQueueItem(String id, String name, String buildAgentAddress, long participationId, long courseId, long exerciseId, int retryCount, int priority,
         BuildStatus status, RepositoryInfo repositoryInfo, JobTimingInfo jobTimingInfo, BuildConfig buildConfig, ResultDTO submissionResult) implements Serializable {
 
