@@ -64,11 +64,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.disposeAnnotations();
-        this.disposeWidgets();
+        this.reset();
         this._editor.dispose();
         this.themeSubscription?.unsubscribe();
-        this.models.forEach((m) => m.dispose());
     }
 
     private emitTextChangeEvent() {
@@ -142,6 +140,17 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
         monaco.editor.setModelLanguage(model, model.getLanguageId());
         this._editor.setModel(model);
+    }
+
+    disposeModels() {
+        this._editor.setModel(null);
+        this.models.forEach((m) => m.dispose());
+        this.models = [];
+    }
+
+    reset(): void {
+        this.disposeEditorElements();
+        this.disposeModels();
     }
 
     disposeEditorElements(): void {

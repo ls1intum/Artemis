@@ -9,7 +9,15 @@ import { Annotation, FileSession } from 'app/exercises/programming/shared/code-e
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
-import { CommitState, CreateFileChange, DeleteFileChange, FileChange, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import {
+    CommitState,
+    CreateFileChange,
+    DeleteFileChange,
+    EditorState,
+    FileChange,
+    FileType,
+    RenameFileChange,
+} from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { fromPairs, pickBy } from 'lodash-es';
 
 @Component({
@@ -25,7 +33,9 @@ export class CodeEditorMonacoComponent implements OnChanges {
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
     inlineFeedbackComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackComponent>;
     @Input()
-    commitState: CommitState;
+    readonly commitState: CommitState;
+    @Input()
+    readonly editorState: EditorState;
     @Input()
     course?: Course;
     @Input()
@@ -57,14 +67,24 @@ export class CodeEditorMonacoComponent implements OnChanges {
     ) {}
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
-        if (changes.selectedFile && this.selectedFile) {
-            await this.selectFileInEditor(changes.selectedFile.currentValue);
+        const editorWasRefreshed = changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN;
+        // Refreshing the editor resets any local files.
+        if (editorWasRefreshed) {
+            this.fileSession = {};
+            this.editor.reset();
+        }
+        if ((changes.selectedFile && this.selectedFile) || editorWasRefreshed) {
+            await this.selectFileInEditor(this.selectedFile);
             this.setBuildAnnotations(this.annotationsArray);
             this.renderFeedbackWidgets();
         }
     }
 
-    async selectFileInEditor(fileName: string): Promise<void> {
+    async selectFileInEditor(fileName: string | undefined): Promise<void> {
+        if (!fileName) {
+            // There is nothing to be done, as the editor will be hidden when there is no file.
+            return;
+        }
         if (!this.fileSession[fileName]) {
             this.isLoading = true;
             const fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName)).then((fileObj) => fileObj.fileContent);
@@ -193,4 +213,5 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     // Expose to template
     protected readonly Feedback = Feedback;
+    protected readonly CommitState = CommitState;
 }
