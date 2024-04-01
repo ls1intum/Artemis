@@ -136,6 +136,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         Path allJavaInstallations = Path.of(javaHomeEnv).getParent().getParent();
         try (var stream = Files.find(allJavaInstallations, 3, (path, basicFileAttributes) -> path.toString().contains("17") && Files.isDirectory(path))) {
             java17Home = stream.findFirst().orElseThrow().toFile();
+            log.debug("Set java 17 home to {}", java17Home);
         }
 
     }
