@@ -25,6 +25,7 @@ import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.is;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.members;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noCodeUnits;
@@ -62,14 +63,17 @@ import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hazelcast.core.HazelcastInstance;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
+import com.tngtech.archunit.core.domain.JavaEnumConstant;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.domain.JavaParameter;
+import com.tngtech.archunit.core.domain.properties.HasAnnotations;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
@@ -400,6 +404,31 @@ class ArchitectureTest extends AbstractArchitectureTest {
         // Method <de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService.onTimeZoneUpdate(Course)>
         var result = transactionalRule.evaluate(allClasses);
         Assertions.assertThat(result.getFailureReport().getDetails()).hasSize(5);
+    }
+
+    @Test
+    void testJsonIncludeNonEmpty() {
+        members().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmpty()).check(allClasses);
+        classes().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmpty()).check(allClasses);
+    }
+
+    private <T extends HasAnnotations<T>> ArchCondition<T> useJsonIncludeNonEmpty() {
+        return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY)") {
+
+            @Override
+            public void check(T item, ConditionEvents events) {
+                var annotation = item.getAnnotations().stream().filter(rawType(JsonInclude.class)).findAny().orElseThrow();
+                var valueProperty = annotation.tryGetExplicitlyDeclaredProperty("value");
+                if (valueProperty.isEmpty()) {
+                    // @JsonInclude() is ok since it allows explicitly including properties
+                    return;
+                }
+                JavaEnumConstant value = (JavaEnumConstant) valueProperty.get();
+                if (!value.name().equals("NON_EMPTY")) {
+                    events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)"));
+                }
+            }
+        };
     }
 
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
