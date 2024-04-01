@@ -139,17 +139,17 @@
             </div>
         }
         @if (!isExamMode) {
-            @if (isAthenaEnabled$ | async) {
-                <div class="form-check">
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
-                        name="allowFeedbackRequests"
-                        [checked]="exercise.allowFeedbackRequests"
-                        [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC"
-                        id="allowFeedbackRequests"
-                        (change)="toggleFeedbackRequests()"
-                    />
+            <div class="form-check">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="allowFeedbackRequests"
+                    [checked]="exercise.allowFeedbackRequests"
+                    [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC"
+                    id="allowFeedbackRequests"
+                    (change)="toggleFeedbackRequests()"
+                />
+                @if (isAthenaEnabled$ | async) {
                     <label
                         [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
                         class="form-control-label"
@@ -157,18 +157,7 @@
                         jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests"
                     ></label>
                     <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.allowFeedbackRequestsTooltip'" />
-                </div>
-            } @else {
-                <div class="form-check">
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
-                        name="allowFeedbackRequests"
-                        [checked]="exercise.allowFeedbackRequests"
-                        [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC"
-                        id="allowFeedbackRequests"
-                        (change)="toggleFeedbackRequests()"
-                    />
+                } @else {
                     <label
                         [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
                         class="form-control-label"
@@ -176,8 +165,8 @@
                         jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"
                     ></label>
                     <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'" />
-                </div>
-            }
+                }
+            </div>
         }
         <div class="form-check">
             <input

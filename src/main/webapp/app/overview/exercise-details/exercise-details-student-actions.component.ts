@@ -286,6 +286,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
     }
 
+    /**
+     * Checks if the conditions for requesting automatic non-graded feedback are satisfied.
+     * The student can request automatic non-graded feedback under the following conditions:
+     * 1. They have a graded submission.
+     * 2. The deadline for the exercise has not been exceeded.
+     * 3. There is no already pending feedback request.
+     * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
+     */
     assureConditionsSatisfied(): boolean {
         this.updateParticipations();
         const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
