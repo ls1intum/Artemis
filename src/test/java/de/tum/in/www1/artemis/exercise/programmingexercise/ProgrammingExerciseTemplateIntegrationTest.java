@@ -94,22 +94,14 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
         try {
             String mvnExecutable = Os.isFamily(Os.FAMILY_WINDOWS) ? "mvn.cmd" : "mvn";
-            ProcessBuilder processBuilder = new ProcessBuilder(mvnExecutable, "-version");
-            Process mvn = processBuilder.start();
-            boolean finished = mvn.waitFor(120, TimeUnit.SECONDS);
-
-            if (!finished) {
-                throw new TimeoutException("Maven version command timed out.");
+            var lines = runProcess(mvnExecutable, "-version");
+            String prefix = "maven home:";
+            Optional<String> home = lines.stream().filter(line -> line.toLowerCase().startsWith(prefix)).findFirst();
+            if (home.isPresent()) {
+                System.setProperty("maven.home", home.get().substring(prefix.length()).strip());
             }
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(mvn.getInputStream()))) {
-                String prefix = "maven home:";
-                Optional<String> home = reader.lines().filter(line -> line.toLowerCase().startsWith(prefix)).findFirst();
-                if (home.isPresent()) {
-                    System.setProperty("maven.home", home.get().substring(prefix.length()).strip());
-                }
-                else {
-                    fail("maven home not found, unexpected '-version' format");
-                }
+            else {
+                fail("maven home not found, unexpected '-version' format");
             }
         }
         catch (Exception e) {
@@ -118,7 +110,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     }
 
     @BeforeAll
-    static void findJava17() throws IOException {
+    static void findJava17() throws Exception {
         String javaHomeEnv = System.getenv("JAVA_HOME");
         if (javaHomeEnv.contains("17")) {
             java17Home = new File(javaHomeEnv);
@@ -126,30 +118,65 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         }
         log.debug("Java home is {}", javaHomeEnv);
 
-        // search for other java installations
-        Path allJavaInstallations = Path.of(javaHomeEnv).getParent().getParent();
-        try (var stream = Files.find(allJavaInstallations, 3, (path, basicFileAttributes) -> path.toString().contains("17") && Files.isDirectory(path))) {
-            Path folder = stream.findFirst().orElseThrow();
-            // This is a valid jdk if it contains /bin/java.
-            if (Files.exists(folder.resolve("bin/java"))) {
-                java17Home = folder.toFile();
-            }
-            // Try x64 subfolder first
-            else if (Files.exists(folder.resolve("x64"))) {
-                java17Home = folder.resolve("x64").toFile();
-            }
-            else {
-                // Search for the /bin/java folder structure
-                try (var subStream = Files.find(folder, 3, (path, basicFileAttributes) -> path.endsWith("bin/java") && Files.isDirectory(path))) {
-                    Path subPath = subStream.findFirst().orElseThrow();
-                    // Go two parents above to navigate out of bin/java
-                    java17Home = subPath.getParent().getParent().toFile();
+        // Use which on Linux
+        if (Os.isFamily(Os.FAMILY_UNIX)) {
+            var lines = runProcess("which -a java | xargs -I{} echo \"echo {};{} -version;echo\" | sh");
+            int i = 0;
+            for (; i < lines.size(); i++) {
+                String line = lines.get(i);
+                if (line.contains("version \"17")) {
+                    break;
                 }
             }
 
-            log.debug("Set java 17 home to {}", java17Home);
+            if (i == lines.size()) {
+                fail("Java 17 not found");
+            }
+
+            // The line above the version contains the path
+            java17Home = new File(lines.get(i - 1));
+            return;
         }
 
+        /*
+         * // search for other java installations
+         * Path allJavaInstallations = Path.of(javaHomeEnv).getParent().getParent();
+         * Path folder = findDirectoryContaining(allJavaInstallations, "17").orElseThrow();
+         * // This is a valid jdk if it contains /bin/java.
+         * if (Files.exists(folder.resolve("bin/java"))) {
+         * java17Home = folder.toFile();
+         * }
+         * // Try x64 subfolder first (present on the GitHub runners)
+         * else if (Files.exists(folder.resolve("x64"))) {
+         * java17Home = folder.resolve("x64").toFile();
+         * } else {
+         * // Search for the /bin/java folder structure
+         * Path subPath = findDirectoryContaining(folder, "bin/java").orElseThrow();
+         * // Go two parents above to navigate out of bin/java
+         * java17Home = subPath.getParent().getParent().toFile();
+         * }
+         * log.debug("Set java 17 home to {}", java17Home);
+         */
+        fail("Java 17 not found");
+    }
+
+    private static Optional<Path> findDirectoryContaining(Path start, String search) throws IOException {
+        try (var stream = Files.find(start, 3, (path, basicFileAttributes) -> path.toString().contains(search) && Files.isDirectory(path))) {
+            return stream.findAny();
+        }
+    }
+
+    private static List<String> runProcess(String... command) throws Exception {
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        Process mvn = processBuilder.start();
+        boolean finished = mvn.waitFor(120, TimeUnit.SECONDS);
+
+        if (!finished) {
+            throw new TimeoutException("command timed out.");
+        }
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(mvn.getInputStream()))) {
+            return reader.lines().toList();
+        }
     }
 
     @BeforeEach
