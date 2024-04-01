@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,7 +13,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
@@ -184,22 +182,18 @@ public class SecurityConfiguration {
                 .permissionsPolicy(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(requests -> requests
-                .requestMatchers(antMatcher("/"), antMatcher("/index.html"), antMatcher("/public/**")).permitAll()
-                .requestMatchers(antMatcher("/*.js"), antMatcher("/*.css"), antMatcher("/*.map"), antMatcher("/*.json")).permitAll()
-                .requestMatchers(antMatcher("/manifest.webapp"), antMatcher("/robots.txt")).permitAll()
-                .requestMatchers(antMatcher("/content/**"), antMatcher("/i18n/*.json"), antMatcher("/logo/*")).permitAll()
-                .requestMatchers(antMatcher("/management/info"), antMatcher("/management/health")).permitAll()
-                .requestMatchers(antMatcher("/api/admin/**")).hasAuthority(Role.ADMIN.getAuthority())
-                .requestMatchers(antMatcher("/api/public/**")).permitAll()
-                // TODO: Remove the following three lines in April 2024 together with LegacyResource
-                .requestMatchers(antMatcher(HttpMethod.POST, "/api/programming-exercises/new-result")).permitAll()
-                .requestMatchers(antMatcher(HttpMethod.POST, "/api/programming-submissions/*")).permitAll()
-                .requestMatchers(antMatcher(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*")).permitAll()
-                .requestMatchers(antMatcher("/websocket/**")).permitAll()
-                .requestMatchers(antMatcher("/.well-known/jwks.json")).permitAll()
-                .requestMatchers(antMatcher("/git/**")).permitAll()
-                .requestMatchers(antMatcher("/management/prometheus/**")).access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
-                .requestMatchers(antMatcher("/**")).authenticated()
+                .requestMatchers("/", "/index.html", "/public/**").permitAll()
+                .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
+                .requestMatchers("/manifest.webapp", "/robots.txt").permitAll()
+                .requestMatchers("/content/**", "/i18n/*.json", "/logo/*").permitAll()
+                .requestMatchers("/management/info", "/management/health").permitAll()
+                .requestMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
+                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/websocket/**").permitAll()
+                .requestMatchers("/.well-known/jwks.json").permitAll()
+                .requestMatchers("/git/**").permitAll()
+                .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
+                .requestMatchers("/**").authenticated()
             )
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
         // @formatter:on
