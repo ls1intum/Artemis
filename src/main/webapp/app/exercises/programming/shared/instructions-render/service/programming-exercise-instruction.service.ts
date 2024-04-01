@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { Result } from 'app/entities/result.model';
-import { isLegacyResult } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
 /**
  * Enumeration defining state of the test case.
@@ -62,16 +61,6 @@ export class ProgrammingExerciseInstructionService {
         return tests.reduce(
             (acc, testId) => {
                 const feedback = latestResult?.feedbacks?.find((feedback) => feedback.testCase?.id === testId);
-                const resultIsLegacy = isLegacyResult(latestResult!);
-
-                // If there is no feedback item, we assume that the test was successful (legacy check).
-                if (resultIsLegacy) {
-                    return {
-                        failed: feedback ? [...acc.failed, testId] : acc.failed,
-                        successful: feedback ? acc.successful : [...acc.successful, testId],
-                        notExecuted: acc.notExecuted,
-                    };
-                }
 
                 return {
                     failed: feedback?.positive === false ? [...acc.failed, testId] : acc.failed,
