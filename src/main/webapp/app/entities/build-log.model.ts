@@ -67,7 +67,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
         return Array.from(
             this
                 // Parse build logs
-                .map(({ log, time }) => ({ log: log.split('\n', 1)[0].trim().match(errorLogRegex), time }))
+                .map(({ log, time }) => ({ log: log.match(errorLogRegex), time }))
                 // Remove entries that could not be parsed, are too short or not errors
                 .filter(({ log }: { log: ParsedLogEntry | null; time: string }) => {
                     // Java logs do not always contain "ERROR"
