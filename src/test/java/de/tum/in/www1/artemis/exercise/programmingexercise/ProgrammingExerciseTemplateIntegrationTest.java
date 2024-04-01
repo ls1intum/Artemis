@@ -120,16 +120,18 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     @BeforeAll
     static void findJava17() throws IOException {
         String javaHomeEnv = System.getenv("JAVA_HOME");
-        if (javaHomeEnv.contains("17")) {
+        if (javaHomeEnv != null && javaHomeEnv.contains("17")) {
             java17Home = new File(javaHomeEnv);
             return;
         }
+        log.debug("Java home is {}", javaHomeEnv);
         // This env variable is used by the setup-java action
         String javaHome17Env = System.getenv("JAVA_HOME_17_x64");
-        if (javaHome17Env.contains("17")) {
+        if (javaHome17Env != null && javaHome17Env.contains("17")) {
             java17Home = new File(javaHome17Env);
             return;
         }
+        log.debug("Java 17 home is {}", javaHome17Env);
         // TODO search for other java installations
         Path allJavaInstallations = Path.of(javaHomeEnv).getParent();
         try (var stream = Files.find(allJavaInstallations, 3, (path, basicFileAttributes) -> path.toString().contains("17"))) {
