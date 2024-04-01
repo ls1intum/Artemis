@@ -157,6 +157,14 @@ describe('MonacoEditorComponent', () => {
         expect(comp.editorBuildAnnotations[0].isOutdated()).toBeTrue();
     });
 
+    it('should not allow editing in readonly mode', () => {
+        comp.readOnly = true;
+        fixture.detectChanges();
+        comp.setText(singleLineText);
+        comp.triggerKeySequence('some ignored input');
+        expect(comp.getText()).toBe(singleLineText);
+    });
+
     it('should dispose and destroy its widgets and annotations when destroyed', () => {
         fixture.detectChanges();
         comp.setAnnotations(buildAnnotationArray);
@@ -203,9 +211,12 @@ describe('MonacoEditorComponent', () => {
 
     it('should dispose its models when destroyed', () => {
         fixture.detectChanges();
-        comp.changeModel('file', multiLineText);
+        comp.changeModel('file1', singleLineText);
+        const model = comp.models[0];
+        const modelDisposeSpy = jest.spyOn(model, 'dispose');
         comp.ngOnDestroy();
-        expect(comp.models).toHaveLength(1);
-        expect(comp.models[0].isDisposed()).toBeTrue();
+        expect(comp.models).toBeEmpty();
+        expect(modelDisposeSpy).toHaveBeenCalledOnce();
+        expect(model.isDisposed()).toBeTrue();
     });
 });
