@@ -17,6 +17,8 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
  * DTO containing {@link Result} information.
  * This does not include large reference attributes in order to send minimal data to the client.
  */
+// TODO: the result should include an actual string calculated and rounded on server side (based on exercise and course settings), this should not be done on the client side
+// this would also simplify the logic in result.component.ts and and result.service.ts and make the experience more consistent among different clients (webapp, ios, android)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, SubmissionDTO submission, ParticipationDTO participation,
         List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount,
