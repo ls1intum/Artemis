@@ -105,7 +105,7 @@
         "axios": "1.6.8",
         "vite": "5.1.6",
         "katex": "0.16.10",
-        "webpack-dev-middleware": "7.1.1"
+        "webpack-dev-middleware": "7.2.0"
     },
     "devDependencies": {
         "@angular-builders/jest": "17.0.2",
