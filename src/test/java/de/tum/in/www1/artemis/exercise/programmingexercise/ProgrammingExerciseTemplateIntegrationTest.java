@@ -125,14 +125,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
             return;
         }
         log.debug("Java home is {}", javaHomeEnv);
-        // This env variable is used by the setup-java action
-        String javaHome17Env = System.getenv("JAVA_HOME_17_x64");
-        if (javaHome17Env != null && javaHome17Env.contains("17")) {
-            java17Home = new File(javaHome17Env);
-            return;
-        }
-        log.debug("Java 17 home is {}", javaHome17Env);
-        // TODO search for other java installations
+
+        // search for other java installations
         Path allJavaInstallations = Path.of(javaHomeEnv).getParent().getParent();
         try (var stream = Files.find(allJavaInstallations, 3, (path, basicFileAttributes) -> path.toString().contains("17") && Files.isDirectory(path))) {
             Path folder = stream.findFirst().orElseThrow();
@@ -140,9 +134,16 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
             if (Files.exists(folder.resolve("bin/java"))) {
                 java17Home = folder.toFile();
             }
+            // Try x64 subfolder first
+            else if (Files.exists(folder.resolve("x64"))) {
+                java17Home = folder.resolve("x64").toFile();
+            }
             else {
+                // Search for the /bin/java folder structure
                 try (var subStream = Files.find(folder, 3, (path, basicFileAttributes) -> path.endsWith("bin/java") && Files.isDirectory(path))) {
-                    java17Home = subStream.findFirst().orElseThrow().toFile();
+                    Path subPath = subStream.findFirst().orElseThrow();
+                    // Go two parents above to navigate out of bin/java
+                    java17Home = subPath.getParent().getParent().toFile();
                 }
             }
 
