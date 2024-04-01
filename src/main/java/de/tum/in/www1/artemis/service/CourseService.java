@@ -570,7 +570,7 @@ public class CourseService {
      */
     public void enrollUserForCourseOrThrow(User user, Course course) {
         authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
-        userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
+        userService.addUserToGroup(user, course.getStudentGroupName());
         if (course.getLearningPathsEnabled()) {
             learningPathService.generateLearningPathForUser(course, user);
         }
@@ -600,7 +600,7 @@ public class CourseService {
         Role courseGroupRole = Role.fromString(courseGroup);
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
-            var optionalStudent = userService.findUserAndAddToCourse(studentDto.registrationNumber(), studentDto.login(), studentDto.email(), courseGroupName, courseGroupRole);
+            var optionalStudent = userService.findUserAndAddToCourse(studentDto.registrationNumber(), studentDto.login(), studentDto.email(), courseGroupName);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
             }
@@ -633,10 +633,22 @@ public class CourseService {
      * @return A list of Courses for the course management overview
      */
     public List<Course> getAllCoursesForManagementOverview(boolean onlyActive) {
-        var dateTimeNow = onlyActive ? ZonedDateTime.now() : null;
         var user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isAdmin = authCheckService.isAdmin(user);
+        if (isAdmin && !onlyActive) {
+            return courseRepository.findAll();
+        }
+
+        if (isAdmin) {
+            return courseRepository.findAllNotEnded(ZonedDateTime.now());
+        }
         var userGroups = new ArrayList<>(user.getGroups());
-        return courseRepository.getAllCoursesForManagementOverview(dateTimeNow, authCheckService.isAdmin(user), userGroups);
+
+        if (onlyActive) {
+            return courseRepository.findAllNotEndedCoursesByManagementGroupNames(ZonedDateTime.now(), userGroups);
+        }
+
+        return courseRepository.findAllCoursesByManagementGroupNames(userGroups);
     }
 
     /**
@@ -961,10 +973,22 @@ public class CourseService {
         return (searchResult);
     }
 
-    public void addUserToGroup(User user, String group, Role role) {
-        userService.addUserToGroup(user, group, role);
+    /**
+     * adds a given user to a user group
+     *
+     * @param user  user to be added to a group
+     * @param group user-group where the user should be added
+     */
+    public void addUserToGroup(User user, String group) {
+        userService.addUserToGroup(user, group);
     }
 
+    /**
+     * removes a given user to a user group
+     *
+     * @param user  user to be removed from a group
+     * @param group user-group where the user should be removed
+     */
     public void removeUserFromGroup(User user, String group) {
         userService.removeUserFromGroup(user, group);
     }

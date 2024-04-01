@@ -7,8 +7,8 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+// TODO: convert to record
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class TestwiseCoverageReportDTO implements Serializable {
 
     @JsonProperty("uniformPath")
