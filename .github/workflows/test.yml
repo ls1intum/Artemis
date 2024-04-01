@@ -54,7 +54,9 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '${{ env.java }}'
+        java-version: |
+          17
+          ${{ env.java }}
         cache: 'gradle'
     - name: Java Tests
       run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
@@ -98,7 +100,9 @@ jobs:
             uses: actions/setup-java@v4
             with:
                 distribution: 'temurin'
-                java-version: '${{ env.java }}'
+                java-version: |
+                  17
+                  ${{ env.java }}
                 cache: 'gradle'
           - name: Java Tests
             id: tests
@@ -152,7 +156,9 @@ jobs:
             uses: actions/setup-java@v4
             with:
                 distribution: 'temurin'
-                java-version: '${{ env.java }}'
+                java-version: |
+                    17
+                    ${{ env.java }}
                 cache: 'gradle'
           - name: Java Tests
             id: tests
