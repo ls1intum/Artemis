@@ -119,15 +119,35 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     @BeforeAll
     static void findJava17() throws IOException {
-        String javaHome = System.getenv("JAVA_HOME");
-        if (javaHome.contains("jdk-17")) {
-            java17Home = new File(javaHome);
+        String javaHomeEnv = System.getenv("JAVA_HOME");
+        if (javaHomeEnv.contains("17")) {
+            java17Home = new File(javaHomeEnv);
             return;
         }
-        // TODO search for other java installations
-        Path allJavaInstallations = Path.of(javaHome).getParent();
-        try (var stream = Files.find(allJavaInstallations, 3, (path, basicFileAttributes) -> path.toString().contains("jdk-17"))) {
-            java17Home = stream.findFirst().orElseThrow().toFile();
+        log.debug("Java home is {}", javaHomeEnv);
+
+        // search for other java installations
+        Path allJavaInstallations = Path.of(javaHomeEnv).getParent().getParent();
+        try (var stream = Files.find(allJavaInstallations, 3, (path, basicFileAttributes) -> path.toString().contains("17") && Files.isDirectory(path))) {
+            Path folder = stream.findFirst().orElseThrow();
+            // This is a valid jdk if it contains /bin/java.
+            if (Files.exists(folder.resolve("bin/java"))) {
+                java17Home = folder.toFile();
+            }
+            // Try x64 subfolder first
+            else if (Files.exists(folder.resolve("x64"))) {
+                java17Home = folder.resolve("x64").toFile();
+            }
+            else {
+                // Search for the /bin/java folder structure
+                try (var subStream = Files.find(folder, 3, (path, basicFileAttributes) -> path.endsWith("bin/java") && Files.isDirectory(path))) {
+                    Path subPath = subStream.findFirst().orElseThrow();
+                    // Go two parents above to navigate out of bin/java
+                    java17Home = subPath.getParent().getParent().toFile();
+                }
+            }
+
+            log.debug("Set java 17 home to {}", java17Home);
         }
 
     }
