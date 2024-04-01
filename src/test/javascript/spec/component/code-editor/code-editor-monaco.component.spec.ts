@@ -16,7 +16,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { SimpleChange } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
-import { CreateFileChange, DeleteFileChange, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CreateFileChange, DeleteFileChange, EditorState, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 describe('CodeEditorMonacoComponent', () => {
     let comp: CodeEditorMonacoComponent;
@@ -84,6 +84,14 @@ describe('CodeEditorMonacoComponent', () => {
         expect(element!.hidden).toBeTrue();
     });
 
+    it('should not try to load a file if none is selected', async () => {
+        const editorChangeModelSpy = jest.spyOn(comp.editor, 'changeModel');
+        fixture.detectChanges();
+        await comp.selectFileInEditor(undefined);
+        expect(editorChangeModelSpy).not.toHaveBeenCalled();
+        expect(loadFileFromRepositoryStub).not.toHaveBeenCalled();
+    });
+
     it('should hide the editor if a file is being loaded', () => {
         comp.selectedFile = 'file';
         fixture.detectChanges();
@@ -144,6 +152,25 @@ describe('CodeEditorMonacoComponent', () => {
         });
         expect(setPositionStub).toHaveBeenCalledTimes(2);
         expect(changeModelStub).toHaveBeenCalledTimes(2);
+    });
+
+    it('should discard local changes when the editor is refreshed', async () => {
+        const fileToReload = { fileName: 'file-to-reload', fileContent: 'some remote code' };
+        const editorResetStub = jest.spyOn(comp.editor, 'reset').mockImplementation();
+        const reloadedFileSubject = new BehaviorSubject(fileToReload);
+        loadFileFromRepositoryStub.mockReturnValue(reloadedFileSubject);
+        comp.selectedFile = fileToReload.fileName;
+        comp.fileSession = {
+            [fileToReload.fileName]: { code: 'some local undiscarded changes', cursor: { row: 0, column: 0 }, loadingError: false },
+        };
+        comp.editorState = EditorState.CLEAN;
+        fixture.detectChanges();
+        // Simulate a refresh of the editor.
+        await comp.ngOnChanges({ editorState: new SimpleChange(EditorState.REFRESHING, EditorState.CLEAN, false) });
+        expect(comp.fileSession).toEqual({
+            [fileToReload.fileName]: { code: fileToReload.fileContent, cursor: { row: 0, column: 0 }, loadingError: false },
+        });
+        expect(editorResetStub).toHaveBeenCalledOnce();
     });
 
     it('should use the code and cursor position of the selected file', async () => {

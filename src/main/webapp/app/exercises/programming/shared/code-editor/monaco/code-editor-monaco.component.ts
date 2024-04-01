@@ -33,9 +33,9 @@ export class CodeEditorMonacoComponent implements OnChanges {
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
     inlineFeedbackComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackComponent>;
     @Input()
-    readonly commitState: CommitState;
+    commitState: CommitState;
     @Input()
-    readonly editorState: EditorState;
+    editorState: EditorState;
     @Input()
     course?: Course;
     @Input()
