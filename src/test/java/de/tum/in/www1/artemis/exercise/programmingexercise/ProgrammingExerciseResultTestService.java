@@ -258,7 +258,7 @@ public class ProgrammingExerciseResultTestService {
         final long participationId = programmingExerciseStudentParticipationStaticCodeAnalysis.getId();
         final var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         assertThat(result).isNotNull();
-        final var savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(result.getId());
+        final var savedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId());
 
         // Should be one because programmingExerciseStudentParticipationStaticCodeAnalysis doesn't have a submission
         var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);

@@ -32,6 +32,10 @@ bootRun {
     args = []
 }
 
+bootJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 tasks.register('webapp', NpmTask) {
     inputs.property('appVersion', project.version)
     inputs.files("package-lock.json")

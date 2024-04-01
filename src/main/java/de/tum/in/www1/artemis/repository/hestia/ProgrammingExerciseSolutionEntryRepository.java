@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.repository.hestia;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,18 +16,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Spring Data repository for the ProgrammingExerciseSolutionEntry entity.
  */
 public interface ProgrammingExerciseSolutionEntryRepository extends JpaRepository<ProgrammingExerciseSolutionEntry, Long> {
-
-    /**
-     * Gets a solution entry by its id
-     *
-     * @param entryId The id of the solution entry
-     * @return The solution entry with the given ID if found
-     * @throws EntityNotFoundException If no solution entry with the given ID was found
-     */
-    @NotNull
-    default ProgrammingExerciseSolutionEntry findByIdElseThrow(long entryId) throws EntityNotFoundException {
-        return findById(entryId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Solution Entry", entryId));
-    }
 
     /**
      * Gets a solution entry with its test cases and programming exercise

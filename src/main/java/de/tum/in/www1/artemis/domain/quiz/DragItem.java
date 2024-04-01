@@ -4,16 +4,7 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.PostPersist;
-import javax.persistence.PostRemove;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;

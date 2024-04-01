@@ -2,9 +2,9 @@ package de.tum.in.www1.artemis.service.listeners;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import javax.persistence.PostPersist;
-import javax.persistence.PostUpdate;
-import javax.persistence.PreRemove;
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.PostUpdate;
+import jakarta.persistence.PreRemove;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;

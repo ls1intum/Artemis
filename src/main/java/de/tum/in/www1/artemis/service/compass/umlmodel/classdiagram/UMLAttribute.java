@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 import java.io.Serializable;
 import java.util.Objects;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;

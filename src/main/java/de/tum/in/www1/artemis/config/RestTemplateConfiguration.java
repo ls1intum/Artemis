@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.*;

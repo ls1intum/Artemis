@@ -22,7 +22,7 @@ import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
@@ -1628,9 +1628,8 @@ class ProgrammingExerciseIntegrationTestService {
         updates.get(0).setBonusMultiplier(-1.0);
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
 
-        request.getMvc()
-                .perform(MockMvcRequestBuilders.patch(new URI(ROOT + endpoint)).contentType(MediaType.APPLICATION_JSON)
-                        .content(request.getObjectMapper().writeValueAsString(updates)))
+        request.performMvcRequest(
+                MockMvcRequestBuilders.patch(new URI(ROOT + endpoint)).contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsString(updates)))
                 .andExpect(status().isBadRequest()) //
                 .andExpect(jsonPath("$.errorKey").value("settingNegative")) //
                 .andExpect(jsonPath("$.testCase").value(testCases.get(0).getTestName()));

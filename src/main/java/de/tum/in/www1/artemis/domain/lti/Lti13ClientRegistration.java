@@ -59,7 +59,7 @@ public class Lti13ClientRegistration {
      * @param clientRegistrationId The client registration ID for LTI configuration.
      */
     public Lti13ClientRegistration(String serverUrl, String clientRegistrationId) {
-        this.setGrantTypes(Arrays.asList(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue(), AuthorizationGrantType.IMPLICIT.getValue()));
+        this.setGrantTypes(Arrays.asList(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue(), AuthorizationGrantType.AUTHORIZATION_CODE.getValue()));
         this.setResponseTypes(List.of("id_token"));
         this.setClientName("Artemis - " + serverUrl);
         this.setTokenEndpointAuthMethod("private_key_jwt");
