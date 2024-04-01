@@ -4,11 +4,11 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 public record LocalCIBuildJobQueueItem(String id, String name, String buildAgentAddress, long participationId, long courseId, long exerciseId, int retryCount, int priority,
-        BuildStatus status, RepositoryInfo repositoryInfo, JobTimingInfo jobTimingInfo, BuildConfig buildConfig, Result submissionResult) implements Serializable {
+        BuildStatus status, RepositoryInfo repositoryInfo, JobTimingInfo jobTimingInfo, BuildConfig buildConfig, ResultDTO submissionResult) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -38,7 +38,7 @@ public record LocalCIBuildJobQueueItem(String id, String name, String buildAgent
                 queueItem.buildConfig(), null);
     }
 
-    public LocalCIBuildJobQueueItem(LocalCIBuildJobQueueItem queueItem, Result submissionResult) {
+    public LocalCIBuildJobQueueItem(LocalCIBuildJobQueueItem queueItem, ResultDTO submissionResult) {
         this(queueItem.id(), queueItem.name(), queueItem.buildAgentAddress(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
                 queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult);
     }
