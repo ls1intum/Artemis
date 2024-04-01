@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.programming;
 
 public final class ProgrammingExerciseResourceEndpoints {
 
@@ -45,10 +45,6 @@ public final class ProgrammingExerciseResourceEndpoints {
     public static final String CHECK_PLAGIARISM_JPLAG_REPORT = PROGRAMMING_EXERCISE + "/check-plagiarism-jplag-report";
 
     public static final String TEST_CASE_STATE = PROGRAMMING_EXERCISE + "/test-case-state";
-
-    public static final String UNLOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/unlock-all-repositories";
-
-    public static final String LOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/lock-all-repositories";
 
     public static final String AUXILIARY_REPOSITORY = PROGRAMMING_EXERCISE + "/auxiliary-repository";
 
