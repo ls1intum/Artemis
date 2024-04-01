@@ -54,6 +54,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     private static final String TEST_PREFIX = "progextemplate";
 
+    private static File java17Home;
+
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
 
@@ -113,6 +115,21 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         catch (Exception e) {
             fail("maven home not found", e);
         }
+    }
+
+    @BeforeAll
+    static void findJava17() throws IOException {
+        String javaHome = System.getenv("JAVA_HOME");
+        if (javaHome.contains("jdk-17")) {
+            java17Home = new File(javaHome);
+            return;
+        }
+        // TODO search for other java installations
+        Path allJavaInstallations = Path.of(javaHome).getParent();
+        try (var stream = Files.find(allJavaInstallations, 3, (path, basicFileAttributes) -> path.toString().contains("jdk-17"))) {
+            java17Home = stream.findFirst().orElseThrow().toFile();
+        }
+
     }
 
     @BeforeEach
@@ -232,6 +249,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     private int invokeMaven(boolean testwiseCoverageAnalysis) throws MavenInvocationException {
         InvocationRequest mvnRequest = new DefaultInvocationRequest();
+        mvnRequest.setJavaHome(java17Home);
         mvnRequest.setPomFile(testRepo.localRepoFile);
         mvnRequest.setGoals(List.of("clean", "test"));
         if (testwiseCoverageAnalysis) {
@@ -249,6 +267,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     private int invokeGradle(boolean recordTestwiseCoverage) {
         try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepo.localRepoFile).useBuildDistribution().connect()) {
             BuildLauncher launcher = connector.newBuild();
+            launcher.setJavaHome(java17Home);
             String[] tasks;
             if (recordTestwiseCoverage) {
                 tasks = new String[] { "clean", "test", "tiaTests", "--run-all-tests" };
