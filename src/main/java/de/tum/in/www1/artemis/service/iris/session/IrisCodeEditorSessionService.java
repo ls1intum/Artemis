@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
+import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.in.www1.artemis.service.iris.session.codeeditor.IrisChangeException;
 import de.tum.in.www1.artemis.service.iris.session.codeeditor.file.*;
 import de.tum.in.www1.artemis.service.iris.session.codeeditor.problemstatement.*;
@@ -191,9 +191,9 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
      *
      * @param content The JsonNode to convert
      * @return The converted IrisMessage
-     * @throws IrisParseResponseException If the JsonNode does not have the correct structure
+     * @throws IrisInternalPyrisErrorException If the JsonNode does not have the correct structure
      */
-    private IrisMessage toIrisMessage(JsonNode content) throws IrisParseResponseException {
+    private IrisMessage toIrisMessage(JsonNode content) {
         var message = new IrisMessage();
         try {
             var chatWindowResponse = content.required("response").asText();
@@ -201,7 +201,7 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
         }
         catch (IllegalArgumentException e) {
             log.error("Missing fields, could not parse IrisTextMessageContent: {}", content.toPrettyString(), e);
-            throw new IrisParseResponseException("Iris response does not have the correct structure");
+            throw new IrisInternalPyrisErrorException("Iris response does not have the correct structure");
         }
 
         if (content.path("steps").isArray()) {
@@ -229,9 +229,9 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
      *
      * @param content The JsonNode to convert
      * @return The converted IrisExercisePlanMessageContent
-     * @throws IrisParseResponseException If the JsonNode does not have the correct structure
+     * @throws IrisInternalPyrisErrorException If the JsonNode does not have the correct structure
      */
-    private IrisExercisePlan toExercisePlan(JsonNode content) throws IrisParseResponseException {
+    private IrisExercisePlan toExercisePlan(JsonNode content) {
         var exercisePlan = new IrisExercisePlan();
         List<IrisExercisePlanStep> planSteps = new ArrayList<>();
         for (JsonNode node : content.get("steps")) {
@@ -443,9 +443,9 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
      *
      * @param content The JsonNode to extract the problem statement changes from
      * @return The extracted problem statement changes
-     * @throws IrisParseResponseException If the JsonNode does not have the correct structure
+     * @throws IrisInternalPyrisErrorException If the JsonNode does not have the correct structure
      */
-    private List<ProblemStatementChange> extractProblemStatementChanges(JsonNode content) throws IrisParseResponseException {
+    private List<ProblemStatementChange> extractProblemStatementChanges(JsonNode content) {
         List<ProblemStatementChange> changes = new ArrayList<>();
         try {
             var type = content.required("type").asText();
@@ -489,7 +489,7 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
             log.error("Missing fields, could not parse ProblemStatementChange: {}", content.toPrettyString(), e);
         }
         if (changes.isEmpty()) {
-            throw new IrisParseResponseException("Was not able to parse any changes");
+            throw new IrisInternalPyrisErrorException("Was not able to parse any changes");
         }
         return changes;
     }
@@ -516,11 +516,11 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
      *
      * @param content The JsonNode to extract the changes from
      * @return The extracted changes
-     * @throws IrisParseResponseException If the JsonNode does not have the correct structure
+     * @throws IrisInternalPyrisErrorException If the JsonNode does not have the correct structure
      */
-    private List<FileChange> extractFileChanges(JsonNode content) throws IrisParseResponseException {
+    private List<FileChange> extractFileChanges(JsonNode content) {
         if (!content.path("changes").isArray()) {
-            throw new IrisParseResponseException("Could not parse file changes: " + content.toPrettyString());
+            throw new IrisInternalPyrisErrorException("Could not parse file changes: " + content.toPrettyString());
         }
         List<FileChange> changes = new ArrayList<>();
         for (JsonNode node : content.path("changes")) {
@@ -548,11 +548,11 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
             }
             catch (IllegalArgumentException e) {
                 log.error("Missing fields, could not parse FileChange: {}", node.toPrettyString(), e);
-                throw new IrisParseResponseException("Parsing failed");
+                throw new IrisInternalPyrisErrorException("Parsing failed");
             }
         }
         if (changes.isEmpty()) {
-            throw new IrisParseResponseException("Was not able to parse any changes");
+            throw new IrisInternalPyrisErrorException("Was not able to parse any changes");
         }
         return changes;
     }

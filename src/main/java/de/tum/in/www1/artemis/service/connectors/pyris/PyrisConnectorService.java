@@ -1,11 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.concurrent.CompletableFuture.failedFuture;
-
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.*;
@@ -67,11 +62,7 @@ public class PyrisConnectorService {
     void executePipeline(String feature, String variant, PyrisPipelineExecutionDTO executionDTO) {
         var endpoint = "/api/v1/pipelines/" + feature + "/" + variant + "/run";
         try {
-            sendRequestAndParseResponse(endpoint, executionDTO, Void.class);
-        }
-        catch (JsonProcessingException e) {
-            log.error("Failed to parse response from Pyris", e);
-            throw new IrisParseResponseException(e);
+            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
         }
         catch (HttpStatusCodeException e) {
             throw toIrisException(e);
@@ -80,19 +71,6 @@ public class PyrisConnectorService {
             log.error("Failed to send request to Pyris", e);
             throw new PyrisConnectorException("Could not fetch response from Iris");
         }
-    }
-
-    private <Response> CompletableFuture<Response> sendRequestAndParseResponse(String urlExtension, Object request, Class<Response> responseType) throws JsonProcessingException {
-        var response = restTemplate.postForEntity(pyrisUrl + urlExtension, objectMapper.valueToTree(request), JsonNode.class);
-        JsonNode body = response.getBody();
-        if (body == null) {
-            if (responseType == Void.class) {
-                return completedFuture(null);
-            }
-            return failedFuture(new IrisNoResponseException());
-        }
-        Response parsed = objectMapper.treeToValue(body, responseType);
-        return completedFuture(parsed);
     }
 
     private IrisException toIrisException(HttpStatusCodeException e) {

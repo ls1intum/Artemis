@@ -140,6 +140,8 @@ private excludedClassFilesForReport(classDirectories) {
             exclude: [
                 "**/de/tum/in/www1/artemis/domain/**/*_*",
                 "**/de/tum/in/www1/artemis/config/migration/entries/**",
+                "**/de/tum/in/www1/artemis/service/connectors/pyris/dto/**",
+                "**/de/tum/in/www1/artemis/web/rest/iris/dto/**",
                 "**/org/eclipse/jgit/**",
                 "**/gradle-wrapper.jar/**"
             ]

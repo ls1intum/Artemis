@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 
 /**
@@ -121,7 +120,7 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COMPETENCY_GENERATION, irisSession.getCourse());
     }
 
-    private List<Competency> toCompetencies(JsonNode content) throws IrisParseResponseException {
+    private List<Competency> toCompetencies(JsonNode content) {
         List<Competency> competencies = new ArrayList<>();
         for (JsonNode node : content.get("competencies")) {
             try {
