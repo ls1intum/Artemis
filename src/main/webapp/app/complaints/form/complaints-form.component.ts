@@ -49,7 +49,11 @@ export class ComplaintsFormComponent implements OnInit {
      * Creates a new complaint on the provided result with the entered text and notifies the output emitter on success.
      */
     createComplaint(): void {
-        const complaintRequest = new ComplaintRequestDTO(this.resultId, this.complaintType, this.complaintText, this.examId);
+        const complaintRequest = new ComplaintRequestDTO();
+        complaintRequest.resultId = this.resultId;
+        complaintRequest.complaintType = this.complaintType;
+        complaintRequest.complaintText = this.complaintText;
+        complaintRequest.examId = this.examId;
 
         // TODO: Rethink global client error handling and adapt this line accordingly
         if (complaintRequest.complaintText !== undefined && this.maxComplaintTextLimit < complaintRequest.complaintText!.length) {
