@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -23,8 +24,17 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class KnowledgeArea extends DomainObject {
 
+    @JsonIgnore
+    public static final int MAX_TITLE_LENGTH = 255;
+
+    @JsonIgnore
+    public static final int MAX_SHORT_TITLE_LENGTH = 10;
+
     @Column(name = "title", nullable = false)
     private String title;
+
+    @Column(name = "short_title", nullable = false)
+    private String shortTitle;
 
     @Column(name = "description")
     private String description;
@@ -46,8 +56,9 @@ public class KnowledgeArea extends DomainObject {
 
     }
 
-    public KnowledgeArea(String title, String description) {
+    public KnowledgeArea(String title, String shortTitle, String description) {
         this.title = title;
+        this.shortTitle = shortTitle;
         this.description = description;
     }
 
@@ -57,6 +68,14 @@ public class KnowledgeArea extends DomainObject {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getShortTitle() {
+        return shortTitle;
+    }
+
+    public void setShortTitle(String shortTitle) {
+        this.shortTitle = shortTitle;
     }
 
     public String getDescription() {

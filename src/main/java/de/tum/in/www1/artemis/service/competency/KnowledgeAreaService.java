@@ -38,7 +38,7 @@ public class KnowledgeAreaService {
             parent = knowledgeAreaRepository.findByIdElseThrow(parent.getId());
         }
 
-        var knowledgeAreaToCreate = new KnowledgeArea(knowledgeArea.getTitle(), knowledgeArea.getDescription());
+        var knowledgeAreaToCreate = new KnowledgeArea(knowledgeArea.getTitle(), knowledgeArea.getShortTitle(), knowledgeArea.getDescription());
         knowledgeAreaToCreate.setParent(parent);
         return knowledgeAreaRepository.save(knowledgeAreaToCreate);
     }
@@ -49,7 +49,11 @@ public class KnowledgeAreaService {
      * @param knowledgeArea the knowledge area to verify
      */
     private void knowledgeAreaIsValidOrElseThrow(KnowledgeArea knowledgeArea) throws BadRequestException {
-        if (knowledgeArea.getId() != null || knowledgeArea.getTitle() == null || knowledgeArea.getTitle().trim().isEmpty()) {
+        boolean titleIsInvalid = knowledgeArea.getTitle() == null || knowledgeArea.getTitle().isBlank() || knowledgeArea.getTitle().length() > KnowledgeArea.MAX_TITLE_LENGTH;
+        boolean shortTitleIsInvalid = knowledgeArea.getShortTitle() == null || knowledgeArea.getShortTitle().isBlank()
+                || knowledgeArea.getTitle().length() > KnowledgeArea.MAX_SHORT_TITLE_LENGTH;
+
+        if (titleIsInvalid || shortTitleIsInvalid) {
             throw new BadRequestException();
         }
     }

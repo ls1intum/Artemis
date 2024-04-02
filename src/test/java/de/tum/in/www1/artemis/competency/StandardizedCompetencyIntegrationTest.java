@@ -61,7 +61,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
     void setupTestScenario() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        knowledgeArea = new KnowledgeArea("Knowledge Area 0", "KA description");
+        knowledgeArea = new KnowledgeArea("Knowledge Area 0", "KA0", "KA description");
         knowledgeArea = knowledgeAreaRepository.save(knowledgeArea);
 
         standardizedCompetency = new StandardizedCompetency("Competency 0", "SC description", CompetencyTaxonomy.ANALYZE, "1.0.0");
@@ -255,7 +255,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
         void shouldCreateKnowledgeArea() throws Exception {
-            var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "description");
+            var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "KA2", "description");
             expectedKnowledgeArea.setParent(knowledgeArea);
 
             var actualKnowledgeArea = request.postWithResponseBody("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, KnowledgeArea.class,
@@ -267,7 +267,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
         void shouldReturn404() throws Exception {
-            var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "description");
+            var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "KA2", "description");
             // parent that does not exist in the database is not allowed
             var knowlegeAreaNotExisting = new KnowledgeArea();
             knowlegeAreaNotExisting.setId(-1000L);
@@ -280,7 +280,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
         @WithMockUser(username = "admin", roles = "ADMIN")
         void shouldReturnBadRequest() throws Exception {
             // empty title is not allowed
-            var expectedKnowledgeArea = new KnowledgeArea("  ", "description");
+            var expectedKnowledgeArea = new KnowledgeArea("  ", "  ", "description");
 
             request.post("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, HttpStatus.BAD_REQUEST);
         }
@@ -345,14 +345,14 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
             @Test
             @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
             void shouldReturnKnowledgeArea() throws Exception {
-                var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "description");
+                var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "KA2", "description");
                 expectedKnowledgeArea.setParent(knowledgeArea);
                 expectedKnowledgeArea = knowledgeAreaRepository.save(expectedKnowledgeArea);
 
-                var child1 = new KnowledgeArea("Child 1", "description");
+                var child1 = new KnowledgeArea("Child 1", "C1", "description");
                 child1.setParent(expectedKnowledgeArea);
                 child1 = knowledgeAreaRepository.save(child1);
-                var child2 = new KnowledgeArea("Child 2", "description");
+                var child2 = new KnowledgeArea("Child 2", "C2", "description");
                 child2.setParent(expectedKnowledgeArea);
                 child2 = knowledgeAreaRepository.save(child2);
                 expectedKnowledgeArea.setChildren(Set.of(child1, child2));
