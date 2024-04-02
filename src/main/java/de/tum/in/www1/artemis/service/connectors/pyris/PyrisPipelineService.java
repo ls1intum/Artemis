@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 
 @Service
+@Profile("iris")
 public class PyrisPipelineService {
 
     private final PyrisConnectorService pyrisConnectorService;
