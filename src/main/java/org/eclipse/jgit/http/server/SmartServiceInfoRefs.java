@@ -8,16 +8,14 @@
 
 package org.eclipse.jgit.http.server;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
-import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
-import static org.eclipse.jgit.http.server.GitSmartHttpTools.infoRefsResultType;
-import static org.eclipse.jgit.http.server.GitSmartHttpTools.sendError;
-import static org.eclipse.jgit.http.server.ServletUtils.ATTRIBUTE_HANDLER;
-import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
-
 import java.io.IOException;
 import java.util.List;
-
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.transport.PacketLineOut;
+import org.eclipse.jgit.transport.RefAdvertiser.PacketLineOutRefAdvertiser;
+import org.eclipse.jgit.transport.ServiceMayNotContinueException;
+import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
+import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -26,13 +24,12 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.transport.PacketLineOut;
-import org.eclipse.jgit.transport.RefAdvertiser.PacketLineOutRefAdvertiser;
-import org.eclipse.jgit.transport.ServiceMayNotContinueException;
-import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
-import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.infoRefsResultType;
+import static org.eclipse.jgit.http.server.GitSmartHttpTools.sendError;
+import static org.eclipse.jgit.http.server.ServletUtils.ATTRIBUTE_HANDLER;
+import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
 
 /** Filter in front of {@link InfoRefsServlet} to catch smart service requests. */
 abstract class SmartServiceInfoRefs implements Filter {
@@ -46,18 +43,15 @@ abstract class SmartServiceInfoRefs implements Filter {
         this.filters = filters.toArray(new Filter[0]);
     }
 
-    @Override
-    public void init(FilterConfig config) throws ServletException {
+    @Override public void init(FilterConfig config) throws ServletException {
         // Do nothing.
     }
 
-    @Override
-    public void destroy() {
+    @Override public void destroy() {
         // Do nothing.
     }
 
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+    @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         final HttpServletRequest req = (HttpServletRequest) request;
         final HttpServletResponse res = (HttpServletResponse) response;
 
@@ -76,10 +70,12 @@ abstract class SmartServiceInfoRefs implements Filter {
             }
 
             try {
-                if (filters.length == 0)
+                if (filters.length == 0) {
                     service(req, response);
-                else
+                }
+                else {
                     new Chain().doFilter(request, response);
+                }
             }
             finally {
                 req.removeAttribute(ATTRIBUTE_HANDLER);
@@ -108,10 +104,12 @@ abstract class SmartServiceInfoRefs implements Filter {
             sendError(req, res, SC_FORBIDDEN, e.getMessage());
         }
         catch (ServiceMayNotContinueException e) {
-            if (e.isOutput())
+            if (e.isOutput()) {
                 buf.close();
-            else
+            }
+            else {
                 sendError(req, res, e.getStatusCode(), e.getMessage());
+            }
         }
     }
 
@@ -184,12 +182,13 @@ abstract class SmartServiceInfoRefs implements Filter {
 
         private int filterIdx;
 
-        @Override
-        public void doFilter(ServletRequest req, ServletResponse rsp) throws IOException, ServletException {
-            if (filterIdx < filters.length)
+        @Override public void doFilter(ServletRequest req, ServletResponse rsp) throws IOException, ServletException {
+            if (filterIdx < filters.length) {
                 filters[filterIdx++].doFilter(req, rsp, this);
-            else
+            }
+            else {
                 service(req, rsp);
+            }
         }
     }
 }

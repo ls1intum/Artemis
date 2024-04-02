@@ -8,18 +8,15 @@
 
 package org.eclipse.jgit.http.server;
 
-import static org.eclipse.jgit.http.server.ServletUtils.acceptsGzipEncoding;
-import static org.eclipse.jgit.util.HttpSupport.ENCODING_GZIP;
-import static org.eclipse.jgit.util.HttpSupport.HDR_CONTENT_ENCODING;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
-
+import org.eclipse.jgit.util.TemporaryBuffer;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.eclipse.jgit.util.TemporaryBuffer;
+import static org.eclipse.jgit.http.server.ServletUtils.acceptsGzipEncoding;
+import static org.eclipse.jgit.util.HttpSupport.ENCODING_GZIP;
+import static org.eclipse.jgit.util.HttpSupport.HDR_CONTENT_ENCODING;
 
 /**
  * Buffers a response, trying to gzip it if the user agent supports that.
@@ -39,7 +36,7 @@ class SmartOutputStream extends TemporaryBuffer {
 
     private final HttpServletResponse rsp;
 
-    private boolean compressStream;
+    private final boolean compressStream;
 
     private boolean startedOutput;
 
@@ -50,8 +47,7 @@ class SmartOutputStream extends TemporaryBuffer {
         this.compressStream = compressStream;
     }
 
-    @Override
-    protected OutputStream overflow() throws IOException {
+    @Override protected OutputStream overflow() throws IOException {
         startedOutput = true;
 
         OutputStream out = rsp.getOutputStream();
@@ -62,8 +58,7 @@ class SmartOutputStream extends TemporaryBuffer {
         return out;
     }
 
-    @Override
-    public void close() throws IOException {
+    @Override public void close() throws IOException {
         super.close();
 
         if (!startedOutput) {

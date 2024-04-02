@@ -50,7 +50,7 @@ public class WeeklyEmailSummaryScheduleService {
     @PostConstruct
     public void scheduleEmailSummariesOnStartUp() {
         try {
-            if (profileService.isDev()) {
+            if (profileService.isDevActive()) {
                 // only execute this on production server, i.e. when the prod profile is active
                 // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
                 return;

@@ -9,19 +9,17 @@
 package org.eclipse.jgit.http.server;
 
 import java.util.Enumeration;
-
+import org.eclipse.jgit.http.server.glue.MetaServlet;
+import org.eclipse.jgit.http.server.resolver.AsIsFileService;
+import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
+import org.eclipse.jgit.transport.resolver.RepositoryResolver;
+import org.eclipse.jgit.transport.resolver.UploadPackFactory;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
-
-import org.eclipse.jgit.http.server.glue.MetaServlet;
-import org.eclipse.jgit.http.server.resolver.AsIsFileService;
-import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
-import org.eclipse.jgit.transport.resolver.RepositoryResolver;
-import org.eclipse.jgit.transport.resolver.UploadPackFactory;
 
 /**
  * Handles Git repository access over HTTP.
@@ -169,27 +167,22 @@ public class GitServlet extends MetaServlet {
         gitFilter.addReceivePackFilter(filter);
     }
 
-    @Override
-    public void init(ServletConfig config) throws ServletException {
+    @Override public void init(ServletConfig config) throws ServletException {
         gitFilter.init(new FilterConfig() {
 
-            @Override
-            public String getFilterName() {
+            @Override public String getFilterName() {
                 return gitFilter.getClass().getName();
             }
 
-            @Override
-            public String getInitParameter(String name) {
+            @Override public String getInitParameter(String name) {
                 return config.getInitParameter(name);
             }
 
-            @Override
-            public Enumeration<String> getInitParameterNames() {
+            @Override public Enumeration<String> getInitParameterNames() {
                 return config.getInitParameterNames();
             }
 
-            @Override
-            public ServletContext getServletContext() {
+            @Override public ServletContext getServletContext() {
                 return config.getServletContext();
             }
         });

@@ -8,14 +8,6 @@
 
 package org.eclipse.jgit.http.server;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_PARTIAL_CONTENT;
-import static jakarta.servlet.http.HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE;
-import static org.eclipse.jgit.util.HttpSupport.HDR_ACCEPT_RANGES;
-import static org.eclipse.jgit.util.HttpSupport.HDR_CONTENT_LENGTH;
-import static org.eclipse.jgit.util.HttpSupport.HDR_CONTENT_RANGE;
-import static org.eclipse.jgit.util.HttpSupport.HDR_IF_RANGE;
-import static org.eclipse.jgit.util.HttpSupport.HDR_RANGE;
-
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -25,12 +17,17 @@ import java.io.RandomAccessFile;
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.Enumeration;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.util.FS;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import static jakarta.servlet.http.HttpServletResponse.SC_PARTIAL_CONTENT;
+import static jakarta.servlet.http.HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE;
+import static org.eclipse.jgit.util.HttpSupport.HDR_ACCEPT_RANGES;
+import static org.eclipse.jgit.util.HttpSupport.HDR_CONTENT_LENGTH;
+import static org.eclipse.jgit.util.HttpSupport.HDR_CONTENT_RANGE;
+import static org.eclipse.jgit.util.HttpSupport.HDR_IF_RANGE;
+import static org.eclipse.jgit.util.HttpSupport.HDR_RANGE;
 
 /**
  * Dumps a file over HTTP GET (or its information via HEAD).

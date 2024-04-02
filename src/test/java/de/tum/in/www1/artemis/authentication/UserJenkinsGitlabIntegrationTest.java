@@ -509,6 +509,12 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUserWithoutGroups() throws Exception {
+        userTestService.testUserWithoutGroups();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testUserWithActivatedStatus() throws Exception {
         userTestService.testUserWithActivatedStatus();
     }

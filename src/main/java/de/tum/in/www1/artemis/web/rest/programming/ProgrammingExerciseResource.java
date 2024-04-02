@@ -1,28 +1,26 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.AUXILIARY_REPOSITORY;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.BUILD_LOG_STATISTICS;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.GENERATE_TESTS;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.GET_FOR_COURSE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROBLEM;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISES;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.REEVALUATE_EXERCISE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.RESET;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.ROOT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.SETUP;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.SOLUTION_REPOSITORY_FILES_WITH_CONTENT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.SOLUTION_REPOSITORY_FILE_NAMES;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.TASKS;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.TEMPLATE_REPOSITORY_FILES_WITH_CONTENT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.TEST_CASE_STATE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.TIMELINE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.AUXILIARY_REPOSITORY;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.BUILD_LOG_STATISTICS;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.GENERATE_TESTS;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.GET_FOR_COURSE;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.PROBLEM;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISES;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.REEVALUATE_EXERCISE;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.RESET;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.ROOT;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.SETUP;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.SOLUTION_REPOSITORY_FILES_WITH_CONTENT;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.SOLUTION_REPOSITORY_FILE_NAMES;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.TASKS;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.TEMPLATE_REPOSITORY_FILES_WITH_CONTENT;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.TEST_CASE_STATE;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.TIMELINE;
 
 import java.io.IOException;
 import java.net.URI;
@@ -85,7 +83,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaModuleService;
@@ -94,7 +91,6 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
-import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionConfigHelper;
 import de.tum.in.www1.artemis.service.programming.AuxiliaryRepositoryService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRepositoryService;
@@ -126,8 +122,6 @@ public class ProgrammingExerciseResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
-
-    private final ProfileService profileService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -171,8 +165,6 @@ public class ProgrammingExerciseResource {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
     private final Optional<AthenaModuleService> athenaModuleService;
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
@@ -183,11 +175,9 @@ public class ProgrammingExerciseResource {
             StudentParticipationRepository studentParticipationRepository, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProfileService profileService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, InstanceMessageSendService instanceMessageSendService,
-            Optional<AthenaModuleService> athenaModuleService) {
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService) {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
-        this.profileService = profileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
@@ -209,7 +199,6 @@ public class ProgrammingExerciseResource {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.channelRepository = channelRepository;
-        this.instanceMessageSendService = instanceMessageSendService;
         this.athenaModuleService = athenaModuleService;
     }
 
@@ -681,48 +670,6 @@ public class ProgrammingExerciseResource {
             @RequestParam ProgrammingLanguage programmingLanguage) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(programmingExerciseService.getAllWithSCAOnPageWithSize(search, isCourseFilter, isExamFilter, programmingLanguage, user));
-    }
-
-    /**
-     * Unlock all repositories of the given programming exercise.
-     *
-     * @param exerciseId of the exercise
-     * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
-     */
-    @PutMapping(UNLOCK_ALL_REPOSITORIES)
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
-        // Locking and unlocking repositories is not supported when using the local version control system.
-        // Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
-            return ResponseEntity.badRequest().build();
-        }
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
-        instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipations(exerciseId);
-        log.info("Unlocked all repositories of programming exercise {} upon manual request", exerciseId);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * Lock all repositories of the given programming exercise.
-     *
-     * @param exerciseId of the exercise
-     * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
-     */
-    @PutMapping(LOCK_ALL_REPOSITORIES)
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
-        // Locking and unlocking repositories is not supported when using the local version control system.
-        // Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
-            return ResponseEntity.badRequest().build();
-        }
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
-        instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipations(exerciseId);
-        log.info("Locked all repositories of programming exercise {} upon manual request", exerciseId);
-        return ResponseEntity.ok().build();
     }
 
     /**

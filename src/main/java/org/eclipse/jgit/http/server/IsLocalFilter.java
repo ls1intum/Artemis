@@ -8,11 +8,9 @@
 
 package org.eclipse.jgit.http.server;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
-import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
-
 import java.io.IOException;
-
+import org.eclipse.jgit.internal.storage.file.ObjectDirectory;
+import org.eclipse.jgit.lib.Repository;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -20,9 +18,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.eclipse.jgit.internal.storage.file.ObjectDirectory;
-import org.eclipse.jgit.lib.Repository;
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
 
 /**
  * Requires the target {@link Repository} to be available via local filesystem.
@@ -32,22 +29,21 @@ import org.eclipse.jgit.lib.Repository;
  */
 class IsLocalFilter implements Filter {
 
-    @Override
-    public void init(FilterConfig config) throws ServletException {
+    @Override public void init(FilterConfig config) throws ServletException {
         // Do nothing.
     }
 
-    @Override
-    public void destroy() {
+    @Override public void destroy() {
         // Do nothing.
     }
 
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        if (isLocal(getRepository(request)))
+    @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        if (isLocal(getRepository(request))) {
             chain.doFilter(request, response);
-        else
+        }
+        else {
             ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
+        }
     }
 
     private static boolean isLocal(Repository db) {

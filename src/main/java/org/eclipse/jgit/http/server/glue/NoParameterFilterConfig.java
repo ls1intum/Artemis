@@ -10,7 +10,6 @@ package org.eclipse.jgit.http.server.glue;
 
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
-
 import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletContext;
 
@@ -25,34 +24,28 @@ final class NoParameterFilterConfig implements FilterConfig {
         this.context = context;
     }
 
-    @Override
-    public String getInitParameter(String name) {
+    @Override public String getInitParameter(String name) {
         return null;
     }
 
-    @Override
-    public Enumeration<String> getInitParameterNames() {
+    @Override public Enumeration<String> getInitParameterNames() {
         return new Enumeration<>() {
 
-            @Override
-            public boolean hasMoreElements() {
+            @Override public boolean hasMoreElements() {
                 return false;
             }
 
-            @Override
-            public String nextElement() {
+            @Override public String nextElement() {
                 throw new NoSuchElementException();
             }
         };
     }
 
-    @Override
-    public ServletContext getServletContext() {
+    @Override public ServletContext getServletContext() {
         return context;
     }
 
-    @Override
-    public String getFilterName() {
+    @Override public String getFilterName() {
         return filterName;
     }
 }

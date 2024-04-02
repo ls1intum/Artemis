@@ -10,15 +10,13 @@ package org.eclipse.jgit.http.server.glue;
 
 import java.io.IOException;
 import java.text.MessageFormat;
-
+import org.eclipse.jgit.http.server.HttpServerText;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-
-import org.eclipse.jgit.http.server.HttpServerText;
 
 /**
  * Switch servlet path and path info to use another regex match group.
@@ -40,28 +38,28 @@ public class RegexGroupFilter implements Filter {
      *                     capture group number, 1 through the number of groups.
      */
     public RegexGroupFilter(int groupIdx) {
-        if (groupIdx < 1)
+        if (groupIdx < 1) {
             throw new IllegalArgumentException(MessageFormat.format(HttpServerText.get().invalidIndex, Integer.valueOf(groupIdx)));
+        }
         this.groupIdx = groupIdx - 1;
     }
 
-    @Override
-    public void init(FilterConfig config) throws ServletException {
+    @Override public void init(FilterConfig config) throws ServletException {
         // Do nothing.
     }
 
-    @Override
-    public void destroy() {
+    @Override public void destroy() {
         // Do nothing.
     }
 
-    @Override
-    public void doFilter(final ServletRequest request, final ServletResponse rsp, final FilterChain chain) throws IOException, ServletException {
+    @Override public void doFilter(final ServletRequest request, final ServletResponse rsp, final FilterChain chain) throws IOException, ServletException {
         final WrappedRequest[] g = groupsFor(request);
-        if (groupIdx < g.length)
+        if (groupIdx < g.length) {
             chain.doFilter(g[groupIdx], rsp);
-        else
+        }
+        else {
             throw new ServletException(MessageFormat.format(HttpServerText.get().invalidRegexGroup, Integer.valueOf(groupIdx + 1)));
+        }
     }
 
     private static WrappedRequest[] groupsFor(ServletRequest r) {

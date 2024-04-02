@@ -9,7 +9,6 @@
 package org.eclipse.jgit.http.server.glue;
 
 import java.io.IOException;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,8 +33,7 @@ public class ErrorServlet extends HttpServlet {
         this.status = status;
     }
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse rsp) throws ServletException, IOException {
+    @Override protected void doGet(HttpServletRequest req, HttpServletResponse rsp) throws ServletException, IOException {
         rsp.sendError(status);
     }
 }

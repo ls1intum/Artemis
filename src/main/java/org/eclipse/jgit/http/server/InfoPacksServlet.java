@@ -8,26 +8,22 @@
 
 package org.eclipse.jgit.http.server;
 
-import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
-import static org.eclipse.jgit.http.server.ServletUtils.sendPlainText;
-
 import java.io.IOException;
-
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.eclipse.jgit.internal.storage.file.ObjectDirectory;
 import org.eclipse.jgit.internal.storage.file.Pack;
 import org.eclipse.jgit.lib.ObjectDatabase;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
+import static org.eclipse.jgit.http.server.ServletUtils.sendPlainText;
 
 /** Sends the current list of pack files, sorted most recent first. */
 class InfoPacksServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public void doGet(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
+    @Override public void doGet(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
         sendPlainText(packList(req), req, rsp);
     }
 

@@ -8,14 +8,6 @@
 
 package org.eclipse.jgit.http.server;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.eclipse.jgit.util.HttpSupport.ENCODING_GZIP;
-import static org.eclipse.jgit.util.HttpSupport.ENCODING_X_GZIP;
-import static org.eclipse.jgit.util.HttpSupport.HDR_ACCEPT_ENCODING;
-import static org.eclipse.jgit.util.HttpSupport.HDR_CONTENT_ENCODING;
-import static org.eclipse.jgit.util.HttpSupport.HDR_ETAG;
-import static org.eclipse.jgit.util.HttpSupport.TEXT_PLAIN;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,14 +16,19 @@ import java.security.MessageDigest;
 import java.text.MessageFormat;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.eclipse.jgit.util.HttpSupport.ENCODING_GZIP;
+import static org.eclipse.jgit.util.HttpSupport.ENCODING_X_GZIP;
+import static org.eclipse.jgit.util.HttpSupport.HDR_ACCEPT_ENCODING;
+import static org.eclipse.jgit.util.HttpSupport.HDR_CONTENT_ENCODING;
+import static org.eclipse.jgit.util.HttpSupport.HDR_ETAG;
+import static org.eclipse.jgit.util.HttpSupport.TEXT_PLAIN;
 
 /**
  * Common utility functions for servlets.
@@ -58,8 +55,9 @@ public final class ServletUtils {
      */
     public static Repository getRepository(ServletRequest req) {
         Repository db = (Repository) req.getAttribute(ATTRIBUTE_REPOSITORY);
-        if (db == null)
+        if (db == null) {
             throw new IllegalStateException(HttpServerText.get().expectedRepositoryAttribute);
+        }
         return db;
     }
 
@@ -79,10 +77,12 @@ public final class ServletUtils {
     public static InputStream getInputStream(HttpServletRequest req) throws IOException {
         InputStream in = req.getInputStream();
         final String enc = req.getHeader(HDR_CONTENT_ENCODING);
-        if (ENCODING_GZIP.equals(enc) || ENCODING_X_GZIP.equals(enc))
+        if (ENCODING_GZIP.equals(enc) || ENCODING_X_GZIP.equals(enc)) {
             in = new GZIPInputStream(in);
-        else if (enc != null)
+        }
+        else if (enc != null) {
             throw new IOException(MessageFormat.format(HttpServerText.get().encodingNotSupportedByThisLibrary, HDR_CONTENT_ENCODING, enc));
+        }
         return in;
     }
 
@@ -114,8 +114,9 @@ public final class ServletUtils {
      *               the stream to discard, closed if not null.
      */
     public static void consumeRequestBody(InputStream in) {
-        if (in == null)
+        if (in == null) {
             return;
+        }
         try {
             while (0 < in.skip(2048) || 0 <= in.read()) {
                 // Discard until EOF.
@@ -206,16 +207,18 @@ public final class ServletUtils {
     }
 
     static boolean acceptsGzipEncoding(String accepts) {
-        if (accepts == null)
+        if (accepts == null) {
             return false;
+        }
 
         int b = 0;
         while (b < accepts.length()) {
             int comma = accepts.indexOf(',', b);
             int e = 0 <= comma ? comma : accepts.length();
             String term = accepts.substring(b, e).trim();
-            if (term.equals(ENCODING_GZIP))
+            if (term.equals(ENCODING_GZIP)) {
                 return true;
+            }
             b = e + 1;
         }
         return false;

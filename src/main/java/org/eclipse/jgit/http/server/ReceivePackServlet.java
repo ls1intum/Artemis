@@ -8,6 +8,29 @@
 
 package org.eclipse.jgit.http.server;
 
+import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.List;
+import org.eclipse.jgit.annotations.Nullable;
+import org.eclipse.jgit.errors.CorruptObjectException;
+import org.eclipse.jgit.errors.PackProtocolException;
+import org.eclipse.jgit.errors.UnpackException;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.transport.InternalHttpServerGlue;
+import org.eclipse.jgit.transport.ReceivePack;
+import org.eclipse.jgit.transport.RefAdvertiser.PacketLineOutRefAdvertiser;
+import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
+import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
+import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
@@ -21,32 +44,6 @@ import static org.eclipse.jgit.http.server.ServletUtils.consumeRequestBody;
 import static org.eclipse.jgit.http.server.ServletUtils.getInputStream;
 import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
 import static org.eclipse.jgit.util.HttpSupport.HDR_USER_AGENT;
-
-import java.io.IOException;
-import java.text.MessageFormat;
-import java.util.List;
-
-import jakarta.servlet.Filter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.FilterConfig;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
-import org.eclipse.jgit.annotations.Nullable;
-import org.eclipse.jgit.errors.CorruptObjectException;
-import org.eclipse.jgit.errors.PackProtocolException;
-import org.eclipse.jgit.errors.UnpackException;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.transport.InternalHttpServerGlue;
-import org.eclipse.jgit.transport.ReceivePack;
-import org.eclipse.jgit.transport.RefAdvertiser.PacketLineOutRefAdvertiser;
-import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
-import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
-import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 
 /** Server side implementation of smart push over HTTP. */
 class ReceivePackServlet extends HttpServlet {
@@ -62,15 +59,13 @@ class ReceivePackServlet extends HttpServlet {
             this.receivePackFactory = receivePackFactory;
         }
 
-        @Override
-        protected void begin(HttpServletRequest req, Repository db) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
+        @Override protected void begin(HttpServletRequest req, Repository db) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
             ReceivePack rp = receivePackFactory.create(req, db);
             InternalHttpServerGlue.setPeerUserAgent(rp, req.getHeader(HDR_USER_AGENT));
             req.setAttribute(ATTRIBUTE_HANDLER, rp);
         }
 
-        @Override
-        protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
+        @Override protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
             ReceivePack rp = (ReceivePack) req.getAttribute(ATTRIBUTE_HANDLER);
             try {
                 rp.sendAdvertisedRefs(pck);
@@ -89,8 +84,7 @@ class ReceivePackServlet extends HttpServlet {
             this.receivePackFactory = receivePackFactory;
         }
 
-        @Override
-        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
             HttpServletRequest req = (HttpServletRequest) request;
             HttpServletResponse rsp = (HttpServletResponse) response;
             ReceivePack rp;
@@ -115,26 +109,22 @@ class ReceivePackServlet extends HttpServlet {
             }
         }
 
-        @Override
-        public void init(FilterConfig filterConfig) throws ServletException {
+        @Override public void init(FilterConfig filterConfig) throws ServletException {
             // Nothing.
         }
 
-        @Override
-        public void destroy() {
+        @Override public void destroy() {
             // Nothing.
         }
     }
 
-    @Nullable
-    private final ReceivePackErrorHandler handler;
+    @Nullable private final ReceivePackErrorHandler handler;
 
     ReceivePackServlet(@Nullable ReceivePackErrorHandler handler) {
         this.handler = handler;
     }
 
-    @Override
-    public void doPost(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
+    @Override public void doPost(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
         if (!RECEIVE_PACK_REQUEST_TYPE.equals(req.getContentType())) {
             rsp.sendError(SC_UNSUPPORTED_MEDIA_TYPE);
             return;
@@ -142,8 +132,7 @@ class ReceivePackServlet extends HttpServlet {
 
         SmartOutputStream out = new SmartOutputStream(req, rsp, false) {
 
-            @Override
-            public void flush() throws IOException {
+            @Override public void flush() throws IOException {
                 doFlush();
             }
         };
@@ -183,7 +172,6 @@ class ReceivePackServlet extends HttpServlet {
                     rsp.reset();
                     sendError(req, rsp, SC_INTERNAL_SERVER_ERROR);
                 }
-                return;
             }
         }
     }

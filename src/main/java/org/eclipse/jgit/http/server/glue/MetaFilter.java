@@ -17,7 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
-
+import org.eclipse.jgit.http.server.HttpServerText;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -27,8 +27,6 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.eclipse.jgit.http.server.HttpServerText;
 
 /**
  * Generic container filter to manage routing to different pipelines.
@@ -67,8 +65,9 @@ public class MetaFilter implements Filter {
      * @return binder for the passed path.
      */
     public ServletBinder serve(String path) {
-        if (path.startsWith("*"))
+        if (path.startsWith("*")) {
             return register(new SuffixPipeline.Binder(path.substring(1)));
+        }
         throw new IllegalArgumentException(MessageFormat.format(HttpServerText.get().pathNotSupported, path));
     }
 
@@ -94,17 +93,16 @@ public class MetaFilter implements Filter {
         return register(new RegexPipeline.Binder(pattern));
     }
 
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
+    @Override public void init(FilterConfig filterConfig) throws ServletException {
         servletContext = filterConfig.getServletContext();
     }
 
-    @Override
-    public void destroy() {
+    @Override public void destroy() {
         if (pipelines != null) {
             Set<Object> destroyed = newIdentitySet();
-            for (UrlPipeline p : pipelines)
+            for (UrlPipeline p : pipelines) {
                 p.destroy(destroyed);
+            }
             pipelines = null;
         }
     }
@@ -113,50 +111,50 @@ public class MetaFilter implements Filter {
         final IdentityHashMap<Object, Object> m = new IdentityHashMap<>();
         return new AbstractSet<>() {
 
-            @Override
-            public boolean add(Object o) {
+            @Override public boolean add(Object o) {
                 return m.put(o, o) == null;
             }
 
-            @Override
-            public boolean contains(Object o) {
+            @Override public boolean contains(Object o) {
                 return m.containsKey(o);
             }
 
-            @Override
-            public Iterator<Object> iterator() {
+            @Override public Iterator<Object> iterator() {
                 return m.keySet().iterator();
             }
 
-            @Override
-            public int size() {
+            @Override public int size() {
                 return m.size();
             }
         };
     }
 
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+    @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
         UrlPipeline p = find(req);
-        if (p != null)
+        if (p != null) {
             p.service(req, res);
-        else
+        }
+        else {
             chain.doFilter(req, res);
+        }
     }
 
     private UrlPipeline find(HttpServletRequest req) throws ServletException {
-        for (UrlPipeline p : getPipelines())
-            if (p.match(req))
+        for (UrlPipeline p : getPipelines()) {
+            if (p.match(req)) {
                 return p;
+            }
+        }
         return null;
     }
 
     private ServletBinder register(ServletBinderImpl b) {
         synchronized (bindings) {
-            if (pipelines != null)
+            if (pipelines != null) {
                 throw new IllegalStateException(HttpServerText.get().servletAlreadyInitialized);
+            }
             bindings.add(b);
         }
         return register((ServletBinder) b);
@@ -191,12 +189,14 @@ public class MetaFilter implements Filter {
     private UrlPipeline[] createPipelines() throws ServletException {
         UrlPipeline[] array = new UrlPipeline[bindings.size()];
 
-        for (int i = 0; i < bindings.size(); i++)
+        for (int i = 0; i < bindings.size(); i++) {
             array[i] = bindings.get(i).create();
+        }
 
         Set<Object> inited = newIdentitySet();
-        for (UrlPipeline p : array)
+        for (UrlPipeline p : array) {
             p.init(servletContext, inited);
+        }
         return array;
     }
 }

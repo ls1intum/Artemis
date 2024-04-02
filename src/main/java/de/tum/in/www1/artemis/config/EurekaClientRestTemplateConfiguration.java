@@ -28,6 +28,24 @@ public class EurekaClientRestTemplateConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(EurekaClientRestTemplateConfiguration.class);
 
+    /**
+     * Configures and returns {@link RestTemplateDiscoveryClientOptionalArgs} for Eureka client communication,
+     * with optional TLS/SSL setup based on provided configuration.
+     * <p>
+     * This method leverages the {@link EurekaClientHttpRequestFactorySupplier} to configure the RestTemplate
+     * specifically for Eureka client interactions. If TLS is enabled in the provided {@link TlsProperties},
+     * a custom SSLContext is set up to ensure secure communication.
+     * </p>
+     *
+     * @param tlsProperties                          The TLS configuration properties, used to check if TLS is enabled and to configure it accordingly.
+     * @param eurekaClientHttpRequestFactorySupplier Supplies the HTTP request factory for the Eureka client RestTemplate.
+     * @return A configured instance of {@link RestTemplateDiscoveryClientOptionalArgs} for Eureka client,
+     *         potentially with SSL/TLS enabled if specified in the {@code tlsProperties}.
+     * @throws GeneralSecurityException If there's an issue with setting up the SSL/TLS context.
+     * @throws IOException              If there's an I/O error during the setup.
+     * @see TlsProperties
+     * @see EurekaClientHttpRequestFactorySupplier
+     */
     @Bean
     public RestTemplateDiscoveryClientOptionalArgs restTemplateDiscoveryClientOptionalArgs(TlsProperties tlsProperties,
             EurekaClientHttpRequestFactorySupplier eurekaClientHttpRequestFactorySupplier) throws GeneralSecurityException, IOException {

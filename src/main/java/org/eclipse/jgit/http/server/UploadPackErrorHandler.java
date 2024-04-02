@@ -7,19 +7,16 @@
  */
 package org.eclipse.jgit.http.server;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
-import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-import static jakarta.servlet.http.HttpServletResponse.SC_OK;
-
 import java.io.IOException;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.eclipse.jgit.errors.PackProtocolException;
 import org.eclipse.jgit.transport.ServiceMayNotContinueException;
 import org.eclipse.jgit.transport.UploadPack;
 import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+import static jakarta.servlet.http.HttpServletResponse.SC_OK;
 
 /**
  * Handle git-upload-pack errors.
@@ -47,7 +44,7 @@ public interface UploadPackErrorHandler {
      * @return the HTTP status code as an int
      * @since 6.1.1
      */
-    public static int statusCodeForThrowable(Throwable error) {
+    static int statusCodeForThrowable(Throwable error) {
         if (error instanceof ServiceNotEnabledException) {
             return SC_FORBIDDEN;
         }
@@ -73,7 +70,7 @@ public interface UploadPackErrorHandler {
     void upload(HttpServletRequest req, HttpServletResponse rsp, UploadPackRunnable r) throws IOException;
 
     /** Process a git-upload-pack request. */
-    public interface UploadPackRunnable {
+    interface UploadPackRunnable {
 
         /**
          * See {@link UploadPack#uploadWithExceptionPropagation}.

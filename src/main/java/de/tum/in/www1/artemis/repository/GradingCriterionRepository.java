@@ -19,8 +19,6 @@ import de.tum.in.www1.artemis.domain.GradingCriterion;
 @Repository
 public interface GradingCriterionRepository extends JpaRepository<GradingCriterion, Long> {
 
-    Set<GradingCriterion> findByExerciseId(long exerciseId);
-
     @Query("""
             SELECT DISTINCT criterion
             FROM GradingCriterion criterion

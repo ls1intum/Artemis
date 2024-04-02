@@ -8,24 +8,12 @@
 
 package org.eclipse.jgit.http.server;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
-import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
-import static org.eclipse.jgit.http.server.ServletUtils.ATTRIBUTE_HANDLER;
-import static org.eclipse.jgit.transport.GitProtocolConstants.CAPABILITY_SIDE_BAND_64K;
-import static org.eclipse.jgit.transport.SideBandOutputStream.CH_ERROR;
-import static org.eclipse.jgit.transport.SideBandOutputStream.SMALL_BUF;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.eclipse.jgit.internal.transport.parser.FirstCommand;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.PacketLineIn;
@@ -33,6 +21,15 @@ import org.eclipse.jgit.transport.PacketLineOut;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.RequestNotYetReadException;
 import org.eclipse.jgit.transport.SideBandOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static org.eclipse.jgit.http.server.ServletUtils.ATTRIBUTE_HANDLER;
+import static org.eclipse.jgit.transport.GitProtocolConstants.CAPABILITY_SIDE_BAND_64K;
+import static org.eclipse.jgit.transport.SideBandOutputStream.CH_ERROR;
+import static org.eclipse.jgit.transport.SideBandOutputStream.SMALL_BUF;
 
 /**
  * Utility functions for handling the Git-over-HTTP protocol.
@@ -60,7 +57,7 @@ public class GitSmartHttpTools {
     public static final String RECEIVE_PACK_RESULT_TYPE = "application/x-git-receive-pack-result";
 
     /** Git service names accepted by the /info/refs?service= handler. */
-    public static final List<String> VALID_SERVICES = Collections.unmodifiableList(Arrays.asList(new String[] { UPLOAD_PACK, RECEIVE_PACK }));
+    public static final List<String> VALID_SERVICES = Collections.unmodifiableList(Arrays.asList(UPLOAD_PACK, RECEIVE_PACK));
 
     private static final String INFO_REFS_PATH = "/" + INFO_REFS;
 
@@ -68,7 +65,7 @@ public class GitSmartHttpTools {
 
     private static final String RECEIVE_PACK_PATH = "/" + RECEIVE_PACK;
 
-    private static final List<String> SERVICE_SUFFIXES = Collections.unmodifiableList(Arrays.asList(new String[] { INFO_REFS_PATH, UPLOAD_PACK_PATH, RECEIVE_PACK_PATH }));
+    private static final List<String> SERVICE_SUFFIXES = Collections.unmodifiableList(Arrays.asList(INFO_REFS_PATH, UPLOAD_PACK_PATH, RECEIVE_PACK_PATH));
 
     /**
      * Check a request for Git-over-HTTP indicators.
@@ -157,8 +154,9 @@ public class GitSmartHttpTools {
             sendReceivePackError(req, res, textForGit, httpStatus);
         }
         else {
-            if (httpStatus < 400)
+            if (httpStatus < 400) {
                 ServletUtils.consumeRequestBody(req);
+            }
             res.sendError(httpStatus, textForGit);
         }
     }
@@ -197,13 +195,16 @@ public class GitSmartHttpTools {
                 sideband = isReceivePackSideBand(req);
             }
         }
-        else
+        else {
             sideband = isReceivePackSideBand(req);
+        }
 
-        if (sideband)
+        if (sideband) {
             writeSideBand(buf, textForGit);
-        else
+        }
+        else {
             writePacket(pckOut, textForGit);
+        }
         send(req, res, RECEIVE_PACK_RESULT_TYPE, buf.toByteArray(), httpStatus);
     }
 
@@ -259,14 +260,18 @@ public class GitSmartHttpTools {
      *                                      {@link #isGitClient(HttpServletRequest)}.
      */
     public static String getResponseContentType(HttpServletRequest req) {
-        if (isInfoRefs(req))
+        if (isInfoRefs(req)) {
             return infoRefsResultType(req.getParameter("service"));
-        else if (isUploadPack(req))
+        }
+        else if (isUploadPack(req)) {
             return UPLOAD_PACK_RESULT_TYPE;
-        else if (isReceivePack(req))
+        }
+        else if (isReceivePack(req)) {
             return RECEIVE_PACK_RESULT_TYPE;
-        else
+        }
+        else {
             throw new IllegalArgumentException();
+        }
     }
 
     static String infoRefsResultType(String svc) {
@@ -286,8 +291,9 @@ public class GitSmartHttpTools {
      */
     public static String stripServiceSuffix(String path) {
         for (String suffix : SERVICE_SUFFIXES) {
-            if (path.endsWith(suffix))
+            if (path.endsWith(suffix)) {
                 return path.substring(0, path.length() - suffix.length());
+            }
         }
         return path;
     }

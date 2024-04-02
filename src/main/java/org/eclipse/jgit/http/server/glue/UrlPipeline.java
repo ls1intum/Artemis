@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 import java.util.Set;
-
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletConfig;
@@ -66,8 +65,9 @@ abstract class UrlPipeline {
      *                              a filter or servlet is unable to initialize.
      */
     void init(ServletContext context, Set<Object> inited) throws ServletException {
-        for (Filter ref : filters)
+        for (Filter ref : filters) {
             initFilter(ref, context, inited);
+        }
         initServlet(servlet, context, inited);
     }
 
@@ -82,34 +82,28 @@ abstract class UrlPipeline {
         if (!inited.contains(ref)) {
             ref.init(new ServletConfig() {
 
-                @Override
-                public String getInitParameter(String name) {
+                @Override public String getInitParameter(String name) {
                     return null;
                 }
 
-                @Override
-                public Enumeration<String> getInitParameterNames() {
+                @Override public Enumeration<String> getInitParameterNames() {
                     return new Enumeration<>() {
 
-                        @Override
-                        public boolean hasMoreElements() {
+                        @Override public boolean hasMoreElements() {
                             return false;
                         }
 
-                        @Override
-                        public String nextElement() {
+                        @Override public String nextElement() {
                             throw new NoSuchElementException();
                         }
                     };
                 }
 
-                @Override
-                public ServletContext getServletContext() {
+                @Override public ServletContext getServletContext() {
                     return context;
                 }
 
-                @Override
-                public String getServletName() {
+                @Override public String getServletName() {
                     return ref.getClass().getName();
                 }
             });
@@ -128,8 +122,9 @@ abstract class UrlPipeline {
      *                      destroyed by this pipeline will be added to this set.
      */
     void destroy(Set<Object> destroyed) {
-        for (Filter ref : filters)
+        for (Filter ref : filters) {
             destroyFilter(ref, destroyed);
+        }
         destroyServlet(servlet, destroyed);
     }
 
@@ -178,10 +173,12 @@ abstract class UrlPipeline {
      *                              IO error prevents the request from being completed.
      */
     void service(HttpServletRequest req, HttpServletResponse rsp) throws ServletException, IOException {
-        if (0 < filters.length)
+        if (0 < filters.length) {
             new Chain(filters, servlet).doFilter(req, rsp);
-        else
+        }
+        else {
             servlet.service(req, rsp);
+        }
     }
 
     private static class Chain implements FilterChain {
@@ -197,12 +194,13 @@ abstract class UrlPipeline {
             this.servlet = servlet;
         }
 
-        @Override
-        public void doFilter(ServletRequest req, ServletResponse rsp) throws IOException, ServletException {
-            if (filterIdx < filters.length)
+        @Override public void doFilter(ServletRequest req, ServletResponse rsp) throws IOException, ServletException {
+            if (filterIdx < filters.length) {
                 filters[filterIdx++].doFilter(req, rsp, this);
-            else
+            }
+            else {
                 servlet.service(req, rsp);
+            }
         }
     }
 }
