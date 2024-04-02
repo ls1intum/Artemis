@@ -24,6 +24,7 @@ export interface StandardizedCompetencyDTO extends BaseEntity {
 
 export interface KnowledgeArea extends BaseEntity {
     title?: string;
+    shortTitle?: string;
     description?: string;
     parent?: KnowledgeArea;
     children?: KnowledgeArea[];
@@ -32,6 +33,7 @@ export interface KnowledgeArea extends BaseEntity {
 
 export interface KnowledgeAreaDTO extends BaseEntity {
     title?: string;
+    shortTitle?: string;
     description?: string;
     parentId?: number;
     children?: KnowledgeAreaDTO[];

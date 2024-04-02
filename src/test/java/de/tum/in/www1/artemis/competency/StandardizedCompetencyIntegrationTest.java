@@ -165,7 +165,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
             @Test
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldUpdateCompetency() throws Exception {
-                var newKnowledgeArea = new KnowledgeArea("KA", "KA description");
+                var newKnowledgeArea = new KnowledgeArea("Knowledge Area", "KA", "KA description");
                 newKnowledgeArea = knowledgeAreaRepository.save(newKnowledgeArea);
 
                 standardizedCompetency.setTitle("New Title");
@@ -183,6 +183,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
             void shouldReturn404() throws Exception {
                 // competency with this id does not exist
                 var competencyNotExisting = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "");
+                competencyNotExisting.setKnowledgeArea(knowledgeArea);
                 competencyNotExisting.setId(999999999L);
 
                 request.put("/api/admin/standardized-competencies/999999999", competencyNotExisting, HttpStatus.NOT_FOUND);
@@ -192,13 +193,14 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
 
                 var invalidCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, null);
                 invalidCompetency.setId(id);
-                var knowlegeAreaNotExisting = new KnowledgeArea("Title", "Description");
+                var knowlegeAreaNotExisting = new KnowledgeArea("Knowledge Area", "KA", "Description");
                 knowlegeAreaNotExisting.setId(-1000L);
                 invalidCompetency.setKnowledgeArea(knowlegeAreaNotExisting);
 
                 request.put("/api/admin/standardized-competencies/" + id, invalidCompetency, HttpStatus.NOT_FOUND);
 
                 invalidCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, null);
+                invalidCompetency.setKnowledgeArea(knowledgeArea);
                 invalidCompetency.setId(id);
                 var sourceNotExisting = new Source();
                 sourceNotExisting.setId(-1000L);
@@ -322,9 +324,9 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
             @Test
             @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
             void shouldGetAllKnowledgeAreasAndCompetencies() throws Exception {
-                var knowledgeAreaA = new KnowledgeArea("!!!A_Title", "Description");
+                var knowledgeAreaA = new KnowledgeArea("!!!A_Title", "A", "Description");
                 knowledgeAreaA = knowledgeAreaRepository.save(knowledgeAreaA);
-                var knowledgeAreaB = new KnowledgeArea("B_Title", "Description");
+                var knowledgeAreaB = new KnowledgeArea("B_Title", "B", "Description");
                 knowledgeAreaB.setParent(knowledgeAreaA);
                 knowledgeAreaB = knowledgeAreaRepository.save(knowledgeAreaB);
                 var competency1 = new StandardizedCompetency("Title", "Description", CompetencyTaxonomy.ANALYZE, "1.0.0");
@@ -335,8 +337,8 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
 
                 var actualKnowledgeAreaA = knowledgeAreaTree.get(0);
                 var actualKnowledgeAreaB = actualKnowledgeAreaA.children().get(0);
-                assertThat(actualKnowledgeAreaA).usingRecursiveComparison().comparingOnlyFields("id", "title").isEqualTo(knowledgeAreaA);
-                assertThat(actualKnowledgeAreaB).usingRecursiveComparison().comparingOnlyFields("id", "title").isEqualTo(knowledgeAreaB);
+                assertThat(actualKnowledgeAreaA).usingRecursiveComparison().comparingOnlyFields("id", "title", "shortTitle").isEqualTo(knowledgeAreaA);
+                assertThat(actualKnowledgeAreaB).usingRecursiveComparison().comparingOnlyFields("id", "title", "shortTitle").isEqualTo(knowledgeAreaB);
                 assertThat(actualKnowledgeAreaB.competencies().get(0)).usingRecursiveComparison().comparingOnlyFields("id", "title").isEqualTo(competency1);
             }
         }

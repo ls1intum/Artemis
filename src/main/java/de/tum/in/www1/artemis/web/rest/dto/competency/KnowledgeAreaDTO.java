@@ -10,5 +10,6 @@ import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
  * DTO containing {@link KnowledgeArea} data. It only contains the id of its parent.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record KnowledgeAreaDTO(long id, String title, String description, Long parentId, List<KnowledgeAreaDTO> children, List<StandardizedCompetencyDTO> competencies) {
+public record KnowledgeAreaDTO(long id, String title, String shortTitle, String description, Long parentId, List<KnowledgeAreaDTO> children,
+        List<StandardizedCompetencyDTO> competencies) {
 }

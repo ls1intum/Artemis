@@ -197,6 +197,7 @@ public class StandardizedCompetencyService {
         var children = knowledgeArea.getChildren().stream().map(this::knowledgeAreaToDTO).toList();
         var competencies = knowledgeArea.getCompetencies().stream().map(this::standardizedCompetencyToDTO).toList();
 
-        return new KnowledgeAreaDTO(knowledgeArea.getId(), knowledgeArea.getTitle(), knowledgeArea.getDescription(), parentId, children, competencies);
+        return new KnowledgeAreaDTO(knowledgeArea.getId(), knowledgeArea.getTitle(), knowledgeArea.getShortTitle(), knowledgeArea.getDescription(), parentId, children,
+                competencies);
     }
 }
