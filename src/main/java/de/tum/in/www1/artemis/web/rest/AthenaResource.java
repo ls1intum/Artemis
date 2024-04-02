@@ -79,7 +79,7 @@ public class AthenaResource {
     }
 
     @FunctionalInterface
-    private interface FeedbackProvider<ExerciseType, SubmissionType, Boolean, OutputType> {
+    private interface FeedbackProvider<ExerciseType, SubmissionType, OutputType> {
 
         /**
          * Method to apply the (graded) feedback provider. Examples: AthenaFeedbackSuggestionsService::getTextFeedbackSuggestions,
@@ -89,7 +89,7 @@ public class AthenaResource {
     }
 
     private <ExerciseT extends Exercise, SubmissionT extends Submission, OutputT> ResponseEntity<List<OutputT>> getFeedbackSuggestions(long exerciseId, long submissionId,
-            Function<Long, ExerciseT> exerciseFetcher, Function<Long, SubmissionT> submissionFetcher, FeedbackProvider<ExerciseT, SubmissionT, Boolean, OutputT> feedbackProvider) {
+            Function<Long, ExerciseT> exerciseFetcher, Function<Long, SubmissionT> submissionFetcher, FeedbackProvider<ExerciseT, SubmissionT, OutputT> feedbackProvider) {
 
         log.debug("REST call to get feedback suggestions for exercise {}, submission {}", exerciseId, submissionId);
 

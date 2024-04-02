@@ -376,7 +376,7 @@ public class ParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         checkAccessPermissionOwner(participation, user);
-        programmingExercise.validateFeedbackSettings();
+        programmingExercise.validateSettingsForFeedbackRequest();
 
         var studentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
         var result = studentParticipation.findLatestLegalResult();
@@ -390,7 +390,7 @@ public class ParticipationResource {
             throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
         }
 
-        participation = this.programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exerciseId, studentParticipation, programmingExercise);
+        participation = this.programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(studentParticipation, programmingExercise);
 
         return ResponseEntity.ok().body(participation);
     }

@@ -212,7 +212,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
     }
 
-    public boolean getAllowFeedbackRequests() {
+    public boolean areFeedbackRequestsAllowed() {
         return allowFeedbackRequests;
     }
 
