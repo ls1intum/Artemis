@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.participation;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -84,12 +84,12 @@ public class StudentParticipation extends Participation {
         }
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getParticipantIdentifier() {
         return Optional.ofNullable(getParticipant()).map(Participant::getParticipantIdentifier).orElse(null);
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getParticipantName() {
         return Optional.ofNullable(getParticipant()).map(Participant::getName).orElse(null);
     }

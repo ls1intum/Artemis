@@ -10,10 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,8 +39,8 @@ import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
-import de.tum.in.www1.artemis.security.lti.Lti13LaunchFilter;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
+import de.tum.in.www1.artemis.web.filter.Lti13LaunchFilter;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
@@ -141,7 +141,7 @@ class Lti13LaunchFilterTest {
 
         idTokenClaims.put(Claims.DEEP_LINKING_SETTINGS, "{ \"deep_link_return_url\": \"https://platform.example/deep_links\" }");
         idTokenClaims.put(Claims.TARGET_LINK_URI, "/lti/deep-linking/121");
-        idTokenClaims.put(Claims.MESSAGE_TYPE, "LtiDeepLinkingRequest");
+        idTokenClaims.put(Claims.MESSAGE_TYPE, CustomLti13Configurer.LTI13_DEEPLINK_MESSAGE_REQUEST);
     }
 
     @Test
@@ -161,7 +161,7 @@ class Lti13LaunchFilterTest {
         JsonObject responseJsonBody = getMockJsonObject(true);
         verify(lti13Service).startDeepLinking(any(), any());
         verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
-        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains("/lti/deep-linking");
+        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains("/lti/select-course");
         verify(lti13Service).buildLtiResponse(any(), any());
 
     }
@@ -204,7 +204,7 @@ class Lti13LaunchFilterTest {
     }
 
     @Test
-    void emailAddressAlreadyInUseServiceLaunchFailed() throws ServletException, IOException {
+    void emailAddressAlreadyInUseServiceLaunchFailed() throws ServletException, IOException, ServletException {
         StringWriter stringWriter = new StringWriter();
         PrintWriter printWriter = new PrintWriter(stringWriter);
         doReturn(printWriter).when(httpResponse).getWriter();
@@ -236,7 +236,7 @@ class Lti13LaunchFilterTest {
         JsonObject responseJsonBody = getMockJsonObject(true);
 
         verify(httpResponse).setStatus(HttpStatus.UNAUTHORIZED.value());
-        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains("/lti/deep-linking/");
+        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains("/lti/select-course");
         assertThat(responseJsonBody.get("ltiIdToken")).isNull();
         assertThat((responseJsonBody.get("clientRegistrationId").toString())).as("Response body contains the expected clientRegistrationId").contains("some-registration");
 

@@ -59,7 +59,7 @@ public class Lti13ClientRegistration {
      * @param clientRegistrationId The client registration ID for LTI configuration.
      */
     public Lti13ClientRegistration(String serverUrl, String clientRegistrationId) {
-        this.setGrantTypes(Arrays.asList(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue(), AuthorizationGrantType.IMPLICIT.getValue()));
+        this.setGrantTypes(Arrays.asList(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue(), AuthorizationGrantType.AUTHORIZATION_CODE.getValue()));
         this.setResponseTypes(List.of("id_token"));
         this.setClientName("Artemis - " + serverUrl);
         this.setTokenEndpointAuthMethod("private_key_jwt");
@@ -84,7 +84,7 @@ public class Lti13ClientRegistration {
         toolConfiguration.setDomain(domain);
         toolConfiguration.setTargetLinkUri(serverUrl + "/courses");
         toolConfiguration.setClaims(Arrays.asList("iss", "email", "sub", "name", "given_name", "family_name"));
-        Message deepLinkingMessage = new Message("LtiDeepLinkingRequest", serverUrl + CustomLti13Configurer.LTI13_DEEPLINK_REDIRECT_PATH);
+        Message deepLinkingMessage = new Message(CustomLti13Configurer.LTI13_DEEPLINK_MESSAGE_REQUEST, serverUrl + CustomLti13Configurer.LTI13_DEEPLINK_REDIRECT_PATH);
         toolConfiguration.setMessages(List.of(deepLinkingMessage));
         return toolConfiguration;
     }

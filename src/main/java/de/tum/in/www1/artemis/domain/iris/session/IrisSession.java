@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -61,6 +61,10 @@ public abstract class IrisSession extends DomainObject {
 
     public List<IrisMessage> getMessages() {
         return messages;
+    }
+
+    public void setMessages(List<IrisMessage> messages) {
+        this.messages = messages;
     }
 
 }
