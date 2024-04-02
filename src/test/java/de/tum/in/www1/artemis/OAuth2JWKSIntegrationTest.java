@@ -16,9 +16,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
-import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 
 class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -27,12 +25,6 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
-
-    @Autowired
-    private OAuth2JWKSService oAuth2JWKSService;
-
-    @Autowired
-    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
     @Test
     @WithAnonymousUser
