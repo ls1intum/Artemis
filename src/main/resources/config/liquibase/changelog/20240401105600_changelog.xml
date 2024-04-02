@@ -2,7 +2,6 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <!-- TODO: remove when 7.0.0 initial schema is released -->
     <changeSet id="20240301174800" author="rstief">
 
         <!-- add tables -->
@@ -19,7 +18,9 @@
                 <constraints nullable="false"/>
             </column>
             <column name="first_version_id" type="bigint"/>
-            <column name="knowledge_area_id" type="bigint"/>
+            <column name="knowledge_area_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
             <column name="source_id" type="bigint"/>
         </createTable>
 
@@ -28,6 +29,9 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="title" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="short_title" type="varchar(10)">
                 <constraints nullable="false"/>
             </column>
             <column name="description" type="varchar(2000)"/>
@@ -70,11 +74,6 @@
         <addForeignKeyConstraint baseColumnNames="linked_standardized_competency_id" baseTableName="competency"
                                  constraintName="fk_competency_linked_standardized_competency" referencedColumnNames="id"
                                  referencedTableName="standardized_competency"/>
-
-        <!-- add indexes -->
-        <createIndex tableName="standardized_competency" indexName="idx_standardized_competency_title" unique="false">
-            <column name="title"/>
-        </createIndex>
 
     </changeSet>
 </databaseChangeLog>
