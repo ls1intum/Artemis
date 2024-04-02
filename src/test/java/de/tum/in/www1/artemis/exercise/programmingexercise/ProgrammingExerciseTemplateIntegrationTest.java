@@ -120,6 +120,14 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
                     return;
                 }
             }
+
+            var alternativeInstallations = runProcess(new ProcessBuilder("/usr/libexec/java_home", "-v", "17"));
+            for (String path : alternativeInstallations) {
+                File binFolder = new File(path).getParentFile();
+                if (checkJavaVersion(binFolder, "./Home/bin/java", "-version")) {
+                    return;
+                }
+            }
         }
         else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             // Use PATH to find all java installations on windows
