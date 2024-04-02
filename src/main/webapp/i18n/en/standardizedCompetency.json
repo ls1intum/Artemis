@@ -39,7 +39,8 @@
             "model": {
                 "title": "Title",
                 "description": "Description"
-            }
+            },
+            "empty": "This knowledge area has no content yet"
         }
     }
 }

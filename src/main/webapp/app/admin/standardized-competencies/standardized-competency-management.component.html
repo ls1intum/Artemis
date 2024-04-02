@@ -44,7 +44,7 @@
         <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="treeControl.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
     </div>
     <div class="d-flex">
-        <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" [trackBy]="trackBy" class="card d-flex flex-grow-1 w-50">
+        <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" [trackBy]="trackBy" class="card d-flex flex-grow-1 h-100 w-50">
             <mat-nested-tree-node *matTreeNodeDef="let node" [class.d-none]="!node.isVisible">
                 <div class="card tree-card light-background">
                     <div class="tree-card-row clickable me-2" matTreeNodeToggle>
@@ -52,7 +52,6 @@
                             <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="treeControl.isExpanded(node)" />
                         </div>
                         <h5 class="mb-0">{{ node.title }}</h5>
-                        <!-- TODO: add #children, #competencies -->
                     </div>
                     <div class="tree-card-row">
                         <jhi-button
@@ -71,6 +70,11 @@
                                 <fa-icon class="me-2" [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
                                 <h6 class="mb-0">{{ competency.title }}</h6>
                             </div>
+                        </div>
+                    }
+                    @if (!node.children && !node.competencies) {
+                        <div class="card tree-card light-background">
+                            <h6 class="mb-0" jhiTranslate="artemisApp.knowledgeArea.empty"></h6>
                         </div>
                     }
                 </div>

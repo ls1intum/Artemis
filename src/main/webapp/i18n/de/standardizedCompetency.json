@@ -39,7 +39,8 @@
             "model": {
                 "title": "Titel",
                 "description": "Beschreibung"
-            }
+            },
+            "empty": "Dieses Wissensgebiet hat noch keinen Inhalt"
         }
     }
 }
