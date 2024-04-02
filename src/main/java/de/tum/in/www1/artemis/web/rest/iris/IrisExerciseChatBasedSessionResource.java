@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -43,21 +44,22 @@ public abstract class IrisExerciseChatBasedSessionResource<E extends Exercise, S
 
     protected final IrisRateLimitService irisRateLimitService;
 
-    protected final Function<Long, E> exerciseByIdFunction;
+    protected final ProgrammingExerciseRepository programmingExerciseRepository;
 
     protected IrisExerciseChatBasedSessionResource(AuthorizationCheckService authCheckService, UserRepository userRepository, IrisSessionService irisSessionService,
-            IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService, Function<Long, E> exerciseByIdFunction) {
+            IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
         this.pyrisHealthIndicator = pyrisHealthIndicator;
         this.irisRateLimitService = irisRateLimitService;
-        this.exerciseByIdFunction = exerciseByIdFunction;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     protected ResponseEntity<S> getCurrentSession(Long exerciseId, IrisSubSettingsType subSettingsType, Role role, BiFunction<Exercise, User, S> sessionsFunction) {
-        var exercise = exerciseByIdFunction.apply(exerciseId);
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         irisSettingsService.isEnabledForElseThrow(subSettingsType, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(role, exercise, user);
@@ -68,7 +70,7 @@ public abstract class IrisExerciseChatBasedSessionResource<E extends Exercise, S
     }
 
     protected ResponseEntity<List<S>> getAllSessions(Long exerciseId, IrisSubSettingsType subSettingsType, Role role, BiFunction<Exercise, User, List<S>> sessionsFunction) {
-        var exercise = exerciseByIdFunction.apply(exerciseId);
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         irisSettingsService.isEnabledForElseThrow(subSettingsType, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(role, exercise, user);
@@ -80,7 +82,7 @@ public abstract class IrisExerciseChatBasedSessionResource<E extends Exercise, S
 
     protected ResponseEntity<S> createSessionForExercise(Long exerciseId, IrisSubSettingsType subSettingsType, Role role, BiFunction<Exercise, User, S> sessionsFunction)
             throws URISyntaxException {
-        var exercise = exerciseByIdFunction.apply(exerciseId);
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }

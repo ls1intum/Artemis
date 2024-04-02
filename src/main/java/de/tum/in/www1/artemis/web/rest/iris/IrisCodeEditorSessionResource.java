@@ -36,8 +36,7 @@ public class IrisCodeEditorSessionResource extends IrisExerciseChatBasedSessionR
     protected IrisCodeEditorSessionResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService,
             IrisCodeEditorSessionRepository irisCodeEditorSessionRepository) {
-        super(authCheckService, userRepository, irisSessionService, irisSettingsService, pyrisHealthIndicator, irisRateLimitService,
-                programmingExerciseRepository::findByIdElseThrow);
+        super(authCheckService, userRepository, irisSessionService, irisSettingsService, pyrisHealthIndicator, irisRateLimitService, programmingExerciseRepository);
         this.irisCodeEditorSessionRepository = irisCodeEditorSessionRepository;
     }
 

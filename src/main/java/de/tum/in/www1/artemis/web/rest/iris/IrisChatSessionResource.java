@@ -36,8 +36,7 @@ public class IrisChatSessionResource extends IrisExerciseChatBasedSessionResourc
     protected IrisChatSessionResource(AuthorizationCheckService authCheckService, IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
             PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService) {
-        super(authCheckService, userRepository, irisSessionService, irisSettingsService, pyrisHealthIndicator, irisRateLimitService,
-                programmingExerciseRepository::findByIdElseThrow);
+        super(authCheckService, userRepository, irisSessionService, irisSettingsService, pyrisHealthIndicator, irisRateLimitService, programmingExerciseRepository);
         this.irisChatSessionRepository = irisChatSessionRepository;
     }
 
