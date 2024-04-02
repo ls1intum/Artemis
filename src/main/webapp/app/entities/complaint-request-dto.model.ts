@@ -7,6 +7,4 @@ export class ComplaintRequestDTO {
     public complaintText?: string;
     public complaintType?: ComplaintType;
     public examId?: number;
-
-    constructor() {}
 }

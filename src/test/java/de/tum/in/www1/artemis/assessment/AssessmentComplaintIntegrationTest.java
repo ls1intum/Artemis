@@ -132,7 +132,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         modelingExercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
-        complaintRequest = new ComplaintRequestDTO(complaint.getResult().getId(), complaint.getComplaintText(), complaint.getComplaintType(), OptionalLong.empty());
+        complaintRequest = new ComplaintRequestDTO(modelingAssessment.getId(), "This is not fair", ComplaintType.COMPLAINT, OptionalLong.empty());
         moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
     }
 
@@ -187,16 +187,10 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void submitComplaintWithId() throws Exception {
-        complaint.setId(1L);
-        request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintResultIsNull() throws Exception {
-        complaint.setResult(null);
-        request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
+        var complaintRequest = new ComplaintRequestDTO(null, "This is not fair", ComplaintType.COMPLAINT, OptionalLong.empty());
+
+        request.post("/api/complaints", complaintRequest, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -220,7 +214,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
         complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
 
-        request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
+        request.post("/api/complaints", complaintRequest, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
@@ -272,7 +266,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(3));
         exerciseUtilService.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(2));
 
-        request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
+        request.post("/api/complaints", complaintRequest, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();

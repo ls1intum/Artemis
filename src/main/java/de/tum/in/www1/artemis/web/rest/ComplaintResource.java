@@ -90,18 +90,21 @@ public class ComplaintResource {
 
         Result result = resultRepository.findByIdElseThrow(complaint.resultId());
 
-        // For exam exercises, the POST complaints/exam/examId should be used
-        if (result.getParticipation().getExercise().isExamExercise()) {
-            throw new BadRequestAlertException("A complaint for an exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME, "complaintAboutExerciseWrongComponent");
-        }
-
         String entityName = complaint.complaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
         Complaint savedComplaint;
         if (complaint.examId().isPresent()) {
+            if (!result.getParticipation().getExercise().isExamExercise()) {
+                throw new BadRequestAlertException("A complaint for an course exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
+                        "complaintAboutCourseExerciseWrongComponent");
+            }
             authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
             savedComplaint = complaintService.createComplaint(complaint, result, complaint.examId(), principal);
         }
         else {
+            if (result.getParticipation().getExercise().isExamExercise()) {
+                throw new BadRequestAlertException("A complaint for an exam exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
+                        "complaintAboutExamExerciseWrongComponent");
+            }
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
             savedComplaint = complaintService.createComplaint(complaint, result, OptionalLong.empty(), principal);
         }
