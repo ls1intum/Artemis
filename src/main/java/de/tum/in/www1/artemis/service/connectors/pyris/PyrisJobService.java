@@ -6,6 +6,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Service
+@Profile("iris")
 public class PyrisJobService {
 
     private final HazelcastInstance hazelcastInstance;
@@ -44,6 +46,12 @@ public class PyrisJobService {
         jobMap = hazelcastInstance.getMap("pyris-job-map");
     }
 
+    /**
+     * Add a job to the job map.
+     *
+     * @param job the job
+     * @return the token
+     */
     public String addJob(PyrisJob job) {
         var token = generateJobIdToken();
         job.setId(token);
@@ -51,14 +59,31 @@ public class PyrisJobService {
         return token;
     }
 
+    /**
+     * Remove a job from the job map.
+     *
+     * @param token the token
+     */
     public void removeJob(String token) {
         jobMap.remove(token);
     }
 
+    /**
+     * Get the job of a token.
+     *
+     * @param token the token
+     * @return the job
+     */
     public PyrisJob getJob(String token) {
         return jobMap.get(token);
     }
 
+    /**
+     * Get the job from the request headers. Throws an exception if the token is invalid.
+     *
+     * @param request the request
+     * @return the job
+     */
     public PyrisJob getJobFromHeader(HttpServletRequest request) {
         var authHeader = request.getHeader("Authorization");
         if (!authHeader.startsWith("Bearer ")) {

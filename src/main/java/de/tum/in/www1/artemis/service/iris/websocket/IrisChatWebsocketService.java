@@ -43,6 +43,7 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
      * Sends a message over the websocket to a specific user
      *
      * @param irisMessage that should be sent over the websocket
+     * @param stages      that should be sent over the websocket
      */
     public void sendMessage(IrisMessage irisMessage, List<PyrisStageDTO> stages) {
         var session = irisMessage.getSession();
@@ -56,6 +57,7 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
      *
      * @param session   to which the exception belongs
      * @param throwable that should be sent over the websocket
+     * @param stages    that should be sent over the websocket
      */
     public void sendException(IrisSession session, Throwable throwable, List<PyrisStageDTO> stages) {
         User user = checkSessionTypeAndGetUser(session);

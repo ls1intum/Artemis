@@ -22,6 +22,12 @@ public class PyrisStatusUpdateService {
         this.irisChatSessionService = irisChatSessionService;
     }
 
+    /**
+     * Handles the status update of a tutor chat job and forwards it to {@link IrisChatSessionService#handleStatusUpdate(TutorChatJob, PyrisTutorChatStatusUpdateDTO)}
+     *
+     * @param job          the job that is updated
+     * @param statusUpdate the status update
+     */
     public void handleStatusUpdate(TutorChatJob job, PyrisTutorChatStatusUpdateDTO statusUpdate) {
         irisChatSessionService.handleStatusUpdate(job, statusUpdate);
 

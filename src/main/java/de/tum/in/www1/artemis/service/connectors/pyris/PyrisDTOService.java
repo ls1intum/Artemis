@@ -10,6 +10,7 @@ import java.util.Optional;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -32,6 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisSubmissionD
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisTextMessageContentDTO;
 
 @Service
+@Profile("iris")
 public class PyrisDTOService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisDTOService.class);
@@ -45,6 +47,12 @@ public class PyrisDTOService {
         this.repositoryService = repositoryService;
     }
 
+    /**
+     * Convert a ProgrammingExercise to a PyrisProgrammingExerciseDTO
+     *
+     * @param exercise the exercise
+     * @return the PyrisProgrammingExerciseDTO
+     */
     public PyrisProgrammingExerciseDTO toPyrisDTO(ProgrammingExercise exercise) {
         var templateRepositoryContents = getRepository(exercise.getTemplateParticipation()).map(repositoryService::getFilesWithContent).orElse(Map.of());
         var solutionRepositoryContents = getRepository(exercise.getSolutionParticipation()).map(repositoryService::getFilesWithContent).orElse(Map.of());
@@ -61,6 +69,12 @@ public class PyrisDTOService {
                 testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
     }
 
+    /**
+     * Convert a ProgrammingSubmission to a PyrisSubmissionDTO
+     *
+     * @param submission the submission
+     * @return the PyrisSubmissionDTO
+     */
     public PyrisSubmissionDTO toPyrisDTO(ProgrammingSubmission submission) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
@@ -70,6 +84,12 @@ public class PyrisDTOService {
                 submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
     }
 
+    /**
+     * Convert a list of IrisMessage to a list of PyrisMessageDTO
+     *
+     * @param messages the messages
+     * @return the PyrisMessageDTOs
+     */
     public List<PyrisMessageDTO> toPyrisDTO(List<IrisMessage> messages) {
         return messages.stream().map(message -> {
             var content = message.getContent().stream().map(messageContent -> {

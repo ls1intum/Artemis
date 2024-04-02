@@ -157,6 +157,12 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
                 .flatMap(sub -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(sub.getId()));
     }
 
+    /**
+     * Handles the status update of a TutorChatJob by sending the result to the student via the Websocket.
+     *
+     * @param job          The job that was executed
+     * @param statusUpdate The status update of the job
+     */
     public void handleStatusUpdate(TutorChatJob job, PyrisTutorChatStatusUpdateDTO statusUpdate) {
         var session = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.getSessionId());
         if (statusUpdate.getResult() != null) {

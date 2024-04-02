@@ -42,6 +42,14 @@ public class PyrisPipelineService {
         this.irisChatWebsocketService = irisChatWebsocketService;
     }
 
+    /**
+     * Executes the tutor chat pipeline for the given session
+     *
+     * @param variant          the variant of the pipeline
+     * @param latestSubmission the latest submission of the user
+     * @param exercise         the exercise the user is working on
+     * @param session          the chat session
+     */
     public void executeTutorChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisChatSession session) {
         var jobToken = pyrisJobService.addJob(new TutorChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()));
         var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);

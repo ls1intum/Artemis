@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.PyrisJobService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisStatusUpdateService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
@@ -34,6 +35,15 @@ public class PyrisStatusUpdateResource {
         this.pyrisStatusUpdateService = pyrisStatusUpdateService;
     }
 
+    /**
+     * {@code POST /api/public/pyris/pipelines/tutor-chat/runs/{runId}/status} : Set the status of a tutor chat job.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     */
     @PostMapping("tutor-chat/runs/{runId}/status")
     @EnforceNothing // We do token based authentication
     public ResponseEntity<Void> setStatusOfJob(@PathVariable String runId, @RequestBody PyrisTutorChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
