@@ -589,7 +589,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult).isNotNull();
         assertThat(invokedResult.getId()).isNotNull();
         assertThat(invokedResult.isSuccessful()).isTrue();
-        assertThat(invokedResult.isAutomaticAthena()).isTrue();
+        assertThat(invokedResult.isAi()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(1);
 
         localRepo.resetLocalRepo();
@@ -635,7 +635,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult).isNotNull();
         assertThat(invokedResult.getId()).isNotNull();
         assertThat(invokedResult.isSuccessful()).isFalse();
-        assertThat(invokedResult.isAutomaticAthena()).isTrue();
+        assertThat(invokedResult.isAi()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(0);
 
         localRepo.resetLocalRepo();

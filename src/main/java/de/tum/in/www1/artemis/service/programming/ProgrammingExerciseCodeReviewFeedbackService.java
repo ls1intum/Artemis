@@ -45,7 +45,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService;
+    private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
@@ -64,7 +64,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ResultRepository resultRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService1, ProgrammingMessagingService programmingMessagingService) {
         this.groupNotificationService = groupNotificationService;
-        this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
+        this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService.orElse(null);
         this.submissionService = submissionService;
         this.resultService = resultService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -78,18 +78,20 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      * This method decides whether to generate feedback automatically using Athena,
      * or notify a tutor to manually process the feedback.
      *
+     * @param exerciseId          the id of the programming exercise.
      * @param participation       the student participation associated with the exercise.
      * @param programmingExercise the programming exercise object.
      * @return ProgrammingExerciseStudentParticipation updated programming exercise for a tutor assessment
      */
-    public ProgrammingExerciseStudentParticipation handleNonGradedFeedbackRequest(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
-        if (this.athenaFeedbackSuggestionsService.isPresent()) {
+    public ProgrammingExerciseStudentParticipation handleNonGradedFeedbackRequest(Long exerciseId, ProgrammingExerciseStudentParticipation participation,
+            ProgrammingExercise programmingExercise) {
+        if (this.athenaFeedbackSuggestionsService != null) {
             this.checkRateLimitOrThrow(participation);
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(programmingExercise.getId(), participation, programmingExercise));
+            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(exerciseId, participation, programmingExercise));
             return participation;
         }
         else {
-            log.debug("tutor is responsible to process feedback request: {}", programmingExercise.getId());
+            log.debug("tutor is responsible to process feedback request: {}", exerciseId);
             groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
             return setIndividualDueDateAndLockRepository(participation, programmingExercise, true);
         }
@@ -118,7 +120,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         var automaticResult = this.submissionService.saveNewEmptyResult(submission);
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         automaticResult.setRated(false);
-        automaticResult.setScore(100.0);
+        automaticResult.setScore(100.0); // requests allowed only if all autotests pass, => 100
         automaticResult.setSuccessful(null);
         automaticResult.setCompletionDate(ZonedDateTime.now().plusMinutes(5)); // we do not want to show dates without a completion date, but we want the students to know their
                                                                                // feedback request is in work
@@ -130,10 +132,9 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
             // now the client should be able to see new result
 
-            log.debug("Entering non-graded feedback generation for submission id: {}", submission.getId());
+            log.debug("Submission id: {}", submission.getId());
 
-            var athenaResponse = this.athenaFeedbackSuggestionsService.orElseThrow().getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission,
-                    false);
+            var athenaResponse = this.athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false);
 
             List<Feedback> feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
                     .filter(individualFeedbackItem -> individualFeedbackItem.description() != null).map(individualFeedbackItem -> {

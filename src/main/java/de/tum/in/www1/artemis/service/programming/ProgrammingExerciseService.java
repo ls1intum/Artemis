@@ -345,7 +345,7 @@ public class ProgrammingExerciseService {
 
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
-        programmingExercise.validateSettingsForFeedbackRequest();
+        programmingExercise.validateFeedbackSettings();
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
