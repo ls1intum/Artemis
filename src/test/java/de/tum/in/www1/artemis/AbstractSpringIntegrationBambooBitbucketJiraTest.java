@@ -235,16 +235,14 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             bambooRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
             bambooRequestMockProvider.mockGiveProjectPermissions(exercise);
 
-            if (useCustomBuildPlanDefinition) {
-                aeolusRequestMockProvider.enableMockingOfRequests();
-                if (useCustomBuildPlanWorked) {
-                    aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.BAMBOO, templateBuildPlanId);
-                    aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.BAMBOO, solutionBuildPlanId);
-                }
-                else {
-                    aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.BAMBOO);
-                    aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.BAMBOO);
-                }
+            aeolusRequestMockProvider.enableMockingOfRequests();
+            if (useCustomBuildPlanWorked) {
+                aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.BAMBOO, templateBuildPlanId);
+                aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.BAMBOO, solutionBuildPlanId);
+            }
+            else {
+                aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.BAMBOO);
+                aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.BAMBOO);
             }
 
             bambooRequestMockProvider.mockTriggerBuild(templateBuildPlanId);
