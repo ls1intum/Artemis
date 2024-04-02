@@ -70,7 +70,8 @@ export class ComplaintsForTutorComponent implements OnInit {
             } else {
                 if (this.isAllowedToRespond) {
                     if (this.complaint.complaintResponse) {
-                        this.complaintResponseUpdate = new ComplaintResponseUpdateDTO(Action.REFRESH_LOCK);
+                        this.complaintResponseUpdate = new ComplaintResponseUpdateDTO();
+                        this.complaintResponseUpdate.action = Action.REFRESH_LOCK;
                         this.refreshLock();
                     } else {
                         this.createLock();
@@ -188,9 +189,11 @@ export class ComplaintsForTutorComponent implements OnInit {
                 },
             });
         } else {
-            // If the complaint was rejected or it was a more feedback request, just the complaint response is updated.
-            this.complaintResponseUpdate = new ComplaintResponseUpdateDTO(Action.RESOLVE_COMPLAINT, this.complaintResponse.responseText, this.complaintResponse.complaint.accepted);
-
+            // If the complaint was rejected, or it was a more feedback request, just the complaint response is updated.
+            this.complaintResponseUpdate = new ComplaintResponseUpdateDTO();
+            this.complaintResponseUpdate.action = Action.RESOLVE_COMPLAINT;
+            this.complaintResponseUpdate.responseText = this.complaintResponse.responseText;
+            this.complaintResponseUpdate.complaintIsAccepted = this.complaintResponse.complaint.accepted;
             this.resolveComplaint();
         }
     }

@@ -40,8 +40,12 @@ describe('ComplaintResponseService', () => {
                 defaultComplaintResponse.complaint = new Complaint();
                 defaultComplaintResponse.complaint.id = 1;
 
-                complaintResponseResolve = new ComplaintResponseUpdateDTO(Action.RESOLVE_COMPLAINT, 'response_text', true);
-                complaintResponseRefresh = new ComplaintResponseUpdateDTO(Action.REFRESH_LOCK);
+                complaintResponseResolve = new ComplaintResponseUpdateDTO();
+                complaintResponseResolve.action = Action.RESOLVE_COMPLAINT;
+                complaintResponseResolve.responseText = 'response_text';
+                complaintResponseResolve.complaintIsAccepted = true;
+                complaintResponseRefresh = new ComplaintResponseUpdateDTO();
+                complaintResponseRefresh.action = Action.REFRESH_LOCK;
             });
     });
 

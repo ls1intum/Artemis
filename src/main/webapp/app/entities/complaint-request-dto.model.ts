@@ -1,7 +1,5 @@
-export enum ComplaintType {
-    COMPLAINT = 'COMPLAINT',
-    MORE_FEEDBACK = 'MORE_FEEDBACK',
-}
+import { ComplaintType } from 'app/entities/complaint.model';
+
 export class ComplaintRequestDTO {
     public resultId?: number;
     public complaintText?: string;
