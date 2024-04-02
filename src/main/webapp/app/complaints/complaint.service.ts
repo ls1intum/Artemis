@@ -7,9 +7,10 @@ import { ComplaintResponseService } from 'app/complaints/complaint-response.serv
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { map } from 'rxjs/operators';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/utils/date.utils';
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ComplaintRequestDTO } from 'app/entities/complaint-request-dto.model';
 
 export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
@@ -80,18 +81,11 @@ export class ComplaintService implements IComplaintService {
 
     /**
      * Create a new complaint.
-     * @param complaint
-     * @param examId the id of the exam
+     * @param complaintRequest
      */
-    create(complaint: Complaint, examId?: number): Observable<EntityResponseType> {
-        const copy = this.convertComplaintDatesFromClient(complaint);
-        if (examId) {
-            return this.http
-                .post<Complaint>(`${this.resourceUrl}?examId=${examId}`, copy, { observe: 'response' })
-                .pipe(map((res: EntityResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
-        }
+    create(complaintRequest: ComplaintRequestDTO): Observable<EntityResponseType> {
         return this.http
-            .post<Complaint>(this.resourceUrl, copy, { observe: 'response' })
+            .post<Complaint>(this.resourceUrl, complaintRequest, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
     }
 
@@ -260,12 +254,6 @@ export class ComplaintService implements IComplaintService {
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {
         return this.http.get<Complaint[]>(url, { observe: 'response' }).pipe(map((res: EntityResponseTypeArray) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
-    }
-
-    private convertComplaintDatesFromClient(complaint: Complaint): Complaint {
-        return Object.assign({}, complaint, {
-            submittedTime: convertDateFromClient(complaint.submittedTime),
-        });
     }
 
     private convertComplaintEntityResponseDatesFromServer(res: EntityResponseType): EntityResponseType {

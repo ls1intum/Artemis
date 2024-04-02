@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.dto.ComplaintRequestDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -55,13 +56,13 @@ public class ComplaintService {
      * Create a new complaint by checking if the user is still allowed to submit complaints and in the case of normal course exercises
      * whether the user still enough complaints left.
      *
-     * @param complaint the complaint to create
-     * @param principal the current Principal
-     * @param examId    the optional examId. This is only set if the exercise is an exam exercise
+     * @param complaintRequest the complaint to create
+     * @param principal        the current Principal
+     * @param examId           the optional examId. This is only set if the exercise is an exam exercise
      * @return the saved complaint
      */
-    public Complaint createComplaint(Complaint complaint, OptionalLong examId, Principal principal) {
-        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaint.getResult().getId())
+    public Complaint createComplaint(ComplaintRequestDTO complaintRequest, Result result, OptionalLong examId, Principal principal) {
+        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaintRequest.resultId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
 
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
@@ -74,7 +75,7 @@ public class ComplaintService {
 
         // Check whether the complaint text limit is exceeded
         int maxLength = course.getMaxComplaintTextLimitForExercise(studentParticipation.getExercise());
-        if (maxLength < complaint.getComplaintText().length()) {
+        if (maxLength < complaintRequest.complaintText().length()) {
             throw new BadRequestAlertException("You cannot submit a complaint that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
                     "exceededComplaintTextLimit");
         }
@@ -89,7 +90,7 @@ public class ComplaintService {
             }
         }
         else {
-            if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
+            if (complaintRequest.complaintType() == ComplaintType.COMPLAINT) {
                 long numberOfUnacceptedComplaints = countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
                 long numberOfAllowedComplaintsInCourse = getMaxComplaintsPerParticipant(course, participant);
                 if (numberOfUnacceptedComplaints >= numberOfAllowedComplaintsInCourse) {
@@ -97,11 +98,11 @@ public class ComplaintService {
                             ENTITY_NAME, "tooManyComplaints");
                 }
             }
-            else if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK && !course.getRequestMoreFeedbackEnabled()) {
+            else if (complaintRequest.complaintType() == ComplaintType.MORE_FEEDBACK && !course.getRequestMoreFeedbackEnabled()) {
                 throw new BadRequestAlertException("You cannot request more feedback in this course because this feature has been disabled by the instructors.", ENTITY_NAME,
                         "moreFeedbackRequestsDisabled");
             }
-            validateTimeOfComplaintOrRequestMoreFeedback(originalResult, studentParticipation.getExercise(), studentParticipation, course, complaint.getComplaintType());
+            validateTimeOfComplaintOrRequestMoreFeedback(originalResult, studentParticipation.getExercise(), studentParticipation, course, complaintRequest.complaintType());
         }
 
         if (studentParticipation.getParticipant() instanceof Team team) {
@@ -117,7 +118,10 @@ public class ComplaintService {
         if (originalResult.getAssessmentType() == AssessmentType.AUTOMATIC) {
             originalResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         }
-
+        Complaint complaint = new Complaint();
+        complaint.setComplaintText(complaintRequest.complaintText());
+        complaint.setComplaintType(complaintRequest.complaintType());
+        complaint.setResult(result);
         complaint.setSubmittedTime(ZonedDateTime.now());
         complaint.setParticipant(participant);
         complaint.setResult(originalResult);

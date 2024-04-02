@@ -36,6 +36,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
@@ -76,6 +77,8 @@ import tech.jhipster.web.util.PaginationUtil;
 public class CourseResource {
 
     private static final String ENTITY_NAME = "course";
+
+    private static final String COMPLAINT_ENTITY_NAME = "complaint";
 
     private static final Logger log = LoggerFactory.getLogger(CourseResource.class);
 
@@ -124,13 +127,18 @@ public class CourseResource {
 
     private final ExamRepository examRepository;
 
+    private final ComplaintService complaintService;
+
+    private final TeamRepository teamRepository;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
-            ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository) {
+            ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService,
+            TeamRepository teamRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -152,6 +160,8 @@ public class CourseResource {
         this.conductAgreementService = conductAgreementService;
         this.athenaModuleService = athenaModuleService;
         this.examRepository = examRepository;
+        this.complaintService = complaintService;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -1338,5 +1348,33 @@ public class CourseResource {
         log.debug("REST request to add {} as {} to course {}", studentDtos, courseGroup, courseId);
         List<StudentDTO> notFoundStudentsDtos = courseService.registerUsersForCourseGroup(courseId, studentDtos, courseGroup);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
+    }
+
+    /**
+     * Get courses/{courseId}/allowed-complaints get the number of complaints that a student or team is still allowed to submit in the given course.
+     * It is determined by the max. complaint limit and the current number of open or rejected complaints of the student or team in the course.
+     * Students use their personal complaints for individual exercises and team complaints for team-based exercises, i.e. each student has
+     * maxComplaints for personal complaints and additionally maxTeamComplaints for complaints by their team in the course.
+     *
+     * @param courseId the id of the course for which we want to get the number of allowed complaints
+     * @param teamMode whether to return the number of allowed complaints per team (instead of per student)
+     * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
+     */
+    @GetMapping("courses/{courseId}/allowed-complaints")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
+        log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
+        User user = userRepository.getUser();
+        Participant participant = user;
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!course.getComplaintsEnabled()) {
+            throw new BadRequestAlertException("Complaints are disabled for this course", COMPLAINT_ENTITY_NAME, "complaintsDisabled");
+        }
+        if (teamMode) {
+            Optional<Team> team = teamRepository.findAllByCourseIdAndUserIdOrderByIdDesc(course.getId(), user.getId()).stream().findFirst();
+            participant = team.orElseThrow(() -> new BadRequestAlertException("You do not belong to a team in this course.", COMPLAINT_ENTITY_NAME, "noAssignedTeamInCourse"));
+        }
+        long unacceptedComplaints = complaintService.countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
+        return ResponseEntity.ok(Math.max(complaintService.getMaxComplaintsPerParticipant(course, participant) - unacceptedComplaints, 0));
     }
 }

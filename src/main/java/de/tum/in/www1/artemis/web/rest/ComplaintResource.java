@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
@@ -27,6 +26,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintService;
+import de.tum.in.www1.artemis.service.dto.ComplaintRequestDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -54,8 +54,6 @@ public class ComplaintResource {
 
     private final UserRepository userRepository;
 
-    private final TeamRepository teamRepository;
-
     private final ResultRepository resultRepository;
 
     private final ComplaintService complaintService;
@@ -64,12 +62,11 @@ public class ComplaintResource {
 
     private final CourseRepository courseRepository;
 
-    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository, TeamRepository teamRepository,
-            ResultRepository resultRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository) {
+    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository, ResultRepository resultRepository,
+            ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository) {
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
-        this.teamRepository = teamRepository;
         this.resultRepository = resultRepository;
         this.complaintService = complaintService;
         this.courseRepository = courseRepository;
@@ -86,24 +83,28 @@ public class ComplaintResource {
      */
     @PostMapping("complaints")
     @EnforceAtLeastStudent
-    public ResponseEntity<Complaint> createComplaint(@RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
+    public ResponseEntity<Complaint> createComplaint(@RequestBody ComplaintRequestDTO complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint: {}", complaint);
 
         validateNewComplaint(complaint);
 
-        Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
+        Result result = resultRepository.findByIdElseThrow(complaint.resultId());
 
         // For exam exercises, the POST complaints/exam/examId should be used
         if (result.getParticipation().getExercise().isExamExercise()) {
-            throw new BadRequestAlertException("A complaint for an exam exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
-                    "complaintAboutExamExerciseWrongComponent");
+            throw new BadRequestAlertException("A complaint for an exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME, "complaintAboutExerciseWrongComponent");
         }
 
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
-
-        // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
-        String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
-        Complaint savedComplaint = complaintService.createComplaint(complaint, OptionalLong.empty(), principal);
+        String entityName = complaint.complaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
+        Complaint savedComplaint;
+        if (complaint.examId().isPresent()) {
+            authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
+            savedComplaint = complaintService.createComplaint(complaint, result, complaint.examId(), principal);
+        }
+        else {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
+            savedComplaint = complaintService.createComplaint(complaint, result, OptionalLong.empty(), principal);
+        }
 
         // Remove assessor information from client request
         savedComplaint.getResult().filterSensitiveInformation();
@@ -112,52 +113,12 @@ public class ComplaintResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
     }
 
-    /**
-     * POST complaints: create a new complaint for an exam exercise
-     *
-     * @param complaint the complaint to create
-     * @param principal that wants to complain
-     * @param examId    the examId of the exam which contains the exercise
-     * @return the ResponseEntity with status 201 (Created) and with body the new complaints
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping(value = "complaints", params = { "examId" })
-    @EnforceAtLeastStudent
-    public ResponseEntity<Complaint> createComplaintForExamExercise(@RequestParam Long examId, @RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
-        log.debug("REST request to save Complaint for exam exercise: {}", complaint);
-
-        validateNewComplaint(complaint);
-
-        Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
-
-        // For non-exam exercises, the POST complaints should be used
-        if (!result.getParticipation().getExercise().isExamExercise()) {
-            throw new BadRequestAlertException("A complaint for an course exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
-                    "complaintAboutCourseExerciseWrongComponent");
-        }
-
-        authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
-        // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
-        String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
-        Complaint savedComplaint = complaintService.createComplaint(complaint, OptionalLong.of(examId), principal);
-
-        // Remove assessor information from client request
-        savedComplaint.getResult().filterSensitiveInformation();
-
-        return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
-    }
-
-    private void validateNewComplaint(Complaint complaint) {
-        if (complaint.getId() != null) {
-            throw new BadRequestAlertException("A new complaint cannot already have an id", COMPLAINT_ENTITY_NAME, "idExists");
-        }
-
-        if (complaint.getResult() == null || complaint.getResult().getId() == null) {
+    private void validateNewComplaint(ComplaintRequestDTO complaint) {
+        if (complaint.resultId() == null) {
             throw new BadRequestAlertException("A complaint can be only associated to a result", COMPLAINT_ENTITY_NAME, "noresultid");
         }
 
-        if (complaintRepository.findByResultId(complaint.getResult().getId()).isPresent()) {
+        if (complaintRepository.findByResultId(complaint.resultId()).isPresent()) {
             throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
         }
     }
@@ -203,34 +164,6 @@ public class ComplaintResource {
         // hide participation + exercise + course which might include sensitive information
         complaint.getResult().setParticipation(null);
         return ResponseEntity.ok(complaint);
-    }
-
-    /**
-     * GET complaints: get the number of complaints that a student or team is still allowed to submit in the given course.
-     * It is determined by the max. complaint limit and the current number of open or rejected complaints of the student or team in the course.
-     * Students use their personal complaints for individual exercises and team complaints for team-based exercises, i.e. each student has
-     * maxComplaints for personal complaints and additionally maxTeamComplaints for complaints by their team in the course.
-     *
-     * @param courseId the id of the course for which we want to get the number of allowed complaints
-     * @param teamMode whether to return the number of allowed complaints per team (instead of per student)
-     * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
-     */
-    @GetMapping(value = "complaints", params = { "courseId" })
-    @EnforceAtLeastStudent
-    public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@RequestParam Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
-        log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
-        User user = userRepository.getUser();
-        Participant participant = user;
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!course.getComplaintsEnabled()) {
-            throw new BadRequestAlertException("Complaints are disabled for this course", COMPLAINT_ENTITY_NAME, "complaintsDisabled");
-        }
-        if (teamMode) {
-            Optional<Team> team = teamRepository.findAllByCourseIdAndUserIdOrderByIdDesc(course.getId(), user.getId()).stream().findFirst();
-            participant = team.orElseThrow(() -> new BadRequestAlertException("You do not belong to a team in this course.", COMPLAINT_ENTITY_NAME, "noAssignedTeamInCourse"));
-        }
-        long unacceptedComplaints = complaintService.countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
-        return ResponseEntity.ok(Math.max(complaintService.getMaxComplaintsPerParticipant(course, participant) - unacceptedComplaints, 0));
     }
 
     /**
