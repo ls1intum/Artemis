@@ -52,7 +52,7 @@ public abstract class AssessmentResource {
         this.submissionRepository = submissionRepository;
     }
 
-    abstract String getEntityName();
+    public abstract String getEntityName();
 
     /**
      * Get the result of the submission with the given id. Returns a 403 Forbidden response if the user is not allowed to retrieve the assessment. The user is not allowed
@@ -64,7 +64,7 @@ public abstract class AssessmentResource {
      */
     ResponseEntity<Result> getAssessmentBySubmissionId(Long submissionId) {
         log.debug("REST request to get assessment for submission with id {}", submissionId);
-        Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+        Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndTeamStudents(submissionId);
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
 
@@ -184,7 +184,7 @@ public abstract class AssessmentResource {
      * @param exercise the exercise for which the authorization should be checked
      * @throws BadRequestAlertException if no course is associated to the given exercise
      */
-    void checkAuthorization(Exercise exercise, User user) throws BadRequestAlertException {
+    protected void checkAuthorization(Exercise exercise, User user) throws BadRequestAlertException {
         validateExercise(exercise);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
     }
