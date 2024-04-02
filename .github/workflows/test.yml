@@ -54,6 +54,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
+        # Install Java 17 to run programming templates
         java-version: |
           17
           ${{ env.java }}
@@ -100,6 +101,7 @@ jobs:
             uses: actions/setup-java@v4
             with:
                 distribution: 'temurin'
+                # Install Java 17 to run programming templates
                 java-version: |
                   17
                   ${{ env.java }}
@@ -156,6 +158,7 @@ jobs:
             uses: actions/setup-java@v4
             with:
                 distribution: 'temurin'
+                # Install Java 17 to run programming templates
                 java-version: |
                     17
                     ${{ env.java }}
