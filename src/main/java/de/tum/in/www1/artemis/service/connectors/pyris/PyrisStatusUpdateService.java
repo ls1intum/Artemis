@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
@@ -9,6 +10,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
 
 @Service
+@Profile("iris")
 public class PyrisStatusUpdateService {
 
     private final PyrisJobService pyrisJobService;
