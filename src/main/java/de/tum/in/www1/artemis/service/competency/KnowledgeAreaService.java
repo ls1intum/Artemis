@@ -51,7 +51,7 @@ public class KnowledgeAreaService {
     private void knowledgeAreaIsValidOrElseThrow(KnowledgeArea knowledgeArea) throws BadRequestException {
         boolean titleIsInvalid = knowledgeArea.getTitle() == null || knowledgeArea.getTitle().isBlank() || knowledgeArea.getTitle().length() > KnowledgeArea.MAX_TITLE_LENGTH;
         boolean shortTitleIsInvalid = knowledgeArea.getShortTitle() == null || knowledgeArea.getShortTitle().isBlank()
-                || knowledgeArea.getTitle().length() > KnowledgeArea.MAX_SHORT_TITLE_LENGTH;
+                || knowledgeArea.getShortTitle().length() > KnowledgeArea.MAX_SHORT_TITLE_LENGTH;
 
         if (titleIsInvalid || shortTitleIsInvalid) {
             throw new BadRequestException();
