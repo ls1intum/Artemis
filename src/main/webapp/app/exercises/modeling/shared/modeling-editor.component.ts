@@ -7,7 +7,7 @@ import { isFullScreen } from 'app/shared/util/fullscreen.util';
 import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
-import { DomSanitizer } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -36,7 +36,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     scrollListener: ((this: Document, ev: Event) => any) | undefined;
 
     readonlyApollonDiagram?: SVG;
-    readOnlySVG: any;
+    readOnlySVG?: SafeHtml;
 
     constructor(
         private modalService: NgbModal,
@@ -54,7 +54,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     async ngAfterViewInit(): Promise<void> {
         this.initializeApollonEditor();
         if (this.readOnly) {
-            console.log(this.apollonEditor);
             await this.apollonEditor?.nextRender;
             this.readonlyApollonDiagram = await this.apollonEditor?.exportAsSVG();
             if (this.readonlyApollonDiagram?.svg) {
