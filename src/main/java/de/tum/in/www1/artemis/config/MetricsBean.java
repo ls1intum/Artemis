@@ -45,6 +45,8 @@ import de.tum.in.www1.artemis.repository.StatisticsRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ProfileService;
+import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import io.micrometer.core.instrument.*;
 
 @Profile(PROFILE_CORE)
@@ -93,6 +95,10 @@ public class MetricsBean {
     private final UserRepository userRepository;
 
     private final StatisticsRepository statisticsRepository;
+
+    private final ProfileService profileService;
+
+    private final Optional<SharedQueueManagementService> localCIBuildJobQueueService;
 
     /**
      * List that stores active usernames (users with a submission within the last 14 days) which is refreshed
@@ -146,7 +152,7 @@ public class MetricsBean {
     public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
             StudentExamRepository studentExamRepository, ExamRepository examRepository, CourseRepository courseRepository, UserRepository userRepository,
-            StatisticsRepository statisticsRepository) {
+            StatisticsRepository statisticsRepository, ProfileService profileService, Optional<SharedQueueManagementService> localCIBuildJobQueueService) {
         this.meterRegistry = meterRegistry;
         this.env = env;
         this.taskScheduler = taskScheduler;
@@ -159,11 +165,14 @@ public class MetricsBean {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.statisticsRepository = statisticsRepository;
+        this.profileService = profileService;
+        this.localCIBuildJobQueueService = localCIBuildJobQueueService;
 
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
 
-        if (this.env.acceptsProfiles(Profiles.of("scheduling"))) {
+        // TODO: remove env and use profileService
+        if (env.acceptsProfiles(Profiles.of("scheduling"))) {
             // Should only be activated if the scheduling profile is present, because these metrics are the same for all instances
             this.scheduledMetricsEnabled = true;
 
@@ -172,6 +181,10 @@ public class MetricsBean {
 
             registerExerciseAndExamMetrics();
             registerPublicArtemisMetrics();
+        }
+
+        if (profileService.isLocalCiActive()) {
+            registerLocalCIMetrics();
         }
 
         // the data source is optional as it is not used during testing
@@ -219,6 +232,36 @@ public class MetricsBean {
                 }
             }
         }
+    }
+
+    private void registerLocalCIMetrics() {
+        // Publish the number of running builds
+        Gauge.builder("artemis.global.localci.running", localCIBuildJobQueueService, MetricsBean::extractRunningBuilds).strongReference(true)
+                .description("Number of sessions connected to this Artemis instance").register(meterRegistry);
+
+        // Publish the number of queued builds
+        Gauge.builder("artemis.global.localci.queued", localCIBuildJobQueueService, MetricsBean::extractQueuedBuilds).strongReference(true)
+                .description("Number of users connected to all Artemis instances").register(meterRegistry);
+
+        // TODO: number of build agents, number of max concurrent builds, etc.
+    }
+
+    private static double extractRunningBuilds(Optional<SharedQueueManagementService> sharedQueueManagementService) {
+        int number = 0;
+        if (sharedQueueManagementService.isPresent()) {
+            for (var buildAgentInformation : sharedQueueManagementService.get().getBuildAgentInformation()) {
+                number += buildAgentInformation.runningBuildJobs().size();
+            }
+        }
+        return number;
+    }
+
+    private static double extractQueuedBuilds(Optional<SharedQueueManagementService> sharedQueueManagementService) {
+        int number = 0;
+        if (sharedQueueManagementService.isPresent()) {
+            return sharedQueueManagementService.get().getQueuedJobs().size();
+        }
+        return number;
     }
 
     private void registerWebsocketMetrics() {
