@@ -111,15 +111,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     @BeforeAll
     static void findJava17() throws Exception {
-        String javaHomeEnv = System.getenv("JAVA_HOME");
-        /*
-         * if (javaHomeEnv.contains("17")) {
-         * java17Home = new File(javaHomeEnv);
-         * return;
-         * }
-         */
-        log.debug("Java home is {}", javaHomeEnv);
-
         if (Os.isFamily(Os.FAMILY_UNIX) || Os.isFamily(Os.FAMILY_MAC)) {
             // Use which to find all java installations on Linux
             var javaInstallations = runProcess(new ProcessBuilder("which", "-a", "java"));
