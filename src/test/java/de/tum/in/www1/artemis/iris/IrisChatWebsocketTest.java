@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -50,9 +51,9 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
         var message = irisSession.newMessage();
         message.addContent(createMockContent(), createMockContent());
         message.setMessageDifferentiator(101010);
-        irisChatWebsocketService.sendMessage(message);
+        irisChatWebsocketService.sendMessage(message, List.of());
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/sessions/" + irisSession.getId()),
-                eq(new IrisChatWebsocketService.IrisWebsocketDTO(message, null)));
+                eq(new IrisChatWebsocketService.IrisWebsocketDTO(message, null, List.of())));
     }
 
     private IrisTextMessageContent createMockContent() {

@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.iris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.util.Collections;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -12,14 +12,34 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorException;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
 import de.tum.in.www1.artemis.service.iris.exception.*;
+import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
+import de.tum.in.www1.artemis.util.IrisUtilTestService;
+import de.tum.in.www1.artemis.util.LocalRepository;
 
 class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
+    private static final String TEST_PREFIX = "pyrisconnectorservice";
+
     @Autowired
     private PyrisConnectorService pyrisConnectorService;
+
+    @Autowired
+    private PyrisPipelineService pyrisPipelineService;
+
+    @Autowired
+    private IrisUtilTestService irisUtilTestService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private IrisChatSessionService irisChatSessionService;
 
     private static Stream<Arguments> irisExceptions() {
         // @formatter:off
@@ -27,7 +47,7 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
                 Arguments.of(400, IrisInvalidTemplateException.class),
                 Arguments.of(401, IrisForbiddenException.class),
                 Arguments.of(403, IrisForbiddenException.class),
-                Arguments.of(404, IrisModelNotAvailableException.class),
+                Arguments.of(404, IrisInternalPyrisErrorException.class), // TODO: Change with more specific exception
                 Arguments.of(500, IrisInternalPyrisErrorException.class),
                 Arguments.of(418, IrisInternalPyrisErrorException.class) // Test default case
         );
@@ -37,12 +57,27 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     @ParameterizedTest
     @MethodSource("irisExceptions")
     void testExceptionV2(int httpStatus, Class<?> exceptionClass) throws Exception {
-        irisRequestMockProvider.mockMessageV2Error(httpStatus);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
 
-        pyrisConnectorService.sendRequestV2("Dummy", "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
-            assertThat(throwable.getCause()).isNotNull().isInstanceOf(exceptionClass);
-            return null;
-        }).get();
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        activateIrisGlobally();
+        activateIrisFor(course);
+        activateIrisFor(exercise);
+        var repository = new LocalRepository("main");
+
+        exercise = irisUtilTestService.setupTemplate(exercise, repository);
+        exercise = irisUtilTestService.setupSolution(exercise, repository);
+        exercise = irisUtilTestService.setupTest(exercise, repository);
+        var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        irisUtilTestService.setupStudentParticipation(exerciseParticipation, repository);
+
+        var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        irisRequestMockProvider.mockRunError(httpStatus);
+
+        ProgrammingExercise finalExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+        assertThatThrownBy(() -> pyrisPipelineService.executeTutorChatPipeline("default", Optional.empty(), finalExercise, irisSession)).isInstanceOf(exceptionClass);
     }
 
     @Test

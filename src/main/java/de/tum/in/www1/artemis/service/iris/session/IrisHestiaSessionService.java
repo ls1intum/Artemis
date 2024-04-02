@@ -89,7 +89,7 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
      */
     @Override
     public CodeHint executeRequest(IrisHestiaSession session) {
-        // TODO: Re-add in a future PR
+        // TODO: Re-add in a future PR. Remember to reenable the test cases!
         return null;
     }
 

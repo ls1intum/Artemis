@@ -18,4 +18,8 @@ public abstract class PyrisPipelineExecutionDTO {
     public PyrisPipelineExecutionSettingsDTO getSettings() {
         return settings;
     }
+
+    public List<PyrisStageDTO> getInitialStages() {
+        return initialStages;
+    }
 }

@@ -162,14 +162,13 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
 
         @Override
         public int hashCode() {
-            return Objects.hash(type, message, errorMessage, errorTranslationKey, translationParams);
+            return Objects.hash(type, message, errorMessage, errorTranslationKey, translationParams, rateLimitInfo, stages);
         }
 
         @Override
         public String toString() {
             return "IrisWebsocketDTO{" + "type=" + type + ", message=" + message + ", errorMessage='" + errorMessage + '\'' + ", errorTranslationKey='" + errorTranslationKey + '\''
-                    + ", translationParams=" + translationParams + '}';
+                    + ", translationParams=" + translationParams + ", rateLimitInfo=" + rateLimitInfo + ", stages=" + stages + '}';
         }
     }
-
 }

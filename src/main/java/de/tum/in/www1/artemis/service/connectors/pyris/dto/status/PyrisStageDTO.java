@@ -58,5 +58,4 @@ public final class PyrisStageDTO {
     public String toString() {
         return "PyrisStageDTO[" + "name=" + name + ", " + "weight=" + weight + ", " + "state=" + state + ", " + "message=" + message + ']';
     }
-
 }

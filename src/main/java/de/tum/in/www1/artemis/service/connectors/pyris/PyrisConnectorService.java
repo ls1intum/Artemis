@@ -86,6 +86,9 @@ public class PyrisConnectorService {
         var response = restTemplate.postForEntity(pyrisUrl + urlExtension, objectMapper.valueToTree(request), JsonNode.class);
         JsonNode body = response.getBody();
         if (body == null) {
+            if (responseType == Void.class) {
+                return completedFuture(null);
+            }
             return failedFuture(new IrisNoResponseException());
         }
         Response parsed = objectMapper.treeToValue(body, responseType);

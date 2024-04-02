@@ -6,6 +6,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.net.URL;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,16 +14,20 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.http.client.MockClientHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.*;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatPipelineExecutionDTO;
 
 @Component
 @Profile("iris")
@@ -36,11 +41,8 @@ public class IrisRequestMockProvider {
 
     private MockRestServiceServer shortTimeoutMockServer;
 
-    @Value("${artemis.iris.url}/api/v1/messages")
-    private URL messagesApiV1URL;
-
-    @Value("${artemis.iris.url}/api/v2/messages")
-    private URL messagesApiV2URL;
+    @Value("${artemis.iris.url}/api/v1/pipelines")
+    private URL pipelinesApiURL;
 
     @Value("${artemis.iris.url}/api/v1/models")
     private URL modelsApiURL;
@@ -74,26 +76,18 @@ public class IrisRequestMockProvider {
         }
     }
 
-    /**
-     * Mocks a message with empty response from the Pyris message endpoint
-     */
-    public void mockEmptyResponse() {
-        // @formatter:off
-        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiV1URL.toString()))
-                .andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess());
-        // @formatter:on
+    public void mockRunResponse(Consumer<PyrisTutorChatPipelineExecutionDTO> responseConsumer) {
+        mockServer.expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            var mockRequest = (MockClientHttpRequest) request;
+            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisTutorChatPipelineExecutionDTO.class);
+            responseConsumer.accept(dto);
+            return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+        });
     }
 
-    /**
-     * Mocks a message response from the Pyris V2 message endpoint
-     *
-     * @param responseContent The content of the response
-     * @throws JsonProcessingException If the response content cannot be serialized to JSON
-     */
-    @Deprecated
-    public void mockMessageV2Response(Map<?, ?> responseContent) throws JsonProcessingException {
-        // FIXME: Remove
+    public void mockRunError(int httpStatus) {
+        mockServer.expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.valueOf(httpStatus)));
     }
 
     public void mockCustomJsonResponse(URL requestUrl, String responseJson) {
@@ -102,14 +96,6 @@ public class IrisRequestMockProvider {
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withSuccess(responseJson, MediaType.APPLICATION_JSON));
         // @formatter:on
-    }
-
-    public void mockMessageV1Error(int status) throws JsonProcessingException {
-        mockMessageError(messagesApiV1URL, status);
-    }
-
-    public void mockMessageV2Error(int status) throws JsonProcessingException {
-        mockMessageError(messagesApiV2URL, status);
     }
 
     private void mockMessageError(URL requestUrl, int status) throws JsonProcessingException {

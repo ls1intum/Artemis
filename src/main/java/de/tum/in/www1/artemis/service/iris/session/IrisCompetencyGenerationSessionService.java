@@ -107,7 +107,7 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
 
     @Override
     public List<Competency> executeRequest(IrisCompetencyGenerationSession session) {
-        // TODO: Re-add in a future PR
+        // TODO: Re-add in a future PR. Remember to reenable the test cases!
         return null;
     }
 
