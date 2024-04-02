@@ -16,6 +16,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
@@ -23,6 +24,12 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 @Table(name = "standardized_competency")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class StandardizedCompetency extends BaseCompetency {
+
+    @JsonIgnore
+    public static final int MAX_TITLE_LENGTH = 255;
+
+    @JsonIgnore
+    public static final int MAX_DESCRIPTION_LENGTH = 2000;
 
     @Column(name = "version", nullable = false)
     private String version;

@@ -71,7 +71,12 @@ public class StandardizedCompetencyService {
      * @param competency the standardized competency to verify
      */
     private void standardizedCompetencyIsValidOrElseThrow(StandardizedCompetency competency) throws BadRequestException {
-        if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
+        boolean TitleIsInvalid = competency.getTitle() == null || competency.getTitle().trim().isEmpty()
+                || competency.getTitle().length() > StandardizedCompetency.MAX_TITLE_LENGTH;
+        boolean DescriptionIsInvalid = competency.getDescription() != null && competency.getDescription().length() > StandardizedCompetency.MAX_DESCRIPTION_LENGTH;
+        boolean knowledgeAreaIsInvalid = competency.getKnowledgeArea() == null;
+
+        if (TitleIsInvalid || DescriptionIsInvalid || knowledgeAreaIsInvalid) {
             throw new BadRequestException();
         }
     }
