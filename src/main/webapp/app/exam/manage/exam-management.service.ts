@@ -402,7 +402,7 @@ export class ExamManagementService {
      * @returns number of exercises for which the repositories were unlocked
      */
     unlockAllRepositories(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/unlock-all-repositories`, {}, { observe: 'response' });
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/unlock-all-repositories`, {}, { observe: 'response' });
     }
 
     /**
@@ -412,7 +412,7 @@ export class ExamManagementService {
      * @returns number of exercises for which the repositories were locked
      */
     lockAllRepositories(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/lock-all-repositories`, {}, { observe: 'response' });
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/lock-all-repositories`, {}, { observe: 'response' });
     }
 
     /**
