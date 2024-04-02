@@ -15,7 +15,7 @@ public class UserGroup {
     @Column(name = "user_id", insertable = false, updatable = false)
     private Long userId;
 
-    @Column(name = "`groups`", insertable = false, updatable = false)
+    @Column(name = "user_groups", insertable = false, updatable = false)
     private String group;
 
     @Embeddable
@@ -24,7 +24,7 @@ public class UserGroup {
         @Column(name = "user_id")
         private Long userId;
 
-        @Column(name = "`groups`")
+        @Column(name = "user_groups")
         private String group;
 
         @Override
