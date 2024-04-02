@@ -43,6 +43,7 @@ public class PyrisStatusUpdateResource {
      * @param request         the HTTP request
      * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
      * @throws AccessForbiddenException if the token is invalid
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
     @PostMapping("tutor-chat/runs/{runId}/status")
     @EnforceNothing // We do token based authentication
