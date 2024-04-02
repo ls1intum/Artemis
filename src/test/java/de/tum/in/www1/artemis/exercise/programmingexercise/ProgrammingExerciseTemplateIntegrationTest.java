@@ -124,7 +124,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
             var alternativeInstallations = runProcess(new ProcessBuilder("/usr/libexec/java_home", "-v", "17"));
             for (String path : alternativeInstallations) {
                 File binFolder = new File(path).getParentFile();
-                if (checkJavaVersion(binFolder, "./Home/bin/java", "-version")) {
+                binFolder = new File(binFolder, "Home/bin/java");
+                if (checkJavaVersion(binFolder, "./java", "-version")) {
                     return;
                 }
             }
