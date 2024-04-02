@@ -361,25 +361,25 @@ jobs:
       - name: Add "lock:${{ matrix.environment }}" label
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            if (context.issue && context.issue.number) {
-              await github.rest.issues.addLabels({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                labels: ['lock:${{ matrix.label-identifier }}']
-              })
-            }
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            script: |
+                if (context.issue && context.issue.number) {
+                  await github.rest.issues.addLabels({
+                    issue_number: context.issue.number,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    labels: ['lock:${{ matrix.label-identifier }}']
+                  })
+                }
 
       - name: Update badge
         uses: RubbaBoy/BYOB@v1.3.0
         with:
-          NAME: ${{ matrix.label-identifier }}
-          LABEL: ${{ matrix.environment }}
-          STATUS: ${{ github.event.pull_request.head.ref }}
-          COLOR: red
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            NAME: ${{ matrix.label-identifier }}
+            LABEL: ${{ matrix.environment }}
+            STATUS: ${{ github.event.pull_request.head.ref }}
+            COLOR: red
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Check that the build job has run successfully before deploying
   add-error-label:
