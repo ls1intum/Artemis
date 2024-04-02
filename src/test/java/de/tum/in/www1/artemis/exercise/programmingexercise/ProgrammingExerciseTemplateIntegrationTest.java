@@ -94,7 +94,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
         try {
             String mvnExecutable = Os.isFamily(Os.FAMILY_WINDOWS) ? "mvn.cmd" : "mvn";
-            var lines = runProcess(mvnExecutable, "-version");
+            var lines = runProcess(new ProcessBuilder(mvnExecutable, "-version"));
             String prefix = "maven home:";
             Optional<String> home = lines.stream().filter(line -> line.toLowerCase().startsWith(prefix)).findFirst();
             if (home.isPresent()) {
@@ -118,25 +118,20 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         }
         log.debug("Java home is {}", javaHomeEnv);
 
-        // Use which on Linux
+        // Use which to find all java installations on Linux
         if (Os.isFamily(Os.FAMILY_UNIX)) {
-            var lines = runProcess("which -a java | xargs -I{} echo \"echo {};{} -version;echo\" | sh");
-            int i = 0;
-            for (; i < lines.size(); i++) {
-                String line = lines.get(i);
-                if (line.contains("version \"17")) {
-                    break;
+            var javaInstallations = runProcess(new ProcessBuilder("which", "-a", "java"));
+            for (String path : javaInstallations) {
+                File binFolder = new File(path).getParentFile();
+                ProcessBuilder processBuilder = new ProcessBuilder("./java", "-version").directory(binFolder);
+                var version = runProcess(processBuilder);
+                if (!version.isEmpty() && version.getFirst().contains("17")) {
+                    java17Home = binFolder.getParentFile(); // JAVA_HOME/bin/java
+                    return;
                 }
             }
-
-            if (i == lines.size()) {
-                fail("Java 17 not found");
-            }
-
-            // The line above the version contains the path
-            java17Home = new File(lines.get(i - 1));
-            return;
         }
+        // Fail.fail("Java 17 not found");
 
         /*
          * // search for other java installations
@@ -166,16 +161,16 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         }
     }
 
-    private static List<String> runProcess(String... command) throws Exception {
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        Process mvn = processBuilder.start();
-        boolean finished = mvn.waitFor(120, TimeUnit.SECONDS);
+    private static List<String> runProcess(ProcessBuilder processBuilder) throws Exception {
+        Process process = processBuilder.start();
+        boolean finished = process.waitFor(120, TimeUnit.SECONDS);
 
         if (!finished) {
             throw new TimeoutException("command timed out.");
         }
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(mvn.getInputStream()))) {
-            return reader.lines().toList();
+        try (BufferedReader error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            return Stream.concat(error.lines(), stdout.lines()).toList();
         }
     }
 
