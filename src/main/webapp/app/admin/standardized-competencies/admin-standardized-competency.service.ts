@@ -25,4 +25,12 @@ export class AdminStandardizedCompetencyService {
     createKnowledgeArea(knowledgeArea: KnowledgeArea) {
         return this.httpClient.post<StandardizedCompetency>(`${this.resourceURL}/knowledge-areas`, knowledgeArea, { observe: 'response' });
     }
+
+    updateKnowledgeArea(knowledgeArea: KnowledgeArea) {
+        return this.httpClient.put<KnowledgeArea>(`${this.resourceURL}/knowledge-areas/${knowledgeArea.id}`, knowledgeArea, { observe: 'response' });
+    }
+
+    deleteKnowledgeArea(knowledgeAreaId: number) {
+        return this.httpClient.delete<void>(`${this.resourceURL}/knowledge-areas/${knowledgeAreaId}`, { observe: 'response' });
+    }
 }
