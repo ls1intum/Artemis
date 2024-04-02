@@ -195,16 +195,16 @@ jobs:
               artemis-test9.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBG3531IQdJVxkckhWGahHh4sb5REa3g+0UYMxGOKExj0Q/KxKFcfsu0rJ0vN4zKEfuZRHJouNcLQVVJfSDxqZF8=
               artemis-test9.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDbS/SXTRdYBE/qVjRHNMPXXMegsjBZrnuK6oAQJJstZ
 
-          - environment: artemis-test10.artemis.cit.tum.de
-            label-identifier: artemis-test10
-            url: https://artemis-test10.artemis.cit.tum.de
-            user: deployment
-            hosts: artemis-test10.artemis.cit.tum.de
-            folder: /opt/artemis
-            host_keys: |
-              artemis-test10.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC82ixfnlVeM94VjifcoGftJraCV71TMBD6/1lGEAvOAEkUckZCWjASRuyvzNvgJAeUYUe93oUfQnEdWRYrtvbWHtO/Oe0fZN0VQJorKnpFyuPOC363Z25Rc1PUAFX5lwlKBfeZkTvg1PVNE9o+yVLmeApRPLjUsF1aNrInbXXgzF4L2GgMgQvr6DW5WQQkwIrjJn4XlZV4nj6lheip+a194yD/4A05UJ/iHIEodzu5+UWVLn2HKZAbWO1VhhU75x5iuTtPASlbbsbq/3cDwSLrAMkI2Vyu4mXRNd4B/L6Js8ilwRe1iIaqnKeNswwfg/7TkCjCU+4sfdHnNc2iHx0vOayw/0pKEtn0L8SpJgBr5ncdIavRNsCZ1caRv44Ino2WWxq/sFFb4Wh2iXYqEbMhEKuBGqryzJF9veh0UTyOQXyuJBSJu4pZ/9YqG6F21girq2RFSWo+roZsnq+8LEkti4dGW22+yFvDgs3sqvTxgSVWIlQZt7CldVTvPyL/0+M=
-              artemis-test10.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCICiCLtljuYwnBxGKurZjMuDsYFfSJ/5UD8gaDa1+CWPqmM4cFTniw+ORglDpaySlusPbXwll+K0JPkIm8E6+Y=
-              artemis-test10.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAF8QXj0d2na/rBaVTIXfGu3HgtFppoE04Oj1Od2O3kD
+          #- environment: artemis-test10.artemis.cit.tum.de
+          #  label-identifier: artemis-test10
+          #  url: https://artemis-test10.artemis.cit.tum.de
+          #  user: deployment
+          #  hosts: artemis-test10.artemis.cit.tum.de
+          #  folder: /opt/artemis
+          #  host_keys: |
+          #    artemis-test10.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC82ixfnlVeM94VjifcoGftJraCV71TMBD6/1lGEAvOAEkUckZCWjASRuyvzNvgJAeUYUe93oUfQnEdWRYrtvbWHtO/Oe0fZN0VQJorKnpFyuPOC363Z25Rc1PUAFX5lwlKBfeZkTvg1PVNE9o+yVLmeApRPLjUsF1aNrInbXXgzF4L2GgMgQvr6DW5WQQkwIrjJn4XlZV4nj6lheip+a194yD/4A05UJ/iHIEodzu5+UWVLn2HKZAbWO1VhhU75x5iuTtPASlbbsbq/3cDwSLrAMkI2Vyu4mXRNd4B/L6Js8ilwRe1iIaqnKeNswwfg/7TkCjCU+4sfdHnNc2iHx0vOayw/0pKEtn0L8SpJgBr5ncdIavRNsCZ1caRv44Ino2WWxq/sFFb4Wh2iXYqEbMhEKuBGqryzJF9veh0UTyOQXyuJBSJu4pZ/9YqG6F21girq2RFSWo+roZsnq+8LEkti4dGW22+yFvDgs3sqvTxgSVWIlQZt7CldVTvPyL/0+M=
+          #    artemis-test10.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCICiCLtljuYwnBxGKurZjMuDsYFfSJ/5UD8gaDa1+CWPqmM4cFTniw+ORglDpaySlusPbXwll+K0JPkIm8E6+Y=
+          #    artemis-test10.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAF8QXj0d2na/rBaVTIXfGu3HgtFppoE04Oj1Od2O3kD
     outputs:
       TS1: ${{ steps.filter.outputs.artemis-test1 || '' }}
       TS2: ${{ steps.filter.outputs.artemis-test2 || '' }}
@@ -215,7 +215,7 @@ jobs:
       #TS7: ${{ steps.filter.outputs.artemis-test7 || '' }}
       #TS8: ${{ steps.filter.outputs.artemis-test8 || '' }}
       TS9: ${{ steps.filter.outputs.artemis-test9 || '' }}
-      TS10: ${{ steps.filter.outputs.artemis-test10 || '' }}
+      #TS10: ${{ steps.filter.outputs.artemis-test10 || '' }}
     steps:
       - run: |
           echo "$DEPLOY_LABEL"
@@ -361,25 +361,25 @@ jobs:
       - name: Add "lock:${{ matrix.environment }}" label
         uses: actions/github-script@v7
         with:
-            github-token: ${{ secrets.GITHUB_TOKEN }}
-            script: |
-                if (context.issue && context.issue.number) {
-                  await github.rest.issues.addLabels({
-                    issue_number: context.issue.number,
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    labels: ['lock:${{ matrix.label-identifier }}']
-                  })
-                }
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            if (context.issue && context.issue.number) {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ['lock:${{ matrix.label-identifier }}']
+              })
+            }
 
       - name: Update badge
         uses: RubbaBoy/BYOB@v1.3.0
         with:
-            NAME: ${{ matrix.label-identifier }}
-            LABEL: ${{ matrix.environment }}
-            STATUS: ${{ github.event.pull_request.head.ref }}
-            COLOR: red
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NAME: ${{ matrix.label-identifier }}
+          LABEL: ${{ matrix.environment }}
+          STATUS: ${{ github.event.pull_request.head.ref }}
+          COLOR: red
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Check that the build job has run successfully before deploying
   add-error-label:
