@@ -47,6 +47,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
         knowledgeArea = knowledgeAreaRepository.save(knowledgeArea);
 
         standardizedCompetency = new StandardizedCompetency("Competency 0", "SC description", CompetencyTaxonomy.ANALYZE, "1.0.0");
+        standardizedCompetency.setKnowledgeArea(knowledgeArea);
         standardizedCompetency = standardizedCompetencyRepository.save(standardizedCompetency);
 
         source = new Source("Source 0", "Author 0", "http:localhost:8000");
@@ -121,6 +122,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
                 request.post("/api/admin/standardized-competencies", expectedCompetency, HttpStatus.NOT_FOUND);
 
                 expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, null);
+                expectedCompetency.setKnowledgeArea(knowledgeArea);
                 var sourceNotExisting = new Source();
                 sourceNotExisting.setId(-1000L);
                 expectedCompetency.setSource(sourceNotExisting);
