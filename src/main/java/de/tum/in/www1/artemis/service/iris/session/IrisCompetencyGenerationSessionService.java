@@ -107,26 +107,7 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
 
     @Override
     public List<Competency> executeRequest(IrisCompetencyGenerationSession session) {
-        // var userMessageContent = irisMessageRepository.findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(session.getId(), IrisMessageSender.USER).getContent().get(0);
-        // if (!(userMessageContent instanceof IrisTextMessageContent) || userMessageContent.getContentAsString() == null) {
-        // throw new InternalServerErrorException("Unable to get last user message!");
-        // }
-        // var courseDescription = userMessageContent.getContentAsString();
-        // var parameters = new CompetencyGenerationDTO(courseDescription, CompetencyTaxonomy.values());
-        // var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false);
-        // try {
-        // var response = pyrisConnectorService.sendRequestV2(irisSettings.irisCompetencyGenerationSettings().getTemplate().getContent(),
-        // irisSettings.irisCompetencyGenerationSettings().getPreferredModel(), parameters).get();
-        // var llmMessage = new IrisMessage();
-        // llmMessage.setSender(IrisMessageSender.LLM);
-        // llmMessage.addContent(new IrisJsonMessageContent(response.content()));
-        // irisSessionRepository.save(session);
-        // return toCompetencies(response.content());
-        // }
-        // catch (InterruptedException | ExecutionException e) {
-        // log.error("Unable to generate competencies", e);
-        // throw new InternalServerErrorException("Unable to generate competencies: " + e.getMessage());
-        // }
+        // TODO: Re-add in a future PR
         return null;
     }
 

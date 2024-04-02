@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.open;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +36,7 @@ public class PyrisStatusUpdateResource {
 
     @PostMapping("tutor-chat/runs/{runId}/status")
     @EnforceNothing // We do token based authentication
-    public ResponseEntity<Void> getInstructorRepository(@PathVariable String runId, @RequestBody PyrisTutorChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+    public ResponseEntity<Void> setStatusOfJob(@PathVariable String runId, @RequestBody PyrisTutorChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getJobFromHeader(request);
         if (!job.getId().equals(runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
