@@ -208,7 +208,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         // 2 complaints are allowed, the course is created with 3 max complaints
         complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
 
-        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+        request.post("/api/complaints", complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
@@ -235,7 +235,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 3, ComplaintType.MORE_FEEDBACK);
 
-        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+        request.post("/api/complaints", complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
@@ -257,7 +257,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(1));
         exerciseUtilService.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(1));
 
-        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+        request.post("/api/complaints", complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
@@ -851,7 +851,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final Exam exam = ExamFactory.generateExam(course);
         examRepository.save(exam);
         // The complaint is about a course exercise, not an exam exercise
-        request.post("/api/complaints?examId=" + exam.getId(), complaintRequest, HttpStatus.BAD_REQUEST);
+        var complaintRequest = new ComplaintRequestDTO(complaint.getResult().getId(), complaint.getComplaintText(), complaint.getComplaintType(), OptionalLong.of(exam.getId()));
+
+        request.post("/api/complaints", complaintRequest, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -928,7 +930,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         course = courseUtilService.updateCourseComplaintTextLimit(course, 25);
         // 26 characters
         complaint.setComplaintText("abcdefghijklmnopqrstuvwxyz");
-        request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
+        var complaintRequest = new ComplaintRequestDTO(complaint.getResult().getId(), "abcdefghijklmnopqrstuvwxyz", complaint.getComplaintType(), OptionalLong.empty());
+        request.post("/api/complaints", complaintRequest, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -939,7 +942,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         course = courseUtilService.updateCourseComplaintTextLimit(course, 27);
         // 26 characters
         complaint.setComplaintText("abcdefghijklmnopqrstuvwxyz");
-        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+        var complaintRequest = new ComplaintRequestDTO(complaint.getResult().getId(), "abcdefghijklmnopqrstuvwxyz", complaint.getComplaintType(), OptionalLong.empty());
+        request.post("/api/complaints", complaintRequest, HttpStatus.CREATED);
         Optional<Complaint> storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId());
         assertThat(storedComplaint).isPresent();
     }

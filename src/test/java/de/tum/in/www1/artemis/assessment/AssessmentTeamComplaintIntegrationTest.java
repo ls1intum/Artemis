@@ -110,7 +110,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         // 2 complaints are allowed, the course is created with 3 max team complaints
         complaintUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
 
-        request.post(resourceUrl, complaint, HttpStatus.CREATED);
+        request.post(resourceUrl, complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
@@ -155,7 +155,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(1));
         exerciseUtilService.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(1));
 
-        request.post(resourceUrl, complaint, HttpStatus.CREATED);
+        request.post(resourceUrl, complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
