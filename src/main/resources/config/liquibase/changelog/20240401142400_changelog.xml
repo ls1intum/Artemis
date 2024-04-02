@@ -6,13 +6,13 @@
     <!-- TODO: remove when 7.0.0 initial schema is released -->
     <changeSet author="rstief" id="20240401142400">
         <addColumn tableName="knowledge_area">
-            <!-- needed so the database does not break -->
+            <!-- default value needed so the database does not break -->
             <column name="short_title" type="varchar(10)" value="1">
                 <constraints nullable="false" />
             </column>
         </addColumn>
-        <!-- needed so the database does not break -->
-        <addNotNullConstraint columnName="knowledge_area_id" tableName="standardized_competency" defaultNullValue="1"/>
+        <!-- default value needed so the database does not break -->
+        <addNotNullConstraint columnName="knowledge_area_id" columnDataType="bigint" tableName="standardized_competency" defaultNullValue="1"/>
         <dropIndex indexName="idx_standardized_competency_title" tableName="standardized_competency"/>
     </changeSet>
 </databaseChangeLog>
