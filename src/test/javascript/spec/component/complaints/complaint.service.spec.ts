@@ -207,19 +207,19 @@ describe('ComplaintService', () => {
 
             const res = httpMock.expectOne({ method: 'POST' });
             expect(res.request.url).toBe('api/complaints');
-            expect(res.request.body).toEqual(serverComplaint1);
+            expect(res.request.body).toEqual(clientComplaintReq);
 
             res.flush(clone(serverComplaint1));
         });
 
         it('For exam', () => {
             complaintService.create(clientComplaintReq).subscribe((received) => {
-                expect(received).toEqual(clientComplaintReq);
+                expect(received).toEqual(serverComplaint1);
             });
 
             const res = httpMock.expectOne({ method: 'POST' });
             expect(res.request.url).toBe(`api/complaints`);
-            expect(res.request.body).toEqual(serverComplaint1);
+            expect(res.request.body).toEqual(clientComplaintReq);
 
             res.flush(clone(serverComplaint1));
         });
