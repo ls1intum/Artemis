@@ -19,11 +19,6 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
 
     Set<ProgrammingExerciseTask> findByExerciseId(Long exerciseId);
 
-    @NotNull
-    default ProgrammingExerciseTask findByIdElseThrow(long programmingExerciseTaskId) throws EntityNotFoundException {
-        return findById(programmingExerciseTaskId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", programmingExerciseTaskId));
-    }
-
     /**
      * Gets a task with its programming exercise, test cases and solution entries of the test cases
      *
@@ -50,22 +45,6 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
             WHERE t.id = :entryId
             """)
     Optional<ProgrammingExerciseTask> findByIdWithTestCaseAndSolutionEntries(@Param("entryId") long entryId);
-
-    /**
-     * Gets a task by its name and associated programming exercise
-     *
-     * @param taskName   The name of the task
-     * @param exerciseId The programming exercise the task should be associated with
-     * @return The task with the given name and programming exercise
-     */
-    @Query("""
-            SELECT t
-            FROM ProgrammingExerciseTask t
-                LEFT JOIN FETCH t.testCases tc
-            WHERE t.taskName = :taskName
-                AND t.exercise.id = :exerciseId
-            """)
-    Optional<ProgrammingExerciseTask> findByNameAndExerciseId(@Param("taskName") String taskName, @Param("exerciseId") long exerciseId);
 
     /**
      * Gets all tasks with its test cases and solution entries of the test case for a programming exercise
@@ -109,19 +88,6 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
             WHERE t.exercise.id = :exerciseId
             """)
     Set<ProgrammingExerciseTask> findByExerciseIdWithTestCases(@Param("exerciseId") Long exerciseId);
-
-    /**
-     * Returns the task name with the given id
-     *
-     * @param taskId the id of the task
-     * @return the name of the task or null if the task does not exist
-     */
-    @Query("""
-            SELECT t.taskName
-            FROM ProgrammingExerciseTask t
-            WHERE t.id = :taskId
-            """)
-    String getTaskName(@Param("taskId") Long taskId);
 
     @Query("""
             SELECT pt

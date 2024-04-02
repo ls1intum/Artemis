@@ -167,10 +167,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
         return conflicts;
     }
 
-    default Team findByIdElseThrow(long teamId) throws EntityNotFoundException {
-        return findById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
-    }
-
     default Team findWithStudentsByIdElseThrow(long teamId) throws EntityNotFoundException {
         return findWithStudentsById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
     }

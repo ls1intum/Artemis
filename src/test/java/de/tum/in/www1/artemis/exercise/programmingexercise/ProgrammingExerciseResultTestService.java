@@ -183,13 +183,17 @@ public class ProgrammingExerciseResultTestService {
     }
 
     private void postResult(AbstractBuildResultNotificationDTO requestBodyMap) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
+        final var alteredObj = convertBuildResultToJsonObject(requestBodyMap);
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
         request.postWithoutLocation("/api/public/programming-exercises/new-result", alteredObj, HttpStatus.OK, httpHeaders);
+    }
+
+    public static Object convertBuildResultToJsonObject(AbstractBuildResultNotificationDTO requestBodyMap) {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        return mapper.convertValue(requestBodyMap, Object.class);
     }
 
     private ProgrammingExerciseTestCase createTest(String testName, long testId, ProgrammingExerciseTestCaseType testCaseType) {
@@ -204,7 +208,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(Object resultNotification, boolean withFailedTest) {
+    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(AbstractBuildResultNotificationDTO resultNotification, boolean withFailedTest) {
         // reset saved test weights to be all 1
         var test2 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "test2").orElseThrow();
         var test3 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "test3").orElseThrow();
@@ -227,7 +231,8 @@ public class ProgrammingExerciseResultTestService {
         }
         expectedTestCases.add(test3);
 
-        final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultRequestBody);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
 
@@ -245,7 +250,7 @@ public class ProgrammingExerciseResultTestService {
         }
 
         // Call again and shouldn't re-create new submission.
-        gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+        gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultRequestBody);
         // One submission from the student participation and the other from solution participation
         var latestSubmissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId());
         assertThat(latestSubmissions).hasSize(1);
@@ -254,11 +259,12 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification, ProgrammingLanguage programmingLanguage) {
+    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(AbstractBuildResultNotificationDTO resultNotification, ProgrammingLanguage programmingLanguage) {
         final long participationId = programmingExerciseStudentParticipationStaticCodeAnalysis.getId();
-        final var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
+        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        final var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultRequestBody);
         assertThat(result).isNotNull();
-        final var savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(result.getId());
+        final var savedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId());
 
         // Should be one because programmingExerciseStudentParticipationStaticCodeAnalysis doesn't have a submission
         var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
@@ -273,13 +279,14 @@ public class ProgrammingExerciseResultTestService {
                 .isEqualTo(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).size());
 
         // Call again and shouldn't re-create new submission.
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultRequestBody);
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId)).hasSameSizeAs(submissions);
     }
 
-    public void shouldSaveBuildLogsInBuildLogRepository(Object resultNotification) {
+    public void shouldSaveBuildLogsInBuildLogRepository(AbstractBuildResultNotificationDTO resultNotification) {
         buildLogEntryRepository.deleteAll();
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
 
         var savedBuildLogs = buildLogEntryRepository.findAll();
         var expectedBuildLogs = getNumberOfBuildLogs(resultNotification) - 3; // 3 of those should be filtered
@@ -287,13 +294,14 @@ public class ProgrammingExerciseResultTestService {
         assertThat(savedBuildLogs).hasSize(expectedBuildLogs);
 
         // Call again and should not re-create new submission.
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
-    public void shouldNotSaveBuildLogsInBuildLogRepository(Object resultNotification) {
+    public void shouldNotSaveBuildLogsInBuildLogRepository(AbstractBuildResultNotificationDTO resultNotification) {
         buildLogEntryRepository.deleteAll();
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
 
         var savedBuildLogs = buildLogEntryRepository.findAll();
         var expectedBuildLogs = 0; // No logs should be stored because the build was successful
@@ -301,12 +309,12 @@ public class ProgrammingExerciseResultTestService {
         assertThat(savedBuildLogs).hasSize(expectedBuildLogs);
 
         // Call again and should not re-create new submission.
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     // Test
-    public void shouldGenerateNewManualResultIfManualAssessmentExists(Object resultNotification) {
+    public void shouldGenerateNewManualResultIfManualAssessmentExists(AbstractBuildResultNotificationDTO resultNotification) {
         activateFourTests();
 
         var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
@@ -318,7 +326,8 @@ public class ProgrammingExerciseResultTestService {
         programmingSubmission.getFirstResult().addFeedbacks(feedback);
         resultRepository.save(programmingSubmission.getFirstResult());
 
-        final var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        final var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
 
         assertThat(result).isNotNull();
 
@@ -329,7 +338,7 @@ public class ProgrammingExerciseResultTestService {
         assertThat(result.getPassedTestCaseCount()).isEqualTo(3);
 
         // Call again and shouldn't re-create new submission.
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
@@ -342,7 +351,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldGenerateTestwiseCoverageFileReports(Object resultNotification) throws GitAPIException {
+    public void shouldGenerateTestwiseCoverageFileReports(AbstractBuildResultNotificationDTO resultNotification) throws GitAPIException {
         // set testwise coverage analysis for programming exercise
         programmingExercise.setTestwiseCoverageEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
@@ -358,7 +367,8 @@ public class ProgrammingExerciseResultTestService {
 
         var expectedReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
 
-        final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultRequestBody);
         assertThat(result).isNotNull();
         var actualReportsByTestName = result.getCoverageFileReportsByTestCaseName();
         assertThat(actualReportsByTestName).usingRecursiveComparison().isEqualTo(expectedReportsByTestName);
@@ -369,40 +379,44 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldIgnoreResultIfNotOnDefaultBranch(Object resultNotification) {
+    public void shouldIgnoreResultIfNotOnDefaultBranch(AbstractBuildResultNotificationDTO resultNotification) {
         solutionParticipation.setProgrammingExercise(programmingExercise);
 
-        assertThatIllegalArgumentException().isThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification))
+        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        assertThatIllegalArgumentException().isThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultRequestBody))
                 .withMessageContaining("different branch");
     }
 
     // Test
-    public void shouldCreateResultOnParticipationDefaultBranch(Object resultNotification) {
+    public void shouldCreateResultOnParticipationDefaultBranch(AbstractBuildResultNotificationDTO resultNotification) {
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation.setBranch("branch");
 
-        var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
 
         assertThat(result).isNotNull();
     }
 
     // Test
-    public void shouldIgnoreResultIfNotOnParticipationBranch(Object resultNotification) {
+    public void shouldIgnoreResultIfNotOnParticipationBranch(AbstractBuildResultNotificationDTO resultNotification) {
         programmingExerciseStudentParticipation.setBranch("default");
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
 
-        assertThatIllegalArgumentException().isThrownBy(() -> gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification))
+        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        assertThatIllegalArgumentException().isThrownBy(() -> gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody))
                 .withMessageContaining("different branch");
     }
 
     // Test
-    public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, Object resultNotification) {
+    public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, AbstractBuildResultNotificationDTO resultNotification) {
         programmingExercise.setBranch(defaultBranch);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
 
-        final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultRequestBody);
         assertThat(result).isNotNull();
     }
 
@@ -445,8 +459,9 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldUpdateParticipantScoresOnlyOnce(Object resultNotification, InstanceMessageSendService instanceMessageSendService) {
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+    public void shouldUpdateParticipantScoresOnlyOnce(AbstractBuildResultNotificationDTO resultNotification, InstanceMessageSendService instanceMessageSendService) {
+        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
 
         // check that exactly one update is scheduled
         verify(instanceMessageSendService, times(1)).sendParticipantScoreSchedule(programmingExercise.getId(), programmingExerciseStudentParticipation.getParticipant().getId(),

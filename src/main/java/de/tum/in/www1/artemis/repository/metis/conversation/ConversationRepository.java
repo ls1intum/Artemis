@@ -26,10 +26,6 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
 
     @Transactional // ok because of delete
     @Modifying
-    void deleteById(long conversationId);
-
-    @Transactional // ok because of delete
-    @Modifying
     void deleteAllByCourseId(long courseId);
 
     // This is used only for testing purposes
