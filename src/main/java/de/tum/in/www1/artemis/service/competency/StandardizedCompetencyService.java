@@ -100,10 +100,7 @@ public class StandardizedCompetencyService {
             var source = sourceRepository.findByIdElseThrow(competency.getSource().getId());
             existingCompetency.setSource(source);
         }
-        if (competency.getKnowledgeArea() == null) {
-            existingCompetency.setKnowledgeArea(null);
-        }
-        else if (!competency.getKnowledgeArea().equals(existingCompetency.getKnowledgeArea())) {
+        if (!competency.getKnowledgeArea().equals(existingCompetency.getKnowledgeArea())) {
             var knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(competency.getKnowledgeArea().getId());
             existingCompetency.setKnowledgeArea(knowledgeArea);
         }
