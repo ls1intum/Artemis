@@ -112,53 +112,53 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     @BeforeAll
     static void findJava17() throws Exception {
         String javaHomeEnv = System.getenv("JAVA_HOME");
-        if (javaHomeEnv.contains("17")) {
-            java17Home = new File(javaHomeEnv);
-            return;
-        }
+        /*
+         * if (javaHomeEnv.contains("17")) {
+         * java17Home = new File(javaHomeEnv);
+         * return;
+         * }
+         */
         log.debug("Java home is {}", javaHomeEnv);
 
-        // Use which to find all java installations on Linux
-        if (Os.isFamily(Os.FAMILY_UNIX)) {
+        if (Os.isFamily(Os.FAMILY_UNIX) || Os.isFamily(Os.FAMILY_MAC)) {
+            // Use which to find all java installations on Linux
             var javaInstallations = runProcess(new ProcessBuilder("which", "-a", "java"));
             for (String path : javaInstallations) {
                 File binFolder = new File(path).getParentFile();
-                ProcessBuilder processBuilder = new ProcessBuilder("./java", "-version").directory(binFolder);
-                var version = runProcess(processBuilder);
-                if (!version.isEmpty() && version.getFirst().contains("17")) {
-                    java17Home = binFolder.getParentFile(); // JAVA_HOME/bin/java
+                if (checkJavaVersion(binFolder, "./java", "-version")) {
                     return;
                 }
             }
         }
-        // Fail.fail("Java 17 not found");
+        else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            // Use PATH to find all java installations on windows
+            String[] path = System.getenv("PATH").split(";");
+            var java17 = Arrays.stream(path).map(Path::of).filter(p -> p.endsWith("bin")).filter(Files::isDirectory).filter(binDir -> Files.exists(binDir.resolve("java.exe")))
+                    .filter(binDir -> {
+                        try {
+                            return checkJavaVersion(binDir.toFile(), "cmd", "/c", "java.exe", "-version");
+                        }
+                        catch (Exception e) {
+                            return false;
+                        }
+                    }).findFirst();
 
-        /*
-         * // search for other java installations
-         * Path allJavaInstallations = Path.of(javaHomeEnv).getParent().getParent();
-         * Path folder = findDirectoryContaining(allJavaInstallations, "17").orElseThrow();
-         * // This is a valid jdk if it contains /bin/java.
-         * if (Files.exists(folder.resolve("bin/java"))) {
-         * java17Home = folder.toFile();
-         * }
-         * // Try x64 subfolder first (present on the GitHub runners)
-         * else if (Files.exists(folder.resolve("x64"))) {
-         * java17Home = folder.resolve("x64").toFile();
-         * } else {
-         * // Search for the /bin/java folder structure
-         * Path subPath = findDirectoryContaining(folder, "bin/java").orElseThrow();
-         * // Go two parents above to navigate out of bin/java
-         * java17Home = subPath.getParent().getParent().toFile();
-         * }
-         * log.debug("Set java 17 home to {}", java17Home);
-         */
+            if (java17.isPresent()) {
+                return;
+            }
+        }
         fail("Java 17 not found");
     }
 
-    private static Optional<Path> findDirectoryContaining(Path start, String search) throws IOException {
-        try (var stream = Files.find(start, 3, (path, basicFileAttributes) -> path.toString().contains(search) && Files.isDirectory(path))) {
-            return stream.findAny();
+    private static boolean checkJavaVersion(File binFolder, String... command) throws Exception {
+        ProcessBuilder processBuilder = new ProcessBuilder(command).directory(binFolder);
+        var version = runProcess(processBuilder);
+        if (!version.isEmpty() && version.getFirst().contains("version \"17")) {
+            java17Home = binFolder.getParentFile(); // JAVA_HOME/bin/java
+            log.debug("Using {} as JAVA_HOME.", java17Home);
+            return true;
         }
+        return false;
     }
 
     private static List<String> runProcess(ProcessBuilder processBuilder) throws Exception {
