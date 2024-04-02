@@ -65,6 +65,10 @@ public class ProgrammingMessagingService {
     public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId) {
         var submissionDTO = SubmissionDTO.of(submission);
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
+            if (studentParticipation.getParticipant() instanceof Team team) {
+                // eager load the team with students so their information can be used for the messages below
+                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+            }
             studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submissionDTO));
         }
 
