@@ -3,19 +3,36 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static de.tum.in.www1.artemis.exercise.ExerciseFactory.populateExerciseForExam;
 import static java.time.ZonedDateTime.now;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.*;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.CommitDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestCaseDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestCaseDetailMessageDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestSuiteDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.util.TestConstants;
 
@@ -317,101 +334,6 @@ public class ProgrammingExerciseFactory {
                 successful, summary, vcsDtos != null && !vcsDtos.isEmpty() ? vcsDtos : List.of(vcs), List.of(job));
 
         return new BambooBuildResultNotificationDTO("secret", "TestNotification", plan, build);
-    }
-
-    /**
-     * Generate a Bamboo result notification DTO with 10 build logs of various sizes. The successful boolean value is set to true if there are no failed test names.
-     *
-     * @param buildPlanKey        The key of the build plan
-     * @param repoName            The repository name.
-     * @param successfulTestNames The names of successful tests.
-     * @param failedTestNames     The names of failed tests.
-     * @param buildCompletionDate The completion date of the build.
-     * @param vcsDtos             The vcs objects containing commit information.
-     * @return The Bamboo result notification DTO with build logs.
-     */
-    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
-            List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos) {
-        return generateBambooBuildResultWithLogs(buildPlanKey, repoName, successfulTestNames, failedTestNames, buildCompletionDate, vcsDtos, failedTestNames.isEmpty());
-    }
-
-    /**
-     * Generate a Bamboo result notification DTO with 10 build logs of various sizes.
-     *
-     * @param buildPlanKey        The key of the build plan
-     * @param repoName            The repository name.
-     * @param successfulTestNames The names of successful tests.
-     * @param failedTestNames     The names of failed tests.
-     * @param buildCompletionDate The completion date of the build.
-     * @param vcsDtos             The vcs objects containing commit information.
-     * @return The Bamboo result notification DTO with build logs.
-     */
-    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
-            List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean successful) {
-        var notification = generateBambooBuildResult(repoName, buildPlanKey, "No tests found", buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, successful);
-
-        String logWith254Chars = "a".repeat(254);
-
-        var buildLogDTO254Chars = new BambooBuildLogDTO(now(), logWith254Chars, null);
-        var buildLogDTO255Chars = new BambooBuildLogDTO(now(), logWith254Chars + "a", null);
-        var buildLogDTO256Chars = new BambooBuildLogDTO(now(), logWith254Chars + "aa", null);
-        var largeBuildLogDTO = new BambooBuildLogDTO(now(), logWith254Chars + logWith254Chars, null);
-        var logTypicalErrorLog = new BambooBuildLogDTO(now(), "error: the java class ABC does not exist", null);
-        var logTypicalDuplicatedErrorLog = new BambooBuildLogDTO(now(), "error: the java class ABC does not exist", null);
-        var logCompilationError = new BambooBuildLogDTO(now(), "COMPILATION ERROR", null);
-        var logBuildError = new BambooBuildLogDTO(now(), "BUILD FAILURE", null);
-        var logWarning = new BambooBuildLogDTO(now(), "[WARNING]", null);
-        var logWarningIllegalReflectiveAccess = new BambooBuildLogDTO(now(), "WARNING: Illegal reflective access by", null);
-
-        notification.getBuild().jobs().get(0).logs().addAll(List.of(buildLogDTO254Chars, buildLogDTO255Chars, buildLogDTO256Chars, largeBuildLogDTO, logTypicalErrorLog,
-                logTypicalDuplicatedErrorLog, logWarning, logWarningIllegalReflectiveAccess, logCompilationError, logBuildError));
-
-        return notification;
-    }
-
-    /**
-     * Generate a Bamboo result notification DTO with 9 analytics logs.
-     *
-     * @param buildPlanKey        The key of the build plan
-     * @param repoName            The repository name.
-     * @param successfulTestNames The names of successful tests.
-     * @param failedTestNames     The names of failed tests.
-     * @param buildCompletionDate The completion date of the build.
-     * @param vcsDtos             The vcs objects containing commit information.
-     * @return The Bamboo result notification DTO with analytics logs.
-     */
-    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithAnalyticsLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
-            List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean sca) {
-        var notification = generateBambooBuildResult(repoName, buildPlanKey, "Test executed", buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, true);
-
-        var jobStarted = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 14, 58, 30, 0, ZoneId.systemDefault()), "started building on agent 1", null);
-
-        var executingBuild = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 0, 0, ZoneId.systemDefault()), "Executing build", null);
-
-        var testingStarted = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 5, 0, ZoneId.systemDefault()), "Starting task 'Tests'", null);
-
-        var dependency1Downloaded = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 10, 0, ZoneId.systemDefault()), "Dependency 1 Downloaded from", null);
-
-        var testingFinished = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 15, 0, ZoneId.systemDefault()), "Finished task 'Tests' with result", null);
-
-        var scaStarted = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 16, 0, ZoneId.systemDefault()), "Starting task 'Static Code Analysis'", null);
-
-        var dependency2Downloaded = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 20, 0, ZoneId.systemDefault()), "Dependency 2 Downloaded from", null);
-
-        var scaFinished = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 27, 0, ZoneId.systemDefault()), "Finished task 'Static Code Analysis'", null);
-
-        var jobFinished = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 30, 0, ZoneId.systemDefault()), "Finished building", null);
-
-        notification.getBuild().jobs().get(0).logs().clear();
-        if (sca) {
-            notification.getBuild().jobs().get(0).logs().addAll(
-                    List.of(jobStarted, executingBuild, testingStarted, dependency1Downloaded, testingFinished, scaStarted, dependency2Downloaded, scaFinished, jobFinished));
-        }
-        else {
-            notification.getBuild().jobs().get(0).logs().addAll(List.of(jobStarted, executingBuild, testingStarted, dependency1Downloaded, testingFinished, jobFinished));
-        }
-
-        return notification;
     }
 
     /**
