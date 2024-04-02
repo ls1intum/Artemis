@@ -229,7 +229,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void lockAllRepositories() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
-
         request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/lock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.BAD_REQUEST);
     }
@@ -237,14 +236,14 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void lockAllRepositories_noInstructor() throws Exception {
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/lock-all-repositories", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/lock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void unlockAllRepositories_preAuthNoInstructor() throws Exception {
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/unlock-all-repositories", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/unlock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
     }
 
@@ -252,7 +251,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void unlockAllRepositories() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
-
         request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/unlock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.BAD_REQUEST);
     }

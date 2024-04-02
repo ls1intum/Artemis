@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipation
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
+import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints;
 
 class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
