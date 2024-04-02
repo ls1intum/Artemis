@@ -8,10 +8,5 @@ export class ComplaintRequestDTO {
     public complaintType?: ComplaintType;
     public examId?: number;
 
-    constructor(resultId: number, complaintType: ComplaintType, complaintText?: string, examId?: number) {
-        this.resultId = resultId;
-        this.complaintText = complaintText;
-        this.complaintType = complaintType;
-        this.examId = examId;
-    }
+    constructor() {}
 }

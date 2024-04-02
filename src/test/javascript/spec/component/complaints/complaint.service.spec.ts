@@ -12,6 +12,7 @@ import { Result } from 'app/entities/result.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ComplaintRequestDTO } from 'app/entities/complaint-request-dto.model';
 
 describe('ComplaintService', () => {
     let complaintService: ComplaintService;
@@ -31,6 +32,8 @@ describe('ComplaintService', () => {
     clientComplaint1.submittedTime = dayjsTime1;
     clientComplaint1.complaintText = 'Test text';
 
+    // const complaintRequest = new ComplaintRequestDTO(this.resultId, this.complaintType, this.complaintText, this.examId);
+
     const serverComplaint1 = { ...clientComplaint1, submittedTime: stringTime1 };
 
     const clientComplaint2 = new Complaint();
@@ -38,9 +41,15 @@ describe('ComplaintService', () => {
     clientComplaint2.complaintType = ComplaintType.MORE_FEEDBACK;
     clientComplaint2.result = new Result();
     clientComplaint2.submittedTime = dayjsTime2;
-    clientComplaint2.complaintText = 'Another test text';
+    clientComplaint2.complaintText = 'Test text';
 
     const serverComplaint2 = { ...clientComplaint2, submittedTime: stringTime2 };
+
+    const clientComplaintReq = new ComplaintRequestDTO();
+    clientComplaintReq.examId = 1337;
+    clientComplaintReq.complaintText = 'Test text';
+    clientComplaintReq.resultId = 1;
+    clientComplaintReq.complaintType = ComplaintType.MORE_FEEDBACK;
 
     let exercise: Exercise;
     let emptyResult: Result;
@@ -191,8 +200,9 @@ describe('ComplaintService', () => {
 
     describe('create', () => {
         it('For course', () => {
-            complaintService.create(clientComplaint1).subscribe((received) => {
-                expect(received).toEqual(clientComplaint1);
+            clientComplaintReq.examId = undefined;
+            complaintService.create(clientComplaintReq).subscribe((received) => {
+                expect(received).toEqual(serverComplaint1);
             });
 
             const res = httpMock.expectOne({ method: 'POST' });
@@ -203,14 +213,12 @@ describe('ComplaintService', () => {
         });
 
         it('For exam', () => {
-            const examId = 1337;
-
-            complaintService.create(clientComplaint1, examId).subscribe((received) => {
-                expect(received).toEqual(clientComplaint1);
+            complaintService.create(clientComplaintReq).subscribe((received) => {
+                expect(received).toEqual(clientComplaintReq);
             });
 
             const res = httpMock.expectOne({ method: 'POST' });
-            expect(res.request.url).toBe(`api/complaints?examId=${examId}`);
+            expect(res.request.url).toBe(`api/complaints`);
             expect(res.request.body).toEqual(serverComplaint1);
 
             res.flush(clone(serverComplaint1));

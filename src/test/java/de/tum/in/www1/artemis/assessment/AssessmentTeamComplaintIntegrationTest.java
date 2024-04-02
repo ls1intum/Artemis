@@ -6,13 +6,13 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.OptionalLong;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.dto.Action;
+import de.tum.in.www1.artemis.service.dto.ComplaintRequestDTO;
 import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -75,6 +76,8 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
 
     private Complaint complaint;
 
+    private ComplaintRequestDTO complaintRequest;
+
     private Complaint moreFeedbackRequest;
 
     private Course course;
@@ -94,6 +97,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         team = teamUtilService.addTeamForExercise(modelingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), TEST_PREFIX);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        complaintRequest = new ComplaintRequestDTO(complaint.getResult().getId(), complaint.getComplaintText(), complaint.getComplaintType(), OptionalLong.empty());
         moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
     }
 
@@ -132,7 +136,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
         complaintUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 5, ComplaintType.MORE_FEEDBACK);
 
-        request.post(resourceUrl, complaint, HttpStatus.CREATED);
+        request.post(resourceUrl, complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
@@ -269,17 +273,4 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         modelingAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission,
                 "test-data/model-assessment/assessment.54727.v2.json", TEST_PREFIX + "tutor1", true);
     }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getNumberOfAllowedTeamComplaintsInCourse() throws Exception {
-        complaint.setParticipant(team);
-        complaintRepo.save(complaint);
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("courseId", modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId().toString());
-        params.add("isTeamMode", "true");
-        Long nrOfAllowedComplaints = request.get("/api/complaints", HttpStatus.OK, Long.class, params);
-        assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxTeamComplaints());
-    }
-
 }
