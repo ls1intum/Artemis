@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LearningPathHealthDTO(@NotEmpty Set<HealthStatus> status, Long missingLearningPaths) {
 
     public LearningPathHealthDTO(Set<HealthStatus> status) {
