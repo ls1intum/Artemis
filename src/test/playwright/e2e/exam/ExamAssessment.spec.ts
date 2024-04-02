@@ -1,6 +1,6 @@
 import dayjs, { Dayjs } from 'dayjs';
 import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType } from '../../support/constants';
-import { admin, instructor, studentOne, tutor, users } from '../../support/users';
+import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
 import { Page, expect } from '@playwright/test';
 
 import javaPartiallySuccessful from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
@@ -27,7 +27,7 @@ import { OnlineEditorPage } from '../../support/pageobjects/exercises/programmin
 import { MultipleChoiceQuiz } from '../../support/pageobjects/exercises/quiz/MultipleChoiceQuiz';
 import { TextEditorPage } from '../../support/pageobjects/exercises/text/TextEditorPage';
 import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
-import { newBrowserPage } from '../../support/utils';
+import { generateUUID, newBrowserPage } from '../../support/utils';
 
 let exam: Exam;
 
@@ -46,10 +46,13 @@ test.describe('Exam assessment', () => {
         await Commands.login(page, admin);
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
         await courseManagementAPIRequests.addTutorToCourse(course, tutor);
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-        const userInfo = await users.getUserInfo(studentOne.username, page);
-        studentOneName = userInfo.name!;
+
+        studentOneName = (await users.getUserInfo(studentOne.username, page)).name!;
     });
 
     test.describe.serial('Programming exercise assessment', () => {
@@ -216,6 +219,75 @@ test.describe('Exam assessment', () => {
             textAssessmentSuccessful = true;
             await examParticipation.verifyGradingKeyOnFinalPage('2.0');
         });
+    });
+
+    test.describe('Exam statistics', () => {
+        let exerciseArray: Array<Exercise> = [];
+
+        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+            await login(admin);
+            const examConfig = {
+                course,
+                title: 'exam' + generateUUID(),
+                visibleDate: dayjs().subtract(3, 'minutes'),
+                startDate: dayjs().subtract(2, 'minutes'),
+                endDate: dayjs().add(1, 'minutes'),
+                examMaxPoints: 40,
+                numberOfExercisesInExam: 4,
+            };
+            exam = await examAPIRequests.createExam(examConfig);
+            const textFixture = 'loremIpsum.txt';
+            const textExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
+            const textExercise2 = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
+            const textExercise3 = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
+            const textExercise4 = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
+            // const programmingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaAllSuccessfulSubmission });
+            // const quizExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
+            // const modelingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING);
+            // exerciseArray = [textExercise, programmingExercise, quizExercise, modelingExercise];
+            exerciseArray = [textExercise, textExercise2, textExercise3, textExercise4];
+
+            await examAPIRequests.registerStudentForExam(exam, studentOne);
+            await examAPIRequests.registerStudentForExam(exam, studentTwo);
+            await examAPIRequests.registerStudentForExam(exam, studentThree);
+            await examAPIRequests.registerStudentForExam(exam, studentFour);
+            await examAPIRequests.generateMissingIndividualExams(exam);
+            await examAPIRequests.prepareExerciseStartForExam(exam);
+        });
+
+        test.beforeEach('Set exam grading and participate in exam', async ({ login, page, examManagement, examGradingPage }) => {
+            await login(instructor);
+            await page.goto(`course-management/${course.id}/exams/${exam.id}`);
+            await examManagement.openGradingKey();
+            await examGradingPage.generateDefaultGrading();
+            await examGradingPage.saveGradingKey();
+        });
+
+        test.beforeEach('Participate in exam', async ({ examParticipation, examNavigation }) => {
+            const students = [studentOne, studentTwo, studentThree, studentFour];
+            for (const student of students) {
+                await examParticipation.startParticipation(student, course, exam);
+                for (let j = 0; j < exerciseArray.length; j++) {
+                    const exercise = exerciseArray[j];
+                    await examNavigation.openExerciseAtIndex(j);
+                    await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
+                }
+                await examParticipation.handInEarly();
+            }
+        });
+
+        test.beforeEach('Assess a text exercise submission', async ({ login, examManagement, examAssessment, courseAssessment, exerciseAssessment }) => {
+            await login(tutor);
+            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
+            for (let i = 0; i < exerciseArray.length; i++) {
+                await examAssessment.addNewFeedback(7, 'Good job');
+                const response = await examAssessment.submitTextAssessment();
+                expect(response.status()).toBe(200);
+                await examAssessment.nextAssessment();
+            }
+        });
+
+        test('Check exam statistics', async () => {});
     });
 
     test.afterAll('Delete course', async ({ browser }) => {

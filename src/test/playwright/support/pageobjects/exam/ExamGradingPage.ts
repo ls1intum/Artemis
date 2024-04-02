@@ -26,6 +26,10 @@ export class ExamGradingPage {
         await this.page.locator('select[title="first passing grade"]').selectOption(gradeName);
     }
 
+    async generateDefaultGrading() {
+        await this.page.locator('button', { hasText: 'Generate Default Grading Key' }).click();
+    }
+
     async saveGradingKey() {
         await this.page.locator('button', { hasText: 'Save' }).click();
     }
