@@ -31,7 +31,9 @@
             <column name="title" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="short_title" type="varchar(10)"/>
+            <column name="short_title" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
             <column name="description" type="varchar(2000)"/>
             <column name="parent_id" type="bigint"/>
         </createTable>
