@@ -17,10 +17,10 @@ public interface TestCaseDTOInterface {
     String getName();
 
     /**
-     * Gets the message of the test case
+     * Gets the messages of the test case (typically error messages)
      *
-     * @return the message of the test case
+     * @return the messages of the test case
      */
     @JsonIgnore
-    List<String> getMessage();
+    List<String> getTestMessages();
 }
