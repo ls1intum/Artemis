@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.domain.Feedback.SUBMISSION_POLICY_FEEDBACK_
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseResultTestService.convertBuildResultToJsonObject;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -413,8 +413,8 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGi
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
-        var resultNotification = ProgrammingExerciseFactory.generateBambooBuildResult(repositoryName, null, null, null, List.of("test1"), List.of("test2", "test3"),
-                new ArrayList<>());
+        var resultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false, List.of("test1"),
+                List.of("test2", "test3"), null, null, null);
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             mockGitlabRequests(participation);
         }
@@ -447,8 +447,8 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGi
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
-        var resultNotification = ProgrammingExerciseFactory.generateBambooBuildResult(repositoryName, null, null, null, List.of("test1", "test2", "test3"), List.of(),
-                new ArrayList<>());
+        var resultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
+                List.of("test1", "test2", "test3"), Collections.emptyList(), null, null, null);
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             mockGitlabRequests(participation);
         }

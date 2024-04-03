@@ -26,8 +26,6 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestCaseDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestCaseDetailMessageDTO;
@@ -287,56 +285,6 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Generates a Bamboo build result notification DTO using the provided values. The successful boolean value is se to true if there are no failed test names.
-     * It first creates a BambooTestSummaryDTO, BambooJobDTO, BambooVCSDTO and BambooBuildDTO which are used to create the BambooBuildResultNotificationDTO.
-     *
-     * @param repoName               The repository name.
-     * @param planKey                The key of the build plan.
-     * @param testSummaryDescription The test summary description used to create a bamboo test summary DTO.
-     * @param buildCompletionDate    The completion date of the build.
-     * @param successfulTestNames    The names of successful tests.
-     * @param failedTestNames        The names of failed tests.
-     * @param vcsDtos                The vcs objects containing commit information.
-     * @return The generated Bamboo build result notification DTO
-     */
-    public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, String planKey, String testSummaryDescription, ZonedDateTime buildCompletionDate,
-            List<String> successfulTestNames, List<String> failedTestNames, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos) {
-        return generateBambooBuildResult(repoName, planKey, testSummaryDescription, buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, failedTestNames.isEmpty());
-    }
-
-    /**
-     * Generates a Bamboo build result notification DTO using the provided values.
-     * It first creates a BambooTestSummaryDTO, BambooJobDTO, BambooVCSDTO and BambooBuildDTO which are used to create the BambooBuildResultNotificationDTO.
-     *
-     * @param repoName               The repository name.
-     * @param planKey                The key of the build plan.
-     * @param testSummaryDescription The test summary description used to create a bamboo test summary DTO.
-     * @param buildCompletionDate    The completion date of the build.
-     * @param successfulTestNames    The names of successful tests.
-     * @param failedTestNames        The names of failed tests.
-     * @param vcsDtos                The vcs objects containing commit information.
-     * @param successful             True, id the build was successful. Used to create the Bamboo build dto.
-     * @return The generated Bamboo build result notification DTO
-     */
-    public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, String planKey, String testSummaryDescription, ZonedDateTime buildCompletionDate,
-            List<String> successfulTestNames, List<String> failedTestNames, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean successful) {
-
-        final var summary = new BambooBuildResultNotificationDTO.BambooTestSummaryDTO(42, 0, failedTestNames.size(), failedTestNames.size(), 0, successfulTestNames.size(),
-                testSummaryDescription, 0, 0, successfulTestNames.size() + failedTestNames.size(), failedTestNames.size());
-
-        final var successfulTests = successfulTestNames.stream().map(name -> generateBambooTestJob(name, true)).toList();
-        final var failedTests = failedTestNames.stream().map(name -> generateBambooTestJob(name, false)).toList();
-        final var job = new BambooBuildResultNotificationDTO.BambooJobDTO(42, failedTests, successfulTests, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-        final var vcs = new BambooBuildResultNotificationDTO.BambooVCSDTO(TestConstants.COMMIT_HASH_STRING, repoName, DEFAULT_BRANCH, new ArrayList<>());
-        final var plan = new BambooBuildPlanDTO(planKey != null ? planKey : "TEST201904BPROGRAMMINGEXERCISE6-STUDENT1");
-
-        final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO(false, 42, "foobar", buildCompletionDate != null ? buildCompletionDate : now().minusSeconds(5),
-                successful, summary, vcsDtos != null && !vcsDtos.isEmpty() ? vcsDtos : List.of(vcs), List.of(job));
-
-        return new BambooBuildResultNotificationDTO("secret", "TestNotification", plan, build);
-    }
-
-    /**
      * Creates a static code analysis feedback with inactive category.
      *
      * @param result The result of the feedback.
@@ -345,23 +293,6 @@ public class ProgrammingExerciseFactory {
     public static Feedback createSCAFeedbackWithInactiveCategory(Result result) {
         return new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"miscellaneous\"}")
                 .type(FeedbackType.AUTOMATIC).positive(false);
-    }
-
-    /**
-     * Generates Bamboo build result notification DTO with a static code analysis report.
-     *
-     * @param repoName            The repository name.
-     * @param successfulTestNames The names of successful tests.
-     * @param failedTestNames     The names of failed tests.
-     * @param programmingLanguage The programming language of the static code analysis report.
-     * @return The created Bamboo build result notification DTO.
-     */
-    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
-            List<String> failedTestNames, ProgrammingLanguage programmingLanguage) {
-        var notification = generateBambooBuildResult(repoName, null, null, null, successfulTestNames, failedTestNames, new ArrayList<>(), true);
-        var reports = generateStaticCodeAnalysisReports(programmingLanguage);
-        notification.getBuild().jobs().get(0).staticCodeAnalysisReports().addAll(reports);
-        return notification;
     }
 
     /**
@@ -437,17 +368,6 @@ public class ProgrammingExerciseFactory {
         category.setState(state);
         category.setProgrammingExercise(programmingExercise);
         return category;
-    }
-
-    /**
-     * Generates a Bamboo test job DTO with the given name, <code>SpringTestClass</code> class name and errors based on the successful value.
-     *
-     * @param name       The name and method name of the DTO.
-     * @param successful If true, an empty list of errors is added to the DTO. Otherwise, the error <code>bad solution, did not work</code> is added.
-     * @return The created Bamboo test job DTO.
-     */
-    private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {
-        return new BambooBuildResultNotificationDTO.BambooTestJobDTO(name, name, "SpringTestClass", successful ? List.of() : List.of("bad solution, did not work"));
     }
 
     /**
