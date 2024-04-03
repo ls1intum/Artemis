@@ -542,7 +542,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         result = participationUtilService.addSampleFeedbackToResults(result);
         request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK);
         assertThat(resultRepository.existsById(result.getId())).isFalse();
-        request.delete("api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.NOT_FOUND);
+        request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.NOT_FOUND);
     }
 
     @Test
