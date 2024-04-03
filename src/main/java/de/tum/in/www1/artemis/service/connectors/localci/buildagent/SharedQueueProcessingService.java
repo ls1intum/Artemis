@@ -251,56 +251,9 @@ public class SharedQueueProcessingService {
 
         log.info("Processing build job: {}", buildJob);
 
+        CompletableFuture<LocalCIBuildResult> futureResult;
         try {
-            CompletableFuture<LocalCIBuildResult> futureResult = buildJobManagementService.executeBuildJob(buildJob);
-            futureResult.thenAccept(buildResult -> {
-
-                JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
-
-                LocalCIBuildJobQueueItem finishedJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
-                        buildJob.courseId(), buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo,
-                        buildJob.buildConfig(), null);
-
-                ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, null);
-                resultQueue.add(resultQueueItem);
-
-                // after processing a build job, remove it from the processing jobs
-                processingJobs.remove(buildJob.id());
-                log.info("Decrementing local processing jobs: {} -> {}. Build Job ID: {}. Job finished normally", localProcessingJobs.get(), localProcessingJobs.decrementAndGet(),
-                        buildJob.id());
-                updateLocalBuildAgentInformationWithRecentJob(finishedJob);
-
-                // process next build job if node is available
-                checkAvailabilityAndProcessNextBuild();
-            });
-
-            futureResult.exceptionally(ex -> {
-                ZonedDateTime completionDate = ZonedDateTime.now();
-
-                LocalCIBuildJobQueueItem job;
-                BuildStatus status;
-
-                if (!(ex.getCause() instanceof CancellationException) || !ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-                    status = BuildStatus.FAILED;
-                    log.error("Error while processing build job: {}", buildJob, ex);
-                }
-                else {
-                    status = BuildStatus.CANCELLED;
-                }
-
-                job = new LocalCIBuildJobQueueItem(buildJob, completionDate, status);
-
-                ResultQueueItem resultQueueItem = new ResultQueueItem(null, job, ex);
-                resultQueue.add(resultQueueItem);
-
-                processingJobs.remove(buildJob.id());
-                log.info("Decrementing local processing jobs: {} -> {}. Build Job ID: {}. Job finished exceptionally", localProcessingJobs.get(),
-                        localProcessingJobs.decrementAndGet(), buildJob.id());
-                updateLocalBuildAgentInformationWithRecentJob(job);
-
-                checkAvailabilityAndProcessNextBuild();
-                return null;
-            });
+            futureResult = buildJobManagementService.executeBuildJob(buildJob);
         }
         catch (Exception e) {
             ZonedDateTime completionDate = ZonedDateTime.now();
@@ -318,7 +271,59 @@ public class SharedQueueProcessingService {
             updateLocalBuildAgentInformationWithRecentJob(job);
 
             checkAvailabilityAndProcessNextBuild();
+            return;
         }
+        if (futureResult == null) {
+            return;
+        }
+        futureResult.thenAccept(buildResult -> {
+
+            JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
+
+            LocalCIBuildJobQueueItem finishedJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
+                    buildJob.courseId(), buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo,
+                    buildJob.buildConfig(), null);
+
+            ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, null);
+            resultQueue.add(resultQueueItem);
+
+            // after processing a build job, remove it from the processing jobs
+            processingJobs.remove(buildJob.id());
+            log.info("Decrementing local processing jobs: {} -> {}. Build Job ID: {}. Job finished normally", localProcessingJobs.get(), localProcessingJobs.decrementAndGet(),
+                    buildJob.id());
+            updateLocalBuildAgentInformationWithRecentJob(finishedJob);
+
+            // process next build job if node is available
+            checkAvailabilityAndProcessNextBuild();
+        });
+
+        futureResult.exceptionally(ex -> {
+            ZonedDateTime completionDate = ZonedDateTime.now();
+
+            LocalCIBuildJobQueueItem job;
+            BuildStatus status;
+
+            if (!(ex.getCause() instanceof CancellationException) || !ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+                status = BuildStatus.FAILED;
+                log.error("Error while processing build job: {}", buildJob, ex);
+            }
+            else {
+                status = BuildStatus.CANCELLED;
+            }
+
+            job = new LocalCIBuildJobQueueItem(buildJob, completionDate, status);
+
+            ResultQueueItem resultQueueItem = new ResultQueueItem(null, job, ex);
+            resultQueue.add(resultQueueItem);
+
+            processingJobs.remove(buildJob.id());
+            log.info("Decrementing local processing jobs: {} -> {}. Build Job ID: {}. Job finished exceptionally", localProcessingJobs.get(), localProcessingJobs.decrementAndGet(),
+                    buildJob.id());
+            updateLocalBuildAgentInformationWithRecentJob(job);
+
+            checkAvailabilityAndProcessNextBuild();
+            return null;
+        });
     }
 
     /**
@@ -327,6 +332,7 @@ public class SharedQueueProcessingService {
     private boolean nodeIsAvailable() {
         log.info("Currently processing jobs on this node: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
                 localCIBuildExecutorService.getMaximumPoolSize());
+        localCIBuildExecutorService.getActiveCount();
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
     }
 
