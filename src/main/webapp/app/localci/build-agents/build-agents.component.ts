@@ -92,4 +92,9 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
             this.buildQueueService.cancelAllRunningBuildJobsForAgent(buildAgent.name).subscribe();
         }
     }
+
+    viewBuildLogs(resultId: number): void {
+        const url = `/api/build-log/${resultId}`;
+        window.open(url, '_blank');
+    }
 }
