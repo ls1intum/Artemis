@@ -71,7 +71,6 @@ following dependencies/tools on your machine:
    setup/database
    setup/server
    setup/client
-   setup/bamboo-bitbucket-jira
    setup/jenkins-gitlab
    setup/gitlabci-gitlab
    setup/integrated-code-lifecycle
