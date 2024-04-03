@@ -1,4 +1,4 @@
-import { BASE_API, POST, PUT } from '../../constants';
+import { COURSE_BASE, POST, PUT } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the course communication page.
@@ -24,13 +24,13 @@ export class CourseCommunicationPage {
     }
 
     save() {
-        cy.intercept(POST, BASE_API + 'courses/*/posts').as('createPost');
+        cy.intercept(POST, `${COURSE_BASE}/*/posts`).as('createPost');
         cy.get('#save').click();
         return cy.wait('@createPost');
     }
 
     saveMessage() {
-        cy.intercept(POST, BASE_API + 'courses/*/messages').as('createMessage');
+        cy.intercept(POST, `${COURSE_BASE}/*/messages`).as('createMessage');
         cy.get('#save').click();
         return cy.wait('@createMessage');
     }
@@ -68,14 +68,14 @@ export class CourseCommunicationPage {
 
     reply(postID: number, content: string) {
         this.getSinglePost(postID).find('.new-reply-inline-input').find('.markdown-editor').find('.ace_content').click().type(content, { delay: 8 });
-        cy.intercept(POST, BASE_API + 'courses/*/answer-posts').as('createReply');
+        cy.intercept(POST, `${COURSE_BASE}/*/answer-posts`).as('createReply');
         this.getSinglePost(postID).find('.new-reply-inline-input').find('#save').click();
         return cy.wait('@createReply');
     }
 
     replyWithMessage(postID: number, content: string) {
         this.getSinglePost(postID).find('.new-reply-inline-input').find('.markdown-editor').find('.ace_content').click().type(content, { delay: 8 });
-        cy.intercept(POST, BASE_API + 'courses/*/answer-messages').as('createReply');
+        cy.intercept(POST, `${COURSE_BASE}/*/answer-messages`).as('createReply');
         this.getSinglePost(postID).find('.new-reply-inline-input').find('#save').click();
         return cy.wait('@createReply');
     }
@@ -83,7 +83,7 @@ export class CourseCommunicationPage {
     react(postID: number, emoji: string) {
         this.getSinglePost(postID).find('.react').click();
         cy.get('.emoji-mart').find('.emoji-mart-search input').type(emoji);
-        cy.intercept(POST, BASE_API + 'courses/*/postings/reactions').as('createReaction');
+        cy.intercept(POST, `${COURSE_BASE}/*/postings/reactions`).as('createReaction');
         cy.get('.emoji-mart').find('.emoji-mart-scroll').find('ngx-emoji:first()').click();
         return cy.wait('@createReaction');
     }
@@ -100,7 +100,7 @@ export class CourseCommunicationPage {
         const post = this.getSinglePost(postID);
         post.find('.editIcon').click();
         this.setContentInline(content);
-        cy.intercept(PUT, BASE_API + 'courses/*/messages/*').as('updatePost');
+        cy.intercept(PUT, `${COURSE_BASE}/*/messages/*`).as('updatePost');
         cy.get('#save').click();
         cy.wait('@updatePost');
     }

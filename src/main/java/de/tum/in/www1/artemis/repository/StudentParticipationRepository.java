@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -403,17 +403,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.results
-                LEFT JOIN FETCH p.submissions s
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.id = :studentId
-                AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
-             """)
-    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndLegalSubmissions(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
-
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.results
                 LEFT JOIN FETCH p.submissions
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
@@ -433,10 +422,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students s
             WHERE p.exercise.id = :exerciseId
-                AND p.team.id = :teamId
+                AND s.id = :studentId
             """)
-    List<StudentParticipation> findAllByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+    List<StudentParticipation> findAllWithTeamStudentsByExerciseIdAndTeamStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT DISTINCT p

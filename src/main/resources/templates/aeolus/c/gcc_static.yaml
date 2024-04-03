@@ -11,7 +11,6 @@ actions:
 
       # Updating assignment and test-reports ownership...
       sudo chown artemis_user:artemis_user assignment/ -R
-      sudo rm -rf test-reports
       mkdir test-reports
       chown artemis_user:artemis_user test-reports/ -R
 
@@ -68,13 +67,8 @@ actions:
     results:
       - name: gcc
         path: target/gcc.xml
+        type: static-code-analysis
       - name: junit_test-reports/tests-results.xml
         path: test-reports/tests-results.xml
         type: junit
         before: true
-  - name: cleanup
-    script: |-
-      sudo rm -rf tests/ assignment/ test-reports/ || true
-      chmod -R 777 .
-    runAlways: true
-    platform: bamboo

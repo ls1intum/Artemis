@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -383,7 +383,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(2);
         results.forEach(result -> {
-            var resultWithSubmission = resultRepository.findWithEagerSubmissionAndFeedbackById(result.getId());
+            var resultWithSubmission = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsById(result.getId());
             assertThat(resultWithSubmission).isPresent();
             assertThat(resultWithSubmission.get().getSubmission()).isNotNull();
             assertThat(resultWithSubmission.get().getSubmission().getId()).isEqualTo(submission.getId());
@@ -425,7 +425,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // There should only be one submission and this submission should be linked to the created result.
         List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
-        Result result = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(0).getId()).orElseThrow();
+        Result result = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsById(results.get(0).getId()).orElseThrow();
         submission = submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
         assertThat(result.getSubmission()).isNotNull();
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
@@ -936,9 +936,11 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         var notification = createBambooBuildResultNotificationDTO(participation.getBuildPlanId());
 
-        String longErrorMessage = "abc\nmultiline\nfeedback\nabc\nmultiline\nfeedback";
+        String actualFeedbackText = "abc\nmultiline\nfeedback";
+
+        String longErrorMessage = actualFeedbackText + "\n" + actualFeedbackText;
         BambooTestJobDTO testCase = new BambooTestJobDTO("test1", "test1", "Class", List.of(longErrorMessage));
-        ((List<BambooTestJobDTO>) notification.getBuildJobs().get(0).getFailedTests()).set(0, testCase);
+        notification.getBuild().jobs().get(0).failedTests().set(0, testCase);
 
         postResult(notification, HttpStatus.OK, false);
 

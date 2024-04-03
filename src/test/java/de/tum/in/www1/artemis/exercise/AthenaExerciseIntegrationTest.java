@@ -91,7 +91,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         textExercise.setId(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -100,7 +100,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         textExercise.setId(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -111,7 +111,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
     }
 
     @Test
@@ -119,7 +119,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     void testUpdateTextExercise_useRestrictedAthenaModule_badRequest() throws Exception {
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -130,7 +130,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
-        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -140,7 +140,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(group);
         examTextExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.postWithResponseBody("/api/text-exercises/", examTextExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text-exercises", examTextExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -151,7 +151,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         course.setRestrictedAthenaModulesAccess(false);
 
-        request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -178,7 +178,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         // Revoke access to restricted Athena modules for the course
         course.setRestrictedAthenaModulesAccess(false);
-        MvcResult result = request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
+        MvcResult result = request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(updatedCourse.getRestrictedAthenaModulesAccess()).as("restricted Athena modules access was correctly updated for the course")

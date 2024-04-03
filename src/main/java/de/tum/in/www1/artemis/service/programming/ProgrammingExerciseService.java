@@ -21,7 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -296,7 +296,8 @@ public class ProgrammingExerciseService {
 
         // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins or Bamboo as
         // we want to use the default approach of Jenkinsfiles and Build Plans if no customizations are made
-        if (aeolusTemplateService.isPresent() && savedProgrammingExercise.getBuildPlanConfiguration() == null && !(profileService.isJenkins() || profileService.isBamboo())) {
+        if (aeolusTemplateService.isPresent() && savedProgrammingExercise.getBuildPlanConfiguration() == null
+                && !(profileService.isJenkinsActive() || profileService.isBambooActive())) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(savedProgrammingExercise);
             if (windfile != null) {
                 savedProgrammingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
@@ -586,7 +587,7 @@ public class ProgrammingExerciseService {
         // we only update the build plan configuration if it has changed and is not null, otherwise we
         // do not have a valid exercise anymore
         if (updatedProgrammingExercise.getBuildPlanConfiguration() != null) {
-            if (!profileService.isLocalCi()) {
+            if (!profileService.isLocalCiActive()) {
                 continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
                 continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
                 continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
