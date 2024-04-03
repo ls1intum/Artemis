@@ -144,7 +144,8 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
         programmingExercise.setAssessmentType(assessmentType);
         programmingExerciseRepository.save(programmingExercise);
 
-        var result = ProgrammingExerciseFactory.generateBambooBuildResult("SOLUTION", null, null, null, List.of("test1", "test2", "test3"), Collections.emptyList(), null);
+        var result = ProgrammingExerciseFactory.generateTestResultDTO(null, "SOLUTION", null, programmingExercise.getProgrammingLanguage(), false,
+                List.of("test1", "test2", "test3"), Collections.emptyList(), null, null, null);
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
