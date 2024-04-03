@@ -141,13 +141,9 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "vcs_access_token_expiry_date")
     private ZonedDateTime vcsAccessTokenExpiryDate = null;
 
-    /**
-     * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
-     * Workaround: Annotation @Column(name = "`groups`") escapes this word using backticks.
-     */
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "user_groups", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "`groups`")
+    @Column(name = "user_groups")
     private Set<String> groups = new HashSet<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)

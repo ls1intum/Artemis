@@ -236,8 +236,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
         ProgrammingExercise programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExerciseRepository.save(programmingExercise2);
 
-        Integer numOfLockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/lock-all-repositories",
-                Optional.empty(), Integer.class, HttpStatus.OK);
+        Integer numOfLockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/lock-all-repositories", Optional.empty(),
+                Integer.class, HttpStatus.OK);
 
         assertThat(numOfLockedExercises).isEqualTo(2);
 
@@ -248,14 +248,14 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void lockAllRepositories_noInstructor() throws Exception {
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/lock-all-repositories", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/lock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void unlockAllRepositories_preAuthNoInstructor() throws Exception {
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/unlock-all-repositories", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/unlock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
     }
 
@@ -297,8 +297,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
         mockConfigureRepository(programmingExercise2, TEST_PREFIX + "student1", Set.of(student1), true);
         mockConfigureRepository(programmingExercise2, TEST_PREFIX + "student2", Set.of(student2), true);
 
-        Integer numOfUnlockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/unlock-all-repositories",
-                Optional.empty(), Integer.class, HttpStatus.OK);
+        Integer numOfUnlockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/unlock-all-repositories", Optional.empty(),
+                Integer.class, HttpStatus.OK);
 
         assertThat(numOfUnlockedExercises).isEqualTo(2);
 

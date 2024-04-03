@@ -5,7 +5,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+
+import org.springframework.util.ObjectUtils;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
@@ -55,24 +56,24 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO imple
     }
 
     @Override
-    public Optional<String> getCommitHashFromAssignmentRepo() {
-        if (assignmentRepoCommitHash.isEmpty()) {
-            return Optional.empty();
+    protected String getCommitHashFromAssignmentRepo() {
+        if (ObjectUtils.isEmpty(assignmentRepoCommitHash)) {
+            return null;
         }
-        return Optional.of(assignmentRepoCommitHash);
+        return assignmentRepoCommitHash;
     }
 
     @Override
-    public Optional<String> getCommitHashFromTestsRepo() {
-        if (testsRepoCommitHash.isEmpty()) {
-            return Optional.empty();
+    protected String getCommitHashFromTestsRepo() {
+        if (ObjectUtils.isEmpty(testsRepoCommitHash)) {
+            return null;
         }
-        return Optional.of(testsRepoCommitHash);
+        return testsRepoCommitHash;
     }
 
     @Override
-    public Optional<String> getBranchNameFromAssignmentRepo() {
-        return Optional.of(assignmentRepoBranchName);
+    public String getBranchNameFromAssignmentRepo() {
+        return assignmentRepoBranchName;
     }
 
     @Override
@@ -167,7 +168,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO imple
         }
 
         @Override
-        public List<String> getMessage() {
+        public List<String> getTestMessages() {
             return errors;
         }
     }
