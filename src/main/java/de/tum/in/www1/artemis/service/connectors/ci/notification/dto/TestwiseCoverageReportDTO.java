@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
+package de.tum.in.www1.artemis.service.connectors.ci.notification.dto;
 
 import java.io.Serializable;
 import java.util.ArrayList;

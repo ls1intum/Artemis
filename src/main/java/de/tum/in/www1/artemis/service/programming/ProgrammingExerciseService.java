@@ -289,10 +289,9 @@ public class ProgrammingExerciseService {
         // Step 7: Make sure that plagiarism detection config does not use existing id
         Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
-        // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins or Bamboo as
+        // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins as
         // we want to use the default approach of Jenkinsfiles and Build Plans if no customizations are made
-        if (aeolusTemplateService.isPresent() && savedProgrammingExercise.getBuildPlanConfiguration() == null
-                && !(profileService.isJenkinsActive() || profileService.isBambooActive())) {
+        if (aeolusTemplateService.isPresent() && savedProgrammingExercise.getBuildPlanConfiguration() == null && !profileService.isJenkinsActive()) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(savedProgrammingExercise);
             if (windfile != null) {
                 savedProgrammingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));

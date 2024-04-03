@@ -1,6 +1,13 @@
 package de.tum.in.www1.artemis.service.user;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MIN_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MIN_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE;
+import static de.tum.in.www1.artemis.config.Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE;
+import static de.tum.in.www1.artemis.config.Constants.USER_LAST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.in.www1.artemis.security.Role.ADMIN;
 import static de.tum.in.www1.artemis.security.Role.STUDENT;
@@ -35,7 +42,9 @@ import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
@@ -673,7 +682,7 @@ public class UserService {
     public void removeUserFromGroup(User user, String group) {
         removeUserFromGroupInternal(user, group); // internal Artemis database
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
-        // e.g. Gitlab/Bitbucket
+        // e.g. Gitlab
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of()));
         // e.g. Jenkins
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.removeUserFromGroups(user.getLogin(), Set.of(group)));

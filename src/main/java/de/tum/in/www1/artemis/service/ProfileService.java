@@ -30,10 +30,6 @@ public class ProfileService {
         return isLocalVcsActive() || isLocalCiActive();
     }
 
-    public boolean isBambooActive() {
-        return isProfileActive("bamboo");
-    }
-
     public boolean isGitlabCiOrJenkinsActive() {
         return isProfileActive("gitlabci") || isJenkinsActive();
     }
