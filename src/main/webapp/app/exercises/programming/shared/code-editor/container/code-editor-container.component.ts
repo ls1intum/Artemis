@@ -41,6 +41,7 @@ export enum CollapsableCodeEditorElement {
 })
 export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeactivate {
     readonly CommitState = CommitState;
+    readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
