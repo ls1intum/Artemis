@@ -128,11 +128,11 @@ public class DatabaseMigration {
                     log.error(path.errorMessage);
                     throw new RuntimeException(path.errorMessage);
                 }
-            }
-            else if (previousVersion.isEqualTo(path.requiredVersion)) {
-                updateInitialChecksum(path.earliestNewVersion.toString());
-                log.info("Successfully cleaned up initial schema during migration");
-                break; // Exit after handling the required migration step
+                else if (previousVersion.isEqualTo(path.requiredVersion)) {
+                    updateInitialChecksum(path.earliestNewVersion.toString());
+                    log.info("Successfully cleaned up initial schema during migration");
+                    break; // Exit after handling the required migration step
+                }
             }
         }
     }
