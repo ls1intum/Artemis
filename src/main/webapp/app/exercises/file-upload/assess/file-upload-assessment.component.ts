@@ -460,7 +460,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         }
         this.isLoading = true;
         this.fileUploadAssessmentService
-            .updateAssessmentAfterComplaint(this.assessments, assessmentAfterComplaint.complaintResponse, this.submission!.id!)
+            .updateAssessmentAfterComplaint(this.assessments, assessmentAfterComplaint.complaintResponse, this.submission!.id!, this.result!.assessmentNote?.note)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (response) => {
