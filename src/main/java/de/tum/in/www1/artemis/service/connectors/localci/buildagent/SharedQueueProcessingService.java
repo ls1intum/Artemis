@@ -266,7 +266,8 @@ public class SharedQueueProcessingService {
 
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.id());
-            log.info("Decrementing local processing jobs: {} -> {}. Build Job ID: {}", localProcessingJobs.get(), localProcessingJobs.decrementAndGet(), buildJob.id());
+            log.info("Decrementing local processing jobs: {} -> {}. Build Job ID: {}. Job finished normally", localProcessingJobs.get(), localProcessingJobs.decrementAndGet(),
+                    buildJob.id());
             updateLocalBuildAgentInformationWithRecentJob(finishedJob);
 
             // process next build job if node is available
@@ -293,7 +294,8 @@ public class SharedQueueProcessingService {
             resultQueue.add(resultQueueItem);
 
             processingJobs.remove(buildJob.id());
-            localProcessingJobs.decrementAndGet();
+            log.info("Decrementing local processing jobs: {} -> {}. Build Job ID: {}. Job finished exceptionally", localProcessingJobs.get(), localProcessingJobs.decrementAndGet(),
+                    buildJob.id());
             updateLocalBuildAgentInformationWithRecentJob(job);
 
             checkAvailabilityAndProcessNextBuild();
