@@ -169,8 +169,7 @@ public class SharedQueueProcessingService {
             LocalCIBuildJobQueueItem processingJob = new LocalCIBuildJobQueueItem(buildJob, hazelcastMemberAddress);
 
             processingJobs.put(processingJob.id(), processingJob);
-            localProcessingJobs.incrementAndGet();
-
+            log.info("Incrementing local processing jobs: {} -> {}. Build Job ID: {}", localProcessingJobs.get(), localProcessingJobs.incrementAndGet(), processingJob.id());
             updateLocalBuildAgentInformation();
             return processingJob;
         }
