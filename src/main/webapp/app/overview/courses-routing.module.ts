@@ -75,10 +75,10 @@ const routes: Routes = [
             {
                 path: 'dashboard',
                 loadChildren: () => import('./course-dashboard/course-dashboard.module').then((m) => m.CourseDashboardModule),
-            },
-            {
-                path: 'dashboard',
-                loadChildren: () => import('./course-dashboard/course-dashboard.module').then((m) => m.CourseDashboardModule),
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.dashboard',
+                },
             },
             {
                 path: 'learning-path',

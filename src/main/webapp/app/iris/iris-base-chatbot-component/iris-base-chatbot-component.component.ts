@@ -86,7 +86,6 @@ export class IrisBaseChatbotComponentComponent implements OnInit, AfterViewInit,
 
     public ButtonType = ButtonType;
     readonly IrisLogoSize = IrisLogoSize;
-    private navigationSubscription: Subscription;
     private readonly MAX_INT_JAVA = 2147483647;
 
     @Input({ required: true }) data: any;
@@ -142,7 +141,6 @@ export class IrisBaseChatbotComponentComponent implements OnInit, AfterViewInit,
 
     ngOnDestroy() {
         this.stateSubscription.unsubscribe();
-        this.navigationSubscription.unsubscribe();
     }
 
     /**
