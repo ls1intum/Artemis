@@ -20,6 +20,8 @@ import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 
 class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
+    private static final String TEST_PREFIX = "oauth2jwksintegrationtest";
+
     @Autowired
     private CourseRepository courseRepository;
 
@@ -44,7 +46,7 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest
         courseRepository.save(course);
         OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", "url");
         LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
-        ltiPlatformConfiguration.setRegistrationId("registrationId");
+        ltiPlatformConfiguration.setRegistrationId(TEST_PREFIX + "registrationId");
         ltiPlatformConfiguration.setClientId("clientId");
         ltiPlatformConfiguration.setAuthorizationUri("authUri");
         ltiPlatformConfiguration.setTokenUri("tokenUri");
@@ -52,7 +54,7 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
         ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
         onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
-        oAuth2JWKSService.updateKey("registrationId");
+        oAuth2JWKSService.updateKey(TEST_PREFIX + "registrationId");
 
         String keyset = request.get("/.well-known/jwks.json", HttpStatus.OK, String.class);
         JsonObject jsonKeyset = JsonParser.parseString(keyset).getAsJsonObject();
