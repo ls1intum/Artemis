@@ -52,8 +52,8 @@ Don't store the `BAMBOO_PASSWORD` in the `.env` file, but let the script prompt 
 
 > **Note:**
 > Ideally, we would use a Bamboo API personal access token instead of the password, but this did not seem to work for
-> requesting the artifact URLs. The artifact also could not be downloaded directly from the Bamboo server, so we had to
-> use user authentication. (PAT would therefore only work partially for this scrip => User authentication is required)
+> requesting the artifact URLs. The artifact could not be downloaded directly from the Bamboo build server, so we had to
+> use user authentication. (PAT would therefore only work partially for this script => User authentication is required)
 
 ## Usage
 

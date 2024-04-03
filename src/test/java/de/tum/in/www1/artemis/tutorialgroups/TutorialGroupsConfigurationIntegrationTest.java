@@ -249,7 +249,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         course.setTimeZone("Europe/Berlin");
         course.setTutorialGroupsConfiguration(null);
 
-        request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
+        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
