@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * especially regarding the creation of valid URLs/Links on the server side for emails
  * NotificationTargets are intended to have different attributes, i.e. many will be null
  */
-@JsonInclude(NON_NULL) // needed for ObjectMapper to ignore null values
+@JsonInclude(NON_EMPTY) // needed for ObjectMapper to ignore null values
 public class NotificationTarget {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationTarget.class);

@@ -4,8 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 public class IrisMessage extends DomainObject {
 
     @ManyToOne(optional = false)
+    @JoinColumn(name = "session_id")
     @JsonIgnore
     private IrisSession session;
 

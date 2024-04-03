@@ -422,7 +422,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testSaveExamWithExerciseGroupWithExerciseToDatabase() {
         textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
     }
@@ -797,7 +797,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetCurrentAndUpcomingExams() throws Exception {
         var exams = request.getList("/api/admin/courses/upcoming-exams", HttpStatus.OK, Exam.class);
         ZonedDateTime currentDay = now().truncatedTo(ChronoUnit.DAYS);
@@ -865,7 +865,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteExamThatDoesNotExist() throws Exception {
         request.delete("/api/courses/" + course2.getId() + "/exams/654555", HttpStatus.NOT_FOUND);
     }
@@ -887,7 +887,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testResetExamThatDoesNotExist() throws Exception {
         request.delete("/api/courses/" + course2.getId() + "/exams/654555/reset", HttpStatus.NOT_FOUND);
     }
@@ -993,7 +993,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourseWithMultipleTestRuns() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
@@ -1005,7 +1005,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId())).hasSize(3);
 
-        request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+
+        assertThat(courseRepository.findById(course.getId())).isEmpty();
+        assertThat(examRepository.findById(exam.getId())).isEmpty();
     }
 
     @Test
@@ -1167,10 +1170,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Start exercises
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/start-exercises", null, HttpStatus.FORBIDDEN, null);
         // Unlock all repositories
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/unlock-all-repositories", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/unlock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
         // Lock all repositories
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/lock-all-repositories", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/lock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
         // Add students to exam
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO(null, null, null, null, null)),

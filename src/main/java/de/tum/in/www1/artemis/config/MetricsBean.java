@@ -2,10 +2,10 @@ package de.tum.in.www1.artemis.config;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,15 +13,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.*;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -43,6 +41,9 @@ import de.tum.in.www1.artemis.repository.StatisticsRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ProfileService;
+import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import io.micrometer.core.instrument.*;
 
 @Profile(PROFILE_CORE)
@@ -70,8 +71,6 @@ public class MetricsBean {
 
     private final MeterRegistry meterRegistry;
 
-    private final Environment env;
-
     private final TaskScheduler taskScheduler;
 
     private final WebSocketMessageBrokerStats webSocketStats;
@@ -91,6 +90,10 @@ public class MetricsBean {
     private final UserRepository userRepository;
 
     private final StatisticsRepository statisticsRepository;
+
+    private final ProfileService profileService;
+
+    private final Optional<SharedQueueManagementService> localCIBuildJobQueueService;
 
     /**
      * List that stores active usernames (users with a submission within the last 14 days) which is refreshed
@@ -141,12 +144,11 @@ public class MetricsBean {
 
     private boolean scheduledMetricsEnabled = false;
 
-    public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
+    public MetricsBean(MeterRegistry meterRegistry, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
             StudentExamRepository studentExamRepository, ExamRepository examRepository, CourseRepository courseRepository, UserRepository userRepository,
-            StatisticsRepository statisticsRepository) {
+            StatisticsRepository statisticsRepository, ProfileService profileService, Optional<SharedQueueManagementService> localCIBuildJobQueueService) {
         this.meterRegistry = meterRegistry;
-        this.env = env;
         this.taskScheduler = taskScheduler;
         this.webSocketStats = webSocketStats;
         this.userRegistry = userRegistry;
@@ -157,11 +159,13 @@ public class MetricsBean {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.statisticsRepository = statisticsRepository;
+        this.profileService = profileService;
+        this.localCIBuildJobQueueService = localCIBuildJobQueueService;
 
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
 
-        if (this.env.acceptsProfiles(Profiles.of("scheduling"))) {
+        if (profileService.isSchedulingActive()) {
             // Should only be activated if the scheduling profile is present, because these metrics are the same for all instances
             this.scheduledMetricsEnabled = true;
 
@@ -170,6 +174,10 @@ public class MetricsBean {
 
             registerExerciseAndExamMetrics();
             registerPublicArtemisMetrics();
+        }
+
+        if (profileService.isLocalCiActive()) {
+            registerLocalCIMetrics();
         }
 
         // the data source is optional as it is not used during testing
@@ -183,16 +191,15 @@ public class MetricsBean {
     public void init() {
         // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
         // later one, e.g. in the code editor. Therefore, we call this method here directly to get a reference and adapt the logging period!
-        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         // Note: this mechanism prevents that this is logged during testing
-        if (activeProfiles.contains("websocketLog")) {
+        if (profileService.isProfileActive("websocketLog")) {
             webSocketStats.setLoggingPeriod(LOGGING_DELAY_SECONDS * 1000L);
             taskScheduler.scheduleAtFixedRate(() -> {
                 final var connectedUsers = userRegistry.getUsers();
                 final var subscriptionCount = connectedUsers.stream().flatMap(simpUser -> simpUser.getSessions().stream()).map(simpSession -> simpSession.getSubscriptions().size())
                         .reduce(0, Integer::sum);
                 log.info("Currently connect users {} with active websocket subscriptions: {}", connectedUsers.size(), subscriptionCount);
-            }, LOGGING_DELAY_SECONDS * 1000L);
+            }, Duration.of(LOGGING_DELAY_SECONDS, ChronoUnit.SECONDS));
         }
     }
 
@@ -217,6 +224,45 @@ public class MetricsBean {
                 }
             }
         }
+    }
+
+    /**
+     * Register metrics for local CI information
+     */
+    private void registerLocalCIMetrics() {
+        // Publish the number of running builds
+        Gauge.builder("artemis.global.localci.running", localCIBuildJobQueueService, MetricsBean::extractRunningBuilds).strongReference(true)
+                .description("Number of running builds").register(meterRegistry);
+
+        // Publish the number of queued builds
+        Gauge.builder("artemis.global.localci.queued", localCIBuildJobQueueService, MetricsBean::extractQueuedBuilds).strongReference(true).description("Number of queued builds")
+                .register(meterRegistry);
+
+        // Publish the number of build agents
+        Gauge.builder("artemis.global.localci.agents", localCIBuildJobQueueService, MetricsBean::extractBuildAgents).strongReference(true)
+                .description("Number of active build agents").register(meterRegistry);
+
+        // Publish the number of max concurrent builds
+        Gauge.builder("artemis.global.localci.maxConcurrentBuilds", localCIBuildJobQueueService, MetricsBean::extractMaxConcurrentBuilds).strongReference(true)
+                .description("Number of max concurrent builds").register(meterRegistry);
+    }
+
+    private static int extractRunningBuilds(Optional<SharedQueueManagementService> sharedQueueManagementService) {
+        return sharedQueueManagementService.map(queueManagementService -> queueManagementService.getBuildAgentInformation().stream()
+                .map(buildAgentInformation -> buildAgentInformation.runningBuildJobs().size()).reduce(0, Integer::sum)).orElse(0);
+    }
+
+    private static int extractQueuedBuilds(Optional<SharedQueueManagementService> sharedQueueManagementService) {
+        return sharedQueueManagementService.map(queueManagementService -> queueManagementService.getQueuedJobs().size()).orElse(0);
+    }
+
+    private static int extractBuildAgents(Optional<SharedQueueManagementService> sharedQueueManagementService) {
+        return sharedQueueManagementService.map(queueManagementService -> queueManagementService.getBuildAgentInformation().size()).orElse(0);
+    }
+
+    private static int extractMaxConcurrentBuilds(Optional<SharedQueueManagementService> sharedQueueManagementService) {
+        return sharedQueueManagementService.map(queueManagementService -> queueManagementService.getBuildAgentInformation().stream()
+                .map(LocalCIBuildAgentInformation::maxNumberOfConcurrentBuildJobs).reduce(0, Integer::sum)).orElse(0);
     }
 
     private void registerWebsocketMetrics() {

@@ -7,9 +7,10 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -85,7 +86,7 @@ public class LectureUnitProcessingService {
 
                 List<PDDocument> documentUnits = pdfSplitter.split(document);
                 pdDocumentInformation.setTitle(lectureUnit.unitName());
-                if (!lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases().isEmpty()) {
+                if (!StringUtils.isEmpty(lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases())) {
                     removeSlidesContainingAnyKeyPhrases(documentUnits.get(0), lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases());
                 }
                 documentUnits.get(0).setDocumentInformation(pdDocumentInformation);

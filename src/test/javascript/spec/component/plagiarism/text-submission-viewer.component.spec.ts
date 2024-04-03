@@ -65,37 +65,37 @@ describe('Text Submission Viewer Component', () => {
 
     it('fetches a programming submission', () => {
         comp.exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
-        jest.spyOn(repositoryService, 'getRepositoryContent').mockReturnValue(of({}));
+        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
 
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
 
-        expect(repositoryService.getRepositoryContent).toHaveBeenCalledOnce();
+        expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
         expect(comp.isProgrammingExercise).toBeTrue();
         expect(comp.cannotLoadFiles).toBeFalse();
     });
 
     it('does not fetch a programming submission', () => {
-        jest.spyOn(repositoryService, 'getRepositoryContent').mockReturnValue(of({}));
+        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
         comp.hideContent = true;
 
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
 
-        expect(repositoryService.getRepositoryContent).not.toHaveBeenCalled();
+        expect(repositoryService.getRepositoryContentForPlagiarismView).not.toHaveBeenCalled();
     });
 
     it('handles a programming submission fetch error', () => {
         comp.exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
-        jest.spyOn(repositoryService, 'getRepositoryContent').mockReturnValue(throwError({}));
+        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(throwError({}));
 
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
 
-        expect(repositoryService.getRepositoryContent).toHaveBeenCalledOnce();
+        expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
         expect(comp.cannotLoadFiles).toBeTrue();
     });
 
@@ -115,13 +115,13 @@ describe('Text Submission Viewer Component', () => {
         comp.matches.set('e', [{ from: new TextSubmissionElement(), to: new TextSubmissionElement() }]);
         comp.matches.set('kContinuedName', [{ from: new TextSubmissionElement(), to: new TextSubmissionElement() }]);
 
-        jest.spyOn(repositoryService, 'getRepositoryContent').mockReturnValue(of(filesUnordered));
+        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of(filesUnordered));
 
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
 
-        expect(repositoryService.getRepositoryContent).toHaveBeenCalledOnce();
+        expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
         expect(comp.isProgrammingExercise).toBeTrue();
 
         // files with matches first, then the ones without match; each section ordered lexicographically
@@ -149,12 +149,12 @@ describe('Text Submission Viewer Component', () => {
         comp.matches = new Map();
         const expectedHeaders = new HttpHeaders().append('content-type', 'text/plain');
         jest.spyOn(repositoryService, 'getFileHeaders').mockReturnValue(of(new HttpResponse<Blob>({ headers: expectedHeaders })));
-        jest.spyOn(repositoryService, 'getFile').mockReturnValue(of({ fileContent: 'if(current>max)' }));
+        jest.spyOn(repositoryService, 'getFileForPlagiarismView').mockReturnValue(of({ fileContent: 'if(current>max)' }));
 
         comp.handleFileSelect(fileName);
 
         const expectedDomain: DomainChange = [DomainType.PARTICIPATION, { id: submissionId }];
-        expect(repositoryService.getFile).toHaveBeenCalledWith(fileName, expectedDomain);
+        expect(repositoryService.getFileForPlagiarismView).toHaveBeenCalledWith(fileName, expectedDomain);
         expect(comp.currentFile).toEqual(fileName);
         expect(comp.fileContent).toBe('if(current&gt;max)');
     });
@@ -165,11 +165,11 @@ describe('Text Submission Viewer Component', () => {
         const fileName = Object.keys(files)[1];
         const expectedHeaders = new HttpHeaders().append('content-type', 'audio/mpeg');
         jest.spyOn(repositoryService, 'getFileHeaders').mockReturnValue(of(new HttpResponse<Blob>({ headers: expectedHeaders })));
-        jest.spyOn(repositoryService, 'getFile').mockReturnValue(of({ fileContent: 'Test' }));
+        jest.spyOn(repositoryService, 'getFileForPlagiarismView').mockReturnValue(of({ fileContent: 'Test' }));
 
         comp.handleFileSelect(fileName);
 
-        expect(repositoryService.getFile).not.toHaveBeenCalled();
+        expect(repositoryService.getFileForPlagiarismView).not.toHaveBeenCalled();
         expect(comp.currentFile).toEqual(fileName);
     });
 

@@ -3,15 +3,6 @@ set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
 build_and_test_the_code () {
   echo '⚙️ executing build_and_test_the_code'
-  # Delete possible old Sources and replace with student's assignment Sources
-  rm -rf Sources
-  mv assignment/Sources .
-  # Delete and create the assignment directory from scratch
-  mv assignment/.git/refs/heads assignment_git_heads # localci workaround
-  rm -rf assignment
-  mkdir assignment
-  mkdir -p assignment/.git/refs # localci workaround
-  mv assignment_git_heads/ assignment/.git/refs/heads/ # localci workaround
   cp -R Sources assignment
   # copy test files
   cp -R Tests assignment

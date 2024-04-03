@@ -10,8 +10,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -338,8 +338,10 @@ public class ParticipationResource {
         // The participations due date is a flag showing that a feedback request is sent
         participation.setIndividualDueDate(currentDate);
 
-        participation = programmingExerciseStudentParticipationRepository.save(participation);
-        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
+        var savedParticipation = programmingExerciseStudentParticipationRepository.save(participation);
+        // Circumvent lazy loading after save
+        savedParticipation.setParticipant(participation.getParticipant());
+        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, savedParticipation);
 
         // Set all past results to automatic to reset earlier feedback request assessments
         var participationResults = studentParticipation.getResults();
@@ -352,7 +354,7 @@ public class ParticipationResource {
 
         groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
 
-        return ResponseEntity.ok().body(participation);
+        return ResponseEntity.ok().body(savedParticipation);
     }
 
     /**
@@ -500,13 +502,19 @@ public class ParticipationResource {
         if (!updatedParticipations.isEmpty() && exercise instanceof ProgrammingExercise programmingExercise) {
             log.info("Updating scheduling for exercise {} (id {}) due to changed individual due dates.", exercise.getTitle(), exercise.getId());
             instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
+            List<StudentParticipation> participationsBeforeDueDate = updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).toList();
+            List<StudentParticipation> participationsAfterDueDate = updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).toList();
 
+            if (exercise.isTeamMode()) {
+                participationService.initializeTeamParticipations(participationsBeforeDueDate);
+                participationService.initializeTeamParticipations(participationsAfterDueDate);
+            }
             // when changing the individual due date after the regular due date, the repository might already have been locked
-            updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(
+            participationsBeforeDueDate.forEach(
                     participation -> programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation));
             // the new due date may be in the past, students should no longer be able to make any changes
-            updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).forEach(participation -> programmingExerciseParticipationService
-                    .lockStudentRepositoryAndParticipation(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
+            participationsAfterDueDate.forEach(participation -> programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise,
+                    (ProgrammingExerciseStudentParticipation) participation));
         }
 
         return ResponseEntity.ok().body(updatedParticipations);

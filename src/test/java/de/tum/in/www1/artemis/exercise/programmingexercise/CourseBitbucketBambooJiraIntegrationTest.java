@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -21,6 +22,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -469,10 +471,12 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
+        Mockito.reset(versionControlService); // Make sure that we only verify this test, not any preparation
+
         var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
-        request.put("/api/courses", course, HttpStatus.OK);
+        request.performMvcRequest(courseTestService.buildUpdateCourse(1, course)).andExpect(status().isOk()).andReturn();
 
         verifyNoInteractions(versionControlService);
     }

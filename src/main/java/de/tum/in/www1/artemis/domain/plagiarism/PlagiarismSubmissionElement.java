@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 
