@@ -118,51 +118,6 @@
                                             </button>
                                         </div>
                                     }
-                                    @if (isExercisePlan(content)) {
-                                        <div class="bubble-left">
-                                            @for (step of content.steps; track step; let i = $index) {
-                                                <div>
-                                                    <!-- step component with show/hide button -->
-                                                    <div [ngStyle]="{ 'background-color': getStepColor(step) }" [ngClass]="isHidden(step) ? 'show-details' : 'hide-details'">
-                                                        <div class="step-component">
-                                                            <span [innerHTML]="getStepName(step) | htmlForMarkdown"></span>
-                                                            <button (click)="hideOrUnhide(step)" class="detail-btn step-title">
-                                                                {{ isHidden(step) ? 'Show Details' : 'Hide Details' }}
-                                                            </button>
-                                                        </div>
-                                                        <span class="step-status" [innerHTML]="getStepStatus(step) | htmlForMarkdown"></span>
-                                                    </div>
-                                                    <!-- step instructions (editable) in a text box -->
-                                                    @if (!isHidden(step)) {
-                                                        <div [attr.contenteditable]="isNotExecuted(step)" class="step-detail">
-                                                            <span [innerHTML]="step.instructions! | htmlForMarkdown"></span>
-                                                        </div>
-                                                    }
-                                                    <!-- loading icon -->
-                                                    @if (isInProgress(step)) {
-                                                        <div>
-                                                            <i class="fa fa-spinner fa-spin"></i>
-                                                        </div>
-                                                    }
-                                                </div>
-                                            }
-                                            <!-- execute/pause button -->
-                                            <div class="execute-button">
-                                                @if (!content.executing) {
-                                                    <div>
-                                                        <button class="btn btn-primary" (click)="setExecuting(message.id, content)" [disabled]="!canExecute(content)">
-                                                            {{ getPlanButtonTitle(content) }}
-                                                        </button>
-                                                    </div>
-                                                }
-                                                @if (content.executing) {
-                                                    <div>
-                                                        <button (click)="pausePlan(content)" class="btn btn-danger">Pause</button>
-                                                    </div>
-                                                }
-                                            </div>
-                                        </div>
-                                    }
                                 </div>
                             }
                             @if (isArtemisClientSentMessage(message)) {
