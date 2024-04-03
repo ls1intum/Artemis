@@ -28,7 +28,7 @@ For a production setup of GitLab, also see the documentation of the GitLab and J
 GitLab
 """"""
 
-1. Depending on your operating system and your docker installation, it is necessary to update the host file of your machine to include the following line:
+1. Depending on your operating system and your Docker installation, it is necessary to update the host file of your machine to include the following lines:
 
     .. code:: text
 
@@ -58,7 +58,8 @@ GitLab Runner
 """""""""""""
 
 1. Create a runner token
-    In order to create a token which can be used to register a runner, execute the command below with the personal access token generated before.
+    In order to create a token which can be used to register a runner, go to ``http://localhost:8081/admin/runners/new``.
+    Alternatively you can execute the command below with the personal access token generated before.
 
     .. code:: bash
 
