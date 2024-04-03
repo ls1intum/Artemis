@@ -121,9 +121,12 @@ public class SharedQueueManagementService {
             }
             else {
                 // Cancel build job if it is currently being processed
-                LocalCIBuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
+                LocalCIBuildJobQueueItem buildJob = processingJobs.get(buildJobId);
                 if (buildJob != null) {
                     triggerBuildJobCancellation(buildJobId);
+                }
+                else {
+                    log.warn("Build job with id {} could not be found in the queue or processing jobs", buildJobId);
                 }
             }
         }
