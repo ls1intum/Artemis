@@ -18,6 +18,7 @@ import { IrisModule } from 'app/iris/iris.module';
 const routes: Routes = [
     {
         path: '',
+        pathMatch: 'full',
         component: CourseDashboardComponent,
         data: {
             authorities: [Authority.USER],
