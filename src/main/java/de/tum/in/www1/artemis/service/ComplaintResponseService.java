@@ -177,14 +177,14 @@ public class ComplaintResponseService {
         Complaint originalComplaint = fetchOriginalComplaintOrThrow(complaintResponseFromDatabase);
         validateOriginalComplaintNotAnswered(originalComplaint);
 
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
+
         if (updatedComplaintResponse.complaintIsAccepted() == null) {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
         }
 
         validateResponseTextLimit(updatedComplaintResponse.responseText(), originalComplaint);
-
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
-        validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
 
         originalComplaint.setAccepted(updatedComplaintResponse.complaintIsAccepted()); // accepted or denied
         originalComplaint = complaintRepository.save(originalComplaint);
@@ -213,14 +213,14 @@ public class ComplaintResponseService {
         Complaint originalComplaint = fetchOriginalComplaintOrThrow(complaintResponseFromDatabase);
         validateOriginalComplaintNotAnswered(originalComplaint);
 
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
+
         if (updatedComplaintResponse.getComplaint().isAccepted() == null) {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
         }
 
         validateResponseTextLimit(updatedComplaintResponse.getResponseText(), originalComplaint);
-
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
-        validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
 
         originalComplaint.setAccepted(updatedComplaintResponse.getComplaint().isAccepted()); // accepted or denied
         originalComplaint = complaintRepository.save(originalComplaint);
