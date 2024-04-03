@@ -129,7 +129,7 @@ public class SharedQueueProcessingService {
                 updateLocalBuildAgentInformation();
             }
 
-            log.debug("Node has no available threads currently");
+            log.info("Node has no available threads currently");
             return;
         }
 
@@ -305,7 +305,7 @@ public class SharedQueueProcessingService {
      * Checks whether the node has at least one thread available for a new build job.
      */
     private boolean nodeIsAvailable() {
-        log.debug("Currently processing jobs on this node: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
+        log.info("Currently processing jobs on this node: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
                 localCIBuildExecutorService.getMaximumPoolSize());
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
     }
