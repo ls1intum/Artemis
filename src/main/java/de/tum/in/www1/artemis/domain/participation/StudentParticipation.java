@@ -130,10 +130,4 @@ public class StudentParticipation extends Participation {
         return getClass().getSimpleName() + "{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", " + participantString + "}";
     }
 
-    @Override
-    public Participation copyParticipationId() {
-        var participation = new StudentParticipation();
-        participation.setId(getId());
-        return participation;
-    }
 }

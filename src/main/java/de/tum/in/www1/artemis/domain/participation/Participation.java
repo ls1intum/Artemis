@@ -314,15 +314,6 @@ public abstract class Participation extends DomainObject implements Participatio
                 + results + ", submissions=" + submissions + ", submissionCount=" + submissionCountTransient + "}";
     }
 
-    /**
-     * NOTE: do not use this in a transactional context and do not save the returned object to the database
-     * This method is useful when we want to cut off attributes while sending entities to the client and we are only interested in the id of the object
-     * We use polymorphism here, so subclasses should implement / override this method to create the correct object type
-     *
-     * @return an empty participation just including the id of the object
-     */
-    public abstract Participation copyParticipationId();
-
     public abstract void filterSensitiveInformation();
 
     @JsonIgnore

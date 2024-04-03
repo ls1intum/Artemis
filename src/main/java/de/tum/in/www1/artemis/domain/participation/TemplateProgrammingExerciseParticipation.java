@@ -33,10 +33,4 @@ public class TemplateProgrammingExerciseParticipation extends AbstractBaseProgra
         return "template";
     }
 
-    @Override
-    public Participation copyParticipationId() {
-        var participation = new TemplateProgrammingExerciseParticipation();
-        participation.setId(getId());
-        return participation;
-    }
 }
