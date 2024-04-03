@@ -121,10 +121,6 @@ public class BuildJobManagementService {
         lock.lock();
         Future<LocalCIBuildResult> future;
         try {
-            if (cancelledBuildJobs.contains(buildJobItem.id())) {
-                finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
-                throw new CompletionException("Build job with id " + buildJobItem.id() + " was cancelled.", null);
-            }
             future = localCIBuildExecutorService.submit(buildJob);
             runningFutures.put(buildJobItem.id(), future);
         }
@@ -204,8 +200,8 @@ public class BuildJobManagementService {
         if (future != null) {
             try {
                 log.info("Cancelling build job with id {}", buildJobId);
-                cancelledBuildJobs.add(buildJobId);
                 future.cancel(true); // Attempt to interrupt the build job
+                cancelledBuildJobs.add(buildJobId);
             }
             catch (CancellationException e) {
                 log.warn("Build job already cancelled or completed for id {}", buildJobId);
