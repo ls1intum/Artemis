@@ -6,7 +6,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.OptionalLong;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -97,7 +97,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         team = teamUtilService.addTeamForExercise(modelingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), TEST_PREFIX);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
-        complaintRequest = new ComplaintRequestDTO(complaint.getResult().getId(), complaint.getComplaintText(), complaint.getComplaintType(), OptionalLong.empty());
+        complaintRequest = new ComplaintRequestDTO(complaint.getResult().getId(), complaint.getComplaintText(), complaint.getComplaintType(), Optional.empty());
         moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
     }
 
