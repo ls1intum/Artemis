@@ -106,6 +106,7 @@ public class ComplaintResource {
                 throw new BadRequestAlertException("A complaint for an exam exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
                         "complaintAboutExamExerciseWrongComponent");
             }
+            // Assumes user with participation in an exam exercise can file a complaint for that participation.
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
         }
         savedComplaint = complaintService.createComplaint(complaint, complaint.examId(), principal);

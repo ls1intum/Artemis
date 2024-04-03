@@ -172,9 +172,9 @@ public class ComplaintResponseService {
      */
     public ComplaintResponse resolveComplaint(ComplaintResponseUpdateDTO updatedComplaintResponse, Long complaintResponseId) {
         validateComplaintResponseId(complaintResponseId);
-        ComplaintResponse complaintResponseFromDatabase = fetchComplaintResponseOrThrow(complaintResponseId);
+        ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.fetchComplaintResponseOrThrow(complaintResponseId);
         validateComplaintResponseEmpty(complaintResponseFromDatabase);
-        Complaint originalComplaint = fetchOriginalComplaintOrThrow(complaintResponseFromDatabase);
+        Complaint originalComplaint = complaintRepository.fetchOriginalComplaintOrThrow(complaintResponseFromDatabase);
         validateOriginalComplaintNotAnswered(originalComplaint);
 
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -208,9 +208,11 @@ public class ComplaintResponseService {
      */
     public ComplaintResponse resolveComplaint(ComplaintResponse updatedComplaintResponse) {
         validateComplaintResponseId(updatedComplaintResponse.getId());
-        ComplaintResponse complaintResponseFromDatabase = fetchComplaintResponseOrThrow(updatedComplaintResponse.getId());
+        ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.fetchComplaintResponseOrThrow(updatedComplaintResponse.getId()); // TODO: make this retrieval
+                                                                                                                                                       // redundant by proper
+                                                                                                                                                       // fetching
         validateComplaintResponseEmpty(complaintResponseFromDatabase);
-        Complaint originalComplaint = fetchOriginalComplaintOrThrow(complaintResponseFromDatabase);
+        Complaint originalComplaint = complaintRepository.fetchOriginalComplaintOrThrow(complaintResponseFromDatabase); // TODO: make this retrieval redundant by proper fetching
         validateOriginalComplaintNotAnswered(originalComplaint);
 
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -238,19 +240,10 @@ public class ComplaintResponseService {
         }
     }
 
-    private ComplaintResponse fetchComplaintResponseOrThrow(Long complaintResponseId) {
-        return complaintResponseRepository.findById(complaintResponseId).orElseThrow(() -> new IllegalArgumentException("The complaint response was not found in the database"));
-    }
-
     private void validateComplaintResponseEmpty(ComplaintResponse complaintResponse) {
         if (complaintResponse.getSubmittedTime() != null || complaintResponse.getResponseText() != null) {
             throw new IllegalArgumentException("The complaint response is not empty");
         }
-    }
-
-    private Complaint fetchOriginalComplaintOrThrow(ComplaintResponse complaintResponse) {
-        return complaintRepository.findByIdWithEagerAssessor(complaintResponse.getComplaint().getId())
-                .orElseThrow(() -> new IllegalArgumentException("The complaint was not found in the database"));
     }
 
     private void validateOriginalComplaintNotAnswered(Complaint originalComplaint) {

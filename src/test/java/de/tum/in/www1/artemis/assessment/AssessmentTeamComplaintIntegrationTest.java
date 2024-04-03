@@ -122,7 +122,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
         complaintUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
 
-        request.post(resourceUrl, complaint, HttpStatus.BAD_REQUEST);
+        request.post(resourceUrl, complaintRequest, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();

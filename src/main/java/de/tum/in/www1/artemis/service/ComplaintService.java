@@ -57,7 +57,6 @@ public class ComplaintService {
      * whether the user still enough complaints left.
      *
      * @param complaintRequest the complaint to create
-     * @param result           result of the complaint
      * @param principal        the current Principal
      * @param examId           the optional examId. This is only set if the exercise is an exam exercise
      * @return the saved complaint

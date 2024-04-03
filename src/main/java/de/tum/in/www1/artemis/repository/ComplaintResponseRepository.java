@@ -111,4 +111,8 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
     @Transactional // ok because of delete
     @Modifying
     void deleteByComplaint_Result_Id(long resultId);
+
+    default ComplaintResponse fetchComplaintResponseOrThrow(Long complaintResponseId) {
+        return findById(complaintResponseId).orElseThrow(() -> new IllegalArgumentException("The complaint response was not found in the database"));
+    }
 }
