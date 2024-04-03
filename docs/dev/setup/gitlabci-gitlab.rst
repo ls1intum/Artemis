@@ -1,3 +1,5 @@
+.. _GitLab CI and GitLab Setup:
+
 GitLab CI and GitLab Setup
 --------------------------
 
