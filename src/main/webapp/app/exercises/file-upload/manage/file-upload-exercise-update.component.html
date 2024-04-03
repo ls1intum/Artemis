@@ -1,16 +1,16 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
     <div class="d-flex align-items-center gap-2">
         @if (fileUploadExercise.id && !isImport) {
-            <h2 id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel">Edit a File Upload Exercise</h2>
+            <h2 id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel"></h2>
         } @else if (!fileUploadExercise.id) {
-            <h2 id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">Create a new File Upload Exercise</h2>
+            <h2 id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel"></h2>
         } @else if (isImport) {
-            <h2 id="jhi-file-upload-exercise-heading-import" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel">Import a File Upload Exercise</h2>
+            <h2 id="jhi-file-upload-exercise-heading-import" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel"></h2>
         }
         <jhi-documentation-button [type]="documentationType" />
     </div>
     <jhi-form-status-bar [formStatusSections]="formStatusSections" />
-    <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general">General Information</h3>
+    <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general"></h3>
     <div>
         <jhi-exercise-title-channel-name
             [exercise]="fileUploadExercise"
@@ -21,22 +21,24 @@
         />
         @if (!isExamMode) {
             <div class="form-group position-relative">
-                <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
+                <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
                 <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
                 <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
             </div>
         }
-        <h3 jhiTranslate="artemisApp.exercise.sections.mode" id="artemisApp.exercise.sections.mode">Mode</h3>
+        <hr class="mb-5" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.mode" id="artemisApp.exercise.sections.mode"></h3>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
             <div>
                 <jhi-difficulty-picker [exercise]="fileUploadExercise" />
             </div>
         </div>
         <jhi-team-config-form-group class="form-element" [exercise]="fileUploadExercise" [isImport]="isImport" />
-        <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem">Problem Statement</h3>
+        <hr class="mb-5" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
         <div class="form-group" id="field_problemStatement">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement"></label>
             <jhi-markdown-editor
                 class="markdown-editor"
                 [domainCommands]="domainCommandsProblemStatement"
@@ -56,10 +58,11 @@
                 />
             </div>
         }
-        <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution">Example Solution</h3>
+        <hr class="mb-5" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution"></h3>
         <!-- TODO we want to have a file upload here and store a PDF, not a text. We could allow to add text in the sample_solution_explanation field -->
         <div class="form-group" id="field_exampleSolution">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.exampleSolution" for="field_exampleSolution">Example Solution</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.exampleSolution" for="field_exampleSolution"></label>
             <jhi-markdown-editor
                 class="markdown-editor"
                 [domainCommands]="domainCommandsSampleSolution"
@@ -86,7 +89,8 @@
                 }
             </div>
         }
-        <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading">Grading</h3>
+        <hr class="mb-5" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
         @if (!isExamMode) {
             <div class="d-flex">
                 <div class="form-group flex-grow-1">
@@ -167,7 +171,7 @@
         <div class="row">
             <div class="col">
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points">Points</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
                     <input
                         required
                         type="number"
@@ -188,7 +192,7 @@
             </div>
             <div class="col">
                 <div class="form-group" [hidden]="fileUploadExercise.includedInOverallScore! !== IncludedInOverallScore.INCLUDED_COMPLETELY">
-                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints">Bonus Points</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
                     <input
                         type="number"
                         [required]="fileUploadExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
@@ -209,13 +213,13 @@
             </div>
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern">File Pattern </label>
+            <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern"></label>
             <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | artemisTranslate }}" />
             <input required minlength="2" type="text" class="form-control" name="filePattern" id="field_filePattern" [(ngModel)]="fileUploadExercise.filePattern" />
         </div>
         <jhi-presentation-score-checkbox [exercise]="fileUploadExercise" />
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="fileUploadExercise" />
         </div>
     </div>

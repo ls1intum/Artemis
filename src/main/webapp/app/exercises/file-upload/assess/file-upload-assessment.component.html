@@ -38,7 +38,7 @@
                 </div>
                 <!--region Right Panel-->
                 <fa-icon right-header [icon]="farListAlt" />&nbsp;
-                <span right-header jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions">Instructions</span>
+                <span right-header jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
                 <div right-body class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></div>
                 <jhi-assessment-instructions id="instructions-card" right-body [exercise]="exercise!" class="markdown-preview" />
                 <!--endregion-->
@@ -59,9 +59,9 @@
     } @else {
         @if (!loadingInitialSubmission) {
             <div class="alert alert-warning text-center mt-4" role="alert">
-                <p jhiTranslate="artemisApp.fileUploadAssessment.notFound">We haven't found any new submission without an assessment, please go back.</p>
+                <p jhiTranslate="artemisApp.fileUploadAssessment.notFound"></p>
                 <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
                 </a>
             </div>
         }
@@ -85,7 +85,7 @@
             </div>
             <!--region Right Panel-->
             <fa-icon right-header [icon]="farListAlt" />&nbsp;
-            <span right-header jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions">Instructions</span>
+            <span right-header jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
             <div right-body class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></div>
             <jhi-assessment-instructions id="instructions-card" right-body [exercise]="exercise!" class="markdown-preview" />
             <!--endregion-->

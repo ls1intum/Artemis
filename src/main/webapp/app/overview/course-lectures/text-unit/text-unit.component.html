@@ -18,7 +18,7 @@
             <div class="col-auto d-flex align-items-center gap-3 pe-2">
                 <button id="popupButton" class="btn btn-sm btn-primary" (click)="openPopup($event)">
                     <fa-icon [icon]="faExternalLinkAlt" />
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.textUnit.isolated">View Isolated</span>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.textUnit.isolated"></span>
                 </button>
                 @if (!isPresentationMode && textUnit.visibleToStudents) {
                     <div class="col-auto">

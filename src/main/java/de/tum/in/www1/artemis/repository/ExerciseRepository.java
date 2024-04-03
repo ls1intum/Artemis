@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -76,15 +76,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findWithCompetenciesById(@Param("exerciseId") long exerciseId);
-
-    @Query("""
-            SELECT e
-            FROM Exercise e
-                LEFT JOIN FETCH e.competencies c
-                LEFT JOIN FETCH c.exercises
-            WHERE e.id = :exerciseId
-            """)
-    Optional<Exercise> findByIdWithCompetenciesBidirectional(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT e
@@ -567,7 +558,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Course c
                 LEFT JOIN c.exercises e
                 LEFT JOIN FETCH e.studentParticipations p
-                LEFT JOIN p.team.students students
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students students
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f

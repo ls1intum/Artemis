@@ -1,11 +1,11 @@
 <form>
     <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmissionLabel">Use as Example Submission</h4>
+        <h4 class="modal-title" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmissionLabel"></h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
         <div class="form-group form-inline">
-            <label class="form-control-label" jhiTranslate="artemisApp.exampleSubmission.searchSubmission" for="searchParticipant">Search for Submission</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exampleSubmission.searchSubmission" for="searchParticipant"></label>
             <input
                 class="form-control ms-2"
                 type="text"
@@ -15,7 +15,7 @@
                 placeholder="{{ 'artemisApp.exercise.name' | artemisTranslate }}"
             />
             @if (loading) {
-                <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading">Loading...</span>
+                <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
             }
         </div>
         @if (content.resultsOnPage && content.resultsOnPage.length > 0) {
@@ -27,14 +27,14 @@
                                 <span>#</span>
                             </th>
                             <th jhiSortBy="STUDENT_NAME">
-                                <span jhiTranslate="artemisApp.exercise.name">Name</span>
+                                <span jhiTranslate="artemisApp.exercise.name"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th>
-                                <span jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission Date</span>
+                                <span jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate"></span>
                             </th>
                             <th>
-                                <span jhiTranslate="artemisApp.assessment.dashboard.columns.result">Latest Result</span>
+                                <span jhiTranslate="artemisApp.assessment.dashboard.columns.result"></span>
                             </th>
                             <th style="display: table-caption">
                                 <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.archival;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 

@@ -16,9 +16,7 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -36,8 +34,6 @@ public class CodeHintResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
     private final CodeHintRepository codeHintRepository;
@@ -46,11 +42,9 @@ public class CodeHintResource {
 
     private final Optional<IrisSettingsService> irisSettingsService;
 
-    public CodeHintResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, CodeHintRepository codeHintRepository, CodeHintService codeHintService,
-            Optional<IrisSettingsService> irisSettingsService) {
+    public CodeHintResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseSolutionEntryRepository solutionEntryRepository,
+            CodeHintRepository codeHintRepository, CodeHintService codeHintService, Optional<IrisSettingsService> irisSettingsService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.authCheckService = authCheckService;
         this.solutionEntryRepository = solutionEntryRepository;
         this.codeHintRepository = codeHintRepository;
         this.codeHintService = codeHintService;
@@ -64,12 +58,9 @@ public class CodeHintResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the code hints for the exercise
      */
     @GetMapping("programming-exercises/{exerciseId}/code-hints")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<Set<CodeHint>> getAllCodeHints(@PathVariable Long exerciseId) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-
-        var result = codeHintRepository.findByExerciseId(exercise.getId());
+        var result = codeHintRepository.findByExerciseId(exerciseId);
         return ResponseEntity.ok(result);
     }
 
@@ -81,13 +72,12 @@ public class CodeHintResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new code hints
      */
     @PostMapping("programming-exercises/{exerciseId}/code-hints")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<List<CodeHint>> generateCodeHintsForExercise(@PathVariable Long exerciseId,
             @RequestParam(value = "deleteOldCodeHints", defaultValue = "true") boolean deleteOldCodeHints) {
         log.debug("REST request to generate CodeHints for ProgrammingExercise: {}", exerciseId);
 
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {
@@ -108,12 +98,11 @@ public class CodeHintResource {
     // TODO: move into some IrisResource
     @Profile("iris")
     @PostMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/generate-description")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<CodeHint> generateDescriptionForCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId) {
         log.debug("REST request to generate description with Iris for CodeHint: {}", codeHintId);
 
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
         irisSettingsService.orElseThrow().isEnabledForElseThrow(IrisSubSettingsType.HESTIA, exercise);
 
         // Hints for exam exercises are not supported at the moment
@@ -144,15 +133,12 @@ public class CodeHintResource {
      * @return 204 No Content
      */
     @DeleteMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/solution-entries/{solutionEntryId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<Void> removeSolutionEntryFromCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId, @PathVariable Long solutionEntryId) {
         log.debug("REST request to remove SolutionEntry {} from CodeHint {} in ProgrammingExercise {}", solutionEntryId, codeHintId, exerciseId);
 
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-
         var codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHintId);
-        if (!Objects.equals(codeHint.getExercise().getId(), exercise.getId())) {
+        if (!Objects.equals(codeHint.getExercise().getId(), exerciseId)) {
             throw new ConflictException("The code hint does not belong to the exercise", "CodeHint", "codeHintExerciseConflict");
         }
 

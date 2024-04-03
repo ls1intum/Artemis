@@ -1,7 +1,7 @@
 <ng-template #controls>
     @if (course && course!.exercises && course!.exercises.length > 0) {
         <div class="course-overview-controls">
-            <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center justify-content-end">
                 <div class="btn-group me-2" ngbDropdown role="group">
                     <button class="btn btn-light dropdown-toggle" ngbDropdownToggle type="button">
                         {{ 'artemisApp.courseOverview.exerciseList.view' | artemisTranslate }}
@@ -35,7 +35,7 @@
                                         [checked]="activeFilters.has(filterType.UNRELEASED)"
                                         type="checkbox"
                                     />
-                                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.unreleased">Hide unreleased</span>
+                                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.unreleased"></span>
                                 </label>
                             </li>
                         }
@@ -47,7 +47,7 @@
                                     [checked]="activeFilters.has(filterType.OVERDUE)"
                                     type="checkbox"
                                 />
-                                <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
+                                <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue"></span>
                             </label>
                         </li>
                         <li>
@@ -58,7 +58,7 @@
                                     [checked]="activeFilters.has(filterType.NEEDS_WORK)"
                                     type="checkbox"
                                 />
-                                <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore">Hide full score</span>
+                                <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore"></span>
                             </label>
                         </li>
                         <li>
@@ -69,7 +69,7 @@
                                     [checked]="activeFilters.has(filterType.OPTIONAL)"
                                     type="checkbox"
                                 />
-                                <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.optional">Hide optional</span>
+                                <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.optional"></span>
                             </label>
                         </li>
                     </ul>
