@@ -86,8 +86,8 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
         var expectedPlanKey = "PLAN";
         mockWindfile.setId("PROJECT-" + expectedPlanKey);
 
-        aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.BAMBOO, expectedPlanKey);
-        String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.BAMBOO);
+        aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, expectedPlanKey);
+        String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.JENKINS);
         assertThat(key).isEqualTo(expectedPlanKey);
     }
 
@@ -100,8 +100,8 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
         var expectedPlanKey = "PLAN";
         mockWindfile.setId("PROJECT-" + expectedPlanKey);
 
-        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.BAMBOO);
-        String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.BAMBOO);
+        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
+        String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.JENKINS);
         assertThat(key).isEqualTo(null);
     }
 
@@ -170,7 +170,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testReturnsNullonUrlNull() {
         ReflectionTestUtils.setField(aeolusBuildPlanService, "ciUrl", null);
-        assertThat(aeolusBuildPlanService.publishBuildPlan(new Windfile(), AeolusTarget.BAMBOO)).isNull();
+        assertThat(aeolusBuildPlanService.publishBuildPlan(new Windfile(), AeolusTarget.JENKINS)).isNull();
     }
 
     @Test

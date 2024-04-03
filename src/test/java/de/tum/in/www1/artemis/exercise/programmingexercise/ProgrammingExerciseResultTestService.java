@@ -68,8 +68,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
- * 1) Bamboo + Bitbucket
- * 2) Jenkins + Gitlab
+ * 1) Jenkins + Gitlab
  */
 @Service
 public class ProgrammingExerciseResultTestService {

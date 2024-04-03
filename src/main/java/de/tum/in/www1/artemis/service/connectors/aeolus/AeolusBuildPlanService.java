@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.domain.enumeration.AeolusTarget.JENKINS;
 
 import java.net.URL;
 import java.util.HashMap;
@@ -107,11 +110,10 @@ public class AeolusBuildPlanService {
      * @return the credentials for the CI server based on the target
      */
     private String getCredentialsBasedOnTarget(AeolusTarget target) {
-        return switch (target) {
-            case BAMBOO -> ciToken != null ? ciToken : ciPassword;
-            case JENKINS -> ciPassword;
-            default -> null;
-        };
+        if (target == JENKINS) {
+            return ciPassword;
+        }
+        return null;
     }
 
     /**
