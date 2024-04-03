@@ -1,13 +1,24 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
-import static java.util.Comparator.*;
-import static org.assertj.core.api.Assertions.*;
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.naturalOrder;
+import static java.util.Comparator.nullsFirst;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +30,15 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -29,16 +47,23 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.hestia.TestwiseCoverageTestUtil;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 /**
@@ -283,36 +308,6 @@ public class ProgrammingExerciseResultTestService {
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId)).hasSameSizeAs(submissions);
     }
 
-    public void shouldSaveBuildLogsInBuildLogRepository(AbstractBuildResultNotificationDTO resultNotification) {
-        buildLogEntryRepository.deleteAll();
-        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
-
-        var savedBuildLogs = buildLogEntryRepository.findAll();
-        var expectedBuildLogs = getNumberOfBuildLogs(resultNotification) - 3; // 3 of those should be filtered
-
-        assertThat(savedBuildLogs).hasSize(expectedBuildLogs);
-
-        // Call again and should not re-create new submission.
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
-        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
-    }
-
-    public void shouldNotSaveBuildLogsInBuildLogRepository(AbstractBuildResultNotificationDTO resultNotification) {
-        buildLogEntryRepository.deleteAll();
-        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
-
-        var savedBuildLogs = buildLogEntryRepository.findAll();
-        var expectedBuildLogs = 0; // No logs should be stored because the build was successful
-
-        assertThat(savedBuildLogs).hasSize(expectedBuildLogs);
-
-        // Call again and should not re-create new submission.
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
-        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
-    }
-
     // Test
     public void shouldGenerateNewManualResultIfManualAssessmentExists(AbstractBuildResultNotificationDTO resultNotification) {
         activateFourTests();
@@ -468,19 +463,8 @@ public class ProgrammingExerciseResultTestService {
                 null);
     }
 
-    private int getNumberOfBuildLogs(Object resultNotification) {
-        if (resultNotification instanceof BambooBuildResultNotificationDTO) {
-            return ((BambooBuildResultNotificationDTO) resultNotification).getBuild().jobs().iterator().next().logs().size();
-        }
-        throw new UnsupportedOperationException("Build logs are only part of the Bamboo notification");
-    }
-
     public ProgrammingExercise getProgrammingExercise() {
         return programmingExercise;
-    }
-
-    public ProgrammingExercise getProgrammingExerciseWithStaticCodeAnalysis() {
-        return programmingExerciseWithStaticCodeAnalysis;
     }
 
     public ProgrammingExerciseParticipation getSolutionParticipation() {
