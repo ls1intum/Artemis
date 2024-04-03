@@ -77,6 +77,10 @@ const routes: Routes = [
                 loadChildren: () => import('./course-dashboard/course-dashboard.module').then((m) => m.CourseDashboardModule),
             },
             {
+                path: 'dashboard',
+                loadChildren: () => import('./course-dashboard/course-dashboard.module').then((m) => m.CourseDashboardModule),
+            },
+            {
                 path: 'learning-path',
                 loadChildren: () => import('app/course/learning-paths/learning-paths.module').then((m) => m.ArtemisLearningPathsModule),
                 data: {
