@@ -1,4 +1,5 @@
 <div
+    id="test-sidebar-card"
     class="pointer rounded-3 col-12 px-1 pt-2 pb-1 border-start border-5 highlight-card bg-module"
     [ngClass]="{
         'border-success': sidebarItem?.difficulty === DifficultyLevel.EASY,
@@ -6,7 +7,7 @@
         'border-danger': sidebarItem?.difficulty === DifficultyLevel.HARD,
         'border-module': !sidebarItem?.difficulty
     }"
-    [routerLink]="'../' + sidebarItem.id"
+    [routerLink]="'../' + sidebarItem?.id"
     (click)="storeLastSelectedItem(sidebarItem.id)"
     [routerLinkActive]="'bg-selected border-selected'"
 >

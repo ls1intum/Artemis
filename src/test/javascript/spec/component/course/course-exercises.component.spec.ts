@@ -4,7 +4,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
@@ -22,9 +22,12 @@ import dayjs from 'dayjs/esm';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -40,9 +43,11 @@ describe('CourseExercisesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, FormsModule, RouterTestingModule.withRoutes([]), MockModule(ReactiveFormsModule)],
             declarations: [
                 CourseExercisesComponent,
+                SidebarComponent,
+                SearchFilterComponent,
                 MockDirective(OrionFilterDirective),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(SidePanelComponent),
@@ -53,6 +58,7 @@ describe('CourseExercisesComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockTranslateValuesDirective,
+                MockPipe(SearchFilterPipe),
             ],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -69,6 +75,7 @@ describe('CourseExercisesComponent', () => {
                 component = fixture.componentInstance;
                 courseStorageService = TestBed.inject(CourseStorageService);
 
+                component.sidebarData = { groupByCategory: true, sidebarType: 'exercise', storageId: 'exercise' };
                 course = new Course();
                 course.id = 123;
                 exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
@@ -91,5 +98,42 @@ describe('CourseExercisesComponent', () => {
         expect(courseStorageStub.mock.calls).toHaveLength(1);
         expect(courseStorageStub.mock.calls[0][0]).toBe(course.id);
         component.ngOnDestroy();
+    });
+
+    it('should display sidebar when course is provided', () => {
+        fixture.detectChanges();
+        // Wait for any async operations to complete here if necessary
+        fixture.detectChanges(); // Trigger change detection again if async operations might change the state
+        expect(fixture.nativeElement.querySelector('jhi-sidebar')).not.toBeNull();
+    });
+
+    it('should toggle sidebar visibility based on isCollapsed property', () => {
+        component.isCollapsed = true;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).not.toBeNull();
+
+        component.isCollapsed = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).toBeNull();
+    });
+
+    it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
+        component.toggleSidebar();
+        expect(component.isCollapsed).toBeTrue();
+
+        component.toggleSidebar();
+        expect(component.isCollapsed).toBeFalse();
+    });
+
+    it('should display "Please Select an Exercise" when no exercise is selected', () => {
+        component.exerciseSelected = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.textContent).toContain('Please Select an Exercise');
+    });
+
+    it('should display the exercise details when an exercise is selected', () => {
+        component.exerciseSelected = true;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('router-outlet')).not.toBeNull();
     });
 });

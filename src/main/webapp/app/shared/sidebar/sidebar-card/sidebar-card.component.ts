@@ -11,7 +11,7 @@ import { Subscription } from 'rxjs';
 export class SidebarCardComponent implements OnChanges {
     DifficultyLevel = DifficultyLevel;
     @Input() sidebarItem: SidebarCardElement;
-    @Input() routeParams: Params;
+    @Input() routeParams: Params = [];
     @Input() sidebarType?: SidebarTypes;
     @Input() storageId?: string = '';
 
@@ -26,7 +26,7 @@ export class SidebarCardComponent implements OnChanges {
     ) {}
 
     ngOnChanges(): void {
-        if (!Object.keys(this.routeParams).length) {
+        if (!this.routeParams || !Object.keys(this.routeParams).length) {
             const lastSelectedExercise = this.getLastSelectedExercise();
 
             if (lastSelectedExercise) {

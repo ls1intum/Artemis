@@ -43,6 +43,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     hasPdfLectureUnit: boolean;
 
     paramsSubscription: Subscription;
+    profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
 
@@ -67,8 +68,8 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     }
 
     ngOnInit(): void {
-        this.activatedRoute.params.subscribe((params) => {
-            this.lectureId = params.lectureId;
+        this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
+            this.lectureId = +params.lectureId;
             if (this.lectureId) {
                 // science logging
                 this.setResourceId(this.lectureId);
@@ -78,8 +79,8 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
             }
         });
 
-        this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
-            this.isProduction = profileInfo.inProduction;
+        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
         });
     }
@@ -172,5 +173,6 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
 
     ngOnDestroy() {
         this.paramsSubscription?.unsubscribe();
+        this.profileSubscription?.unsubscribe();
     }
 }

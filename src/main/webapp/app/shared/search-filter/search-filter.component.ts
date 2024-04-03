@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { faMagnifyingGlass, faTimes } from '@fortawesome/free-solid-svg-icons';
 
@@ -8,9 +8,6 @@ import { faMagnifyingGlass, faTimes } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./search-filter.component.scss'],
 })
 export class SearchFilterComponent {
-    @Input()
-    searchText: string;
-
     faMagnifyingGlass = faMagnifyingGlass;
     faTimes = faTimes;
 

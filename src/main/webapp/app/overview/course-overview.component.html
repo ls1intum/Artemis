@@ -23,7 +23,7 @@
                                 </div>
                             }
                             @if (!isNavbarCollapsed) {
-                                <div class="h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
+                                <div id="test-course-title" class="h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
                             }
                         </div>
                         <hr class="mt-0" />
@@ -113,7 +113,7 @@
                                     class="btn btn-sidebar-collapse me-3 btn-sm rounded-3"
                                     (click)="toggleSidebar()"
                                 >
-                                    <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary" />
+                                    <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary" size="lg" />
                                 </button>
                             }
                             <div class="align-self-center">{{ 'artemisApp.courseOverview.menu.' + pageTitle | artemisTranslate }}</div>

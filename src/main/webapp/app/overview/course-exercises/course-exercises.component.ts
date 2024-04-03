@@ -10,7 +10,6 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 
-//Todo einheitlöich machen
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
     current: { entityData: [] },

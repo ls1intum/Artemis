@@ -54,14 +54,16 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     }
 
     expandGroupWithSelectedItem() {
-        const routeParamKey = Object.keys(this.routeParams)[0];
-        if (this.routeParams[routeParamKey] && this.groupedData) {
-            const groupWithSelectedItem = Object.entries(this.groupedData).find((groupedItem) =>
-                groupedItem[1].entityData.some((entityItem: SidebarCardElement) => entityItem.id === Number(this.routeParams[routeParamKey])),
-            );
-            if (groupWithSelectedItem) {
-                const groupName = groupWithSelectedItem[0];
-                this.collapseState[groupName] = false;
+        if (this.routeParams) {
+            const routeParamKey = Object.keys(this.routeParams)[0];
+            if (this.routeParams[routeParamKey] && this.groupedData) {
+                const groupWithSelectedItem = Object.entries(this.groupedData).find((groupedItem) =>
+                    groupedItem[1].entityData.some((entityItem: SidebarCardElement) => entityItem.id === Number(this.routeParams[routeParamKey])),
+                );
+                if (groupWithSelectedItem) {
+                    const groupName = groupWithSelectedItem[0];
+                    this.collapseState[groupName] = false;
+                }
             }
         }
     }

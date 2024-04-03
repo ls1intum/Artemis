@@ -19,6 +19,11 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import * as utils from 'app/exercises/shared/feedback/feedback.utils';
 import { FeedbackComponentPreparedParams } from 'app/exercises/shared/feedback/feedback.utils';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
+import { By } from '@angular/platform-browser';
+import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { of } from 'rxjs';
 
 const mockExercise: Exercise = {
     id: 1,
@@ -63,23 +68,68 @@ describe('ResultComponent', () => {
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
     let modalService: NgbModal;
+    let participationService: ParticipationService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        const participationServiceMock = {
+            downloadArtifact: jest.fn(),
+        };
+        global.URL.createObjectURL = jest.fn(() => 'blob:test-url');
+        global.URL.revokeObjectURL = jest.fn();
+        await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe)],
-            providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
+            providers: [
+                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: ParticipationService, useValue: participationServiceMock },
+            ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ResultComponent);
                 comp = fixture.componentInstance;
                 modalService = TestBed.inject(NgbModal);
+                participationService = TestBed.inject(ParticipationService);
+                comp.badge = {
+                    tooltip: 'Example Tooltip', // Ensure this property is set
+                    // Set other properties expected by your component
+                };
+                fixture.detectChanges();
             });
     });
 
     afterEach(() => {
+        global.URL.revokeObjectURL = jest.fn();
         jest.restoreAllMocks();
+    });
+
+    it('should download build result when participation ID is provided', () => {
+        // Arrange
+        const fakeArtifact = {
+            fileContent: new Blob(['test'], { type: 'text/plain' }),
+            fileName: 'test.txt',
+        };
+        const mockLink = document.createElement('a');
+        jest.spyOn(document, 'createElement').mockReturnValue(mockLink);
+        jest.spyOn(document.body, 'appendChild').mockImplementation((child) => child);
+        jest.spyOn(document.body, 'removeChild').mockImplementation((child) => child);
+
+        const urlSpy = jest.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
+
+        participationService.downloadArtifact.mockReturnValue(of(fakeArtifact));
+
+        // Act
+        comp.downloadBuildResult(123);
+
+        // Assert
+        expect(participationService.downloadArtifact).toHaveBeenCalledWith(123);
+        expect(document.createElement).toHaveBeenCalledWith('a');
+        expect(urlSpy).toHaveBeenCalledWith(fakeArtifact.fileContent);
+        expect(mockLink.download).toBe(fakeArtifact.fileName);
+        expect(mockLink.href).toBe('blob:test-url');
+        expect(document.body.appendChild).toHaveBeenCalledWith(mockLink);
+        // Cleanup to avoid memory leaks
+        URL.revokeObjectURL(mockLink.href);
     });
 
     it('should set template status to BUILDING if isBuilding changes to true even though participation changes', () => {
@@ -109,11 +159,13 @@ describe('ResultComponent', () => {
         const RESULT_SCORE_SELECTOR = '#result-score';
 
         it('should not display if result is not present', () => {
+            comp.resultIconClass = faTimesCircle;
             const button = fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR);
             expect(button).not.toBeTruthy();
         });
 
         it('should display result if present', () => {
+            comp.resultIconClass = faTimesCircle;
             comp.result = mockResult;
             comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
 
@@ -133,6 +185,7 @@ describe('ResultComponent', () => {
 
             comp.exercise = preparedFeedback.exercise;
             comp.result = mockResult;
+            comp.resultIconClass = faTimesCircle;
             comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
 
             fixture.detectChanges();
@@ -153,5 +206,83 @@ describe('ResultComponent', () => {
             expect(modalComponentInstance.latestDueDate).toEqual(preparedFeedback.latestDueDate);
             expect(modalComponentInstance.showMissingAutomaticFeedbackInformation).toEqual(preparedFeedback.showMissingAutomaticFeedbackInformation);
         });
+    });
+
+    it('should call showDetails only when isInSidebarCard is false', () => {
+        comp.result = mockResult;
+        const detailsSpy = jest.spyOn(comp, 'showDetails');
+
+        comp.isInSidebarCard = false;
+        comp.resultIconClass = faTimesCircle;
+        comp.exercise = { type: ExerciseType.PROGRAMMING };
+        comp.result = mockResult;
+        comp.resultIconClass = faTimesCircle;
+        comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
+        fixture.detectChanges();
+        const resultElement = fixture.debugElement.query(By.css('#result-score'));
+        resultElement.triggerEventHandler('click', null);
+        expect(detailsSpy).toHaveBeenCalledWith(mockResult);
+
+        detailsSpy.mockClear();
+        comp.isInSidebarCard = true;
+        fixture.detectChanges();
+        resultElement.triggerEventHandler('click', null);
+        expect(detailsSpy).not.toHaveBeenCalled();
+    });
+
+    it('should display building message for IS_BUILDING status', () => {
+        comp.templateStatus = ResultTemplateStatus.IS_BUILDING;
+        fixture.detectChanges();
+        const compiled = fixture.debugElement.query(By.css('[jhiTranslate$=building]'));
+        expect(compiled).toBeTruthy();
+    });
+
+    it('should display badge when showBadge is true', () => {
+        comp.showBadge = true;
+        comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
+        comp.result = mockResult;
+        comp.resultIconClass = faTimesCircle;
+        fixture.detectChanges();
+        const badge = fixture.nativeElement.querySelector('#result-score-badge');
+        expect(badge).toBeTruthy();
+    });
+
+    it('should display the correct message for FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE and FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE', () => {
+        comp.templateStatus = ResultTemplateStatus.MISSING;
+        comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
+        fixture.detectChanges();
+        const compiled = fixture.nativeElement;
+        expect(compiled.textContent).toContain('artemisApp.result.missing.programmingFailedSubmission.message');
+        comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
+        fixture.detectChanges();
+        expect(compiled.textContent).toContain('artemisApp.result.missing.programmingFailedSubmission.message');
+    });
+
+    it('should display the submitted text for SUBMITTED template status', () => {
+        comp.templateStatus = ResultTemplateStatus.SUBMITTED;
+        fixture.detectChanges();
+        const submittedSpan = fixture.nativeElement.querySelector('#test-submitted');
+        expect(submittedSpan).toBeTruthy();
+    });
+
+    it('should display the submitted text for SUBMITTED_WAITING_FOR_GRADING template status', () => {
+        comp.templateStatus = ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING;
+        fixture.detectChanges();
+        const submittedSpan = fixture.nativeElement.querySelector('#test-submitted-waiting-grading');
+        expect(submittedSpan).toBeTruthy();
+    });
+
+    it('should display the submitted text for LATE_NO_FEEDBACK template status', () => {
+        comp.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
+        fixture.detectChanges();
+        const submittedSpan = fixture.nativeElement.querySelector('#test-late-no-feedback');
+        expect(submittedSpan).toBeTruthy();
+    });
+    it('should display the submitted text for LATE template status', () => {
+        comp.resultIconClass = faTimesCircle;
+        comp.templateStatus = ResultTemplateStatus.LATE;
+        fixture.detectChanges();
+        const submittedSpan = fixture.nativeElement.querySelector('#test-late');
+        expect(submittedSpan).toBeTruthy();
     });
 });

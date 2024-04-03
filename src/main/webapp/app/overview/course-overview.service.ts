@@ -22,14 +22,14 @@ export class CourseOverviewService {
     constructor(private participationService: ParticipationService) {}
 
     getUpcomingLecture(lectures: Lecture[] | undefined): Lecture | undefined {
-        if (lectures) {
+        if (lectures && lectures.length) {
             const upcomingLecture = lectures?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
             return upcomingLecture;
         }
     }
-    getUpcomingExercise(exercise: Exercise[] | undefined): Exercise | undefined {
-        if (exercise) {
-            const upcomingLecture = exercise?.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b));
+    getUpcomingExercise(exercises: Exercise[] | undefined): Exercise | undefined {
+        if (exercises && exercises.length) {
+            const upcomingLecture = exercises?.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b));
             return upcomingLecture;
         }
     }
@@ -84,7 +84,7 @@ export class CourseOverviewService {
     }
 
     mapExercisesToSidebarCardElements(exercises: Exercise[]) {
-        return exercises.map((exercise) => this.mapLectureToSidebarCardElement(exercise));
+        return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
     }
 
     mapLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {

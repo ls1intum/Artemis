@@ -22,6 +22,7 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
 export class CourseLecturesComponent implements OnInit, OnDestroy {
     private courseId: number;
     private paramSubscription: Subscription;
+    private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     course?: Course;
 
@@ -41,7 +42,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('lectures');
-        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
+        this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params.courseId, 10);
         });
 
@@ -91,5 +92,6 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.courseUpdatesSubscription?.unsubscribe();
         this.paramSubscription?.unsubscribe();
+        this.parentParamSubscription?.unsubscribe();
     }
 }

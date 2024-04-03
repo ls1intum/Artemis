@@ -12,7 +12,7 @@
         />
         <div class="position-relative my-auto mn-icon-field">
             @if (filterForm.value.searchFilter) {
-                <fa-icon class="pointer text-secondary" [icon]="faTimes" (click)="resetSearchValue()" tooltip="Clear search filter" />
+                <fa-icon id="test-fa-times" class="pointer text-secondary" [icon]="faTimes" (click)="resetSearchValue()" tooltip="Clear search filter" />
             } @else {
                 <fa-icon class="text-secondary" [icon]="faMagnifyingGlass" />
             }

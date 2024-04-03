@@ -104,6 +104,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     activatedExerciseHints: ExerciseHint[];
     irisSettings?: IrisSettings;
     paramsSubscription: Subscription;
+    profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
 
@@ -175,8 +176,8 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             });
         }
 
-        this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
-            this.isProduction = profileInfo.inProduction;
+        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
         });
     }
@@ -193,6 +194,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.teamAssignmentUpdateListener?.unsubscribe();
         this.submissionSubscription?.unsubscribe();
         this.paramsSubscription?.unsubscribe();
+        this.profileSubscription?.unsubscribe();
     }
 
     loadExercise() {

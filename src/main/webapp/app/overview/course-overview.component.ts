@@ -107,6 +107,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     canUnenroll: boolean;
     isNavbarCollapsed = false;
     isSidebarCollapsed = false;
+    profileSubscription?: Subscription;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -179,8 +180,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.subscription = this.route.params.subscribe((params) => {
             this.courseId = parseInt(params.courseId, 10);
         });
-        this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
-            this.isProduction = profileInfo.inProduction;
+        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
         });
         this.getCollapseStateFromStorage();
@@ -582,6 +583,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.controlsSubscription?.unsubscribe();
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
+        this.profileSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }

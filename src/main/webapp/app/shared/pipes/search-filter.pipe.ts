@@ -14,7 +14,7 @@ export class SearchFilterPipe implements PipeTransform {
             }
             return fields.some((field) => {
                 const elementValue = element[field];
-                return elementValue && typeof elementValue === 'string' ? elementValue.toLowerCase().includes(value.toLowerCase()) : false;
+                return elementValue && typeof elementValue === 'string' ? elementValue.toLowerCase().includes(value?.toLowerCase()) : false;
             });
         });
     }
