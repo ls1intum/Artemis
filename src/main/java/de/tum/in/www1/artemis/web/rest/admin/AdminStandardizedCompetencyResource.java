@@ -122,7 +122,7 @@ public class AdminStandardizedCompetencyResource {
      * @param knowledgeArea   the updated knowledge area
      * @return the ResponseEntity with status 200 (OK) and with body the updated knowledge area
      */
-    @PutMapping("knowledge-areas/{knowledgeAreaId}")
+    @PutMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
     @EnforceAdmin
     public ResponseEntity<KnowledgeArea> updateKnowledgeArea(@PathVariable long knowledgeAreaId, @RequestBody KnowledgeArea knowledgeArea) {
         log.debug("REST request to update knowledge area : {}", knowledgeArea);
@@ -142,7 +142,7 @@ public class AdminStandardizedCompetencyResource {
      * @param knowledgeAreaId the id of the knowledge area that should be deleted
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("knowledge-areas/{knowledgeAreaId}")
+    @DeleteMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
     @EnforceAdmin
     public ResponseEntity<Void> deleteKnowledgeArea(@PathVariable long knowledgeAreaId) {
         log.debug("REST request to delete knowledge area : {}", knowledgeAreaId);

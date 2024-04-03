@@ -41,25 +41,18 @@ public interface KnowledgeAreaRepository extends JpaRepository<KnowledgeArea, Lo
         return findById(knowledgeAreaId).orElseThrow(() -> new EntityNotFoundException("KnowledgeArea", knowledgeAreaId));
     }
 
-    @Query(nativeQuery = true, value = """
-                WITH RECURSIVE recurse(id) AS (
-                SELECT id, parent, children
-                FROM knowledge_areas
-                WHERE id = :id1
+    @Query(value = """
+            WITH RECURSIVE transitive_closure(id) AS
+            (
+                (SELECT knowledge_area.id FROM knowledge_area WHERE knowledge_area.id = :parentId)
                 UNION
-                SELECT ka.id, ka.parent, ka.children
-                FROM knowledge_areas ka
-                INNER JOIN recurse r ON ka.id = r.parent
+                (
+                    SELECT ka.id
+                    FROM knowledge_area AS ka
+                    JOIN transitive_closure AS tc ON ka.parent_id = tc.id
+                )
             )
-            SELECT CASE
-                       WHEN EXISTS (
-                           SELECT 1
-                           FROM recurse
-                           WHERE id = :id2
-                       ) THEN 'Yes'
-                       ELSE 'No'
-                   END AS IsDescendant
-            WHERE id = :id1
-            """)
-    String isDescendant(@Param("id1") long id1, @Param("id2") long id2);
+            SELECT EXISTS(SELECT * FROM transitive_closure WHERE transitive_closure.id = :descendantId)
+            """, nativeQuery = true)
+    boolean isDescendantOf(@Param("descendantId") long descendantId, @Param("parentId") long parentId);
 }

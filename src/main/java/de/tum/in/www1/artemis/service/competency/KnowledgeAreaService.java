@@ -32,6 +32,9 @@ public class KnowledgeAreaService {
      */
     public KnowledgeArea createKnowledgeArea(KnowledgeArea knowledgeArea) {
         knowledgeAreaIsValidOrElseThrow(knowledgeArea);
+        if (knowledgeArea.getId() != null) {
+            throw new BadRequestException("A new knowledge cannot already have an id");
+        }
 
         // fetch the parent from the database if it exists
         KnowledgeArea parent = knowledgeArea.getParent();
@@ -53,14 +56,20 @@ public class KnowledgeAreaService {
     public KnowledgeArea updateKnowledgeArea(KnowledgeArea knowledgeArea) {
         knowledgeAreaIsValidOrElseThrow(knowledgeArea);
         var existingKnowledgeArea = knowledgeAreaRepository.findByIdElseThrow(knowledgeArea.getId());
-        // TODO: do not allow to send any children/competencies?
+
+        existingKnowledgeArea.setTitle(knowledgeArea.getTitle());
+        existingKnowledgeArea.setShortTitle(knowledgeArea.getShortTitle());
+        existingKnowledgeArea.setDescription(knowledgeArea.getDescription());
 
         if (knowledgeArea.getParent() == null) {
             existingKnowledgeArea.setParent(null);
         }
         else if (!knowledgeArea.getParent().equals(existingKnowledgeArea.getParent())) {
-            var parent = knowledgeAreaRepository.findByIdElseThrow(knowledgeArea.getParent().getId());
-            existingKnowledgeArea.setParent(parent);
+            var newParent = knowledgeAreaRepository.findByIdElseThrow(knowledgeArea.getParent().getId());
+            if (knowledgeAreaRepository.isDescendantOf(newParent.getId(), knowledgeArea.getId())) {
+                throw new BadRequestException("A knowledge area cannot have itself or one of its descendants as parent");
+            }
+            existingKnowledgeArea.setParent(newParent);
         }
 
         return knowledgeAreaRepository.save(existingKnowledgeArea);
@@ -75,7 +84,6 @@ public class KnowledgeAreaService {
         if (!knowledgeAreaRepository.existsById(knowledgeAreaId)) {
             throw new EntityNotFoundException("KnowledgeArea", knowledgeAreaId);
         }
-        // TODO: see if this works or if i need cascade.
         knowledgeAreaRepository.deleteById(knowledgeAreaId);
     }
 
@@ -90,8 +98,14 @@ public class KnowledgeAreaService {
                 || knowledgeArea.getShortTitle().length() > KnowledgeArea.MAX_SHORT_TITLE_LENGTH;
         boolean descriptionIsInvalid = knowledgeArea.getDescription() != null && knowledgeArea.getDescription().length() > KnowledgeArea.MAX_DESCRIPTION_LENGTH;
 
-        if (titleIsInvalid || shortTitleIsInvalid || descriptionIsInvalid) {
-            throw new BadRequestException();
+        if (titleIsInvalid) {
+            throw new BadRequestException("A knowledge area must have a title and it cannot be longer than " + KnowledgeArea.MAX_TITLE_LENGTH + " characters");
+        }
+        if (shortTitleIsInvalid) {
+            throw new BadRequestException("A knowledge area must have a shortTitle and it cannot be longer than " + KnowledgeArea.MAX_SHORT_TITLE_LENGTH + " characters");
+        }
+        if (descriptionIsInvalid) {
+            throw new BadRequestException("The description of a knowledge area cannot be longer than \" + KnowledgeArea.MAX_SHORT_TITLE_LENGTH + \" characters");
         }
     }
 
