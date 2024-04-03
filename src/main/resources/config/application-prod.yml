@@ -13,12 +13,6 @@
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
 
-management:
-    metrics:
-        export:
-            prometheus:
-                enabled: false
-
 artemis:
     push-notification-relay: https://hermes.artemis.cit.tum.de
 

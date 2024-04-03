@@ -93,7 +93,16 @@ management:
         web:
             base-path: /management
             exposure:
-                include: ['configprops', 'env', 'health', 'info', 'jhimetrics', 'logfile', 'loggers', 'prometheus', 'threaddump']
+                include:
+                  - configprops
+                  - env
+                  - health
+                  - info
+                  - jhimetrics
+                  - logfile
+                  - loggers
+                  - prometheus
+                  - threaddump
     endpoint:
         health:
             show-details: when_authorized
@@ -116,6 +125,12 @@ management:
             enabled: false # Disabled to prevent periodic health checks that lead to null pointer exceptions if the ldap is not configured or not active
         config:
             enabled: false # Disabled because we do not use a Spring Cloud Config Server
+    prometheus:
+        # Prometheus is the default metrics server
+        metrics:
+            export:
+                enabled: true
+                step: 60
     metrics:
         export:
             # Prometheus is the default metrics server
