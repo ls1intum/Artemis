@@ -317,7 +317,7 @@
             "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
             "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
             "attendanceNotVerifiedWarningFirstSentence": "Deine Anwesenheit wurde noch nicht kontrolliert.",
-            "attendanceNotVerifiedWarningSecondSentence": "Bitte kontaktiere einen/eine Tutor:in nach der Prüfung, um deine Anwesenheit zu kontrollieren.",
+            "attendanceNotVerifiedWarningSecondSentence": "Bitte kontaktiere die Hörsaalaufsicht nach der Prüfung, um deine Anwesenheit zu kontrollieren.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein",
             "submissionSuccessful": {
                 "title": "Deine Klausur wurde erfolgreich abgegeben!",
