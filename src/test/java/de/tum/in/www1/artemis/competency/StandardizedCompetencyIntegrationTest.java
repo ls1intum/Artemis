@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.competency;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -17,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
 import de.tum.in.www1.artemis.domain.competency.Source;
@@ -25,11 +26,14 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
 
-class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "stdcompetencyintegrationtest";
+
+    private static final long ID_NOT_EXISTS = -1000L;
 
     private KnowledgeArea knowledgeArea;
 
@@ -46,16 +50,44 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
     @Autowired
     private SourceRepository sourceRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
     static class CheckStandardizedCompetencyValidationProvider implements ArgumentsProvider {
 
         @Override
         public Stream<Arguments> provideArguments(ExtensionContext extensionContext) {
-            var competency1 = new StandardizedCompetency("  ", "valid description", CompetencyTaxonomy.ANALYZE, null);
-            var competency2 = new StandardizedCompetency("0".repeat(StandardizedCompetency.MAX_TITLE_LENGTH + 1), "valid description", CompetencyTaxonomy.ANALYZE, null);
-            var competency3 = new StandardizedCompetency("valid title", "0".repeat(StandardizedCompetency.MAX_DESCRIPTION_LENGTH + 1), CompetencyTaxonomy.ANALYZE, null);
-            return Stream.of(Arguments.of(competency1), Arguments.of(competency2), Arguments.of(competency3));
+            var competencies = new ArrayList<StandardizedCompetency>();
+            // invalid title
+            competencies.add(new StandardizedCompetency("  ", "valid description", null, null));
+            competencies.add(new StandardizedCompetency(null, "valid description", null, null));
+            competencies.add(new StandardizedCompetency("0".repeat(StandardizedCompetency.MAX_TITLE_LENGTH + 1), "valid description", null, null));
+            // invalid description
+            competencies.add(new StandardizedCompetency("valid title", "0".repeat(StandardizedCompetency.MAX_DESCRIPTION_LENGTH + 1), null, null));
+            return competencies.stream().map(Arguments::of);
         }
     }
+
+    static class CheckKnowledgeAreaValidationProvider implements ArgumentsProvider {
+
+        @Override
+        public Stream<Arguments> provideArguments(ExtensionContext extensionContext) {
+            var knowledgeAreas = new ArrayList<KnowledgeArea>();
+            // invalid title
+            knowledgeAreas.add(new KnowledgeArea(" ", "shortTitle", ""));
+            knowledgeAreas.add(new KnowledgeArea(null, "shortTitle", ""));
+            knowledgeAreas.add(new KnowledgeArea("0".repeat(KnowledgeArea.MAX_TITLE_LENGTH + 1), "shortTitle", ""));
+            // invalid short title
+            knowledgeAreas.add(new KnowledgeArea("title", "  ", ""));
+            knowledgeAreas.add(new KnowledgeArea("title", "0".repeat(KnowledgeArea.MAX_SHORT_TITLE_LENGTH + 1), ""));
+            // invalid description
+            knowledgeAreas.add(new KnowledgeArea("title", "shortTitle", "0".repeat(KnowledgeArea.MAX_DESCRIPTION_LENGTH + 1)));
+            return knowledgeAreas.stream().map(Arguments::of);
+        }
+    }
+
+    // TODO: methods to create objects that dont exist ^^
+    // TODO: remove id const -> notExists.getId() in url
 
     @BeforeEach
     void setupTestScenario() {
@@ -68,49 +100,55 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
         standardizedCompetency.setKnowledgeArea(knowledgeArea);
         standardizedCompetency = standardizedCompetencyRepository.save(standardizedCompetency);
 
-        source = new Source("Source 0", "Author 0", "http:localhost:8000");
+        source = new Source("Source 0", "Author 0", "localhost:8000");
         source = sourceRepository.save(source);
     }
 
-    private void testAllPreAuthorizeInstructor() throws Exception {
-        request.get("/api/standardized-competencies/1", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
-        request.get("/api/standardized-competencies/for-tree-view", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
-        request.get("/api/standardized-competencies/knowledge-areas/1", HttpStatus.FORBIDDEN, KnowledgeArea.class);
-    }
+    @Nested
+    class PreAuthorize {
 
-    private void testAllPreAuthorizeAdmin() throws Exception {
-        request.post("/api/admin/standardized-competencies", new StandardizedCompetency(), HttpStatus.FORBIDDEN);
-        request.put("/api/admin/standardized-competencies/1", new StandardizedCompetency(), HttpStatus.FORBIDDEN);
-        request.delete("/api/admin/standardized-competencies/1", HttpStatus.FORBIDDEN);
-        request.post("/api/admin/standardized-competencies/knowledge-areas", new KnowledgeArea(), HttpStatus.FORBIDDEN);
-    }
+        private void testAllPreAuthorizeInstructor() throws Exception {
+            request.get("/api/standardized-competencies/1", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
+            request.get("/api/standardized-competencies/for-tree-view", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
+            request.get("/api/standardized-competencies/knowledge-areas/1", HttpStatus.FORBIDDEN, KnowledgeArea.class);
+        }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAll_asTutor() throws Exception {
-        this.testAllPreAuthorizeAdmin();
-        this.testAllPreAuthorizeInstructor();
-    }
+        private void testAllPreAuthorizeAdmin() throws Exception {
+            request.post("/api/admin/standardized-competencies", new StandardizedCompetency(), HttpStatus.FORBIDDEN);
+            request.put("/api/admin/standardized-competencies/1", new StandardizedCompetency(), HttpStatus.FORBIDDEN);
+            request.delete("/api/admin/standardized-competencies/1", HttpStatus.FORBIDDEN);
+            request.post("/api/admin/standardized-competencies/knowledge-areas", new KnowledgeArea(), HttpStatus.FORBIDDEN);
+            request.put("/api/admin/standardized-competencies/knowledge-areas/1", new KnowledgeArea(), HttpStatus.FORBIDDEN);
+            request.delete("/api/admin/standardized-competencies/knowledge-areas/1", HttpStatus.FORBIDDEN);
+        }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testAll_asStudent() throws Exception {
-        this.testAllPreAuthorizeAdmin();
-        this.testAllPreAuthorizeInstructor();
-    }
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void shouldFailAsTutor() throws Exception {
+            this.testAllPreAuthorizeAdmin();
+            this.testAllPreAuthorizeInstructor();
+        }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testAll_asEditor() throws Exception {
-        this.testAllPreAuthorizeAdmin();
-        this.testAllPreAuthorizeInstructor();
-    }
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldFailAsStudent() throws Exception {
+            this.testAllPreAuthorizeAdmin();
+            this.testAllPreAuthorizeInstructor();
+        }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testAll_asInstructor() throws Exception {
-        this.testAllPreAuthorizeAdmin();
-        // do not call testAllPreAuthorizeInstructor, as these methods should succeed
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldFailAsEditor() throws Exception {
+            this.testAllPreAuthorizeAdmin();
+            this.testAllPreAuthorizeInstructor();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldFailAsInstructor() throws Exception {
+            this.testAllPreAuthorizeAdmin();
+            // do not call testAllPreAuthorizeInstructor, as these methods should succeed
+        }
     }
 
     @Nested
@@ -122,7 +160,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
             @Test
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldCreateCompetency() throws Exception {
-                var expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "");
+                var expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, null);
                 expectedCompetency.setKnowledgeArea(knowledgeArea);
                 expectedCompetency.setSource(source);
 
@@ -135,9 +173,9 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldReturn404() throws Exception {
                 // knowledge area/source that does not exist in the database is not allowed
-                var expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "");
+                var expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, null);
                 var knowlegeAreaNotExisting = new KnowledgeArea();
-                knowlegeAreaNotExisting.setId(-1000L);
+                knowlegeAreaNotExisting.setId(ID_NOT_EXISTS);
                 expectedCompetency.setKnowledgeArea(knowlegeAreaNotExisting);
 
                 request.post("/api/admin/standardized-competencies", expectedCompetency, HttpStatus.NOT_FOUND);
@@ -145,7 +183,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
                 expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, null);
                 expectedCompetency.setKnowledgeArea(knowledgeArea);
                 var sourceNotExisting = new Source();
-                sourceNotExisting.setId(-1000L);
+                sourceNotExisting.setId(ID_NOT_EXISTS);
                 expectedCompetency.setSource(sourceNotExisting);
 
                 request.post("/api/admin/standardized-competencies", expectedCompetency, HttpStatus.NOT_FOUND);
@@ -184,29 +222,29 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
                 // competency with this id does not exist
                 var competencyNotExisting = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "");
                 competencyNotExisting.setKnowledgeArea(knowledgeArea);
-                competencyNotExisting.setId(999999999L);
+                competencyNotExisting.setId(ID_NOT_EXISTS);
 
-                request.put("/api/admin/standardized-competencies/999999999", competencyNotExisting, HttpStatus.NOT_FOUND);
+                request.put("/api/admin/standardized-competencies/" + ID_NOT_EXISTS, competencyNotExisting, HttpStatus.NOT_FOUND);
 
                 // knowledge area/source that does not exist in the database is not allowed
-                long id = standardizedCompetency.getId();
+                long validId = standardizedCompetency.getId();
 
                 var invalidCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, null);
-                invalidCompetency.setId(id);
-                var knowlegeAreaNotExisting = new KnowledgeArea("Knowledge Area", "KA", "Description");
-                knowlegeAreaNotExisting.setId(-1000L);
+                invalidCompetency.setId(validId);
+                var knowlegeAreaNotExisting = new KnowledgeArea();
+                knowlegeAreaNotExisting.setId(ID_NOT_EXISTS);
                 invalidCompetency.setKnowledgeArea(knowlegeAreaNotExisting);
 
-                request.put("/api/admin/standardized-competencies/" + id, invalidCompetency, HttpStatus.NOT_FOUND);
+                request.put("/api/admin/standardized-competencies/" + validId, invalidCompetency, HttpStatus.NOT_FOUND);
 
                 invalidCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, null);
                 invalidCompetency.setKnowledgeArea(knowledgeArea);
-                invalidCompetency.setId(id);
+                invalidCompetency.setId(validId);
                 var sourceNotExisting = new Source();
-                sourceNotExisting.setId(-1000L);
+                sourceNotExisting.setId(ID_NOT_EXISTS);
                 invalidCompetency.setSource(sourceNotExisting);
 
-                request.put("/api/admin/standardized-competencies/" + id, invalidCompetency, HttpStatus.NOT_FOUND);
+                request.put("/api/admin/standardized-competencies/" + validId, invalidCompetency, HttpStatus.NOT_FOUND);
             }
 
             @Test
@@ -220,7 +258,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
             @ParameterizedTest
             @ArgumentsSource(CheckStandardizedCompetencyValidationProvider.class)
             @WithMockUser(username = "admin", roles = "ADMIN")
-            void shouldReturnBadRequest(StandardizedCompetency competency) throws Exception {
+            void shouldReturnBadRequestForInvalidCompetency(StandardizedCompetency competency) throws Exception {
                 // get a valid id so the request does not fail because of this
                 long validId = standardizedCompetency.getId();
                 competency.setId(validId);
@@ -245,48 +283,95 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
             @Test
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldReturn404() throws Exception {
-                var competencyNotExisting = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "");
-                competencyNotExisting.setId(-1000L);
-
-                request.delete("/api/admin/standardized-competencies/-1000", HttpStatus.NOT_FOUND);
+                request.delete("/api/admin/standardized-competencies/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND);
             }
         }
-    }
 
-    @Nested
-    class CreateKnowledgeArea {
+        @Nested
+        class CreateKnowledgeArea {
 
-        @Test
-        @WithMockUser(username = "admin", roles = "ADMIN")
-        void shouldCreateKnowledgeArea() throws Exception {
-            var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "KA2", "description");
-            expectedKnowledgeArea.setParent(knowledgeArea);
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldCreateKnowledgeArea() throws Exception {
+                var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "KA2", "description");
+                expectedKnowledgeArea.setParent(knowledgeArea);
 
-            var actualKnowledgeArea = request.postWithResponseBody("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, KnowledgeArea.class,
-                    HttpStatus.CREATED);
+                var actualKnowledgeArea = request.postWithResponseBody("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, KnowledgeArea.class,
+                        HttpStatus.CREATED);
 
-            assertThat(actualKnowledgeArea).usingRecursiveComparison().ignoringFields("id").isEqualTo(expectedKnowledgeArea);
+                assertThat(actualKnowledgeArea).usingRecursiveComparison().ignoringFields("id").isEqualTo(expectedKnowledgeArea);
+            }
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldReturn404() throws Exception {
+                var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "KA2", "description");
+                // parent that does not exist in the database is not allowed
+                var knowlegeAreaNotExisting = new KnowledgeArea();
+                knowlegeAreaNotExisting.setId(ID_NOT_EXISTS);
+                expectedKnowledgeArea.setParent(knowlegeAreaNotExisting);
+
+                request.post("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, HttpStatus.NOT_FOUND);
+            }
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldReturnBadRequest() throws Exception {
+                // empty title is not allowed
+                var expectedKnowledgeArea = new KnowledgeArea("  ", "  ", "description");
+
+                request.post("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, HttpStatus.BAD_REQUEST);
+            }
         }
 
-        @Test
-        @WithMockUser(username = "admin", roles = "ADMIN")
-        void shouldReturn404() throws Exception {
-            var expectedKnowledgeArea = new KnowledgeArea("Knowledge Area 2", "KA2", "description");
-            // parent that does not exist in the database is not allowed
-            var knowlegeAreaNotExisting = new KnowledgeArea();
-            knowlegeAreaNotExisting.setId(-1000L);
-            expectedKnowledgeArea.setParent(knowlegeAreaNotExisting);
+        @Nested
+        class UpdateKnowledgeArea {
 
-            request.post("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, HttpStatus.NOT_FOUND);
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldUpdateKnowledgeArea() throws Exception {
+
+            }
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldMoveKnowledgeAreaToNewParent() throws Exception {
+
+            }
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldReturn404() throws Exception {
+                // TODO: 404 if new parent does not exist.
+            }
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldReturnBadRequestForCircularDependency() throws Exception {
+
+            }
         }
 
-        @Test
-        @WithMockUser(username = "admin", roles = "ADMIN")
-        void shouldReturnBadRequest() throws Exception {
-            // empty title is not allowed
-            var expectedKnowledgeArea = new KnowledgeArea("  ", "  ", "description");
+        @Nested
+        class DeleteKnowledgeArea {
 
-            request.post("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, HttpStatus.BAD_REQUEST);
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldReturn404() throws Exception {
+
+            }
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldDeleteKnowledgeArea() throws Exception {
+
+            }
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldDeleteSelfAndContents() throws Exception {
+                // TODO: add code when cascade changes are merged.
+            }
         }
     }
 
@@ -311,10 +396,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
             @Test
             @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
             void shouldReturn404() throws Exception {
-                var competencyNotExisting = new StandardizedCompetency();
-                competencyNotExisting.setId(-1000L);
-
-                request.get("/api/standardized-competencies/" + competencyNotExisting.getId(), HttpStatus.NOT_FOUND, StandardizedCompetency.class);
+                request.get("/api/standardized-competencies/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND, StandardizedCompetency.class);
             }
         }
 
@@ -376,10 +458,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationLoc
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturn404() throws Exception {
-            var knowledgeAreaNotExisting = new KnowledgeArea();
-            knowledgeAreaNotExisting.setId(-1000L);
-
-            request.get("/api/standardized-competencies/knowledge-areas/" + knowledgeAreaNotExisting.getId(), HttpStatus.NOT_FOUND, KnowledgeArea.class);
+            request.get("/api/standardized-competencies/knowledge-areas/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND, KnowledgeArea.class);
         }
     }
 }
