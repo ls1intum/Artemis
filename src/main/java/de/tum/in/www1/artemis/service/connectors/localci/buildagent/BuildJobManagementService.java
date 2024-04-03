@@ -203,6 +203,7 @@ public class BuildJobManagementService {
         Future<LocalCIBuildResult> future = runningFutures.get(buildJobId);
         if (future != null) {
             try {
+                log.info("Cancelling build job with id {}", buildJobId);
                 cancelledBuildJobs.add(buildJobId);
                 future.cancel(true); // Attempt to interrupt the build job
             }
@@ -223,7 +224,7 @@ public class BuildJobManagementService {
      * @param containerName The name of the Docker container that was used to execute the build job.
      */
     private void finishCancelledBuildJob(String repositoryUri, String buildJobId, String containerName) {
-        log.debug("Build job with id {} in repository {} was cancelled", buildJobId, repositoryUri);
+        log.info("Build job with id {} in repository {} was cancelled", buildJobId, repositoryUri);
 
         buildJobContainerService.stopContainer(containerName);
 
