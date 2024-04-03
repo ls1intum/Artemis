@@ -139,4 +139,13 @@ export class CourseOverviewService {
     sortByTitle(a: Exercise | Lecture, b: Exercise | Lecture): number {
         return a.title && b.title ? a.title.localeCompare(b.title) : 0;
     }
+
+    getSidebarCollapseStateFromStorage(storageId: string): boolean {
+        const storedCollapseState: string | null = localStorage.getItem('sidebar.collapseState.' + storageId);
+        return storedCollapseState ? JSON.parse(storedCollapseState) : false;
+    }
+
+    setSidebarCollapseState(storageId: string, isCollapsed: boolean) {
+        localStorage.setItem('sidebar.collapseState.' + storageId, JSON.stringify(isCollapsed));
+    }
 }

@@ -37,6 +37,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     accordionExerciseGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sidebarData: SidebarData;
     sidebarExercises: SidebarCardElement[] = [];
+    isCollapsed: boolean = false;
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -48,6 +49,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
+        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('exercise');
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params.courseId, 10);
         });
@@ -73,6 +75,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
                 this.exerciseSelected = exerciseId ? true : false;
             }
         });
+    }
+
+    toggleSidebar() {
+        this.isCollapsed = !this.isCollapsed;
+        this.courseOverviewService.setSidebarCollapseState('exercise', this.isCollapsed);
     }
 
     prepareSidebarData() {

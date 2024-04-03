@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { faChevronRight, faFilter, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -35,17 +35,12 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.getCollapseStateFromStorage();
         this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
         });
     }
 
-    getCollapseStateFromStorage() {
-        const storedCollapseState: string | null = localStorage.getItem('sidebar.collapseState.' + this.sidebarData.storageId);
-        if (storedCollapseState) this.isCollapsed = JSON.parse(storedCollapseState);
-    }
     ngOnChanges() {
         this.paramSubscription = this.route.params?.subscribe((params) => {
             this.routeParams = params;
@@ -56,16 +51,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.searchValue = searchValue;
     }
 
-    @HostListener('window:keydown.Control.x', ['$event'])
-    onKeyDownControlX(event: KeyboardEvent) {
-        event.preventDefault();
-        this.toggleCollapseState();
-    }
-
-    toggleCollapseState() {
-        this.isCollapsed = !this.isCollapsed;
-        localStorage.setItem('sidebar.collapseState.' + this.sidebarData.storageId, JSON.stringify(this.isCollapsed));
-    }
     ngOnDestroy() {
         this.paramSubscription?.unsubscribe();
     }

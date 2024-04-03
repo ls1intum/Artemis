@@ -61,8 +61,8 @@
                         </div>
                     }
                     @for (lectureUnit of lectureUnits; track lectureUnit) {
-                        <div class="row m-0">
-                            <div class="col-11">
+                        <div class="row m-0 d-flex flex-nowrap">
+                            <div class="col-lg-11 col-10">
                                 @switch (lectureUnit.type) {
                                     @case (LectureUnitType.EXERCISE) {
                                         <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="lecture!.course!" />
@@ -81,7 +81,7 @@
                                     }
                                 }
                             </div>
-                            <div class="col-1 my-auto mx-auto">
+                            <div class="col-lg-1 col-2 my-auto mx-auto width-fit-content">
                                 <jhi-competencies-popover
                                     [hidden]="!lectureUnit.competencies || lectureUnit.competencies!.length === 0"
                                     [courseId]="lecture!.course!.id!"

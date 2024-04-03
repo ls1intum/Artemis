@@ -11,7 +11,6 @@ Course Info Bar
     // move instructor actions onto their own line for small/medium devices
     .instructor-actions {
         width: 100%;
-        flex-basis: 100%;
         justify-content: flex-end;
     }
 }
@@ -223,4 +222,8 @@ canvas#complete-chart {
     &.content-height-dev {
         height: calc(100vh - $footer-height-dev - $header-height);
     }
+}
+
+.sidebar-collapsed {
+    display: none;
 }

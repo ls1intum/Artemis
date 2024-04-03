@@ -32,16 +32,5 @@
                 </div>
             }
         </div>
-        <div
-            class="double-arrow my-2"
-            [ngClass]="{ 'menu-closed': isCollapsed }"
-            [ngbTooltip]="(isCollapsed ? 'Expand' : 'Collapse') + ' Sidebar (Ctrl + X)'"
-            (click)="toggleCollapseState()"
-        >
-            <div [attr.aria-expanded]="!isCollapsed" aria-controls="collapseBasic">
-                <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
-                <fa-icon class="fa-xs" [icon]="faChevronRight" />
-            </div>
-        </div>
     </div>
 </div>

@@ -30,6 +30,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     accordionLectureGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sortedLectures: Lecture[] = [];
     sidebarLectures: SidebarCardElement[] = [];
+    isCollapsed: boolean = false;
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -39,6 +40,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
+        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('lectures');
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params.courseId, 10);
         });
@@ -79,6 +81,11 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
             groupedData: this.accordionLectureGroups,
             ungroupedData: this.sidebarLectures,
         };
+    }
+
+    toggleSidebar() {
+        this.isCollapsed = !this.isCollapsed;
+        this.courseOverviewService.setSidebarCollapseState('lectures', this.isCollapsed);
     }
 
     ngOnDestroy(): void {

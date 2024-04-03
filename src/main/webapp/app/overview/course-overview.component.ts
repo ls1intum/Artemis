@@ -57,8 +57,12 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
+import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
+import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
+import { facSidebar } from '../../content/icons/icons';
 
 interface CourseActionItem {
+    title: string;
     icon?: IconDefinition;
     translation: string;
     action?: (item?: CourseActionItem) => void;
@@ -66,7 +70,7 @@ interface CourseActionItem {
 interface SidebarItem {
     routerLink: string;
     icon?: IconDefinition;
-    name: string;
+    title: string;
     testId?: string;
     translation: string;
     hasInOrionProperty?: boolean;
@@ -101,10 +105,12 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     courseActionItems: CourseActionItem[];
     isNotManagementView: boolean;
     canUnenroll: boolean;
-    isCollapsed = false;
+    isNavbarCollapsed = false;
+    isSidebarCollapsed = false;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
+    activatedComponentReference: CourseExercisesComponent | CourseLecturesComponent;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -144,6 +150,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faChevronRight = faChevronRight;
     faListCheck = faListCheck;
     faDoorOpen = faDoorOpen;
+    facSidebar = facSidebar;
 
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
@@ -236,6 +243,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     getUnenrollItem() {
         const unenrollItem: CourseActionItem = {
+            title: 'Unenroll',
             icon: faDoorOpen,
             translation: 'artemisApp.courseOverview.exerciseList.details.unenrollmentButton',
             action: () => this.openUnenrollStudentModal(),
@@ -246,7 +254,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         const lecturesItem: SidebarItem = {
             routerLink: 'lectures',
             icon: faChalkboardUser,
-            name: 'Lectures',
+            title: 'Lectures',
             translation: 'artemisApp.courseOverview.menu.lectures',
             hasInOrionProperty: true,
             showInOrionWindow: false,
@@ -257,7 +265,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         const examsItem: SidebarItem = {
             routerLink: 'exams',
             icon: faGraduationCap,
-            name: 'Exams',
+            title: 'Exams',
             testId: 'exam-tab',
             translation: 'artemisApp.courseOverview.menu.exams',
             hasInOrionProperty: true,
@@ -269,7 +277,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         const communicationItem: SidebarItem = {
             routerLink: 'discussion',
             icon: faComment,
-            name: 'Communication',
+            title: 'Communication',
             translation: 'artemisApp.courseOverview.menu.communication',
             hasInOrionProperty: true,
             showInOrionWindow: false,
@@ -280,7 +288,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         const messagesItem: SidebarItem = {
             routerLink: 'messages',
             icon: faComments,
-            name: 'Messages',
+            title: 'Messages',
             translation: 'artemisApp.courseOverview.menu.messages',
             hasInOrionProperty: true,
             showInOrionWindow: false,
@@ -291,7 +299,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         const tutorialGroupsItem: SidebarItem = {
             routerLink: 'tutorial-groups',
             icon: faPersonChalkboard,
-            name: 'Exercises',
+            title: 'Tutorials',
             translation: 'artemisApp.courseOverview.menu.tutorialGroups',
             hasInOrionProperty: true,
             showInOrionWindow: false,
@@ -303,7 +311,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         const competenciesItem: SidebarItem = {
             routerLink: 'competencies',
             icon: faFlag,
-            name: 'Competencies',
+            title: 'Competencies',
             translation: 'artemisApp.courseOverview.menu.competencies',
             hasInOrionProperty: true,
             showInOrionWindow: false,
@@ -314,7 +322,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         const learningPathItem: SidebarItem = {
             routerLink: 'learning-path',
             icon: faNetworkWired,
-            name: 'Learning Path',
+            title: 'Learning Path',
             translation: 'artemisApp.courseOverview.menu.learningPath',
             hasInOrionProperty: true,
             showInOrionWindow: false,
@@ -327,14 +335,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         const exercisesItem: SidebarItem = {
             routerLink: 'exercises',
             icon: faListCheck,
-            name: 'Exercises',
+            title: 'Exercises',
             translation: 'artemisApp.courseOverview.menu.exercises',
         };
 
         const statisticsItem: SidebarItem = {
             routerLink: 'statistics',
             icon: faListAlt,
-            name: 'Statistics',
+            title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
             hasInOrionProperty: true,
             showInOrionWindow: false,
@@ -427,13 +435,32 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                     this.tryRenderControls();
                 }) || undefined;
         }
+        if (componentRef instanceof CourseExercisesComponent || componentRef instanceof CourseLecturesComponent) {
+            this.activatedComponentReference = componentRef;
+        }
+
         // Since we change the pageTitle + might be pulling data upwards during a render cycle, we need to re-run change detection
         this.changeDetectorRef.detectChanges();
+    }
+
+    toggleSidebar() {
+        if (!this.activatedComponentReference) {
+            return;
+        }
+        const childRouteComponent = this.activatedComponentReference;
+        childRouteComponent.toggleSidebar();
+    }
+
+    @HostListener('window:keydown.Control.Shift.b', ['$event'])
+    onKeyDownControlShiftB(event: KeyboardEvent) {
+        event.preventDefault();
+        this.toggleSidebar();
     }
     getPageTitle(): void {
         const routePageTitle: string = this.route.snapshot.firstChild?.data?.pageTitle;
         this.pageTitle = routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
     }
+
     getHasSidebar(): boolean {
         return this.route.snapshot.firstChild?.data?.hasSidebar;
     }
@@ -619,19 +646,19 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
     }
 
-    @HostListener('window:keydown.Control.y', ['$event'])
-    onKeyDownControlY(event: KeyboardEvent) {
+    @HostListener('window:keydown.Control.m', ['$event'])
+    onKeyDownControlM(event: KeyboardEvent) {
         event.preventDefault();
         this.toggleCollapseState();
     }
 
     getCollapseStateFromStorage() {
-        const storedCollapseState: string | null = localStorage.getItem('sidebar.collapseState');
-        if (storedCollapseState) this.isCollapsed = JSON.parse(storedCollapseState);
+        const storedCollapseState: string | null = localStorage.getItem('navbar.collapseState');
+        if (storedCollapseState) this.isNavbarCollapsed = JSON.parse(storedCollapseState);
     }
 
     toggleCollapseState() {
-        this.isCollapsed = !this.isCollapsed;
-        localStorage.setItem('navbar.collapseState', JSON.stringify(this.isCollapsed));
+        this.isNavbarCollapsed = !this.isNavbarCollapsed;
+        localStorage.setItem('navbar.collapseState', JSON.stringify(this.isNavbarCollapsed));
     }
 }
