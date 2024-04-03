@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationUserDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
 class ConversationIntegrationTest extends AbstractConversationTest {
@@ -99,9 +100,9 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         // given
         var channel = createChannel(false, TEST_PREFIX + "1");
         addUsersToConversation(channel.getId(), "tutor1");
-        var groupChat = createGroupChat("tutor1");
+        var groupChat = createGroupChat("tutor1", "student1");
         hideConversation(groupChat.getId(), "tutor1");
-        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
         this.resetWebsocketMock();
@@ -119,10 +120,16 @@ class ConversationIntegrationTest extends AbstractConversationTest {
                 assertThat(conv.getIsHidden()).isFalse();
             }
             else if (conv.getId().equals(groupChat.getId())) {
+                var convAsGroupChat = (GroupChatDTO) conv;
+                assertThat(convAsGroupChat.getMembers()).isEqualTo(groupChat.getMembers());
+                assertThat(conv.getNumberOfMembers()).isEqualTo(3);
                 assertThat(conv.getIsFavorite()).isFalse();
                 assertThat(conv.getIsHidden()).isTrue();
             }
             else if (conv.getId().equals(oneToOneChat.getId())) {
+                var convAsOneToOneChat = (OneToOneChatDTO) conv;
+                assertThat(convAsOneToOneChat.getMembers()).isEqualTo(oneToOneChat.getMembers());
+                assertThat(conv.getNumberOfMembers()).isEqualTo(2);
                 assertThat(conv.getIsFavorite()).isTrue();
                 assertThat(conv.getIsHidden()).isFalse();
             }
@@ -161,7 +168,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var groupChat = createGroupChat("tutor1");
         hideConversation(groupChat.getId(), "tutor1");
 
-        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
         this.resetWebsocketMock();
@@ -192,7 +199,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var groupChat = createGroupChat("tutor1");
         hideConversation(groupChat.getId(), "tutor1");
 
-        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
         this.resetWebsocketMock();
@@ -509,7 +516,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void unreadMessages_shouldReturnCorrectValue_Message() throws Exception {
-        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
         this.postInConversation(oneToOneChat.getId(), "instructor1");
 

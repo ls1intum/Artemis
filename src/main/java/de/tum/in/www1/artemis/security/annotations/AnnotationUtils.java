@@ -1,12 +1,20 @@
 package de.tum.in.www1.artemis.security.annotations;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 
+/**
+ * Utility class for annotations
+ */
 public final class AnnotationUtils {
 
     private AnnotationUtils() {
@@ -21,7 +29,8 @@ public final class AnnotationUtils {
      * @param <T>       the type of the annotation
      * @return the annotation if it is present, empty otherwise
      */
-    public static <T extends Annotation> Optional<T> getAnnotation(Class<T> clazz, ProceedingJoinPoint joinPoint) {
+    @NotNull
+    public static <T extends Annotation> Optional<T> getAnnotation(@NotNull Class<T> clazz, @NotNull ProceedingJoinPoint joinPoint) {
         final var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         T annotation = method.getAnnotation(clazz);
         if (annotation != null) {
@@ -47,13 +56,39 @@ public final class AnnotationUtils {
     }
 
     /**
+     * Extracts the value from the annotation
+     *
+     * @param annotation the annotation
+     * @param valueName  the value name
+     * @param valueType  the value type
+     * @param <T>        the type of the annotation
+     * @param <V>        the type of the value
+     * @return the value if it is present, otherwise an exception is thrown
+     */
+    @NotNull
+    public static <T extends Annotation, V> Optional<V> getValue(@NotNull T annotation, @NotBlank String valueName, @NotNull Class<V> valueType) {
+        try {
+            Method method = annotation.annotationType().getMethod(valueName);
+            Object value = method.invoke(annotation);
+            if (method.getReturnType().equals(valueType)) {
+                return Optional.ofNullable(valueType.cast(value));
+            }
+            return Optional.empty();
+        }
+        catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
      * Extracts the id from the method arguments
      *
      * @param joinPoint the join point
      * @param fieldName the fieldName
      * @return the id if it is present, empty otherwise
      */
-    public static Optional<Long> getIdFromSignature(ProceedingJoinPoint joinPoint, String fieldName) {
+    @NotNull
+    public static Optional<Long> getIdFromSignature(@NotNull ProceedingJoinPoint joinPoint, @NotBlank String fieldName) {
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         final int indexOfId = Arrays.asList(signature.getParameterNames()).indexOf(fieldName);
         Object[] args = joinPoint.getArgs();

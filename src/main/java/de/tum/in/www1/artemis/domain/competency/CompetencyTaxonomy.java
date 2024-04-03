@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.competency;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
 /**
  * The type of competency according to Bloom's revised taxonomy.

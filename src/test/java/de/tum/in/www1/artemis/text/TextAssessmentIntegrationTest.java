@@ -9,7 +9,7 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
@@ -274,7 +274,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         complaintRepo.save(new Complaint().result(textAssessment).complaintText("This is not fair"));
 
         // Get Text Submission and Complaint
-        request.get("/api/participations/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, StudentParticipation.class);
+        request.get("/api/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, StudentParticipation.class);
         final Complaint complaint = request.get("/api/complaints/submissions/" + textSubmission.getId(), HttpStatus.OK, Complaint.class);
 
         // Accept Complaint and update Assessment

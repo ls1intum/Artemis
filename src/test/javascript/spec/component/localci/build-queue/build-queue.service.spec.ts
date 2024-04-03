@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
@@ -10,8 +10,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { BuildJob } from 'app/entities/build-job.model';
 import dayjs from 'dayjs/esm';
-import { fakeAsync, tick } from '@angular/core/testing';
-import { RepositoryInfo } from 'app/entities/repository-info.model';
+import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/build-config.model';
 
@@ -42,7 +41,7 @@ describe('BuildQueueService', () => {
 
         repositoryInfo.repositoryName = 'name1';
         repositoryInfo.repositoryType = 'USER';
-        repositoryInfo.triggeredByPushTo = 'USER';
+        repositoryInfo.triggeredByPushTo = TriggeredByPushTo.USER;
         repositoryInfo.assignmentRepositoryUri = 'uri1';
         repositoryInfo.testRepositoryUri = 'uri2';
         repositoryInfo.solutionRepositoryUri = 'uri3';
@@ -195,6 +194,19 @@ describe('BuildQueueService', () => {
         });
 
         const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-all-queued-jobs`);
+        expect(req.request.method).toBe('DELETE');
+        req.flush({}); // Flush an empty response to indicate success
+    });
+
+    it('should cancel all running build jobs for a specific agent', () => {
+        const agentName = 'agent1';
+
+        service.cancelAllRunningBuildJobsForAgent(agentName).subscribe(() => {
+            // Ensure that the cancellation was successful
+            expect(true).toBeTrue();
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-running-jobs-for-agent?agentName=${agentName}`);
         expect(req.request.method).toBe('DELETE');
         req.flush({}); // Flush an empty response to indicate success
     });
@@ -375,6 +387,39 @@ describe('BuildQueueService', () => {
         });
 
         const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-all-queued-jobs`);
+        expect(req.request.method).toBe('DELETE');
+
+        // Simulate an error response from the server
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        // Verify that an error occurred during the subscription
+        expect(errorOccurred).toBeTrue();
+    }));
+
+    it('should handle errors when cancelling all running build jobs for a specific agent', fakeAsync(() => {
+        const agentName = 'agent1';
+
+        let errorOccurred = false;
+
+        service.cancelAllRunningBuildJobsForAgent(agentName).subscribe({
+            error: (err) => {
+                // Ensure that the error is handled properly
+                expect(err.message).toBe(
+                    'Failed to cancel all running build jobs for agent ' +
+                        agentName +
+                        '\nHttp failure response for ' +
+                        service.adminResourceUrl +
+                        '/cancel-all-running-jobs-for-agent?agentName=' +
+                        agentName +
+                        ': 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-running-jobs-for-agent?agentName=${agentName}`);
         expect(req.request.method).toBe('DELETE');
 
         // Simulate an error response from the server

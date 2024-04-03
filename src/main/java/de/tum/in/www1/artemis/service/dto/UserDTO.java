@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.*;
 
 import org.hibernate.Hibernate;
 
