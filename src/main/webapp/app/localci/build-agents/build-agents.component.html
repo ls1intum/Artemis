@@ -154,6 +154,7 @@
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                             @if (value === 'SUCCESSFUL') {
                                 <jhi-result [result]="row.submissionResult" [showUngradedResults]="true" [showBadge]="true" />
+                                <a class="detail-link" (click)="viewBuildLogs(row.submissionResult.id)" jhiTranslate="artemisApp.result.buildLogs.viewLogs" />
                             } @else {
                                 <span
                                     [ngClass]="{
