@@ -266,7 +266,7 @@ export class ExamManagementService {
      * @return boolean indicating if the student's attendance was checked
      */
     isAttendanceChecked(courseId: number, examId: number): Observable<HttpResponse<boolean>> {
-        return this.http.get<boolean>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-attendance`, { observe: 'response' });
+        return this.http.get<boolean>(`${this.resourceUrl}/${courseId}/exams/${examId}/attendance`, { observe: 'response' });
     }
 
     /**
