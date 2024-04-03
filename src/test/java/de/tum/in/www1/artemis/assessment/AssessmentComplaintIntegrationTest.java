@@ -53,7 +53,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.service.dto.Action;
+import de.tum.in.www1.artemis.service.dto.ComplaintAction;
 import de.tum.in.www1.artemis.service.dto.ComplaintRequestDTO;
 import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -279,7 +279,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaint = complaintRepo.save(complaint);
         // creating the initial complaintResponse
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
-        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, Action.RESOLVE_COMPLAINT);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, ComplaintAction.RESOLVE_COMPLAINT);
 
         request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.OK);
 
@@ -378,7 +378,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaintResponse.getComplaint().setAccepted(true);
         // 26 characters, above course limit but valid for exam exercises (where complaint limits don't apply)
         complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
-        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("abcdefghijklmnopqrstuvwxyz", true, Action.RESOLVE_COMPLAINT);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("abcdefghijklmnopqrstuvwxyz", true, ComplaintAction.RESOLVE_COMPLAINT);
 
         request.patch("/api/complaints/" + examExerciseComplaint.getId() + "/response", complaintResponseUpdate, HttpStatus.OK);
 

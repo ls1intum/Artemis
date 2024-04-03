@@ -62,7 +62,7 @@ public class ComplaintService {
      * @param examId           the optional examId. This is only set if the exercise is an exam exercise
      * @return the saved complaint
      */
-    public Complaint createComplaint(ComplaintRequestDTO complaintRequest, Result result, OptionalLong examId, Principal principal) {
+    public Complaint createComplaint(ComplaintRequestDTO complaintRequest, Optional<Long> examId, Principal principal) {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaintRequest.resultId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
 
@@ -83,7 +83,7 @@ public class ComplaintService {
 
         // checking if it is allowed to create a complaint
         if (examId.isPresent()) {
-            final Exam exam = examRepository.findByIdElseThrow(examId.getAsLong());
+            final Exam exam = examRepository.findByIdElseThrow(examId.get());
             final Set<User> instructors = userRepository.getInstructors(exam.getCourse());
             boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
             if (!examTestRun && !isTimeOfComplaintValid(exam)) {
@@ -91,17 +91,21 @@ public class ComplaintService {
             }
         }
         else {
-            if (complaintRequest.complaintType() == ComplaintType.COMPLAINT) {
-                long numberOfUnacceptedComplaints = countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
-                long numberOfAllowedComplaintsInCourse = getMaxComplaintsPerParticipant(course, participant);
-                if (numberOfUnacceptedComplaints >= numberOfAllowedComplaintsInCourse) {
-                    throw new BadRequestAlertException("You cannot have more than " + numberOfAllowedComplaintsInCourse + " open or rejected complaints at the same time.",
-                            ENTITY_NAME, "tooManyComplaints");
+            switch (complaintRequest.complaintType()) {
+                case COMPLAINT -> {
+                    long numberOfUnacceptedComplaints = countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
+                    long numberOfAllowedComplaintsInCourse = getMaxComplaintsPerParticipant(course, participant);
+                    if (numberOfUnacceptedComplaints >= numberOfAllowedComplaintsInCourse) {
+                        throw new BadRequestAlertException("You cannot have more than " + numberOfAllowedComplaintsInCourse + " open or rejected complaints at the same time.",
+                                ENTITY_NAME, "tooManyComplaints");
+                    }
                 }
-            }
-            else if (complaintRequest.complaintType() == ComplaintType.MORE_FEEDBACK && !course.getRequestMoreFeedbackEnabled()) {
-                throw new BadRequestAlertException("You cannot request more feedback in this course because this feature has been disabled by the instructors.", ENTITY_NAME,
-                        "moreFeedbackRequestsDisabled");
+                case MORE_FEEDBACK -> {
+                    if (!course.getRequestMoreFeedbackEnabled()) {
+                        throw new BadRequestAlertException("You cannot request more feedback in this course because this feature has been disabled by the instructors.",
+                                ENTITY_NAME, "moreFeedbackRequestsDisabled");
+                    }
+                }
             }
             validateTimeOfComplaintOrRequestMoreFeedback(originalResult, studentParticipation.getExercise(), studentParticipation, course, complaintRequest.complaintType());
         }
@@ -122,7 +126,6 @@ public class ComplaintService {
         Complaint complaint = new Complaint();
         complaint.setComplaintText(complaintRequest.complaintText());
         complaint.setComplaintType(complaintRequest.complaintType());
-        complaint.setResult(result);
         complaint.setSubmittedTime(ZonedDateTime.now());
         complaint.setParticipant(participant);
         complaint.setResult(originalResult);

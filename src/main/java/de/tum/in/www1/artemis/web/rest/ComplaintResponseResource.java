@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.ComplaintResponseService;
-import de.tum.in.www1.artemis.service.dto.Action;
+import de.tum.in.www1.artemis.service.dto.ComplaintAction;
 import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -87,11 +87,11 @@ public class ComplaintResponseResource {
     @PatchMapping("complaints/{complaintId}/response")
     @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> refreshLockOrResolveComplaint(@RequestBody ComplaintResponseUpdateDTO complaintResponseUpdate, @PathVariable long complaintId) {
-        if (complaintResponseUpdate == null || complaintResponseUpdate.action() == null) {
+        if (complaintResponseUpdate.action() == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        Action action = complaintResponseUpdate.action();
+        ComplaintAction action = complaintResponseUpdate.action();
 
         return switch (action) {
             case REFRESH_LOCK -> refreshLockOnComplaint(complaintId);
@@ -113,7 +113,7 @@ public class ComplaintResponseResource {
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
         ComplaintResponse savedComplaintResponse = complaintResponseService.refreshComplaintResponseRepresentingLock(complaint);
         removeSensitiveInformation(savedComplaintResponse);
-        return new ResponseEntity<>(savedComplaintResponse, HttpStatus.CREATED);
+        return new ResponseEntity<>(savedComplaintResponse, HttpStatus.OK);
     }
 
     /**

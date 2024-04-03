@@ -86,7 +86,9 @@ public class ComplaintResource {
     public ResponseEntity<Complaint> createComplaint(@RequestBody ComplaintRequestDTO complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint: {}", complaint);
 
-        validateNewComplaint(complaint);
+        if (complaintRepository.findByResultId(complaint.resultId()).isPresent()) {
+            throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
+        }
 
         Result result = resultRepository.findByIdElseThrow(complaint.resultId());
 
@@ -98,7 +100,6 @@ public class ComplaintResource {
                         "complaintAboutCourseExerciseWrongComponent");
             }
             authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
-            savedComplaint = complaintService.createComplaint(complaint, result, complaint.examId(), principal);
         }
         else {
             if (result.getParticipation().getExercise().isExamExercise()) {
@@ -106,24 +107,14 @@ public class ComplaintResource {
                         "complaintAboutExamExerciseWrongComponent");
             }
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
-            savedComplaint = complaintService.createComplaint(complaint, result, OptionalLong.empty(), principal);
         }
+        savedComplaint = complaintService.createComplaint(complaint, complaint.examId(), principal);
 
         // Remove assessor information from client request
         savedComplaint.getResult().filterSensitiveInformation();
 
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
-    }
-
-    private void validateNewComplaint(ComplaintRequestDTO complaint) {
-        if (complaint.resultId() == null) {
-            throw new BadRequestAlertException("A complaint can be only associated to a result", COMPLAINT_ENTITY_NAME, "noresultid");
-        }
-
-        if (complaintRepository.findByResultId(complaint.resultId()).isPresent()) {
-            throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
-        }
     }
 
     /**

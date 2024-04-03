@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilServ
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.dto.Action;
+import de.tum.in.www1.artemis.service.dto.ComplaintAction;
 import de.tum.in.www1.artemis.service.dto.ComplaintRequestDTO;
 import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.team.TeamUtilService;
@@ -183,7 +183,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         complaint = complaintRepo.saveAndFlush(complaint);
 
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor1", complaint);
-        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, Action.RESOLVE_COMPLAINT);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, ComplaintAction.RESOLVE_COMPLAINT);
 
         request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.OK);
         assertThat(complaintResponse.getComplaint().getParticipant()).isNull();
@@ -207,7 +207,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
-        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, Action.RESOLVE_COMPLAINT);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, ComplaintAction.RESOLVE_COMPLAINT);
 
         request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.FORBIDDEN);
     }

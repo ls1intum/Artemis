@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,59 +171,29 @@ public class ComplaintResponseService {
      * @return complaintResponse of resolved complaint
      */
     public ComplaintResponse resolveComplaint(ComplaintResponseUpdateDTO updatedComplaintResponse, Long complaintResponseId) {
-        if (complaintResponseId == null) {
-            throw new IllegalArgumentException("The complaint response needs to have an id");
-        }
-        Optional<ComplaintResponse> complaintResponseFromDatabaseOptional = complaintResponseRepository.findById(complaintResponseId);
-        if (complaintResponseFromDatabaseOptional.isEmpty()) {
-            throw new IllegalArgumentException("The complaint response was not found in the database");
-        }
-        ComplaintResponse emptyComplaintResponseFromDatabase = complaintResponseFromDatabaseOptional.get();
-        if (emptyComplaintResponseFromDatabase.getSubmittedTime() != null || emptyComplaintResponseFromDatabase.getResponseText() != null) {
-            throw new IllegalArgumentException("The complaint response is not empty");
-        }
-        Optional<Complaint> originalComplaintOptional = complaintRepository.findByIdWithEagerAssessor(emptyComplaintResponseFromDatabase.getComplaint().getId());
-        if (originalComplaintOptional.isEmpty()) {
-            throw new IllegalArgumentException("The complaint was not found in the database");
-        }
-        Complaint originalComplaint = originalComplaintOptional.get();
-        if (originalComplaint.isAccepted() != null) {
-            throw new IllegalArgumentException("You can not update the response to an already answered complaint");
-        }
+        validateComplaintResponseId(complaintResponseId);
+        ComplaintResponse complaintResponseFromDatabase = fetchComplaintResponseOrThrow(complaintResponseId);
+        validateComplaintResponseEmpty(complaintResponseFromDatabase);
+        Complaint originalComplaint = fetchOriginalComplaintOrThrow(complaintResponseFromDatabase);
+        validateOriginalComplaintNotAnswered(originalComplaint);
+
         if (updatedComplaintResponse.complaintIsAccepted() == null) {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
         }
 
-        if (updatedComplaintResponse.responseText() != null) {
-            // Retrieve course to get max complaint response limit
-            final Course course = originalComplaint.getResult().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
-
-            // Check whether the complaint text limit is exceeded
-            Exercise exercise = originalComplaint.getResult().getParticipation().getExercise();
-            int maxLength = course.getMaxComplaintResponseTextLimitForExercise(exercise);
-            if (maxLength < updatedComplaintResponse.responseText().length()) {
-                throw new BadRequestAlertException("You cannot submit a complaint response that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
-                        "exceededComplaintResponseTextLimit");
-            }
-        }
+        validateResponseTextLimit(updatedComplaintResponse.responseText(), originalComplaint);
 
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
-        if (!isUserAuthorizedToRespondToComplaint(originalComplaint, user)) {
-            throw new AccessForbiddenException("Insufficient permission for resolving the complaint");
-        }
-        // only instructors and the original reviewer can ignore the lock on a complaint response
-        if (blockedByLock(emptyComplaintResponseFromDatabase, user)) {
-            throw new ComplaintResponseLockedException(emptyComplaintResponseFromDatabase);
-        }
+        validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
 
         originalComplaint.setAccepted(updatedComplaintResponse.complaintIsAccepted()); // accepted or denied
         originalComplaint = complaintRepository.save(originalComplaint);
 
-        emptyComplaintResponseFromDatabase.setSubmittedTime(ZonedDateTime.now());
-        emptyComplaintResponseFromDatabase.setResponseText(updatedComplaintResponse.responseText());
-        emptyComplaintResponseFromDatabase.setComplaint(originalComplaint);
-        emptyComplaintResponseFromDatabase.setReviewer(user);
-        return complaintResponseRepository.save(emptyComplaintResponseFromDatabase);
+        complaintResponseFromDatabase.setSubmittedTime(ZonedDateTime.now());
+        complaintResponseFromDatabase.setResponseText(updatedComplaintResponse.responseText());
+        complaintResponseFromDatabase.setComplaint(originalComplaint);
+        complaintResponseFromDatabase.setReviewer(user);
+        return complaintResponseRepository.save(complaintResponseFromDatabase);
     }
 
     /**
@@ -238,59 +207,77 @@ public class ComplaintResponseService {
      * @return complaintResponse of resolved complaint
      */
     public ComplaintResponse resolveComplaint(ComplaintResponse updatedComplaintResponse) {
-        if (updatedComplaintResponse.getId() == null) {
-            throw new IllegalArgumentException("The complaint response needs to have an id");
-        }
-        Optional<ComplaintResponse> complaintResponseFromDatabaseOptional = complaintResponseRepository.findById(updatedComplaintResponse.getId());
-        if (complaintResponseFromDatabaseOptional.isEmpty()) {
-            throw new IllegalArgumentException("The complaint response was not found in the database");
-        }
-        ComplaintResponse emptyComplaintResponseFromDatabase = complaintResponseFromDatabaseOptional.get();
-        if (emptyComplaintResponseFromDatabase.getSubmittedTime() != null || emptyComplaintResponseFromDatabase.getResponseText() != null) {
-            throw new IllegalArgumentException("The complaint response is not empty");
-        }
-        Optional<Complaint> originalComplaintOptional = complaintRepository.findByIdWithEagerAssessor(emptyComplaintResponseFromDatabase.getComplaint().getId());
-        if (originalComplaintOptional.isEmpty()) {
-            throw new IllegalArgumentException("The complaint was not found in the database");
-        }
-        Complaint originalComplaint = originalComplaintOptional.get();
-        if (originalComplaint.isAccepted() != null) {
-            throw new IllegalArgumentException("You can not update the response to an already answered complaint");
-        }
+        validateComplaintResponseId(updatedComplaintResponse.getId());
+        ComplaintResponse complaintResponseFromDatabase = fetchComplaintResponseOrThrow(updatedComplaintResponse.getId());
+        validateComplaintResponseEmpty(complaintResponseFromDatabase);
+        Complaint originalComplaint = fetchOriginalComplaintOrThrow(complaintResponseFromDatabase);
+        validateOriginalComplaintNotAnswered(originalComplaint);
+
         if (updatedComplaintResponse.getComplaint().isAccepted() == null) {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
         }
 
-        if (updatedComplaintResponse.getResponseText() != null) {
-            // Retrieve course to get max complaint response limit
-            final Course course = originalComplaint.getResult().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
-
-            // Check whether the complaint text limit is exceeded
-            Exercise exercise = originalComplaint.getResult().getParticipation().getExercise();
-            int maxLength = course.getMaxComplaintResponseTextLimitForExercise(exercise);
-            if (maxLength < updatedComplaintResponse.getResponseText().length()) {
-                throw new BadRequestAlertException("You cannot submit a complaint response that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
-                        "exceededComplaintResponseTextLimit");
-            }
-        }
+        validateResponseTextLimit(updatedComplaintResponse.getResponseText(), originalComplaint);
 
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
-        if (!isUserAuthorizedToRespondToComplaint(originalComplaint, user)) {
-            throw new AccessForbiddenException("Insufficient permission for resolving the complaint");
-        }
-        // only instructors and the original reviewer can ignore the lock on a complaint response
-        if (blockedByLock(emptyComplaintResponseFromDatabase, user)) {
-            throw new ComplaintResponseLockedException(emptyComplaintResponseFromDatabase);
-        }
+        validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
 
         originalComplaint.setAccepted(updatedComplaintResponse.getComplaint().isAccepted()); // accepted or denied
         originalComplaint = complaintRepository.save(originalComplaint);
 
-        emptyComplaintResponseFromDatabase.setSubmittedTime(ZonedDateTime.now());
-        emptyComplaintResponseFromDatabase.setResponseText(updatedComplaintResponse.getResponseText());
-        emptyComplaintResponseFromDatabase.setComplaint(originalComplaint);
-        emptyComplaintResponseFromDatabase.setReviewer(user);
-        return complaintResponseRepository.save(emptyComplaintResponseFromDatabase);
+        complaintResponseFromDatabase.setSubmittedTime(ZonedDateTime.now());
+        complaintResponseFromDatabase.setResponseText(updatedComplaintResponse.getResponseText());
+        complaintResponseFromDatabase.setComplaint(originalComplaint);
+        complaintResponseFromDatabase.setReviewer(user);
+        return complaintResponseRepository.save(complaintResponseFromDatabase);
+    }
+
+    private void validateComplaintResponseId(Long complaintResponseId) {
+        if (complaintResponseId == null) {
+            throw new IllegalArgumentException("The complaint response needs to have an id");
+        }
+    }
+
+    private ComplaintResponse fetchComplaintResponseOrThrow(Long complaintResponseId) {
+        return complaintResponseRepository.findById(complaintResponseId).orElseThrow(() -> new IllegalArgumentException("The complaint response was not found in the database"));
+    }
+
+    private void validateComplaintResponseEmpty(ComplaintResponse complaintResponse) {
+        if (complaintResponse.getSubmittedTime() != null || complaintResponse.getResponseText() != null) {
+            throw new IllegalArgumentException("The complaint response is not empty");
+        }
+    }
+
+    private Complaint fetchOriginalComplaintOrThrow(ComplaintResponse complaintResponse) {
+        return complaintRepository.findByIdWithEagerAssessor(complaintResponse.getComplaint().getId())
+                .orElseThrow(() -> new IllegalArgumentException("The complaint was not found in the database"));
+    }
+
+    private void validateOriginalComplaintNotAnswered(Complaint originalComplaint) {
+        if (originalComplaint.isAccepted() != null) {
+            throw new IllegalArgumentException("You cannot update the response to an already answered complaint");
+        }
+    }
+
+    private void validateResponseTextLimit(String responseText, Complaint originalComplaint) {
+        if (responseText != null) {
+            Course course = originalComplaint.getResult().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
+            int maxLength = course.getMaxComplaintResponseTextLimitForExercise(originalComplaint.getResult().getParticipation().getExercise());
+            if (responseText.length() > maxLength) {
+                throw new BadRequestAlertException("You cannot submit a complaint response that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
+                        "exceededComplaintResponseTextLimit");
+            }
+        }
+    }
+
+    private void validateUserPermissionAndLockStatus(Complaint originalComplaint, ComplaintResponse complaintResponse, User user) {
+        if (!isUserAuthorizedToRespondToComplaint(originalComplaint, user)) {
+            throw new AccessForbiddenException("Insufficient permission for resolving the complaint");
+        }
+
+        if (blockedByLock(complaintResponse, user)) {
+            throw new ComplaintResponseLockedException(complaintResponse);
+        }
     }
 
     /**
