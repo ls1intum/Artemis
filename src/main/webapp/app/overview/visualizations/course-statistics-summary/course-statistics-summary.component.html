@@ -1,0 +1,33 @@
+<div class="row">
+    <div class="col-md-4">
+        <div class="d-flex align-items-center">
+            <h4>{{ 'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate }}</h4>
+        </div>
+        <h6 class="fw-bolder" id="absolute-course-score">
+            {{ 'artemisApp.courseOverview.statistics.yourPoints' | artemisTranslate: { number: overallPoints } }}
+        </h6>
+        <h6 class="fw-bolder" id="reachable-course-score">
+            <span>
+                {{ 'artemisApp.courseOverview.statistics.reachablePoints' | artemisTranslate: { number: reachablePoints, relative: currentRelativeScore } }}
+            </span>
+        </h6>
+    </div>
+    <div #containerRef class="col-md-8">
+        <div class="chart-text">
+            <h5 class="text-center">{{ overallPoints }} / {{ reachablePoints }} Pts</h5>
+        </div>
+        <ngx-charts-bar-horizontal-stacked
+            [view]="[containerRef.offsetWidth, 80]"
+            [scheme]="colorScheme"
+            [results]="data"
+            [gradient]="false"
+            [xAxis]="true"
+            [yAxis]="false"
+            [legend]="false"
+            [showXAxisLabel]="false"
+            [showYAxisLabel]="false"
+            [showDataLabel]="true"
+            [tooltipDisabled]="false"
+        />
+    </div>
+</div>

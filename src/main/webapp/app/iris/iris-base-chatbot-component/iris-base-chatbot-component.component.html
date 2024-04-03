@@ -1,0 +1,125 @@
+<div class="chat-window">
+    <div class="chat-body" #chatBody (scroll)="checkChatScroll()">
+        @if (messages.length === 0 && !this.error?.fatal) {
+            <div class="empty-chat">
+                <jhi-iris-logo [size]="IrisLogoSize.MEDIUM" />
+                <h5 style="margin-top: 20px">How can I help you today?</h5>
+            </div>
+        } @else {
+            @for (message of messages; track message; let i = $index) {
+                <div>
+                    @if (i === unreadMessageIndex) {
+                        <span class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate }}</span>
+                    }
+                    @for (content of message.content; track content) {
+                        <div>
+                            @if (isStudentSentMessage(message)) {
+                                <div style="display: flex">
+                                    <div style="display: flex; margin-left: auto; margin-right: 0; padding-right: 5px">
+                                        @if (
+                                            i === messages.length - 1 &&
+                                            message.sender === IrisSender.USER &&
+                                            !this.isLoading &&
+                                            !(rateLimit >= 0 && currentMessageCount >= rateLimit)
+                                        ) {
+                                            <button
+                                                id="resendButton"
+                                                style="all: unset; display: flex; align-items: flex-start; justify-content: space-between; cursor: pointer"
+                                                (click)="resendMessage(message)"
+                                                [disabled]="resendAnimationActive"
+                                            >
+                                                <fa-icon [icon]="faRedo" size="sm" [ngClass]="resendAnimationActive ? 'fa-pulse' : ''" />
+                                            </button>
+                                        }
+                                    </div>
+                                    @if (isTextContent(content)) {
+                                        <div style="display: flex">
+                                            <pre><span [innerHTML]="getTextContent(content)! | htmlForMarkdown"
+                                                       class="bubble-right"></span></pre>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            @if (isServerSentMessage(message)) {
+                                <div style="width: fit-content">
+                                    @if (isTextContent(content)) {
+                                        <div class="bubble-left">
+                                            <span [innerHTML]="getTextContent(content)! | htmlForMarkdown"></span>
+                                        </div>
+                                    }
+                                    @if (isTextContent(content)) {
+                                        <div class="rate-message-buttons">
+                                            <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
+                                                <fa-icon
+                                                    [class]="message.helpful ? 'thumbs-up-clicked' : 'clickable rate-button-not-clicked'"
+                                                    style="margin-right: 15px"
+                                                    [icon]="faThumbsUp"
+                                                    size="sm"
+                                                />
+                                            </button>
+                                            <button style="all: unset" (click)="rateMessage(message.id, i, false)" [disabled]="!message.helpful">
+                                                <fa-icon
+                                                    [class]="message.helpful === false ? 'thumbs-down-clicked' : 'clickable rate-button-not-clicked'"
+                                                    [icon]="faThumbsDown"
+                                                    size="sm"
+                                                />
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            @if (isArtemisClientSentMessage(message)) {
+                                <div style="width: fit-content">
+                                    @if (isTextContent(content)) {
+                                        <div class="bubble-left">
+                                            <span [innerHTML]="getTextContent(content)!"></span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            @if (isLoading) {
+                <div class="bubble-left">
+                    <div class="blinking-dots">
+                        @for (_ of [].constructor(dots); track _) {
+                            <div class="d-inline">
+                                <fa-icon [icon]="faCircle" size="xs" />
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            @if (shouldShowEmptyMessageError && error && isEmptyMessageError()) {
+                <div class="client-chat-error" [@fadeAnimation]="fadeState" (@fadeAnimation.done)="onFadeAnimationPhaseEnd($event)">
+                    {{ error.key | artemisTranslate }}
+                </div>
+            }
+            @if (error && !isEmptyMessageError()) {
+                <div class="client-chat-error">
+                    {{ error.key | artemisTranslate: getConvertedErrorMap() }}
+                </div>
+            }
+        }
+        <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
+            <fa-icon [icon]="faArrowDown" />
+        </div>
+    </div>
+    <div class="chat-input">
+        <textarea
+            [(ngModel)]="newMessageTextContent"
+            rows="1"
+            class="form-control"
+            (ngModelChange)="onRowChange()"
+            (input)="onInput()"
+            (paste)="onPaste()"
+            type="text"
+            (keydown)="handleKey($event)"
+            placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
+            #messageTextarea
+        ></textarea>
+        <jhi-button id="sendButton" (onClick)="onSend()" [btnType]="ButtonType.SUCCESS" [icon]="faPaperPlane" style="margin-bottom: auto" [disabled]="deactivateSubmitButton()" />
+    </div>
+</div>
