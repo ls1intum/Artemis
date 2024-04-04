@@ -29,7 +29,7 @@ artemis:
             cleanup-schedule-time: 0 0 3 * * *
         container-cleanup:
             expiry-minutes: 5
-            cleanup-schedule-hours: 1
+            cleanup-schedule-minutes: 60
     git:
         name: Artemis
         email: artemis@xcit.tum.de

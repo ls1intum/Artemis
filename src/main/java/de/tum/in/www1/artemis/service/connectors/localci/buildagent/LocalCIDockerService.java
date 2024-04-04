@@ -59,7 +59,7 @@ public class LocalCIDockerService {
     @Value("${artemis.continuous-integration.container-cleanup.expiry-minutes:5}")
     private int containerExpiryMinutes;
 
-    @Value("${artemis.continuous-integration.container-cleanup.cleanup-schedule-hours:1}")
+    @Value("${artemis.continuous-integration.container-cleanup.cleanup-schedule-minutes:60}")
     private int containerCleanupScheduleHour;
 
     public LocalCIDockerService(DockerClient dockerClient, HazelcastInstance hazelcastInstance) {
@@ -71,7 +71,7 @@ public class LocalCIDockerService {
     private void scheduleTask() {
         // Schedule the cleanup of stranded build containers once 10 seconds after the application has started and then every containerCleanupScheduleHour hours
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-        scheduledExecutorService.scheduleAtFixedRate(this::cleanUpContainers, 10, containerCleanupScheduleHour * 60L * 60L, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(this::cleanUpContainers, 10, containerCleanupScheduleHour * 60L, TimeUnit.SECONDS);
     }
 
     /**
