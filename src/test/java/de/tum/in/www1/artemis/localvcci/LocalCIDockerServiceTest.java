@@ -95,13 +95,14 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
 
         // Mocks
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        doReturn(listContainersCmd).when(dockerClient).listContainersCmd();
+        doReturn(listContainersCmd).when(listContainersCmd).withShowAll(true);
 
         Container mockContainer = mock(Container.class);
         doReturn(List.of(mockContainer)).when(listContainersCmd).exec();
         doReturn(new String[] { "/local-ci-dummycontainer" }).when(mockContainer).getNames();
         // Mock container creation time to be older than 5 minutes
-        doReturn(System.currentTimeMillis() - (300001)).when(mockContainer).getCreated();
-
+        doReturn(System.currentTimeMillis() - (6 * 60 * 1000)).when(mockContainer).getCreated();
         doReturn("dummy-container-id").when(mockContainer).getId();
 
         localCIDockerService.cleanUpContainers();

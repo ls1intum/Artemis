@@ -81,14 +81,12 @@ public class LocalCIDockerService {
         List<Container> buildContainers;
         log.info("Start cleanup stranded build containers");
         if (isFirstCleanup) {
-            log.info("kula");
             // Cleanup all stranded build containers after the application has started
             buildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream().filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix))
                     .toList();
             isFirstCleanup = false;
         }
         else {
-            log.info("hubi");
             // Cleanup all containers that are older than 5 minutes for all subsequent cleanups
             // Get current time in milliseconds
             long now = Instant.now().toEpochMilli();
