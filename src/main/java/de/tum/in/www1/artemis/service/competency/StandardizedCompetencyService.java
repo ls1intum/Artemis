@@ -52,11 +52,8 @@ public class StandardizedCompetencyService {
     public StandardizedCompetency createStandardizedCompetency(StandardizedCompetency competency) {
         standardizedCompetencyIsValidOrElseThrow(competency);
 
-        // fetch the knowledge area and source from the database if they exists
-        KnowledgeArea knowledgeArea = competency.getKnowledgeArea();
-        if (knowledgeArea != null) {
-            knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(knowledgeArea.getId());
-        }
+        // fetch the knowledge area and source from the database if they exist
+        KnowledgeArea knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(competency.getKnowledgeArea().getId());
         Source source = competency.getSource();
         if (source != null) {
             source = sourceRepository.findByIdElseThrow(source.getId());
@@ -161,10 +158,16 @@ public class StandardizedCompetencyService {
         boolean titleIsInvalid = competency.getTitle() == null || competency.getTitle().trim().isEmpty()
                 || competency.getTitle().length() > StandardizedCompetency.MAX_TITLE_LENGTH;
         boolean descriptionIsInvalid = competency.getDescription() != null && competency.getDescription().length() > StandardizedCompetency.MAX_DESCRIPTION_LENGTH;
-        boolean knowledgeAreaIsInvalid = competency.getKnowledgeArea() == null;
+        boolean knowledgeAreaIsInvalid = competency.getKnowledgeArea() == null || competency.getKnowledgeArea().getId() == null;
 
-        if (titleIsInvalid || descriptionIsInvalid || knowledgeAreaIsInvalid) {
-            throw new BadRequestException();
+        if (titleIsInvalid) {
+            throw new BadRequestException("A standardized competency must have a title and it cannot be longer than " + StandardizedCompetency.MAX_TITLE_LENGTH + " characters");
+        }
+        if (descriptionIsInvalid) {
+            throw new BadRequestException("The description of a standardized competency cannot be longer than " + StandardizedCompetency.MAX_DESCRIPTION_LENGTH + " characters");
+        }
+        if (knowledgeAreaIsInvalid) {
+            throw new BadRequestException("A standardized competency must be part of a knowledge area whose id is not null");
         }
     }
 }

@@ -105,7 +105,7 @@ public class KnowledgeAreaService {
             throw new BadRequestException("A knowledge area must have a shortTitle and it cannot be longer than " + KnowledgeArea.MAX_SHORT_TITLE_LENGTH + " characters");
         }
         if (descriptionIsInvalid) {
-            throw new BadRequestException("The description of a knowledge area cannot be longer than \" + KnowledgeArea.MAX_SHORT_TITLE_LENGTH + \" characters");
+            throw new BadRequestException("The description of a knowledge area cannot be longer than " + KnowledgeArea.MAX_DESCRIPTION_LENGTH + " characters");
         }
     }
 
