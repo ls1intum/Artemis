@@ -171,13 +171,14 @@ public class ComplaintResponseService {
      * @return complaintResponse of resolved complaint
      */
     public ComplaintResponse resolveComplaint(ComplaintResponseUpdateDTO updatedComplaintResponse, Long complaintResponseId) {
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+
         validateComplaintResponseId(complaintResponseId);
         ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.fetchComplaintResponseOrThrow(complaintResponseId);
         validateComplaintResponseEmpty(complaintResponseFromDatabase);
         Complaint originalComplaint = complaintRepository.fetchOriginalComplaintOrThrow(complaintResponseFromDatabase);
         validateOriginalComplaintNotAnswered(originalComplaint);
 
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
 
         if (updatedComplaintResponse.complaintIsAccepted() == null) {
@@ -207,15 +208,16 @@ public class ComplaintResponseService {
      * @return complaintResponse of resolved complaint
      */
     public ComplaintResponse resolveComplaint(ComplaintResponse updatedComplaintResponse) {
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+
         validateComplaintResponseId(updatedComplaintResponse.getId());
-        ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.fetchComplaintResponseOrThrow(updatedComplaintResponse.getId()); // TODO: make this retrieval
-                                                                                                                                                       // redundant by proper
-                                                                                                                                                       // fetching
+        // TODO: make this retrieval redundant by proper fetching
+        ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.fetchComplaintResponseOrThrow(updatedComplaintResponse.getId());
         validateComplaintResponseEmpty(complaintResponseFromDatabase);
-        Complaint originalComplaint = complaintRepository.fetchOriginalComplaintOrThrow(complaintResponseFromDatabase); // TODO: make this retrieval redundant by proper fetching
+        // TODO: make this retrieval redundant by proper fetching
+        Complaint originalComplaint = complaintRepository.fetchOriginalComplaintOrThrow(complaintResponseFromDatabase);
         validateOriginalComplaintNotAnswered(originalComplaint);
 
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
 
         if (updatedComplaintResponse.getComplaint().isAccepted() == null) {

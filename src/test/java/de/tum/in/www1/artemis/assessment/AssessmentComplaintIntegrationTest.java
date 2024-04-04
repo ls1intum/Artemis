@@ -270,7 +270,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     void submitComplaintResponse_rejectComplaint() throws Exception {
         complaint = complaintRepo.save(complaint);
         // creating the initial complaintResponse
-        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("Rejected", false, ComplaintAction.RESOLVE_COMPLAINT);
+        complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, ComplaintAction.RESOLVE_COMPLAINT);
 
         request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.OK);
 
