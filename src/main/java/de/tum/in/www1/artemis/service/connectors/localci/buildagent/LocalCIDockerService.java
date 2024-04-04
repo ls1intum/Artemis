@@ -10,12 +10,12 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -67,8 +67,8 @@ public class LocalCIDockerService {
         this.hazelcastInstance = hazelcastInstance;
     }
 
-    @PostConstruct
-    private void scheduleTask() {
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
         // Schedule the cleanup of stranded build containers once 10 seconds after the application has started and then every containerCleanupScheduleHour hours
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
         scheduledExecutorService.scheduleAtFixedRate(this::cleanUpContainers, 10, containerCleanupScheduleHour * 60L, TimeUnit.SECONDS);
@@ -82,9 +82,13 @@ public class LocalCIDockerService {
         log.info("Start cleanup stranded build containers");
         if (isFirstCleanup) {
             // Cleanup all stranded build containers after the application has started
-            buildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream().filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix))
-                    .toList();
-            isFirstCleanup = false;
+            try {
+                buildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
+                        .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).toList();
+            }
+            finally {
+                isFirstCleanup = false;
+            }
         }
         else {
             // Cleanup all containers that are older than 5 minutes for all subsequent cleanups
