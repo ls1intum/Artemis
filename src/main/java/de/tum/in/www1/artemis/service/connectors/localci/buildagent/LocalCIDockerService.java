@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -9,12 +10,12 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +45,8 @@ public class LocalCIDockerService {
 
     private final HazelcastInstance hazelcastInstance;
 
+    private boolean isFirstCleanup = true;
+
     @Value("${artemis.continuous-integration.image-cleanup.enabled:false}")
     private Boolean imageCleanupEnabled;
 
@@ -53,27 +56,53 @@ public class LocalCIDockerService {
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
 
+    @Value("${artemis.continuous-integration.container-cleanup.expiry-minutes:5}")
+    private int containerExpiryMinutes;
+
+    @Value("${artemis.continuous-integration.container-cleanup.cleanup-schedule-hours:1}")
+    private int containerCleanupScheduleHour;
+
     public LocalCIDockerService(DockerClient dockerClient, HazelcastInstance hazelcastInstance) {
         this.dockerClient = dockerClient;
         this.hazelcastInstance = hazelcastInstance;
     }
 
+    @PostConstruct
+    private void scheduleTask() {
+        // Schedule the cleanup of stranded build containers once 10 seconds after the application has started and then every containerCleanupScheduleHour hours
+        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        scheduledExecutorService.scheduleAtFixedRate(this::cleanUpContainers, 10, containerCleanupScheduleHour * 60L * 60L, TimeUnit.SECONDS);
+    }
+
     /**
-     * Removes all stranded build containers after the application has started
+     * Removes all stranded build containers
      */
-    @EventListener(ApplicationReadyEvent.class)
-    public void applicationReady() {
-        // NOTE: we delay this after startup, because this can take several seconds and can block the startup of the build agent otherwise
-        // remove all stranded build containers after 10s
-        var executor = Executors.newScheduledThreadPool(1);
-        executor.schedule(() -> {
-            log.info("Start cleanup stranded build containers");
-            var buildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
-                    .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).toList();
-            log.info("Found {} stranded build containers", buildContainers.size());
-            buildContainers.forEach(container -> dockerClient.removeContainerCmd(container.getId()).withForce(true).exec());
-            log.info("Cleanup stranded build containers done");
-        }, 10, TimeUnit.SECONDS);
+    public void cleanUpContainers() {
+        List<Container> buildContainers;
+        log.info("Start cleanup stranded build containers");
+        if (isFirstCleanup) {
+            log.info("kula");
+            // Cleanup all stranded build containers after the application has started
+            buildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream().filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix))
+                    .toList();
+            isFirstCleanup = false;
+        }
+        else {
+            log.info("hubi");
+            // Cleanup all containers that are older than 5 minutes for all subsequent cleanups
+            // Get current time in milliseconds
+            long now = Instant.now().toEpochMilli();
+
+            // Threshold for "stuck" containers in milliseconds
+            long ageThreshold = containerExpiryMinutes * 60L * 1000L;
+
+            buildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream().filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix))
+                    .filter(container -> (now - container.getCreated()) > ageThreshold).toList();
+        }
+
+        log.info("Found {} stranded build containers", buildContainers.size());
+        buildContainers.forEach(container -> dockerClient.removeContainerCmd(container.getId()).withForce(true).exec());
+        log.info("Cleanup stranded build containers done");
     }
 
     /**

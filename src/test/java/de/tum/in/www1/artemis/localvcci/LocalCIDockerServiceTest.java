@@ -4,13 +4,16 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.Container;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
@@ -85,5 +88,33 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
 
         // Verify that pullImageCmd() was called.
         verify(dockerClient, times(1)).pullImageCmd("test-image-name");
+    }
+
+    @Test
+    void testRemoveStrandedContainers() {
+
+        // Mocks
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+
+        Container mockContainer = mock(Container.class);
+        doReturn(List.of(mockContainer)).when(listContainersCmd).exec();
+        doReturn(new String[] { "/local-ci-dummycontainer" }).when(mockContainer).getNames();
+        // Mock container creation time to be older than 5 minutes
+        doReturn(System.currentTimeMillis() - (300001)).when(mockContainer).getCreated();
+
+        doReturn("dummy-container-id").when(mockContainer).getId();
+
+        localCIDockerService.cleanUpContainers();
+
+        // Verify that removeContainerCmd() was called
+        verify(dockerClient, times(1)).removeContainerCmd(anyString());
+
+        // Mock container creation time to be younger than 5 minutes
+        doReturn(System.currentTimeMillis()).when(mockContainer).getCreated();
+
+        localCIDockerService.cleanUpContainers();
+
+        // Verify that removeContainerCmd() was not called a second time
+        verify(dockerClient, times(1)).removeContainerCmd(anyString());
     }
 }
