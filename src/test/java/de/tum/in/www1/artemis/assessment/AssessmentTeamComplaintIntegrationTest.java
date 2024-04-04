@@ -143,7 +143,9 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
 
         // Only one complaint is possible for exercise regardless of its type
+        var moreFeedbackRequest = new ComplaintRequestDTO(modelingAssessment.getId(), "Please explain", ComplaintType.MORE_FEEDBACK, Optional.empty());
         request.post(resourceUrl, moreFeedbackRequest, HttpStatus.BAD_REQUEST);
+
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow().getComplaintType()).as("more feedback request is not saved")
                 .isNotEqualTo(ComplaintType.MORE_FEEDBACK);
     }
@@ -170,7 +172,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(3));
         exerciseUtilService.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(3));
 
-        request.post(resourceUrl, complaint, HttpStatus.BAD_REQUEST);
+        request.post(resourceUrl, complaintRequest, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
