@@ -219,7 +219,7 @@ Participate in Modeling Exercise
 View Modeling Exercise Submission
 """""""""""""""""""""""""""""""""
 
-- Interact with the submitted diagram
+- Interact with the submitted diagram (e.g., zooming in/out, moving the diagram for better viewing)
 - No modification to the submitted diagram is possible
 
 .. raw:: html
