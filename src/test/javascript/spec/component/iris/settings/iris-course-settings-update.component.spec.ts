@@ -77,7 +77,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(getParentSettingsSpy).toHaveBeenCalledOnce();
 
         expect(fixture.debugElement.query(By.directive(IrisGlobalAutoupdateSettingsUpdateComponent))).toBeFalsy();
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(4);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(3);
         expect(fixture.debugElement.query(By.directive(IrisChatSubSettingsUpdateComponent))).toBeTruthy();
         expect(fixture.debugElement.query(By.directive(IrisHestiaSubSettingsUpdateComponent))).toBeTruthy();
         expect(fixture.debugElement.query(By.directive(IrisCompetencyGenerationSubSettingsUpdateComponent))).toBeTruthy();
