@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 /**
  * Represents a windfile, the definition file for an aeolus build plan that
@@ -153,13 +153,14 @@ public class Windfile {
      *
      * @param json the json string to deserialize.
      * @return the deserialized windfile.
-     * @throws JsonSyntaxException if the json string is not valid.
+     * @throws JsonProcessingException if the json string is not valid.
      */
-    public static Windfile deserialize(String json) throws JsonSyntaxException {
-        GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(Action.class, new ActionDeserializer());
-        Gson gson = builder.create();
-        return gson.fromJson(json, Windfile.class);
+    public static Windfile deserialize(String json) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Action.class, new ActionDeserializer());
+        mapper.registerModule(module);
+        return mapper.readValue(json, Windfile.class);
     }
 
     /**

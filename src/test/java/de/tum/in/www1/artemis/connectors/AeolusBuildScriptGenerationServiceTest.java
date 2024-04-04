@@ -13,8 +13,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
-import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
@@ -116,14 +117,14 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
     }
 
     @Test
-    void testFailedBuildPlanPublish() {
+    void testFailedBuildPlanPublish() throws JsonProcessingException {
         aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.CLI);
         String key = aeolusBuildPlanService.publishBuildPlan(getWindfile(), AeolusTarget.CLI);
         assertThat(key).isNull();
     }
 
     @Test
-    void testNoAuthRestCall() {
+    void testNoAuthRestCall() throws JsonProcessingException {
         ReflectionTestUtils.setField(aeolusBuildPlanService, "token", "secret-token");
         aeolusRequestMockProvider.mockAuthenticatedRequest(aeolusUrl + "/publish/" + AeolusTarget.CLI.getName(), "secret-token");
         String key = aeolusBuildPlanService.publishBuildPlan(getWindfile(), AeolusTarget.CLI);

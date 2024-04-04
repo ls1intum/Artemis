@@ -45,6 +45,7 @@ import com.atlassian.bamboo.specs.builders.task.*;
 import com.atlassian.bamboo.specs.model.task.ScriptTaskProperties;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.*;
@@ -603,9 +604,8 @@ public class BambooBuildPlanService {
                 throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle());
             }
         }
-        catch (ContinuousIntegrationBuildPlanException e) {
-            log.error("Could not create custom build plan for exercise {} with id {}, will create default build plan", programmingExercise.getTitle(), programmingExercise.getId(),
-                    e);
+        catch (ContinuousIntegrationBuildPlanException | JsonProcessingException e) {
+            log.error("Custom build plan creation for exercise {} with id {} failed -> use default build plan", programmingExercise.getTitle(), programmingExercise.getId(), e);
         }
         return assignedKey;
     }
