@@ -72,7 +72,7 @@
                             </div>
                         </div>
                     }
-                    @if (!node.children && !node.competencies) {
+                    @if (!node.children?.length && !node.competencies?.length) {
                         <div class="card tree-card light-background">
                             <h6 class="mb-0" jhiTranslate="artemisApp.knowledgeArea.empty"></h6>
                         </div>
