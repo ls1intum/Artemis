@@ -322,7 +322,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
             previousKnowledgeArea.competencies = previousKnowledgeArea.competencies.filter((c) => c.id !== competency.id);
             newKnowledgeArea.competencies = (newKnowledgeArea.competencies ?? []).concat(competencyForTree);
         } else {
-            //if the knowlege area stayed the same insert the new competency/replace the existing one
+            //if the knowledge area stayed the same insert the new competency/replace the existing one
             const index = previousKnowledgeArea.competencies.findIndex((c) => c.id === competency.id);
             if (index === -1) {
                 this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');

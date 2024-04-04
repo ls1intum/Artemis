@@ -15,7 +15,7 @@
                     "update": "Successfully updated standardized competency \"{{competencyTitle}}\"",
                     "delete": "Successfully deleted standardized competency \"{{competencyTitle}}\""
                 },
-                "updateTreeError": "Something went wrong when updating the knowledge area tree. Please reload the page."
+                "updateTreeError": "Something went wrong while updating the knowledge area tree. Please reload the page."
             },
             "model": {
                 "title": "Title",

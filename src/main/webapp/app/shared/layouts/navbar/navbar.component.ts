@@ -119,6 +119,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faGears = faGears;
     faPuzzlePiece = faPuzzlePiece;
 
+    private standardizedCompetencySubscription: Subscription;
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
     private studentExam?: StudentExam;
@@ -206,7 +207,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
+        this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;
         });
 
@@ -242,6 +243,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
         if (this.examActiveCheckFuture) {
             clearTimeout(this.examActiveCheckFuture);
+        }
+        if (this.standardizedCompetencySubscription) {
+            this.standardizedCompetencySubscription.unsubscribe();
         }
     }
 

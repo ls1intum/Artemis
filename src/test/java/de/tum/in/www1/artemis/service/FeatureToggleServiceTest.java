@@ -15,6 +15,9 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
+    // science and standardized competencies are always disabled
+    private static final int FEATURES_DISABLED_DEFAULT = 2;
+
     @Autowired
     private FeatureToggleService featureToggleService;
 
@@ -65,22 +68,22 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     void testShouldNotEnableTwice() {
-        assertThat(featureToggleService.enabledFeatures()).hasSize(Feature.values().length - 2);
+        assertThat(featureToggleService.enabledFeatures()).hasSize(Feature.values().length - FEATURES_DISABLED_DEFAULT);
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
 
         // Feature should not be added multiple times
-        assertThat(featureToggleService.enabledFeatures()).hasSize(Feature.values().length - 2);
+        assertThat(featureToggleService.enabledFeatures()).hasSize(Feature.values().length - FEATURES_DISABLED_DEFAULT);
     }
 
     @Test
     void testShouldNotDisableTwice() {
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
 
-        assertThat(featureToggleService.disabledFeatures()).hasSize(3);
+        assertThat(featureToggleService.disabledFeatures()).hasSize(FEATURES_DISABLED_DEFAULT + 1);
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
 
         // Feature should not be added multiple times
-        assertThat(featureToggleService.disabledFeatures()).hasSize(3);
+        assertThat(featureToggleService.disabledFeatures()).hasSize(FEATURES_DISABLED_DEFAULT + 1);
 
         // Reset
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
