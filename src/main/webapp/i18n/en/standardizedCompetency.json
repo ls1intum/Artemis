@@ -5,7 +5,6 @@
             "manage": {
                 "title": "Standardized Competency Management",
                 "filter": "Filter competencies",
-                "knowledgeAreasButton": "Manage knowledge areas",
                 "createButtonTooltip": "Create standardized competency",
                 "expandButtonTooltip": "Expand all knowledge areas",
                 "collapseButtonTooltip": "Collapse all knowledge areas",

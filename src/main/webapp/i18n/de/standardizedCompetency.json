@@ -5,7 +5,6 @@
             "manage": {
                 "title": "Standardisierte Kompetenzen Verwalten",
                 "filter": "Kompetenzen Filtern",
-                "knowledgeAreasButton": "Wissensgebiete verwalten",
                 "createButtonTooltip": "Standardisierte Kompetenz erstellen",
                 "expandButtonTooltip": "Alle Wissensgebiete ausklappen",
                 "collapseButtonTooltip": "Alle Wissensgebiete einklappen",

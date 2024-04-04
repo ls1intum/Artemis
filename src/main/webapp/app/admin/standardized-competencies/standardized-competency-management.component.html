@@ -3,12 +3,7 @@
         <div class="d-flex align-items-center">
             <h2 jhiTranslate="artemisApp.standardizedCompetency.manage.title"></h2>
         </div>
-        <div class="ms-auto justify-content-end">
-            <!-- TODO link to knowledgeArea Management when ready -->
-            <a class="btn btn-primary" id="knowledgeAreaButton" [routerLink]="['']">
-                <span jhiTranslate="artemisApp.standardizedCompetency.manage.knowledgeAreasButton"></span>
-            </a>
-        </div>
+        <div class="ms-auto justify-content-end"></div>
     </div>
     <div class="card mb-3">
         <div class="card-header">
@@ -67,7 +62,12 @@
                     @for (competency of node.competencies; track competency.id) {
                         <div class="card tree-card light-background" [class.d-none]="!competency.isVisible">
                             <div class="tree-card-row clickable" (click)="selectCompetency(competency)">
-                                <fa-icon class="me-2" [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
+                                <fa-icon
+                                    class="me-2"
+                                    [icon]="getIcon(competency.taxonomy)"
+                                    [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                                    [fixedWidth]="true"
+                                />
                                 <h6 class="mb-0">{{ competency.title }}</h6>
                             </div>
                         </div>
