@@ -11,11 +11,11 @@ Overview
 --------
 
 LTI (Learning Tools Interoperability) is a standard developed by `1EdTech <https://www.1edtech.org/>`_, allowing different learning platforms and tools to work together seamlessly.
-It establishes a standard way of integrating learning applications, called tools (delivered by tool providers, i.e., Artemis), with platforms such as Learning Management Systems (i.e., Moodle, edX), called tool consumers.
+It establishes a standard way of integrating learning applications, called tools (delivered by tool providers, e.g., Artemis), with platforms such as Learning Management Systems (e.g., Moodle, edX), called tool consumers.
 Artemis is up-to-date with the latest in this standard, supporting `LTI 1.3. <https://www.imsglobal.org/spec/lti/v1p3>`_, ensuring a smooth and efficient connection between Artemis and educational platforms.
 
 LTI 1.3 sets the foundation for securely launching and using educational tools within any LMS. It specifies the technical protocol for how tools like Artemis can seamlessly integrate into platforms like Moodle or edX.
-When LTI 1.3 is combined with three critical services—Assignment and Grade Services, Names and Role Provisioning Services, and Deep Linking, all together known as LTI Advantage.
+When LTI 1.3 is combined with three critical services—Assignment and Grade Services, Names and Role Provisioning Services, and Deep Linking, it is collectively known as LTI Advantage.
 This package provides a more comprehensive integration, allowing smoother communication between the educational tool and the LMS. For more detailed information about LTI Advantage and its features, visit `1EdTech LTI Advantage <https://www.imsglobal.org/lti-advantage-overview>`_.
 In the context of LTI Advantage, the term *Tool* refers to any external service or application that adds functionality to the learning environment, such as a tool for submitting exercises. On the other hand, *Platform* refers to the learning management system itself, which wants to incorporate these external tools.
 In addition to supporting the core functionalities of LTI 1.3, Artemis integrates specific services under the LTI Advantage framework, including the Score Service from the LTI Advantage Assignment and Grade Services and the Deep Linking Service.
@@ -91,7 +91,7 @@ Enabling Online Course
 
 .. note::
     The steps provided in this section assume the existence of an Artemis course and relevant content.
-    For detailed information on the types of exercises Artemis supports and guidance on creating these exercises, please refer to the `Exercises Guideline <exercises/general.html#general-information>`_.
+    For detailed information on the types of exercises Artemis supports and guidance on creating these exercises, please refer to the :ref:`exercises-general-information`.
     This resource will help you understand the exercises Artemis can support and provide step-by-step instructions for creating and managing them within your course.
 
 Before diving into the LTI configuration, ensuring that the Online Course setting is enabled in Artemis is crucial. This setting activates the LTI configurability, allowing instructors to link Artemis content with the LMS platforms.
@@ -308,7 +308,7 @@ Please follow below steps on edX to conclude registration process:
 #. Select *Deep Linking* as True.
 #. Copy *Deep linking URL* into the *Deep Linking Launch URL* field.
 #. Select *LTI Launch Target* as *Modal*.
-#. Set a *Button Text* (i.e. Launch Exercise).
+#. Set a *Button Text* (e.g. Launch Exercise).
 #. Select the *Scored* field as True and define the *Weight* field as 100.
 #. Select True for the *Request user's username*, *Request user's full name*, *Request user's email*, and *Send extra parameters* fields.
 #. Save the component.
