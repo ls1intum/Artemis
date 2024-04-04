@@ -28,62 +28,61 @@ For a production setup of GitLab, also see the documentation of the GitLab and J
 GitLab
 """"""
 
-1. Depending on your operating system, it is necessary to update the host file of your machine to include the following line:
+1. Depending on your operating system and your Docker installation, it is necessary to update the host file of your machine to include the following lines:
 
     .. code:: text
 
         127.0.0.1       host.docker.internal
         ::1             host.docker.internal
 
-2. Configure GitLab
+2. Start GitLab and the GitLab Runner
     .. code:: bash
 
-        cp docker/env.example.gitlab-gitlabci.txt docker/.env
+        docker-compose -f docker/gitlab-gitlabci.yml up -d
 
-3. Start GitLab and the GitLab Runner
+3. Get your GitLab root password
     .. code:: bash
 
-        docker-compose -f docker/gitlab-gitlabci.yml --env-file docker/.env up --build -d
+        docker exec artemis-gitlab grep 'Password:' /etc/gitlab/initial_root_password
 
-4. Get your GitLab root password
-    .. code:: bash
+4. Generate an access token
+    Go to ``http://localhost:8081/-/profile/personal_access_tokens`` and generate an access token with all scopes.
+    This token is used for generating a runner token and in the Artemis configuration as ``artemis.version-control.token``.
 
-        docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
-
-5. Generate an access token
-    Go to ``http://host.docker.internal/-/profile/personal_access_tokens`` and generate an access token with all scopes.
-    This token is used in the Artemis configuration as ``artemis.version-control.token``.
-
-6. Allow outbound requests to local network
+5. Allow outbound requests to local network
     For setting up the webhook between Artemis and GitLab, it is necessary to allow requests to the local network.
-    Go to ``http://host.docker.internal/admin/application_settings/network`` and allow the outbound requests.
+    Go to ``http://localhost:8081/admin/application_settings/network`` and allow the outbound requests.
     More information about this aspect can be found in the `GitLab setup instructions <#gitlab-access-token>`__ (step 12).
 
 GitLab Runner
 """""""""""""
 
-1. Register a new runner
-    Login to your GitLab instance and open ``http://host.docker.internal/admin/runners``.
-    Click on ``Register an instance runner`` and copy the registration token.
+1. Create a runner token
+    In order to create a token which can be used to register a runner, go to ``http://localhost:8081/admin/runners/new``.
+    Alternatively you can execute the command below with the personal access token generated before.
 
+    .. code:: bash
+
+        curl --request POST --header "PRIVATE-TOKEN: <gitlab-personal-access-token>" \
+        --data "runner_type=instance_type" \
+        --data "run_untagged=true" \
+        --data "access_level=not_protected" \
+         "http://host.docker.internal:8081/api/v4/user/runners"
+
+1. Register a new runner
     Then execute this command with the registration token:
 
     .. code:: bash
 
-        docker exec -it gitlab-runner gitlab-runner register \
+        docker exec -it artemis-gitlab-runner gitlab-runner register \
         --non-interactive \
         --executor "docker" \
         --docker-image alpine:latest \
-        --url http://host.docker.internal:80 \
-        --registration-token "PROJECT_REGISTRATION_TOKEN" \
-        --description "docker-runner" \
-        --maintenance-note "Test Runner" \
-        --tag-list "docker,artemis" \
-        --run-untagged="true" \
-        --locked="false" \
-        --access-level="not_protected"
+        --url http://host.docker.internal:8081 \
+        --token "REGISTRATION_TOKEN" \
+        --description "docker-runner"
 
-    You should now find the runner in the list of runners (``http://host.docker.internal/admin/runners``)
+    You should now find the runner in the list of runners (``http://localhost:8081/admin/runners``)
 
 .. note::
     Adding a runner in a production setup works the same way.
@@ -116,7 +115,7 @@ Artemis
                 login:
                     account-name: TUM
             version-control:
-                url: http://host.docker.internal:80
+                url: http://localhost:8081
                 user: root
                 password: password # change this value
                 token: gitlab-personal-access-token # change this value
