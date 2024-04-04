@@ -7,11 +7,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.dto.athena.*;
 
 /**
@@ -32,12 +30,16 @@ public class AthenaDTOConverterService {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
+    private final GradingCriterionRepository gradingCriterionRepository;
+
     public AthenaDTOConverterService(TextBlockRepository textBlockRepository, TextExerciseRepository textExerciseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ModelingExerciseRepository modelingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
+            GradingCriterionRepository gradingCriterionRepository) {
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
+        this.gradingCriterionRepository = gradingCriterionRepository;
     }
 
     /**
@@ -60,8 +62,9 @@ public class AthenaDTOConverterService {
             }
             case MODELING -> {
                 // Fetch modeling exercise with grading criteria
-                var modelingExercise = modelingExerciseRepository.findByIdWithGradingCriteriaElseThrow(exercise.getId());
-                return ModelingExerciseDTO.of(modelingExercise);
+                var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+                exercise.setGradingCriteria(gradingCriteria);
+                return ModelingExerciseDTO.of((ModelingExercise) exercise);
             }
         }
         throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());

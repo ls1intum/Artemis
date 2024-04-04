@@ -97,31 +97,6 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
     }
 
-    /**
-     * Find a modeling exercise by its id, with grading criteria loaded
-     *
-     * @param exerciseId of the modeling exercise.
-     * @return The modeling exercise related to the given id
-     */
-    @Query("""
-            SELECT DISTINCT e
-            FROM ModelingExercise e
-                LEFT JOIN FETCH e.gradingCriteria
-            WHERE e.id = :exerciseId
-            """)
-    Optional<ModelingExercise> findByIdWithGradingCriteria(@Param("exerciseId") long exerciseId);
-
-    /**
-     * Find a modeling exercise by its id, with grading criteria loaded, and throw an EntityNotFoundException if it cannot be found
-     *
-     * @param exerciseId of the modeling exercise.
-     * @return The modeling exercise related to the given id
-     */
-    @NotNull
-    default ModelingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
-        return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
-    }
-
     @NotNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {
         return findWithEagerExampleSubmissionsAndCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));

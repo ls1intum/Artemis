@@ -24,10 +24,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.*;
 
 class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
@@ -45,6 +42,9 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Mock
     private ModelingExerciseRepository modelingExerciseRepository;
+
+    @Mock
+    private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -71,7 +71,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     @BeforeEach
     void setUp() {
         athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), athenaModuleService,
-                new AthenaDTOConverterService(textBlockRepository, textExerciseRepository, programmingExerciseRepository, modelingExerciseRepository));
+                new AthenaDTOConverterService(textBlockRepository, textExerciseRepository, programmingExerciseRepository, modelingExerciseRepository, gradingCriterionRepository));
 
         athenaRequestMockProvider.enableMockingOfRequests();
 
