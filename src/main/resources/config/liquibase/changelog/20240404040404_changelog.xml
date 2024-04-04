@@ -20,53 +20,47 @@
             WHERE discriminator = 'CODE_EDITOR';
         </sql>
         <sql>
-            DELETE FROM iris_text_message_content imc_outer
-            WHERE imc_outer.id IN (
-                SELECT imc.id
-                FROM iris_message_content imc
-                         JOIN iris_message im ON imc.message_id = im.id
-                         JOIN iris_session ON im.session_id = iris_session.id
-                WHERE iris_session.discriminator = 'CODE_EDITOR'
-            );
-        </sql>
-        <sql>
-            DELETE FROM iris_json_message_content imc_outer
-            WHERE imc_outer.id IN (
-                SELECT imc.id
-                FROM iris_message_content imc
-                         JOIN iris_message im ON imc.message_id = im.id
-                         JOIN iris_session ON im.session_id = iris_session.id
-                WHERE iris_session.discriminator = 'CODE_EDITOR'
-            );
-        </sql>
-        <sql>
-            DELETE FROM iris_json_message_content imc_outer
-            WHERE imc_outer.id IN (
-                SELECT imc.id
-                FROM iris_message_content imc
-                         JOIN iris_message im ON imc.message_id = im.id
-                         JOIN iris_session ON im.session_id = iris_session.id
-                WHERE iris_session.discriminator = 'CODE_EDITOR'
-            );
-        </sql>
-        <sql>
-            DELETE FROM iris_message_content imc_outer
-            WHERE imc_outer.id IN (
+            WITH ids_to_delete AS (
                 SELECT imc.id
                 FROM iris_message_content imc
                      JOIN iris_message im ON imc.message_id = im.id
                      JOIN iris_session ON im.session_id = iris_session.id
                 WHERE iris_session.discriminator = 'CODE_EDITOR'
-            );
+            )
+            DELETE FROM iris_text_message_content imc_outer
+            WHERE imc_outer.id IN (SELECT id FROM ids_to_delete);
         </sql>
         <sql>
-            DELETE FROM iris_message im_outer
-            WHERE im_outer.id IN (
+            WITH ids_to_delete AS (
+                SELECT imc.id
+                FROM iris_message_content imc
+                     JOIN iris_message im ON imc.message_id = im.id
+                     JOIN iris_session ON im.session_id = iris_session.id
+                WHERE iris_session.discriminator = 'CODE_EDITOR'
+            )
+            DELETE FROM iris_json_message_content imc_outer
+            WHERE imc_outer.id IN (SELECT id FROM ids_to_delete);
+        </sql>
+        <sql>
+            WITH ids_to_delete AS (
+                SELECT imc.id
+                FROM iris_message_content imc
+                     JOIN iris_message im ON imc.message_id = im.id
+                     JOIN iris_session ON im.session_id = iris_session.id
+                WHERE iris_session.discriminator = 'CODE_EDITOR'
+            )
+            DELETE FROM iris_message_content imc_outer
+            WHERE imc_outer.id IN (SELECT id FROM ids_to_delete);
+        </sql>
+        <sql>
+            WITH ids_to_delete AS (
                 SELECT im.id
                 FROM iris_message im
                      JOIN iris_session ON im.session_id = iris_session.id
                 WHERE iris_session.discriminator = 'CODE_EDITOR'
-            );
+            )
+            DELETE FROM iris_message im_outer
+            WHERE im_outer.id IN (SELECT id FROM ids_to_delete);
         </sql>
         <sql>
             DELETE FROM iris_session
