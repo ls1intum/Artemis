@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.export.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
 import static de.tum.in.www1.artemis.service.export.DataExportUtil.createDirectoryIfNotExistent;
 import static de.tum.in.www1.artemis.service.export.DataExportUtil.retrieveCourseDirPath;
@@ -13,6 +14,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -29,6 +31,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
  * This includes exercise participations and general information such as working time.
  * Results are only included if the results are already published.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class DataExportExamCreationService {
 
@@ -58,7 +61,8 @@ public class DataExportExamCreationService {
      * @throws IOException if an error occurs while accessing the file system
      */
     public void createExportForExams(long userId, Path workingDirectory) throws IOException {
-        Map<Course, List<StudentExam>> studentExamsPerCourse = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserId(userId).stream()
+        Map<Course, List<StudentExam>> studentExamsPerCourse = studentExamRepository
+                .findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userId).stream()
                 .collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));
 
         for (var entry : studentExamsPerCourse.entrySet()) {

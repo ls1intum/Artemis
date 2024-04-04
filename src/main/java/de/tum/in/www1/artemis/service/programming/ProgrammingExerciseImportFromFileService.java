@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.BUILD_PLAN_FILE_NAME;
 
 import java.io.IOException;
@@ -18,6 +19,7 @@ import org.apache.commons.io.filefilter.NotFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +33,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseImportFromFileService {
 
@@ -104,7 +107,7 @@ public class ProgrammingExerciseImportFromFileService {
             importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName, user);
             importedProgrammingExercise.setCourse(course);
             // It doesn't make sense to import a build plan on a bamboo or local CI setup.
-            if (profileService.isGitlabCiOrJenkins()) {
+            if (profileService.isGitlabCiOrJenkinsActive()) {
                 importBuildPlanIfExisting(importedProgrammingExercise, pathToDirectoryWithImportedContent);
             }
         }

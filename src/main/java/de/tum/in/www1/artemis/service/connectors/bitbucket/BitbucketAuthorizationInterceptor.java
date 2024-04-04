@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 @Profile("bitbucket")
 @Component
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BitbucketAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.version-control.user}")

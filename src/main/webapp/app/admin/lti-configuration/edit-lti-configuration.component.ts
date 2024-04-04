@@ -3,10 +3,9 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { FormControl, FormGroup } from '@angular/forms';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faPlus, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
-import { HttpClient } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-edit-lti-configuration',
@@ -21,12 +20,12 @@ export class EditLtiConfigurationComponent implements OnInit {
     // Icons
     faBan = faBan;
     faSave = faSave;
+    faPlus = faPlus;
 
     constructor(
         private route: ActivatedRoute,
         private ltiConfigurationService: LtiConfigurationService,
         private router: Router,
-        private http: HttpClient,
         private alertService: AlertService,
     ) {}
 
@@ -35,35 +34,58 @@ export class EditLtiConfigurationComponent implements OnInit {
      */
     ngOnInit() {
         const platformId = this.route.snapshot.paramMap.get('platformId');
-        this.http.get<LtiPlatformConfiguration>(`api/admin/lti-platform/${platformId}`).subscribe({
-            next: (data) => {
-                this.platform = data;
-
-                this.platformConfigurationForm = new FormGroup({
-                    id: new FormControl(this.platform?.id),
-                    registrationId: new FormControl(this.platform?.registrationId),
-                    originalUrl: new FormControl(this.platform?.originalUrl),
-                    customName: new FormControl(this.platform?.customName),
-                    clientId: new FormControl(this.platform?.clientId),
-                    authorizationUri: new FormControl(this.platform?.authorizationUri),
-                    tokenUri: new FormControl(this.platform?.tokenUri),
-                    jwkSetUri: new FormControl(this.platform?.jwkSetUri),
-                });
-            },
-            error: (error) => {
-                this.alertService.error(error);
-            },
-        });
+        if (platformId) {
+            this.ltiConfigurationService.getLtiPlatformById(Number(platformId)).subscribe({
+                next: (data) => {
+                    this.platform = data;
+                    this.initializeForm();
+                },
+                error: (error) => {
+                    this.alertService.error(error);
+                },
+            });
+        }
+        this.initializeForm();
     }
 
     /**
-     * Save the changes to the online course configuration
+     * Create or update lti platform configuration
      */
     save() {
         this.isSaving = true;
         const platformConfiguration = this.platformConfigurationForm.getRawValue();
+        if (this.platform?.id) {
+            this.updateLtiConfiguration(platformConfiguration);
+        } else {
+            this.addLtiConfiguration(platformConfiguration);
+        }
+    }
+
+    /**
+     * Update existing platform configuration
+     */
+    updateLtiConfiguration(platformConfiguration: any) {
         this.ltiConfigurationService
             .updateLtiPlatformConfiguration(platformConfiguration)
+            .pipe(
+                finalize(() => {
+                    this.isSaving = false;
+                }),
+            )
+            .subscribe({
+                next: () => this.onSaveSuccess(),
+                error: (error) => {
+                    this.alertService.error(error);
+                },
+            });
+    }
+
+    /**
+     * Create new platform configuration
+     */
+    addLtiConfiguration(platformConfiguration: any) {
+        this.ltiConfigurationService
+            .addLtiPlatformConfiguration(platformConfiguration)
             .pipe(
                 finalize(() => {
                     this.isSaving = false;
@@ -83,6 +105,19 @@ export class EditLtiConfigurationComponent implements OnInit {
     private onSaveSuccess() {
         this.isSaving = false;
         this.navigateToLtiConfigurationPage();
+    }
+
+    private initializeForm() {
+        this.platformConfigurationForm = new FormGroup({
+            id: new FormControl(this.platform?.id),
+            registrationId: new FormControl(this.platform?.registrationId),
+            originalUrl: new FormControl(this.platform?.originalUrl),
+            customName: new FormControl(this.platform?.customName),
+            clientId: new FormControl(this.platform?.clientId),
+            authorizationUri: new FormControl(this.platform?.authorizationUri),
+            tokenUri: new FormControl(this.platform?.tokenUri),
+            jwkSetUri: new FormControl(this.platform?.jwkSetUri),
+        });
     }
 
     /**

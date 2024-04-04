@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 
 class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -183,7 +183,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         assertThat(complaintResponse.getComplaint().getParticipant()).isNull();
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
-        Result storedResult = resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(modelingAssessment.getId());
+        Result storedResult = resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
         participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getSubmission()).isEqualTo(modelingAssessment.getSubmission());
         assertThat(storedResult.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
@@ -259,7 +259,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     private void saveModelingSubmissionAndAssessment() throws Exception {
-        modelingSubmission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        modelingSubmission = ParticipationFactory.generateModelingSubmission(TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingTeamSubmission(modelingExercise, modelingSubmission, team);
         modelingAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission,
                 "test-data/model-assessment/assessment.54727.v2.json", TEST_PREFIX + "tutor1", true);

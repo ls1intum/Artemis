@@ -1,14 +1,22 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faDownload, faRotateRight, faUpload } from '@fortawesome/free-solid-svg-icons';
+
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+
+export enum OrionButtonType {
+    Other = 'Other',
+    Submit = 'Submit',
+    Reload = 'Reload',
+    Download = 'Download',
+}
 
 @Component({
     selector: 'jhi-ide-button',
     templateUrl: './orion-button.component.html',
-    styleUrls: ['./orion-button.component.scss'],
 })
 export class OrionButtonComponent {
     @Input() buttonLabel: string;
+    @Input() buttonType: OrionButtonType = OrionButtonType.Other;
     @Input() buttonLoading = false;
     @Input() outlined = false;
     @Input() smallButton = false;
@@ -18,8 +26,13 @@ export class OrionButtonComponent {
     // Indirect handler to disable clicking while loading
     @Output() clickHandler = new EventEmitter<void>();
 
+    protected readonly OrionButtonType = OrionButtonType;
+
     // Icons
     faCircleNotch = faCircleNotch;
+    faRotateRight = faRotateRight;
+    faUpload = faUpload;
+    faDownload = faDownload;
 
     constructor() {}
 

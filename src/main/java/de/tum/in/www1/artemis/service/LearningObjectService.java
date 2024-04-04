@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -21,6 +24,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
  * @see LectureUnit
  * @see Exercise
  */
+@Profile(PROFILE_CORE)
 @Service
 public class LearningObjectService {
 

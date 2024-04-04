@@ -5,7 +5,8 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+
+import jakarta.annotation.Nullable;
 
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 // Note: due to limitations with inheritance, we cannot declare this as record, but we can use it in a similar way with final fields
 public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotificationDTO {
 
@@ -61,19 +63,19 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     }
 
     @Override
-    public Optional<String> getCommitHashFromAssignmentRepo() {
+    protected String getCommitHashFromAssignmentRepo() {
         return getCommitHashFromRepo(ASSIGNMENT_REPO_NAME);
     }
 
     @Override
-    public Optional<String> getCommitHashFromTestsRepo() {
+    protected String getCommitHashFromTestsRepo() {
         return getCommitHashFromRepo(TEST_REPO_NAME);
     }
 
     @Override
-    public Optional<String> getBranchNameFromAssignmentRepo() {
+    public String getBranchNameFromAssignmentRepo() {
         var repo = getBuild().vcs().stream().filter(vcs -> vcs.repositoryName().equalsIgnoreCase(ASSIGNMENT_REPO_NAME)).findFirst();
-        return repo.map(BambooVCSDTO::branchName);
+        return repo.map(BambooVCSDTO::branchName).orElse(null);
     }
 
     @Override
@@ -130,30 +132,16 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
         return getBuild().jobs().stream().flatMap(job -> job.testwiseCoverageReport().stream()).toList();
     }
 
-    private Optional<String> getCommitHashFromRepo(String repoName) {
+    @Nullable
+    private String getCommitHashFromRepo(String repoName) {
         var repo = getBuild().vcs().stream().filter(vcs -> vcs.repositoryName().equalsIgnoreCase(repoName)).findFirst();
-        return repo.map(BambooVCSDTO::id);
+        return repo.map(BambooVCSDTO::id).orElse(null);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record BambooBuildDTO(boolean artifact, int number, String reason, ZonedDateTime buildCompletedDate, boolean successful, BambooTestSummaryDTO testSummary,
-            List<BambooVCSDTO> vcs, List<BambooJobDTO> jobs) {
-
-        // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
-        @JsonCreator
-        public BambooBuildDTO(boolean artifact, int number, String reason, ZonedDateTime buildCompletedDate, boolean successful, BambooTestSummaryDTO testSummary,
-                @JsonProperty("vcs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooVCSDTO> vcs,
-                @JsonProperty("jobs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooJobDTO> jobs) {
-            this.artifact = artifact;
-            this.number = number;
-            this.reason = reason;
-            this.buildCompletedDate = buildCompletedDate;
-            this.successful = successful;
-            this.testSummary = testSummary;
-            this.vcs = vcs;
-            this.jobs = jobs;
-        }
+            @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooVCSDTO> vcs, @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooJobDTO> jobs) {
     }
 
     /**
@@ -167,16 +155,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record BambooVCSDTO(String id, String repositoryName, String branchName, List<BambooCommitDTO> commits) {
-
-        // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
-        @JsonCreator
-        public BambooVCSDTO(String id, String repositoryName, String branchName, @JsonProperty("commits") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooCommitDTO> commits) {
-            this.id = id;
-            this.repositoryName = repositoryName;
-            this.branchName = branchName;
-            this.commits = commits;
-        }
+    public record BambooVCSDTO(String id, String repositoryName, String branchName, @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooCommitDTO> commits) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -186,30 +165,20 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record BambooJobDTO(int id, List<BambooTestJobDTO> failedTests, List<BambooTestJobDTO> successfulTests, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
-            List<TestwiseCoverageReportDTO> testwiseCoverageReport, List<BambooBuildLogDTO> logs) implements BuildJobDTOInterface {
-
-        // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
-        @JsonCreator
-        public BambooJobDTO(int id, @JsonProperty("failedTests") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooTestJobDTO> failedTests,
-                @JsonProperty("successfulTests") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooTestJobDTO> successfulTests,
-                @JsonProperty("staticCodeAnalysisReports") @JsonSetter(nulls = Nulls.AS_EMPTY) List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
-                @JsonProperty("testwiseCoverageReport") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestwiseCoverageReportDTO> testwiseCoverageReport,
-                @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooBuildLogDTO> logs) {
-            this.id = id;
-            this.failedTests = failedTests;
-            this.successfulTests = successfulTests;
-            this.staticCodeAnalysisReports = staticCodeAnalysisReports;
-            this.testwiseCoverageReport = testwiseCoverageReport;
-            this.logs = logs;
-        }
+    public record BambooJobDTO(int id, @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooTestJobDTO> failedTests,
+            @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooTestJobDTO> successfulTests,
+            @JsonSetter(nulls = Nulls.AS_EMPTY) List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
+            @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestwiseCoverageReportDTO> testwiseCoverageReport, @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooBuildLogDTO> logs)
+            implements BuildJobDTOInterface {
 
         @Override
+        @JsonInclude // intentionally deviated from the behavior specified in the implemented interface
         public List<? extends TestCaseDTOInterface> getFailedTests() {
             return failedTests;
         }
 
         @Override
+        @JsonInclude // intentionally deviated from the behavior specified in the implemented interface
         public List<? extends TestCaseDTOInterface> getSuccessfulTests() {
             return successfulTests;
         }
@@ -217,16 +186,8 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record BambooTestJobDTO(String name, String methodName, String className, List<String> errors) implements TestCaseDTOInterface {
-
-        // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
-        @JsonCreator
-        public BambooTestJobDTO(String name, String methodName, String className, @JsonProperty("errors") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> errors) {
-            this.name = name;
-            this.methodName = methodName;
-            this.className = className;
-            this.errors = errors;
-        }
+    public record BambooTestJobDTO(String name, String methodName, String className, @JsonProperty("errors") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> errors)
+            implements TestCaseDTOInterface {
 
         @Override
         public String getName() {
@@ -234,7 +195,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
         }
 
         @Override
-        public List<String> getMessage() {
+        public List<String> getTestMessages() {
             return errors;
         }
     }

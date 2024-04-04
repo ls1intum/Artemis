@@ -1,14 +1,17 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,24 +23,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring JPA repository for Organization entities
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface OrganizationRepository extends JpaRepository<Organization, Long> {
-
-    @Query("""
-            SELECT organization
-            FROM Organization organization
-                LEFT JOIN FETCH organization.courses
-            WHERE organization.id = :organizationId
-            """)
-    Optional<Organization> findByIdWithEagerCourses(@Param("organizationId") long organizationId);
-
-    @Query("""
-            SELECT organization
-            FROM Organization organization
-                LEFT JOIN FETCH organization.users
-            WHERE organization.id = :organizationId
-            """)
-    Optional<Organization> findByIdWithEagerUsers(@Param("organizationId") long organizationId);
 
     @Query("""
             SELECT organization

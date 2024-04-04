@@ -18,8 +18,8 @@
             "forgot": "Did you forget your password?"
         },
         "ide": {
-            "confirmation": "Do you want to store your credentials in IntelliJ?\nThis will make importing your exercises a lot easier!",
-            "title": "Log in to IntelliJ"
+            "confirmation": "Do you want to store your credentials in your IDE?\nThis will make importing your exercises a lot easier!",
+            "title": "Log in to your IDE"
         }
     },
     "logout": {

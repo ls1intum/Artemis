@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.PUSH;
 
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +25,7 @@ import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebaseP
  * A Handler for InstantNotifications such as MailService and PushNotifications.
  * Handles the sending of Notifications via these channels.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class GeneralInstantNotificationService implements InstantNotificationService {
 

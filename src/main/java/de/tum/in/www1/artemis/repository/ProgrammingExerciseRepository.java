@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
-import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
-import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.in.www1.artemis.config.Constants.*;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -10,10 +9,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.criteria.Fetch;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -24,15 +27,21 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the ProgrammingExercise entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long>, JpaSpecificationExecutor<ProgrammingExercise> {
+
+    default ProgrammingExercise findOneByIdElseThrow(final Specification<ProgrammingExercise> specification, long exerciseId) {
+        final Specification<ProgrammingExercise> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), exerciseId);
+        return findOne(specification.and(hasIdSpec)).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+    }
 
     /**
      * Does a max join on the result table for each participation by result id (the newer the result id, the newer the result).
@@ -72,10 +81,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
-            "auxiliaryRepositories" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
             "auxiliaryRepositories", "plagiarismDetectionConfig", "buildPlanConfiguration", "buildScript", "templateParticipation", "solutionParticipation" })
@@ -351,8 +356,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             FROM ProgrammingExerciseStudentParticipation p
                 JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
-                AND p.testRun IS FALSE
-                AND s.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             GROUP BY p.exercise.id
             """)
@@ -371,8 +376,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             FROM ProgrammingExerciseStudentParticipation p
                 LEFT JOIN p.results r
             WHERE p.exercise.id = :exerciseId
-                AND p.testRun IS FALSE
-                AND r.submission.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND r.submission.submitted = TRUE
                 AND (r.submission.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR r.submission.type IS NULL)
                 AND r.assessor IS NOT NULL
                 AND r.completionDate IS NOT NULL
@@ -390,10 +395,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT COUNT (DISTINCT p)
             FROM ProgrammingExerciseStudentParticipation p
-            JOIN p.submissions s
+                JOIN p.submissions s
             WHERE p.exercise.assessmentType <> de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
                 AND p.exercise.exerciseGroup.exam.id = :examId
-                AND s IS NOT EMPTY
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     long countLegalSubmissionsByExamIdSubmitted(@Param("examId") long examId);
@@ -629,17 +633,42 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded template and solution participation, submissions and results
+     * Finds a programming exercise by its id including the submissions for its solution and template participation.
      *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
+     * @param exerciseId            The id of the programming exercise.
+     * @param withSubmissionResults True, if the results of the template and solution should be included as well.
+     * @param withGradingCriteria   True, if the grading instructions of the exercise should be included as well.
+     * @return A programming exercise that has the given id.
+     * @throws EntityNotFoundException In case no exercise with the given id exists.
      */
     @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesElseThrow(long programmingExerciseId)
-            throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationSubmissionsAndAuxiliaryRepositoriesElseThrow(long exerciseId, boolean withSubmissionResults,
+            boolean withGradingCriteria) throws EntityNotFoundException {
+        final Specification<ProgrammingExercise> specification = (root, query, criteriaBuilder) -> {
+            root.fetch(Exercise_.CATEGORIES, JoinType.LEFT);
+            root.fetch(Exercise_.TEAM_ASSIGNMENT_CONFIG, JoinType.LEFT);
+            root.fetch(ProgrammingExercise_.AUXILIARY_REPOSITORIES, JoinType.LEFT);
+
+            if (withGradingCriteria) {
+                root.fetch(Exercise_.GRADING_CRITERIA, JoinType.LEFT);
+            }
+
+            final Fetch<ProgrammingExercise, TemplateProgrammingExerciseParticipation> joinTemplateParticipation = root.fetch(ProgrammingExercise_.TEMPLATE_PARTICIPATION,
+                    JoinType.LEFT);
+            final Fetch<TemplateProgrammingExerciseParticipation, Submission> joinTemplateSubmissions = joinTemplateParticipation.fetch(Participation_.SUBMISSIONS, JoinType.LEFT);
+            final Fetch<ProgrammingExercise, SolutionProgrammingExerciseParticipation> joinSolutionParticipation = root.fetch(ProgrammingExercise_.SOLUTION_PARTICIPATION,
+                    JoinType.LEFT);
+            final Fetch<TemplateProgrammingExerciseParticipation, Submission> joinSolutionSubmissions = joinSolutionParticipation.fetch(Participation_.SUBMISSIONS, JoinType.LEFT);
+
+            if (withSubmissionResults) {
+                joinTemplateSubmissions.fetch(Submission_.RESULTS, JoinType.LEFT);
+                joinSolutionSubmissions.fetch(Submission_.RESULTS, JoinType.LEFT);
+            }
+
+            return null;
+        };
+
+        return findOneByIdElseThrow(specification, exerciseId);
     }
 
     /**
@@ -672,7 +701,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     /**
      * Find a programming exercise by its id, with eagerly loaded template and solution participation,
      * including the latest result with feedback and test cases.
-     *
+     * <p>
      * NOTICE: this query is quite expensive because it loads all feedback and test cases,
      * and it includes sub queries to retrieve the latest result
      * IMPORTANT: you should generally avoid using this query except you really need all information!!

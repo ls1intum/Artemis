@@ -25,6 +25,7 @@ import { CourseManagementTabBarComponent } from 'app/course/manage/course-manage
 import { LearningPathManagementComponent } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
+import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
 
@@ -226,6 +227,16 @@ export const courseManagementState: Routes = [
                                     pageTitle: 'artemisApp.competency.editCompetency.title',
                                 },
                                 canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                path: 'import',
+                                component: ImportCompetenciesComponent,
+                                data: {
+                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    pageTitle: 'artemisApp.competency.import.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                                canDeactivate: [PendingChangesGuard],
                             },
                             {
                                 path: 'generate',

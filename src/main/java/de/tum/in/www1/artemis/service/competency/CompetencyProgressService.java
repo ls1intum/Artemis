@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.service.competency;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 /**
  * Service for calculating the progress of a student in a competency.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class CompetencyProgressService {
 
@@ -119,10 +123,10 @@ public class CompetencyProgressService {
         try {
             Set<Competency> competencies;
             if (learningObject instanceof Exercise exercise) {
-                competencies = exerciseRepository.findByIdWithCompetencies(exercise.getId()).map(Exercise::getCompetencies).orElse(null);
+                competencies = exerciseRepository.findWithCompetenciesById(exercise.getId()).map(Exercise::getCompetencies).orElse(null);
             }
             else if (learningObject instanceof LectureUnit lectureUnit) {
-                competencies = lectureUnitRepository.findByIdWithCompetencies(lectureUnit.getId()).map(LectureUnit::getCompetencies).orElse(null);
+                competencies = lectureUnitRepository.findWithCompetenciesById(lectureUnit.getId()).map(LectureUnit::getCompetencies).orElse(null);
             }
             else {
                 throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");

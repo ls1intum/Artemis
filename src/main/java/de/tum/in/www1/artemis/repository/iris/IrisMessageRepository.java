@@ -5,7 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> {
 
-    List<IrisMessage> findAllBySessionId(Long sessionId);
+    List<IrisMessage> findAllBySessionId(long sessionId);
 
     /**
      * Counts the number of LLM responses the user got within the given timeframe.
@@ -34,12 +34,12 @@ public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> 
     @Query("""
             SELECT COUNT(DISTINCT m)
             FROM IrisMessage m
-                JOIN TREAT (m.session as IrisChatSession) s
+                JOIN TREAT (m.session AS IrisChatSession) s
             WHERE s.user.id = :userId
                 AND m.sender = de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender.LLM
                 AND m.sentAt BETWEEN :start AND :end
             """)
-    int countLlmResponsesOfUserWithinTimeframe(@Param("userId") Long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
+    int countLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
     @NotNull
     default IrisMessage findByIdElseThrow(long messageId) throws EntityNotFoundException {

@@ -10,8 +10,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPer
 
 @Service
 @Profile("bitbucket")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BitbucketService extends AbstractVersionControlService {
 
     private static final int MAX_GIVE_PERMISSIONS_RETRIES = 5;
@@ -870,6 +871,7 @@ public class BitbucketService extends AbstractVersionControlService {
         createRepository(entityName, topLevelEntity);
     }
 
+    @Deprecated(forRemoval = true) // will be removed in 7.0.0
     public final class BitbucketRepositoryUri extends VcsRepositoryUri {
 
         public BitbucketRepositoryUri(String projectKey, String repositorySlug) {

@@ -1,17 +1,21 @@
 package de.tum.in.www1.artemis.service.feature;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class FeatureToggleService {
 

@@ -1,14 +1,17 @@
 package de.tum.in.www1.artemis.repository.tutorialgroups;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 import java.util.Set;
 
-import javax.transaction.Transactional;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -16,6 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupReg
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 
+@Profile(PROFILE_CORE)
 @Repository
 public interface TutorialGroupRegistrationRepository extends JpaRepository<TutorialGroupRegistration, Long> {
 
@@ -26,17 +30,16 @@ public interface TutorialGroupRegistrationRepository extends JpaRepository<Tutor
 
     Set<TutorialGroupRegistration> findAllByTutorialGroup(TutorialGroup tutorialGroup);
 
+    @Transactional // ok because of delete
     @Modifying
-    @Transactional
-    // ok because of delete
     void deleteAllByStudent(User student);
 
-    @Transactional
+    @Transactional  // ok because of delete
     @Modifying
     void deleteById(@NotNull Long tutorialGroupRegistrationId);
 
+    @Transactional  // ok because of delete
     @Modifying
-    @Transactional
     void deleteAllByStudentIsInAndTypeAndTutorialGroupCourse(Set<User> students, TutorialGroupRegistrationType type, Course course);
 
     boolean existsByTutorialGroupTitleAndStudentAndType(String title, User student, TutorialGroupRegistrationType type);

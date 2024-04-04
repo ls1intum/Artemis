@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -7,8 +8,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -25,6 +27,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Participation entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
@@ -90,7 +93,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
 
-    @EntityGraph(type = LOAD, attributePaths = { "team" })
+    @EntityGraph(type = LOAD, attributePaths = { "team.students" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
 
     @Query("""
@@ -118,7 +121,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     List<ProgrammingExerciseStudentParticipation> findByExerciseId(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
@@ -214,7 +217,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     /**
      * Remove the build plan id from all participations of the given exercise.
-     * This is used when the build plan is changed for an exercise and we want to remove the old build plan id from all participations.
+     * This is used when the build plan is changed for an exercise, and we want to remove the old build plan id from all participations.
      * By deleting the build plan in the CI platform and unsetting the build plan id in the participations, the build plan is effectively removed
      * and will be regenerated/recreated on the next submission.
      *
@@ -224,8 +227,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @Modifying
     @Query("""
             UPDATE ProgrammingExerciseStudentParticipation p
-            SET p.buildPlanId = NULL
+            SET p.buildPlanId = NULL, p.initializationState = de.tum.in.www1.artemis.domain.enumeration.InitializationState.INACTIVE
             WHERE p.exercise.id = :#{#exerciseId}
+                AND p.initializationState = de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED
             """)
     void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
 }

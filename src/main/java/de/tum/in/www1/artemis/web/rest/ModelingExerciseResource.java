@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.plagiarism.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
 
 import java.io.File;
@@ -10,6 +11,7 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,9 +36,9 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleSer
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionConfigHelper;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -46,6 +48,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 /**
  * REST controller for managing ModelingExercise.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ModelingExerciseResource {
@@ -166,7 +169,7 @@ public class ModelingExerciseResource {
      */
     @GetMapping("modeling-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
+    public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));

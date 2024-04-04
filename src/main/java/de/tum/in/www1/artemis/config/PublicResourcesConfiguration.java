@@ -1,15 +1,18 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.CacheControl;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -20,6 +23,7 @@ import tech.jhipster.config.JHipsterProperties;
 /**
  * Configures serving of static resources from /public from both the resources folder and the host file system.
  */
+@Profile(PROFILE_CORE)
 @Configuration
 public class PublicResourcesConfiguration implements WebMvcConfigurer {
 

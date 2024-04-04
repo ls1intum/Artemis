@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.bamboo;
 import java.io.IOException;
 import java.util.Collections;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 @Profile("bamboo")
 @Component
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BambooAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.continuous-integration.user}")

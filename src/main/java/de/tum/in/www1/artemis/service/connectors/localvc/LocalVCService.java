@@ -9,8 +9,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -152,6 +152,17 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUri) {
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString(), localVCBaseUrl);
+        return getDefaultBranchOfRepository(localVCRepositoryUri);
+    }
+
+    /**
+     * Get the default branch of the repository given the Local VC repository URI
+     *
+     * @param localVCRepositoryUri The Local VC repository URI uri to get the default branch for.
+     * @return the name of the default branch, e.g. 'main'
+     * @throws LocalVCInternalException if the default branch cannot be determined
+     */
+    public String getDefaultBranchOfRepository(LocalVCRepositoryUri localVCRepositoryUri) {
         String localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toString();
         Map<String, Ref> remoteRepositoryRefs;
         try {

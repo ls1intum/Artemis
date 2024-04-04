@@ -25,7 +25,7 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationCircle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -38,6 +38,11 @@ import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programmin
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
+
+export interface ImportOptions {
+    recreateBuildPlans: boolean;
+    updateTemplate: boolean;
+}
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -68,11 +73,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     auxiliaryRepositoryDuplicateNames: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
     auxiliaryRepositoryNamedCorrectly: boolean;
-    submitButtonTitle: string;
     isImportFromExistingExercise: boolean;
     isImportFromFile: boolean;
     isEdit: boolean;
     isExamMode: boolean;
+    isLocal: boolean;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     backupExercise: ProgrammingExercise;
@@ -139,8 +144,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public customBuildPlansSupported: string = '';
 
     // Additional options for import
-    public recreateBuildPlans = false;
-    public updateTemplate = false;
+    // This is a wrapper to allow modifications from the other subcomponents
+    public readonly importOptions: ImportOptions = {
+        recreateBuildPlans: false,
+        updateTemplate: false,
+    };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
     public projectTypes: ProjectType[] = [];
@@ -150,9 +158,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public modePickerOptions: ModePickerOption<ProjectType>[] = [];
 
     // Icons
-    faSave = faSave;
-    faBan = faBan;
-    faHandShakeAngle = faHandshakeAngle;
     faQuestionCircle = faQuestionCircle;
     faExclamationCircle = faExclamationCircle;
 
@@ -376,6 +381,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            if (this.programmingExercise.buildPlanConfiguration) {
+                this.programmingExercise.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
+            }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
@@ -429,16 +437,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                             });
                         }
                     }
-
-                    // Set submit button text depending on component state
-                    if (this.isImportFromExistingExercise || this.isImportFromFile) {
-                        this.submitButtonTitle = 'entity.action.import';
-                    } else if (this.programmingExercise.id) {
-                        this.isEdit = true;
-                        this.submitButtonTitle = 'entity.action.save';
-                    } else {
-                        this.submitButtonTitle = 'entity.action.generate';
-                    }
                 }),
             )
             .subscribe();
@@ -461,6 +459,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo?.activeProfiles.includes(PROFILE_LOCALCI)) {
                 this.customBuildPlansSupported = PROFILE_LOCALCI;
+                this.isLocal = true;
             }
             if (profileInfo?.activeProfiles.includes(PROFILE_AEOLUS)) {
                 this.customBuildPlansSupported = PROFILE_AEOLUS;
@@ -635,7 +634,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromExistingExercise) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
+            this.subscribeToSaveResponse(
+                this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions.recreateBuildPlans, this.importOptions.updateTemplate),
+            );
         } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {
@@ -751,8 +752,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     onStaticCodeAnalysisChanged() {
         // On import: If SCA mode changed, activate recreation of build plans and update of the template
         if (this.isImportFromExistingExercise && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
-            this.recreateBuildPlans = true;
-            this.updateTemplate = true;
+            this.importOptions.recreateBuildPlans = true;
+            this.importOptions.updateTemplate = true;
         }
 
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
@@ -761,7 +762,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     onRecreateBuildPlanOrUpdateTemplateChange() {
-        if (!this.recreateBuildPlans || !this.updateTemplate) {
+        if (!this.importOptions.recreateBuildPlans || !this.importOptions.updateTemplate) {
             this.programmingExercise.staticCodeAnalysisEnabled = this.originalStaticCodeAnalysisEnabled;
         }
 
@@ -1084,9 +1085,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             rerenderSubject: this.rerenderSubject.asObservable(),
             validIdeSelection: this.validIdeSelection,
             inProductionEnvironment: this.inProductionEnvironment,
-            recreateBuildPlans: this.recreateBuildPlans,
+            recreateBuildPlans: this.importOptions.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
-            updateTemplate: this.updateTemplate,
+            updateTemplate: this.importOptions.updateTemplate,
             publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             buildPlanLoaded: this.buildPlanLoaded,

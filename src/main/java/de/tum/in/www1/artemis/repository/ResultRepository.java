@@ -1,19 +1,35 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.util.Arrays.asList;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
@@ -25,6 +41,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Result entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ResultRepository extends JpaRepository<Result, Long> {
 
@@ -117,8 +134,19 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "feedbacks", "assessor" })
-    Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorById(long resultId);
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.submission s
+                LEFT JOIN FETCH s.results
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH r.participation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsById(@Param("resultId") long resultId);
 
     /**
      * counts the number of assessments of a course, which are either rated or not rated
@@ -143,8 +171,17 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission and feedback list, or an empty optional if no result could be found for the given id
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
-    Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.submission
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.participation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findWithSubmissionAndFeedbackAndTeamStudentsById(@Param("resultId") long resultId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
     Optional<Result> findWithEagerSubmissionAndFeedbackAndTestCasesById(long resultId);
@@ -170,10 +207,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 JOIN p.results r
                 JOIN p.exercise e
             WHERE e.id = :exerciseId
-                AND p.testRun IS FALSE
+                AND p.testRun = FALSE
                 AND r.assessor IS NOT NULL
-                AND r.rated IS TRUE
-                AND r.submission.submitted IS TRUE
+                AND r.rated = TRUE
+                AND r.submission.submitted = TRUE
                 AND r.completionDate IS NOT NULL
                 AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
             """)
@@ -189,10 +226,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 JOIN p.submissions s
                 JOIN s.results r
             WHERE p.exercise.id = :exerciseId
-                AND p.testRun IS FALSE
-                AND s.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
-                AND r.rated IS TRUE
+                AND r.rated = TRUE
                 AND r.assessor IS NOT NULL
             GROUP BY p.id
             """)
@@ -204,8 +241,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 JOIN p.submissions s
                 JOIN s.results r
             WHERE p.exercise.id = :exerciseId
-                AND p.testRun IS FALSE
-                AND s.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
                 AND r.completionDate IS NULL
                 AND r.assessor.id <> :tutorId
             """)
@@ -223,10 +260,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 JOIN p.submissions s
                 JOIN s.results r
             WHERE p.exercise.exerciseGroup.exam.id = :examId
-                AND p.testRun IS FALSE
-                AND s.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
-                AND r.rated IS TRUE
+                AND r.rated = TRUE
                 AND r.assessor IS NOT NULL
             GROUP BY p.id
             """)
@@ -242,7 +279,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             WHERE p.exercise.id = :exerciseId
                 AND r.assessor IS NOT NULL
                 AND r.assessmentType IN :types
-                AND r.rated IS TRUE
+                AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
               """)
@@ -255,7 +292,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             WHERE p.exercise.id = :exerciseId
                 AND r.assessor IS NOT NULL
                 AND r.assessmentType IN :types
-                AND r.rated IS FALSE
+                AND r.rated = FALSE
                 AND r.completionDate IS NOT NULL
                 AND p.exercise.dueDate IS NOT NULL
                 AND r.submission.submissionDate > p.exercise.dueDate
@@ -302,7 +339,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND p.student.id = :studentId
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
-                AND r.rated IS TRUE
+                AND r.rated = TRUE
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
@@ -318,7 +355,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND p.team.id = :teamId
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
-                AND r.rated IS TRUE
+                AND r.rated = TRUE
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
@@ -480,7 +517,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -503,7 +540,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -513,7 +550,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 LEFT JOIN FETCH Rating rating ON rating.result = r
             WHERE r.completionDate IS NOT NULL
                 AND e.id = :exerciseId
-            GROUP BY a.id
+            GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
@@ -523,7 +560,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) as double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -532,10 +569,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 JOIN e.exerciseGroup eg
                 JOIN eg.exam ex
                 JOIN r.assessor a
-                LEFT JOIN FETCH Rating rating on rating.result = r
+                LEFT JOIN FETCH Rating rating ON rating.result = r
             WHERE r.completionDate IS NOT NULL
                 AND ex.id = :examId
-            GROUP BY a.id
+            GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
 
@@ -578,11 +615,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         // Set score according to maxPoints, to establish results with score > 100%
         result.setScore(totalPoints, maxPoints, exercise.getCourseViaExerciseGroupOrCourseMember());
 
-        // Workaround to prevent the assessor turning into a proxy object after saving
-        var assessor = result.getAssessor();
-        result = save(result);
-        result.setAssessor(assessor);
-        return result;
+        Result savedResult = save(result);
+        // Workaround to prevent the assessor or participant turning into a proxy object after saving
+        savedResult.setAssessor(result.getAssessor());
+        // Workaround to prevent the team students of a student participation turning into a proxy object after saving
+        savedResult.setParticipation(result.getParticipation());
+        return savedResult;
     }
 
     /**
@@ -685,8 +723,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 .orElseThrow(() -> new EntityNotFoundException("Result by participationId", participationId));
     }
 
-    default Result findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(long resultId) {
-        return findWithEagerSubmissionAndFeedbackAndAssessorById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+    default Result findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsByIdElseThrow(long resultId) {
+        return findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
     /**
@@ -705,8 +743,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return the result with submission and feedback list
      */
-    default Result findByIdWithEagerSubmissionAndFeedbackElseThrow(long resultId) {
-        return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+    default Result findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(long resultId) {
+        return findWithSubmissionAndFeedbackAndTeamStudentsById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
     default Result findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(long resultId) {
@@ -735,7 +773,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         for (ExampleSubmission exampleSubmission : exampleSubmissions) {
             Submission submission = exampleSubmission.getSubmission();
             if (!submission.isEmpty() && submission.getLatestResult() != null) {
-                Result result = findByIdWithEagerSubmissionAndFeedbackElseThrow(submission.getLatestResult().getId());
+                Result result = findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(submission.getLatestResult().getId());
                 results.add(result);
             }
         }

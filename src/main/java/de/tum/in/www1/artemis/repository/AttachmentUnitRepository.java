@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,20 +19,22 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Attachment Unit entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, Long> {
 
     @Query("""
-            SELECT attachmentUnit
+            SELECT lectureUnit
             FROM Lecture lecture
-                LEFT JOIN TREAT(lecture.lectureUnits as AttachmentUnit) attachmentUnit
-                LEFT JOIN FETCH attachmentUnit.attachment attachment
+                LEFT JOIN lecture.lectureUnits lectureUnit
+                LEFT JOIN FETCH lectureUnit.attachment attachment
             WHERE lecture.id = :lectureId
+                AND TYPE (lectureUnit) = AttachmentUnit
                 AND attachment.attachmentType = :attachmentType
-            ORDER BY INDEX(attachmentUnit)
+            ORDER BY INDEX(lectureUnit)
             """)
     // INDEX() is used to retrieve the order saved by @OrderColumn, see https://en.wikibooks.org/wiki/Java_Persistence/JPQL#Special_Operators
-    List<AttachmentUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType);
+    List<AttachmentUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") long lectureId, @Param("attachmentType") AttachmentType attachmentType);
 
     /**
      * Find all attachment units by lecture id and attachment type or throw if ist is empty.

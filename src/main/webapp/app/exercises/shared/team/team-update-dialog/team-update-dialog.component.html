@@ -10,7 +10,7 @@
     </div>
     <div class="modal-body">
         <div class="form-group">
-            <label class="label-narrow" jhiTranslate="artemisApp.team.name.label" for="teamName">Name</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.team.name.label" for="teamName"></label>
             <input
                 type="text"
                 class="form-control"
@@ -32,7 +32,7 @@
         </div>
         <div class="form-group">
             <div>
-                <label class="label-narrow" jhiTranslate="artemisApp.team.shortName.label" for="teamShortName">Short Name</label>
+                <label class="label-narrow" jhiTranslate="artemisApp.team.shortName.label" for="teamShortName"></label>
                 <jhi-help-icon text="artemisApp.team.shortName.tooltip" />
             </div>
             <input
@@ -45,7 +45,8 @@
                 [pattern]="shortNamePattern"
                 [(ngModel)]="pendingTeam.shortName"
                 (ngModelChange)="onTeamShortNameChanged($event)"
-                [readonly]="shortNameReadOnly"
+                [disabled]="shortNameReadOnly"
+                [readOnly]="shortNameReadOnly"
                 #shortName="ngModel"
             />
             @for (e of shortName.errors! | keyvalue | removekeys: ['required']; track e) {
@@ -59,23 +60,23 @@
         <div class="form-group">
             <div class="d-flex align-items-end">
                 <div>
-                    <label class="label-narrow" jhiTranslate="artemisApp.team.owner.label">Tutor</label>
+                    <label class="label-narrow" jhiTranslate="artemisApp.team.owner.label"></label>
                     <jhi-help-icon text="artemisApp.team.owner.tooltip" class="me-1" />
                 </div>
                 @if (searchingOwner) {
                     <fa-icon class="search-searching" [icon]="faSpinner" [spin]="true" />
                 }
                 @if (searchingOwnerQueryTooShort) {
-                    <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.queryTooShort"> Please enter at least 3 characters. </span>
+                    <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.queryTooShort"></span>
                 }
                 @if (searchingOwnerNoResultsForQuery) {
                     <span class="label-inline-message text-danger">
-                        <span jhiTranslate="artemisApp.team.ownerSearch.noResults">No tutors found in course for search:</span>
+                        <span jhiTranslate="artemisApp.team.ownerSearch.noResults"></span>
                         <strong>{{ searchingOwnerNoResultsForQuery }}</strong>
                     </span>
                 }
                 @if (searchingOwnerFailed) {
-                    <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.failed"> Search failed. Please try again. </span>
+                    <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.failed"></span>
                 }
                 @if (team.id && team.owner?.id !== pendingTeam.owner?.id) {
                     <span jhiTranslate="artemisApp.team.ownerChangeWarning" [translateValues]="{ shortName: team.shortName }" class="label-inline-message text-danger">
@@ -98,21 +99,21 @@
         </div>
         <div class="form-group">
             <div class="d-flex align-items-end">
-                <label class="label-narrow me-1" jhiTranslate="artemisApp.team.students">Students</label>
+                <label class="label-narrow me-1" jhiTranslate="artemisApp.team.students"></label>
                 @if (searchingStudents) {
                     <fa-icon class="search-searching" [icon]="faSpinner" [spin]="true" />
                 }
                 @if (searchingStudentsQueryTooShort) {
-                    <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.studentSearch.queryTooShort"> Please enter at least 3 characters. </span>
+                    <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.studentSearch.queryTooShort"></span>
                 }
                 @if (searchingStudentsNoResultsForQuery) {
                     <span class="label-inline-message text-danger">
-                        <span jhiTranslate="artemisApp.team.studentSearch.noResults">No students found in course for search:</span>
+                        <span jhiTranslate="artemisApp.team.studentSearch.noResults"></span>
                         <strong>{{ searchingStudentsNoResultsForQuery }}</strong>
                     </span>
                 }
                 @if (searchingStudentsFailed) {
-                    <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.studentSearch.failed"> Search failed. Please try again. </span>
+                    <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.studentSearch.failed"></span>
                 }
             </div>
             <jhi-team-student-search
@@ -151,7 +152,7 @@
                     <li class="list-group-item-container d-flex align-items-center">
                         <div class="list-group-item-index text-body-secondary">1</div>
                         <div class="list-group-item d-flex align-items-center">
-                            <div class="text-body-secondary" jhiTranslate="artemisApp.team.noStudentsAddedYet">No students added yet.</div>
+                            <div class="text-body-secondary" jhiTranslate="artemisApp.team.noStudentsAddedYet"></div>
                         </div>
                     </li>
                 }
@@ -159,9 +160,9 @@
             <div class="alert mt-3" [class.alert-info]="!showIgnoreTeamSizeRecommendationOption" [class.alert-warning]="showIgnoreTeamSizeRecommendationOption" role="alert">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <span class="font-weight-bold" jhiTranslate="artemisApp.team.teamSizeNote">Recommended team size:</span>
+                        <span class="font-weight-bold" jhiTranslate="artemisApp.team.teamSizeNote"></span>
                         {{ config.minTeamSize }} - {{ config.maxTeamSize }}
-                        <span jhiTranslate="artemisApp.team.teamSizeUnit">students</span>
+                        <span jhiTranslate="artemisApp.team.teamSizeUnit"></span>
                     </div>
                     @if (showIgnoreTeamSizeRecommendationOption) {
                         <div class="form-check">
@@ -174,7 +175,7 @@
                                 [ngModelOptions]="{ standalone: true }"
                             />
                             <label class="form-check-label" for="ignoreTeamSizeRecommendation">
-                                <span jhiTranslate="artemisApp.team.ignoreTeamSizeRecommendation">Proceed against recommendation</span>
+                                <span jhiTranslate="artemisApp.team.ignoreTeamSizeRecommendation"></span>
                                 <fa-icon class="ms-1" [icon]="faExclamationTriangle" />
                             </label>
                         </div>
@@ -185,10 +186,10 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
-            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
         <button type="submit" [disabled]="editForm.invalid || isSaving || teamSizeViolationUnconfirmed" class="btn btn-primary">
-            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
         </button>
     </div>
 </form>

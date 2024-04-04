@@ -1,15 +1,20 @@
 package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -28,8 +33,7 @@ import de.tum.in.www1.artemis.exception.LocalCIException;
  * Service for Docker related operations in local CI
  */
 @Service
-@Profile("buildagent")
-
+@Profile(PROFILE_BUILDAGENT)
 public class LocalCIDockerService {
 
     private final ReentrantLock lock = new ReentrantLock();
@@ -46,9 +50,30 @@ public class LocalCIDockerService {
     @Value("${artemis.continuous-integration.image-cleanup.expiry-days:2}")
     private int imageExpiryDays;
 
+    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
+    private String buildContainerPrefix;
+
     public LocalCIDockerService(DockerClient dockerClient, HazelcastInstance hazelcastInstance) {
         this.dockerClient = dockerClient;
         this.hazelcastInstance = hazelcastInstance;
+    }
+
+    /**
+     * Removes all stranded build containers after the application has started
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
+        // NOTE: we delay this after startup, because this can take several seconds and can block the startup of the build agent otherwise
+        // remove all stranded build containers after 10s
+        var executor = Executors.newScheduledThreadPool(1);
+        executor.schedule(() -> {
+            log.info("Start cleanup stranded build containers");
+            var buildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
+                    .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).toList();
+            log.info("Found {} stranded build containers", buildContainers.size());
+            buildContainers.forEach(container -> dockerClient.removeContainerCmd(container.getId()).withForce(true).exec());
+            log.info("Cleanup stranded build containers done");
+        }, 10, TimeUnit.SECONDS);
     }
 
     /**
@@ -77,6 +102,9 @@ public class LocalCIDockerService {
                 }
                 catch (InterruptedException ie) {
                     throw new LocalCIException("Interrupted while pulling docker image " + imageName, ie);
+                }
+                catch (Exception e3) {
+                    throw new LocalCIException("Error while pulling docker image " + imageName, e3);
                 }
             }
             finally {

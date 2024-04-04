@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -10,13 +12,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -31,11 +33,12 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
+@Profile(PROFILE_CORE)
 @Service
 public class QuizExerciseService extends QuizService<QuizExercise> {
 
@@ -120,7 +123,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param files                the files that were uploaded
      * @return the updated quiz exercise with the changed statistics
      */
-    public QuizExercise reEvaluate(QuizExercise quizExercise, QuizExercise originalQuizExercise, @Nonnull List<MultipartFile> files) throws IOException {
+    public QuizExercise reEvaluate(QuizExercise quizExercise, QuizExercise originalQuizExercise, @NotNull List<MultipartFile> files) throws IOException {
         quizExercise.undoUnallowedChanges(originalQuizExercise);
         validateQuizExerciseFiles(quizExercise, files, false);
 
@@ -192,7 +195,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Search for all quiz exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * Search for all quiz exercises fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged,
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
@@ -202,7 +205,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<QuizExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
+    public SearchResultPageDTO<QuizExercise> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
             final User user) {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
@@ -315,7 +318,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param providedFiles the provided files to validate
      * @param isCreate      On create all files get validated, on update only changed files get validated
      */
-    public void validateQuizExerciseFiles(QuizExercise quizExercise, @Nonnull List<MultipartFile> providedFiles, boolean isCreate) {
+    public void validateQuizExerciseFiles(QuizExercise quizExercise, @NotNull List<MultipartFile> providedFiles, boolean isCreate) {
         long fileCount = providedFiles.size();
         Set<String> exerciseFileNames = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
         Set<String> newFileNames = isCreate ? exerciseFileNames : exerciseFileNames.stream().filter(fileNameOrUri -> {
@@ -376,8 +379,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return the public path of the saved image
      */
     private URI saveDragAndDropImage(Path basePath, MultipartFile file, @Nullable Long entityId) throws IOException {
-        String clearFileExtension = FileService.sanitizeFilename(FilenameUtils.getExtension(Objects.requireNonNull(file.getOriginalFilename())));
-        Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", clearFileExtension));
+        String sanitizedFilename = fileService.checkAndSanitizeFilename(file.getOriginalFilename());
+        Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", sanitizedFilename, true));
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
         return FilePathService.publicPathForActualPathOrThrow(savePath, entityId);
     }

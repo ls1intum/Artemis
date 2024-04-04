@@ -163,6 +163,30 @@ export const routes: Routes = [
         path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType',
         component: RepositoryViewComponent,
         data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService, LocalVCGuard],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/commit-history',
+        component: CommitHistoryComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [LocalVCGuard],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/commit-history/:commitHash',
+        component: CommitDetailsViewComponent,
+        data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
             pageTitle: 'artemisApp.repository.title',
             flushRepositoryCacheAfter: 900000, // 15 min
@@ -175,37 +199,37 @@ export const routes: Routes = [
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository',
         component: RepositoryViewComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history',
         component: CommitHistoryComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history/:commitHash',
         component: CommitDetailsViewComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [LocalVCGuard],
+        canActivate: [UserRouteAccessService, LocalVCGuard],
     },
 ];
 

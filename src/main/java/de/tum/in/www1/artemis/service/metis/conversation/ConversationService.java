@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ConversationService {
 
@@ -123,7 +127,7 @@ public class ConversationService {
             return Optional.empty();
         }
 
-        Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+        Conversation conversation = loadConversationWithParticipantsIfGroupChat(conversationId);
 
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
@@ -139,6 +143,20 @@ public class ConversationService {
     }
 
     /**
+     * In certain use cases, we need the conversation participants to generate the human-readable name for a group chat.
+     *
+     * @param conversationId the id of the conversation
+     * @return the conversation that has been loaded
+     */
+    public Conversation loadConversationWithParticipantsIfGroupChat(Long conversationId) {
+        var conversation = conversationRepository.findByIdElseThrow(conversationId);
+        if (conversation instanceof GroupChat) {
+            return conversationRepository.findWithParticipantsById(conversationId).orElseThrow();
+        }
+        return conversation;
+    }
+
+    /**
      * Gets the conversation in a course for which the user is a member
      *
      * @param course         the course
@@ -149,7 +167,7 @@ public class ConversationService {
         var conversationsOfUser = new ArrayList<Conversation>();
         List<Channel> channelsOfUser;
         if (course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
-            var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(course.getId(), requestingUser.getId());
+            var oneToOneChatsOfUser = oneToOneChatRepository.findAllWithParticipantsAndUserGroupsByCourseIdAndUserId(course.getId(), requestingUser.getId());
             conversationsOfUser.addAll(oneToOneChatsOfUser);
 
             var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(course.getId(), requestingUser.getId());

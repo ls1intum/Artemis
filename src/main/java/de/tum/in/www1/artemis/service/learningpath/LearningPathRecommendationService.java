@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.learningpath;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -7,6 +9,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -24,6 +27,7 @@ import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 /**
  * Service Implementation for the recommendation of competencies and learning objects in learning paths.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class LearningPathRecommendationService {
 

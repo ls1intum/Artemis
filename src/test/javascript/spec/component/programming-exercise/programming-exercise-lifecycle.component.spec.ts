@@ -13,6 +13,7 @@ import { QueryList, SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
 import { Course } from 'app/entities/course.model';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { Subject } from 'rxjs';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
@@ -32,6 +33,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 ProgrammingExerciseLifecycleComponent,
                 MockComponent(ProgrammingExerciseTestScheduleDatePickerComponent),
                 MockComponent(HelpIconComponent),
+                MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
                 MockDirective(NgModel),
                 TranslatePipeMock,
             ],
@@ -161,10 +163,10 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
 
         comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        comp.exercise.feedbackSuggestionsEnabled = true;
+        comp.exercise.feedbackSuggestionModule = 'programming_module';
         comp.toggleAssessmentType(); // toggle to AUTOMATIC
 
-        expect(comp.exercise.feedbackSuggestionsEnabled).toBeFalse();
+        expect(comp.exercise.feedbackSuggestionModule).toBeUndefined();
     });
 
     it('should change publication of tests for programming exercise with published solution', () => {

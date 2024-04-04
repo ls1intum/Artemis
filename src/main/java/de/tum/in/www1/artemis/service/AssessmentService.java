@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -18,6 +21,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class AssessmentService {
 
@@ -219,7 +223,7 @@ public class AssessmentService {
      * @return the saved result
      */
     private Result submitManualAssessment(long resultId, Exercise exercise) {
-        Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(resultId);
+        Result result = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsByIdElseThrow(resultId);
         result.setRatedIfNotAfterDueDate();
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.submitResult(result, exercise);
@@ -244,7 +248,7 @@ public class AssessmentService {
      * @return the saved result
      */
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId) {
-        Result result = submission.getResults().stream().filter(res -> res.getId().equals(resultId)).findAny().orElse(null);
+        Result result = submission.getResults().stream().filter(res -> res != null && res.getId().equals(resultId)).findAny().orElse(null);
 
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission);

@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,6 +26,7 @@ import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
 /**
  * Spring Data repository for the Team entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
 
@@ -30,7 +34,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     List<Team> findAllByExerciseId(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "students")
-    List<Team> findAllWithStudentsByIdIn(List<Long> teamIds);
+    List<Team> findAllWithStudentsByIdIn(Collection<Long> teamIds);
 
     List<Team> findAllByExerciseCourseIdAndShortName(Long courseId, String shortName);
 
@@ -161,10 +165,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
             }
         });
         return conflicts;
-    }
-
-    default Team findByIdElseThrow(long teamId) throws EntityNotFoundException {
-        return findById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
     }
 
     default Team findWithStudentsByIdElseThrow(long teamId) throws EntityNotFoundException {

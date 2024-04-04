@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -411,6 +411,7 @@ class Lti13ServiceTest {
         Exercise exercise = state.exercise();
         StudentParticipation participation = state.participation();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setOnlineCourse(true);
         ClientRegistration clientRegistration = state.clientRegistration();
 
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);

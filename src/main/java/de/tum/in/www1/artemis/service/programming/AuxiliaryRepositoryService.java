@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_CHECKOUT_PATH;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,15 +10,17 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceErrorKeys;
 
+@Profile(PROFILE_CORE)
 @Service
 public class AuxiliaryRepositoryService {
 

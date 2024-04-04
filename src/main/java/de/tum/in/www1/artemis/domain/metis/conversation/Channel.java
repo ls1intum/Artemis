@@ -1,18 +1,24 @@
 package de.tum.in.www1.artemis.domain.metis.conversation;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import java.time.ZonedDateTime;
+import java.util.Set;
+
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.Post;
 
 @Entity
 @DiscriminatorValue("C")
@@ -89,6 +95,25 @@ public class Channel extends Conversation {
     @JoinColumn(unique = true, name = "exam_id")
     @JsonIgnoreProperties("channel")
     private Exam exam;
+
+    public Channel(Long id, User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,
+            ZonedDateTime lastMessageDate, String name, @Nullable String description, @Nullable String topic, Boolean isPublic, Boolean isAnnouncementChannel, Boolean isArchived,
+            boolean isCourseWide, Lecture lecture, Exercise exercise, Exam exam) {
+        super(id, creator, conversationParticipants, posts, course, creationDate, lastMessageDate);
+        this.name = name;
+        this.description = description;
+        this.topic = topic;
+        this.isPublic = isPublic;
+        this.isAnnouncementChannel = isAnnouncementChannel;
+        this.isArchived = isArchived;
+        this.isCourseWide = isCourseWide;
+        this.lecture = lecture;
+        this.exercise = exercise;
+        this.exam = exam;
+    }
+
+    public Channel() {
+    }
 
     @Nullable
     public String getName() {
@@ -189,5 +214,11 @@ public class Channel extends Conversation {
         setExam(null);
         setExercise(null);
         super.hideDetails();
+    }
+
+    @Override
+    public Conversation copy() {
+        return new Channel(getId(), getCreator(), getConversationParticipants(), getPosts(), getCourse(), getCreationDate(), getLastMessageDate(), getName(), getDescription(),
+                getTopic(), getIsPublic(), getIsAnnouncementChannel(), getIsArchived(), getIsCourseWide(), getLecture(), getExercise(), getExam());
     }
 }

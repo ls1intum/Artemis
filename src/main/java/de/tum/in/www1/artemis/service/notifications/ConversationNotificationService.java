@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.notification.ConversationNotificationFactory.createConversationMessageNotification;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -24,6 +26,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ConversationNotifica
 /**
  * Service for sending notifications about new messages in conversations.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ConversationNotificationService {
 
@@ -53,7 +56,7 @@ public class ConversationNotificationService {
         String notificationText;
         String[] placeholders;
         NotificationType notificationType = NotificationType.CONVERSATION_NEW_MESSAGE;
-        String conversationName = createdMessage.getConversation().getHumanReadableNameForReceiver(createdMessage.getAuthor());
+        String conversationName = conversation.getHumanReadableNameForReceiver(createdMessage.getAuthor());
 
         // add channel/groupChat/oneToOneChat string to placeholders for notification to distinguish in mobile client
         if (conversation instanceof Channel channel) {

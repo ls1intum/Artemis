@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="basak-akan" id="20240118175408">
+        <!-- Drop the lti_key column -->
+        <dropColumn tableName="online_course_configuration" columnName="lti_key"/>
+        <!-- Drop the lti_secret column -->
+        <dropColumn tableName="online_course_configuration" columnName="lti_secret"/>
+        <!-- Drop the lti_outcome_url table -->
+        <dropTable tableName="lti_outcome_url"/>
+    </changeSet>
+</databaseChangeLog>

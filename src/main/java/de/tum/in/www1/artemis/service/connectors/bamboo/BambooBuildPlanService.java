@@ -8,7 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.*;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -60,6 +60,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 
 @Service
 @Profile("bamboo")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BambooBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(BambooBuildPlanService.class);

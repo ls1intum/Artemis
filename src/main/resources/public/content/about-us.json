@@ -444,6 +444,22 @@
         {
             "fullName": "Xinyao Liu",
             "photoDirectory": "public/images/about/Xinyao_Liu.jpg"
+        },
+        {
+            "fullName": "Raphael Stief",
+            "photoDirectory": "public/images/about/Raphael_Stief.jpg"
+        },
+        {
+            "fullName": "Jonathan Ostertag",
+            "photoDirectory": "public/images/about/Jonathan_Ostertag.jpg"
+        },
+        {
+            "fullName": "Michael Dyer",
+            "photoDirectory": "public/images/about/Michael_Dyer.jpg"
+        },
+        {
+            "fullName": "Mateus Messias Mendes",
+            "photoDirectory": "public/images/about/Mateus_Messias_Mendes.jpg"
         }
     ]
 }

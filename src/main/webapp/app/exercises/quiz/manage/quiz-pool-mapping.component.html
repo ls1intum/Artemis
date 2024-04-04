@@ -6,13 +6,13 @@
         </div>
         @if (!disabled) {
             <div class="col-12 col-lg-10">
-                <label for="groupName" jhiTranslate="artemisApp.quizPool.groupName">Group Name</label>
+                <label for="groupName" jhiTranslate="artemisApp.quizPool.groupName"></label>
                 <input required #groupName id="groupName" name="groupName" class="form-control" />
             </div>
             <div class="col-12 col-lg-2 d-flex align-items-end mt-2 mt-lg-0">
                 <a class="btn btn-primary text-truncate w-100" (click)="addGroup(groupName.value); groupName.value = ''">
                     <fa-icon [icon]="faPlus" />
-                    <span jhiTranslate="artemisApp.quizPool.addGroup">Add Group</span>
+                    <span jhiTranslate="artemisApp.quizPool.addGroup"></span>
                 </a>
             </div>
         }
@@ -23,10 +23,10 @@
                 <thead>
                     <tr>
                         <th>
-                            <span jhiTranslate="artemisApp.quizPool.group">Group</span>
+                            <span jhiTranslate="artemisApp.quizPool.group"></span>
                         </th>
                         <th class="w-75">
-                            <span jhiTranslate="artemisApp.quizExercise.questions">Questions</span>
+                            <span jhiTranslate="artemisApp.quizExercise.questions"></span>
                         </th>
                         <th></th>
                     </tr>

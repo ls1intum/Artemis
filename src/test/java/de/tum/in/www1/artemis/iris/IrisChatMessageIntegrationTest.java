@@ -8,6 +8,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -76,7 +77,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend = createDefaultMockMessage(irisSession);
         messageToSend.setMessageDifferentiator(1453);
 
-        irisRequestMockProvider.mockMessageV1Response("Hello World");
+        irisRequestMockProvider.mockMessageV2Response(Map.of("response", "Hello World"));
         setupExercise();
 
         var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
@@ -95,9 +96,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessageToWrongSession() throws Exception {
         irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var irisSession2 = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
-        IrisMessage messageToSend = createDefaultMockMessage(irisSession2);
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
+        var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        IrisMessage messageToSend = createDefaultMockMessage(irisSession);
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -144,15 +145,11 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getMessages() throws Exception {
         var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisMessage message1 = createDefaultMockMessage(irisSession);
-        IrisMessage message2 = createDefaultMockMessage(irisSession);
-        IrisMessage message3 = createDefaultMockMessage(irisSession);
-        IrisMessage message4 = createDefaultMockMessage(irisSession);
 
-        message1 = irisMessageService.saveMessage(message1, irisSession, IrisMessageSender.USER);
-        message2 = irisMessageService.saveMessage(message2, irisSession, IrisMessageSender.LLM);
-        message3 = irisMessageService.saveMessage(message3, irisSession, IrisMessageSender.USER);
-        message4 = irisMessageService.saveMessage(message4, irisSession, IrisMessageSender.LLM);
+        IrisMessage message1 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.USER);
+        IrisMessage message2 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.LLM);
+        IrisMessage message3 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.USER);
+        IrisMessage message4 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.LLM);
 
         var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
         assertThat(messages).hasSize(4).containsAll(List.of(message1, message2, message3, message4));
@@ -251,7 +248,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockMessageV1Response("Hello World");
+        irisRequestMockProvider.mockMessageV2Response(Map.of("response", "Hello World"));
         setupExercise();
 
         var irisMessage = irisMessageService.saveMessage(messageToSend, irisSession, IrisMessageSender.USER);
@@ -268,7 +265,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend1 = createDefaultMockMessage(irisSession);
         var messageToSend2 = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockMessageV1Response("Hello World");
+        irisRequestMockProvider.mockMessageV2Response(Map.of("response", "Hello World"));
         setupExercise();
 
         var globalSettings = irisSettingsService.getGlobalSettings();
@@ -312,9 +309,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         String randomNoun = nouns[rdm.nextInt(nouns.length)];
 
         var text = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
-        var content = new IrisTextMessageContent(text);
-        content.setId(rdm.nextLong());
-        return content;
+        return new IrisTextMessageContent(text);
     }
 
     private ArgumentMatcher<Object> messageDTO(String message) {

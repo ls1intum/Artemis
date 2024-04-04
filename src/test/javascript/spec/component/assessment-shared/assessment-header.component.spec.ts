@@ -106,7 +106,7 @@ describe('AssessmentHeaderComponent', () => {
 
         const alertComponent = fixture.debugElement.query(By.css('ngb-alert'));
         expect(alertComponent).toBeDefined();
-        expect(alertComponent.nativeElement.innerHTML).toContain('Assessment Due Date is over, the assessment will be published immediately after submitting');
+        expect(alertComponent.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.assessment.assessmentDueDateIsOver');
     });
 
     it('should hide right side row-container if loading', () => {

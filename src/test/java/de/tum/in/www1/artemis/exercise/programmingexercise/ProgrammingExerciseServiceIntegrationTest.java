@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.IMPORT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.ROOT;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.IMPORT;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -34,14 +34,14 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
+import de.tum.in.www1.artemis.util.ExerciseIntegrationTestService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 
 class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "progexserviceintegration";
 
-    private static final String BASE_RESOURCE = "/api/programming-exercises/";
+    private static final String BASE_RESOURCE = "/api/programming-exercises";
 
     @Autowired
     ProgrammingExerciseService programmingExerciseService;
@@ -53,7 +53,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
+    private ExerciseIntegrationTestService exerciseIntegrationTestService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -236,7 +236,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     private void testCourseAndExamFilters(boolean withSCA, String programmingExerciseTitle) throws Exception {
         programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, withSCA);
         programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise(programmingExerciseTitle + "-Morpork", programmingExerciseTitle + "Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/", programmingExerciseTitle);
+        exerciseIntegrationTestService.testCourseAndExamFilters("/api/programming-exercises", programmingExerciseTitle);
         testSCAFilter(programmingExerciseTitle, withSCA);
     }
 

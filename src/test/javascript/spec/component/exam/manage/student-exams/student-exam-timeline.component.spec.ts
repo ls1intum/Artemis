@@ -30,10 +30,11 @@ import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { QueryList } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { ChangeContext, SliderComponent } from 'ngx-slider-v2';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { MatSlider } from '@angular/material/slider';
+import { FormsModule } from 'app/forms/forms.module';
 
 describe('Student Exam Timeline Component', () => {
     let fixture: ComponentFixture<StudentExamTimelineComponent>;
@@ -61,7 +62,7 @@ describe('Student Exam Timeline Component', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FormsModule],
             declarations: [
                 StudentExamTimelineComponent,
                 MockComponent(ProgrammingExerciseExamDiffComponent),
@@ -72,7 +73,7 @@ describe('Student Exam Timeline Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockTranslateValuesDirective,
                 MockComponent(ExamNavigationBarComponent),
-                MockComponent(SliderComponent),
+                MockComponent(MatSlider),
             ],
             providers: [
                 {
@@ -206,22 +207,24 @@ describe('Student Exam Timeline Component', () => {
         }
     });
 
-    it.each([{ value: dayjs('2023-01-07').valueOf() }, { value: dayjs('2023-02-07').valueOf() }, { value: dayjs('2023-05-07').valueOf() }])(
+    it.each([0, 1, 2])(
         'should correctly set the values onInputChange',
-        fakeAsync((changeContext: ChangeContext) => {
+        fakeAsync((index: number) => {
             component.submissionVersions = [submissionVersion];
             component.fileUploadSubmissions = [fileUploadSubmission1];
             component.programmingSubmissions = [programmingSubmission1];
             component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
+            component.timestampIndex = index;
+
             //when
-            component.onSliderInputChange(changeContext as unknown as ChangeContext);
+            component.onSliderInputChange();
             fixture.detectChanges();
             //then
-            if (changeContext.value === dayjs('2023-01-07').valueOf()) {
+            if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-01-07'))) {
                 expect(component.currentSubmission).toEqual(submissionVersion);
                 expect(component.exerciseIndex).toBe(0);
                 expect(component.currentExercise).toEqual(textExercise);
-            } else if (changeContext.value === dayjs('2023-02-07').valueOf()) {
+            } else if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-02-07'))) {
                 expect(component.currentSubmission).toEqual(programmingSubmission1);
                 expect(component.exerciseIndex).toBe(1);
                 expect(component.currentExercise).toEqual(programmingExercise);
@@ -230,7 +233,7 @@ describe('Student Exam Timeline Component', () => {
                 expect(component.exerciseIndex).toBe(2);
                 expect(component.currentExercise).toEqual(fileUploadExercise);
             }
-            expect(component.selectedTimestamp).toEqual(changeContext.value);
+            expect(component.selectedTimestamp).toEqual(component.submissionTimeStamps[component.timestampIndex].valueOf());
         }),
     );
     it.each([programmingSubmission1, programmingSubmission2, programmingSubmission3])(

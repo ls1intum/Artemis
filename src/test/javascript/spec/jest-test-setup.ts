@@ -8,6 +8,8 @@ import failOnConsole from 'jest-fail-on-console';
 
 failOnConsole({
     shouldFailOnWarn: true,
+    shouldFailOnLog: true,
+    shouldFailOnInfo: true,
 });
 
 const noop = () => {};

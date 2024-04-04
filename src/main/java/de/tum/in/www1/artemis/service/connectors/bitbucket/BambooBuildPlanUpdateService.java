@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationUpdateS
 
 @Service
 @Profile("bamboo")
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdateService {
 
     @Value("${artemis.continuous-integration.url}")

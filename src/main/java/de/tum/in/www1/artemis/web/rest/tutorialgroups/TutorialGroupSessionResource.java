@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.interpretInTimeZone;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.interpretInTimeZone;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -10,19 +11,21 @@ import java.time.ZoneId;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import javax.ws.rs.BadRequestException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
@@ -36,8 +39,9 @@ import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.SessionOverlapsWithSessionException;
 
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class TutorialGroupSessionResource {
 
     private static final String ENTITY_NAME = "tutorialGroupSession";
@@ -79,7 +83,7 @@ public class TutorialGroupSessionResource {
      * @param sessionId       the id of the session to retrieve
      * @return ResponseEntity with status 200 (OK) and with body the tutorial group session
      */
-    @GetMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
+    @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> getOneOfTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
@@ -102,7 +106,7 @@ public class TutorialGroupSessionResource {
      * @param tutorialGroupSessionDTO DTO containing the updated tutorial group session
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group session
      */
-    @PutMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
+    @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
@@ -113,15 +117,8 @@ public class TutorialGroupSessionResource {
         var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToUpdate.getTutorialGroup(), null);
-        var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
-        if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration");
-        }
-        var configuration = configurationOptional.get();
-        if (configuration.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
-        }
 
+        TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
         var updatedSession = tutorialGroupSessionDTO.toEntity(configuration);
         sessionToUpdate.setStart(updatedSession.getStart());
         sessionToUpdate.setEnd(updatedSession.getEnd());
@@ -137,18 +134,9 @@ public class TutorialGroupSessionResource {
             sessionToUpdate.setTutorialGroupSchedule(null);
         }
 
-        var overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(),
-                sessionToUpdate.getEnd());
-        if (overlappingPeriodOptional.isPresent()) {
-            sessionToUpdate.setStatus(TutorialGroupSessionStatus.CANCELLED);
-            sessionToUpdate.setStatusExplanation(null);
-            sessionToUpdate.setTutorialGroupFreePeriod(overlappingPeriodOptional.get());
-        }
-        else {
-            sessionToUpdate.setStatus(TutorialGroupSessionStatus.ACTIVE);
-            sessionToUpdate.setStatusExplanation(null);
-            sessionToUpdate.setTutorialGroupFreePeriod(null);
-        }
+        Optional<TutorialGroupFreePeriod> overlappingPeriodOptional = tutorialGroupFreePeriodRepository
+                .findFirstOverlappingInSameCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(), sessionToUpdate.getEnd());
+        updateTutorialGroupSession(sessionToUpdate, overlappingPeriodOptional);
 
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
@@ -164,7 +152,7 @@ public class TutorialGroupSessionResource {
      * @param attendanceCount the new attendance count, can be null
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group session
      */
-    @PatchMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/attendance-count")
+    @PatchMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/attendance-count")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> updateAttendanceCount(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
@@ -186,7 +174,7 @@ public class TutorialGroupSessionResource {
      * @param sessionId       the id of the session to delete
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
-    @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
+    @DeleteMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> deleteSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
@@ -206,7 +194,7 @@ public class TutorialGroupSessionResource {
      * @param tutorialGroupSessionDTO DTO containing the new tutorial group session
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group session
      */
-    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
@@ -215,35 +203,49 @@ public class TutorialGroupSessionResource {
         tutorialGroupSessionDTO.validityCheck();
         var tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(tutorialGroupId);
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(tutorialGroup, null);
-        var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
-        if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration");
-        }
-        var configuration = configurationOptional.get();
-        if (configuration.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
-        }
-
+        TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
         TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(configuration);
         newSession.setTutorialGroup(tutorialGroup);
         checkEntityIdMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
         isValidTutorialGroupSession(newSession, ZoneId.of(configuration.getCourse().getTimeZone()));
 
-        var overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroup.getCourse(), newSession.getStart(), newSession.getEnd());
-        if (overlappingPeriodOptional.isPresent()) {
+        Optional<TutorialGroupFreePeriod> overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findFirstOverlappingInSameCourse(tutorialGroup.getCourse(),
+                newSession.getStart(), newSession.getEnd());
+        updateTutorialGroupSession(newSession, overlappingPeriodOptional);
+        newSession = tutorialGroupSessionRepository.save(newSession);
+
+        return ResponseEntity.created(URI.create("/api/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
+                .body(TutorialGroupSession.preventCircularJsonConversion(newSession));
+    }
+
+    /**
+     * Updates the status and associated free period of a tutorial group session based on the presence of an overlapping free period.
+     *
+     * @param newSession        the tutorial group session to be updated.
+     * @param overlappingPeriod an Optional that may contain a TutorialGroupFreePeriod if there is an overlapping free period.
+     */
+    public static void updateTutorialGroupSession(TutorialGroupSession newSession, Optional<TutorialGroupFreePeriod> overlappingPeriod) {
+        if (overlappingPeriod.isPresent()) {
             newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
+            // the status explanation is set to null, as it is specified in the TutorialGroupFreePeriod
             newSession.setStatusExplanation(null);
-            newSession.setTutorialGroupFreePeriod(overlappingPeriodOptional.get());
+            newSession.setTutorialGroupFreePeriod(overlappingPeriod.get());
         }
         else {
             newSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
             newSession.setStatusExplanation(null);
             newSession.setTutorialGroupFreePeriod(null);
         }
-        newSession = tutorialGroupSessionRepository.save(newSession);
+    }
 
-        return ResponseEntity.created(URI.create("/api/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
-                .body(TutorialGroupSession.preventCircularJsonConversion(newSession));
+    private TutorialGroupsConfiguration validateTutorialGroupConfiguration(@PathVariable Long courseId) {
+        var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
+        var configuration = configurationOptional.orElseThrow(() -> new BadRequestException("The course has no tutorial groups configuration"));
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
+
+        return configuration;
     }
 
     /**
@@ -255,7 +257,7 @@ public class TutorialGroupSessionResource {
      * @param tutorialGroupStatusDTO DTO containing the explanation for the cancellation
      * @return ResponseEntity with status 200 (OK) and in the body the cancelled tutorial group session
      */
-    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> cancel(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
@@ -283,7 +285,7 @@ public class TutorialGroupSessionResource {
      * @param sessionId       the id of the session to activate
      * @return ResponseEntity with status 200 (OK) and in the body the activated tutorial group session
      */
-    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> activate(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) throws URISyntaxException {

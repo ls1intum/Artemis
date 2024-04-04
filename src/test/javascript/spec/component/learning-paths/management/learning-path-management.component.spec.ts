@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { LearningPathManagementComponent, TableColumn } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
 import { LearningPathPagingService } from 'app/course/learning-paths/learning-path-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { LearningPath } from 'app/entities/competency/learning-path.model';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -28,7 +28,7 @@ describe('LearningPathManagementComponent', () => {
     let searchStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
     let searchResult: SearchResult<LearningPath>;
-    let state: PageableSearch;
+    let state: SearchTermPageableSearch;
     let learningPath: LearningPath;
     let learningPathService: LearningPathService;
     let enableLearningPathsStub: jest.SpyInstance;

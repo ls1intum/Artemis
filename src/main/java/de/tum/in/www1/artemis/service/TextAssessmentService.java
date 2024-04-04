@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.hibernate.Hibernate.isInitialized;
 
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -17,6 +19,7 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class TextAssessmentService extends AssessmentService {
 

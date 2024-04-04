@@ -7,6 +7,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+// TODO: convert to record
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TestwiseCoverageReportDTO implements Serializable {
 

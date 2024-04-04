@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,6 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the Lecture entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface LectureRepository extends JpaRepository<Lecture, Long> {
 
@@ -31,13 +35,6 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             WHERE lecture.course.id = :courseId
             """)
     Set<Lecture> findAllByCourseIdWithAttachments(@Param("courseId") Long courseId);
-
-    @Query("""
-            SELECT lecture
-            FROM Lecture lecture
-            WHERE lecture.course.id = :courseId
-            """)
-    Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT lecture
@@ -99,9 +96,10 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
                 LEFT JOIN FETCH lecture.lectureUnits lectureUnit
                 LEFT JOIN FETCH lectureUnit.attachment luAttachment
                 LEFT JOIN FETCH lectureUnit.slides slides
+                LEFT JOIN FETCH lecture.attachments
             WHERE lecture.id = :lectureId
             """)
-    Optional<Lecture> findByIdWithLectureUnitsAndWithSlides(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithLectureUnitsAndSlidesAndAttachments(@Param("lectureId") long lectureId);
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
@@ -160,8 +158,8 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     }
 
     @NotNull
-    default Lecture findByIdWithLectureUnitsAndWithSlidesElseThrow(Long lectureId) {
-        return findByIdWithLectureUnitsAndWithSlides(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    default Lecture findByIdWithLectureUnitsAndSlidesAndAttachmentsElseThrow(long lectureId) {
+        return findByIdWithLectureUnitsAndSlidesAndAttachments(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 
     @Query("""

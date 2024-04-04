@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.function.BiFunction;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +24,7 @@ import inet.ipaddr.IPAddressString;
 /**
  * Service Implementation for managing ExamSession.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ExamSessionService {
 

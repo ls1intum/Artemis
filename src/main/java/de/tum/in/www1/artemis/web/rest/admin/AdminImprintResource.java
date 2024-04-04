@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
-import javax.ws.rs.BadRequestException;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import jakarta.ws.rs.BadRequestException;
+
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,8 +20,9 @@ import de.tum.in.www1.artemis.service.LegalDocumentService;
 /**
  * REST controller for editing the imprint as an admin.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin")
+@RequestMapping("api/admin/")
 public class AdminImprintResource {
 
     private final LegalDocumentService legalDocumentService;

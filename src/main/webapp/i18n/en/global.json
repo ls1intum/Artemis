@@ -139,7 +139,8 @@
             "email.pattern": "Please use an email with the following pattern:",
             "cancel": "Cancel",
             "confirm": "Confirm",
-            "refresh": "Refresh"
+            "refresh": "Refresh",
+            "invalidInput": "Invalid Input"
         },
         "messages": {
             "info": {
@@ -209,7 +210,7 @@
             "editSelected": "Edit selected",
             "editInEditor": "Edit in editor",
             "editBuildPlan": "Edit build plan",
-            "editInIntelliJ": "Edit in IntelliJ",
+            "editInOrion": "Edit in your IDE",
             "editEntity": "Edit {{entity}}",
             "exampleSubmissions": "Example submissions",
             "generate": "Generate",
@@ -262,7 +263,9 @@
             "ldap": "Sync from LDAP",
             "notUndoable": "This action cannot be undone!",
             "discardChanges": "Discard changes",
-            "goBack": "Go back"
+            "goBack": "Go back",
+            "search": "Search",
+            "select": "Select"
         },
         "detail": {
             "field": "Field",
@@ -331,6 +334,7 @@
         "learningPath": "Learning Path",
         "tutorialGroups": "Tutorial Groups",
         "exercise": "Exercise details",
+        "exercises": "Exercises",
         "statistics": "Course statistics",
         "exams": "Exams",
         "communication": "Communication"

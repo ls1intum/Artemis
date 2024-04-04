@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 
@@ -8,12 +9,19 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -21,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -29,17 +38,36 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ProfileService;
+import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
@@ -55,12 +83,13 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseService {
 
@@ -262,10 +291,12 @@ public class ProgrammingExerciseService {
 
         // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins or Bamboo as
         // we want to use the default approach of Jenkinsfiles and Build Plans if no customizations are made
-        if (aeolusTemplateService.isPresent() && programmingExercise.getBuildPlanConfiguration() == null && !(profileService.isJenkins() || profileService.isBamboo())) {
-            Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
+        if (aeolusTemplateService.isPresent() && savedProgrammingExercise.getBuildPlanConfiguration() == null
+                && !(profileService.isJenkinsActive() || profileService.isBambooActive())) {
+            Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(savedProgrammingExercise);
             if (windfile != null) {
                 savedProgrammingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+                savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
             }
             else {
                 log.warn("No windfile for the settings of exercise {}", savedProgrammingExercise.getId());
@@ -425,7 +456,7 @@ public class ProgrammingExerciseService {
         giveCIProjectPermissions(programmingExercise);
 
         Windfile windfile = programmingExercise.getWindfile();
-        if (windfile != null && buildScriptGenerationService.isPresent()) {
+        if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildScript() == null) {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
             programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
             programmingExercise.setBuildScript(script);
@@ -513,21 +544,7 @@ public class ProgrammingExerciseService {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
-        if (continuousIntegrationService.isPresent()) {
-            if (!Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
-                if (updatedProgrammingExercise.getBuildPlanConfiguration() != null) {
-                    // we only update the build plan configuration if it has changed and is not null, otherwise we
-                    // do not have a valid exercise anymore
-                    continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
-                    continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
-                    continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
-                    resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
-                }
-                else {
-                    updatedProgrammingExercise.setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildPlanConfiguration());
-                }
-            }
-        }
+        updateBuildPlanForExercise(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
@@ -543,6 +560,39 @@ public class ProgrammingExerciseService {
         scheduleOperations(updatedProgrammingExercise.getId());
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
+    }
+
+    /**
+     * This method updates the build plan for the given programming exercise.
+     * It deletes the old build plan and creates a new one if the build plan configuration has changed.
+     *
+     * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
+     * @param updatedProgrammingExercise      the changed programming exercise with its new values
+     */
+    private void updateBuildPlanForExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+        if (continuousIntegrationService.isEmpty()
+                || Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
+            return;
+        }
+        // we only update the build plan configuration if it has changed and is not null, otherwise we
+        // do not have a valid exercise anymore
+        if (updatedProgrammingExercise.getBuildPlanConfiguration() != null) {
+            if (!profileService.isLocalCiActive()) {
+                continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
+                continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
+                continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
+                resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
+            }
+            if (buildScriptGenerationService.isPresent()) {
+                String script = buildScriptGenerationService.get().getScript(updatedProgrammingExercise);
+                updatedProgrammingExercise.setBuildScript(script);
+                programmingExerciseRepository.save(updatedProgrammingExercise);
+            }
+        }
+        else {
+            // if the user does not change the build plan configuration, we have to set the old one again
+            updatedProgrammingExercise.setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildPlanConfiguration());
+        }
     }
 
     /**
@@ -761,7 +811,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Search for all programming exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * Search for all programming exercises fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged,
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
@@ -771,7 +821,7 @@ public class ProgrammingExerciseService {
      * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
+    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
             final User user) {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
@@ -792,7 +842,7 @@ public class ProgrammingExerciseService {
      * @param programmingLanguage The result will only include exercises in this language
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<ProgrammingExercise> getAllWithSCAOnPageWithSize(PageableSearchDTO<String> search, boolean isCourseFilter, boolean isExamFilter,
+    public SearchResultPageDTO<ProgrammingExercise> getAllWithSCAOnPageWithSize(SearchTermPageableSearchDTO<String> search, boolean isCourseFilter, boolean isExamFilter,
             ProgrammingLanguage programmingLanguage, User user) {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);

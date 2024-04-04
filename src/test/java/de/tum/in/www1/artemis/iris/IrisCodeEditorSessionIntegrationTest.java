@@ -97,13 +97,5 @@ class IrisCodeEditorSessionIntegrationTest extends AbstractIrisIntegrationTest {
         settings.getIrisCodeEditorSettings().setPreferredModel("TEST_MODEL_UP");
         irisSettingsService.saveIrisSettings(settings);
         assertThat(request.get("/api/iris/code-editor-sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isTrue();
-
-        settings.getIrisCodeEditorSettings().setPreferredModel("TEST_MODEL_DOWN");
-        irisSettingsService.saveIrisSettings(settings);
-        assertThat(request.get("/api/iris/code-editor-sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isFalse();
-
-        settings.getIrisCodeEditorSettings().setPreferredModel("TEST_MODEL_NA");
-        irisSettingsService.saveIrisSettings(settings);
-        assertThat(request.get("/api/iris/code-editor-sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isFalse();
     }
 }

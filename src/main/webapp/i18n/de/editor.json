@@ -124,7 +124,7 @@
                 "templateInfo": "Kein Ergebnis verfügbar.",
                 "exerciseHasNoIssues": "Es wurden keine Probleme mit den Repositories identifiziert."
             },
-            "intellij": {
+            "orion": {
                 "testLocally": "Lokal Testen"
             }
         }

@@ -7,7 +7,7 @@
         <div class="col">
             <button (click)="openCreateDiagramDialog(courseId)" id="create-apollon-diagram" class="btn btn-primary">
                 <fa-icon [icon]="faPlus" />
-                <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel">Create a New Apollon Diagram</span>
+                <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel"></span>
             </button>
         </div>
     </div>
@@ -16,11 +16,11 @@
             <table class="table table-striped">
                 <thead>
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                        <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                        <th jhiSortBy="courseId"><span jhiTranslate="artemisApp.apollonDiagram.courseId">Course ID</span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                        <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                        <th jhiSortBy="diagramType"><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                        <th jhiTranslate="artemisApp.exercise.actions">Actions</th>
+                        <th jhiSortBy="id"><span jhiTranslate="global.field.id"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                        <th jhiSortBy="courseId"><span jhiTranslate="artemisApp.apollonDiagram.courseId"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                        <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                        <th jhiSortBy="diagramType"><span jhiTranslate="artemisApp.modelingExercise.diagramType"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                        <th jhiTranslate="artemisApp.exercise.actions"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -35,9 +35,12 @@
                             <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
                             <td jhiTranslate="{{ 'artemisApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>
                             <td>
-                                <button class="btn btn-primary me-1" (click)="handleOpenDialogClick(apollonDiagram.id!)" jhiTranslate="entity.action.open" id="open-diagram">
-                                    Open
-                                </button>
+                                <button
+                                    class="btn btn-primary me-1"
+                                    (click)="handleOpenDialogClick(apollonDiagram.id!)"
+                                    jhiTranslate="entity.action.open"
+                                    id="open-diagram"
+                                ></button>
                                 @if (course && course.isAtLeastInstructor) {
                                     <button
                                         class="me-1"

@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -383,7 +383,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(2);
         results.forEach(result -> {
-            var resultWithSubmission = resultRepository.findWithEagerSubmissionAndFeedbackById(result.getId());
+            var resultWithSubmission = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsById(result.getId());
             assertThat(resultWithSubmission).isPresent();
             assertThat(resultWithSubmission.get().getSubmission()).isNotNull();
             assertThat(resultWithSubmission.get().getSubmission().getId()).isEqualTo(submission.getId());
@@ -425,7 +425,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // There should only be one submission and this submission should be linked to the created result.
         List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
-        Result result = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(0).getId()).orElseThrow();
+        Result result = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsById(results.get(0).getId()).orElseThrow();
         submission = submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
         assertThat(result.getSubmission()).isNotNull();
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
@@ -749,13 +749,13 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, false);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
-        assertThat(statistics.getBuildCount()).isEqualTo(1);
-        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
-        assertThat(statistics.getTestDuration()).isEqualTo(10);
-        assertThat(statistics.getScaDuration()).isNull();
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(120);
-        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(1);
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
+        assertThat(statistics.buildCount()).isEqualTo(1);
+        assertThat(statistics.agentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.testDuration()).isEqualTo(10);
+        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.totalJobDuration()).isEqualTo(120);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(1);
     }
 
     @Test
@@ -772,13 +772,13 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, true);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
-        assertThat(statistics.getBuildCount()).isEqualTo(1);
-        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
-        assertThat(statistics.getTestDuration()).isEqualTo(10);
-        assertThat(statistics.getScaDuration()).isEqualTo(11);
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(120);
-        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(2);
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
+        assertThat(statistics.buildCount()).isEqualTo(1);
+        assertThat(statistics.agentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.testDuration()).isEqualTo(10);
+        assertThat(statistics.scaDuration()).isEqualTo(11);
+        assertThat(statistics.totalJobDuration()).isEqualTo(120);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(2);
     }
 
     @Test
@@ -794,14 +794,14 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, true);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
         // Should not extract any statistics
-        assertThat(statistics.getBuildCount()).isZero();
-        assertThat(statistics.getAgentSetupDuration()).isNull();
-        assertThat(statistics.getTestDuration()).isNull();
-        assertThat(statistics.getScaDuration()).isNull();
-        assertThat(statistics.getTotalJobDuration()).isNull();
-        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+        assertThat(statistics.buildCount()).isZero();
+        assertThat(statistics.agentSetupDuration()).isNull();
+        assertThat(statistics.testDuration()).isNull();
+        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.totalJobDuration()).isNull();
+        assertThat(statistics.dependenciesDownloadedCount()).isNull();
     }
 
     @NotNull
@@ -936,9 +936,11 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         var notification = createBambooBuildResultNotificationDTO(participation.getBuildPlanId());
 
-        String longErrorMessage = "abc\nmultiline\nfeedback\nabc\nmultiline\nfeedback";
+        String actualFeedbackText = "abc\nmultiline\nfeedback";
+
+        String longErrorMessage = actualFeedbackText + "\n" + actualFeedbackText;
         BambooTestJobDTO testCase = new BambooTestJobDTO("test1", "test1", "Class", List.of(longErrorMessage));
-        ((List<BambooTestJobDTO>) notification.getBuildJobs().get(0).getFailedTests()).set(0, testCase);
+        notification.getBuild().jobs().get(0).failedTests().set(0, testCase);
 
         postResult(notification, HttpStatus.OK, false);
 

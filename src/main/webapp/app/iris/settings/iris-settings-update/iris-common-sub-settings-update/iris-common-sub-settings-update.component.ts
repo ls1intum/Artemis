@@ -116,11 +116,10 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         }
         return false;
     }
-    get isChatSettingsSwitchDisabled() {
+    get isSettingsSwitchDisabled() {
         return this.inheritDisabled || (!this.isAdmin && this.settingsType !== this.EXERCISE);
     }
 
     protected readonly IrisSubSettings = IrisSubSettings;
     protected readonly IrisSubSettingsType = IrisSubSettingsType;
-    protected readonly IrisSettingsType = IrisSettingsType;
 }

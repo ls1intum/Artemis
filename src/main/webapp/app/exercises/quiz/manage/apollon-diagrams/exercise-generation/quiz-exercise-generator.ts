@@ -216,14 +216,17 @@ async function generateDragAndDropItemForRelationship(
  *
  * @return {DropLocation} A Drag and Drop Quiz Exercise `DropLocation`.
  */
-function computeDropLocation(elementLocation: { x: number; y: number; width: number; height: number }, totalSize: { width: number; height: number }): DropLocation {
+function computeDropLocation(
+    elementLocation: { x: number; y: number; width: number; height: number },
+    totalSize: { x?: number; y?: number; width: number; height: number },
+): DropLocation {
     const dropLocation = new DropLocation();
     // on quiz exercise generation, svg exports adds 15px padding
     elementLocation.x += 15;
     elementLocation.y += 15;
     // round to second decimal
-    dropLocation.posX = round((elementLocation.x / totalSize.width) * MAX_SIZE_UNIT, 2);
-    dropLocation.posY = round((elementLocation.y / totalSize.height) * MAX_SIZE_UNIT, 2);
+    dropLocation.posX = round(((elementLocation.x - (totalSize.x ?? 0)) / totalSize.width) * MAX_SIZE_UNIT, 2);
+    dropLocation.posY = round(((elementLocation.y - (totalSize.y ?? 0)) / totalSize.height) * MAX_SIZE_UNIT, 2);
     dropLocation.width = round((elementLocation.width / totalSize.width) * MAX_SIZE_UNIT, 2);
     dropLocation.height = round((elementLocation.height / totalSize.height) * MAX_SIZE_UNIT, 2);
     return dropLocation;

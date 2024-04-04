@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -28,6 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the Submission entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
@@ -45,7 +48,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             FROM Submission submission
                 LEFT JOIN FETCH submission.results r
                 LEFT JOIN FETCH r.feedbacks
-            WHERE submission.exampleSubmission IS TRUE
+            WHERE submission.exampleSubmission = TRUE
                 AND submission.id = :submissionId
             """)
     Optional<Submission> findExampleSubmissionByIdWithEagerResult(@Param("submissionId") long submissionId);
@@ -75,10 +78,11 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param submissionIds the ids of the submissions which should be retrieved
      * @return a list of submissions with their results eagerly loaded
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
     @Query("""
             SELECT DISTINCT s
             FROM Submission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.assessor
             WHERE s.id IN :submissionIds
             """)
     List<Submission> findBySubmissionIdsWithEagerResults(@Param("submissionIds") List<Long> submissionIds);
@@ -227,7 +231,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 JOIN p.exercise e
             WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
                 AND e.id IN :exerciseIds
-                AND s.submitted IS TRUE
+                AND s.submitted = TRUE
                 AND (s.submissionDate <= e.dueDate OR e.dueDate IS NULL)
             """)
     long countAllByExerciseIdsSubmittedBeforeDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
@@ -244,8 +248,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             FROM Submission submission
             WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
                 AND submission.participation.exercise.exerciseGroup.exam.id = :examId
-                AND submission.submitted IS TRUE
-                AND submission.participation.testRun IS FALSE
+                AND submission.submitted = TRUE
+                AND submission.participation.testRun = FALSE
             """)
     long countByExamIdSubmittedSubmissionsIgnoreTestRuns(@Param("examId") long examId);
 
@@ -262,7 +266,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 JOIN p.exercise e
             WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
                 AND e.id IN :exerciseIds
-                AND s.submitted IS TRUE
+                AND s.submitted = TRUE
                 AND e.dueDate IS NOT NULL
                 AND s.submissionDate > e.dueDate
             """)
@@ -279,7 +283,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 JOIN p.exercise e
                 JOIN p.submissions s
             WHERE e.id = :exerciseId
-                AND s.submitted IS TRUE
+                AND s.submitted = TRUE
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
@@ -298,8 +302,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 JOIN p.submissions s
                 JOIN p.exercise e
             WHERE e.id = :exerciseId
-                AND p.testRun IS FALSE
-                AND s.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
@@ -321,8 +325,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 JOIN p.submissions s
                 JOIN p.exercise e
             WHERE e.id IN :exerciseIds
-                AND p.testRun IS FALSE
-                AND s.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             GROUP BY p.exercise.id
             """)
@@ -339,7 +343,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             FROM StudentParticipation p
                 JOIN p.submissions s
             WHERE p.exercise.id = :exerciseId
-                AND s.submitted IS TRUE
+                AND s.submitted = TRUE
             """)
     long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
 
@@ -372,7 +376,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 JOIN p.submissions s
                 JOIN p.exercise e
             WHERE e.id IN :exerciseIds
-                AND s.submitted IS TRUE
+                AND s.submitted = TRUE
                 AND s.submissionDate > e.dueDate
             GROUP BY e.id
             """)
@@ -395,14 +399,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 LEFT JOIN FETCH r.assessor a
             WHERE submission.participation.exercise.id = :exerciseId
                 AND :assessor = a
-                AND submission.participation.testRun IS FALSE
+                AND submission.participation.testRun = FALSE
             """)
     <T extends Submission> List<T> findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 
-    /**
-     * @param submissionId the submission id we are interested in
-     * @return the submission with its feedback and assessor
-     */
     @Query("""
             SELECT DISTINCT submission
             FROM Submission submission
@@ -413,6 +413,20 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             WHERE submission.id = :submissionId
             """)
     Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
+
+    @Query("""
+            SELECT DISTINCT submission
+            FROM Submission submission
+                LEFT JOIN FETCH submission.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+                LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH submission.participation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE submission.id = :submissionId
+            """)
+    Optional<Submission> findWithEagerResultAndFeedbackAndTeamStudentsById(@Param("submissionId") long submissionId);
 
     /**
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
@@ -463,22 +477,35 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
+     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the result.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
+     * @throws EntityNotFoundException if no submission could be found for the given id
      */
     default Submission findOneWithEagerResultAndFeedback(long submissionId) {
-        return this.findWithEagerResultAndFeedbackById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+        return findWithEagerResultAndFeedbackById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its results and the assessors. Throws an EntityNotFoundException if no
-     * submission could be found for the given id.
+     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the result and the
+     * team students of the participation.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
+     * @throws EntityNotFoundException if no submission could be found for the given id
+     */
+    default Submission findOneWithEagerResultAndFeedbackAndTeamStudents(long submissionId) {
+        return findWithEagerResultAndFeedbackAndTeamStudentsById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    /**
+     * Get the submission with the given id from the database. The submission is loaded together with its results and the assessors.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the submission with the given id
+     * @throws EntityNotFoundException if no submission could be found for the given id
      */
     default Submission findByIdWithResultsElseThrow(long submissionId) {
         return findWithEagerResultsAndAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", +submissionId));
@@ -495,12 +522,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             SELECT s
             FROM Submission s
             WHERE s.participation.exercise.id = :exerciseId
-                AND s.submitted IS TRUE
+                AND s.submitted = TRUE
                 AND s.submissionDate = (
                     SELECT MAX(s2.submissionDate)
                     FROM Submission s2
                     WHERE s2.participation.id = s.participation.id
-                        AND s2.submitted IS TRUE
+                        AND s2.submitted = TRUE
                 )
             """)
     Page<Submission> findLatestSubmittedSubmissionsByExerciseId(@Param("exerciseId") long exerciseId, Pageable pageable);

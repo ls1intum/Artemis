@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
@@ -9,14 +10,15 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
@@ -55,6 +57,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing Participation.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ParticipationResource {
@@ -335,8 +338,10 @@ public class ParticipationResource {
         // The participations due date is a flag showing that a feedback request is sent
         participation.setIndividualDueDate(currentDate);
 
-        participation = programmingExerciseStudentParticipationRepository.save(participation);
-        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
+        var savedParticipation = programmingExerciseStudentParticipationRepository.save(participation);
+        // Circumvent lazy loading after save
+        savedParticipation.setParticipant(participation.getParticipant());
+        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, savedParticipation);
 
         // Set all past results to automatic to reset earlier feedback request assessments
         var participationResults = studentParticipation.getResults();
@@ -349,7 +354,7 @@ public class ParticipationResource {
 
         groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
 
-        return ResponseEntity.ok().body(participation);
+        return ResponseEntity.ok().body(savedParticipation);
     }
 
     /**
@@ -497,13 +502,19 @@ public class ParticipationResource {
         if (!updatedParticipations.isEmpty() && exercise instanceof ProgrammingExercise programmingExercise) {
             log.info("Updating scheduling for exercise {} (id {}) due to changed individual due dates.", exercise.getTitle(), exercise.getId());
             instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
+            List<StudentParticipation> participationsBeforeDueDate = updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).toList();
+            List<StudentParticipation> participationsAfterDueDate = updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).toList();
 
+            if (exercise.isTeamMode()) {
+                participationService.initializeTeamParticipations(participationsBeforeDueDate);
+                participationService.initializeTeamParticipations(participationsAfterDueDate);
+            }
             // when changing the individual due date after the regular due date, the repository might already have been locked
-            updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(
+            participationsBeforeDueDate.forEach(
                     participation -> programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation));
             // the new due date may be in the past, students should no longer be able to make any changes
-            updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).forEach(participation -> programmingExerciseParticipationService
-                    .lockStudentRepositoryAndParticipation(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
+            participationsAfterDueDate.forEach(participation -> programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise,
+                    (ProgrammingExerciseStudentParticipation) participation));
         }
 
         return ResponseEntity.ok().body(updatedParticipations);
@@ -512,6 +523,10 @@ public class ParticipationResource {
     private Set<StudentParticipation> findParticipationWithLatestResults(Exercise exercise) {
         if (exercise.getExerciseType() == ExerciseType.QUIZ) {
             return studentParticipationRepository.findByExerciseIdWithLatestAndManualRatedResults(exercise.getId());
+        }
+        if (exercise.isTeamMode()) {
+            // For team exercises the students need to be eagerly fetched
+            return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
         }
         return studentParticipationRepository.findByExerciseIdWithLatestAndManualResults(exercise.getId());
     }

@@ -115,7 +115,7 @@
                         <div>{{ 'artemisApp.exam.startExamToolTip' | artemisTranslate }}</div>
                     }
                     <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart" type="submit" (click)="startExam()" class="btn btn-primary">
-                        <span jhiTranslate="artemisApp.exam.startExam">Start Exam</span>
+                        <span jhiTranslate="artemisApp.exam.startExam"></span>
                     </button>
                 </ng-container>
             } @else {
@@ -130,7 +130,7 @@
                     @if (submitInProgress) {
                         <fa-icon [icon]="faSpinner" [spin]="true" />
                     }
-                    <span jhiTranslate="artemisApp.exam.endExam">Finish</span>
+                    <span jhiTranslate="artemisApp.exam.endExam"></span>
                 </button>
             }
             @if (handInEarly) {

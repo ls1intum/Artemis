@@ -48,7 +48,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
     /**
      * Constructor that builds a LocalVCRepositoryUri from a URL string.
      *
-     * @param urlString      the enire URL string (should already contain the base URL, otherwise an exception is thrown).
+     * @param urlString      the entire URL string (should already contain the base URL, otherwise an exception is thrown).
      * @param localVCBaseUrl the base URL of the local VC server defined in an environment variable.
      * @throws LocalVCInternalException if the URL string is invalid.
      */
@@ -159,6 +159,6 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * @return the path to the cloned repository
      */
     public Path getRepoClonePath(String baseRepoClonePath) {
-        return Paths.get(baseRepoClonePath, "git", projectKey, repositorySlug);
+        return Paths.get(baseRepoClonePath, projectKey, repositorySlug);
     }
 }

@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.domain.participation;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -120,10 +120,4 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
                 + getIndividualDueDate() + "'" + ", presentationScore=" + getPresentationScore() + "}";
     }
 
-    @Override
-    public Participation copyParticipationId() {
-        var participation = new ProgrammingExerciseStudentParticipation();
-        participation.setId(getId());
-        return participation;
-    }
 }

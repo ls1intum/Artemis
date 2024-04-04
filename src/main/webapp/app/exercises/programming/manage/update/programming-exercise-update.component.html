@@ -1,11 +1,11 @@
 <div>
     <div class="d-flex align-items-center gap-2">
         @if (!isImportFromExistingExercise && !isImportFromFile && !programmingExercise.id) {
-            <h2 id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel">Create Programming Exercise</h2>
+            <h2 id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel"></h2>
         } @else if (!isImportFromExistingExercise && programmingExercise.id) {
-            <h2 id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">Edit Programming Exercise</h2>
+            <h2 id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel"></h2>
         } @else if (isImportFromExistingExercise || isImportFromFile) {
-            <h2 id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">Import Programming Exercise</h2>
+            <h2 id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel"></h2>
         }
         <jhi-documentation-button [type]="documentationType" />
     </div>
@@ -17,14 +17,20 @@
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isExamMode]="isExamMode"
                 [isImport]="isImportFromExistingExercise || isImportFromFile"
+                [isLocal]="isLocal"
+                [importOptions]="importOptions"
             />
+            <hr class="mb-5" />
             <jhi-programming-exercise-difficulty [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()" />
+            <hr class="mb-5" />
             <jhi-programming-exercise-language [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()" />
+            <hr class="mb-5" />
             <jhi-programming-exercise-problem
                 [(exercise)]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 (problemStatementChange)="calculateFormStatusSections()"
             />
+            <hr class="mb-5" />
             <jhi-programming-exercise-grading
                 class="form-step"
                 [programmingExercise]="programmingExercise"
@@ -33,44 +39,15 @@
             @if (!isExamMode) {
                 <jhi-exercise-update-plagiarism [exercise]="programmingExercise" />
             }
-            <jhi-exercise-update-notification
-                [exercise]="programmingExercise"
+            <jhi-form-footer
+                [isCreation]="!programmingExercise.id"
                 [isImport]="isImportFromExistingExercise || isImportFromFile"
+                [isSaving]="isSaving"
+                [invalidReasons]="getInvalidReasons()"
+                (save)="save()"
+                (cancel)="previousState()"
                 [(notificationText)]="notificationText"
             />
-            <div class="update-programming-exercise-footer">
-                <div class="update-programming-exercise-footer-content">
-                    @if (isSaving) {
-                        <span jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-secondary"> </span>
-                    }
-                    <ng-template #tooltipTranslate>
-                        @for (reason of getInvalidReasons(); track reason) {
-                            <div>
-                                <p jhiTranslate="{{ reason.translateKey }}"></p>
-                            </div>
-                        }
-                    </ng-template>
-                    @if (getInvalidReasons().length > 0) {
-                        <span class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
-                            <fa-icon [icon]="faExclamationCircle" />
-                            <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
-                            <span>({{ getInvalidReasons().length }})</span>
-                        </span>
-                    }
-                    <button type="button" id="cancel-save" class="btn btn-secondary me-1" (click)="previousState()">
-                        <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
-                    </button>
-                    <jhi-button
-                        id="save-entity"
-                        [featureToggle]="FeatureToggle.ProgrammingExercises"
-                        [disabled]="getInvalidReasons().length > 0"
-                        [isLoading]="isSaving"
-                        [icon]="faSave"
-                        [title]="submitButtonTitle"
-                        (onClick)="save()"
-                    />
-                </div>
-            </div>
         </div>
     </form>
 </div>

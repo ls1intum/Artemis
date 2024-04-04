@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
@@ -181,6 +181,9 @@ public class Course extends DomainObject {
     @Column(name = "accuracy_of_scores", nullable = false)
     @JsonView(QuizView.Before.class)
     private Integer accuracyOfScores = 1; // default value
+
+    @Column(name = "restricted_athena_modules_access", nullable = false)
+    private boolean restrictedAthenaModulesAccess = false; // default is false
 
     /**
      * Note: Currently just used in the scope of the tutorial groups feature
@@ -789,6 +792,14 @@ public class Course extends DomainObject {
 
     public void setAccuracyOfScores(Integer accuracyOfScores) {
         this.accuracyOfScores = accuracyOfScores;
+    }
+
+    public boolean getRestrictedAthenaModulesAccess() {
+        return restrictedAthenaModulesAccess;
+    }
+
+    public void setRestrictedAthenaModulesAccess(boolean restrictedAthenaModulesAccess) {
+        this.restrictedAthenaModulesAccess = restrictedAthenaModulesAccess;
     }
 
     public Set<TutorialGroup> getTutorialGroups() {

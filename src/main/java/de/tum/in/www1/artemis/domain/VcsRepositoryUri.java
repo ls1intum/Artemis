@@ -86,9 +86,7 @@ public class VcsRepositoryUri {
             path = path.replaceAll("\\.git$", "");
             path = path.replaceAll("/$", "");
             path = path.replaceAll("^/.*scm", "");
-            // TODO: this seems to be somehow necessary for LOCAL VCS, however it breaks with usernames such ab123git (because they will include a '.' before)
-            // Therefore, we temporarily disable this replacement until we find out what the actual needed replacement would be
-            // path = path.replaceAll("^/.*git", "");
+            path = path.replaceAll("^.*?/git/", "/");
             return path;
         }
     }

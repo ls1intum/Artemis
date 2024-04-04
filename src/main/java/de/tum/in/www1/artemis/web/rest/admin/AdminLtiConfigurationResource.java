@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
@@ -37,6 +40,8 @@ public class AdminLtiConfigurationResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final OAuth2JWKSService oAuth2JWKSService;
+
     /**
      * Constructor to initialize the controller with necessary services.
      *
@@ -45,10 +50,11 @@ public class AdminLtiConfigurationResource {
      * @param authCheckService                   Service for authorization checks.
      */
     public AdminLtiConfigurationResource(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository, LtiDynamicRegistrationService ltiDynamicRegistrationService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, OAuth2JWKSService oAuth2JWKSService) {
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
         this.ltiDynamicRegistrationService = ltiDynamicRegistrationService;
         this.authCheckService = authCheckService;
+        this.oAuth2JWKSService = oAuth2JWKSService;
     }
 
     /**
@@ -98,6 +104,27 @@ public class AdminLtiConfigurationResource {
         }
 
         ltiPlatformConfigurationRepository.save(platform);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Updates an existing LTI platform configuration.
+     *
+     * @param platform the updated LTI platform configuration to be saved.
+     * @return a {@link ResponseEntity} with status 200 (OK) if the update was successful,
+     *         or with status 400 (Bad Request) if the provided platform configuration is invalid (e.g., missing ID)
+     */
+    @PostMapping("lti-platform")
+    @EnforceAdmin
+    public ResponseEntity<Void> addLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
+        log.debug("REST request to add new lti platform");
+
+        String clientRegistrationId = "artemis-" + UUID.randomUUID();
+        platform.setRegistrationId("artemis-" + UUID.randomUUID());
+
+        ltiPlatformConfigurationRepository.save(platform);
+        oAuth2JWKSService.updateKey(clientRegistrationId);
+
         return ResponseEntity.ok().build();
     }
 

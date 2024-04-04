@@ -1,11 +1,11 @@
 <div>
-    <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepTitle">Title</span></h1>
-    <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepMessage">Add a title and meaningful description to the new lecture.</span></p>
+    <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepTitle"></span></h1>
+    <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepMessage"></span></p>
     <form name="editForm" role="form" novalidate>
         <jhi-lecture-title-channel-name [lecture]="lecture" />
     </form>
     <div class="form-group" id="field_description">
-        <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
+        <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description"></label>
         <jhi-markdown-editor class="markdown-editor" [domainCommands]="domainCommandsDescription" [(markdown)]="lecture.description" [editorMode]="EditorMode.LATEX" />
     </div>
 </div>

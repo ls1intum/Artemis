@@ -46,8 +46,8 @@
                             class="text-editor-textarea"
                             [maxLength]="maxCharacterCount"
                             [(ngModel)]="answer"
-                            [readonly]="!isActive || !submission || !isOwnerOfParticipation"
-                            [disabled]="!isActive || !submission"
+                            [readOnly]="!isActive || !submission || !isOwnerOfParticipation"
+                            [disabled]="!isActive || !submission || !isOwnerOfParticipation"
                             (keydown.tab)="onTextEditorTab(textEditor, $event)"
                             (input)="onTextEditorInput($event)"
                         ></textarea>
@@ -106,7 +106,7 @@
             <!--endregion-->
             <!--region Right Panel-->
             <fa-icon right-header [icon]="farListAlt" />&nbsp;
-            <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+            <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
             <ng-container right-body>
                 @if (textExercise!.problemStatement) {
                     <p class="markdown-preview mb-3">

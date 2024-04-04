@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.plagiarism.PlagiarismService.hasMinimumScore;
 
 import java.io.File;
@@ -12,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
@@ -32,6 +34,7 @@ import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class TextPlagiarismDetectionService {
 

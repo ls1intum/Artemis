@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
 import static de.tum.in.www1.artemis.domain.ProgrammingSubmission.createFallbackSubmission;
 
@@ -8,15 +9,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import com.google.common.base.Strings;
 
@@ -40,6 +43,7 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseGradingService {
 
@@ -140,7 +144,10 @@ public class ProgrammingExerciseGradingService {
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-            latestSubmission.setBuildFailed(newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback));
+
+            // Artemis considers a build as failed if no tests have been executed (e.g. due to a compile failure in the student code)
+            final var buildFailed = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
+            latestSubmission.setBuildFailed(buildFailed);
             // Add artifacts to submission
             latestSubmission.setBuildArtifact(buildResult.hasArtifact());
 
@@ -164,7 +171,7 @@ public class ProgrammingExerciseGradingService {
             newResult.setSubmission(latestSubmission);
             newResult.setRatedIfNotAfterDueDate();
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
-            return processNewProgrammingExerciseResult(participation, newResult);
+            return processNewProgrammingExerciseResult(participation, newResult, buildResult.extractBuildLogs());
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Result for participation {} could not be created", participation.getId(), ex);
@@ -182,8 +189,9 @@ public class ProgrammingExerciseGradingService {
      */
     private void checkCorrectBranchElseThrow(final ProgrammingExerciseParticipation participation, final AbstractBuildResultNotificationDTO buildResult)
             throws IllegalArgumentException {
+        var branchName = buildResult.getBranchNameFromAssignmentRepo();
         // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
-        buildResult.getBranchNameFromAssignmentRepo().ifPresent(branchName -> {
+        if (!ObjectUtils.isEmpty(branchName)) {
             String participationDefaultBranch = null;
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
                 participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
@@ -195,7 +203,7 @@ public class ProgrammingExerciseGradingService {
             if (!Objects.equals(branchName, participationDefaultBranch)) {
                 throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
             }
-        });
+        }
     }
 
     /**
@@ -213,33 +221,33 @@ public class ProgrammingExerciseGradingService {
 
         return submissions.stream().filter(theSubmission -> {
             var commitHash = buildResult.getCommitHash(theSubmission.getType());
-            return commitHash.isPresent() && commitHash.get().equals(theSubmission.getCommitHash());
+            return !ObjectUtils.isEmpty(commitHash) && commitHash.equals(theSubmission.getCommitHash());
         }).max(Comparator.naturalOrder());
     }
 
     @NotNull
     protected ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, AbstractBuildResultNotificationDTO buildResult) {
         final var commitHash = buildResult.getCommitHash(SubmissionType.MANUAL);
-        if (commitHash.isEmpty()) {
+        if (ObjectUtils.isEmpty(commitHash)) {
             log.error("Could not find commit hash for participation {}, build plan {}", participation.getId(), participation.getBuildPlanId());
         }
         log.warn("Could not find pending ProgrammingSubmission for Commit Hash {} (Participation {}, Build Plan {}). Will create a new one subsequently...", commitHash,
                 participation.getId(), participation.getBuildPlanId());
         // We always take the build run date as the fallback solution
         ZonedDateTime submissionDate = buildResult.getBuildRunDate();
-        if (commitHash.isPresent()) {
+        if (!ObjectUtils.isEmpty(commitHash)) {
             try {
                 // Try to get the actual date, the push might be 10s - 3min earlier, depending on how long the build takes.
                 // Note: the whole method is a fallback in case creating the submission initially (when the user pushed the code) was not successful for whatever reason
                 // This is also the case when a new programming exercise is created and the local CI system builds and tests the template and solution repositories for the first
                 // time.
-                submissionDate = versionControlService.orElseThrow().getPushDate(participation, commitHash.get(), null);
+                submissionDate = versionControlService.orElseThrow().getPushDate(participation, commitHash, null);
             }
             catch (VersionControlException e) {
                 log.error("Could not retrieve push date for participation {} and build plan {}", participation.getId(), participation.getBuildPlanId(), e);
             }
         }
-        var submission = createFallbackSubmission(participation, submissionDate, commitHash.orElse(null));
+        var submission = createFallbackSubmission(participation, submissionDate, commitHash);
         // Save to avoid TransientPropertyValueException.
         return programmingSubmissionRepository.save(submission);
     }
@@ -252,7 +260,7 @@ public class ProgrammingExerciseGradingService {
      * @param newResult     that contains the build result with its feedbacks.
      * @return the result after processing and persisting.
      */
-    private Result processNewProgrammingExerciseResult(final ProgrammingExerciseParticipation participation, final Result newResult) {
+    private Result processNewProgrammingExerciseResult(final ProgrammingExerciseParticipation participation, final Result newResult, final List<BuildLogEntry> buildLogs) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
         boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
@@ -281,7 +289,12 @@ public class ProgrammingExerciseGradingService {
                 // Adding back dropped submission
                 updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
                 programmingSubmissionRepository.save(programmingSubmission);
-                resultRepository.save(updatedLatestSemiAutomaticResult);
+                Result result = resultRepository.save(updatedLatestSemiAutomaticResult);
+
+                // Save the build logs to the file system
+                if (buildLogs != null && !buildLogs.isEmpty()) {
+                    buildLogService.saveBuildLogsToFile(buildLogs, result.getId().toString());
+                }
 
                 return updatedLatestSemiAutomaticResult;
             }
@@ -299,6 +312,10 @@ public class ProgrammingExerciseGradingService {
         processedResult.setParticipation((Participation) participation);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
+
+        if (buildLogs != null && !buildLogs.isEmpty()) {
+            buildLogService.saveBuildLogsToFile(buildLogs, processedResult.getId().toString());
+        }
 
         return processedResult;
     }

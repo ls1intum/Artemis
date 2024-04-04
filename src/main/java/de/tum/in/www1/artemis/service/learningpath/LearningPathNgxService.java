@@ -1,14 +1,17 @@
 package de.tum.in.www1.artemis.service.learningpath;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.jgrapht.alg.util.UnionFind;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -24,6 +27,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 /**
  * Service Implementation for the generation of ngx representations of learning paths.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class LearningPathNgxService {
 

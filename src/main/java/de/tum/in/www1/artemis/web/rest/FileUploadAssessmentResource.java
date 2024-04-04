@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +24,9 @@ import de.tum.in.www1.artemis.service.exam.ExamService;
 /**
  * REST controller for managing FileUploadAssessment.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class FileUploadAssessmentResource extends AssessmentResource {
 
     private static final Logger log = LoggerFactory.getLogger(FileUploadAssessmentResource.class);
@@ -47,7 +51,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission that should be sent to the client
      * @return the assessment of the given submission
      */
-    @GetMapping("/file-upload-submissions/{submissionId}/result")
+    @GetMapping("file-upload-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
         return super.getAssessmentBySubmissionId(submissionId);
@@ -62,7 +66,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/file-upload-submissions/{submissionId}/feedback")
+    @PutMapping("file-upload-submissions/{submissionId}/feedback")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveFileUploadAssessment(@PathVariable Long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody List<Feedback> feedbacks) {
@@ -80,7 +84,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @return the updated result
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/file-upload-submissions/{submissionId}/assessment-after-complaint")
+    @PutMapping("file-upload-submissions/{submissionId}/assessment-after-complaint")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
@@ -108,7 +112,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission for which the current assessment should be canceled
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
-    @PutMapping("/file-upload-submissions/{submissionId}/cancel-assessment")
+    @PutMapping("file-upload-submissions/{submissionId}/cancel-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
         return super.cancelAssessment(submissionId);
@@ -122,14 +126,14 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @param resultId        - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
-    @DeleteMapping("/participations/{participationId}/file-upload-submissions/{submissionId}/results/{resultId}")
+    @DeleteMapping("participations/{participationId}/file-upload-submissions/{submissionId}/results/{resultId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
         return super.deleteAssessment(participationId, submissionId, resultId);
     }
 
     @Override
-    String getEntityName() {
+    public String getEntityName() {
         return ENTITY_NAME;
     }
 }

@@ -1,0 +1,55 @@
+# ===================================================================
+# Build Agent specific properties: this file will only be loaded during startup if the profile buildagent is active
+#
+# This configuration overrides the application.yml file.
+# ===================================================================
+artemis:
+    repo-clone-path: ./repos
+    repo-download-clone-path: ./repos-download
+    version-control:
+        url: http://localhost:8000  # TODO: is this really needed for build agents?
+        user: "demo"                    # not needed for build agents / TODO: remove this requirement in GitService
+        password: "demo"                # not needed for build agents / TODO: remove this requirement in GitService
+    continuous-integration:
+        docker-connection-uri: unix:///var/run/docker.sock
+        specify-concurrent-builds: false
+        concurrent-build-size: 1
+        asynchronous: true
+        timeout-seconds: 240
+        build-container-prefix: local-ci-
+        proxies:
+            use-system-proxy: false
+            default:
+                http-proxy: http://proxyserver:port
+                https-proxy: http://proxyserver:port
+                no-proxy: localhost,127.0.0.1
+        image-cleanup:
+            enabled: false
+            expiry-days: 2
+            cleanup-schedule-time: 0 0 3 * * *
+    git:
+        name: Artemis
+        email: artemis@xcit.tum.de
+
+spring:
+    liquibase:
+        enabled: false #not needed for build agents
+    autoconfigure:
+        exclude:
+            # Hibernate and DataSource are not needed in the build agent
+            - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+            - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+            # Those metrics are repeated here, because overriding the `exclude` array is not possible
+            - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
+            - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
+            - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
+            - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
+            - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
+    cloud:
+        loadbalancer:
+            cache:
+                enabled: false #not needed for build agents
+
+server:
+    port: 8080
+    url: https://artemislocal.cit.tum.de

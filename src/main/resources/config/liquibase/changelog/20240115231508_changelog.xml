@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="basak-akan" id="20240115231508">
+        <!-- Add a lti_platform_configuration_id column to 'lti_resource_launch' table -->
+        <addColumn tableName="lti_resource_launch">
+            <column name="lti_platform_configuration_id" type="bigint"/>
+        </addColumn>
+        <!-- Add a foreign key constraint to 'lti_resource_launch' table -->
+        <addForeignKeyConstraint
+          baseTableName="lti_resource_launch"
+          baseColumnNames="lti_platform_configuration_id"
+          constraintName="fk_lti_resource_launch_lti_platform"
+          referencedTableName="lti_platform_configuration"
+          referencedColumnNames="id"
+          onDelete="SET NULL"
+        />
+    </changeSet>
+</databaseChangeLog>

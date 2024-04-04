@@ -1,17 +1,21 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.nio.file.Path;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class FilePathService {
 

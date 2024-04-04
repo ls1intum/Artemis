@@ -1,9 +1,7 @@
-<section class="mb-5">
-    <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle">
-        Problem
-    </h3>
-    <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage">Set problem.</p>
-    <div class="form-group mb-0" id="field_problemStatement" name="problemStatement">
+<section>
+    <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle"></h3>
+    <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage"></p>
+    <div class="form-group" id="field_problemStatement" name="problemStatement">
         <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
         @if (programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile) {
             <ngb-alert [dismissible]="false">

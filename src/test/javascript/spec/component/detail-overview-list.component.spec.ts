@@ -10,12 +10,13 @@ import { MockAlertService } from '../helpers/mocks/service/mock-alert.service';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
+import { Detail } from 'app/detail-overview-list/detail.model';
 import { Router } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
 
-const sections = [
+const sections: DetailOverviewSection[] = [
     {
         headline: 'headline.1',
         details: [
@@ -27,7 +28,7 @@ const sections = [
             false,
         ],
     },
-] as DetailOverviewSection[];
+];
 
 describe('DetailOverviewList', () => {
     let component: DetailOverviewListComponent;
@@ -48,7 +49,6 @@ describe('DetailOverviewList', () => {
                 { provide: ModelingExerciseService, useValue: { convertToPdf: jest.fn() } },
             ],
         })
-            .overrideTemplate(DetailOverviewListComponent, '')
             .compileComponents()
             .then(() => {
                 modalService = fixture.debugElement.injector.get(NgbModal);
@@ -71,10 +71,31 @@ describe('DetailOverviewList', () => {
         expect(component.profileSub?.closed).toBeTruthy();
     });
 
+    it('should escape all falsy values', () => {
+        component.sections = [
+            { headline: 'some-section', details: [null as any as Detail, undefined, false, { type: DetailType.Text, title: 'title', data: { text: 'A Title' } }] },
+        ];
+        fixture.detectChanges();
+        const detailListTitleDOMElements = fixture.nativeElement.querySelectorAll('dt[id^=detail-title]');
+        expect(detailListTitleDOMElements).toHaveLength(1);
+        const titleDetailTitle = fixture.nativeElement.querySelector('dt[id=detail-title-title]');
+        const titleDetailValue = fixture.nativeElement.querySelector('dd[id=detail-value-title]');
+        expect(titleDetailTitle).toBeDefined();
+        expect(titleDetailValue).toBeDefined();
+        expect(titleDetailTitle.textContent).toContain('title');
+        expect(titleDetailValue.textContent).toContain('A Title');
+    });
+
     it('should open git diff modal', () => {
         const modalSpy = jest.spyOn(modalService, 'open');
         component.showGitDiff({} as unknown as ProgrammingExerciseGitDiffReport);
         expect(modalSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not open git diff modal', () => {
+        const modalSpy = jest.spyOn(modalService, 'open');
+        component.showGitDiff(undefined);
+        expect(modalSpy).not.toHaveBeenCalled();
     });
 
     it('should download apollon Diagram', () => {

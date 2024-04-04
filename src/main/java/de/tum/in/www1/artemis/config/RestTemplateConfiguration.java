@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.*;
@@ -24,6 +26,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInt
  * For now only provides a basic {@link org.springframework.web.client.RestTemplate RestTemplate} bean. Can be extended
  * to further customize how requests to other REST APIs are handled
  */
+@Profile(PROFILE_CORE)
 @Configuration
 public class RestTemplateConfiguration {
 

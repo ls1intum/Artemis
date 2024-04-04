@@ -1,12 +1,19 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
+import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +24,7 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.repository.*;
 
+@Profile(PROFILE_CORE)
 @Service
 public class LectureUnitService {
 
@@ -28,14 +36,20 @@ public class LectureUnitService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
+    private final FileService fileService;
+
+    private final SlideRepository slideRepository;
+
     private final ExerciseRepository exerciseRepository;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, CompetencyRepository competencyRepository,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository, ExerciseRepository exerciseRepository) {
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.competencyRepository = competencyRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.fileService = fileService;
+        this.slideRepository = slideRepository;
         this.exerciseRepository = exerciseRepository;
     }
 
@@ -116,7 +130,7 @@ public class LectureUnitService {
      * @param lectureUnit lecture unit to delete
      */
     public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
-        LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesElseThrow(lectureUnit.getId());
+        LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competencies
@@ -128,16 +142,20 @@ public class LectureUnitService {
             }).toList());
         }
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
-        // Creating a new list of lecture units without the one we want to remove
-        List<LectureUnit> lectureUnitsUpdated = new ArrayList<>();
-        for (LectureUnit unit : lecture.getLectureUnits()) {
-            if (unit != null && !unit.getId().equals(lectureUnitToDelete.getId())) {
-                lectureUnitsUpdated.add(unit);
+        if (lectureUnitToDelete instanceof AttachmentUnit attachmentUnit) {
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create((attachmentUnit.getAttachment().getLink()))), 5);
+            if (attachmentUnit.getSlides() != null && !attachmentUnit.getSlides().isEmpty()) {
+                List<Slide> slides = attachmentUnit.getSlides();
+                for (Slide slide : slides) {
+                    fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
+                }
+                slideRepository.deleteAll(slides);
             }
         }
-        lecture.getLectureUnits().clear();
-        lecture.getLectureUnits().addAll(lectureUnitsUpdated);
+
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
+        // Creating a new list of lecture units without the one we want to remove
+        lecture.getLectureUnits().removeIf(unit -> unit == null || unit.getId().equals(lectureUnitToDelete.getId()));
         lectureRepository.save(lecture);
     }
 

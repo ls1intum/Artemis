@@ -1,0 +1,20 @@
+{
+    "deleteFiles": ["BubbleSort.java", "Client.java", "MergeSort.java"],
+    "createFilesInRootFolder": false,
+    "files": [
+        {
+            "name": "BubbleSort.java",
+            "path": "exercise/programming/java/all_successful/BubbleSort.txt"
+        },
+        {
+            "name": "MergeSort.java",
+            "path": "exercise/programming/java/all_successful/MergeSort.txt"
+        },
+        {
+            "name": "SortStrategy.java",
+            "path": "exercise/programming/java/all_successful/SortStrategy.txt"
+        }
+    ],
+    "expectedResult": "46.2%",
+    "packageName": "de.test"
+}

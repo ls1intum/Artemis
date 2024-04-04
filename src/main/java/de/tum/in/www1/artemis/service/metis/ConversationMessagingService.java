@@ -1,17 +1,20 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
@@ -47,6 +50,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ConversationMessagingService extends PostingService {
 
@@ -99,12 +103,12 @@ public class ConversationMessagingService extends PostingService {
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(newMessage.getConversation().getId(), author, Optional.empty())
-                .orElse(conversationRepository.findByIdElseThrow(newMessage.getConversation().getId()));
+        var conversationId = newMessage.getConversation().getId();
+
+        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
+                .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
         log.debug("      createMessage:conversationService.isMemberOrCreateForCourseWideElseThrow DONE");
 
-        // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
-        conversation.setConversationParticipants(Set.of());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
         // extra checks for channels
@@ -128,8 +132,6 @@ public class ConversationMessagingService extends PostingService {
         log.debug("      conversationMessageRepository.save DONE");
         // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
-        // reduce the payload of the response / websocket message: this is important to avoid overloading the involved subsystems
-        createdMessage.getConversation().hideDetails();
         log.debug("      conversationMessageRepository.save DONE");
 
         createdMessage.setAuthor(author);
@@ -155,6 +157,7 @@ public class ConversationMessagingService extends PostingService {
         ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, conversation, course,
                 createdConversationMessage.mentionedUsers());
         PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE, notification);
+        createdMessage.getConversation().hideDetails();
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
             if (conversationService.isChannelVisibleToStudents(channel)) {

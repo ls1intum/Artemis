@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.*;
@@ -9,6 +10,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -36,8 +38,9 @@ import io.swagger.annotations.ApiResponses;
 /**
  * REST controller for managing TextAssessment.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class TextAssessmentResource extends AssessmentResource {
 
     @Value("${jhipster.clientApp.name}")
@@ -393,7 +396,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission which must be connected to an example submission
      * @return the example result linked to the submission
      */
-    @GetMapping("/exercises/{exerciseId}/submissions/{submissionId}/example-result")
+    @GetMapping("exercises/{exerciseId}/submissions/{submissionId}/example-result")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -445,7 +448,7 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     @Override
-    String getEntityName() {
+    public String getEntityName() {
         return ENTITY_NAME;
     }
 
@@ -483,7 +486,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
     private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
-        if (athenaFeedbackSendingService.isPresent() && exercise.getFeedbackSuggestionsEnabled()) {
+        if (athenaFeedbackSendingService.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
             athenaFeedbackSendingService.get().sendFeedback(exercise, textSubmission, feedbacks);
         }
     }

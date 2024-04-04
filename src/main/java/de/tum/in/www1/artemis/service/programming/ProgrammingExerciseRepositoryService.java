@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.isMavenProject;
 
@@ -14,6 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.SubmissionPolicyResource;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseRepositoryService {
 

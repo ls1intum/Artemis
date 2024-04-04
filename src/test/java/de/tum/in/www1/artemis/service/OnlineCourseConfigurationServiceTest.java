@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,7 +66,7 @@ class OnlineCourseConfigurationServiceTest {
 
         ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(ltiPlatformConfiguration);
 
-        assertThat(clientRegistration.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.IMPLICIT);
+        assertThat(clientRegistration.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
         assertThat(clientRegistration.getScopes()).hasSize(1).contains("openid");
         assertThat(clientRegistration.getRegistrationId()).isEqualTo("reg");
         assertThat(clientRegistration.getRedirectUri()).isEqualTo(artemisServerUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH);
@@ -133,8 +132,6 @@ class OnlineCourseConfigurationServiceTest {
     private OnlineCourseConfiguration getMockOnlineCourseConfiguration(LtiPlatformConfiguration ltiPlatformConfiguration) {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setCourse(null);
-        onlineCourseConfiguration.setLtiKey(RandomStringUtils.random(12, true, true));
-        onlineCourseConfiguration.setLtiSecret(RandomStringUtils.random(12, true, true));
         onlineCourseConfiguration.setUserPrefix("ltiCourse");
         onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
         return onlineCourseConfiguration;

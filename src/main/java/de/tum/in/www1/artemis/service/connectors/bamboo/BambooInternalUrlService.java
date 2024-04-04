@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.service.InternalUrlService;
 
 @Profile("bamboo")
 @Service
+@Deprecated(forRemoval = true) // will be removed in 7.0.0
 public class BambooInternalUrlService extends InternalUrlService {
 
     public BambooInternalUrlService(@Value("${bamboo.internal-urls.ci-url:#{null}}") Optional<URL> internalCiUrl,

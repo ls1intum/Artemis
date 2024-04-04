@@ -1,19 +1,19 @@
 <jhi-lecture-unit-layout [isLoading]="isLoading">
     <div class="col-4">
         <h2 id="page-heading">
-            <span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.unit">Lecture Units</span>
+            <span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.unit"></span>
         </h2>
     </div>
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th><span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.unitName">Unit Name</span></th>
+                    <th><span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.unitName"></span></th>
                     <th>
-                        <span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.releaseDate">Release Date</span>
+                        <span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.releaseDate"></span>
                     </th>
-                    <th><span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.startPage">Start Page</span></th>
-                    <th><span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.endPage">End Page</span></th>
+                    <th><span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.startPage"></span></th>
+                    <th><span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.endPage"></span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -114,7 +114,7 @@
     >
         <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
     </button>
-    <button (click)="cancelSplit()" class="btn btn-default"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span></button>
+    <button (click)="cancelSplit()" class="btn btn-default"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
     @if (invalidUnitTableMessage) {
         <div class="alert alert-warning mt-3">
             <fa-icon [icon]="faExclamationTriangle" />

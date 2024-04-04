@@ -67,6 +67,7 @@ import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
+import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -118,6 +119,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 MockComponent(ProgrammingExerciseProblemComponent),
                 MockComponent(DocumentationButtonComponent),
                 MockComponent(FormStatusBarComponent),
+                MockComponent(FormFooterComponent),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(CustomMinDirective),
@@ -525,7 +527,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                     comp.onStaticCodeAnalysisChanged();
 
-                    expect(comp.updateTemplate).toBeTrue();
+                    expect(comp.importOptions.updateTemplate).toBeTrue();
 
                     comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                     comp.onStaticCodeAnalysisChanged();
@@ -541,10 +543,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 // Recreate build plan and template update should be automatically selected
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(scaActivatedOriginal ? undefined : newMaxPenalty);
-                expect(comp.recreateBuildPlans).toBeTrue();
-                expect(comp.updateTemplate).toBeTrue();
+                expect(comp.importOptions.recreateBuildPlans).toBeTrue();
+                expect(comp.importOptions.updateTemplate).toBeTrue();
 
-                comp.recreateBuildPlans = !comp.recreateBuildPlans;
+                comp.importOptions.recreateBuildPlans = !comp.importOptions.recreateBuildPlans;
                 comp.onRecreateBuildPlanOrUpdateTemplateChange();
                 tick();
 

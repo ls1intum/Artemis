@@ -53,12 +53,15 @@ jobs:
 
         # sanity cleanup
       - name: Stop mysql server
-        run: docker stop artemis-mysql
+        run: docker stop artemis-mysql || exit 0
         continue-on-error: true
 
       - name: Remove mysql server
-        run: docker rm artemis-mysql
+        run: docker rm artemis-mysql  || exit 0
         continue-on-error: true
+
+      - name: Remove mysql volume
+        run: docker volume rm artemis-mysql-data || exit 0
 
       - name: Launch mysql docker container
         run: docker compose -f main-repo/docker/mysql.yml up -d mysql
@@ -79,6 +82,7 @@ jobs:
           timeout_minutes: 10
           retry_wait_seconds: 10
           max_attempts: 60
+          warning_on_retry: false
           command: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
 
         # The android tests depend on certain user accounts to be available. Create them here.
@@ -100,7 +104,7 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Android E2E Test Results
-          path: ./android-repo/test-outputs/**/*.xml
+          path: android-repo/test-outputs/**/*.xml
           reporter: java-junit
 
       - name: Cleanup -> Stop artemis server
@@ -109,10 +113,10 @@ jobs:
 
       - name: Cleanup -> Stop all running docker containers
         if: always()
-        run: docker stop artemis-mysql
+        run: docker stop artemis-mysql || exit 0
         continue-on-error: true
 
       - name: Cleanup -> Remove all docker containers
         if: always()
-        run: docker rm artemis-mysql
+        run: docker rm artemis-mysql || exit 0
         continue-on-error: true

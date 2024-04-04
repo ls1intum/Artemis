@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
 import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.awaitility.Awaitility;
@@ -2489,12 +2489,12 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseRepository
                 .save(ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.getBuildCount()).isZero();
-        assertThat(statistics.getAgentSetupDuration()).isNull();
-        assertThat(statistics.getTestDuration()).isNull();
-        assertThat(statistics.getScaDuration()).isNull();
-        assertThat(statistics.getTotalJobDuration()).isNull();
-        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+        assertThat(statistics.buildCount()).isZero();
+        assertThat(statistics.agentSetupDuration()).isNull();
+        assertThat(statistics.testDuration()).isNull();
+        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.totalJobDuration()).isNull();
+        assertThat(statistics.dependenciesDownloadedCount()).isNull();
     }
 
     // TEST
@@ -2509,12 +2509,12 @@ public class ProgrammingExerciseTestService {
         buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission2, 8, 15, null, 30, 0));
 
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.getBuildCount()).isEqualTo(2);
-        assertThat(statistics.getAgentSetupDuration()).isEqualTo(9);
-        assertThat(statistics.getTestDuration()).isEqualTo(17.5);
-        assertThat(statistics.getScaDuration()).isEqualTo(30);
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(45);
-        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(2.5);
+        assertThat(statistics.buildCount()).isEqualTo(2);
+        assertThat(statistics.agentSetupDuration()).isEqualTo(9);
+        assertThat(statistics.testDuration()).isEqualTo(17.5);
+        assertThat(statistics.scaDuration()).isEqualTo(30);
+        assertThat(statistics.totalJobDuration()).isEqualTo(45);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(2.5);
     }
 
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {

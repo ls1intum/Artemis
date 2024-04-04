@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.repository.tutorialgroups;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +21,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Repository
 public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGroupSession, Long> {
 
@@ -70,24 +74,22 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
     @Query("""
             SELECT session
             FROM TutorialGroupSession session
-            WHERE session.start <= :end
-                AND session.end >= :start
+            WHERE session.start < :end
+                AND session.end > :start
                 AND session.tutorialGroup.course = :course
             """)
     Set<TutorialGroupSession> findAllBetween(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
-
-    Set<TutorialGroupSession> findAllByTutorialGroupFreePeriodId(Long freePeriodId);
 
     default TutorialGroupSession findByIdElseThrow(long tutorialGroupSessionId) {
         return findById(tutorialGroupSessionId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupSession", tutorialGroupSessionId));
     }
 
+    @Transactional // ok because of delete
     @Modifying
-    @Transactional
     void deleteByTutorialGroupCourse(Course course);
 
+    @Transactional // ok because of delete
     @Modifying
-    @Transactional
     void deleteByTutorialGroupSchedule(TutorialGroupSchedule tutorialGroupSchedule);
 
 }

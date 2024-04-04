@@ -79,7 +79,7 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
         fixture.detectChanges();
 
         expect(comp.inheritDisabled).toBeTrue();
-        expect(comp.isChatSettingsSwitchDisabled).toBeTrue();
+        expect(comp.isSettingsSwitchDisabled).toBeTrue();
     });
 
     it('change allowed model', () => {

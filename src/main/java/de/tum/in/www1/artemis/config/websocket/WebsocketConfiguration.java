@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config.websocket;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.*;
@@ -10,14 +11,15 @@ import java.security.Principal;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.Cookie;
-import javax.validation.constraints.NotNull;
+import jakarta.servlet.http.Cookie;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -59,6 +61,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Configuration
 // See https://stackoverflow.com/a/34337731/3802758
 public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConfiguration {

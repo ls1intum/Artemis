@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -20,9 +23,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
@@ -42,6 +45,7 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
@@ -58,6 +62,7 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Service
 public class GitService {
 
@@ -270,7 +275,7 @@ public class GitService {
      * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
      */
     private URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
-        if (profileService.isLocalVcsCi()) {
+        if (profileService.isLocalVcsCiActive()) {
             // Create less generic LocalVCRepositoryUri out of VcsRepositoryUri.
             LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString(), gitUrl);
             String localVCBasePath = environment.getProperty("artemis.version-control.local-vcs-repo-path");

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
@@ -15,6 +17,7 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 /**
  * Service for upgrading of Java template files
  */
+@Profile(PROFILE_CORE)
 @Service
 public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
@@ -91,7 +95,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
             return;
         }
         try {
-            String templatePomDir = repositoryType == RepositoryType.TESTS ? "test/projectTemplate" : repositoryType.getName();
+            String templatePomDir = repositoryType == RepositoryType.TESTS ? "test/maven/projectTemplate" : repositoryType.getName();
             Resource[] templatePoms = getTemplateResources(exercise, templatePomDir + "/**/" + POM_FILE);
             Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURL(repositoryType), true);
             List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> Objects.equals(file.getName(), POM_FILE)).toList();

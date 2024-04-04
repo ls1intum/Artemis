@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.localvcci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -29,15 +31,12 @@ import de.tum.in.www1.artemis.exception.LocalCIException;
  * This includes a Docker client and an executor service that manages the queue of build jobs.
  */
 @Configuration
-@Profile("localci")
+@Profile({ "localci", PROFILE_BUILDAGENT })
 public class LocalCIConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
-
-    @Value("${artemis.continuous-integration.queue-size-limit:30}")
-    int queueSizeLimit;
 
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
@@ -47,9 +46,6 @@ public class LocalCIConfiguration {
 
     @Value("${artemis.continuous-integration.specify-concurrent-builds:false}")
     boolean specifyConcurrentBuilds;
-
-    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
-    private String buildContainerPrefix;
 
     public LocalCIConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -97,7 +93,6 @@ public class LocalCIConfiguration {
      */
     @Bean
     public ExecutorService localCIBuildExecutorService() {
-
         int threadPoolSize;
 
         if (specifyConcurrentBuilds) {
@@ -108,8 +103,6 @@ public class LocalCIConfiguration {
             threadPoolSize = Math.max(1, (availableProcessors - 2) / 2);
         }
 
-        log.info("Using ExecutorService with thread pool size {} and a queue size limit of {}.", threadPoolSize, queueSizeLimit);
-
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
                 .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).build();
 
@@ -117,8 +110,8 @@ public class LocalCIConfiguration {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
         };
 
-        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory,
-                customRejectedExecutionHandler);
+        log.info("Using ExecutorService with thread pool size {}.", threadPoolSize);
+        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), customThreadFactory, customRejectedExecutionHandler);
     }
 
     /**
@@ -139,18 +132,12 @@ public class LocalCIConfiguration {
      */
     @Bean
     public DockerClient dockerClient() {
+        log.debug("Create bean dockerClient");
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig()).build();
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
         log.info("Docker client created with connection URI: {}", dockerConnectionUri);
-
-        // remove all stranded build containers
-        dockerClient.listContainersCmd().withShowAll(true).exec().forEach(container -> {
-            if (container.getNames()[0].startsWith("/" + buildContainerPrefix)) {
-                dockerClient.removeContainerCmd(container.getId()).withForce(true).exec();
-            }
-        });
 
         return dockerClient;
     }

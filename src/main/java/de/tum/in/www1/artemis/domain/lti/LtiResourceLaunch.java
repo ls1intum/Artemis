@@ -1,13 +1,11 @@
 package de.tum.in.www1.artemis.domain.lti;
 
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 
 /**
  * Represents an LTI 1.3 Resource Link Launch.
@@ -37,6 +35,9 @@ public class LtiResourceLaunch extends DomainObject {
     @NotNull
     @ManyToOne
     private Exercise exercise;
+
+    @ManyToOne
+    private LtiPlatformConfiguration ltiPlatformConfiguration;
 
     /**
      * Creates an LtiResourceLaunch entity from an LTI1.3 launch request to be saved in the database
@@ -96,5 +97,13 @@ public class LtiResourceLaunch extends DomainObject {
 
     public void setScoreLineItemUrl(String lineItemUrl) {
         this.scoreLineItemUrl = lineItemUrl;
+    }
+
+    public LtiPlatformConfiguration getLtiPlatformConfiguration() {
+        return ltiPlatformConfiguration;
+    }
+
+    public void setLtiPlatformConfiguration(LtiPlatformConfiguration ltiPlatformConfiguration) {
+        this.ltiPlatformConfiguration = ltiPlatformConfiguration;
     }
 }

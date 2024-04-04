@@ -1,25 +1,28 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.getFirstDateOfWeekDay;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.getFirstDateOfWeekDay;
 
 import java.time.*;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
-import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil;
+import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupSessionResource;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.ScheduleOverlapsWithSessionException;
+import de.tum.in.www1.artemis.web.rest.util.DateUtil;
 
+@Profile(PROFILE_CORE)
 @Service
 public class TutorialGroupScheduleService {
 
@@ -99,7 +102,7 @@ public class TutorialGroupScheduleService {
     public List<TutorialGroupSession> generateSessions(Course course, TutorialGroupSchedule tutorialGroupSchedule) {
         ZoneId timeZone = ZoneId.of(course.getTimeZone());
         List<TutorialGroupSession> sessions = new ArrayList<>();
-        ZonedDateTime periodEnd = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidToInclusive()), TutorialGroupDateUtil.END_OF_DAY, timeZone);
+        ZonedDateTime periodEnd = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidToInclusive()), DateUtil.END_OF_DAY, timeZone);
 
         // generate first session in the period (starting point of generation for other sessions)
         ZonedDateTime sessionStart = ZonedDateTime.of(getFirstDateOfWeekDay(LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive()), tutorialGroupSchedule.getDayOfWeek()),
@@ -125,17 +128,8 @@ public class TutorialGroupScheduleService {
         session.setTutorialGroupSchedule(tutorialGroupSchedule);
         session.setTutorialGroup(tutorialGroupSchedule.getTutorialGroup());
 
-        var overlappingPeriod = tutorialGroupFreePeriodService.findOverlappingPeriod(course, session);
-        if (overlappingPeriod.isPresent()) {
-            session.setStatus(TutorialGroupSessionStatus.CANCELLED);
-            session.setStatusExplanation(null);
-            session.setTutorialGroupFreePeriod(overlappingPeriod.get());
-        }
-        else {
-            session.setStatus(TutorialGroupSessionStatus.ACTIVE);
-            session.setStatusExplanation(null);
-            session.setTutorialGroupFreePeriod(null);
-        }
+        var overlappingPeriod = tutorialGroupFreePeriodService.findOverlappingPeriod(course, session).stream().findFirst();
+        TutorialGroupSessionResource.updateTutorialGroupSession(session, overlappingPeriod);
         session.setLocation(tutorialGroupSchedule.getLocation());
         return session;
     }

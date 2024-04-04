@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -12,12 +15,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import javax.annotation.Nonnull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -27,6 +31,7 @@ import org.springframework.stereotype.Service;
 /**
  * Service class to load resources from the file system (if possible) and the classpath (as fallback).
  */
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Service
 public class ResourceLoaderService {
 
@@ -84,7 +89,7 @@ public class ResourceLoaderService {
      * @param basePath A relative path pattern to a resource.
      * @return The resources located by the specified pathPattern.
      */
-    @Nonnull
+    @NotNull
     public Resource[] getResources(final Path basePath) {
         return getResources(basePath, ALL_FILES_GLOB);
     }
@@ -100,7 +105,7 @@ public class ResourceLoaderService {
      * @param pattern  A pattern that limits which files in the directory of the base path are matched.
      * @return The resources located by the specified pathPattern.
      */
-    @Nonnull
+    @NotNull
     public Resource[] getResources(final Path basePath, final String pattern) {
         checkValidPathElseThrow(basePath);
 

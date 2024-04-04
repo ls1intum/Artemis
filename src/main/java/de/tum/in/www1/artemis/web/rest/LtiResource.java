@@ -30,9 +30,9 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 /**
  * REST controller to handle LTI13 launches.
  */
-@RestController
-@RequestMapping("/api")
 @Profile("lti")
+@RestController
+@RequestMapping("api/")
 public class LtiResource {
 
     private final LtiDeepLinkingService ltiDeepLinkingService;
@@ -69,7 +69,7 @@ public class LtiResource {
      * @param clientRegistrationId The identifier online of the course configuration.
      * @return A ResponseEntity containing a JSON object with the 'targetLinkUri' property set to the deep linking response target link.
      */
-    @PostMapping("/lti13/deep-linking/{courseId}")
+    @PostMapping("lti13/deep-linking/{courseId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseIds") Set<Long> exerciseIds,
             @RequestParam(name = "ltiIdToken") String ltiIdToken, @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {

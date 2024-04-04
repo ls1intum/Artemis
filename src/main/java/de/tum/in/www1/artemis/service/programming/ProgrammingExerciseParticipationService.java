@@ -1,17 +1,20 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
@@ -31,6 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseParticipationService {
 
@@ -465,12 +469,29 @@ public class ProgrammingExerciseParticipationService {
      * @param participation the participation for which to get the commits.
      * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
      */
-    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseStudentParticipation participation) {
+    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseParticipation participation) {
         try {
             return gitService.getCommitInfos(participation.getVcsRepositoryUri());
         }
         catch (GitAPIException e) {
             log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
+            return List.of();
+        }
+    }
+
+    /**
+     * Get the commits information for the test repository of the given participation's exercise.
+     *
+     * @param participation the participation for which to get the commits.
+     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
+     */
+    public List<CommitInfoDTO> getCommitInfosTestRepo(ProgrammingExerciseParticipation participation) {
+        ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
+        try {
+            return gitService.getCommitInfos(exercise.getVcsTestRepositoryUri());
+        }
+        catch (GitAPIException e) {
+            log.error("Could not get commit infos for test repository with participation id {}", participation.getId());
             return List.of();
         }
     }

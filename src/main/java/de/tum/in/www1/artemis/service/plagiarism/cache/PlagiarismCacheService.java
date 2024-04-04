@@ -1,14 +1,17 @@
 package de.tum.in.www1.artemis.service.plagiarism.cache;
 
 import static de.tum.in.www1.artemis.config.Constants.HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.ISet;
 import com.hazelcast.core.HazelcastInstance;
 
+@Profile(PROFILE_CORE)
 @Service
 public class PlagiarismCacheService {
 

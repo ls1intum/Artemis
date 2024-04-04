@@ -6,11 +6,12 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +37,7 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportSer
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 // TODO: this class has too many dependencies to other services. We should reduce this
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingSubmissionService extends SubmissionService {
 

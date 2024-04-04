@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.Instant;
 import java.util.Optional;
 
 import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,6 +19,7 @@ import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
  * <p>
  * This is the default implementation to support SpringBoot Actuator AuditEventRepository
  */
+@Profile(PROFILE_CORE)
 @Service
 public class AuditEventService {
 

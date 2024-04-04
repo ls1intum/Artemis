@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.websocket.team;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.Principal;
 import java.time.Instant;
 import java.util.List;
@@ -8,10 +10,11 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -40,6 +43,7 @@ import de.tum.in.www1.artemis.web.websocket.dto.OnlineTeamStudentDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.SubmissionSyncPayload;
 
 @Controller
+@Profile(PROFILE_CORE)
 public class ParticipationTeamWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationTeamWebsocketService.class);
@@ -101,7 +105,7 @@ public class ParticipationTeamWebsocketService {
      * @param participationId     id of participation
      * @param stompHeaderAccessor header from STOMP frame
      */
-    @SubscribeMapping("/topic/participations/{participationId}/team")
+    @SubscribeMapping("topic/participations/{participationId}/team")
     public void subscribe(@DestinationVariable Long participationId, StompHeaderAccessor stompHeaderAccessor) {
         final String destination = getDestination(participationId);
         destinationTracker.put(stompHeaderAccessor.getSessionId(), destination);
@@ -113,7 +117,7 @@ public class ParticipationTeamWebsocketService {
      *
      * @param participationId id of participation
      */
-    @MessageMapping("/topic/participations/{participationId}/team/trigger")
+    @MessageMapping("topic/participations/{participationId}/team/trigger")
     public void triggerSendOnlineTeamStudents(@DestinationVariable Long participationId) {
         sendOnlineTeamStudents(participationId);
     }
@@ -125,7 +129,7 @@ public class ParticipationTeamWebsocketService {
      * @param participationId id of participation which is being worked on
      * @param principal       principal of user who is working on the submission
      */
-    @MessageMapping("/topic/participations/{participationId}/team/typing")
+    @MessageMapping("topic/participations/{participationId}/team/typing")
     public void startTyping(@DestinationVariable Long participationId, Principal principal) {
         updateValue(lastTypingTracker, participationId, principal.getName());
         sendOnlineTeamStudents(participationId);
@@ -138,7 +142,7 @@ public class ParticipationTeamWebsocketService {
      * @param modelingSubmission updated modeling submission
      * @param principal          principal of user who wants to update the text submission
      */
-    @MessageMapping("/topic/participations/{participationId}/team/modeling-submissions/update")
+    @MessageMapping("topic/participations/{participationId}/team/modeling-submissions/update")
     public void updateModelingSubmission(@DestinationVariable Long participationId, @Payload ModelingSubmission modelingSubmission, Principal principal) {
         long start = System.currentTimeMillis();
         updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions");
@@ -152,7 +156,7 @@ public class ParticipationTeamWebsocketService {
      * @param textSubmission  updated text submission
      * @param principal       principal of user who wants to update the text submission
      */
-    @MessageMapping("/topic/participations/{participationId}/team/text-submissions/update")
+    @MessageMapping("topic/participations/{participationId}/team/text-submissions/update")
     public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
         long start = System.currentTimeMillis();
         updateSubmission(participationId, textSubmission, principal, "/text-submissions");

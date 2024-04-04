@@ -40,8 +40,8 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.TestConstants;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -145,7 +145,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
         ModelingExercise classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         ModelingSubmission modelingSubmission = ParticipationFactory
-                .generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
+                .generateModelingSubmission(TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, login);
 
         String url = "/api/programming-submissions/" + modelingSubmission.getParticipation().getId() + "/trigger-build";
@@ -449,7 +449,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
         ModelingExercise classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         ModelingSubmission modelingSubmission = ParticipationFactory
-                .generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
+                .generateModelingSubmission(TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, login);
 
         String url = "/api/programming-submissions/" + modelingSubmission.getParticipation().getId() + "/trigger-failed-build";

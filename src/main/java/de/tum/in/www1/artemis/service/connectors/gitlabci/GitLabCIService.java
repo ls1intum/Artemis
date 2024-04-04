@@ -122,7 +122,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         // The second time, we don't want to overwrite the configuration.
         setupGitLabCIConfigurationForGroup(exercise, false);
         setupGitLabCIConfigurationForRepository(repositoryUri, exercise, planKey);
-        // TODO: triggerBuild(repositoryUri, exercise.getBranch());
     }
 
     private void setupGitLabCIConfigurationForRepository(VcsRepositoryUri repositoryUri, ProgrammingExercise exercise, String buildPlanId) {
@@ -140,7 +139,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
             projectApi.updateProject(project);
 
-            updateRepositoryVariable(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId);
+            setRepositoryVariable(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId);
         }
         catch (GitLabApiException e) {
             throw new GitLabCIException("Error enabling CI for " + repositoryUri, e);
@@ -186,7 +185,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         }
     }
 
-    private void updateRepositoryVariable(String repositoryPath, String key, String value) {
+    private void setRepositoryVariable(String repositoryPath, String key, String value) {
         final ProjectApi projectApi = gitlab.getProjectApi();
         if (projectApi.getOptionalVariable(repositoryPath, key).isEmpty()) {
             try {
@@ -219,11 +218,9 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
         VcsRepositoryUri templateUri = exercise.getVcsTemplateRepositoryUri();
         setupGitLabCIConfigurationForRepository(templateUri, exercise, exercise.getTemplateBuildPlanId());
-        // TODO: triggerBuild(templateUrl, exercise.getBranch());
 
         VcsRepositoryUri solutionUri = exercise.getVcsSolutionRepositoryUri();
         setupGitLabCIConfigurationForRepository(solutionUri, exercise, exercise.getSolutionBuildPlanId());
-        // TODO: triggerBuild(solutionUrl, exercise.getBranch());
     }
 
     @Override

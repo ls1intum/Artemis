@@ -1,15 +1,18 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,16 +27,17 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GradingScaleService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing grading scale
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class GradingScaleResource {
 
     private static final Logger log = LoggerFactory.getLogger(GradingScaleResource.class);
@@ -71,7 +75,7 @@ public class GradingScaleResource {
      * @param courseId the course to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) with body the grading scale if it exists and 404 (Not found) otherwise
      */
-    @GetMapping("/courses/{courseId}/grading-scale")
+    @GetMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> getGradingScaleForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get grading scale for course: {}", courseId);
@@ -88,7 +92,7 @@ public class GradingScaleResource {
      * @param examId   the exam to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) with body the grading scale if it exists and 404 (Not found) otherwise
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale")
+    @GetMapping("courses/{courseId}/exams/{examId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> getGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get grading scale for exam: {}", examId);
@@ -106,9 +110,9 @@ public class GradingScaleResource {
      * @param search The pageable search containing the page size, page number and query string
      * @return The desired page, sorted and matching the given query
      */
-    @GetMapping("/grading-scales")
+    @GetMapping("grading-scales")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<GradingScale>> getAllGradingScalesInInstructorGroupOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<GradingScale>> getAllGradingScalesInInstructorGroupOnPage(SearchTermPageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(gradingScaleService.getAllOnPageWithSize(search, user));
     }
@@ -121,7 +125,7 @@ public class GradingScaleResource {
      * @return ResponseEntity with status 201 (Created) with body the new grading scale if no such exists for the course
      *         and if it is correctly formatted and 400 (Bad request) otherwise
      */
-    @PostMapping("/courses/{courseId}/grading-scale")
+    @PostMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> createGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScale gradingScale) throws URISyntaxException {
         log.debug("REST request to create a grading scale for course: {}", courseId);
@@ -159,7 +163,7 @@ public class GradingScaleResource {
      * @return ResponseEntity with status 201 (Created) with body the new grading scale if no such exists for the course
      *         and if it is correctly formatted and 400 (Bad request) otherwise
      */
-    @PostMapping("/courses/{courseId}/exams/{examId}/grading-scale")
+    @PostMapping("courses/{courseId}/exams/{examId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScale gradingScale)
             throws URISyntaxException {
@@ -187,7 +191,7 @@ public class GradingScaleResource {
      * @param gradingScale the grading scale which will be updated
      * @return ResponseEntity with status 200 (Ok) with body the newly updated grading scale if it is correctly formatted and 400 (Bad request) otherwise
      */
-    @PutMapping("/courses/{courseId}/grading-scale")
+    @PutMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> updateGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for course: {}", courseId);
@@ -212,7 +216,7 @@ public class GradingScaleResource {
      * @param gradingScale the grading scale which will be updated
      * @return ResponseEntity with status 200 (Ok) with body the newly updated grading scale if it is correctly formatted and 400 (Bad request) otherwise
      */
-    @PutMapping("/courses/{courseId}/exams/{examId}/grading-scale")
+    @PutMapping("courses/{courseId}/exams/{examId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for exam: {}", examId);
@@ -237,7 +241,7 @@ public class GradingScaleResource {
      * @param courseId the course to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) if the grading scale is successfully deleted and 400 (Bad request) otherwise
      */
-    @DeleteMapping("/courses/{courseId}/grading-scale")
+    @DeleteMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteGradingScaleForCourse(@PathVariable Long courseId) {
         log.debug("REST request to delete the grading scale for course: {}", courseId);
@@ -255,7 +259,7 @@ public class GradingScaleResource {
      * @param examId   the exam to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) if the grading scale is successfully deleted and 400 (Bad request) otherwise
      */
-    @DeleteMapping("/courses/{courseId}/exams/{examId}/grading-scale")
+    @DeleteMapping("courses/{courseId}/exams/{examId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to delete the grading scale for exam: {}", examId);

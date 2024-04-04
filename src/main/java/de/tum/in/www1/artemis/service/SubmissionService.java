@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
@@ -21,13 +23,14 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSelectionService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
+@Profile(PROFILE_CORE)
 @Service
 // TODO: this class has too many dependencies to other services. We should reduce this
 public class SubmissionService {
@@ -235,7 +238,7 @@ public class SubmissionService {
      */
     public <S extends Submission> Optional<S> getAthenaSubmissionToAssess(Exercise exercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound,
             Function<Long, Optional<S>> findSubmissionById) {
-        if (exercise.getFeedbackSuggestionsEnabled() && athenaSubmissionSelectionService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
+        if (exercise.areFeedbackSuggestionsEnabled() && athenaSubmissionSelectionService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
             var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
             var athenaSubmissionId = athenaSubmissionSelectionService.get().getProposedSubmissionId(exercise, assessableSubmissions.stream().map(Submission::getId).toList());
             if (athenaSubmissionId.isPresent()) {
@@ -768,7 +771,7 @@ public class SubmissionService {
     }
 
     /**
-     * Search for all submissions fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * Search for all submissions fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged,
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of submissions if there are that many in Artemis.
      *
@@ -776,7 +779,7 @@ public class SubmissionService {
      * @param exerciseId Id of the exercise the submissions belongs to
      * @return A wrapper object containing a list of all found submissions and the total number of pages
      */
-    public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(PageableSearchDTO<String> search, Long exerciseId) {
+    public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(SearchTermPageableSearchDTO<String> search, Long exerciseId) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.STUDENT_PARTICIPATION);
         String searchTerm = search.getSearchTerm();
         Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exerciseId, searchTerm,

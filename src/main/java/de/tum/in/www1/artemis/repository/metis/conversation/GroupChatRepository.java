@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,15 +13,26 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Repository
 public interface GroupChatRepository extends JpaRepository<GroupChat, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
+    /**
+     * Find all group chats of a given user in a given course.
+     * <p>
+     * We join the conversionParticipants twice, once to filter the chats and bind it to the user ID. The second time, we fetch all participants.
+     *
+     * @param courseId the ID of the course to search in
+     * @param userId   the ID of the user to search for
+     * @return a list of group chats
+     */
     @Query("""
             SELECT DISTINCT groupChat
             FROM GroupChat groupChat
                 LEFT JOIN groupChat.conversationParticipants conversationParticipant
-                LEFT JOIN FETCH groupChat.conversationParticipants
+                LEFT JOIN FETCH groupChat.conversationParticipants conversationParticipants
+                LEFT JOIN FETCH conversationParticipants.user user
+                LEFT JOIN FETCH user.groups
             WHERE groupChat.course.id = :courseId
                 AND conversationParticipant.user.id = :userId
             ORDER BY groupChat.lastMessageDate DESC

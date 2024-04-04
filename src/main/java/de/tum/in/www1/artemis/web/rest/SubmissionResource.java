@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -7,6 +9,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,14 +25,16 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing Submission.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class SubmissionResource {
 
     private static final Logger log = LoggerFactory.getLogger(SubmissionResource.class);
@@ -80,7 +85,7 @@ public class SubmissionResource {
      * @param submissionId the id of the submission to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/submissions/{submissionId}")
+    @DeleteMapping("submissions/{submissionId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to delete Submission : {}", submissionId);
@@ -116,7 +121,7 @@ public class SubmissionResource {
      * @param exerciseId exerciseID for which all submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of the latest test run submission in body
      */
-    @GetMapping("/exercises/{exerciseId}/test-run-submissions")
+    @GetMapping("exercises/{exerciseId}/test-run-submissions")
     @EnforceAtLeastEditor
     public ResponseEntity<List<Submission>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
@@ -154,7 +159,7 @@ public class SubmissionResource {
      * @param exerciseId of the exercise we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of SubmissionWithComplaintDTOs. The list can be empty.
      */
-    @GetMapping("/exercises/{exerciseId}/submissions-with-complaints")
+    @GetMapping("exercises/{exerciseId}/submissions-with-complaints")
     @EnforceAtLeastTutor
     public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithComplaintsForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -175,7 +180,7 @@ public class SubmissionResource {
      * @param exerciseId of the exercise we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of SubmissionWithComplaintDTOs. The list can be empty.
      */
-    @GetMapping("/exercises/{exerciseId}/more-feedback-requests-with-complaints")
+    @GetMapping("exercises/{exerciseId}/more-feedback-requests-with-complaints")
     @EnforceAtLeastTutor
     public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithMoreFeedbackRequestForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -196,7 +201,7 @@ public class SubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/submissions-for-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<Submission>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<Submission>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get all Submissions for import : {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -233,7 +238,7 @@ public class SubmissionResource {
      * @return a list of {@link SubmissionVersionDTO} for the given submission
      */
 
-    @GetMapping("/submissions/{submissionId}/versions")
+    @GetMapping("submissions/{submissionId}/versions")
     @EnforceAtLeastInstructor
     public List<SubmissionVersionDTO> getSubmissionVersions(@PathVariable long submissionId) {
         var submission = submissionRepository.findByIdElseThrow(submissionId);
