@@ -22,7 +22,6 @@ export interface IComplaintService {
     create: (complaint: Complaint, examId: number) => Observable<EntityResponseType>;
     findBySubmissionId: (participationId: number) => Observable<EntityResponseType>;
     getComplaintsForTestRun: (exerciseId: number) => Observable<EntityResponseTypeArray>;
-    getNumberOfAllowedComplaintsInCourse: (courseId: number) => Observable<number>;
     findAllByTutorIdForCourseId: (tutorId: number, courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
     findAllByTutorIdForExerciseId: (tutorId: number, exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
     findAllByCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
@@ -107,16 +106,6 @@ export class ComplaintService implements IComplaintService {
         return this.http
             .get<Complaint[]>(`${this.resourceUrl}?exerciseId=${exerciseId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseTypeArray) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
-    }
-
-    /**
-     * Get number of allowed complaints in this course.
-     * @param courseId
-     * @param teamMode If true, the number of allowed complaints for the user's team is returned
-     */
-    getNumberOfAllowedComplaintsInCourse(courseId: number, teamMode = false): Observable<number> {
-        // Note: 0 is the default value in case the server returns something that does not make sense
-        return this.http.get<number>(`${this.resourceUrl}?courseId=${courseId}&teamMode=${teamMode}`) ?? 0;
     }
 
     /**

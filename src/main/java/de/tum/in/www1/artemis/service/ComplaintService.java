@@ -225,20 +225,6 @@ public class ComplaintService {
         });
     }
 
-    /**
-     * Given an exercise id, retrieve more feedback requests related to whoever is calling the method. Useful for creating a list of more feedback requests a tutor can review.
-     *
-     * @param exerciseId - the id of the exercise we are interested in
-     * @return a list of complaints
-     */
-    public List<Complaint> getMyMoreFeedbackRequests(long exerciseId) {
-        return complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
-    }
-
-    public List<Complaint> getAllComplaintsByTutorId(Long tutorId) {
-        return complaintRepository.getAllByResult_Assessor_Id(tutorId);
-    }
-
     public List<Complaint> getAllComplaintsByCourseId(Long courseId) {
         return complaintRepository.getAllByResult_Participation_Exercise_Course_Id(courseId);
     }
