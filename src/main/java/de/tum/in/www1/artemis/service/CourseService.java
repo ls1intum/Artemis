@@ -633,10 +633,22 @@ public class CourseService {
      * @return A list of Courses for the course management overview
      */
     public List<Course> getAllCoursesForManagementOverview(boolean onlyActive) {
-        var dateTimeNow = onlyActive ? ZonedDateTime.now() : null;
         var user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isAdmin = authCheckService.isAdmin(user);
+        if (isAdmin && !onlyActive) {
+            return courseRepository.findAll();
+        }
+
+        if (isAdmin) {
+            return courseRepository.findAllNotEnded(ZonedDateTime.now());
+        }
         var userGroups = new ArrayList<>(user.getGroups());
-        return courseRepository.getAllCoursesForManagementOverview(dateTimeNow, authCheckService.isAdmin(user), userGroups);
+
+        if (onlyActive) {
+            return courseRepository.findAllNotEndedCoursesByManagementGroupNames(ZonedDateTime.now(), userGroups);
+        }
+
+        return courseRepository.findAllCoursesByManagementGroupNames(userGroups);
     }
 
     /**

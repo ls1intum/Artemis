@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.ci.notification.dto;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -14,25 +13,9 @@ import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TestCaseDTO(String name, String classname, double time, List<TestCaseDetailMessageDTO> failures, List<TestCaseDetailMessageDTO> errors,
-        List<TestCaseDetailMessageDTO> successInfos) implements TestCaseDTOInterface {
-
-    // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
-    @JsonCreator
-    public TestCaseDTO(String name, String classname, double time, @JsonProperty("failures") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> failures,
-            @JsonProperty("errors") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> errors,
-            @JsonProperty("successInfos") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> successInfos) {
-        this.name = name;
-        this.classname = classname;
-        this.time = time;
-        this.failures = failures;
-        this.errors = errors;
-        this.successInfos = successInfos;
-    }
-
-    public TestCaseDTO(String name, String classname, double time) {
-        this(name, classname, time, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-    }
+public record TestCaseDTO(String name, String classname, double time, @JsonProperty("failures") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> failures,
+        @JsonProperty("errors") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> errors,
+        @JsonProperty("successInfos") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> successInfos) implements TestCaseDTOInterface {
 
     @JsonIgnore
     public boolean isSuccessful() {
@@ -45,7 +28,7 @@ public record TestCaseDTO(String name, String classname, double time, List<TestC
     }
 
     @Override
-    public List<String> getMessage() {
+    public List<String> getTestMessages() {
         return extractMessage().map(Collections::singletonList).orElse(Collections.emptyList());
     }
 
