@@ -212,7 +212,7 @@ Participate in Modeling Exercise
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/42870?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/43388?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video tutorial for participating in a modeling exercise on TUM-Live.
     </iframe>
 
@@ -224,7 +224,7 @@ View Modeling Exercise Submission
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/42871?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/43389?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video tutorial for viewing a modeling exercise submission on TUM-Live.
     </iframe>
 
@@ -236,7 +236,7 @@ View Modeling Exercise Result
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/42872?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/43390?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video tutorial for viewing modeling exercise results on TUM-Live.
     </iframe>
 
