@@ -19,6 +19,8 @@ import 'monaco-editor/esm/vs/editor/edcore.main';
 
 failOnConsole({
     shouldFailOnWarn: true,
+    shouldFailOnLog: true,
+    shouldFailOnInfo: true,
 });
 
 const noop = () => {};
