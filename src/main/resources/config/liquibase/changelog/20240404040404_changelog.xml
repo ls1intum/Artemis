@@ -8,10 +8,6 @@
         <dropAllForeignKeyConstraints baseTableName="iris_exercise_plan_message_content"/>
         <dropForeignKeyConstraint baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_IRIS_CODE_EDITOR_SETTINGS"/>
 
-        <dropPrimaryKey tableName="iris_exercise_plan_step"/>
-        <dropPrimaryKey tableName="iris_code_editor_sub_settings"/>
-        <dropPrimaryKey tableName="iris_exercise_plan_message_content"/>
-
         <dropTable tableName="iris_exercise_plan_step"/>
         <dropTable tableName="iris_code_editor_sub_settings"/>
         <dropTable tableName="iris_exercise_plan_message_content"/>
