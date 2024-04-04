@@ -62,14 +62,14 @@
                                  referencedTableName="standardized_competency" onDelete="CASCADE"/>
         <addForeignKeyConstraint baseColumnNames="knowledge_area_id" baseTableName="standardized_competency"
                                  constraintName="fk_standardized_competency_knowledge_area" referencedColumnNames="id"
-                                 referencedTableName="knowledge_area"/>
+                                 referencedTableName="knowledge_area" onDelete="CASCADE"/>
         <addForeignKeyConstraint baseColumnNames="source_id" baseTableName="standardized_competency"
                                  constraintName="fk_standardized_competency_source" referencedColumnNames="id"
                                  referencedTableName="source"/>
 
         <addForeignKeyConstraint baseColumnNames="parent_id" baseTableName="knowledge_area"
                                  constraintName="fk_knowledge_area_parent" referencedColumnNames="id"
-                                 referencedTableName="knowledge_area"/>
+                                 referencedTableName="knowledge_area" onDelete="CASCADE"/>
 
         <addForeignKeyConstraint baseColumnNames="linked_standardized_competency_id" baseTableName="competency"
                                  constraintName="fk_competency_linked_standardized_competency" referencedColumnNames="id"

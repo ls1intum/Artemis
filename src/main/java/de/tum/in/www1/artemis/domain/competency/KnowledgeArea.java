@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.competency;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -44,11 +45,11 @@ public class KnowledgeArea extends DomainObject {
     @JsonIgnoreProperties({ "parent", "children" })
     private KnowledgeArea parent;
 
-    @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties({ "parent" })
     private Set<KnowledgeArea> children = new HashSet<>();
 
-    @OneToMany(mappedBy = "knowledgeArea", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "knowledgeArea", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("knowledgeArea")
     private Set<StandardizedCompetency> competencies = new HashSet<>();
 

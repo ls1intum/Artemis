@@ -31,8 +31,6 @@ public interface ParticipationInterface {
 
     void addSubmission(Submission submission);
 
-    Participation copyParticipationId();
-
     Exercise getExercise();
 
     void setExercise(Exercise exercise);
