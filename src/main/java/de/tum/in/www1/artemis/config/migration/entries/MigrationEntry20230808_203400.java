@@ -80,7 +80,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
-    private static final List<String> MIGRATABLE_PROFILES = List.of("gitlab", "jenkins");
+    private static final List<String> MIGRATABLE_PROFILES = List.of("jenkins");
 
     public MigrationEntry20230808_203400(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
