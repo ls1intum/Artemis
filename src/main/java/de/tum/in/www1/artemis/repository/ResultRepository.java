@@ -134,8 +134,19 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "feedbacks", "assessor" })
-    Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorById(long resultId);
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.submission s
+                LEFT JOIN FETCH s.results
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH r.participation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsById(@Param("resultId") long resultId);
 
     /**
      * counts the number of assessments of a course, which are either rated or not rated
@@ -160,8 +171,17 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission and feedback list, or an empty optional if no result could be found for the given id
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
-    Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.submission
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.participation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findWithSubmissionAndFeedbackAndTeamStudentsById(@Param("resultId") long resultId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
     Optional<Result> findWithEagerSubmissionAndFeedbackAndTestCasesById(long resultId);
@@ -607,11 +627,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         // Set score according to maxPoints, to establish results with score > 100%
         result.setScore(totalPoints, maxPoints, exercise.getCourseViaExerciseGroupOrCourseMember());
 
-        // Workaround to prevent the assessor turning into a proxy object after saving
-        var assessor = result.getAssessor();
-        result = save(result);
-        result.setAssessor(assessor);
-        return result;
+        Result savedResult = save(result);
+        // Workaround to prevent the assessor or participant turning into a proxy object after saving
+        savedResult.setAssessor(result.getAssessor());
+        // Workaround to prevent the team students of a student participation turning into a proxy object after saving
+        savedResult.setParticipation(result.getParticipation());
+        return savedResult;
     }
 
     /**
@@ -714,8 +735,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 .orElseThrow(() -> new EntityNotFoundException("Result by participationId", participationId));
     }
 
-    default Result findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(long resultId) {
-        return findWithEagerSubmissionAndFeedbackAndAssessorById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+    default Result findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsByIdElseThrow(long resultId) {
+        return findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
     /**
@@ -734,8 +755,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return the result with submission and feedback list
      */
-    default Result findByIdWithEagerSubmissionAndFeedbackElseThrow(long resultId) {
-        return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+    default Result findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(long resultId) {
+        return findWithSubmissionAndFeedbackAndTeamStudentsById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
     default Result findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(long resultId) {
@@ -764,7 +785,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         for (ExampleSubmission exampleSubmission : exampleSubmissions) {
             Submission submission = exampleSubmission.getSubmission();
             if (!submission.isEmpty() && submission.getLatestResult() != null) {
-                Result result = findByIdWithEagerSubmissionAndFeedbackElseThrow(submission.getLatestResult().getId());
+                Result result = findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(submission.getLatestResult().getId());
                 results.add(result);
             }
         }
