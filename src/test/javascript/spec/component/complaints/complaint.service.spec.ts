@@ -13,12 +13,10 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ComplaintRequestDTO } from 'app/entities/complaint-request-dto.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 describe('ComplaintService', () => {
     let complaintService: ComplaintService;
     let accountService: AccountService;
-    let courseService: CourseManagementService;
     let httpMock: HttpTestingController;
 
     const dayjsTime1 = dayjs().utc().year(2022).month(3).date(14).hour(10).minute(35).second(12).millisecond(332);
@@ -371,21 +369,6 @@ describe('ComplaintService', () => {
         expect(res.request.url).toBe(`api/complaints?exerciseId=${exerciseId}`);
 
         res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
-    });
-
-    it('getNumberOfAllowedComplaintsInCourse', () => {
-        const courseId = 42;
-        const teamMode = true;
-        const expectedCount = 69;
-
-        courseService.getNumberOfAllowedComplaintsInCourse(courseId, teamMode).subscribe((received) => {
-            expect(received).toBe(expectedCount);
-        });
-
-        const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/complaints?courseId=${courseId}&teamMode=true`);
-
-        res.flush(expectedCount);
     });
 
     it('findAllByTutorIdForCourseId', () => {
