@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.connectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URL;
-import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +25,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
-import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.aeolus.WindfileMetadata;
 
@@ -83,7 +81,6 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
         windfile.getMetadata().setName("test");
         windfile.getMetadata().setDescription("test");
         windfile.getMetadata().setId("test");
-        windfile.setActions(List.of(new ScriptAction()));
         return windfile;
     }
 

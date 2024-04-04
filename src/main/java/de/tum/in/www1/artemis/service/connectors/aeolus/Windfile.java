@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,9 +19,9 @@ public class Windfile {
 
     private WindfileMetadata metadata;
 
-    private List<Action> actions;
+    private List<Action> actions = new ArrayList<>();
 
-    private Map<String, AeolusRepository> repositories;
+    private Map<String, AeolusRepository> repositories = new HashMap<>();
 
     public String getApi() {
         return api;
