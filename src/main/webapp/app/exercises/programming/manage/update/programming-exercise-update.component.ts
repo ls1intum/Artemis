@@ -276,8 +276,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
 
-        // Automatically enable the checkout of the solution repository for Haskell exercises
-        this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL;
+        if (language == ProgrammingLanguage.HASKELL) {
+            // Automatically enable the checkout of the solution repository for Haskell exercises
+            this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed;
+        }
+        if (!this.checkoutSolutionRepositoryAllowed) {
+            this.programmingExercise.checkoutSolutionRepository = false;
+        }
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined && !this.isImportFromFile) {
