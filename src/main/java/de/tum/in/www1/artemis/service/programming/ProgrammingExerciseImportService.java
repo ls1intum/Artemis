@@ -290,6 +290,11 @@ public class ProgrammingExerciseImportService {
             upgradeService.upgradeTemplate(importedProgrammingExercise);
         }
 
+        if (newExercise.getBuildPlanConfiguration() == null) {
+            // this means the user did not override the build plan config when importing the exercise and want to reuse it from the existing exercise
+            newExercise.setBuildPlanConfiguration(importedProgrammingExercise.getBuildPlanConfiguration());
+        }
+
         if (recreateBuildPlans) {
             // Create completely new build plans for the exercise
             programmingExerciseService.setupBuildPlansForNewExercise(importedProgrammingExercise, false);

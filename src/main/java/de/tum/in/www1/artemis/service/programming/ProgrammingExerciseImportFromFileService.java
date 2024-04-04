@@ -87,7 +87,7 @@ public class ProgrammingExerciseImportFromFileService {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
         Path importExerciseDir = null;
-        ProgrammingExercise importedProgrammingExercise;
+        ProgrammingExercise newProgrammingExercise;
         try {
             importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
             Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
@@ -98,24 +98,29 @@ public class ProgrammingExerciseImportFromFileService {
             var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
             programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
-            importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport, true);
+            newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport, true);
             if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
-                staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
+                staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
             Path pathToDirectoryWithImportedContent = exerciseFilePath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(exerciseFilePath.toString()));
             copyEmbeddedFiles(pathToDirectoryWithImportedContent);
-            importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName, user);
-            importedProgrammingExercise.setCourse(course);
+            importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, oldShortName, user);
+            newProgrammingExercise.setCourse(course);
             // It doesn't make sense to import a build plan on a bamboo or local CI setup.
             if (profileService.isGitlabCiOrJenkinsActive()) {
-                importBuildPlanIfExisting(importedProgrammingExercise, pathToDirectoryWithImportedContent);
+                importBuildPlanIfExisting(newProgrammingExercise, pathToDirectoryWithImportedContent);
+            }
+
+            if (newProgrammingExercise.getBuildPlanConfiguration() == null) {
+                // this means the user did not override the build plan config when importing the exercise and want to reuse it from the existing exercise
+                newProgrammingExercise.setBuildPlanConfiguration(programmingExerciseForImport.getBuildPlanConfiguration());
             }
         }
         finally {
             // want to make sure the directories are deleted, even if an exception is thrown
             fileService.scheduleDirectoryPathForRecursiveDeletion(importExerciseDir, 5);
         }
-        return importedProgrammingExercise;
+        return newProgrammingExercise;
     }
 
     /**
