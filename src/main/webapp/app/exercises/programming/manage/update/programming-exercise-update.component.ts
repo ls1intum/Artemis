@@ -276,7 +276,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
 
-        if (language == ProgrammingLanguage.HASKELL) {
+        if (language == ProgrammingLanguage.HASKELL || language == ProgrammingLanguage.OCAML) {
             // Automatically enable the checkout of the solution repository for Haskell exercises
             this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed;
         }
