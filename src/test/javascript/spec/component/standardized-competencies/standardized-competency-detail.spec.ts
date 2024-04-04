@@ -77,7 +77,7 @@ describe('StandardizedCompetencyDetailComponent', () => {
     });
 
     it('should disable/enable when setting edit mode', () => {
-        component.isInEditMode = false;
+        component.isEditing = false;
         componentFixture.detectChanges();
         expect(component.form.disabled).toBeTrue();
 
@@ -86,14 +86,14 @@ describe('StandardizedCompetencyDetailComponent', () => {
     });
 
     it('should save', () => {
-        component.isInEditMode = true;
+        component.isEditing = true;
         component.form.setValue(newValues);
         const saveSpy = jest.spyOn(component.onSave, 'emit');
 
         component.save();
 
         expect(saveSpy).toHaveBeenCalledWith({ ...defaultCompetency, ...newValues });
-        expect(component.isInEditMode).toBeFalse();
+        expect(component.isEditing).toBeFalse();
     });
 
     it.each<[StandardizedCompetencyDTO, boolean]>([
@@ -101,14 +101,14 @@ describe('StandardizedCompetencyDetailComponent', () => {
         [{ title: 'new competency' } as StandardizedCompetencyDTO, true],
     ])('should cancel and close', (competency, shouldClose) => {
         component.competency = competency;
-        component.isInEditMode = true;
+        component.isEditing = true;
         component.form.setValue(newValues);
         const closeSpy = jest.spyOn(component.onClose, 'emit');
 
         component.cancel();
 
         compareFormValues(component.form.getRawValue(), competency);
-        expect(component.isInEditMode).toBeFalse();
+        expect(component.isEditing).toBeFalse();
         shouldClose ? expect(closeSpy).toHaveBeenCalled() : expect(closeSpy).not.toHaveBeenCalled();
     });
 

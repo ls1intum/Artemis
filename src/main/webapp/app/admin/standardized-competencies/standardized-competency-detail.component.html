@@ -2,14 +2,14 @@
     <div class="mb-2">
         <div class="d-flex justify-content-between">
             @if (competency.id !== undefined) {
-                <h4 [jhiTranslate]="'artemisApp.standardizedCompetency.details.title' + (isInEditMode ? 'Edit' : '')"></h4>
+                <h4 [jhiTranslate]="'artemisApp.standardizedCompetency.details.title' + (isEditing ? 'Edit' : '')"></h4>
             } @else {
                 <h4 jhiTranslate="artemisApp.standardizedCompetency.details.titleCreate"></h4>
             }
             <button type="button" class="btn-close" (click)="close()"></button>
         </div>
         <div>
-            @if (!isInEditMode) {
+            @if (!isEditing) {
                 <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.edit'" [icon]="faPencil" (onClick)="edit()" />
             }
             <!-- do not display the delete button when creating new competencies -->
@@ -44,7 +44,7 @@
         </div>
         <div class="form-group">
             <label jhiTranslate="artemisApp.standardizedCompetency.model.description"></label>
-            @if (isInEditMode) {
+            @if (isEditing) {
                 <jhi-markdown-editor
                     [markdown]="form.controls.description.value"
                     (markdownChange)="updateDescriptionControl($event)"
@@ -81,7 +81,7 @@
         </div>
         <!-- TODO: add source handling in follow-up PR -->
     </div>
-    @if (isInEditMode) {
+    @if (isEditing) {
         <div>
             <jhi-button [btnType]="ButtonType.SECONDARY" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
             <jhi-button

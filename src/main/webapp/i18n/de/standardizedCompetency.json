@@ -3,7 +3,7 @@
         "standardizedCompetency": {
             "title": "Standardisierte Kompetenzen",
             "manage": {
-                "title": "Standardisierter Kompetenzen Verwalten",
+                "title": "Standardisierte Kompetenzen Verwalten",
                 "filter": "Kompetenzen Filtern",
                 "knowledgeAreasButton": "Wissensgebiete verwalten",
                 "createButtonTooltip": "Standardisierte Kompetenz erstellen",

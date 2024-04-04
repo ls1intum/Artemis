@@ -76,7 +76,7 @@ public class StandardizedCompetencyService {
     /**
      * Updates an existing standardized competency with the provided competency data
      *
-     * @param competency the new competency values
+     * @param competency competency object containing the data to update
      * @return the updated standardized competency
      */
     public StandardizedCompetency updateStandardizedCompetency(StandardizedCompetency competency) {

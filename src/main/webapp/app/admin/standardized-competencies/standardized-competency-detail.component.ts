@@ -21,7 +21,7 @@ export class StandardizedCompetencyDetailComponent {
             taxonomy: [competency.taxonomy],
             knowledgeAreaId: [competency.knowledgeAreaId, [Validators.required]],
         });
-        if (!this.isInEditMode) {
+        if (!this.isEditing) {
             this.form.disable();
         }
     }
@@ -30,18 +30,18 @@ export class StandardizedCompetencyDetailComponent {
         return this._competency;
     }
 
-    @Input() set isInEditMode(isInEditMode: boolean) {
-        this._isInEditMode = isInEditMode;
-        this.isInEditModeChange.emit(isInEditMode);
-        if (isInEditMode) {
+    @Input() set isEditing(isEditing: boolean) {
+        this._isEditing = isEditing;
+        this.isEditingChange.emit(isEditing);
+        if (isEditing) {
             this.form.enable();
         } else {
             this.form.disable();
         }
     }
 
-    get isInEditMode() {
-        return this._isInEditMode;
+    get isEditing() {
+        return this._isEditing;
     }
 
     @Input() dialogError: Observable<string>;
@@ -49,9 +49,9 @@ export class StandardizedCompetencyDetailComponent {
     @Output() onSave = new EventEmitter<StandardizedCompetencyDTO>();
     @Output() onDelete = new EventEmitter<void>();
     @Output() onClose = new EventEmitter<void>();
-    @Output() isInEditModeChange = new EventEmitter<boolean>();
+    @Output() isEditingChange = new EventEmitter<boolean>();
 
-    private _isInEditMode: boolean;
+    private _isEditing: boolean;
     private _competency: StandardizedCompetencyDTO;
     form: FormGroup<{
         title: FormControl<string | undefined>;
@@ -75,7 +75,7 @@ export class StandardizedCompetencyDetailComponent {
     save() {
         const updatedValues = this.form.getRawValue();
         const updatedCompetency: StandardizedCompetencyDTO = { ...this.competency, ...updatedValues };
-        this.isInEditMode = false;
+        this.isEditing = false;
         this.onSave.emit(updatedCompetency);
     }
 
@@ -88,12 +88,12 @@ export class StandardizedCompetencyDetailComponent {
     }
 
     edit() {
-        this.isInEditMode = true;
+        this.isEditing = true;
     }
 
     cancel() {
         this.form.reset();
-        this.isInEditMode = false;
+        this.isEditing = false;
 
         //canceling when creating a new competency closes it
         if (this.competency.id === undefined) {
