@@ -174,9 +174,9 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
             void shouldReturn404() throws Exception {
                 // knowledge area/source that does not exist in the database is not allowed
                 var expectedCompetency = new StandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, null);
-                var knowlegeAreaNotExisting = new KnowledgeArea();
-                knowlegeAreaNotExisting.setId(ID_NOT_EXISTS);
-                expectedCompetency.setKnowledgeArea(knowlegeAreaNotExisting);
+                var knowledgeAreaNotExisting = new KnowledgeArea();
+                knowledgeAreaNotExisting.setId(ID_NOT_EXISTS);
+                expectedCompetency.setKnowledgeArea(knowledgeAreaNotExisting);
 
                 request.post("/api/admin/standardized-competencies", expectedCompetency, HttpStatus.NOT_FOUND);
 
