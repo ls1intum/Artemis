@@ -104,6 +104,11 @@ public class GroupedFile {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(filePath, testCase, gitDiffEntries, coverageReportEntries, fileContent, changedLines, coveredLines, commonLines, commonChanges);
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;

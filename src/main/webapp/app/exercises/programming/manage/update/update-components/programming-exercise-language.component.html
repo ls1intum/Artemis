@@ -1,14 +1,17 @@
-<section class="mb-5">
-    <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle">Language</h3>
-    <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepMessage">Set language.</p>
+<section>
+    <h3
+        jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle"
+        id="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle"
+    ></h3>
+    <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepMessage"></p>
     <div class="form-group">
-        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
+        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage"></label>
         <select
-            #select
+            #select="ngModel"
             required
             class="form-select"
             [ngModel]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
-            (ngModelChange)="select.value = programmingExerciseCreationConfig.onProgrammingLanguageChange($event)"
+            (ngModelChange)="select.model = programmingExerciseCreationConfig.onProgrammingLanguageChange($event)"
             name="programmingLanguage"
             id="field_programmingLanguage"
             [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
@@ -22,7 +25,7 @@
     </div>
     @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.projectTypes && programmingExerciseCreationConfig.projectTypes.length > 0) {
         <div class="form-group mt-2">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType">Project Type</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType"></label>
             <jhi-mode-picker
                 required
                 [options]="programmingExerciseCreationConfig.modePickerOptions"
@@ -31,7 +34,7 @@
                 [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile || !!programmingExercise.id"
                 name="projectType"
                 id="field_projectType"
-            ></jhi-mode-picker>
+            />
             @if (
                 !programmingExerciseCreationConfig.isImportFromExistingExercise &&
                 !programmingExerciseCreationConfig.isImportFromFile &&
@@ -49,15 +52,15 @@
                         (ngModelChange)="programmingExerciseCreationConfig.onWithDependenciesChanged($event)"
                         checked
                     />
-                    <span jhiTranslate="artemisApp.programmingExercise.withDependencies">With Dependencies</span>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.withDependenciesTooltip"></jhi-help-icon>
+                    <span jhiTranslate="artemisApp.programmingExercise.withDependencies"></span>
+                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.withDependenciesTooltip" />
                 </div>
             }
         </div>
     }
     @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.packageNameRequired && programmingExercise.projectType !== ProjectType.XCODE) {
         <div class="form-group">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName"></label>
             <input
                 required
                 type="text"
@@ -86,7 +89,7 @@
     }
     @if (programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && programmingExercise.projectType === ProjectType.XCODE) {
         <div class="form-group">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName">App Name</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName"></label>
             <input
                 required
                 type="text"
@@ -128,7 +131,7 @@
                 >
                     Enable Static Code Analysis</label
                 >
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.enableStaticCodeAnalysis.description"></jhi-help-icon>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.enableStaticCodeAnalysis.description" />
             </div>
         </div>
     }
@@ -149,7 +152,7 @@
                 <label class="form-check-label custom-control-label" for="field_sequentialTestRuns" jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">
                     >Sequential Test Runs</label
                 >
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.sequentialTestRuns.description" />
             </div>
         </div>
     }
@@ -165,21 +168,16 @@
                 [(ngModel)]="programmingExercise.testwiseCoverageEnabled"
                 checked
             />
-            <label class="form-check-label custom-control-label" for="field_testwiseCoverageEnabled" jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage"
-                >Record Testwise Coverage
-            </label>
-            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recordTestwiseCoverageTooltip"></jhi-help-icon>
+            <label class="form-check-label custom-control-label" for="field_testwiseCoverageEnabled" jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage"></label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recordTestwiseCoverageTooltip" />
         </div>
     }
-    @if (programmingExerciseCreationConfig.customBuildPlansSupported == PROFILE_LOCALCI) {
-        <jhi-programming-exercise-custom-build-plan
-            [programmingExercise]="programmingExercise"
-            [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig"
-        ></jhi-programming-exercise-custom-build-plan>
-    } @else if (programmingExerciseCreationConfig.customBuildPlansSupported == PROFILE_AEOLUS) {
+    @if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_LOCALCI) {
+        <jhi-programming-exercise-custom-build-plan [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig" />
+    } @else if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_AEOLUS) {
         <jhi-programming-exercise-custom-aeolus-build-plan
             [programmingExercise]="programmingExercise"
             [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig"
-        ></jhi-programming-exercise-custom-aeolus-build-plan>
+        />
     }
 </section>

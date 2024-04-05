@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.domain;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -25,12 +25,6 @@ public class OnlineCourseConfiguration extends DomainObject {
     @JsonIgnore
     private Course course;
 
-    @Column(name = "lti_key", nullable = false)
-    private String ltiKey;
-
-    @Column(name = "lti_secret", nullable = false)
-    private String ltiSecret;
-
     @Column(name = "user_prefix", nullable = false)
     private String userPrefix;
 
@@ -47,22 +41,6 @@ public class OnlineCourseConfiguration extends DomainObject {
 
     public void setCourse(Course course) {
         this.course = course;
-    }
-
-    public String getLtiKey() {
-        return ltiKey;
-    }
-
-    public void setLtiKey(String ltiKey) {
-        this.ltiKey = ltiKey;
-    }
-
-    public String getLtiSecret() {
-        return ltiSecret;
-    }
-
-    public void setLtiSecret(String ltiSecret) {
-        this.ltiSecret = ltiSecret;
     }
 
     public String getUserPrefix() {

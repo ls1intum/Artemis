@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,21 +19,33 @@ import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 /**
  * Spring Data JPA repository for the BuildLogStatisticsEntry entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLogStatisticsEntry, Long> {
 
     @Query("""
-                SELECT new de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO(count(b.id), avg(b.agentSetupDuration), avg(b.testDuration), avg(b.scaDuration), avg(b.totalJobDuration), avg(b.dependenciesDownloadedCount))
-                FROM BuildLogStatisticsEntry b, Submission s, Participation p
-                WHERE b.programmingSubmission = s
-                    AND s.participation = p
-                    AND (
-                        p.exercise = :#{#exercise}
-                        OR :#{#exercise.solutionParticipation != null ? #exercise.solutionParticipation.id : #exercise.solutionParticipation} = p.id
-                        OR :#{#exercise.templateParticipation != null ? #exercise.templateParticipation.id : #exercise.templateParticipation} = p.id
-                    )
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO(
+                COUNT(b.id),
+                AVG(b.agentSetupDuration),
+                AVG(b.testDuration),
+                AVG(b.scaDuration),
+                AVG(b.totalJobDuration),
+                AVG(b.dependenciesDownloadedCount)
+            )
+            FROM BuildLogStatisticsEntry b
+                LEFT JOIN b.programmingSubmission s
+                LEFT JOIN s.participation p
+            WHERE p.exercise = :exercise
+                OR p.id = :templateParticipationId
+                OR p.id = :solutionParticipationId
             """)
-    BuildLogStatisticsDTO findAverageBuildLogStatisticsEntryForExercise(@Param("exercise") ProgrammingExercise exercise);
+    BuildLogStatisticsDTO findAverageBuildLogStatistics(@Param("exercise") ProgrammingExercise exercise, @Param("templateParticipationId") Long templateParticipationId,
+            @Param("solutionParticipationId") Long solutionParticipationId);
+
+    default BuildLogStatisticsDTO findAverageBuildLogStatistics(ProgrammingExercise exercise) {
+        return findAverageBuildLogStatistics(exercise, exercise.getTemplateParticipation() != null ? exercise.getTemplateParticipation().getId() : null,
+                exercise.getSolutionParticipation() != null ? exercise.getSolutionParticipation().getId() : null);
+    }
 
     @Transactional // ok because of delete
     @Modifying

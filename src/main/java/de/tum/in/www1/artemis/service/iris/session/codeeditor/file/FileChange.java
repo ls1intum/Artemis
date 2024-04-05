@@ -17,11 +17,11 @@ import de.tum.in.www1.artemis.service.iris.session.codeeditor.IrisChangeExceptio
  */
 // @formatter:off
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = RenameFileChange.class, name = "rename"),
-        @JsonSubTypes.Type(value = DeleteFileChange.class, name = "delete"),
-        @JsonSubTypes.Type(value = CreateFileChange.class, name = "create"),
-        @JsonSubTypes.Type(value = OverwriteFileChange.class, name = "overwrite"),
-        @JsonSubTypes.Type(value = ModifyFileChange.class, name = "modify")
+    @JsonSubTypes.Type(value = RenameFileChange.class, name = "rename"),
+    @JsonSubTypes.Type(value = DeleteFileChange.class, name = "delete"),
+    @JsonSubTypes.Type(value = CreateFileChange.class, name = "create"),
+    @JsonSubTypes.Type(value = OverwriteFileChange.class, name = "overwrite"),
+    @JsonSubTypes.Type(value = ModifyFileChange.class, name = "modify")
 })
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:on

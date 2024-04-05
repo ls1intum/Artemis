@@ -21,7 +21,7 @@
                                 }
                                 @if (titleControl?.errors?.maxlength) {
                                     <div>
-                                        {{ 'artemisApp.competency.createCompetency.titleMaxLengthValidationError' | artemisTranslate }}
+                                        {{ 'artemisApp.competency.createCompetency.titleMaxLengthValidationError' | artemisTranslate: { max: competencyValidators.TITLE_MAX } }}
                                     </div>
                                 }
                                 @if (titleControl?.errors?.titleUnique) {
@@ -47,7 +47,10 @@
                             <div class="alert alert-danger">
                                 @if (descriptionControl?.errors?.maxlength) {
                                     <div>
-                                        {{ 'artemisApp.competency.createCompetency.descriptionMaxLengthValidationError' | artemisTranslate }}
+                                        {{
+                                            'artemisApp.competency.createCompetency.descriptionMaxLengthValidationError'
+                                                | artemisTranslate: { max: competencyValidators.DESCRIPTION_MAX }
+                                        }}
                                     </div>
                                 }
                             </div>
@@ -60,7 +63,7 @@
                         labelName="{{ 'artemisApp.competency.createCompetency.softDueDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.competency.createCompetency.softDueDateHint' | artemisTranslate }}"
                         formControlName="softDueDate"
-                    ></jhi-date-time-picker>
+                    />
                 </div>
                 @if (!isInConnectMode) {
                     <div class="form-group">
@@ -70,16 +73,7 @@
                                 <small> ({{ 'artemisApp.competency.createCompetency.suggestedTaxonomy' | artemisTranslate }}: {{ suggestedTaxonomies.join(', ') }}) </small>
                             }
                         </label>
-                        <select class="form-select mb-2" id="taxonomy" formControlName="taxonomy">
-                            <option [ngValue]="undefined" selected></option>
-                            @for (taxonomy of competencyTaxonomy | keyvalue: keepOrder; track taxonomy; let i = $index) {
-                                <option [ngValue]="taxonomy.key">
-                                    {{ '&ThinSpace;'.repeat(i) }}&boxur;
-                                    {{ 'artemisApp.competency.taxonomies.' + taxonomy.value.toLowerCase() | artemisTranslate }}
-                                    ({{ 'artemisApp.competency.keywords.' + taxonomy.value.toLowerCase() | artemisTranslate }})
-                                </option>
-                            }
-                        </select>
+                        <jhi-taxonomy-select selectId="taxonomy" [form]="taxonomyControl" />
                     </div>
                 }
                 @if (!isInConnectMode) {
@@ -96,7 +90,7 @@
                 <div class="form-group">
                     <input type="checkbox" class="form-check-input" id="optional" formControlName="optional" />
                     <label class="form-control-label" jhiTranslate="artemisApp.competency.optional" for="optional"></label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.competency.optionalDescription' | artemisTranslate }}"></fa-icon>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.competency.optionalDescription' | artemisTranslate }}" />
                 </div>
                 <div>
                     <label>{{ 'artemisApp.competency.createCompetency.connectWithLectureUnits' | artemisTranslate }}</label>
@@ -174,7 +168,7 @@
                     </button>
                     @if (hasCancelButton) {
                         <button type="button" (click)="cancelForm()" class="btn btn-default">
-                            <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                            <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                         </button>
                     }
                 </div>

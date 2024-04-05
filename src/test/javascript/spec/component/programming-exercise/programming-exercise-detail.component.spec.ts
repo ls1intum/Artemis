@@ -76,8 +76,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
     } as ExerciseManagementStatisticsDto;
 
     const gitDiffReport = {
-        leftCommitHash: 'x1',
-        rightCommitHash: 'x2',
+        templateRepositoryCommitHash: 'x1',
+        solutionRepositoryCommitHash: 'x2',
         entries: [
             {
                 previousFilePath: '/src/test.java',
@@ -162,7 +162,6 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            await Promise.resolve();
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
@@ -227,18 +226,13 @@ describe('ProgrammingExercise Management Detail Component', () => {
         }));
     });
 
-    it('should create empty details', () => {
+    it('should create details', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
         comp.programmingExercise = programmingExercise;
 
         const sections = comp.getExerciseDetails();
         expect(sections).toBeDefined();
-        for (const section of sections) {
-            for (const detail of section.details) {
-                expect(detail).toBeDefined();
-            }
-        }
     });
 
     it('should create structural solution entries', () => {
@@ -293,16 +287,17 @@ describe('ProgrammingExercise Management Detail Component', () => {
         expect(comp.isBuildPlanEditable).toBe(editable);
     });
 
-    it('should reload on participation change', () => {
-        const loadDiffSpy = jest.spyOn(comp, 'loadGitDiffReport').mockReturnValue(new Promise(() => null));
+    it('should reload on participation change', fakeAsync(() => {
+        const loadDiffSpy = jest.spyOn(comp, 'loadGitDiffReport');
         jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
-        jest.spyOn(exerciseService, 'getLatestTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
+        jest.spyOn(exerciseService, 'getLatestFullTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
         comp.programmingExercise = mockProgrammingExercise;
         comp.programmingExercise.testwiseCoverageEnabled = true;
         comp.onParticipationChange();
+        tick();
         expect(loadDiffSpy).toHaveBeenCalledOnce();
         expect(comp.programmingExercise.coveredLinesRatio).toBe(0.5);
-    });
+    }));
 
     it('should combine template commit', () => {
         const combineCommitsSpy = jest.spyOn(exerciseService, 'combineTemplateRepositoryCommits').mockReturnValue(of(new HttpResponse({ body: null })));

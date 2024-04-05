@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -26,8 +26,13 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = IrisGlobalSettings.class, name = "global"), @JsonSubTypes.Type(value = IrisCourseSettings.class, name = "course"),
-        @JsonSubTypes.Type(value = IrisExerciseSettings.class, name = "exercise") })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = IrisGlobalSettings.class, name = "global"),
+    @JsonSubTypes.Type(value = IrisCourseSettings.class, name = "course"),
+    @JsonSubTypes.Type(value = IrisExerciseSettings.class, name = "exercise")
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisSettings extends DomainObject {
 
@@ -42,6 +47,10 @@ public abstract class IrisSettings extends DomainObject {
     public abstract IrisCodeEditorSubSettings getIrisCodeEditorSettings();
 
     public abstract void setIrisCodeEditorSettings(IrisCodeEditorSubSettings irisCodeEditorSettings);
+
+    public abstract IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings();
+
+    public abstract void setIrisCompetencyGenerationSettings(IrisCompetencyGenerationSubSettings irisCompetencyGenerationSubSettings);
 
     public abstract boolean isValid();
 }

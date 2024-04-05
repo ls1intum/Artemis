@@ -28,10 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -41,13 +39,15 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepository;
+    ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     private LocalRepository assignmentRepository;
 
     private LocalRepository templateRepository;
 
     private LocalRepository solutionRepository;
+
+    private LocalRepository testsRepository;
 
     @BeforeEach
     void initRepositories() throws GitAPIException, IOException, URISyntaxException {
@@ -59,6 +59,9 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Create solution repository
         solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-solution");
+
+        // Create tests repository
+        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-tests");
     }
 
     @AfterEach
@@ -66,6 +69,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assignmentRepository.resetLocalRepo();
         templateRepository.resetLocalRepo();
         solutionRepository.resetLocalRepo();
+        testsRepository.resetLocalRepo();
     }
 
     @Test
@@ -192,59 +196,105 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUserTriesToForcePush() throws Exception {
+    void testStudentTriesToForcePush() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
 
-        // Create a second local repository, push a file from there, and then try to force push from the original local repository.
+        RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, repositoryUri, student1Login, projectKey1, assignmentRepositorySlug);
+
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testInstructorTriesToForcePush() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        String assignmentRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, assignmentRepositorySlug);
+        String templateRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, templateRepositorySlug);
+        String solutionRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, solutionRepositorySlug);
+        String testsRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, testsRepositorySlug);
+
+        // Force push to assignment repository (should not be possible)
+        RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, assignmentRepoUri, instructor1Login, projectKey1, assignmentRepositorySlug);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
+
+        // Force push to template repository (should be possible)
+        remoteRefUpdate = setupAndTryForcePush(templateRepository, templateRepoUri, instructor1Login, projectKey1, templateRepositorySlug);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+
+        // Force push to solution repository (should be possible)
+        remoteRefUpdate = setupAndTryForcePush(solutionRepository, solutionRepoUri, instructor1Login, projectKey1, solutionRepositorySlug);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+
+        // Force push to rests repository (should be possible)
+        remoteRefUpdate = setupAndTryForcePush(testsRepository, testsRepoUri, instructor1Login, projectKey1, testsRepositorySlug);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+    }
+
+    private RemoteRefUpdate setupAndTryForcePush(LocalRepository originalRepository, String repositoryUri, String login, String projectKey, String repositorySlug)
+            throws Exception {
+
+        // Create a second local repository and push a file from there
         Path tempDirectory = Files.createTempDirectory("tempDirectory");
         Git secondLocalGit = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDirectory.toFile()).call();
         localVCLocalCITestService.commitFile(tempDirectory, secondLocalGit);
-        localVCLocalCITestService.testPushSuccessful(secondLocalGit, student1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(secondLocalGit, login, projectKey, repositorySlug);
 
-        localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), assignmentRepository.localGit, "second-test.txt");
+        // Commit a file to the original local repository
+        localVCLocalCITestService.commitFile(originalRepository.localRepoFile.toPath(), originalRepository.localGit, "second-test.txt");
 
-        // Try to push normally, should fail because the remote already contains work that does not exist locally.
-        PushResult pushResultNormal = assignmentRepository.localGit.push().setRemote(repositoryUri).call().iterator().next();
+        // Try to push normally, should fail because the remote already contains work that does not exist locally
+        PushResult pushResultNormal = originalRepository.localGit.push().setRemote(repositoryUri).call().iterator().next();
         RemoteRefUpdate remoteRefUpdateNormal = pushResultNormal.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdateNormal.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD);
 
-        // Force push from the original local repository.
-        PushResult pushResultForce = assignmentRepository.localGit.push().setForce(true).setRemote(repositoryUri).call().iterator().next();
+        // Force push from the original local repository
+        PushResult pushResultForce = originalRepository.localGit.push().setForce(true).setRemote(repositoryUri).call().iterator().next();
         RemoteRefUpdate remoteRefUpdate = pushResultForce.getRemoteUpdates().iterator().next();
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
-        assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
 
         // Cleanup
         secondLocalGit.close();
         FileUtils.deleteDirectory(tempDirectory.toFile());
+
+        return remoteRefUpdate;
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesNewBranch() throws Exception {
-        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        // Users can create new branches, but pushing to them should not result in a new submission. A warning message should be returned.
+        // Users cannot create new branches.
         assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
         String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
 
         // Push the new branch.
         PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
                 .iterator().next();
-        assertThat(pushResult.getMessages()).contains("Only pushes to the default branch will be graded.");
-        Optional<ProgrammingSubmission> submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(studentParticipation.getId());
-        assertThat(submission).isNotPresent();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
+    }
 
-        // Commit a new file to the new branch and push again.
-        assignmentRepository.localGit.checkout().setName("new-branch").call();
-        Path testFilePath = assignmentRepository.localRepoFile.toPath().resolve("new-file.txt");
-        Files.createFile(testFilePath);
-        assignmentRepository.localGit.add().addFilepattern(".").call();
-        GitService.commit(assignmentRepository.localGit).setMessage("Add new file").call();
-        pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).call().iterator().next();
-        assertThat(pushResult.getMessages()).contains("Only pushes to the default branch will be graded.");
-        submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(studentParticipation.getId());
-        assertThat(submission).isNotPresent();
+    @Test
+    void testRepositoryFolderName() {
+
+        // we specifically choose logins containing "git" to test it does not accidentally get replaced
+        String login1 = "ab123git";
+        String login2 = "git123ab";
+
+        LocalVCRepositoryUri studentAssignmentRepositoryUri1 = new LocalVCRepositoryUri(projectKey1, projectKey1.toLowerCase() + "-" + login1, localVCBaseUrl);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri2 = new LocalVCRepositoryUri(projectKey1, projectKey1.toLowerCase() + "-" + login2, localVCBaseUrl);
+
+        // assert that the URIs are correct
+        assertThat(studentAssignmentRepositoryUri1.getURI().toString()).isEqualTo(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1 + ".git");
+        assertThat(studentAssignmentRepositoryUri2.getURI().toString()).isEqualTo(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2 + ".git");
+
+        // assert that the folder names are correct
+        assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo("/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1);
+        assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo("/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2);
     }
 }

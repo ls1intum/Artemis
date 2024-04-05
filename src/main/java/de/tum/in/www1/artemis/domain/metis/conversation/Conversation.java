@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -26,8 +26,13 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = OneToOneChat.class, name = "oneToOneChat"), @JsonSubTypes.Type(value = GroupChat.class, name = "groupChat"),
-        @JsonSubTypes.Type(value = Channel.class, name = "channel"), })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = OneToOneChat.class, name = "oneToOneChat"),
+    @JsonSubTypes.Type(value = GroupChat.class, name = "groupChat"),
+    @JsonSubTypes.Type(value = Channel.class, name = "channel"),
+})
+// @formatter:on
 public abstract class Conversation extends DomainObject {
 
     @ManyToOne
@@ -53,6 +58,20 @@ public abstract class Conversation extends DomainObject {
 
     @Column(name = "last_message_date")
     private ZonedDateTime lastMessageDate;
+
+    public Conversation(Long id, User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,
+            ZonedDateTime lastMessageDate) {
+        this.setId(id);
+        this.creator = creator;
+        this.conversationParticipants = conversationParticipants;
+        this.posts = posts;
+        this.course = course;
+        this.creationDate = creationDate;
+        this.lastMessageDate = lastMessageDate;
+    }
+
+    public Conversation() {
+    }
 
     public Set<ConversationParticipant> getConversationParticipants() {
         return conversationParticipants;
@@ -101,6 +120,8 @@ public abstract class Conversation extends DomainObject {
     public void setPosts(Set<Post> posts) {
         this.posts = posts;
     }
+
+    public abstract Conversation copy();
 
     /**
      * @param sender the sender of the message

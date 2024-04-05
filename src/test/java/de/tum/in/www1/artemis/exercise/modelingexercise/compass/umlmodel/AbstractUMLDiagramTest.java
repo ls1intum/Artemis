@@ -11,10 +11,10 @@ import org.assertj.core.data.Offset;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.*;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismWebsocketService;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 
@@ -22,7 +22,7 @@ public abstract class AbstractUMLDiagramTest {
 
     // TODO: we should not mock like this!
     protected ModelingPlagiarismDetectionService modelingPlagiarismDetectionService = new ModelingPlagiarismDetectionService(mock(PlagiarismWebsocketService.class),
-            mock(PlagiarismCacheService.class), new AuthorizationCheckService(null, null, null, null));
+            mock(PlagiarismCacheService.class), new PlagiarismService(null, null, null, null, null, null));
 
     protected void compareSubmissions(ModelingSubmission modelingSubmission1, ModelingSubmission modelingSubmission2, double minimumSimilarity, double expectedSimilarity) {
         // not really necessary, but avoids issues.
@@ -33,7 +33,7 @@ public abstract class AbstractUMLDiagramTest {
         submissions.add(modelingSubmission1);
         submissions.add(modelingSubmission2);
 
-        var comparisonResult = modelingPlagiarismDetectionService.checkPlagiarism(submissions, minimumSimilarity, 1, 0, 1L);
+        var comparisonResult = modelingPlagiarismDetectionService.checkPlagiarism(submissions, minimumSimilarity, 1, 1L);
         assertThat(comparisonResult).isNotNull();
         assertThat(comparisonResult.getComparisons()).hasSize(1);
         assertThat(comparisonResult.getComparisons().stream().findFirst().orElseThrow().getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.01));

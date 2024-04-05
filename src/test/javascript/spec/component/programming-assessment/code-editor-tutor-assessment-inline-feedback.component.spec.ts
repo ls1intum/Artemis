@@ -12,6 +12,8 @@ import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruct
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { QuotePipe } from 'app/shared/pipes/quote.pipe';
+import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
@@ -30,6 +32,8 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
                 MockComponent(FaIconComponent),
                 MockDirective(NgModel),
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(QuotePipe),
+                MockPipe(FeedbackContentPipe),
             ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
         })

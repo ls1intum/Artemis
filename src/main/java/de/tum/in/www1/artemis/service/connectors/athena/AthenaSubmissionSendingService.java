@@ -37,19 +37,19 @@ public class AthenaSubmissionSendingService {
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
-    private final AthenaModuleUrlHelper athenaModuleUrlHelper;
+    private final AthenaModuleService athenaModuleService;
 
-    private final AthenaDTOConverter athenaDTOConverter;
+    private final AthenaDTOConverterService athenaDTOConverterService;
 
     /**
      * Creates a new AthenaSubmissionSendingService.
      */
     public AthenaSubmissionSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, SubmissionRepository submissionRepository,
-            AthenaModuleUrlHelper athenaModuleUrlHelper, AthenaDTOConverter athenaDTOConverter) {
+            AthenaModuleService athenaModuleService, AthenaDTOConverterService athenaDTOConverterService) {
         this.submissionRepository = submissionRepository;
         connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
-        this.athenaModuleUrlHelper = athenaModuleUrlHelper;
-        this.athenaDTOConverter = athenaDTOConverter;
+        this.athenaModuleService = athenaModuleService;
+        this.athenaDTOConverterService = athenaDTOConverterService;
     }
 
     private record RequestDTO(ExerciseDTO exercise, List<SubmissionDTO> submissions) {
@@ -74,7 +74,7 @@ public class AthenaSubmissionSendingService {
      * @param maxRetries number of retries before the request will be canceled
      */
     public void sendSubmissions(Exercise exercise, int maxRetries) {
-        if (!exercise.getFeedbackSuggestionsEnabled()) {
+        if (!exercise.areFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
         }
 
@@ -117,9 +117,9 @@ public class AthenaSubmissionSendingService {
                 submissions.size() - filteredSubmissions.size());
 
         try {
-            final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise),
-                    filteredSubmissions.stream().map((submission) -> athenaDTOConverter.ofSubmission(exercise.getId(), submission)).toList());
-            ResponseDTO response = connector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/submissions", request, maxRetries);
+            final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise),
+                    filteredSubmissions.stream().map((submission) -> athenaDTOConverterService.ofSubmission(exercise.getId(), submission)).toList());
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/submissions", request, maxRetries);
             log.info("Athena (calculating automatic feedback) responded: {}", response.data);
         }
         catch (NetworkingException error) {

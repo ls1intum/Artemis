@@ -1,21 +1,22 @@
 <div class="form-group col-auto border border-warning p-3">
     <div class="row">
         <div>
-            <label jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControl">Continuous Plagiarism Control</label>
-            <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.continuousPlagiarismControlTooltip' | artemisTranslate"></fa-icon>
+            <label jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControl"></label>
+            <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.continuousPlagiarismControlTooltip' | artemisTranslate" />
             <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
         </div>
         <div class="plagiarism-option">
             <div class="form-check form-check-inline">
                 <input
+                    #continuous_plagiarism_control_enabled="ngModel"
                     type="checkbox"
                     id="continuous_plagiarism_control_enabled"
                     class="plagiarism-option-checkbox form-check-input"
                     name="exercise.plagiarismDetectionConfig.continuousPlagiarismControlEnabled"
-                    [checked]="exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
-                    (click)="toggleCPCEnabled()"
+                    [ngModel]="exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
+                    (ngModelChange)="toggleCPCEnabled()"
                 />
-                <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlEnabled">Enable Continuous Plagiarism Control</div>
+                <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlEnabled"></div>
             </div>
         </div>
         <div class="plagiarism-option">
@@ -29,17 +30,15 @@
                     #exercise.plagiarismDetectionConfig.continuousPlagiarismControlPostDueDateChecksEnabled="ngModel"
                     [(ngModel)]="exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled"
                 />
-                <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlPostDueDateChecksEnabled">
-                    Run additional checks during the night after exercise's due date.
-                </div>
+                <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlPostDueDateChecksEnabled"></div>
             </div>
         </div>
         <div class="row">
             <div class="col">
                 <div class="form-group">
                     <div>
-                        <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.similarityThreshold">Similarity Threshold</label>
-                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate"></fa-icon>
+                        <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.similarityThreshold"></label>
+                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate" />
                     </div>
                     <input
                         type="number"
@@ -52,14 +51,15 @@
                         name="plagiarismChecksSimilarityThresholdPercentage"
                         #exercise.plagiarismDetectionConfig!.similarityThreshol="ngModel"
                         [(ngModel)]="exercise.plagiarismDetectionConfig!.similarityThreshold"
+                        [disabled]="!exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
                     />
                 </div>
             </div>
             <div class="col">
                 <div class="form-group">
                     <div>
-                        <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.minimumScore">Minimum Score</label>
-                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate"></fa-icon>
+                        <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.minimumScore"></label>
+                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate" />
                     </div>
                     <input
                         type="number"
@@ -71,14 +71,15 @@
                         name="exercise.plagiarismDetectionConfig.minimumScore"
                         #exercise.plagiarismDetectionConfig.minimumScore="ngModel"
                         [(ngModel)]="exercise.plagiarismDetectionConfig!.minimumScore"
+                        [disabled]="!exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
                     />
                 </div>
             </div>
             <div class="col">
                 <div class="form-group">
                     <div>
-                        <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.minimumSize">Minimum Size</label>
-                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="minimumSizeTooltip | artemisTranslate"></fa-icon>
+                        <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.minimumSize"></label>
+                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="minimumSizeTooltip | artemisTranslate" />
                     </div>
                     <input
                         type="number"
@@ -90,18 +91,15 @@
                         name="exercise.plagiarismDetectionConfig.minimumSize"
                         #exercise.plagiarismDetectionConfig.minimumSize="ngModel"
                         [(ngModel)]="exercise.plagiarismDetectionConfig!.minimumSize"
+                        [disabled]="!exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
                     />
                 </div>
             </div>
             <div class="col">
                 <div class="form-group">
                     <div>
-                        <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.plagiarismCaseResponsePeriod">Plagiarism case response period in days</label>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            placement="bottom auto"
-                            [ngbTooltip]="'artemisApp.plagiarism.plagiarismCaseResponsePeriodTooltip' | artemisTranslate"
-                        ></fa-icon>
+                        <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.plagiarismCaseResponsePeriod"></label>
+                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.plagiarismCaseResponsePeriodTooltip' | artemisTranslate" />
                     </div>
                     <input
                         type="number"
@@ -114,6 +112,7 @@
                         name="continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod"
                         #exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod="ngModel"
                         [(ngModel)]="exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod"
+                        [disabled]="!exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
                     />
                 </div>
             </div>

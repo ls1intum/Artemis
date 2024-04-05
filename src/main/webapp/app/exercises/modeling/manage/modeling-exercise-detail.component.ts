@@ -102,7 +102,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         const exercise = this.modelingExercise;
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
-        const problemSection = getExerciseProblemDetailSection(this.problemStatement);
+        const problemSection = getExerciseProblemDetailSection(this.problemStatement, this.modelingExercise);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
         const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.gradingInstructions);
         return [
@@ -136,9 +136,9 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
                     { type: DetailType.Text, title: 'artemisApp.modelingExercise.diagramType', data: { text: exercise.diagramType } },
                     ...gradingInstructionsCriteriaDetails,
                     this.isAdmin && { type: DetailType.Text, title: 'artemisApp.modelingExercise.checkClusters.text', data: { text: this.numberOfClusters } },
-                ].filter(Boolean),
+                ],
             },
-        ] as DetailOverviewSection[];
+        ];
     }
 
     ngOnDestroy() {

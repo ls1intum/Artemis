@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -31,6 +31,10 @@ public class IrisCourseSettings extends IrisSettings {
     @JoinColumn(name = "iris_code_editor_settings_id")
     private IrisCodeEditorSubSettings irisCodeEditorSettings;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "iris_competency_generation_settings_id")
+    private IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings;
+
     @Override
     public boolean isValid() {
         return course != null;
@@ -44,18 +48,22 @@ public class IrisCourseSettings extends IrisSettings {
         this.course = course;
     }
 
+    @Override
     public IrisChatSubSettings getIrisChatSettings() {
         return irisChatSettings;
     }
 
+    @Override
     public void setIrisChatSettings(IrisChatSubSettings irisChatSettings) {
         this.irisChatSettings = irisChatSettings;
     }
 
+    @Override
     public IrisHestiaSubSettings getIrisHestiaSettings() {
         return irisHestiaSettings;
     }
 
+    @Override
     public void setIrisHestiaSettings(IrisHestiaSubSettings irisHestiaSettings) {
         this.irisHestiaSettings = irisHestiaSettings;
     }
@@ -68,5 +76,15 @@ public class IrisCourseSettings extends IrisSettings {
     @Override
     public void setIrisCodeEditorSettings(IrisCodeEditorSubSettings irisCodeEditorSettings) {
         this.irisCodeEditorSettings = irisCodeEditorSettings;
+    }
+
+    @Override
+    public IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings() {
+        return irisCompetencyGenerationSettings;
+    }
+
+    @Override
+    public void setIrisCompetencyGenerationSettings(IrisCompetencyGenerationSubSettings irisCompetencyGenerationSubSettings) {
+        this.irisCompetencyGenerationSettings = irisCompetencyGenerationSubSettings;
     }
 }

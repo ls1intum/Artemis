@@ -19,10 +19,11 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faCodeBranch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import { Router } from '@angular/router';
 
 enum FilterProp {
     ALL = 'all',
@@ -76,6 +77,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     afterDueDate = false;
 
+    routerLink: string;
+
     // Icons
     faTable = faTable;
     faTimes = faTimes;
@@ -83,6 +86,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     faCircleNotch = faCircleNotch;
     faEraser = faEraser;
     faFilePowerpoint = faFilePowerpoint;
+    faCodeBranch = faCodeBranch;
 
     constructor(
         private route: ActivatedRoute,
@@ -94,6 +98,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private profileService: ProfileService,
         private gradingSystemService: GradingSystemService,
+        private router: Router,
     ) {
         this.participationCriteria = {
             filterProp: FilterProp.ALL,
@@ -104,6 +109,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * Initialize component by calling loadAll and registerChangeInParticipation
      */
     ngOnInit() {
+        this.routerLink = this.router.url;
         this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
         this.registerChangeInParticipations();
         this.isAdmin = this.accountService.isAdmin();

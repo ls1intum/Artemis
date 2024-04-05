@@ -67,7 +67,7 @@
         <!-- QUIZ EXERCISE ACTIONS END -->
         <!-- PROGRAMMING EXERCISE ACTIONS START -->
         @case (ExerciseType.PROGRAMMING) {
-            <div class="btn-group gap-1">
+            <div class="d-flex flex-wrap mb-1 gap-1">
                 @if (isTeamAvailable) {
                     <button
                         class="view-team"
@@ -79,8 +79,8 @@
                         [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
                     ></button>
                 }
-                <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
-                    @if (isStartExerciseAvailable()) {
+                @if (isStartExerciseAvailable()) {
+                    <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
                         <button
                             [id]="'start-exercise-' + exercise.id"
                             class="start-exercise"
@@ -94,8 +94,8 @@
                             [overwriteDisabled]="isBeforeStartDateAndStudent"
                             (click)="startExercise()"
                         ></button>
-                    }
-                </span>
+                    </span>
+                }
                 @if (isStartPracticeAvailable()) {
                     <jhi-start-practice-mode-button
                         [id]="'start-practice-' + exercise.id"
@@ -103,7 +103,7 @@
                         [smallButtons]="smallButtons"
                         [exercise]="exercise"
                         (practiceModeStarted)="receiveNewParticipation($event)"
-                    ></jhi-start-practice-mode-button>
+                    />
                 }
                 <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open
         code editor button. We should think about refactoring the clone repo button into an own component -->
@@ -116,8 +116,7 @@
                                 [participations]="exercise.studentParticipations!"
                                 [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor']"
                                 [exercise]="exercise"
-                            >
-                            </jhi-open-code-editor-button>
+                            />
                         }
                         @if (programmingExercise?.allowOfflineIde) {
                             <jhi-clone-repo-button
@@ -125,8 +124,19 @@
                                 [smallButtons]="smallButtons"
                                 [participations]="exercise.studentParticipations!"
                                 [exercise]="exercise"
+                            />
+                        }
+                        @if (localVCEnabled) {
+                            <a
+                                class="btn btn-primary"
+                                [class.btn-sm]="smallButtons"
+                                [routerLink]="repositoryLink + '/repository/' + exercise.studentParticipations![0].id"
+                                target="_blank"
+                                rel="noopener noreferrer"
                             >
-                            </jhi-clone-repo-button>
+                                <fa-icon [icon]="faCodeBranch" [fixedWidth]="true" />
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openRepository"></span>
+                            </a>
                         }
                         @if (exercise.allowManualFeedbackRequests) {
                             <span tabindex="0" [ngbTooltip]="'artemisApp.exerciseActions.requestFeedbackTooltip' | artemisTranslate">
@@ -138,7 +148,7 @@
                                     [id]="'request-feedback-' + exercise.id"
                                     (click)="requestFeedback()"
                                 >
-                                    <fa-icon [icon]="faComment"></fa-icon>
+                                    <fa-icon [icon]="faComment" />
                                     <span class="d-none d-md-inline">{{ 'artemisApp.exerciseActions.requestFeedback' | artemisTranslate }}</span>
                                 </button>
                             </span>
@@ -189,8 +199,8 @@
                         rel="noreferrer"
                         href="{{ buildPlanUrl(gradedParticipation!) }}"
                     >
-                        <fa-icon [icon]="faExternalLinkAlt" [fixedWidth]="true"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.goToBuildPlan">Go to build plan</span>
+                        <fa-icon [icon]="faExternalLinkAlt" [fixedWidth]="true" />
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.goToBuildPlan"></span>
                     </a>
                 }
             </div>

@@ -1,14 +1,17 @@
 package de.tum.in.www1.artemis.web.rest.open;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -33,6 +36,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 /**
  * REST controller to authenticate users.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/public/")
 public class PublicUserJwtResource {

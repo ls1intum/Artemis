@@ -1,7 +1,7 @@
 <form name="workingTimeForm" (ngSubmit)="confirmUpdateWorkingTime()" #editForm="ngForm">
     <div class="modal-header">
         <h4 class="modal-title">
-            <span jhiTranslate="artemisApp.examManagement.editWorkingTime.title">Edit Exam Duration</span>
+            <span jhiTranslate="artemisApp.examManagement.editWorkingTime.title"></span>
         </h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
@@ -22,7 +22,7 @@
         </div>
         <hr />
         <div>
-            <p jhiTranslate="artemisApp.examManagement.editWorkingTime.question" [translateValues]="{ title: exam.title }">Do you really want to edit the duration of the exam?</p>
+            <p jhiTranslate="artemisApp.examManagement.editWorkingTime.question" [translateValues]="{ title: exam.title }"></p>
             <jhi-confirm-entity-name
                 confirmationText="artemisApp.examManagement.editWorkingTime.typeNameToConfirm"
                 [entityName]="exam.title!"
@@ -34,7 +34,7 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="isLoading">
-            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
         <button
             id="confirm"
@@ -44,13 +44,13 @@
             [disabled]="editForm.invalid || isLoading || !isWorkingTimeChangeValid"
         >
             @if (isLoading) {
-                <span><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
+                <span><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;</span>
             }
             @if (!isLoading) {
-                <fa-icon [icon]="faCheck"></fa-icon>
+                <fa-icon [icon]="faCheck" />
             }
             &nbsp;
-            <span jhiTranslate="entity.action.confirm">Confirm</span>
+            <span jhiTranslate="entity.action.confirm"></span>
         </button>
     </div>
 </form>

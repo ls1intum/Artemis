@@ -1,16 +1,20 @@
 package de.tum.in.www1.artemis.security.jwt;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
+
 import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -26,6 +30,7 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import tech.jhipster.config.JHipsterProperties;
 
+@Profile(PROFILE_CORE)
 @Component
 public class TokenProvider {
 

@@ -1,6 +1,6 @@
 @if (!showConfirm) {
-    <fa-icon [icon]="initialIcon" [ngbTooltip]="initialTooltip" [size]="iconSize" (click)="toggle()"></fa-icon>
+    <fa-icon [icon]="initialIcon" [ngbTooltip]="initialTooltip" [size]="iconSize" (click)="toggle()" />
 }
 @if (showConfirm) {
-    <fa-icon [ngClass]="'text-danger'" [icon]="confirmIcon" [ngbTooltip]="confirmTooltip" [size]="iconSize" (mouseleave)="toggle()" (click)="confirmAction()"></fa-icon>
+    <fa-icon [ngClass]="'text-danger'" [icon]="confirmIcon" [ngbTooltip]="confirmTooltip" [size]="iconSize" (mouseleave)="toggle()" (click)="confirmAction()" />
 }

@@ -11,7 +11,7 @@ import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-c
 import { isMessagingEnabled, isMessagingOrCommunicationEnabled } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-post',
@@ -68,7 +68,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.routerLink = this.metisService.getLinkForPost();
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
-        this.showAnnouncementIcon = (getAsChannelDto(this.posting.conversation)?.isAnnouncementChannel && !this.isCourseMessagesPage) ?? false;
+        this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && !this.isCourseMessagesPage) ?? false;
     }
 
     /**

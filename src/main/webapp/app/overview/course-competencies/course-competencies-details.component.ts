@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Competency, CompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
+import { Competency, CompetencyProgress, getIcon } from 'app/entities/competency.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -28,7 +28,6 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
 
     faPencilAlt = faPencilAlt;
     getIcon = getIcon;
-    getIconTooltip = getIconTooltip;
 
     constructor(
         private alertService: AlertService,

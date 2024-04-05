@@ -14,7 +14,7 @@
             <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeSingleChoiceExplanation"></span>
             <br />
             <div>
-                @if (this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) {
+                @if (this.correctMultipleChoiceAnswers === this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen === 0) {
                     <span>
                         <span
                             jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceSingleChoiceCorrect"
@@ -27,7 +27,7 @@
                         ></span
                     ></span>
                 }
-                @if (!(this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0)) {
+                @if (!(this.correctMultipleChoiceAnswers === this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen === 0)) {
                     <span>
                         <span
                             jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceSingleChoiceNotCorrect"
@@ -50,7 +50,7 @@
             <br />
             @if (this.question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 <div>
-                    @if (this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) {
+                    @if (this.correctMultipleChoiceAnswers === this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen === 0) {
                         <span>
                             <span
                                 jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect"
@@ -63,7 +63,7 @@
                             ></span
                         ></span>
                     }
-                    @if (!(this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0)) {
+                    @if (!(this.correctMultipleChoiceAnswers === this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen === 0)) {
                         <span>
                             <span
                                 jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceAllOrNothingNotCorrect"
@@ -84,7 +84,7 @@
             }
             @if (this.question.type === QuizQuestionType.DRAG_AND_DROP) {
                 <div>
-                    @if (this.incorrectlyMappedDragAndDropItems == 0) {
+                    @if (this.incorrectlyMappedDragAndDropItems === 0) {
                         <span>
                             <span
                                 jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect"
@@ -97,7 +97,7 @@
                             ></span
                         ></span>
                     }
-                    @if (this.incorrectlyMappedDragAndDropItems != 0) {
+                    @if (this.incorrectlyMappedDragAndDropItems !== 0) {
                         <span>
                             <span
                                 jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropAllOrNothingNotCorrect"
@@ -159,7 +159,7 @@
             <br />
             @if (this.question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 <div>
-                    @if (this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) {
+                    @if (this.correctMultipleChoiceAnswers === this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen === 0) {
                         <span>
                             <span
                                 jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect"
@@ -173,7 +173,7 @@
                         ></span>
                     }
                     @if (
-                        !(this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) &&
+                        !(this.correctMultipleChoiceAnswers === this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen === 0) &&
                         this.differenceMultipleChoice >= 0
                     ) {
                         <span>
@@ -199,7 +199,7 @@
                         </span>
                     }
                     @if (
-                        !(this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) &&
+                        !(this.correctMultipleChoiceAnswers === this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen === 0) &&
                         this.differenceMultipleChoice < 0
                     ) {
                         <span>
@@ -230,7 +230,7 @@
             }
             @if (this.question.type === QuizQuestionType.DRAG_AND_DROP) {
                 <div>
-                    @if (this.incorrectlyMappedDragAndDropItems == 0) {
+                    @if (this.incorrectlyMappedDragAndDropItems === 0) {
                         <span>
                             <span
                                 jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect"
@@ -243,7 +243,7 @@
                             ></span
                         ></span>
                     }
-                    @if (this.incorrectlyMappedDragAndDropItems != 0 && this.differenceDragAndDrop >= 0) {
+                    @if (this.incorrectlyMappedDragAndDropItems !== 0 && this.differenceDragAndDrop >= 0) {
                         <span>
                             <p
                                 jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropProp"
@@ -266,7 +266,7 @@
                             <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
                         </span>
                     }
-                    @if (this.incorrectlyMappedDragAndDropItems != 0 && this.differenceDragAndDrop < 0) {
+                    @if (this.incorrectlyMappedDragAndDropItems !== 0 && this.differenceDragAndDrop < 0) {
                         <span>
                             <p
                                 jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropProp"
@@ -369,7 +369,7 @@
             <br />
             @if (this.question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 <div>
-                    @if (this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) {
+                    @if (this.correctMultipleChoiceAnswers === this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen === 0) {
                         <span>
                             <span
                                 jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect"
@@ -383,7 +383,7 @@
                         ></span>
                     }
                     @if (
-                        !(this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) &&
+                        !(this.correctMultipleChoiceAnswers === this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen === 0) &&
                         this.differenceMultipleChoice >= 0
                     ) {
                         <span>
@@ -406,7 +406,7 @@
                         </span>
                     }
                     @if (
-                        !(this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) &&
+                        !(this.correctMultipleChoiceAnswers === this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen === 0) &&
                         this.differenceMultipleChoice < 0
                     ) {
                         <span>
@@ -432,7 +432,7 @@
             }
             @if (this.question.type === QuizQuestionType.DRAG_AND_DROP) {
                 <div>
-                    @if (this.incorrectlyMappedDragAndDropItems == 0) {
+                    @if (this.incorrectlyMappedDragAndDropItems === 0) {
                         <span>
                             <span
                                 jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect"
@@ -445,7 +445,7 @@
                             ></span
                         ></span>
                     }
-                    @if (this.incorrectlyMappedDragAndDropItems != 0 && this.differenceDragAndDrop >= 0) {
+                    @if (this.incorrectlyMappedDragAndDropItems !== 0 && this.differenceDragAndDrop >= 0) {
                         <span>
                             <p
                                 jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropProp"
@@ -465,7 +465,7 @@
                             <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
                         </span>
                     }
-                    @if (this.incorrectlyMappedDragAndDropItems != 0 && this.differenceDragAndDrop < 0) {
+                    @if (this.incorrectlyMappedDragAndDropItems !== 0 && this.differenceDragAndDrop < 0) {
                         <span>
                             <p
                                 jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropProp"
@@ -553,6 +553,6 @@
 </ng-template>
 <div>
     <button class="btn" (click)="open(scoringExplanation)">
-        <fa-icon [ngClass]="{ questionCorrect: this.score === this.question.points, questionWrong: this.score !== this.question.points }" [icon]="farQuestionCircle"></fa-icon>
+        <fa-icon [ngClass]="{ questionCorrect: this.score === this.question.points, questionWrong: this.score !== this.question.points }" [icon]="farQuestionCircle" />
     </button>
 </div>

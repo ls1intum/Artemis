@@ -5,10 +5,10 @@
             <!-- If all preparation tasks are finished, show a green check as header, show a red cross else -->
             <div class="d-flex justify-content-center header-icon">
                 @if (examPreparationFinished) {
-                    <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
+                    <fa-icon [icon]="faCheckCircle" class="check" />
                 }
                 @if (!examPreparationFinished) {
-                    <fa-icon [icon]="faTimesCircle" class="cross"></fa-icon>
+                    <fa-icon [icon]="faTimesCircle" class="cross" />
                 }
             </div>
             <div class="status-step-content">
@@ -19,21 +19,21 @@
                             'artemisApp.examStatus.preparation.configureExercises' | artemisTranslate: { amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0 }
                         }}</span>
                         @if (configuredExercises) {
-                            <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
+                            <fa-icon [icon]="faCheckCircle" class="check" />
                         }
                         @if (!configuredExercises) {
-                            <fa-icon [icon]="faTimes" class="cross"></fa-icon>
+                            <fa-icon [icon]="faTimes" class="cross" />
                         }
                     </li>
                     @if (isTestExam) {
                         <li class="d-flex align-items-center">
                             @if (maxPointExercises === exam.examMaxPoints) {
                                 <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsCorrect' | artemisTranslate }}{{ exam.examMaxPoints }}</span>
-                                <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
+                                <fa-icon [icon]="faCheckCircle" class="check" />
                             }
                             @if (maxPointExercises !== exam.examMaxPoints) {
                                 <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsWrong' | artemisTranslate: { points: maxPointExercises } }} </span>
-                                <fa-icon [icon]="faTimes" class="cross"></fa-icon>
+                                <fa-icon [icon]="faTimes" class="cross" />
                             }
                         </li>
                     }
@@ -41,10 +41,10 @@
                         <li class="d-flex align-items-center">
                             <span>{{ 'artemisApp.examStatus.preparation.registerStudents' | artemisTranslate: { registered: exam.numberOfExamUsers } }} </span>
                             @if (registeredStudents) {
-                                <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
+                                <fa-icon [icon]="faCheckCircle" class="check" />
                             }
                             @if (!registeredStudents) {
-                                <fa-icon [icon]="faTimes" class="cross"></fa-icon>
+                                <fa-icon [icon]="faTimes" class="cross" />
                             }
                         </li>
                     }
@@ -68,10 +68,10 @@
                                 </span>
                             }
                             @if (generatedStudentExams) {
-                                <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
+                                <fa-icon [icon]="faCheckCircle" class="check" />
                             }
                             @if (!generatedStudentExams) {
-                                <fa-icon [icon]="faTimes" class="cross"></fa-icon>
+                                <fa-icon [icon]="faTimes" class="cross" />
                             }
                         </li>
                     }
@@ -79,10 +79,10 @@
                         <li class="d-flex align-items-center">
                             <span>{{ 'artemisApp.examStatus.preparation.prepareExerciseStart' | artemisTranslate }}</span>
                             @if (preparedExerciseStart) {
-                                <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
+                                <fa-icon [icon]="faCheckCircle" class="check" />
                             }
                             @if (!preparedExerciseStart) {
-                                <fa-icon [icon]="faTimes" class="cross"></fa-icon>
+                                <fa-icon [icon]="faTimes" class="cross" />
                             }
                         </li>
                     }
@@ -100,16 +100,16 @@
         <div class="d-flex justify-content-center header-icon">
             @switch (examConductionState) {
                 @case (examConductionStateEnum.PLANNED) {
-                    <fa-icon [icon]="faTimesCircle" class="cross"></fa-icon>
+                    <fa-icon [icon]="faTimesCircle" class="cross" />
                 }
                 @case (examConductionStateEnum.RUNNING) {
-                    <fa-icon [icon]="faDotCircle" class="running"></fa-icon>
+                    <fa-icon [icon]="faDotCircle" class="running" />
                 }
                 @case (examConductionStateEnum.FINISHED) {
-                    <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
+                    <fa-icon [icon]="faCheckCircle" class="check" />
                 }
                 @case (examConductionStateEnum.ERROR) {
-                    <fa-icon [icon]="faCircleExclamation" class="cross"></fa-icon>
+                    <fa-icon [icon]="faCircleExclamation" class="cross" />
                 }
             }
         </div>
@@ -168,13 +168,13 @@
             <div class="d-flex justify-content-center header-icon">
                 @switch (examCorrectionState) {
                     @case (examReviewStateEnum.RUNNING) {
-                        <fa-icon [icon]="faDotCircle" class="running"></fa-icon>
+                        <fa-icon [icon]="faDotCircle" class="running" />
                     }
                     @case (examReviewStateEnum.FINISHED) {
-                        <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
+                        <fa-icon [icon]="faCheckCircle" class="check" />
                     }
                     @default {
-                        <fa-icon [icon]="faTimesCircle" class="cross"></fa-icon>
+                        <fa-icon [icon]="faTimesCircle" class="cross" />
                     }
                 }
             </div>
@@ -211,7 +211,7 @@
                             @if (exam.publishResultsDate) {
                                 <b>
                                     {{ exam.publishResultsDate | artemisDate }}
-                                    <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
+                                    <fa-icon [icon]="faCheckCircle" class="check" />
                                 </b>
                             }
                             @if (!exam.publishResultsDate) {

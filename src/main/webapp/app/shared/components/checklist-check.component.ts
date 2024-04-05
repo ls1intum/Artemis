@@ -8,6 +8,7 @@ import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 })
 export class ChecklistCheckComponent {
     @Input() checkAttribute: boolean | undefined = false;
+    @Input() iconColor?: string;
 
     // Icons
     faTimes = faTimes;

@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.web.websocket;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.Principal;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -16,6 +19,7 @@ import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 @Controller
+@Profile(PROFILE_CORE)
 public class QuizSubmissionWebsocketService {
 
     private final QuizSubmissionService quizSubmissionService;
@@ -37,7 +41,7 @@ public class QuizSubmissionWebsocketService {
      * @param quizSubmission the submission which should be saved
      * @param principal      refers to the user who initiated the request
      */
-    @MessageMapping("/topic/quizExercise/{exerciseId}/submission")
+    @MessageMapping("topic/quizExercise/{exerciseId}/submission")
     public void saveSubmission(@DestinationVariable Long exerciseId, @Valid @Payload QuizSubmission quizSubmission, Principal principal) {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();

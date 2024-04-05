@@ -19,7 +19,7 @@
                 [popoverTitle]="'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate"
             >
                 @if (overlapsWithFreePeriod) {
-                    <fa-icon [icon]="faUmbrellaBeach"></fa-icon>
+                    <fa-icon [icon]="faUmbrellaBeach" />
                 }
                 {{ 'artemisApp.pages.tutorialGroupSessionManagement.cancelled' | artemisTranslate }}
             </button>
@@ -76,7 +76,7 @@
     @if (extraColumn) {
         <td [class.table-danger]="isCancelled">
             <div class="extra-buttons">
-                <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }"></ng-template>
+                <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }" />
             </div>
         </td>
     }

@@ -8,7 +8,7 @@
         (cdkCopyToClipboardCopied)="onCopyFinished()"
         [class.btn-success]="wasCopied"
     >
-        <fa-icon [icon]="faCopy"></fa-icon>
+        <fa-icon [icon]="faCopy" />
         {{ wasCopied ? ('global.generic.copied' | artemisTranslate) : '' }}
     </button>
 }

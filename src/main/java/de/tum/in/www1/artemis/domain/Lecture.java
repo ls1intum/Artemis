@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -150,21 +150,6 @@ public class Lecture extends DomainObject {
     public String toString() {
         return "Lecture{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", visibleDate='" + getVisibleDate() + "'"
                 + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + "}";
-    }
-
-    public enum LectureSearchColumn {
-
-        ID("id"), TITLE("title"), COURSE_TITLE("course.title"), SEMESTER("course.semester");
-
-        private final String mappedColumnName;
-
-        LectureSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
     }
 
     public String getChannelName() {

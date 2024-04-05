@@ -4,16 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.OrganizationCountDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "organizationtest";
 
@@ -44,18 +44,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private UserUtilService userUtilService;
 
-    @BeforeEach
-    void initTestCase() {
-        bitbucketRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.enableMockingOfRequests();
-    }
-
-    @AfterEach
-    void tearDown() {
-        bitbucketRequestMockProvider.reset();
-        bambooRequestMockProvider.reset();
-    }
-
     /**
      * Test if getting courses a user can enroll in works with multi organization and
      * filters out basing on user's organizations
@@ -63,7 +51,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "login2")
     void testGetCoursesToEnrollWithOrganizationsEnabled() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
 
         Organization organization = organizationUtilService.createOrganization();
         Set<Organization> organizations = new HashSet<>();
@@ -87,8 +74,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         course1 = courseRepo.save(course1);
         course2 = courseRepo.save(course2);
-        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course1.getStudentGroupName()));
-        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course2.getStudentGroupName()));
 
         List<Course> coursesToEnroll = request.getList("/api/courses/for-enrollment", HttpStatus.OK, Course.class);
         assertThat(coursesToEnroll).contains(course1).contains(course2);
@@ -97,7 +82,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "login1")
     void testEnrollForCourseWithOrganizationsEnabled() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
 
         Organization organization = organizationUtilService.createOrganization();
         Set<Organization> organizations = new HashSet<>();
@@ -130,16 +114,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course2 = courseRepo.save(course2);
         course3 = courseRepo.save(course3);
 
-        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course1.getStudentGroupName()));
-        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course2.getStudentGroupName()));
-        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course3.getStudentGroupName()));
-        bitbucketRequestMockProvider.mockUpdateUserDetails(student.getLogin(), student.getEmail(), student.getName());
-        bitbucketRequestMockProvider.mockAddUserToGroups();
-        bitbucketRequestMockProvider.mockUpdateUserDetails(student.getLogin(), student.getEmail(), student.getName());
-        bitbucketRequestMockProvider.mockAddUserToGroups();
-        bitbucketRequestMockProvider.mockUpdateUserDetails(student.getLogin(), student.getEmail(), student.getName());
-        bitbucketRequestMockProvider.mockAddUserToGroups();
-
         Set<String> updatedGroups = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
 
@@ -155,8 +129,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAddCourseToOrganization() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
-
         Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
@@ -175,21 +147,19 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRemoveCourseToOrganization() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
-
         Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
 
         Organization organization = organizationUtilService.createOrganization();
-        organization.getCourses().add(course1);
-        organization = organizationRepo.save(organization);
+        courseRepo.addOrganizationToCourse(course1.getId(), organization);
 
-        assertThat(organization.getCourses()).contains(course1);
+        Organization originalOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        assertThat(originalOrganization.getCourses()).contains(course1);
 
-        request.delete("/api/admin/organizations/course/" + course1.getId() + "/organization/" + organization.getId(), HttpStatus.OK);
+        request.delete("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), HttpStatus.OK);
+
         Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
-
-        assertThat(updatedOrganization.getCourses()).doesNotContain(course1);
+        assertThat(updatedOrganization.getCourses()).isEmpty();
     }
 
     /**
@@ -198,8 +168,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAddUserToOrganization() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
-
         Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testAddUserToOrganization");
@@ -215,8 +183,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRemoveUserFromOrganization() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
-
         Organization organization = organizationUtilService.createOrganization();
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testRemoveUser_");
 
@@ -241,8 +207,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> organizationRepo.findByIdWithEagerUsersAndCoursesElseThrow(Long.MAX_VALUE));
 
-        jiraRequestMockProvider.enableMockingOfRequests();
-
         Organization organization = organizationUtilService.createOrganization();
 
         Organization updatedOrganization = request.postWithResponseBody("/api/admin/organizations", organization, Organization.class, HttpStatus.OK);
@@ -257,8 +221,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateOrganization() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
-
         Organization organization = organizationUtilService.createOrganization();
         organization.setName("UpdatedName");
 
@@ -272,8 +234,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateOrganization_idInBodyNull() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
-
         Organization initialOrganization = organizationUtilService.createOrganization();
         long initialOrganizationId = initialOrganization.getId();
         organizationRepo.save(initialOrganization);
@@ -290,8 +250,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateOrganization_IdInPathWrong() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
-
         Organization organization = organizationUtilService.createOrganization();
         organizationRepo.save(organization);
         String initialName = organization.getName();
@@ -390,8 +348,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetOrganizationById() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
-
         Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
@@ -423,8 +379,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetAllOrganizationByCourse() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
-
         Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
 
@@ -443,8 +397,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetAllOrganizationByUser() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
-
         Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testGetAllOrganizationByUser");
@@ -462,8 +414,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testOrganizationIndexing() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
-
         Organization organization = organizationUtilService.createOrganization();
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testOrganizationIndexing");
 

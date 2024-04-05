@@ -7,6 +7,8 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
+import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
+import { QuotePipe } from 'app/shared/pipes/quote.pipe';
 
 @NgModule({
     imports: [
@@ -16,6 +18,8 @@ import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.mo
         ArtemisAssessmentSharedModule,
         ArtemisGradingInstructionLinkIconModule,
         ArtemisFeedbackModule,
+        FeedbackContentPipe,
+        QuotePipe,
     ],
     declarations: [CodeEditorTutorAssessmentInlineFeedbackComponent, CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent],
     exports: [CodeEditorTutorAssessmentInlineFeedbackComponent, CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent],

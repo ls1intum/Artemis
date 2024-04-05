@@ -120,6 +120,11 @@ public class BPMNFlow extends UMLElement implements Serializable {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name, source, target, flowType);
+    }
+
+    @Override
     public boolean equals(Object object) {
         if (!super.equals(object)) {
             return false;

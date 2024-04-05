@@ -4,10 +4,10 @@
     </div>
 }
 @if (coverageReport && fileContentByPath) {
-    <jhi-testwise-coverage-report [report]="coverageReport" [fileContentByPath]="fileContentByPath"></jhi-testwise-coverage-report>
+    <jhi-testwise-coverage-report [report]="coverageReport" [fileContentByPath]="fileContentByPath" />
 }
 @if (!(coverageReport || fileContentByPath)) {
     <div class="text-center">
-        <span jhiTranslate="artemisApp.codeHint.management.step1.notGenerated">Coverage report has not been generated yet.</span>
+        <span jhiTranslate="artemisApp.codeHint.management.step1.notGenerated"></span>
     </div>
 }

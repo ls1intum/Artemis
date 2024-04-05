@@ -1,5 +1,6 @@
 import { SafeHtml } from '@angular/platform-browser';
-import { Detail, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { Detail } from 'app/detail-overview-list/detail.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 
 export function getExerciseGeneralDetailsSection(exercise: Exercise): DetailOverviewSection {
@@ -34,8 +35,8 @@ export function getExerciseGeneralDetailsSection(exercise: Exercise): DetailOver
                 title: 'artemisApp.exercise.categories',
                 data: { text: exercise.categories?.map((category) => category.category?.toUpperCase()).join(', ') },
             },
-        ].filter(Boolean),
-    } as DetailOverviewSection;
+        ],
+    };
 }
 
 export function getExerciseModeDetailSection(exercise: Exercise): DetailOverviewSection {
@@ -57,20 +58,31 @@ export function getExerciseModeDetailSection(exercise: Exercise): DetailOverview
                 title: 'artemisApp.exercise.teamAssignmentConfig.teamSize',
                 data: { text: `Min. ${exercise.teamAssignmentConfig.minTeamSize}, Max. ${exercise.teamAssignmentConfig.maxTeamSize}` },
             },
-        ].filter(Boolean),
-    } as DetailOverviewSection;
+        ],
+    };
 }
 
-export function getExerciseProblemDetailSection(formattedProblemStatement: SafeHtml | null): DetailOverviewSection {
+export function getExerciseProblemDetailSection(formattedProblemStatement: SafeHtml | null, exercise: Exercise): DetailOverviewSection {
+    const hasCompetencies = !!exercise.competencies?.length;
+    const details: Detail[] = [
+        {
+            title: hasCompetencies ? 'artemisApp.exercise.sections.problem' : undefined,
+            type: DetailType.Markdown,
+            data: { innerHtml: formattedProblemStatement },
+        },
+    ];
+
+    if (hasCompetencies) {
+        details.push({
+            title: 'artemisApp.competency.link.title',
+            type: DetailType.Text,
+            data: { text: exercise.competencies?.map((competency) => competency.title).join(', ') },
+        });
+    }
     return {
         headline: 'artemisApp.exercise.sections.problem',
-        details: [
-            {
-                type: DetailType.Markdown,
-                data: { innerHtml: formattedProblemStatement },
-            },
-        ],
-    } as DetailOverviewSection;
+        details: details,
+    };
 }
 
 export function getExerciseGradingDefaultDetails(exercise: Exercise): Detail[] {
@@ -86,19 +98,19 @@ export function getExerciseGradingDefaultDetails(exercise: Exercise): Detail[] {
         { type: DetailType.Date, title: 'artemisApp.exercise.dueDate', data: { date: exercise.dueDate } },
         exercise.type !== ExerciseType.QUIZ && { type: DetailType.Date, title: 'artemisApp.exercise.assessmentDueDate', data: { date: exercise.assessmentDueDate } },
         { type: DetailType.Text, title: 'artemisApp.exercise.points', data: { text: exercise.maxPoints } },
-        exercise.bonusPoints && { type: DetailType.Text, title: 'artemisApp.exercise.bonusPoints', data: { text: exercise.bonusPoints } },
-        includedInScore,
+        !!exercise.bonusPoints && { type: DetailType.Text, title: 'artemisApp.exercise.bonusPoints', data: { text: exercise.bonusPoints } },
+        includedInScore as Detail,
         exercise.type !== ExerciseType.QUIZ && {
             type: DetailType.Boolean,
             title: 'artemisApp.exercise.presentationScoreEnabled.title',
             data: { boolean: exercise.presentationScoreEnabled },
         },
-    ] as Detail[];
+    ];
 }
 
 export function getExerciseGradingInstructionsCriteriaDetails(exercise: Exercise, formattedGradingInstructions: SafeHtml | null): Detail[] {
     return [
-        exercise.gradingInstructions && {
+        !!exercise.gradingInstructions && {
             type: DetailType.Markdown,
             title: 'artemisApp.exercise.assessmentInstructions',
             data: { innerHtml: formattedGradingInstructions },
@@ -108,7 +120,7 @@ export function getExerciseGradingInstructionsCriteriaDetails(exercise: Exercise
             title: 'artemisApp.exercise.structuredAssessmentInstructions',
             data: { gradingCriteria: exercise.gradingCriteria },
         },
-    ] as Detail[];
+    ];
 }
 
 export function getExerciseMarkdownSolution(exercise: Exercise, formattedExampleSolution: SafeHtml | null): DetailOverviewSection {

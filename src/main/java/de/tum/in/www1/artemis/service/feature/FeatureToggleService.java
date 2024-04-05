@@ -1,35 +1,58 @@
 package de.tum.in.www1.artemis.service.feature;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Map;
 
+import jakarta.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class FeatureToggleService {
 
     private static final String TOPIC_FEATURE_TOGGLES = "/topic/management/feature-toggles";
 
+    @Value("${artemis.science.event-logging.enable:false}")
+    private boolean scienceEnabledOnStart;
+
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final Map<Feature, Boolean> features;
+    private final HazelcastInstance hazelcastInstance;
+
+    private Map<Feature, Boolean> features;
 
     public FeatureToggleService(WebsocketMessagingService websocketMessagingService, HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
+        this.hazelcastInstance = hazelcastInstance;
+    }
 
+    /**
+     * Initialize relevant data from hazelcast
+     */
+    @PostConstruct
+    public void init() {
         // The map will automatically be distributed between all instances by Hazelcast.
         features = hazelcastInstance.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features are enabled once the system starts up
+        // This ensures that all features (except the Science API) are enabled once the system starts up
         for (Feature feature : Feature.values()) {
-            if (!features.containsKey(feature)) {
+            if (!features.containsKey(feature) && feature != Feature.Science) {
                 features.put(feature, true);
             }
+        }
+        // init science feature from config
+        if (!features.containsKey(Feature.Science)) {
+            features.put(Feature.Science, scienceEnabledOnStart);
         }
     }
 

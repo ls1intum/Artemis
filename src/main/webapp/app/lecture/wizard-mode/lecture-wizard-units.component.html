@@ -1,25 +1,25 @@
 <div>
-    <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.unitsStepTitle">Units</span></h1>
-    <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.unitsStepMessage">Add content to the lecture by creating different kinds of lecture units.</span></p>
+    <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.unitsStepTitle"></span></h1>
+    <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.unitsStepMessage"></span></p>
     <jhi-lecture-unit-management
         [lectureId]="this.lecture.id"
         [emitEditEvents]="true"
         (onEditLectureUnitClicked)="startEditLectureUnit($event)"
         [showCreationCard]="false"
         [showCompetencies]="false"
-    ></jhi-lecture-unit-management>
+    />
     @if (!isAnyUnitFormOpen()) {
         <div class="form-group w-100 d-flex justify-content-start">
-            <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)"></jhi-unit-creation-card>
+            <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)" />
         </div>
     }
     @if (isAnyUnitFormOpen()) {
         <div class="form-group">
             @if (!isEditingLectureUnit) {
-                <h4><span jhiTranslate="artemisApp.lecture.wizardMode.newLectureUnit">New Lecture Unit</span></h4>
+                <h4><span jhiTranslate="artemisApp.lecture.wizardMode.newLectureUnit"></span></h4>
             }
             @if (isEditingLectureUnit) {
-                <h4><span jhiTranslate="artemisApp.lecture.wizardMode.editLectureUnit">Edit Lecture Unit</span></h4>
+                <h4><span jhiTranslate="artemisApp.lecture.wizardMode.editLectureUnit"></span></h4>
             }
             @if (isTextUnitFormOpen) {
                 <jhi-text-unit-form
@@ -28,7 +28,7 @@
                     (onCancel)="onCloseLectureUnitForms()"
                     (formSubmitted)="createEditTextUnit($event)"
                     [formData]="textUnitFormData"
-                ></jhi-text-unit-form>
+                />
             }
             @if (isVideoUnitFormOpen) {
                 <jhi-video-unit-form
@@ -37,7 +37,7 @@
                     (onCancel)="onCloseLectureUnitForms()"
                     (formSubmitted)="createEditVideoUnit($event)"
                     [formData]="videoUnitFormData"
-                ></jhi-video-unit-form>
+                />
             }
             @if (isOnlineUnitFormOpen) {
                 <jhi-online-unit-form
@@ -46,7 +46,7 @@
                     (onCancel)="onCloseLectureUnitForms()"
                     (formSubmitted)="createEditOnlineUnit($event)"
                     [formData]="onlineUnitFormData"
-                ></jhi-online-unit-form>
+                />
             }
             @if (isAttachmentUnitFormOpen) {
                 <jhi-attachment-unit-form
@@ -55,7 +55,7 @@
                     (onCancel)="onCloseLectureUnitForms()"
                     (formSubmitted)="createEditAttachmentUnit($event)"
                     [formData]="attachmentUnitFormData"
-                ></jhi-attachment-unit-form>
+                />
             }
             @if (isExerciseUnitFormOpen) {
                 <jhi-create-exercise-unit
@@ -67,7 +67,7 @@
                     [hasCancelButton]="true"
                     [hasCreateExerciseButton]="true"
                     (onCancel)="onCloseLectureUnitForms()"
-                ></jhi-create-exercise-unit>
+                />
             }
         </div>
     }

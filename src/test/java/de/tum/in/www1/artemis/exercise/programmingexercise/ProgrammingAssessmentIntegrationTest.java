@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -55,7 +55,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     private ResultRepository resultRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private ExerciseRepository exerciseRepository;
@@ -166,7 +166,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
         // Check that result and submission are properly connected
         var submissionFromDb = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(programmingSubmission.getId());
-        var resultFromDb = resultRepository.findWithEagerSubmissionAndFeedbackById(programmingAssessment.getId()).orElseThrow();
+        var resultFromDb = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsById(programmingAssessment.getId()).orElseThrow();
         assertThat(submissionFromDb.getLatestResult()).isEqualTo(updatedResult);
         assertThat(resultFromDb.getSubmission()).isEqualTo(updatedResult.getSubmission());
     }
@@ -1008,7 +1008,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteResult() throws Exception {
         Course course = exerciseUtilService.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "modeling", 1,
-                Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
+                Optional.of(TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().findFirst().orElseThrow();
 
         exerciseUtilService.addAutomaticAssessmentToExercise(exercise);

@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
@@ -28,9 +28,6 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.service.EntityFileService;
-import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -45,18 +42,6 @@ public class Course extends DomainObject {
     public static final String ENTITY_NAME = "course";
 
     private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
-
-    @Transient
-    private final transient FilePathService filePathService = new FilePathService();
-
-    @Transient
-    private final transient FileService fileService = new FileService();
-
-    @Transient
-    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
-
-    @Transient
-    private String prevCourseIcon;
 
     @Column(name = "title")
     @JsonView(QuizView.Before.class)
@@ -197,6 +182,9 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Integer accuracyOfScores = 1; // default value
 
+    @Column(name = "restricted_athena_modules_access", nullable = false)
+    private boolean restrictedAthenaModulesAccess = false; // default is false
+
     /**
      * Note: Currently just used in the scope of the tutorial groups feature
      */
@@ -242,7 +230,7 @@ public class Course extends DomainObject {
     private Set<Organization> organizations = new HashSet<>();
 
     @ManyToMany
-    @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
+    @JoinTable(name = "competency_course", joinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("consecutiveCourses")
     private Set<Competency> prerequisites = new HashSet<>();
@@ -806,6 +794,14 @@ public class Course extends DomainObject {
         this.accuracyOfScores = accuracyOfScores;
     }
 
+    public boolean getRestrictedAthenaModulesAccess() {
+        return restrictedAthenaModulesAccess;
+    }
+
+    public void setRestrictedAthenaModulesAccess(boolean restrictedAthenaModulesAccess) {
+        this.restrictedAthenaModulesAccess = restrictedAthenaModulesAccess;
+    }
+
     public Set<TutorialGroup> getTutorialGroups() {
         return tutorialGroups;
     }
@@ -1027,5 +1023,20 @@ public class Course extends DomainObject {
 
     public void setCourseInformationSharingMessagingCodeOfConduct(String courseInformationSharingMessagingCodeOfConduct) {
         this.courseInformationSharingMessagingCodeOfConduct = courseInformationSharingMessagingCodeOfConduct;
+    }
+
+    public enum CourseSearchColumn {
+
+        ID("id"), TITLE("title"), SHORT_NAME("shortName"), SEMESTER("semester");
+
+        private final String mappedColumnName;
+
+        CourseSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
     }
 }

@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.domain.notification;
 
 import java.time.ZonedDateTime;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -31,8 +31,14 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "notificationType")
 // Annotation necessary to distinguish between concrete implementations of Notification when deserializing from JSON
-@JsonSubTypes({ @JsonSubTypes.Type(value = GroupNotification.class, name = "group"), @JsonSubTypes.Type(value = SingleUserNotification.class, name = "single"),
-        @JsonSubTypes.Type(value = SystemNotification.class, name = "system"), @JsonSubTypes.Type(value = ConversationNotification.class, name = "conversation") })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = GroupNotification.class, name = "group"),
+    @JsonSubTypes.Type(value = SingleUserNotification.class, name = "single"),
+    @JsonSubTypes.Type(value = SystemNotification.class, name = "system"),
+    @JsonSubTypes.Type(value = ConversationNotification.class, name = "conversation")
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Notification extends DomainObject {
 

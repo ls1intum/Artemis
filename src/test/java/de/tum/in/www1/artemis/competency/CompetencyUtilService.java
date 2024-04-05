@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.competency;
 
 import java.time.ZonedDateTime;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
@@ -148,7 +149,7 @@ public class CompetencyUtilService {
      * @param type The type of the relation
      * @param head The Competency that the tail Competency relates to
      */
-    public void addRelation(Competency tail, CompetencyRelation.RelationType type, Competency head) {
+    public void addRelation(Competency tail, RelationType type, Competency head) {
         CompetencyRelation relation = new CompetencyRelation();
         relation.setTailCompetency(tail);
         relation.setHeadCompetency(head);

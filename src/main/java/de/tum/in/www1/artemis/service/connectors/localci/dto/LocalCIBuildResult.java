@@ -1,13 +1,18 @@
 package de.tum.in.www1.artemis.service.connectors.localci.dto;
 
+import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+
+import org.springframework.util.ObjectUtils;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
@@ -17,7 +22,9 @@ import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
  * Represents all the information returned by the local CI system about a build.
  * Note: due to limitations with inheritance, we cannot declare this as a record, but we can use it in a similar way with final fields.
  */
-public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO implements Serializable {
 
     private final String assignmentRepoBranchName;
 
@@ -54,24 +61,24 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
     }
 
     @Override
-    public Optional<String> getCommitHashFromAssignmentRepo() {
-        if (assignmentRepoCommitHash.isEmpty()) {
-            return Optional.empty();
+    protected String getCommitHashFromAssignmentRepo() {
+        if (ObjectUtils.isEmpty(assignmentRepoCommitHash)) {
+            return null;
         }
-        return Optional.of(assignmentRepoCommitHash);
+        return assignmentRepoCommitHash;
     }
 
     @Override
-    public Optional<String> getCommitHashFromTestsRepo() {
-        if (testsRepoCommitHash.isEmpty()) {
-            return Optional.empty();
+    protected String getCommitHashFromTestsRepo() {
+        if (ObjectUtils.isEmpty(testsRepoCommitHash)) {
+            return null;
         }
-        return Optional.of(testsRepoCommitHash);
+        return testsRepoCommitHash;
     }
 
     @Override
-    public Optional<String> getBranchNameFromAssignmentRepo() {
-        return Optional.of(assignmentRepoBranchName);
+    public String getBranchNameFromAssignmentRepo() {
+        return assignmentRepoBranchName;
     }
 
     @Override
@@ -139,7 +146,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
      * @param failedTests     list of failed tests.
      * @param successfulTests list of successful tests.
      */
-    public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) implements BuildJobDTOInterface {
+    public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) implements BuildJobDTOInterface, Serializable {
 
         @Override
         public List<? extends TestCaseDTOInterface> getFailedTests() {
@@ -158,7 +165,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
      * @param name   name of the test case.
      * @param errors list of error messages.
      */
-    public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseDTOInterface {
+    public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseDTOInterface, Serializable {
 
         @Override
         public String getName() {
@@ -166,7 +173,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
         }
 
         @Override
-        public List<String> getMessage() {
+        public List<String> getTestMessages() {
             return errors;
         }
     }

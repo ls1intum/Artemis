@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import { IrisSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisModel } from 'app/entities/iris/settings/iris-model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -36,6 +36,7 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     // Settings types
     EXERCISE = IrisSettingsType.EXERCISE;
+    COURSE = IrisSettingsType.COURSE;
     // Button types
     WARNING = ButtonType.WARNING;
     // Icons
@@ -108,4 +109,17 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
             this.subSettings!.allowedModels = this.allowedIrisModels.map((model) => model.id);
         }
     }
+
+    get inheritDisabled() {
+        if (this.parentSubSettings) {
+            return !this.parentSubSettings.enabled;
+        }
+        return false;
+    }
+    get isSettingsSwitchDisabled() {
+        return this.inheritDisabled || (!this.isAdmin && this.settingsType !== this.EXERCISE);
+    }
+
+    protected readonly IrisSubSettings = IrisSubSettings;
+    protected readonly IrisSubSettingsType = IrisSubSettingsType;
 }

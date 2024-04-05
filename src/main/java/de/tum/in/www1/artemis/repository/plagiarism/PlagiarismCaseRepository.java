@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.repository.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +18,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the PlagiarismCase entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, Long> {
 
@@ -65,8 +69,8 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
                 LEFT JOIN FETCH plagiarismCase.post p
                 LEFT JOIN FETCH p.answers
             WHERE plagiarismCase.exercise.id = :exerciseId
-                  AND (plagiarismCase.student.id = :userId OR teamStudent.id = :userId)
-                  AND p.id IS NOT NULL
+                AND (plagiarismCase.student.id = :userId OR teamStudent.id = :userId)
+                AND p.id IS NOT NULL
             """)
     Optional<PlagiarismCase> findByStudentIdAndExerciseIdWithPostAndAnswerPost(@Param("userId") Long userId, @Param("exerciseId") Long exerciseId);
 
@@ -142,7 +146,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
             FROM PlagiarismCase plagiarismCase
                 LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             WHERE plagiarismCase.exercise.id = :exerciseId
-                AND plagiarismCase.createdByContinuousPlagiarismControl = true
+                AND plagiarismCase.createdByContinuousPlagiarismControl = TRUE
             """)
     List<PlagiarismCase> findAllCreatedByContinuousPlagiarismControlByExerciseIdWithPlagiarismSubmissions(@Param("exerciseId") long exerciseId);
 
@@ -167,8 +171,8 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     @Query("""
             SELECT COUNT(plagiarismCase)
             FROM PlagiarismCase plagiarismCase
-                WHERE plagiarismCase.student.isDeleted = false
-                      AND plagiarismCase.exercise.id = :exerciseId
+            WHERE plagiarismCase.student.isDeleted = FALSE
+                AND plagiarismCase.exercise.id = :exerciseId
             """)
-    long countByExerciseId(long exerciseId);
+    long countByExerciseId(@Param("exerciseId") long exerciseId);
 }

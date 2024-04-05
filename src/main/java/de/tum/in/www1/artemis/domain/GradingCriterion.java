@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -23,8 +22,7 @@ public class GradingCriterion extends DomainObject {
     @OneToMany(mappedBy = "gradingCriterion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "gradingCriterion", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    // TODO: this should actually be a set and not a list, because the relationship is not ordered
-    private List<GradingInstruction> structuredGradingInstructions = new ArrayList<>();
+    private Set<GradingInstruction> structuredGradingInstructions = new HashSet<>();
 
     @ManyToOne
     private Exercise exercise;
@@ -40,7 +38,7 @@ public class GradingCriterion extends DomainObject {
         this.title = title;
     }
 
-    public List<GradingInstruction> getStructuredGradingInstructions() {
+    public Set<GradingInstruction> getStructuredGradingInstructions() {
         return structuredGradingInstructions;
     }
 
@@ -52,7 +50,7 @@ public class GradingCriterion extends DomainObject {
     /**
      * @param structuredGradingInstructions the list of structured grading instructions which belong to the grading criterion
      */
-    public void setStructuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
+    public void setStructuredGradingInstructions(Set<GradingInstruction> structuredGradingInstructions) {
         this.structuredGradingInstructions = structuredGradingInstructions;
         if (structuredGradingInstructions != null) {
             this.structuredGradingInstructions.forEach(structuredGradingInstruction -> structuredGradingInstruction.setGradingCriterion(this));

@@ -22,6 +22,7 @@ describe('BuildQueueComponent', () => {
         getQueuedBuildJobs: jest.fn(),
         getRunningBuildJobs: jest.fn(),
         cancelBuildJobInCourse: jest.fn(),
+        cancelBuildJob: jest.fn(),
         cancelAllQueuedBuildJobsInCourse: jest.fn(),
         cancelAllRunningBuildJobsInCourse: jest.fn(),
         cancelAllQueuedBuildJobs: jest.fn(),
@@ -33,58 +34,150 @@ describe('BuildQueueComponent', () => {
     const testCourseId = 123;
     const mockQueuedJobs = [
         {
-            id: 1,
+            id: '1',
             name: 'Build Job 1',
+            buildAgentAddress: 'agent1',
             participationId: 101,
-            repositoryTypeOrUserName: 'repo1',
-            commitHash: 'abc123',
-            submissionDate: dayjs('2023-01-02'),
-            retryCount: 2,
-            buildStartDate: null,
-            priority: 5,
             courseId: 10,
-            isPushToTestRepository: false,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 4,
+            repositoryInfo: {
+                repositoryName: 'repo1',
+                repositoryType: 'USER',
+                triggeredByPushTo: 'USER',
+                assignmentRepositoryUri: 'https://some.uri',
+                testRepositoryUri: 'https://some.uri',
+                solutionRepositoryUri: 'https://some.uri',
+                auxiliaryRepositoryUris: [],
+                auxiliaryRepositoryCheckoutDirectories: [],
+            },
+            jobTimingInfo: {
+                submissionDate: dayjs('2023-01-02'),
+                buildStartDate: null,
+                buildCompletionDate: null,
+            },
+            buildConfig: {
+                dockerImage: 'someImage',
+                commitHash: 'abc123',
+                branch: 'main',
+                programmingLanguage: 'Java',
+                projectType: 'Maven',
+                scaEnabled: false,
+                sequentialTestRunsEnabled: false,
+                testwiseCoverageEnabled: false,
+                resultPaths: [],
+            },
         },
         {
-            id: 3,
+            id: '3',
             name: 'Build Job 3',
+            buildAgentAddress: 'agent3',
             participationId: 103,
-            repositoryTypeOrUserName: 'repo3',
-            commitHash: 'abc125',
-            submissionDate: dayjs('2023-01-03'),
-            retryCount: 1,
-            buildStartDate: null,
-            priority: 3,
             courseId: 10,
-            isPushToTestRepository: false,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 5,
+            repositoryInfo: {
+                repositoryName: 'repo3',
+                repositoryType: 'USER',
+                triggeredByPushTo: 'USER',
+                assignmentRepositoryUri: 'https://some.uri',
+                testRepositoryUri: 'https://some.uri',
+                solutionRepositoryUri: 'https://some.uri',
+                auxiliaryRepositoryUris: [],
+                auxiliaryRepositoryCheckoutDirectories: [],
+            },
+            jobTimingInfo: {
+                submissionDate: dayjs('2023-01-03'),
+                buildStartDate: null,
+                buildCompletionDate: null,
+            },
+            buildConfig: {
+                dockerImage: 'someImage',
+                commitHash: 'abc125',
+                branch: 'main',
+                programmingLanguage: 'Java',
+                projectType: 'Maven',
+                scaEnabled: false,
+                sequentialTestRunsEnabled: false,
+                testwiseCoverageEnabled: false,
+                resultPaths: [],
+            },
         },
     ];
     const mockRunningJobs = [
         {
-            id: 2,
+            id: '2',
             name: 'Build Job 2',
+            buildAgentAddress: 'agent2',
             participationId: 102,
-            repositoryTypeOrUserName: 'repo2',
-            commitHash: 'abc124',
-            submissionDate: dayjs('2023-01-01'),
-            retryCount: 2,
-            buildStartDate: dayjs('2023-01-01'),
-            priority: 5,
             courseId: 10,
-            isPushToTestRepository: false,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 3,
+            repositoryInfo: {
+                repositoryName: 'repo2',
+                repositoryType: 'USER',
+                triggeredByPushTo: 'USER',
+                assignmentRepositoryUri: 'https://some.uri',
+                testRepositoryUri: 'https://some.uri',
+                solutionRepositoryUri: 'https://some.uri',
+                auxiliaryRepositoryUris: [],
+                auxiliaryRepositoryCheckoutDirectories: [],
+            },
+            jobTimingInfo: {
+                submissionDate: dayjs('2023-01-01'),
+                buildStartDate: dayjs('2023-01-01'),
+                buildCompletionDate: null,
+            },
+            buildConfig: {
+                dockerImage: 'someImage',
+                commitHash: 'abc124',
+                branch: 'main',
+                programmingLanguage: 'Java',
+                projectType: 'Maven',
+                scaEnabled: false,
+                sequentialTestRunsEnabled: false,
+                testwiseCoverageEnabled: false,
+                resultPaths: [],
+            },
         },
         {
-            id: 4,
+            id: '4',
             name: 'Build Job 4',
+            buildAgentAddress: 'agent4',
             participationId: 104,
-            repositoryTypeOrUserName: 'repo4',
-            commitHash: 'abc126',
-            submissionDate: dayjs('2023-01-04'),
-            retryCount: 3,
-            buildStartDate: dayjs('2023-01-04'),
-            priority: 2,
             courseId: 10,
-            isPushToTestRepository: false,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 2,
+            repositoryInfo: {
+                repositoryName: 'repo4',
+                repositoryType: 'USER',
+                triggeredByPushTo: 'USER',
+                assignmentRepositoryUri: 'https://some.uri',
+                testRepositoryUri: 'https://some.uri',
+                solutionRepositoryUri: 'https://some.uri',
+                auxiliaryRepositoryUris: [],
+                auxiliaryRepositoryCheckoutDirectories: [],
+            },
+            jobTimingInfo: {
+                submissionDate: dayjs('2023-01-04'),
+                buildStartDate: dayjs('2023-01-04'),
+                buildCompletionDate: null,
+            },
+            buildConfig: {
+                dockerImage: 'someImage',
+                commitHash: 'abc126',
+                branch: 'main',
+                programmingLanguage: 'Java',
+                projectType: 'Maven',
+                scaEnabled: false,
+                sequentialTestRunsEnabled: false,
+                testwiseCoverageEnabled: false,
+                resultPaths: [],
+            },
         },
     ];
 
@@ -188,6 +281,25 @@ describe('BuildQueueComponent', () => {
 
         // Expectations: The service method for canceling a build job in a course is called with the correct parameters
         expect(mockBuildQueueService.cancelBuildJobInCourse).toHaveBeenCalledWith(testCourseId, buildJobId);
+    });
+
+    it('should cancel a build job without a course ID', () => {
+        const buildJobId = '1';
+
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        // Mock BuildQueueService to return a successful response for canceling a build job
+        mockBuildQueueService.cancelBuildJob.mockReturnValue(of(null));
+
+        // Initialize the component
+        component.ngOnInit();
+
+        // Call the cancelBuildJob method
+        component.cancelBuildJob(buildJobId);
+
+        // Expectations: The service method for canceling a build job is called without a course ID
+        expect(mockBuildQueueService.cancelBuildJob).toHaveBeenCalledWith(buildJobId);
     });
 
     it('should cancel all queued build jobs in a course', () => {

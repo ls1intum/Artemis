@@ -30,8 +30,7 @@
                         [numberOfMoreFeedbackRequests]="moreFeedbackRequestsDashboardInfo.total"
                         [numberOfOpenMoreFeedbackRequests]="moreFeedbackRequestsDashboardInfo.total - moreFeedbackRequestsDashboardInfo.done!"
                         [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
-                    >
-                    </jhi-tutor-participation-graph>
+                    />
                     <p>
                         {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.description.' + tutorParticipation.status!.toString() | artemisTranslate }}
                     </p>
@@ -42,7 +41,7 @@
                                 (ngModelChange)="toggleSecondCorrection()"
                                 [secondCorrectionEnabled]="secondCorrectionEnabled"
                                 [togglingSecondCorrectionButton]="togglingSecondCorrectionButton"
-                            ></jhi-second-correction-enable-button>
+                            />
                         </div>
                     }
                 </div>
@@ -153,7 +152,7 @@
                         </div>
                         <div class="row g-0 mb-1">
                             <a [routerLink]="getExerciseDetailsLink()" [queryParams]="" class="btn btn-info btn-sm me-1 mb-3" id="exercise-details">
-                                <fa-icon [icon]="faListAlt" [fixedWidth]="true"></fa-icon>
+                                <fa-icon [icon]="faListAlt" [fixedWidth]="true" />
                                 <span class="d-none d-md-inline">{{ 'artemisApp.exerciseAssessmentDashboard.exerciseDetails' | artemisTranslate }}</span>
                             </a>
                         </div>
@@ -187,7 +186,7 @@
                                 [exercise]="programmingExercise"
                                 [participation]="programmingExercise.templateParticipation!"
                                 [personalParticipation]="false"
-                            ></jhi-programming-exercise-instructions>
+                            />
                         }
                     </jhi-info-panel>
                 }
@@ -201,7 +200,7 @@
                 @if (exercise.type === ExerciseType.MODELING && exampleSolutionModel) {
                     <jhi-info-panel [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate">
                         <div>
-                            <jhi-modeling-editor [umlModel]="exampleSolutionModel" [diagramType]="modelingExercise.diagramType" [readOnly]="true"></jhi-modeling-editor>
+                            <jhi-modeling-editor [umlModel]="exampleSolutionModel" [diagramType]="modelingExercise.diagramType" [readOnly]="true" />
                         </div>
                     </jhi-info-panel>
                 }
@@ -217,10 +216,10 @@
                         <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate }}</h4>
                         @if (!localVCEnabled) {
                             <a jhiSecureLink [href]="programmingExercise.solutionParticipation?.repositoryUri || ''">
-                                <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution"> Example solution repository </jhi-button>
+                                <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution" />
                             </a>
                         } @else {
-                            <jhi-clone-repo-button [smallButtons]="true" [repositoryUri]="programmingExercise.solutionParticipation?.repositoryUri || ''"></jhi-clone-repo-button>
+                            <jhi-clone-repo-button [smallButtons]="true" [repositoryUri]="programmingExercise.solutionParticipation?.repositoryUri || ''" />
                         }
                     </div>
                 }
@@ -234,10 +233,7 @@
                 @if (exercise.gradingCriteria && exercise.gradingCriteria.length > 0) {
                     <div class="col-md-6 mt-4">
                         <h4>{{ 'artemisApp.exerciseAssessmentDashboard.structuredGradingInstructions' | artemisTranslate }}</h4>
-                        <jhi-structured-grading-instructions-assessment-layout
-                            [readonly]="true"
-                            [criteria]="exercise.gradingCriteria || []"
-                        ></jhi-structured-grading-instructions-assessment-layout>
+                        <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="exercise.gradingCriteria || []" />
                     </div>
                 }
             </div>
@@ -254,7 +250,7 @@
                         </span>
                     }
 
-                    @if (!exercise.gradingInstructions || exercise.gradingInstructions.length == 0) {
+                    @if (!exercise.gradingInstructions || exercise.gradingInstructions.length === 0) {
                         <span>
                             {{ 'artemisApp.exerciseAssessmentDashboard.startYourParticipation' | artemisTranslate }}
                         </span>
@@ -275,8 +271,7 @@
                                     toRead: stats.toReview.total,
                                     toAssess: stats.toAssess.total
                                 }"
-                            >
-                            </span>
+                            ></span>
                         </div>
                     }
 
@@ -318,7 +313,7 @@
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.readExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
                                                     @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
-                                                        <fa-icon class="text-success" [icon]="faCheckCircle"></fa-icon>
+                                                        <fa-icon class="text-success" [icon]="faCheckCircle" />
                                                     }
                                                 </li>
                                             }
@@ -363,7 +358,7 @@
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.assessExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
                                                     @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
-                                                        <fa-icon class="text-success" [icon]="faCheckCircle"></fa-icon>
+                                                        <fa-icon class="text-success" [icon]="faCheckCircle" />
                                                     }
                                                 </li>
                                             }
@@ -396,7 +391,7 @@
                                         class="text-secondary"
                                         [icon]="faQuestionCircle"
                                         ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
-                                    ></fa-icon>
+                                    />
                                 }
                             }
                             @if (numberOfCorrectionRoundsEnabled > correctionRound) {
@@ -419,16 +414,16 @@
                                                         <th>#</th>
                                                         <th jhiSortBy="submissionDate">
                                                             <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | artemisTranslate }}</a>
-                                                            <fa-icon [icon]="faSort"></fa-icon>
+                                                            <fa-icon [icon]="faSort" />
                                                         </th>
                                                         <th jhiSortBy="results.correctionRound.score">
                                                             <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.result' | artemisTranslate }}</a>
-                                                            <fa-icon [icon]="faSort"></fa-icon>
+                                                            <fa-icon [icon]="faSort" />
                                                         </th>
                                                         @if (exercise.type === ExerciseType.TEXT) {
                                                             <th jhiSortBy="language">
                                                                 <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.language' | artemisTranslate }}</a>
-                                                                <fa-icon [icon]="faSort"></fa-icon>
+                                                                <fa-icon [icon]="faSort" />
                                                             </th>
                                                         }
                                                         <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</th>
@@ -442,9 +437,7 @@
                                                             <td></td>
                                                             @if (exercise.type === ExerciseType.TEXT) {
                                                                 <td>
-                                                                    <jhi-language-table-cell
-                                                                        [submission]="unassessedSubmissionByRound!.get(correctionRound)!"
-                                                                    ></jhi-language-table-cell>
+                                                                    <jhi-language-table-cell [submission]="unassessedSubmissionByRound!.get(correctionRound)!" />
                                                                 </td>
                                                             }
                                                             <td>
@@ -466,9 +459,9 @@
                                                                     [ngStyle]="exercise === exerciseForGuidedTour ? { cursor: 'not-allowed' } : {}"
                                                                 >
                                                                     @if (openingAssessmentEditorForNewSubmission) {
-                                                                        <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>
+                                                                        <fa-icon [icon]="faSpinner" [spin]="true" />
                                                                     }
-                                                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                                                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                                     {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}
                                                                 </a>
                                                             </td>
@@ -483,11 +476,11 @@
                                                                     [result]="getSubmissionResultByCorrectionRound(submission, correctionRound)"
                                                                     [participation]="submission.participation!"
                                                                     [exercise]="exercise"
-                                                                ></jhi-result>
+                                                                />
                                                             </td>
                                                             @if (exercise.type === ExerciseType.TEXT) {
                                                                 <td>
-                                                                    <jhi-language-table-cell [submission]="submission"></jhi-language-table-cell>
+                                                                    <jhi-language-table-cell [submission]="submission" />
                                                                 </td>
                                                             }
                                                             <td>
@@ -512,7 +505,7 @@
                                                                                 class="btn btn-warning btn-sm"
                                                                                 id="continue-assessment"
                                                                             >
-                                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>&nbsp;{{
+                                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{
                                                                                     'artemisApp.exerciseAssessmentDashboard.continueAssessment' | artemisTranslate
                                                                                 }}
                                                                             </a>
@@ -524,7 +517,7 @@
                                                                                     class="btn btn-primary btn-sm"
                                                                                     id="open-assessment"
                                                                                 >
-                                                                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                                                                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                                                     &nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | artemisTranslate }}
                                                                                 </a>
                                                                             }
@@ -537,7 +530,7 @@
                                                 </tbody>
                                             </table>
                                         } @else {
-                                            <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
+                                            <jhi-assessment-warning [exercise]="exercise" />
                                             @if (!exercise.teamMode) {
                                                 <div class="alert alert-info">
                                                     {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissions' | artemisTranslate }}
@@ -551,7 +544,7 @@
                                         @if (
                                             isExamMode &&
                                             (!unassessedSubmissionByRound?.get(correctionRound)?.id || exercise.teamMode || isTestRun) &&
-                                            numberOfSubmissions.inTime != roundState.inTime
+                                            numberOfSubmissions.inTime !== roundState.inTime
                                         ) {
                                             <div class="alert alert-info">
                                                 <span
@@ -560,14 +553,12 @@
                                                         notYetAssessed: notYetAssessed[correctionRound],
                                                         lockedSubmissionsByOtherTutor: lockedSubmissionsByOtherTutor[correctionRound]
                                                     }"
-                                                >
-                                                </span>
+                                                ></span>
                                                 @if (correctionRound === 1) {
                                                     <span
                                                         jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsInfoSecondCorrection"
                                                         [translateValues]="{ firstRoundAssessments: firstRoundAssessments }"
-                                                    >
-                                                    </span>
+                                                    ></span>
                                                 }
                                             </div>
                                         }
@@ -586,11 +577,7 @@
                         <h4 class="d-inline-block">
                             {{ 'artemisApp.exerciseAssessmentDashboard.complaints' | artemisTranslate }}
                         </h4>
-                        <fa-icon
-                            class="text-secondary"
-                            [icon]="faQuestionCircle"
-                            [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"
-                        ></fa-icon>
+                        <fa-icon class="text-secondary" [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate" />
                         <div class="table-responsive">
                             @if (submissionsWithComplaints && submissionsWithComplaints!.length > 0) {
                                 <table class="table exercise-table">
@@ -599,19 +586,19 @@
                                             <th>#</th>
                                             <th jhiSortBy="complaint.submittedTime">
                                                 <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | artemisTranslate }}</a>
-                                                <fa-icon [icon]="faSort"></fa-icon>
+                                                <fa-icon [icon]="faSort" />
                                             </th>
                                             <th jhiSortBy="submission.latestResult.score">
                                                 <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.result' | artemisTranslate }}</a>
-                                                <fa-icon [icon]="faSort"></fa-icon>
+                                                <fa-icon [icon]="faSort" />
                                             </th>
                                             <th jhiSortBy="responseTime">
                                                 <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.responseTime' | artemisTranslate }}</a>
-                                                <fa-icon [icon]="faSort"></fa-icon>
+                                                <fa-icon [icon]="faSort" />
                                             </th>
                                             <th jhiSortBy="complaint.accepted">
                                                 <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.status' | artemisTranslate }}</a>
-                                                <fa-icon [icon]="faSort"></fa-icon>
+                                                <fa-icon [icon]="faSort" />
                                             </th>
                                             <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</th>
                                         </tr>
@@ -626,7 +613,7 @@
                                                         [result]="submissionWithComplaint.submission.latestResult"
                                                         [participation]="submissionWithComplaint.complaint.result!.participation!"
                                                         [exercise]="exercise"
-                                                    ></jhi-result>
+                                                    />
                                                 </td>
                                                 <td>
                                                     @if (submissionWithComplaint.complaint.accepted === undefined) {
@@ -638,21 +625,21 @@
                                                             [icon]="faExclamationTriangle"
                                                             class="text-warning"
                                                             ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
-                                                        ></fa-icon>
+                                                        />
                                                     }
                                                 </td>
                                                 <td>
-                                                    @if (submissionWithComplaint.complaint.accepted == undefined) {
+                                                    @if (submissionWithComplaint.complaint.accepted === undefined) {
                                                         <span class="text-warning">
                                                             {{ 'artemisApp.complaint.listOfComplaints.noReply' | artemisTranslate }}
                                                         </span>
                                                     }
-                                                    @if (submissionWithComplaint.complaint.accepted == true) {
+                                                    @if (submissionWithComplaint.complaint.accepted === true) {
                                                         <span class="text-success">
                                                             {{ 'artemisApp.complaint.listOfComplaints.accepted' | artemisTranslate }}
                                                         </span>
                                                     }
-                                                    @if (submissionWithComplaint.complaint.accepted == false) {
+                                                    @if (submissionWithComplaint.complaint.accepted === false) {
                                                         <span class="text-danger">
                                                             {{ 'artemisApp.complaint.listOfComplaints.rejected' | artemisTranslate }}
                                                         </span>
@@ -678,7 +665,7 @@
                                                                 class="btn btn-success btn-sm"
                                                                 id="evaluate-complaint"
                                                             >
-                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                                 {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
                                                             </a>
                                                         } @else {
@@ -687,7 +674,7 @@
                                                                 [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
                                                                 class="btn btn-primary btn-sm"
                                                             >
-                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                                 {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
                                                             </a>
                                                         }
@@ -721,7 +708,7 @@
                             class="text-secondary"
                             [icon]="faQuestionCircle"
                             [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | artemisTranslate"
-                        ></fa-icon>
+                        />
                         <div class="table-responsive">
                             @if (submissionsWithMoreFeedbackRequests && submissionsWithMoreFeedbackRequests!.length > 0) {
                                 <table class="table exercise-table">
@@ -730,19 +717,19 @@
                                             <th>#</th>
                                             <th jhiSortBy="complaint.submittedTime">
                                                 <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | artemisTranslate }}</a>
-                                                <fa-icon [icon]="faSort"></fa-icon>
+                                                <fa-icon [icon]="faSort" />
                                             </th>
                                             <th jhiSortBy="submission.latestResult.score">
                                                 <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.result' | artemisTranslate }}</a>
-                                                <fa-icon [icon]="faSort"></fa-icon>
+                                                <fa-icon [icon]="faSort" />
                                             </th>
                                             <th jhiSortBy="responseTime">
                                                 <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.responseTime' | artemisTranslate }}</a>
-                                                <fa-icon [icon]="faSort"></fa-icon>
+                                                <fa-icon [icon]="faSort" />
                                             </th>
                                             <th jhiSortBy="complaint.accepted">
                                                 <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.status' | artemisTranslate }}</a>
-                                                <fa-icon [icon]="faSort"></fa-icon>
+                                                <fa-icon [icon]="faSort" />
                                             </th>
                                             <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</th>
                                         </tr>
@@ -753,7 +740,7 @@
                                                 <td>{{ i + 1 }}</td>
                                                 <td>{{ moreFeedbackRequest.complaint.submittedTime | artemisDate }}</td>
                                                 <td>
-                                                    <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise"></jhi-result>
+                                                    <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise" />
                                                 </td>
                                                 <td>
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {
@@ -765,16 +752,16 @@
                                                             [icon]="faExclamationTriangle"
                                                             class="text-warning"
                                                             ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
-                                                        ></fa-icon>
+                                                        />
                                                     }
                                                 </td>
                                                 <td>
-                                                    @if (moreFeedbackRequest.complaint.accepted == undefined) {
+                                                    @if (moreFeedbackRequest.complaint.accepted === undefined) {
                                                         <span class="text-warning">
                                                             {{ 'artemisApp.complaint.listOfComplaints.noReply' | artemisTranslate }}
                                                         </span>
                                                     }
-                                                    @if (moreFeedbackRequest.complaint.accepted == true) {
+                                                    @if (moreFeedbackRequest.complaint.accepted === true) {
                                                         <span class="text-success">
                                                             {{ 'artemisApp.moreFeedback.accepted' | artemisTranslate }}
                                                         </span>
@@ -801,7 +788,7 @@
                                                                 [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
                                                                 [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
                                                             >
-                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                                 {{ 'artemisApp.exerciseAssessmentDashboard.evaluateMoreFeedbackRequest' | artemisTranslate }}
                                                             </a>
                                                         } @else {
@@ -810,7 +797,7 @@
                                                                 [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
                                                                 [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
                                                             >
-                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                                 {{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}
                                                             </button>
                                                         }
@@ -835,12 +822,7 @@
                         </div>
                     }
                 </div>
-                <jhi-collapsable-assessment-instructions
-                    class="collapsable-instructions"
-                    [readOnly]="true"
-                    [exercise]="exercise"
-                    [collapsed]="true"
-                ></jhi-collapsable-assessment-instructions>
+                <jhi-collapsable-assessment-instructions class="collapsable-instructions" [readOnly]="true" [exercise]="exercise" [collapsed]="true" />
             </div>
         }
 
@@ -849,7 +831,7 @@
                 @if (!isExamMode) {
                     <h2>{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | artemisTranslate }}</h2>
                 }
-                <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="statsForDashboard.tutorLeaderboardEntries" [exercise]="exercise"></jhi-tutor-leaderboard>
+                <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="statsForDashboard.tutorLeaderboardEntries" [exercise]="exercise" />
             </div>
         }
     </div>

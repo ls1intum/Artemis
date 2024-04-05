@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -60,6 +60,7 @@ describe('Edit LTI Configuration Component', () => {
                 fixture = TestBed.createComponent(EditLtiConfigurationComponent);
                 comp = fixture.componentInstance;
                 ltiConfigurationService = TestBed.inject(LtiConfigurationService);
+                jest.spyOn(ltiConfigurationService, 'getLtiPlatformById').mockReturnValue(of(platformConfiguration));
             });
     });
 
@@ -68,7 +69,6 @@ describe('Edit LTI Configuration Component', () => {
     });
 
     it('should initialize', fakeAsync(() => {
-        tick();
         fixture.detectChanges();
         expect(comp).toBeTruthy();
         expect(comp.platform).toEqual(platformConfiguration);

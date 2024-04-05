@@ -5,9 +5,11 @@ import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -28,10 +30,16 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.service.connectors.aeolus.*;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusRepository;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
+import de.tum.in.www1.artemis.service.connectors.aeolus.WindfileMetadata;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
-class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private AeolusRequestMockProvider aeolusRequestMockProvider;
@@ -78,8 +86,8 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         var expectedPlanKey = "PLAN";
         mockWindfile.setId("PROJECT-" + expectedPlanKey);
 
-        aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.BAMBOO, expectedPlanKey);
-        String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.BAMBOO);
+        aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, expectedPlanKey);
+        String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.JENKINS);
         assertThat(key).isEqualTo(expectedPlanKey);
     }
 
@@ -92,8 +100,8 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         var expectedPlanKey = "PLAN";
         mockWindfile.setId("PROJECT-" + expectedPlanKey);
 
-        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.BAMBOO);
-        String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.BAMBOO);
+        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
+        String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.JENKINS);
         assertThat(key).isEqualTo(null);
     }
 
@@ -101,11 +109,11 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testRepositoryMapForJavaWindfileCreation() throws URISyntaxException {
         ProgrammingLanguage language = ProgrammingLanguage.JAVA;
         String branch = "develop";
-        VcsRepositoryUri repositoryUri = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO.git");
-        VcsRepositoryUri testRepositoryUri = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-test.git");
-        VcsRepositoryUri solutionRepositoryUri = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-solution.git");
-        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-aux1.git")),
-                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-aux2.git")));
+        VcsRepositoryUri repositoryUri = new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO.git");
+        VcsRepositoryUri testRepositoryUri = new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-test.git");
+        VcsRepositoryUri solutionRepositoryUri = new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-solution.git");
+        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-aux1.git")),
+                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-aux2.git")));
         var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, false, repositoryUri, testRepositoryUri, solutionRepositoryUri, auxiliaryRepositories);
         assertThat(map).isNotNull();
         var assignmentDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);
@@ -129,11 +137,11 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testRepositoryMapForHaskellWindfileCreation() throws URISyntaxException {
         ProgrammingLanguage language = ProgrammingLanguage.HASKELL;
         String branch = "develop";
-        VcsRepositoryUri repositoryUri = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO.git");
-        VcsRepositoryUri testRepositoryUri = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-test.git");
-        VcsRepositoryUri solutionRepositoryUri = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-solution.git");
-        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-aux1.git")),
-                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-aux2.git")));
+        VcsRepositoryUri repositoryUri = new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO.git");
+        VcsRepositoryUri testRepositoryUri = new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-test.git");
+        VcsRepositoryUri solutionRepositoryUri = new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-solution.git");
+        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-aux1.git")),
+                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-aux2.git")));
         var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, true, repositoryUri, testRepositoryUri, solutionRepositoryUri, auxiliaryRepositories);
         assertThat(map).isNotNull();
         var assignmentDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);
@@ -162,7 +170,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     @Test
     void testReturnsNullonUrlNull() {
         ReflectionTestUtils.setField(aeolusBuildPlanService, "ciUrl", null);
-        assertThat(aeolusBuildPlanService.publishBuildPlan(new Windfile(), AeolusTarget.BAMBOO)).isNull();
+        assertThat(aeolusBuildPlanService.publishBuildPlan(new Windfile(), AeolusTarget.JENKINS)).isNull();
     }
 
     @Test
@@ -199,5 +207,24 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExercise.setTestwiseCoverageEnabled(true);
         String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNull();
+    }
+
+    @Test
+    void testGetWindfileFor() throws IOException {
+        Windfile windfile = aeolusTemplateService.getWindfileFor(ProgrammingLanguage.JAVA, Optional.empty(), false, false, false);
+        assertThat(windfile).isNotNull();
+        assertThat(windfile.getActions()).isNotNull();
+        assertThat(windfile.getActions()).hasSize(1);
+    }
+
+    @Test
+    void testGetDefaultWindfileFor() {
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.setSequentialTestRuns(true);
+        programmingExercise.setTestwiseCoverageEnabled(true);
+        Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
+        assertThat(windfile).isNull();
     }
 }

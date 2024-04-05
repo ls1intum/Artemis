@@ -241,6 +241,14 @@
                     "customMin": "The number of bonus points must be at least 0!",
                     "customMax": "The number of bonus points may not exceed 9999!"
                 },
+                "minTeamSize": {
+                    "min": "The minimal team size must not be less than 1 person.",
+                    "max": "The minimal team size must not exceed 99 people."
+                },
+                "maxTeamSize": {
+                    "min": "The maximal team size must not be less than 1 person.",
+                    "max": "The maximal team size must not exceed 99 people."
+                },
                 "maxPenalty": {
                     "pattern": "The maximum penalty must be between 0 and 100 percent!"
                 }

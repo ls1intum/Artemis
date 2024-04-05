@@ -1,6 +1,11 @@
 {
     "artemisApp": {
         "exam": {
+            "detail": {
+                "sections": {
+                    "general": "Informationen"
+                }
+            },
             "examUsers": {
                 "uploadImage": "Bilder hochladen",
                 "uploadImageTooltip": "Hochladen von Bildern für die registrierten Studenten",

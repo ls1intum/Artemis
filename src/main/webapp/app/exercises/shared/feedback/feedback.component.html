@@ -10,7 +10,7 @@
 
         @if (activeModal) {
             <button type="button" class="feedback-header__close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
-                <fa-icon [icon]="faXmark" size="xl"></fa-icon>
+                <fa-icon [icon]="faXmark" size="xl" />
             </button>
         }
     </div>
@@ -30,7 +30,7 @@
     <!-- Loading state -->
     @if (isLoading) {
         <div class="text-body-secondary d-flex justify-content-center" id="result-detail-spinner">
-            <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch"></fa-icon>
+            <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch" />
         </div>
     } @else {
         @if (!loadingFailed && feedbackItemNodes?.length) {
@@ -98,8 +98,7 @@
                                 [legendTitle]="''"
                                 [legendPosition]="legendPosition"
                                 [tooltipDisabled]="true"
-                            >
-                            </ngx-charts-bar-horizontal-stacked>
+                            />
                         </div>
                     </div>
                 }
@@ -109,7 +108,7 @@
                 }
 
                 <!-- Always show failed build logs first -->
-                <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null"></ng-container>
+                <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null" />
 
                 @if (buildLogs?.length) {
                     <hr />
@@ -131,13 +130,13 @@
 
                 <div class="feedback-list">
                     @for (feedbackItemNode of feedbackItemNodes; track feedbackItemNode) {
-                        <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course"></jhi-feedback-node>
+                        <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course" />
                     }
                 </div>
             </div>
         } @else {
             @if (buildLogs?.length) {
-                <h4 jhiTranslate="artemisApp.result.buildError">Build Error:</h4>
+                <h4 jhiTranslate="artemisApp.result.buildError"></h4>
                 <dl class="buildoutput dl-horizontal">
                     @for (logEntry of buildLogs; track logEntry; let i = $index) {
                         <!--Don't show the timestamp again if it is the same as the last entry's.-->
@@ -156,12 +155,12 @@
                 </dl>
             } @else {
                 @if (!isExamReviewPage) {
-                    <h4 jhiTranslate="artemisApp.result.noResultDetails">No result details available</h4>
+                    <h4 jhiTranslate="artemisApp.result.noResultDetails"></h4>
                 } @else {
-                    <span jhiTranslate="artemisApp.result.noResultDetails">No result details available</span>
+                    <span jhiTranslate="artemisApp.result.noResultDetails"></span>
                 }
                 @if (isOnlyCompilationTested) {
-                    <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested">Your code compiled successfully. There are currently no tests visible.</p>
+                    <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested"></p>
                 }
             }
         }
@@ -172,7 +171,7 @@
     <!-- Build logs container -->
     <ng-template #buildLogsContainer>
         @if (buildLogs?.length) {
-            <h4 jhiTranslate="artemisApp.result.buildError">Build Error:</h4>
+            <h4 jhiTranslate="artemisApp.result.buildError"></h4>
             <dl class="buildoutput dl-horizontal">
                 @for (logEntry of buildLogs; track logEntry; let i = $index) {
                     <!--Don't show the timestamp again if it is the same as the last entry's.-->
@@ -192,12 +191,12 @@
         } @else {
             <!-- No content fallback -->
             @if (!isExamReviewPage) {
-                <h4 jhiTranslate="artemisApp.result.noResultDetails">No result details available</h4>
+                <h4 jhiTranslate="artemisApp.result.noResultDetails"></h4>
             } @else {
-                <span jhiTranslate="artemisApp.result.noResultDetails">No result details available</span>
+                <span jhiTranslate="artemisApp.result.noResultDetails"></span>
             }
             @if (isOnlyCompilationTested) {
-                <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested">Your code compiled successfully. There are currently no tests visible.</p>
+                <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested"></p>
             }
         }
     </ng-template>

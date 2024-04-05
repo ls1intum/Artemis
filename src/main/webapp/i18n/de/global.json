@@ -32,7 +32,6 @@
                 "quizExercise": "Quiz Exercise",
                 "lecture": "Vorlesung",
                 "competency": "Kompetenz",
-                "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
                 "quizQuestion": "Question",
                 "multipleChoiceQuestion": "Multiple-Choice Question",
@@ -139,7 +138,8 @@
             "email.pattern": "Bitte nutze eine E-Mail nach folgendem Muster:",
             "cancel": "Abbruch",
             "confirm": "Bestätigen",
-            "refresh": "Aktualisieren"
+            "refresh": "Aktualisieren",
+            "invalidInput": "Ungültige Eingabe"
         },
         "messages": {
             "info": {
@@ -208,7 +208,7 @@
             "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
             "editBuildPlan": "Build-Plan bearbeiten",
-            "editInIntelliJ": "In IntelliJ bearbeiten",
+            "editInOrion": "In deiner IDE bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "exampleSubmissions": "Beispielabgaben",
             "generate": "Generieren",
@@ -261,7 +261,9 @@
             "ldap": "von LDAP synchronisieren",
             "notUndoable": "Diese Aktion kann nicht rückgängig gemacht werden.",
             "discardChanges": "Änderungen verwerfen",
-            "goBack": "Zurück"
+            "goBack": "Zurück",
+            "search": "Suchen",
+            "select": "Auswählen"
         },
         "detail": {
             "field": "Feld",
@@ -326,6 +328,7 @@
         "aboutUs": "Über",
         "course": "Kursdetails",
         "exercise": "Aufgabendetails",
+        "exercises": "Aufgaben",
         "lectures": "Vorlesungen",
         "competencies": "Kompetenzen",
         "learningPath": "Lernpfad",

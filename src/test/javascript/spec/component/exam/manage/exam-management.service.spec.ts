@@ -14,8 +14,9 @@ import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.mod
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('Exam Management Service Tests', () => {
     let service: ExamManagementService;
@@ -562,7 +563,7 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'POST',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/student-exams/unlock-all-repositories`,
+            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/unlock-all-repositories`,
         });
         req.flush(expected);
         tick();
@@ -580,7 +581,7 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'POST',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/student-exams/lock-all-repositories`,
+            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/lock-all-repositories`,
         });
         req.flush(expected);
         tick();

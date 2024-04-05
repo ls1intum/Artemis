@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -7,6 +9,7 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -19,13 +22,14 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQueueService;
+import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for managing Participation.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ParticipationService {
 
@@ -65,7 +69,7 @@ public class ParticipationService {
 
     private final TeamScoreRepository teamScoreRepository;
 
-    private final Optional<LocalCISharedBuildJobQueueService> localCISharedBuildJobQueueService;
+    private final Optional<SharedQueueManagementService> localCISharedBuildJobQueueService;
 
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
@@ -73,7 +77,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ResultService resultService,
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            Optional<LocalCISharedBuildJobQueueService> localCISharedBuildJobQueueService) {
+            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -503,6 +507,29 @@ public class ParticipationService {
     }
 
     /**
+     * Ensures that all team students of a list of team participations are loaded from the database. If not, one database call for all participations is made to load the students.
+     *
+     * @param participations the team participations to load the students for
+     */
+    public void initializeTeamParticipations(List<StudentParticipation> participations) {
+        List<Long> teamIds = new ArrayList<>();
+        participations.forEach(participation -> {
+            if (participation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                teamIds.add(team.getId());
+            }
+        });
+        if (teamIds.isEmpty()) {
+            return;
+        }
+        Map<Long, Team> teamMap = teamRepository.findAllWithStudentsByIdIn(teamIds).stream().collect(Collectors.toMap(Team::getId, team -> team));
+        participations.forEach(participation -> {
+            if (participation.getParticipant() instanceof Team team) {
+                team.setStudents(teamMap.get(team.getId()).getStudents());
+            }
+        });
+    }
+
+    /**
      * Get one participation (in any state) by its student and exercise.
      *
      * @param exercise the exercise for which to find a participation
@@ -600,8 +627,7 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByExerciseAndStudentId(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
-            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
-            return optionalTeam.map(team -> studentParticipationRepository.findAllByExerciseIdAndTeamId(exercise.getId(), team.getId())).orElse(List.of());
+            return studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentId(exercise.getId(), studentId);
         }
         return studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), studentId);
     }
@@ -752,7 +778,7 @@ public class ParticipationService {
         }
 
         // If local CI is active, remove all queued jobs for participation
-        localCISharedBuildJobQueueService.ifPresent(service -> service.removeQueuedJobsForParticipation(participationId));
+        localCISharedBuildJobQueueService.ifPresent(service -> service.cancelAllJobsForParticipation(participationId));
 
         deleteResultsAndSubmissionsOfParticipation(participationId, deleteParticipantScores);
         studentParticipationRepository.delete(participation);

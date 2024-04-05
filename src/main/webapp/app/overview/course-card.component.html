@@ -5,7 +5,7 @@
             <div class="row d-flex">
                 <div class="col-2 header-col image-col">
                     @if (course.courseIcon) {
-                        <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
+                        <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon" />
                     }
                 </div>
                 <div class="col-7 header-col title-col px-3">
@@ -64,7 +64,7 @@
                 </ngx-charts-pie-chart>
             </div>
         } @else {
-            <h6 class="no-statistics" jhiTranslate="artemisApp.studentDashboard.noStatistics">No statistics available</h6>
+            <h6 class="no-statistics" jhiTranslate="artemisApp.studentDashboard.noStatistics"></h6>
         }
     </div>
     @if (nextRelevantExercise) {
@@ -73,10 +73,10 @@
             <div class="container">
                 <div class="row">
                     <div class="col-3 next-exercise-col">
-                        <h6 jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel">Next exercises:</h6>
+                        <h6 jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel"></h6>
                     </div>
                     <div class="col-6 next-exercise-col">
-                        <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" placement="right auto" [ngbTooltip]="nextExerciseTooltip | artemisTranslate"></fa-icon>
+                        <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" placement="right auto" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" />
                         <span class="next-exercise-title">{{ nextRelevantExercise.title }}</span>
                     </div>
                     <div class="col-3 next-exercise-col text-nowrap">
@@ -95,7 +95,7 @@
         <div class="card-footer text-body-secondary">
             <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
             <div class="col no-exercise">
-                <h6 jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel">No Exercise planned</h6>
+                <h6 jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel"></h6>
             </div>
         </div>
     }

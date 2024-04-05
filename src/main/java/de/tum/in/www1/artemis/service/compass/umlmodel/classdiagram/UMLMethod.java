@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
@@ -141,6 +141,11 @@ public class UMLMethod extends UMLElement implements Serializable {
     @Override
     public String getType() {
         return UML_METHOD_TYPE;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), completeName, name, returnType, parameters);
     }
 
     @Override

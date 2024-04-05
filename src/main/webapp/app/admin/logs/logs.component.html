@@ -1,14 +1,14 @@
 @if (loggers) {
     <div class="table-responsive">
-        <h2 id="logs-page-heading" jhiTranslate="logs.title" data-cy="logsPageHeading">Logs</h2>
+        <h2 id="logs-page-heading" jhiTranslate="logs.title" data-cy="logsPageHeading"></h2>
         <p jhiTranslate="logs.nbloggers" [translateValues]="{ total: loggers.length }">There are {{ loggers.length }} loggers.</p>
-        <span jhiTranslate="logs.filter">Filter</span>
+        <span jhiTranslate="logs.filter"></span>
         <input type="text" [(ngModel)]="filter" (ngModelChange)="filterAndSort()" class="form-control" />
         <table class="table table-sm table-striped table-bordered" aria-describedby="logs-page-heading">
             <thead>
                 <tr jhiSort [(predicate)]="orderProp" [(ascending)]="ascending" (sortChange)="filterAndSort()">
-                    <th jhiSortBy="name" scope="col"><span jhiTranslate="logs.table.name">Name</span> <fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="level" scope="col"><span jhiTranslate="logs.table.level">Level</span> <fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="name" scope="col"><span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="level" scope="col"><span jhiTranslate="logs.table.level"></span> <fa-icon [icon]="faSort" /></th>
                 </tr>
             </thead>
             @for (logger of filteredAndOrderedLoggers; track logger) {

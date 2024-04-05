@@ -92,7 +92,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         const exercise = this.textExercise;
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
-        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement);
+        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement, this.textExercise);
         const solutionSection = getExerciseMarkdownSolution(exercise, this.formattedExampleSolution);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
         const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.formattedGradingInstructions);
@@ -105,11 +105,11 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
                 headline: 'artemisApp.exercise.sections.grading',
                 details: [
                     ...defaultGradingDetails,
-                    { type: DetailType.Boolean, title: 'artemisApp.exercise.feedbackSuggestionsEnabled', data: { boolean: exercise.feedbackSuggestionsEnabled } },
+                    { type: DetailType.Boolean, title: 'artemisApp.exercise.feedbackSuggestionsEnabled', data: { boolean: !!exercise.feedbackSuggestionModule } },
                     ...gradingInstructionsCriteriaDetails,
-                ].filter(Boolean),
+                ],
             },
-        ] as DetailOverviewSection[];
+        ];
     }
 
     /**

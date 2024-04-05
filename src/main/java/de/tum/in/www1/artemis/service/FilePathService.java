@@ -1,17 +1,21 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.nio.file.Path;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class FilePathService {
 
@@ -74,7 +78,7 @@ public class FilePathService {
      * @throws FilePathParsingException if the path is unknown
      * @return the actual path to that file in the local filesystem
      */
-    public Path actualPathForPublicPathOrThrow(URI publicPath) {
+    public static Path actualPathForPublicPathOrThrow(URI publicPath) {
         Path actualPath = actualPathForPublicPath(publicPath);
         if (actualPath == null) {
             // path is unknown => cannot convert
@@ -98,26 +102,26 @@ public class FilePathService {
 
         // check for known path to convert
         if (uriPath.startsWith("/api/files/temp")) {
-            return FilePathService.getTempFilePath().resolve(filename);
+            return getTempFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/drag-and-drop/backgrounds")) {
-            return FilePathService.getDragAndDropBackgroundFilePath().resolve(filename);
+            return getDragAndDropBackgroundFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/drag-and-drop/drag-items")) {
-            return FilePathService.getDragItemFilePath().resolve(filename);
+            return getDragItemFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/course/icons")) {
-            return FilePathService.getCourseIconFilePath().resolve(filename);
+            return getCourseIconFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/exam-user/signatures")) {
-            return FilePathService.getExamUserSignatureFilePath().resolve(filename);
+            return getExamUserSignatureFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/exam-user")) {
-            return FilePathService.getStudentImageFilePath().resolve(filename);
+            return getStudentImageFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/attachments/lecture")) {
             String lectureId = path.getName(4).toString();
-            return FilePathService.getLectureAttachmentFilePath().resolve(Path.of(lectureId, filename));
+            return getLectureAttachmentFilePath().resolve(Path.of(lectureId, filename));
         }
         if (uriPath.startsWith("/api/files/attachments/attachment-unit")) {
             return actualPathForPublicAttachmentUnitFilePath(publicPath, filename);
@@ -133,7 +137,7 @@ public class FilePathService {
         Path path = Path.of(publicPath.getPath());
         if (!publicPath.toString().contains("/slide")) {
             String attachmentUnitId = path.getName(4).toString();
-            return FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
+            return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
         }
         try {
             String attachmentUnitId = path.getName(4).toString();
@@ -141,7 +145,7 @@ public class FilePathService {
             // check if the ids are valid long values
             Long.parseLong(attachmentUnitId);
             Long.parseLong(slideId);
-            return FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "slide", slideId, filename));
+            return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "slide", slideId, filename));
         }
         catch (IllegalArgumentException e) {
             throw new FilePathParsingException("Public path does not contain correct attachmentUnitId or slideId: " + publicPath, e);
@@ -170,7 +174,7 @@ public class FilePathService {
      * @throws FilePathParsingException if the path is unknown
      * @return the public file url that can be used by users to access the file from outside
      */
-    public URI publicPathForActualPathOrThrow(Path actualPathString, @Nullable Long entityId) {
+    public static URI publicPathForActualPathOrThrow(Path actualPathString, @Nullable Long entityId) {
         URI publicPath = publicPathForActualPath(actualPathString, entityId);
         if (publicPath == null) {
             // path is unknown => cannot convert
@@ -187,45 +191,45 @@ public class FilePathService {
      * @param entityId the id of the entity associated with the file
      * @return the public file url that can be used by users to access the file from outside
      */
-    public URI publicPathForActualPath(Path path, @Nullable Long entityId) {
+    public static URI publicPathForActualPath(Path path, @Nullable Long entityId) {
         // first extract filename
         String filename = path.getFileName().toString();
 
         // generate part for id
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
         // check for known path to convert
-        if (path.startsWith(FilePathService.getTempFilePath())) {
+        if (path.startsWith(getTempFilePath())) {
             return URI.create(FileService.DEFAULT_FILE_SUBPATH + filename);
         }
-        if (path.startsWith(FilePathService.getDragAndDropBackgroundFilePath())) {
+        if (path.startsWith(getDragAndDropBackgroundFilePath())) {
             return URI.create("/api/files/drag-and-drop/backgrounds/" + id + "/" + filename);
         }
-        if (path.startsWith(FilePathService.getDragItemFilePath())) {
+        if (path.startsWith(getDragItemFilePath())) {
             return URI.create("/api/files/drag-and-drop/drag-items/" + id + "/" + filename);
         }
-        if (path.startsWith(FilePathService.getCourseIconFilePath())) {
+        if (path.startsWith(getCourseIconFilePath())) {
             return URI.create("/api/files/course/icons/" + id + "/" + filename);
         }
-        if (path.startsWith(FilePathService.getExamUserSignatureFilePath())) {
+        if (path.startsWith(getExamUserSignatureFilePath())) {
             return URI.create("/api/files/exam-user/signatures/" + id + "/" + filename);
         }
-        if (path.startsWith(FilePathService.getStudentImageFilePath())) {
+        if (path.startsWith(getStudentImageFilePath())) {
             return URI.create("/api/files/exam-user/" + id + "/" + filename);
         }
-        if (path.startsWith(FilePathService.getLectureAttachmentFilePath())) {
+        if (path.startsWith(getLectureAttachmentFilePath())) {
             return URI.create("/api/files/attachments/lecture/" + id + "/" + filename);
         }
-        if (path.startsWith(FilePathService.getAttachmentUnitFilePath())) {
+        if (path.startsWith(getAttachmentUnitFilePath())) {
             return publicPathForActualAttachmentUnitFilePath(path, filename, id);
         }
-        if (path.startsWith(FilePathService.getFileUploadExercisesFilePath())) {
+        if (path.startsWith(getFileUploadExercisesFilePath())) {
             return publicPathForActualFileUploadExercisesFilePath(path, filename, id);
         }
 
         return null;
     }
 
-    private URI publicPathForActualAttachmentUnitFilePath(Path path, String filename, String id) {
+    private static URI publicPathForActualAttachmentUnitFilePath(Path path, String filename, String id) {
         if (!path.toString().contains("/slide")) {
             return URI.create("/api/files/attachments/attachment-unit/" + id + "/" + filename);
         }
@@ -241,7 +245,7 @@ public class FilePathService {
         }
     }
 
-    private URI publicPathForActualFileUploadExercisesFilePath(Path path, String filename, String id) {
+    private static URI publicPathForActualFileUploadExercisesFilePath(Path path, String filename, String id) {
         try {
             // The last name is the file name, the one before that is the submissionId and the one before that is the exerciseId, in which we are interested
             final var expectedExerciseId = path.getName(path.getNameCount() - 3).toString();

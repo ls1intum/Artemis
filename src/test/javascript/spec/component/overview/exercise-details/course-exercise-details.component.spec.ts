@@ -66,8 +66,12 @@ import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exe
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
 import { ExerciseInfoComponent } from 'app/exercises/shared/exercise-info/exercise-info.component';
-import { IrisSettingsService } from '../../../../../../main/webapp/app/iris/settings/shared/iris-settings.service';
-import { IrisSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-settings.model';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { ScienceService } from 'app/shared/science/science.service';
+import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
+import { ScienceEventType } from 'app/shared/science/science.model';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -85,6 +89,8 @@ describe('CourseExerciseDetailsComponent', () => {
     let mergeStudentParticipationMock: jest.SpyInstance;
     let subscribeForParticipationChangesMock: jest.SpyInstance;
     let plagiarismCaseServiceMock: jest.SpyInstance;
+    let scienceService: ScienceService;
+    let logEventStub: jest.SpyInstance;
 
     const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [], course: {} } as unknown as Exercise;
 
@@ -97,7 +103,9 @@ describe('CourseExerciseDetailsComponent', () => {
 
     const plagiarismCaseInfo = { id: 20, verdict: PlagiarismVerdict.WARNING };
 
-    const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
+    const parentParams = { courseId: 1 };
+    const parentRoute = { parent: { parent: { params: of(parentParams) } } } as any as ActivatedRoute;
+    const route = { params: of({ exerciseId: exercise.id }), parent: parentRoute, queryParams: of({ welcome: '' }) } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -137,6 +145,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: ScienceService, useClass: MockScienceService },
                 MockProvider(ExerciseService),
                 MockProvider(ParticipationService),
                 MockProvider(GuidedTourService),
@@ -186,6 +195,9 @@ describe('CourseExerciseDetailsComponent', () => {
                 plagiarismCaseServiceMock = jest
                     .spyOn(plagiarismCaseService, 'getPlagiarismCaseInfoForStudent')
                     .mockReturnValue(of({ body: plagiarismCaseInfo } as HttpResponse<PlagiarismCaseInfo>));
+
+                scienceService = TestBed.inject(ScienceService);
+                logEventStub = jest.spyOn(scienceService, 'logEvent');
             });
     });
 
@@ -196,10 +208,12 @@ describe('CourseExerciseDetailsComponent', () => {
     it('should initialize', fakeAsync(() => {
         fixture.detectChanges();
         tick(500);
-        expect(comp.inProductionEnvironment).toBeFalse();
+        expect(comp.isProduction).toBeFalse();
+        expect(comp.exerciseId).toBe(42);
         expect(comp.courseId).toBe(1);
         expect(comp.exercise).toStrictEqual(exercise);
         expect(comp.hasMoreResults).toBeFalse();
+        comp.ngOnDestroy();
     }));
 
     it('should have student participations', fakeAsync(() => {
@@ -356,7 +370,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledWith(error.message);
     }));
 
-    it.each<[string[]]>([[[]], [['iris']]])(
+    it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])(
         'should load iris settings only if profile iris is active',
         fakeAsync((activeProfiles: string[]) => {
             // Setup
@@ -386,7 +400,7 @@ describe('CourseExerciseDetailsComponent', () => {
             comp.ngOnInit();
             tick();
 
-            if (activeProfiles.includes('iris')) {
+            if (activeProfiles.includes(PROFILE_IRIS)) {
                 // Should have called getCombinedProgrammingExerciseSettings if 'iris' is active
                 expect(getCombinedProgrammingExerciseSettingsMock).toHaveBeenCalled();
                 expect(comp.irisSettings).toBe(fakeSettings);
@@ -397,4 +411,9 @@ describe('CourseExerciseDetailsComponent', () => {
             }
         }),
     );
+
+    it('should log event on init', () => {
+        fixture.detectChanges();
+        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.EXERCISE__OPEN, exercise.id);
+    });
 });

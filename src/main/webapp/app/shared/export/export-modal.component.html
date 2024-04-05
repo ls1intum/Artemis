@@ -10,7 +10,7 @@
             <a ngbNavLink>Excel</a>
             <ng-template ngbNavContent>
                 <div class="form-group">
-                    <p class="intro-text" jhiTranslate="export.excelFile.introText">Export course scores as an Excel file (.xlsx).</p>
+                    <p class="intro-text" jhiTranslate="export.excelFile.introText"></p>
                 </div>
             </ng-template>
         </ng-container>
@@ -18,10 +18,10 @@
             <a ngbNavLink>CSV</a>
             <ng-template ngbNavContent>
                 <div class="form-group">
-                    <p class="intro-text" jhiTranslate="export.csvFile.introText">Select the options used for generating the .csv file.</p>
+                    <p class="intro-text" jhiTranslate="export.csvFile.introText"></p>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="export.csvFile.fieldSeparator.label">Field Separator</label>
+                    <label class="form-control-label" jhiTranslate="export.csvFile.fieldSeparator.label"></label>
                     <div>
                         <div class="btn-group">
                             @for (fieldSeparator of CsvFieldSeparator | keyvalue; track fieldSeparator) {
@@ -37,7 +37,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="export.csvFile.quoteStrings.label">Quote Strings</label>
+                    <label class="form-control-label" jhiTranslate="export.csvFile.quoteStrings.label"></label>
                     <div>
                         <div class="btn-group">
                             @for (quoteString of CsvQuoteStrings | keyvalue; track quoteString) {
@@ -53,7 +53,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="export.csvFile.decimalSeparator.label">Decimal Separator</label>
+                    <label class="form-control-label" jhiTranslate="export.csvFile.decimalSeparator.label"></label>
                     <div>
                         <div class="btn-group">
                             @for (separator of CsvDecimalSeparator | keyvalue; track separator) {
@@ -77,14 +77,14 @@
     <div class="modal-footer justify-content-between">
         <div class="flex-grow-1 d-flex justify-content-end">
             <button type="button" class="btn btn-default cancel me-1" data-dismiss="modal" (click)="cancel()">
-                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
             <button class="btn btn-success" id="finish-button" (click)="onFinish()">
-                <fa-icon [icon]="faDownload" class="me-2"></fa-icon>
+                <fa-icon [icon]="faDownload" class="me-2" />
                 @if (activeTab === 1) {
-                    <span jhiTranslate="export.excelFile.buttonText">Export as Excel</span>
+                    <span jhiTranslate="export.excelFile.buttonText"></span>
                 } @else {
-                    <span jhiTranslate="export.csvFile.buttonText">Export as CSV</span>
+                    <span jhiTranslate="export.csvFile.buttonText"></span>
                 }
             </button>
         </div>

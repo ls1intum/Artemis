@@ -1,6 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { BuildAction, PlatformAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
+import {
+    BuildAction,
+    DockerConfiguration,
+    PlatformAction,
+    ProgrammingExercise,
+    ProgrammingLanguage,
+    ProjectType,
+    ScriptAction,
+    WindFile,
+    WindMetadata,
+} from 'app/entities/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
@@ -33,6 +43,10 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         programmingExercise = new ProgrammingExercise(course, undefined);
         programmingExercise.customizeBuildPlanWithAeolus = true;
         windFile = new WindFile();
+        const metadata = new WindMetadata();
+        metadata.docker = new DockerConfiguration();
+        metadata.docker.image = 'testImage';
+        windFile.metadata = metadata;
         actions = [];
         gradleBuildAction = new ScriptAction();
         gradleBuildAction.name = 'gradle';
@@ -311,8 +325,19 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should not call loadAeolusTemplate on existing exercise', () => {
         comp.programmingExercise.id = 1;
+        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         const resetCustomBuildPlanSpy = jest.spyOn(comp, 'resetCustomBuildPlan');
         comp.loadAeolusTemplate();
         expect(resetCustomBuildPlanSpy).not.toHaveBeenCalled();
+    });
+
+    it('should set docker image correctly', () => {
+        comp.programmingExercise.windFile = windFile;
+        comp.programmingExercise.windFile.metadata.docker.image = 'old';
+        comp.setDockerImage('testImage');
+        expect(comp.programmingExercise.windFile?.metadata.docker.image).toBe('testImage');
+        comp.programmingExercise.windFile = undefined;
+        comp.setDockerImage('testImage');
+        expect(comp.programmingExercise.windFile).toBeUndefined();
     });
 });

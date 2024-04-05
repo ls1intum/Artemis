@@ -7,38 +7,69 @@ import { BuildJob } from 'app/entities/build-job.model';
 import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { BuildAgent } from 'app/entities/build-agent.model';
+import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/repository-info.model';
+import { JobTimingInfo } from 'app/entities/job-timing-info.model';
+import { BuildConfig } from 'app/entities/build-config.model';
 
 describe('BuildAgentsService', () => {
     let service: BuildAgentsService;
     let httpMock: HttpTestingController;
     let element: BuildAgent;
 
+    const repositoryInfo: RepositoryInfo = {
+        repositoryName: 'repo2',
+        repositoryType: 'USER',
+        triggeredByPushTo: TriggeredByPushTo.USER,
+        assignmentRepositoryUri: 'https://some.uri',
+        testRepositoryUri: 'https://some.uri',
+        solutionRepositoryUri: 'https://some.uri',
+        auxiliaryRepositoryUris: [],
+        auxiliaryRepositoryCheckoutDirectories: [],
+    };
+
+    const jobTimingInfo: JobTimingInfo = {
+        submissionDate: dayjs('2023-01-01'),
+        buildStartDate: dayjs('2023-01-01'),
+    };
+
+    const buildConfig: BuildConfig = {
+        dockerImage: 'someImage',
+        commitHash: 'abc124',
+        branch: 'main',
+        programmingLanguage: 'Java',
+        projectType: 'Maven',
+        scaEnabled: false,
+        sequentialTestRunsEnabled: false,
+        testwiseCoverageEnabled: false,
+        resultPaths: [],
+    };
+
     const mockRunningJobs: BuildJob[] = [
         {
             id: '2',
             name: 'Build Job 2',
+            buildAgentAddress: 'agent2',
             participationId: 102,
-            repositoryTypeOrUserName: 'repo2',
-            commitHash: 'abc124',
-            submissionDate: dayjs('2023-01-01'),
-            retryCount: 2,
-            buildStartDate: dayjs('2023-01-01'),
-            priority: 5,
             courseId: 10,
-            isPushToTestRepository: false,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 3,
+            repositoryInfo: repositoryInfo,
+            jobTimingInfo: jobTimingInfo,
+            buildConfig: buildConfig,
         },
         {
             id: '4',
             name: 'Build Job 4',
+            buildAgentAddress: 'agent4',
             participationId: 104,
-            repositoryTypeOrUserName: 'repo4',
-            commitHash: 'abc126',
-            submissionDate: dayjs('2023-01-04'),
-            retryCount: 3,
-            buildStartDate: dayjs('2023-01-04'),
-            priority: 2,
             courseId: 10,
-            isPushToTestRepository: false,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 2,
+            repositoryInfo: repositoryInfo,
+            jobTimingInfo: jobTimingInfo,
+            buildConfig: buildConfig,
         },
     ];
 

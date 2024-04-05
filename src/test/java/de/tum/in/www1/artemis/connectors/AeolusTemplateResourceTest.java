@@ -39,26 +39,28 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAeolusTemplateFile() throws Exception {
         Map<String, Integer> templatesWithExpectedScriptActions = new HashMap<>();
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE", 2);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?sequentialRuns=true", 3);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true", 3);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true&testCoverage=true", 3);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE", 1);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?sequentialRuns=true", 2);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true", 2);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true&testCoverage=true", 2);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN", 1);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?sequentialRuns=true", 2);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true", 2);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true&testCoverage=true", 3);
+        templatesWithExpectedScriptActions.put("JAVA/MAVEN_BLACKBOX", 5);
+        templatesWithExpectedScriptActions.put("JAVA/MAVEN_BLACKBOX?staticAnalysis=true", 6);
         templatesWithExpectedScriptActions.put("ASSEMBLER", 4);
-        templatesWithExpectedScriptActions.put("C/FACT", 3);
-        templatesWithExpectedScriptActions.put("C/GCC", 4);
-        templatesWithExpectedScriptActions.put("C/GCC?staticAnalysis=true", 4);
-        templatesWithExpectedScriptActions.put("KOTLIN", 2);
-        templatesWithExpectedScriptActions.put("KOTLIN?testCoverage=true", 3);
+        templatesWithExpectedScriptActions.put("C/FACT", 2);
+        templatesWithExpectedScriptActions.put("C/GCC", 3);
+        templatesWithExpectedScriptActions.put("C/GCC?staticAnalysis=true", 3);
+        templatesWithExpectedScriptActions.put("KOTLIN", 1);
+        templatesWithExpectedScriptActions.put("KOTLIN?testCoverage=true", 2);
         templatesWithExpectedScriptActions.put("KOTLIN?sequentialRuns=true", 3);
         templatesWithExpectedScriptActions.put("VHDL", 4);
-        templatesWithExpectedScriptActions.put("HASKELL", 2);
-        templatesWithExpectedScriptActions.put("HASKELL?sequentialRuns=true", 3);
+        templatesWithExpectedScriptActions.put("HASKELL", 1);
+        templatesWithExpectedScriptActions.put("HASKELL?sequentialRuns=true", 2);
         templatesWithExpectedScriptActions.put("OCAML", 2);
-        templatesWithExpectedScriptActions.put("SWIFT/PLAIN", 2);
+        templatesWithExpectedScriptActions.put("SWIFT/PLAIN", 1);
         templatesWithExpectedScriptActions.put("SWIFT/PLAIN?staticAnalysis=true", 2);
         for (Map.Entry<String, Integer> entry : templatesWithExpectedScriptActions.entrySet()) {
             String template = request.get("/api/aeolus/templates/" + entry.getKey(), HttpStatus.OK, String.class);
@@ -82,7 +84,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Test()
     void testValidWindfileDeserializationWithClass() {
-        String validWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"class\": \"script-action\",\n\"script\": \"echo $PATH\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action1\",\n\"platform\": \"bamboo\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action2\",\n\"script\": \"bash script\",\n\"runAlways\": true\n}\n]\n}";
+        String validWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"class\": \"script-action\",\n\"script\": \"echo $PATH\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action1\",\n\"platform\": \"jenkins\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action2\",\n\"script\": \"bash script\",\n\"runAlways\": true\n}\n]\n}";
         Windfile windfile = Windfile.deserialize(validWindfile);
         assertThat(windfile).isNotNull();
         assertThat(windfile.getActions().get(0)).isInstanceOf(ScriptAction.class);

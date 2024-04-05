@@ -7,7 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
 import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/shared/metis/metis.util';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
@@ -27,11 +27,11 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 @Injectable()
 export class MetisConversationService implements OnDestroy {
     // Stores the conversation of the course where the current user is a member
-    private conversationsOfUser: ConversationDto[] = [];
-    _conversationsOfUser$: ReplaySubject<ConversationDto[]> = new ReplaySubject<ConversationDto[]>(1);
+    private conversationsOfUser: ConversationDTO[] = [];
+    _conversationsOfUser$: ReplaySubject<ConversationDTO[]> = new ReplaySubject<ConversationDTO[]>(1);
     // Stores the currently selected conversation
-    private activeConversation: ConversationDto | undefined = undefined;
-    _activeConversation$: ReplaySubject<ConversationDto | undefined> = new ReplaySubject<ConversationDto | undefined>(1);
+    private activeConversation: ConversationDTO | undefined = undefined;
+    _activeConversation$: ReplaySubject<ConversationDTO | undefined> = new ReplaySubject<ConversationDTO | undefined>(1);
     private isCodeOfConductAccepted: boolean = false;
     _isCodeOfConductAccepted$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
     private isCodeOfConductPresented: boolean = false;
@@ -86,10 +86,10 @@ export class MetisConversationService implements OnDestroy {
         }
     }
 
-    get conversationsOfUser$(): Observable<ConversationDto[]> {
+    get conversationsOfUser$(): Observable<ConversationDTO[]> {
         return this._conversationsOfUser$.asObservable();
     }
-    get activeConversation$(): Observable<ConversationDto | undefined> {
+    get activeConversation$(): Observable<ConversationDTO | undefined> {
         return this._activeConversation$.asObservable();
     }
     get isCodeOfConductAccepted$(): Observable<boolean> {
@@ -114,7 +114,7 @@ export class MetisConversationService implements OnDestroy {
         return this._isLoading$.asObservable();
     }
 
-    public setActiveConversation(conversationIdentifier: ConversationDto | number | undefined) {
+    public setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {
         this.updateLastReadDateAndNumberOfUnreadMessages();
         let cachedConversation = undefined;
         if (conversationIdentifier) {
@@ -168,7 +168,7 @@ export class MetisConversationService implements OnDestroy {
         }
         this.setIsLoading(true);
         return this.conversationService.getConversationsOfUser(this._courseId).pipe(
-            map((conversations: HttpResponse<ConversationDto[]>) => {
+            map((conversations: HttpResponse<ConversationDTO[]>) => {
                 return conversations.body ?? [];
             }),
             catchError((res: HttpErrorResponse) => {
@@ -176,7 +176,7 @@ export class MetisConversationService implements OnDestroy {
                 this.setIsLoading(false);
                 return of([]);
             }),
-            map((conversations: ConversationDto[]) => {
+            map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;
                 this.hasUnreadMessagesCheck();
                 this._conversationsOfUser$.next(this.conversationsOfUser);
@@ -211,9 +211,9 @@ export class MetisConversationService implements OnDestroy {
         this.onConversationCreation(this.oneToOneChatService.create(this._courseId, loginOfChatPartner));
     public createChannel = (channel: ChannelDTO) => this.onConversationCreation(this.channelService.create(this._courseId, channel));
     public createGroupChat = (loginsOfChatPartners: string[]) => this.onConversationCreation(this.groupChatService.create(this._courseId, loginsOfChatPartners));
-    private onConversationCreation = (creation$: Observable<HttpResponse<ConversationDto>>): Observable<never> => {
+    private onConversationCreation = (creation$: Observable<HttpResponse<ConversationDTO>>): Observable<never> => {
         return creation$.pipe(
-            tap((conversation: HttpResponse<ConversationDto>) => {
+            tap((conversation: HttpResponse<ConversationDTO>) => {
                 this.activeConversation = conversation.body!;
             }),
             catchError((res: HttpErrorResponse) => {
@@ -240,7 +240,7 @@ export class MetisConversationService implements OnDestroy {
         this._courseId = course.id!;
         this._course = course;
         return this.conversationService.getConversationsOfUser(this._courseId).pipe(
-            map((conversations: HttpResponse<ConversationDto[]>) => {
+            map((conversations: HttpResponse<ConversationDTO[]>) => {
                 return conversations.body ?? [];
             }),
             catchError((res: HttpErrorResponse) => {
@@ -249,7 +249,7 @@ export class MetisConversationService implements OnDestroy {
                 this._isServiceSetup$.next(false);
                 return of([]);
             }),
-            map((conversations: ConversationDto[]) => {
+            map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;
                 this.hasUnreadMessagesCheck();
                 this._conversationsOfUser$.next(this.conversationsOfUser);
@@ -396,15 +396,15 @@ export class MetisConversationService implements OnDestroy {
         this._conversationsOfUser$.next(this.conversationsOfUser);
     }
 
-    private handleCreateConversation(createdConversation: ConversationDto) {
+    private handleCreateConversation(createdConversation: ConversationDTO) {
         this.handleUpdateOrCreate(createdConversation);
     }
 
-    private handleUpdateConversation(updatedConversation: ConversationDto) {
+    private handleUpdateConversation(updatedConversation: ConversationDTO) {
         this.handleUpdateOrCreate(updatedConversation);
     }
 
-    private handleUpdateOrCreate(updatedOrNewConversation: ConversationDto) {
+    private handleUpdateOrCreate(updatedOrNewConversation: ConversationDTO) {
         const conversationsCopy = [...this.conversationsOfUser];
         const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === updatedOrNewConversation.id);
         if (indexOfCachedConversation === -1) {
@@ -423,7 +423,7 @@ export class MetisConversationService implements OnDestroy {
         // Therefore we live with a small inconsistency until the users opens the conversation again.
     }
 
-    private handleDeleteConversation(deletedConversation: ConversationDto) {
+    private handleDeleteConversation(deletedConversation: ConversationDTO) {
         const conversationsCopy = [...this.conversationsOfUser];
         const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === deletedConversation.id);
         if (indexOfCachedConversation !== -1) {

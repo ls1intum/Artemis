@@ -4,7 +4,7 @@
         [icon]="faExclamationTriangle"
         class="text-warning"
         [ngbTooltip]="'artemisApp.programmingExercise.status.templateFulfillsTest' | artemisTranslate"
-    ></fa-icon>
+    />
 }
 @if (participationType === ProgrammingExerciseParticipationType.SOLUTION && latestResult && !latestResult.successful) {
     <fa-icon
@@ -12,5 +12,5 @@
         [icon]="faExclamationTriangle"
         class="text-warning"
         [ngbTooltip]="'artemisApp.programmingExercise.status.solutionFailsTest' | artemisTranslate"
-    ></fa-icon>
+    />
 }

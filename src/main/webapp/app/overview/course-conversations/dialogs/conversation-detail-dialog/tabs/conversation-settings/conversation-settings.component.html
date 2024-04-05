@@ -37,14 +37,14 @@
                                 (delete)="deleteChannel()"
                                 [dialogError]="dialogError$"
                             >
-                                <fa-icon [icon]="faTimes"></fa-icon>
+                                <fa-icon [icon]="faTimes" />
                             </button>
                         </div>
                     }
                 }
             </div>
         } @else {
-            <div class="col-12 settings-section text-center" jhiTranslate="artemisApp.dialogs.conversationSettings.settingsUnavailable">No settings possible</div>
+            <div class="col-12 settings-section text-center" jhiTranslate="artemisApp.dialogs.conversationSettings.settingsUnavailable"></div>
         }
     </div>
 }

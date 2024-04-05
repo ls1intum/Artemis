@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -44,10 +43,11 @@ public class DropLocation extends TempIdObject implements QuizQuestionComponent<
     @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private DragAndDropQuestion question;
 
+    // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "dropLocation")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -115,10 +115,6 @@ public class DropLocation extends TempIdObject implements QuizQuestionComponent<
 
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
-    }
-
-    public Set<DragAndDropMapping> getMappings() {
-        return mappings;
     }
 
     public void setInvalid(Boolean invalid) {

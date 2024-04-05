@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -19,8 +22,9 @@ import de.tum.in.www1.artemis.web.rest.errors.*;
 /**
  * REST controller for managing the current user's account.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class AccountResource {
 
     private final UserRepository userRepository;

@@ -4,8 +4,7 @@
             <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
         </div>
     </div>
-}
-@if (!isLoading) {
+} @else {
     <div class="container">
         <h3>{{ 'artemisApp.competency.editCompetency.title' | artemisTranslate }}</h3>
         <jhi-competency-form
@@ -15,6 +14,6 @@
             [courseId]="courseId"
             [lecturesOfCourseWithLectureUnits]="lecturesWithLectureUnits"
             [averageStudentScore]="competency?.courseProgress?.averageStudentScore ?? 0"
-        ></jhi-competency-form>
+        />
     </div>
 }

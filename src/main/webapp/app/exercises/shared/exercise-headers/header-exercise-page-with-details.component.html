@@ -4,13 +4,13 @@
             <div class="title-row">
                 <div class="inner-row">
                     @if (exercise.type) {
-                        <fa-icon [icon]="getIcon(exercise.type)" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate"></fa-icon>
+                        <fa-icon [icon]="getIcon(exercise.type)" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
                     }
                     &nbsp;
-                    <ng-content select="[pagetitle]"></ng-content>
+                    <ng-content select="[pagetitle]" />
                 </div>
                 @if ((exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs())) || exercise.difficulty || exerciseCategories?.length) {
-                    <jhi-exercise-categories [exercise]="exercise" [showTags]="{ difficulty: true, notReleased: true }" [ngClass]="'badge-row'"></jhi-exercise-categories>
+                    <jhi-exercise-categories [exercise]="exercise" [showTags]="{ difficulty: true, notReleased: true }" [ngClass]="'badge-row'" />
                 }
             </div>
             @if (exercise.maxPoints || (exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING)) {
@@ -28,7 +28,7 @@
                                 }
                             </span>
                             @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                                <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" class="me-2"></jhi-included-in-score-badge>
+                                <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" class="me-2" />
                             }
                         </span>
                     }
@@ -37,7 +37,7 @@
                             <div>
                                 {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}
                                 {{ 'artemisApp.AssessmentType.forExerciseHeader.' + exercise.assessmentType | artemisTranslate }}
-                                <fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise.assessmentType | artemisTranslate }}"></fa-icon>
+                                <fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise.assessmentType | artemisTranslate }}" />
                             </div>
                         </span>
                     }
@@ -59,7 +59,7 @@
                         <fa-icon
                             [icon]="faQuestionCircle"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy.type + '.tooltip' | artemisTranslate }}"
-                        ></fa-icon>
+                        />
                     </div>
                 </div>
             }

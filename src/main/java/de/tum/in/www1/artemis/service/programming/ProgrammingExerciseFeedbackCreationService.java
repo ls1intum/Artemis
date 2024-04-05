@@ -1,14 +1,21 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,7 +25,11 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
@@ -31,6 +42,7 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 /**
  * Service for creating feedback for programming exercises.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseFeedbackCreationService {
 
@@ -80,23 +92,23 @@ public class ProgrammingExerciseFeedbackCreationService {
      *
      * @param programmingLanguage The programming language for which the feedback was generated
      * @param projectType         The project type for which the feedback was generated
-     * @param message             The raw error message in the feedback
+     * @param errorMessage        The raw error message in the feedback
      * @return A filtered and better formatted error message
      */
-    private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final ProjectType projectType, final String message) {
+    private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final ProjectType projectType, final String errorMessage) {
         final String timeoutDetailText = "The test case execution timed out. This indicates issues in your code such as endless loops, issues with recursion or really slow performance. Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.";
         final String exceptionPrefix = "Exception message: ";
         // Overwrite timeout exception messages for Junit4, Junit5 and other
         // Defining two pattern groups, (1) the exception name and (2) the exception text
         Pattern findTimeoutPattern = Pattern.compile("^.*(" + String.join("|", TIMEOUT_EXCEPTIONS) + "):?(.*)");
-        Matcher matcher = findTimeoutPattern.matcher(message);
+        Matcher matcher = findTimeoutPattern.matcher(errorMessage);
         if (matcher.find()) {
             String exceptionText = matcher.group(2);
             return timeoutDetailText + "\n" + exceptionPrefix + exceptionText.trim();
         }
         // Defining one pattern group, (1) the exception text
         Pattern findGeneralTimeoutPattern = Pattern.compile("^.*:(.*timed out after.*)", Pattern.CASE_INSENSITIVE);
-        matcher = findGeneralTimeoutPattern.matcher(message);
+        matcher = findGeneralTimeoutPattern.matcher(errorMessage);
         if (matcher.find()) {
             // overwrite Ares: TimeoutException
             String generalTimeOutExceptionText = matcher.group(1);
@@ -105,24 +117,18 @@ public class ProgrammingExerciseFeedbackCreationService {
 
         // Filter out unneeded Exception classnames
         if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
-            var messageWithoutStackTrace = message.lines().takeWhile(IS_NOT_STACK_TRACE_LINE).collect(Collectors.joining("\n")).trim();
-
-            // the feedback from gradle test result is duplicated on bamboo therefore it's cut in half
-            if (projectType != null && projectType.isGradle() && profileService.isBamboo()) {
-                long numberOfLines = messageWithoutStackTrace.lines().count();
-                messageWithoutStackTrace = messageWithoutStackTrace.lines().skip(numberOfLines / 2).collect(Collectors.joining("\n")).trim();
-            }
+            var messageWithoutStackTrace = errorMessage.lines().takeWhile(IS_NOT_STACK_TRACE_LINE).collect(Collectors.joining("\n")).trim();
             return JVM_RESULT_MESSAGE_MATCHER.matcher(messageWithoutStackTrace).replaceAll("");
         }
 
         if (programmingLanguage == ProgrammingLanguage.PYTHON) {
-            Optional<String> firstExceptionMessage = message.lines().filter(IS_PYTHON_EXCEPTION_LINE).findFirst();
+            Optional<String> firstExceptionMessage = errorMessage.lines().filter(IS_PYTHON_EXCEPTION_LINE).findFirst();
             if (firstExceptionMessage.isPresent()) {
-                return firstExceptionMessage.get().replace(PYTHON_EXCEPTION_LINE_PREFIX, "") + "\n\n" + message;
+                return firstExceptionMessage.get().replace(PYTHON_EXCEPTION_LINE_PREFIX, "") + "\n\n" + errorMessage;
             }
         }
 
-        return message;
+        return errorMessage;
     }
 
     /**
@@ -161,7 +167,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      * Transforms static code analysis reports to feedback objects.
      * As we reuse the Feedback entity to store static code analysis findings, a mapping to those attributes
      * has to be defined, violating the first normal form.
-     *
+     * <p>
      * Mapping:
      * - text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER
      * - reference: Tool

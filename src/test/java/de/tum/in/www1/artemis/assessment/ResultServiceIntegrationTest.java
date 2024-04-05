@@ -5,7 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -21,10 +25,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -33,6 +52,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
@@ -41,13 +61,25 @@ import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
+import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "resultserviceintegration";
 
@@ -296,7 +328,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         // the exercise has no grading criteria -> empty points map in every resultWithPoints
         for (final var resultWithPoints : resultsWithPoints) {
-            assertThat(resultWithPoints.pointsPerCriterion()).isEmpty();
+            assertThat(resultWithPoints.pointsPerCriterion()).isNullOrEmpty();
         }
     }
 
@@ -317,8 +349,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
         assertThat(resultWithPoints2).containsExactlyInAnyOrderElementsOf(results);
 
-        final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
-        final GradingCriterion criterion2 = getGradingCriterionByTitle(fileUploadExercise, "test title2");
+        final GradingCriterion criterion1 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title");
+        final GradingCriterion criterion2 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title2");
 
         for (final var resultWithPoints : resultsWithPoints) {
             final Map<Long, Double> points = resultWithPoints.pointsPerCriterion();
@@ -367,16 +399,21 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private void addFeedbacksWithGradingCriteriaToExercise(FileUploadExercise fileUploadExercise) {
-        List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
+        Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         fileUploadExerciseRepository.save(fileUploadExercise);
 
-        final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
-        final GradingCriterion criterion2 = getGradingCriterionByTitle(fileUploadExercise, "test title2");
+        final GradingCriterion criterion1 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title");
+        final GradingCriterion criterion2 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title2");
 
-        final GradingInstruction instruction1a = criterion1.getStructuredGradingInstructions().get(0);
-        final GradingInstruction instruction1b = criterion1.getStructuredGradingInstructions().get(1);
-        final GradingInstruction instruction2 = criterion2.getStructuredGradingInstructions().get(0);
+        final List<GradingInstruction> gradingInstructions1 = List.copyOf(criterion1.getStructuredGradingInstructions());
+        // as long as credits are equal we can choose any two here
+        assertThat(gradingInstructions1).allMatch(instruction -> instruction.getCredits() == 1);
+        final GradingInstruction instruction1a = gradingInstructions1.get(0);
+        final GradingInstruction instruction1b = gradingInstructions1.get(1);
+        final Set<GradingInstruction> gradingInstructions2 = criterion2.getStructuredGradingInstructions();
+        assertThat(gradingInstructions2).hasSize(1);
+        final GradingInstruction instruction2 = gradingInstructions2.stream().findFirst().orElseThrow();
 
         for (final var participation : fileUploadExercise.getStudentParticipations()) {
             for (final var result : participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).toList()) {
@@ -415,10 +452,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         }
     }
 
-    private GradingCriterion getGradingCriterionByTitle(Exercise exercise, String title) {
-        return exercise.getGradingCriteria().stream().filter(criteria -> title.equals(criteria.getTitle())).findFirst().orElseThrow();
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getResult() throws Exception {
@@ -450,7 +483,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         // the exercise has no grading criteria -> empty points map in every resultWithPoints
         for (final var resultWithPoints : resultsWithPoints) {
-            assertThat(resultWithPoints.pointsPerCriterion()).isEmpty();
+            assertThat(resultWithPoints.pointsPerCriterion()).isNullOrEmpty();
         }
     }
 
@@ -496,7 +529,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deleteResult() throws Exception {
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(Long.MAX_VALUE));
 
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findByIdElseThrow(Long.MAX_VALUE));
 
@@ -509,7 +542,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         result = participationUtilService.addSampleFeedbackToResults(result);
         request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK);
         assertThat(resultRepository.existsById(result.getId())).isFalse();
-        request.delete("api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.NOT_FOUND);
+        request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -553,13 +586,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission_programmingExercise() throws Exception {
-        bitbucketRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.enableMockingOfRequests();
         var studentLogin = TEST_PREFIX + "student1";
         User user = userRepository.findOneByLogin(studentLogin).orElseThrow();
-        final var repositorySlug = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase();
-        bitbucketRequestMockProvider.mockSetStudentRepositoryPermission(repositorySlug, programmingExercise.getProjectKey(), studentLogin,
-                VersionControlRepositoryPermission.REPO_READ);
         mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true);
         Result result = new Result().rated(false);
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(5));
@@ -673,7 +701,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void testGetAssessmentCountByCorrectionRoundForProgrammingExercise() {
         // exercise
         Course course = courseUtilService.createCourse();
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         programmingExercise.setDueDate(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 

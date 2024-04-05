@@ -7,19 +7,15 @@
         <div class="row">
             <div class="col">
                 @if (allowBehavioralEntryGeneration ? currentStep !== 0 : currentStep !== 2) {
-                    <button type="button" class="btn btn-primary" jhiTranslate="artemisApp.codeHint.management.previousButton.label" (click)="onPreviousStep()">Previous</button>
+                    <button type="button" class="btn btn-primary" jhiTranslate="artemisApp.codeHint.management.previousButton.label" (click)="onPreviousStep()"></button>
                 }
             </div>
             <div class="col text-center status-wrapper">
-                <jhi-code-hint-generation-status
-                    [currentStep]="currentStep.valueOf()"
-                    [isPerformedByStep]="isPerformedByStep"
-                    (onStepChange)="onStepChange($event)"
-                ></jhi-code-hint-generation-status>
+                <jhi-code-hint-generation-status [currentStep]="currentStep.valueOf()" [isPerformedByStep]="isPerformedByStep" (onStepChange)="onStepChange($event)" />
             </div>
             <div class="col text-end">
                 @if (!isNextStepAvailable()) {
-                    <jhi-help-icon text="artemisApp.codeHint.management.nextButton.tooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.codeHint.management.nextButton.tooltip" />
                 }
                 @if (currentStep !== 3) {
                     <button
@@ -28,9 +24,7 @@
                         jhiTranslate="artemisApp.codeHint.management.nextButton.label"
                         [disabled]="!isNextStepAvailable()"
                         (click)="onNextStep()"
-                    >
-                        Next
-                    </button>
+                    ></button>
                 }
             </div>
         </div>
@@ -42,25 +36,17 @@
                     [hidden]="currentStep.valueOf() !== GenerationStep.GIT_DIFF.valueOf()"
                     [exercise]="exercise!"
                     (onGitDiffLoaded)="onDiffReportLoaded($event)"
-                ></jhi-diff-generation-step>
+                />
             }
             @if (allowBehavioralEntryGeneration) {
-                <jhi-coverage-generation-step
-                    [hidden]="currentStep !== GenerationStep.COVERAGE"
-                    [exercise]="exercise!"
-                    (onCoverageLoaded)="onCoverageReportLoaded($event)"
-                ></jhi-coverage-generation-step>
+                <jhi-coverage-generation-step [hidden]="currentStep !== GenerationStep.COVERAGE" [exercise]="exercise!" (onCoverageLoaded)="onCoverageReportLoaded($event)" />
             }
             <jhi-solution-entry-generation-step
                 [hidden]="currentStep !== GenerationStep.SOLUTION_ENTRIES"
                 [exercise]="exercise!"
                 (onEntryUpdate)="onSolutionEntryChanges($event)"
-            ></jhi-solution-entry-generation-step>
-            <jhi-code-hint-generation-step
-                [hidden]="currentStep !== GenerationStep.CODE_HINTS"
-                [exercise]="exercise!"
-                (onCodeHintsLoaded)="onCodeHintsLoaded($event)"
-            ></jhi-code-hint-generation-step>
+            />
+            <jhi-code-hint-generation-step [hidden]="currentStep !== GenerationStep.CODE_HINTS" [exercise]="exercise!" (onCodeHintsLoaded)="onCodeHintsLoaded($event)" />
         }
     </div>
 }

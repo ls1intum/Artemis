@@ -1,23 +1,30 @@
 package de.tum.in.www1.artemis.config.websocket;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.*;
-import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.*;
+import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
+import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.isParticipationTeamDestination;
 
 import java.net.InetSocketAddress;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.Cookie;
-import javax.validation.constraints.NotNull;
+import jakarta.servlet.http.Cookie;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -47,11 +54,13 @@ import org.springframework.web.util.WebUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterators;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -59,6 +68,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Configuration
 // See https://stackoverflow.com/a/34337731/3802758
 public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConfiguration {
@@ -95,11 +105,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
-    private final CourseRepository courseRepository;
-
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            UserRepository userRepository, ExamRepository examRepository, CourseRepository courseRepository) {
+            UserRepository userRepository, ExamRepository examRepository) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
@@ -108,7 +116,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.examRepository = examRepository;
-        this.courseRepository = courseRepository;
     }
 
     @Override
@@ -280,22 +287,15 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
              * use case.
              */
 
-            if (isBuildQueueAdminDestination(destination)) {
-                var user = userRepository.getUserWithAuthorities(principal.getName());
-                return authorizationCheckService.isAdmin(user);
-            }
+            final var login = principal.getName();
 
-            if (isBuildAgentDestination(destination)) {
-                log.debug("Allowing subscription to build agent destination: {}", destination);
-                var user = userRepository.getUserWithAuthorities(principal.getName());
-                return authorizationCheckService.isAdmin(user);
+            if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination)) {
+                return authorizationCheckService.isAdmin(login);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
-                Course course = courseRepository.findByIdElseThrow(courseId.get());
-                var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-                return authorizationCheckService.isAtLeastInstructorInCourse(course, user);
+                return authorizationCheckService.isAtLeastInstructorInCourse(login, courseId.get());
             }
 
             if (isParticipationTeamDestination(destination)) {
@@ -303,23 +303,22 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 return isParticipationOwnedByUser(principal, participationId);
             }
             if (isNonPersonalExerciseResultDestination(destination)) {
-                Long exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination);
+                final var exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination).orElseThrow();
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
-                Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-                if (exercise.isExamExercise()) {
-                    return isUserInstructorOrHigherForExercise(principal, exercise);
+                if (exerciseRepository.isExamExercise(exerciseId)) {
+                    Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+                    return authorizationCheckService.isAtLeastInstructorInCourse(login, exercise.getCourseViaExerciseGroupOrCourseMember().getId());
                 }
                 else {
-                    return isUserTAOrHigherForExercise(principal, exercise);
+                    return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, exerciseId);
                 }
             }
 
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
                 var exam = examRepository.findByIdElseThrow(examId.get());
-                var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-                return authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), user);
+                return authorizationCheckService.isAtLeastInstructorInCourse(login, exam.getCourse().getId());
             }
             return true;
         }
@@ -335,7 +334,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     private boolean isParticipationOwnedByUser(Principal principal, Long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
         return participation.isOwnedBy(principal.getName());
     }
 

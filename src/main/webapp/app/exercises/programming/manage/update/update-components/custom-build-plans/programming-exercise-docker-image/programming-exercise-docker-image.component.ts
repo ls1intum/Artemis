@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { NgModel } from '@angular/forms';
 
 @Component({
     selector: 'jhi-programming-exercise-docker-image',
@@ -8,4 +9,6 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 export class ProgrammingExerciseDockerImageComponent {
     @Input() dockerImage: string;
     @Output() dockerImageChange = new EventEmitter<string>();
+
+    @ViewChild('dockerImageField') dockerImageField?: NgModel;
 }

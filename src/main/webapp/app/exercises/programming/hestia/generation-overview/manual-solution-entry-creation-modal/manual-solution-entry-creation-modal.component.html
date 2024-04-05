@@ -5,9 +5,9 @@
     </div>
     <div class="modal-body">
         <div class="form-group">
-            <label class="label-narrow" for="field_test" jhiTranslate="artemisApp.programmingExerciseSolutionEntry.test">Test Name</label>
+            <label class="label-narrow" for="field_test" jhiTranslate="artemisApp.programmingExerciseSolutionEntry.test"></label>
             @if (codeHint) {
-                <jhi-help-icon text="artemisApp.programmingExerciseSolutionEntry.testOnlyForCurrentTask"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.programmingExerciseSolutionEntry.testOnlyForCurrentTask" />
             }
             @if (testCases?.length) {
                 <select class="form-select" required name="test" [(ngModel)]="this.solutionEntry.testCase" id="field_test">
@@ -18,7 +18,7 @@
             }
         </div>
         <div class="form-group">
-            <label class="label-narrow" for="field_path" jhiTranslate="artemisApp.programmingExerciseSolutionEntry.file">File</label>
+            <label class="label-narrow" for="field_path" jhiTranslate="artemisApp.programmingExerciseSolutionEntry.file"></label>
             @if (solutionRepositoryFileNames?.length) {
                 <select class="form-select" required name="path" [(ngModel)]="this.solutionEntry.filePath" id="field_path">
                     @for (fileName of solutionRepositoryFileNames; track fileName) {
@@ -28,7 +28,7 @@
             }
         </div>
         <div class="d-flex flex-row">
-            <jhi-solution-entry class="flex-grow-1" [solutionEntry]="solutionEntry" [enableEditing]="true"></jhi-solution-entry>
+            <jhi-solution-entry class="flex-grow-1" [solutionEntry]="solutionEntry" [enableEditing]="true" />
             <div class="ps-2 flex-grow-0">
                 <button
                     type="button"
@@ -36,9 +36,7 @@
                     jhiTranslate="entity.action.submit"
                     (click)="onCreateEntry()"
                     [disabled]="!(solutionEntry?.code && solutionEntry.testCase && solutionEntry.filePath)"
-                >
-                    Save
-                </button>
+                ></button>
             </div>
         </div>
     </div>

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.config.localvcci;
 
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
+import org.springframework.context.annotation.Profile;
 
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCFetchFilter;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPostPushHook;
@@ -12,6 +13,7 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 /**
  * This class configures the JGit Servlet, which is used to receive Git push and fetch requests for local VC.
  */
+@Profile("localvc")
 public class ArtemisGitServlet extends GitServlet {
 
     /**
@@ -35,7 +37,7 @@ public class ArtemisGitServlet extends GitServlet {
         this.setReceivePackFactory((request, repository) -> {
             ReceivePack receivePack = new ReceivePack(repository);
             // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
-            receivePack.setPreReceiveHook(new LocalVCPrePushHook());
+            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, request));
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
             receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
             return receivePack;

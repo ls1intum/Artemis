@@ -21,7 +21,7 @@ import { ButtonType } from 'app/shared/components/button.component';
                     (onClick)="onUpdate.emit()"
                     [icon]="faSave"
                     [disabled]="isSaving || !exercise.submissionPolicy || (exercise.submissionPolicy?.type === SubmissionPolicyType.NONE && !hadPolicyBefore) || formInvalid"
-                ></jhi-button>
+                />
             }
             @if (exercise.isAtLeastInstructor && hadPolicyBefore && exercise.submissionPolicy!.active) {
                 <jhi-button
@@ -30,7 +30,7 @@ import { ButtonType } from 'app/shared/components/button.component';
                     [tooltip]="'artemisApp.programmingExercise.submissionPolicy.deactivateButton.tooltip'"
                     (onClick)="onToggle.emit()"
                     [disabled]="isSaving"
-                ></jhi-button>
+                />
             }
             @if (exercise.isAtLeastInstructor && hadPolicyBefore && !exercise.submissionPolicy!.active) {
                 <jhi-button
@@ -39,7 +39,7 @@ import { ButtonType } from 'app/shared/components/button.component';
                     [tooltip]="'artemisApp.programmingExercise.submissionPolicy.activateButton.tooltip'"
                     (onClick)="onToggle.emit()"
                     [disabled]="isSaving"
-                ></jhi-button>
+                />
             }
         </div>
     `,

@@ -195,8 +195,7 @@ public class GitUtilService {
     }
 
     public void stashAndCommitAll(REPOS repo, String commitMsg) {
-        try {
-            Git git = new Git(getRepoByType(repo));
+        try (Git git = new Git(getRepoByType(repo))) {
             git.add().addFilepattern(".").call();
             GitService.commit(git).setMessage(commitMsg).call();
         }

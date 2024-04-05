@@ -20,7 +20,7 @@ import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
                 (delete)="removeTeam()"
                 [dialogError]="dialogError$"
             >
-                <fa-icon [icon]="faTrashAlt" class="me-1"></fa-icon>
+                <fa-icon [icon]="faTrashAlt" class="me-1" />
             </button>
         }
     `,

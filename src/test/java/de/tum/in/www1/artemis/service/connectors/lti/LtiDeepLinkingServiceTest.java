@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.*;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.junit.jupiter.api.AfterEach;
@@ -88,12 +90,8 @@ class LtiDeepLinkingServiceTest {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
 
-        long exerciseId = 3;
-        long courseId = 17;
-        Exercise exercise = createMockExercise(exerciseId, courseId);
-        when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
-
-        String deepLinkResponse = ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", courseId, exerciseId);
+        DeepLinkCourseExercises result = createTestExercisesForDeepLinking();
+        String deepLinkResponse = ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", result.courseId(), result.exerciseSet());
 
         assertThat(deepLinkResponse).isNotNull();
         assertThat(deepLinkResponse).contains("test_jwt");
@@ -104,13 +102,9 @@ class LtiDeepLinkingServiceTest {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn(null);
 
-        long exerciseId = 3;
-        long courseId = 17;
-        Exercise exercise = createMockExercise(exerciseId, courseId);
-        when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
-
+        DeepLinkCourseExercises result = createTestExercisesForDeepLinking();
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", courseId, exerciseId))
+                .isThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", result.courseId, result.exerciseSet))
                 .withMessage("Deep linking response cannot be created")
                 .matches(exception -> "LTI".equals(exception.getEntityName()) && "deepLinkingResponseFailed".equals(exception.getErrorKey()));
     }
@@ -123,13 +117,9 @@ class LtiDeepLinkingServiceTest {
         }.getType());
         when(oidcIdToken.getClaim(de.tum.in.www1.artemis.domain.lti.Claims.DEEP_LINKING_SETTINGS)).thenReturn(deepLinkingSettingsAsMap);
 
-        long exerciseId = 3;
-        long courseId = 17;
-        Exercise exercise = createMockExercise(exerciseId, courseId);
-        when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
-
+        DeepLinkCourseExercises result = createTestExercisesForDeepLinking();
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", courseId, exerciseId))
+                .isThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", result.courseId, result.exerciseSet))
                 .withMessage("Cannot find platform return URL")
                 .matches(exception -> "LTI".equals(exception.getEntityName()) && "deepLinkReturnURLEmpty".equals(exception.getErrorKey()));
     }
@@ -140,13 +130,9 @@ class LtiDeepLinkingServiceTest {
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
         when(oidcIdToken.getClaim(de.tum.in.www1.artemis.domain.lti.Claims.LTI_DEPLOYMENT_ID)).thenReturn(null);
 
-        long exerciseId = 3;
-        long courseId = 17;
-        Exercise exercise = createMockExercise(exerciseId, courseId);
-        when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
-
+        DeepLinkCourseExercises result = createTestExercisesForDeepLinking();
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", courseId, exerciseId))
+                .isThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", result.courseId, result.exerciseSet))
                 .withMessage("Missing claim: " + Claims.LTI_DEPLOYMENT_ID);
     }
 
@@ -173,5 +159,20 @@ class LtiDeepLinkingServiceTest {
         course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
         exercise.setCourse(course);
         return exercise;
+    }
+
+    private DeepLinkCourseExercises createTestExercisesForDeepLinking() {
+        long exerciseId = 3;
+        long courseId = 17;
+        Exercise exercise = createMockExercise(exerciseId, courseId);
+        when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
+
+        Set<Long> exerciseSet = new HashSet<>();
+        exerciseSet.add(exerciseId);
+        return new DeepLinkCourseExercises(courseId, exerciseSet);
+    }
+
+    private record DeepLinkCourseExercises(long courseId, Set<Long> exerciseSet) {
+
     }
 }

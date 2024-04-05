@@ -25,13 +25,14 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 
 /**
  * Service responsible for initializing the database with specific testdata related to participations, submissions and results.
@@ -72,7 +73,7 @@ public class ParticipationUtilService {
     private TextSubmissionRepository textSubmissionRepo;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepo;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepo;
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepo;
@@ -706,7 +707,7 @@ public class ParticipationUtilService {
      * @throws Exception If the file cannot be read
      */
     public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
-        String fileContent = FileUtils.loadFileFromResources(path);
+        String fileContent = TestResourceUtils.loadFileFromResources(path);
         return mapper.readValue(fileContent, mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class));
     }
 
@@ -806,12 +807,14 @@ public class ParticipationUtilService {
         resultRepo.save(result);
 
         assertThat(exercise.getGradingCriteria()).isNotNull();
-        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).isNotNull();
+        assertThat(exercise.getGradingCriteria()).allMatch(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions() != null);
 
         // add feedback which is associated with structured grading instructions
+        GradingInstruction anyInstruction = GradingCriterionUtil.findAnyInstructionWhere(exercise.getGradingCriteria(), gradingInstruction -> true).orElseThrow();
         Feedback feedback = new Feedback();
-        feedback.setGradingInstruction(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0));
+        feedback.setGradingInstruction(anyInstruction);
         addFeedbackToResult(feedback, result);
+
         return studentParticipation;
     }
 

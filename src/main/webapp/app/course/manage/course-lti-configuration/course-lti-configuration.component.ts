@@ -12,6 +12,8 @@ import { SortService } from 'app/shared/service/sort.service';
     templateUrl: './course-lti-configuration.component.html',
 })
 export class CourseLtiConfigurationComponent implements OnInit {
+    protected readonly Object = Object;
+
     course: Course;
     onlineCourseConfiguration: OnlineCourseConfiguration;
     exercises: Exercise[];
@@ -20,6 +22,7 @@ export class CourseLtiConfigurationComponent implements OnInit {
 
     predicate = 'type';
     reverse = false;
+    showAdvancedSettings = false;
 
     // Icons
     faSort = faSort;
@@ -50,13 +53,6 @@ export class CourseLtiConfigurationComponent implements OnInit {
     }
 
     /**
-     * Gets the LTI 1.0 launch url for an exercise
-     */
-    getExerciseLti10LaunchUrl(exercise: Exercise): string {
-        return `${location.origin}/api/public/lti/launch/${exercise.id}`; // Needs to match url in LtiResource
-    }
-
-    /**
      * Gets the LTI 1.3 launch url for an exercise
      */
     getExerciseLti13LaunchUrl(exercise: Exercise): string {
@@ -65,5 +61,16 @@ export class CourseLtiConfigurationComponent implements OnInit {
 
     sortRows() {
         this.sortService.sortByProperty(this.exercises, this.predicate, this.reverse);
+    }
+
+    /**
+     * Returns true if any required LTI 1.3 fields are missing
+     */
+    missingLti13ConfigurationField(): boolean {
+        return !this.onlineCourseConfiguration.ltiPlatformConfiguration;
+    }
+
+    toggleAdvancedSettings() {
+        this.showAdvancedSettings = !this.showAdvancedSettings;
     }
 }

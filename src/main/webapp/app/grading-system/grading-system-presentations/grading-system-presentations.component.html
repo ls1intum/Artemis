@@ -3,21 +3,17 @@
         <div class="row">
             <div class="col-auto">
                 <div>
-                    <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.presentationType.title">Presentation Mode</label>
-                    <jhi-help-icon text="artemisApp.gradingSystem.presentationType.description"></jhi-help-icon>
+                    <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.presentationType.title"></label>
+                    <jhi-help-icon text="artemisApp.gradingSystem.presentationType.description" />
                 </div>
                 <div>
-                    <jhi-mode-picker
-                        [options]="modePickerOptions"
-                        [value]="presentationsConfig.presentationType"
-                        (valueChange)="onPresentationTypeChange($event!)"
-                    ></jhi-mode-picker>
+                    <jhi-mode-picker [options]="modePickerOptions" [value]="presentationsConfig.presentationType" (valueChange)="onPresentationTypeChange($event!)" />
                 </div>
             </div>
             @if (presentationsConfig.presentationType === BASIC && gradingScale.course !== undefined) {
                 <div class="col-auto">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.basicPresentation.label">Basic Presentations</label>
+                        <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.basicPresentation.label"></label>
                     </div>
                     <div>
                         <div class="input-group">
@@ -44,12 +40,12 @@
             @if (presentationsConfig.presentationType === GRADED) {
                 <div class="col-auto">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.label">Graded Presentations</label>
+                        <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.label"></label>
                     </div>
                     <div>
                         <div class="input-group">
                             <div class="input-group-prepend">
-                                <label class="input-group-text" for="field_numberPresentations" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.number">Number</label>
+                                <label class="input-group-text" for="field_numberPresentations" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.number"></label>
                             </div>
                             <input
                                 name="numPresentations"

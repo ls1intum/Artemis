@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,14 +17,15 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the ProgrammingExerciseTestCase entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<ProgrammingExerciseTestCase, Long> {
 
-    Set<ProgrammingExerciseTestCase> findByExerciseId(Long exerciseId);
+    Set<ProgrammingExerciseTestCase> findByExerciseId(long exerciseId);
 
-    Optional<ProgrammingExerciseTestCase> findByExerciseIdAndTestName(Long exerciseId, String testName);
+    Optional<ProgrammingExerciseTestCase> findByExerciseIdAndTestName(long exerciseId, String testName);
 
-    default ProgrammingExerciseTestCase findByIdWithExerciseElseThrow(Long testCaseId) {
+    default ProgrammingExerciseTestCase findByIdWithExerciseElseThrow(long testCaseId) {
         return findByIdWithExercise(testCaseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Test Case", testCaseId));
     }
 
@@ -37,7 +41,7 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
                 LEFT JOIN FETCH tc.exercise ex
             WHERE tc.id = :testCaseId
             """)
-    Optional<ProgrammingExerciseTestCase> findByIdWithExercise(@Param("testCaseId") Long testCaseId);
+    Optional<ProgrammingExerciseTestCase> findByIdWithExercise(@Param("testCaseId") long testCaseId);
 
     /**
      * Returns all test cases with the associated solution entries for a programming exercise
@@ -51,7 +55,7 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
                 LEFT JOIN FETCH tc.solutionEntries se
             WHERE tc.exercise.id = :exerciseId
             """)
-    Set<ProgrammingExerciseTestCase> findByExerciseIdWithSolutionEntries(@Param("exerciseId") Long exerciseId);
+    Set<ProgrammingExerciseTestCase> findByExerciseIdWithSolutionEntries(@Param("exerciseId") long exerciseId);
 
     /**
      * Returns all test cases with the associated solution entries for a programming exercise
@@ -61,14 +65,15 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
      * @return all test cases with the associated solution entries
      */
     @Query("""
-            SELECT DISTINCT tc FROM ProgrammingExerciseTestCase tc
+            SELECT DISTINCT tc
+            FROM ProgrammingExerciseTestCase tc
                 LEFT JOIN FETCH tc.solutionEntries se
             WHERE tc.exercise.id = :exerciseId
                 AND tc.active = :active
             """)
-    Set<ProgrammingExerciseTestCase> findByExerciseIdWithSolutionEntriesAndActive(@Param("exerciseId") Long exerciseId, @Param("active") Boolean active);
+    Set<ProgrammingExerciseTestCase> findByExerciseIdWithSolutionEntriesAndActive(@Param("exerciseId") long exerciseId, @Param("active") Boolean active);
 
-    Set<ProgrammingExerciseTestCase> findByExerciseIdAndActive(Long exerciseId, Boolean active);
+    Set<ProgrammingExerciseTestCase> findByExerciseIdAndActive(long exerciseId, Boolean active);
 
     /**
      * Returns the number of test cases marked as {@link de.tum.in.www1.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE} for the given exercise.
@@ -77,10 +82,10 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
      * @return the number of test cases marked as {@link de.tum.in.www1.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE}.
      */
     @Query("""
-            SELECT count(DISTINCT testCase)
+            SELECT COUNT(DISTINCT testCase)
             FROM ProgrammingExerciseTestCase testCase
             WHERE testCase.exercise.id = :exerciseId
-                AND testCase.visibility = 'AFTER_DUE_DATE'
+                AND testCase.visibility = de.tum.in.www1.artemis.domain.enumeration.Visibility.AFTER_DUE_DATE
             """)
-    long countAfterDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
+    long countAfterDueDateByExerciseId(@Param("exerciseId") long exerciseId);
 }

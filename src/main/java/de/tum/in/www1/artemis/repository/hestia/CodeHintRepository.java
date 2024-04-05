@@ -3,10 +3,11 @@ package de.tum.in.www1.artemis.repository.hestia;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -31,18 +32,18 @@ public interface CodeHintRepository extends JpaRepository<CodeHint, Long> {
     @Query("""
             SELECT h
             FROM CodeHint h
-            LEFT JOIN FETCH h.task t
-            LEFT JOIN FETCH h.solutionEntries tc
+                LEFT JOIN FETCH h.task t
+                LEFT JOIN FETCH h.solutionEntries tc
             WHERE h.id = :codeHintId
             """)
-    Optional<CodeHint> findByIdWithSolutionEntries(Long codeHintId);
+    Optional<CodeHint> findByIdWithSolutionEntries(@Param("codeHintId") Long codeHintId);
 
     @Query("""
             SELECT h
             FROM CodeHint h
-            LEFT JOIN FETCH h.task t
-            LEFT JOIN FETCH h.solutionEntries tc
+                LEFT JOIN FETCH h.task t
+                LEFT JOIN FETCH h.solutionEntries tc
             WHERE t.id = :taskId
             """)
-    Set<CodeHint> findByTaskIdWithSolutionEntries(Long taskId);
+    Set<CodeHint> findByTaskIdWithSolutionEntries(@Param("taskId") Long taskId);
 }

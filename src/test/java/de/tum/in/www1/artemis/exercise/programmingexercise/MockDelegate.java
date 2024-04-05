@@ -17,7 +17,8 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 
 public interface MockDelegate {
 
-    void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) throws Exception;
+    void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked)
+            throws Exception;
 
     void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
             throws Exception;

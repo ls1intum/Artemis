@@ -19,6 +19,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 
 describe('Edit Course LTI Configuration Component', () => {
     let comp: EditCourseLtiConfigurationComponent;
@@ -29,8 +30,6 @@ describe('Edit Course LTI Configuration Component', () => {
 
     const onlineCourseConfiguration = {
         id: 1,
-        ltiKey: 'key',
-        ltiSecret: 'secret',
         userPrefix: 'prefix',
         requireExistingUser: false,
     } as OnlineCourseConfiguration;
@@ -51,6 +50,7 @@ describe('Edit Course LTI Configuration Component', () => {
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
                 MockComponent(HelpIconComponent),
+                MockDirective(MockHasAnyAuthorityDirective),
             ],
             providers: [
                 MockProvider(CourseManagementService),
@@ -89,8 +89,6 @@ describe('Edit Course LTI Configuration Component', () => {
             expect(comp.course).toEqual(course);
             expect(comp.onlineCourseConfiguration).toEqual(course.onlineCourseConfiguration);
             expect(comp.onlineCourseConfigurationForm.get(['id'])?.value).toBe(onlineCourseConfiguration.id);
-            expect(comp.onlineCourseConfigurationForm.get(['ltiKey'])?.value).toBe(onlineCourseConfiguration.ltiKey);
-            expect(comp.onlineCourseConfigurationForm.get(['ltiSecret'])?.value).toBe(onlineCourseConfiguration.ltiSecret);
             expect(comp.onlineCourseConfigurationForm.get(['userPrefix'])?.value).toBe(onlineCourseConfiguration.userPrefix);
             expect(comp.onlineCourseConfigurationForm.get(['requireExistingUser'])?.value).toBe(onlineCourseConfiguration.requireExistingUser);
         });
@@ -101,13 +99,10 @@ describe('Edit Course LTI Configuration Component', () => {
 
         const changedConfiguration = {
             ...onlineCourseConfiguration,
-            ltiKey: 'ChangedKey',
         } as OnlineCourseConfiguration;
 
         comp.onlineCourseConfigurationForm = new FormGroup({
             id: new FormControl(changedConfiguration.id),
-            ltiKey: new FormControl(changedConfiguration.ltiKey),
-            ltiSecret: new FormControl(changedConfiguration.ltiSecret),
             userPrefix: new FormControl(changedConfiguration.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
             requireExistingUser: new FormControl(changedConfiguration.requireExistingUser),
         });

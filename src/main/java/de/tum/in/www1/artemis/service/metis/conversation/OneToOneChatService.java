@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -12,6 +15,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 
+@Profile(PROFILE_CORE)
 @Service
 public class OneToOneChatService {
 
@@ -39,7 +43,7 @@ public class OneToOneChatService {
      */
     public OneToOneChat startOneToOneChat(Course course, User userA, User userB) {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        var existingChatBetweenUsers = oneToOneChatRepository.findBetweenUsersWithParticipantsAndUserGroups(course.getId(), userA.getId(), userB.getId());
+        var existingChatBetweenUsers = oneToOneChatRepository.findWithParticipantsAndUserGroupsInCourseBetweenUsers(course.getId(), userA.getId(), userB.getId());
         if (existingChatBetweenUsers.isPresent()) {
             OneToOneChat chat = existingChatBetweenUsers.get();
             if (chat.getLastMessageDate() == null && !requestingUser.getId().equals(chat.getCreator().getId())) {

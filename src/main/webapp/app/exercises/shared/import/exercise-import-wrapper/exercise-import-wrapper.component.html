@@ -1,13 +1,13 @@
 <form>
     <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="{{ titleKey }}">Import an Exercise</h4>
+        <h4 class="modal-title" jhiTranslate="{{ titleKey }}"></h4>
         <button type="button" id="cancel-btn" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <!-- imports from file are currently only supported for programming exercises, for the other exercise types we need to show the import dialog as it was before -->
     @if (exerciseType === ExerciseType.PROGRAMMING && !programmingLanguage) {
-        <jhi-exercise-import-tabs id="exercise-import-tabs" [exerciseType]="exerciseType"></jhi-exercise-import-tabs>
+        <jhi-exercise-import-tabs id="exercise-import-tabs" [exerciseType]="exerciseType" />
     }
     @if (exerciseType !== ExerciseType.PROGRAMMING || programmingLanguage) {
-        <jhi-exercise-import id="exercise-import" [exerciseType]="exerciseType" [programmingLanguage]="programmingLanguage"></jhi-exercise-import>
+        <jhi-exercise-import id="exercise-import" [exerciseType]="exerciseType" [programmingLanguage]="programmingLanguage" />
     }
 </form>

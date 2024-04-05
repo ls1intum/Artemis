@@ -63,15 +63,14 @@
                             [maxXAxisTickLength]="17"
                             [dataLabelFormatting]="bindFormatting"
                             [roundEdges]="false"
-                        >
-                        </ngx-charts-bar-vertical>
+                        />
                         <div class="col-md-12 text-center button-row">
                             <button (click)="switchSolution()" type="button" class="btn btn-primary">
                                 @if (showSolution) {
-                                    <fa-icon [icon]="faCheckCircle"></fa-icon>
+                                    <fa-icon [icon]="faCheckCircle" />
                                 }
                                 @if (!showSolution) {
-                                    <fa-icon [icon]="faTimesCircle"></fa-icon>
+                                    <fa-icon [icon]="faTimesCircle" />
                                 }
                                 @if (showSolution) {
                                     <span jhiTranslate="artemisApp.showStatistic.hideSolution"></span>
@@ -81,7 +80,7 @@
                                 }
                             </button>
                             <button (click)="switchRated()" type="button" class="btn btn-primary">
-                                <fa-icon [icon]="faSync"></fa-icon>
+                                <fa-icon [icon]="faSync" />
                                 @if (rated) {
                                     <span jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
                                 }
@@ -95,6 +94,6 @@
                 </div>
             </div>
         </div>
-        <jhi-quiz-statistics-footer></jhi-quiz-statistics-footer>
+        <jhi-quiz-statistics-footer />
     </div>
 }

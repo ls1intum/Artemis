@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 
 class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -92,8 +92,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         course = courseUtilService.addCourseWithModelingAndTextExercise();
         modelingExercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
-        emptyModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
-        validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        emptyModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
+        validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         log.debug("Test setup done");
     }
 
@@ -386,7 +386,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     private void testGradingCriteriaAreImported(Exercise exercise) throws Exception {
-        List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(exercise);
+        Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(exercise);
         gradingCriterionRepo.saveAll(gradingCriteria);
         var studentParticipation = participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(exercise, TEST_PREFIX + "instructor1");
         Submission originalSubmission = studentParticipation.findLatestSubmission().orElseThrow();

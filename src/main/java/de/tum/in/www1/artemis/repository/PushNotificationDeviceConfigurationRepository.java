@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +21,7 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceTyp
 /**
  * The Repository used for PushNotificationDeviceConfiguration
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface PushNotificationDeviceConfigurationRepository extends JpaRepository<PushNotificationDeviceConfiguration, PushNotificationDeviceConfigurationId> {
 
@@ -28,7 +32,7 @@ public interface PushNotificationDeviceConfigurationRepository extends JpaReposi
      */
     @Query("""
             SELECT p FROM PushNotificationDeviceConfiguration p
-            WHERE p.expirationDate > now()
+            WHERE p.expirationDate > CURRENT_TIMESTAMP()
                 AND p.owner IN :users
                 AND p.deviceType = :deviceType
             """)
@@ -37,8 +41,11 @@ public interface PushNotificationDeviceConfigurationRepository extends JpaReposi
     /**
      * Cleans up the old/expired push notifications device configurations
      */
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
-    @Query("DELETE FROM PushNotificationDeviceConfiguration p WHERE p.expirationDate <= now()")
+    @Query("""
+            DELETE FROM PushNotificationDeviceConfiguration p
+            WHERE p.expirationDate <= CURRENT_TIMESTAMP()
+            """)
     void deleteExpiredDeviceConfigurations();
 }

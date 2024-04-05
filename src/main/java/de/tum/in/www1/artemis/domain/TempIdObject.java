@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import java.util.Objects;
 
-import javax.persistence.Transient;
+import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -22,6 +22,12 @@ public abstract class TempIdObject extends DomainObject {
 
     public void setTempID(Long tempID) {
         this.tempIDTransient = tempID;
+    }
+
+    @Override
+    public int hashCode() {
+        // Important: do not include the tempId in the hash code
+        return super.hashCode();
     }
 
     /**

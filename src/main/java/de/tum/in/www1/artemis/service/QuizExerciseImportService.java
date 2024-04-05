@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -16,6 +19,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class QuizExerciseImportService extends ExerciseImportService {
 
@@ -25,18 +29,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     private final ChannelService channelService;
 
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, FileService fileService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
-            FilePathService filePathService) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.quizExerciseService = quizExerciseService;
         this.fileService = fileService;
         this.channelService = channelService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -85,15 +85,15 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * This helper method copies all questions of the {@code importedExercise} into a new exercise.
+     * This helper method copies all questions of the {@code sourceExercise} into a new exercise.
      *
-     * @param importedExercise The exercise from which to copy the questions
-     * @param newExercise      The exercise to which the questions are copied
+     * @param sourceExercise The exercise from which to copy the questions
+     * @param newExercise    The exercise to which the questions are copied
      */
-    private void copyQuizQuestions(QuizExercise importedExercise, QuizExercise newExercise) {
+    private void copyQuizQuestions(QuizExercise sourceExercise, QuizExercise newExercise) {
         log.debug("Copying the QuizQuestions to new QuizExercise: {}", newExercise);
 
-        for (QuizQuestion quizQuestion : importedExercise.getQuizQuestions()) {
+        for (QuizQuestion quizQuestion : sourceExercise.getQuizQuestions()) {
             quizQuestion.setId(null);
             quizQuestion.setQuizQuestionStatistic(null);
             if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
@@ -107,7 +107,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             }
             quizQuestion.setExercise(newExercise);
         }
-        newExercise.setQuizQuestions(importedExercise.getQuizQuestions());
+        newExercise.setQuizQuestions(sourceExercise.getQuizQuestions());
     }
 
     private void setUpMultipleChoiceQuestionForImport(MultipleChoiceQuestion mcQuestion) {
@@ -127,7 +127,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
             Path oldPath = FilePathService.actualPathForPublicPath(backgroundFilePublicPath);
             Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
-            dndQuestion.setBackgroundFilePath(filePathService.publicPathForActualPath(newPath, null).toString());
+            dndQuestion.setBackgroundFilePath(FilePathService.publicPathForActualPathOrThrow(newPath, null).toString());
         }
         else {
             log.warn("BackgroundFilePath of DragAndDropQuestion {} is null", dndQuestion.getId());
@@ -158,7 +158,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             // Need to copy the file and get a new path, same as above
             Path oldDragItemPath = FilePathService.actualPathForPublicPath(pictureFilePublicPath);
             Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
-            dragItem.setPictureFilePath(filePathService.publicPathForActualPath(newDragItemPath, null).toString());
+            dragItem.setPictureFilePath(FilePathService.publicPathForActualPathOrThrow(newDragItemPath, null).toString());
         }
     }
 
@@ -197,16 +197,16 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * This helper method copies all batches of the {@code importedExercise} into a new exercise.
+     * This helper method copies all batches of the {@code sourceExercise} into a new exercise.
      *
-     * @param importedExercise The exercise from which to copy the batches
-     * @param newExercise      The exercise to which the batches are copied
+     * @param sourceExercise The exercise from which to copy the batches
+     * @param newExercise    The exercise to which the batches are copied
      */
-    private void copyQuizBatches(QuizExercise importedExercise, QuizExercise newExercise) {
+    private void copyQuizBatches(QuizExercise sourceExercise, QuizExercise newExercise) {
         log.debug("Copying the QuizBatches to new QuizExercise: {}", newExercise);
 
         Set<QuizBatch> quizBatchList = new HashSet<>();
-        for (QuizBatch batch : importedExercise.getQuizBatches()) {
+        for (QuizBatch batch : sourceExercise.getQuizBatches()) {
             batch.setId(null);
             batch.setQuizExercise(newExercise);
             quizBatchList.add(batch);

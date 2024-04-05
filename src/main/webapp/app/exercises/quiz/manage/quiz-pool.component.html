@@ -1,7 +1,7 @@
 @if (quizPool) {
     <div class="row">
         <div>
-            <h4 class="title-container" jhiTranslate="artemisApp.quizPool.editTitle">Edit Quiz Pool</h4>
+            <h4 class="title-container" jhiTranslate="artemisApp.quizPool.editTitle"></h4>
             <h4 class="max-score-container">
                 <span class="badge bg-info align-text-top float-end">
                     <span jhiTranslate="artemisApp.quizExercise.maxScore"></span>&nbsp;
@@ -18,7 +18,7 @@
                 #quizPoolQuestionMapping
                 (onQuizGroupUpdated)="handleUpdate()"
                 (onQuizQuestionDropped)="handleUpdate()"
-            ></jhi-quiz-pool-mapping>
+            />
         </div>
         <div class="row px-3">
             <div class="form-check custom-control custom-checkbox">
@@ -29,7 +29,7 @@
                     [(ngModel)]="quizPool.randomizeQuestionOrder"
                     (ngModelChange)="handleUpdate()"
                 />
-                <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"> </label>
+                <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
             </div>
         </div>
         <div class="row mt-3">
@@ -58,7 +58,7 @@
                         <ng-template #tooltipTranslate>
                             @for (reason of invalidReasons; track reason) {
                                 <div>
-                                    @if ((reason.translateValues | json) != '{}') {
+                                    @if ((reason.translateValues | json) !== '{}') {
                                         <p
                                             jhiTranslate="{{ reason.translateKey }}"
                                             [translateValues]="{
@@ -68,7 +68,7 @@
                                             }"
                                         ></p>
                                     }
-                                    @if ((reason.translateValues | json) == '{}') {
+                                    @if ((reason.translateValues | json) === '{}') {
                                         <p jhiTranslate="{{ reason.translateKey }}"></p>
                                     }
                                 </div>
@@ -77,13 +77,13 @@
                         <ng-template #warningTranslate>
                             @for (warning of warningReasons; track warning) {
                                 <div>
-                                    @if ((warning.translateValues | json) != '{}') {
+                                    @if ((warning.translateValues | json) !== '{}') {
                                         <p
                                             jhiTranslate="{{ warning.translateKey }}"
                                             [translateValues]="{ index: warning.translateValues.index, name: warning.translateValues.name }"
                                         ></p>
                                     }
-                                    @if ((warning.translateValues | json) == '{}') {
+                                    @if ((warning.translateValues | json) === '{}') {
                                         <p jhiTranslate="{{ warning.translateKey }}"></p>
                                     }
                                 </div>
@@ -91,7 +91,7 @@
                         </ng-template>
                         @if (!isValid) {
                             <span class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
-                                <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                                <fa-icon [icon]="faExclamationCircle" />
                                 <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
                                 <span>({{ invalidReasons.length }})</span>
                             </span>

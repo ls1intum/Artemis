@@ -13,6 +13,8 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { QuotePipe } from 'app/shared/pipes/quote.pipe';
+import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
 
 describe('Unreferenced Feedback Detail Component', () => {
     let comp: UnreferencedFeedbackDetailComponent;
@@ -28,6 +30,8 @@ describe('Unreferenced Feedback Detail Component', () => {
                 MockComponent(FaIconComponent),
                 MockComponent(FaLayersComponent),
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(QuotePipe),
+                MockPipe(FeedbackContentPipe),
                 MockDirective(NgModel),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(AssessmentCorrectionRoundBadgeComponent),

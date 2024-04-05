@@ -9,7 +9,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -21,6 +21,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { MockRouterLinkDirective } from '../helpers/mocks/directive/mock-router-link.directive';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('Exercise detail common actions Component', () => {
     let comp: NonProgrammingExerciseDetailCommonActionsComponent;

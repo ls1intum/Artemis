@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,15 +13,17 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 /**
@@ -51,85 +53,131 @@ public class PlagiarismUtilService {
     @Autowired
     private UserUtilService userUtilService;
 
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    private Course createCourseWithUsers(String userPrefix, int studentsAmount) {
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        userUtilService.addUsers(userPrefix, studentsAmount, 1, 1, 1);
+        return course;
+    }
+
+    private TextExercise createTextExercise(String userPrefix, int studentsAmount, ExerciseMode mode) {
+        var course = createCourseWithUsers(userPrefix, studentsAmount);
+        var exercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        exercise.setMode(mode);
+        course.addExercises(exercise);
+        courseRepo.save(course);
+        return exerciseRepo.save(exercise);
+    }
+
+    private ModelingExercise createModelingExercise(String userPrefix, int studentsAmount, ExerciseMode mode) {
+        var course = createCourseWithUsers(userPrefix, studentsAmount);
+        var exercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
+        exercise.setMode(mode);
+        course.addExercises(exercise);
+        courseRepo.save(course);
+        return exerciseRepo.save(exercise);
+    }
+
+    private StudentParticipation saveParticipationAndAddSubmission(StudentParticipation participation, Submission submission) {
+        var savedParticipation = studentParticipationRepo.save(participation);
+        submission.setParticipation(savedParticipation);
+        submissionRepository.save(submission);
+
+        savedParticipation.setSubmissions(Set.of(submission));
+        return savedParticipation;
+    }
+
     /**
-     * Creates and saves a Course and a TextExercise. It also creates and saves StudentParticipations with similar Submissions.
+     * Creates an individual TextExercise. Also creates and saves a Course and a StudentParticipations with similar Submissions.
      *
      * @param userPrefix            The prefix for the user logins
      * @param similarSubmissionText The text that each student submits
      * @param studentsAmount        The number of students that submitted the text
-     * @return The created Course
+     * @return id of created exercise
      */
-    public Course addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(String userPrefix, String similarSubmissionText, int studentsAmount) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        userUtilService.addUsers(userPrefix, studentsAmount, 1, 1, 1);
-
-        // Add text exercise to the course
-        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        textExercise.setTitle("Finished");
-        textExercise.getCategories().add("Text");
-        course.addExercises(textExercise);
-        courseRepo.save(course);
-        exerciseRepo.save(textExercise);
-
-        Set<StudentParticipation> participations = new HashSet<>();
-
+    public long createTextExerciseAndSimilarSubmissions(String userPrefix, String similarSubmissionText, int studentsAmount) {
+        var exercise = createTextExercise(userPrefix, studentsAmount, ExerciseMode.INDIVIDUAL);
         for (int i = 0; i < studentsAmount; i++) {
-            User participant = userUtilService.getUserByLogin(userPrefix + "student" + (i + 1));
-            StudentParticipation participation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, participant);
+            var participant = userUtilService.getUserByLogin(userPrefix + "student" + (i + 1));
+            var participation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, exercise, participant);
             participation.setParticipant(participant);
-            TextSubmission submission = ParticipationFactory.generateTextSubmission(similarSubmissionText, Language.ENGLISH, true);
-            participation = studentParticipationRepo.save(participation);
-            submission.setParticipation(participation);
-            submissionRepository.save(submission);
-
-            participation.setSubmissions(Set.of(submission));
-            participations.add(participation);
+            var submission = ParticipationFactory.generateTextSubmission(similarSubmissionText, Language.ENGLISH, true);
+            saveParticipationAndAddSubmission(participation, submission);
+            exercise.addParticipation(participation);
         }
-
-        textExercise.participations(participations);
-        exerciseRepo.save(textExercise);
-
-        return course;
+        exerciseRepo.save(exercise);
+        return exercise.getId();
     }
 
     /**
-     * Creates and saves a ModellingExercise. It also creates and saves StudentParticipations with similar Submissions.
+     * Creates a team TextExercise. Also creates and saves a Course and a StudentParticipations with similar Submissions.
+     *
+     * @param userPrefix            The prefix for the user logins
+     * @param similarSubmissionText The text that each student submits
+     * @param teamsAmount           The number of teams that submitted the text
+     * @return id of created exercise
+     */
+    public long createTeamTextExerciseAndSimilarSubmissions(String userPrefix, String similarSubmissionText, int teamsAmount) {
+        var exercise = createTextExercise(userPrefix, 0, ExerciseMode.TEAM);
+        var instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
+        var teams = teamUtilService.addTeamsForExercise(exercise, "team-" + userPrefix, userPrefix, teamsAmount, instructor);
+        for (var team : teams) {
+            var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
+            var submission = ParticipationFactory.generateTextSubmission(similarSubmissionText, Language.ENGLISH, true);
+            saveParticipationAndAddSubmission(participation, submission);
+            exercise.addParticipation(participation);
+        }
+        exerciseRepo.save(exercise);
+        return exercise.getId();
+    }
+
+    /**
+     * Creates and saves an individual ModelingExercise. Also creates and saves a Course and a StudentParticipations with similar Submissions.
      *
      * @param userPrefix             The prefix for the user logins
      * @param similarSubmissionModel The model that each student submits
      * @param studentsAmount         The number of students that submitted the model
-     * @param course                 The Course to which the ModellingExercise is added
-     * @return The updated Course
+     * @return id of created exercise
      */
-    public Course addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(String userPrefix, String similarSubmissionModel, int studentsAmount, Course course) {
-        // Add text exercise to the course
-        ModelingExercise exercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
-        exercise.setTitle("finished");
-        exercise.getCategories().add("Model");
-        course.addExercises(exercise);
-
-        courseRepo.save(course);
-        exerciseRepo.save(exercise);
-
-        Set<StudentParticipation> participations = new HashSet<>();
-
+    public long createModelingExerciseAndSimilarSubmissionsToTheCourse(String userPrefix, String similarSubmissionModel, int studentsAmount) {
+        var exercise = createModelingExercise(userPrefix, studentsAmount, ExerciseMode.INDIVIDUAL);
         for (int i = 0; i < studentsAmount; i++) {
-            User participant = userUtilService.getUserByLogin(userPrefix + "student" + (i + 1));
-            StudentParticipation participation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, exercise, participant);
+            var participant = userUtilService.getUserByLogin(userPrefix + "student" + (i + 1));
+            var participation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, exercise, participant);
             participation.setParticipant(participant);
-            ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(similarSubmissionModel, true);
-            participation = studentParticipationRepo.save(participation);
-            submission.setParticipation(participation);
-            submissionRepository.save(submission);
-
-            participation.setSubmissions(Set.of(submission));
-            participations.add(participation);
+            var submission = ParticipationFactory.generateModelingSubmission(similarSubmissionModel, true);
+            saveParticipationAndAddSubmission(participation, submission);
+            exercise.addParticipation(participation);
         }
-
-        exercise.participations(participations);
         exerciseRepo.save(exercise);
+        return exercise.getId();
+    }
 
-        return course;
+    /**
+     * Creates and saves an individual ModelingExercise. Also creates and saves a Course and a StudentParticipations with similar Submissions.
+     *
+     * @param userPrefix             The prefix for the user logins
+     * @param similarSubmissionModel The model that each student submits
+     * @param teamsAmount            The number of teams that submitted the text
+     * @return id of created exercise
+     */
+    public long createTeamModelingExerciseAndSimilarSubmissionsToTheCourse(String userPrefix, String similarSubmissionModel, int teamsAmount) {
+        var exercise = createModelingExercise(userPrefix, 0, ExerciseMode.TEAM);
+        var instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
+        var teams = teamUtilService.addTeamsForExercise(exercise, "team-" + userPrefix, userPrefix, teamsAmount, instructor);
+        for (var team : teams) {
+            var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
+            var submission = ParticipationFactory.generateModelingSubmission(similarSubmissionModel, true);
+            saveParticipationAndAddSubmission(participation, submission);
+            exercise.addParticipation(participation);
+        }
+        exerciseRepo.save(exercise);
+        return exercise.getId();
     }
 
     /**
@@ -154,7 +202,6 @@ public class PlagiarismUtilService {
      */
     @NotNull
     public LinkedMultiValueMap<String, String> getPlagiarismOptions(int similarityThreshold, int minimumScore, int minimumSize) {
-        // Use default options for plagiarism detection
         var params = new LinkedMultiValueMap<String, String>();
         params.add("similarityThreshold", String.valueOf(similarityThreshold));
         params.add("minimumScore", String.valueOf(minimumScore));

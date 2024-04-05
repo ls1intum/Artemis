@@ -4,8 +4,8 @@
             {{ 'artemisApp.exam.examSummary.examResults' | artemisTranslate }}
         </ng-container>
         <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
-            <fa-icon [icon]="faPrint"></fa-icon>
-            <span jhiTranslate="artemisApp.exam.examSummary.exportPDF">Export PDF</span>
+            <fa-icon [icon]="faPrint" />
+            <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
         </button>
     </h2>
 </div>
@@ -36,7 +36,7 @@
 }
 @if (!resultsArePublished) {
     <div class="mb-0">
-        <fa-icon [icon]="faInfoCircle" class="info-icon"></fa-icon>
+        <fa-icon [icon]="faInfoCircle" class="info-icon" />
         {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
     </div>
 }
@@ -70,9 +70,7 @@
                         }
                         @if (exampleSolutionPublished) {
                             @if (exerciseInfos[exercise.id!].displayExampleSolution) {
-                                <span class="alert alert-info p-1" jhiTranslate="artemisApp.exam.examSummary.youAreViewingTheExampleSolution">
-                                    You are viewing the example solution.
-                                </span>
+                                <span class="alert alert-info p-1" jhiTranslate="artemisApp.exam.examSummary.youAreViewingTheExampleSolution"></span>
                             }
                             @if (exercise.type !== QUIZ && exercise.type !== PROGRAMMING) {
                                 <button
@@ -81,7 +79,7 @@
                                     [class]="exerciseInfos[exercise.id!].displayExampleSolution ? 'btn-primary' : 'btn-outline-primary'"
                                     (click)="toggleShowSampleSolution(exercise.id)"
                                 >
-                                    <fa-icon [icon]="!exerciseInfos[exercise.id!].displayExampleSolution ? faEye : faEyeSlash" class="info-icon"></fa-icon>
+                                    <fa-icon [icon]="!exerciseInfos[exercise.id!].displayExampleSolution ? faEye : faEyeSlash" class="info-icon" />
                                     @if (!exerciseInfos[exercise.id!].displayExampleSolution) {
                                         <span>&nbsp;{{ 'artemisApp.exam.examSummary.showExampleSolution' | artemisTranslate }}&nbsp;</span>
                                     } @else {
@@ -163,8 +161,7 @@
                                         [result]="exerciseInfos[exercise.id!]!.participation!.results?.[0]"
                                         [exam]="examWithOnlyIdAndStudentReviewPeriod"
                                         [testRun]="isTestRun"
-                                    >
-                                    </jhi-complaint-student-view>
+                                    />
                                 }
                             } @else {
                                 {{ 'artemisApp.exam.examSummary.noSubmissionFound' | artemisTranslate }}
@@ -196,6 +193,6 @@
     </div>
 }
 <button class="btn btn-light mx-auto d-block" (click)="scrollToOverviewOrTop()" id="back-to-overview-button">
-    <fa-icon [icon]="faArrowUp"></fa-icon>
+    <fa-icon [icon]="faArrowUp" />
     <span>&nbsp; {{ 'artemisApp.exam.examSummary.backToOverview' | artemisTranslate }}&nbsp; </span>
 </button>

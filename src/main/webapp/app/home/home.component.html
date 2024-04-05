@@ -1,8 +1,8 @@
 <div [hidden]="loading || account" class="container-fluid">
     <div class="row">
         <div class="col-md-8 offset-md-2 text-center">
-            <h1 jhiTranslate="home.title">Welcome to Artemis!</h1>
-            <p class="lead" jhiTranslate="home.subtitle">Interactive Learning with Individual Feedback</p>
+            <h1 jhiTranslate="home.title"></h1>
+            <p class="lead" jhiTranslate="home.subtitle"></p>
         </div>
     </div>
     <div class="row row-divided my-4 justify-content-center">
@@ -41,7 +41,7 @@
                             }
                         </div>
                         <div class="form-group">
-                            <label class="font-weight-bold" for="username" jhiTranslate="global.form.username">Login</label>
+                            <label class="font-weight-bold" for="username" jhiTranslate="global.form.username"></label>
                             <input
                                 #usernameForm="ngModel"
                                 [(ngModel)]="username"
@@ -61,7 +61,7 @@
                             }
                         </div>
                         <div class="form-group">
-                            <label class="font-weight-bold" for="password" jhiTranslate="login.form.password">Password</label>
+                            <label class="font-weight-bold" for="password" jhiTranslate="login.form.password"></label>
                             <input
                                 [(ngModel)]="password"
                                 autocomplete="current-password"
@@ -76,14 +76,14 @@
                             <div class="form-check">
                                 <label class="form-check-label" for="rememberMe">
                                     <input [(ngModel)]="rememberMe" checked class="form-check-input" id="rememberMe" name="rememberMe" type="checkbox" />
-                                    <span jhiTranslate="login.form.rememberme">Remember me</span>
+                                    <span jhiTranslate="login.form.rememberme"></span>
                                 </label>
                             </div>
                             @if (needsToAcceptTerms) {
                                 <div class="form-check">
                                     <label class="form-check-label" for="acceptTerms">
                                         <input [(ngModel)]="userAcceptedTerms" checked class="form-check-input" id="acceptTerms" name="acceptTerms" type="checkbox" />
-                                        <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms">Accept terms</a>
+                                        <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms"></a>
                                     </label>
                                 </div>
                             }
@@ -103,28 +103,28 @@
                                 type="submit"
                             >
                                 @if (isSubmittingLogin) {
-                                    <span class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
+                                    <span class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true" /></span>
                                 }
-                                <span jhiTranslate="login.form.button"> Sign in </span>
+                                <span jhiTranslate="login.form.button"></span>
                             </button>
                         </div>
                     </form>
                     <div class="text-center">
                         @if (isRegistrationEnabled) {
                             <div>
-                                <span jhiTranslate="global.messages.info.register.noaccount">You don't have an account yet?</span>&nbsp;
-                                <a class="alert-link" jhiTranslate="global.messages.info.register.link" routerLink="account/register">Register a new account</a>
+                                <span jhiTranslate="global.messages.info.register.noaccount"></span>&nbsp;
+                                <a class="alert-link" jhiTranslate="global.messages.info.register.link" routerLink="account/register"></a>
                             </div>
                         }
-                        <a class="alert-link" jhiTranslate="login.password.forgot" routerLink="account/reset/request">Did you forget your password?</a>
+                        <a class="alert-link" jhiTranslate="login.password.forgot" routerLink="account/reset/request"></a>
                     </div>
                 </div>
             </div>
         }
         @if (!isPasswordLoginDisabled && !!profileInfo?.saml2) {
             <div class="col-12 col-xl-2 py-5 h-100">
-                <div class="d-none d-xl-block vertical-divider" jhiTranslate="login.divider">or</div>
-                <div class="d-xl-none horizontal-divider" jhiTranslate="login.divider">or</div>
+                <div class="d-none d-xl-block vertical-divider" jhiTranslate="login.divider"></div>
+                <div class="d-xl-none horizontal-divider" jhiTranslate="login.divider"></div>
             </div>
         }
         @if (!!profileInfo?.saml2) {
@@ -149,7 +149,7 @@
                                 <div class="form-check">
                                     <label class="form-check-label" for="acceptTerms">
                                         <input [(ngModel)]="userAcceptedTerms" class="form-check-input" type="checkbox" />
-                                        <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms">Accept terms</a>
+                                        <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms"></a>
                                     </label>
                                 </div>
                             }
@@ -159,7 +159,7 @@
                             [rememberMe]="rememberMe"
                             [saml2Profile]="profileInfo!.saml2!"
                             class="d-block text-center"
-                        ></jhi-saml2-login>
+                        />
                     </div>
                 </div>
             </div>

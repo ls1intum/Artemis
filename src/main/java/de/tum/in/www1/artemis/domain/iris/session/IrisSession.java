@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -26,8 +26,13 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"), @JsonSubTypes.Type(value = IrisHestiaSession.class, name = "hestia"),
-        @JsonSubTypes.Type(value = IrisCodeEditorSession.class, name = "codeEditor") })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"),
+    @JsonSubTypes.Type(value = IrisHestiaSession.class, name = "hestia"),
+    @JsonSubTypes.Type(value = IrisCodeEditorSession.class, name = "codeEditor")
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisSession extends DomainObject {
 
@@ -56,6 +61,10 @@ public abstract class IrisSession extends DomainObject {
 
     public List<IrisMessage> getMessages() {
         return messages;
+    }
+
+    public void setMessages(List<IrisMessage> messages) {
+        this.messages = messages;
     }
 
 }

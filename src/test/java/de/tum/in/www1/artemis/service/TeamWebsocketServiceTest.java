@@ -82,7 +82,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentTest 
         }
         assertThat(modelingExercise).isNotNull();
         assertThat(textExercise).isNotNull();
-        students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
+        students = new HashSet<>(userRepo.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains("tumuser"));
     }
 
     @Test

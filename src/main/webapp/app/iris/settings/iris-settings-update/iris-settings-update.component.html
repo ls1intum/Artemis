@@ -6,19 +6,18 @@
         [icon]="faRotate"
         [title]="'artemisApp.iris.settings.button.reload'"
         (onClick)="loadIrisSettings()"
-    >
-    </jhi-button>
-    <jhi-button id="save" [btnType]="SUCCESS" [isLoading]="isSaving" [icon]="faSave" [title]="'artemisApp.iris.settings.button.save'" (onClick)="saveIrisSettings()"></jhi-button>
+    />
+    <jhi-button id="save" [btnType]="SUCCESS" [isLoading]="isSaving" [icon]="faSave" [title]="'artemisApp.iris.settings.button.save'" (onClick)="saveIrisSettings()" />
 </div>
 @if (irisSettings) {
     <div>
         @if (settingsType === GLOBAL) {
             <div>
-                <h3 jhiTranslate="artemisApp.iris.settings.autoUpdate.title">Auto-Update Settings</h3>
-                <jhi-iris-global-autoupdate-settings-update [irisSettings]="irisSettings" (onChanges)="isDirty = true"></jhi-iris-global-autoupdate-settings-update>
+                <h3 jhiTranslate="artemisApp.iris.settings.autoUpdate.title"></h3>
+                <jhi-iris-global-autoupdate-settings-update [irisSettings]="irisSettings" (onChanges)="isDirty = true" />
             </div>
         }
-        <h3 jhiTranslate="artemisApp.iris.settings.subSettings.chatSettings">Chat Settings</h3>
+        <h3 jhiTranslate="artemisApp.iris.settings.subSettings.chatSettings"></h3>
         <div>
             <jhi-iris-common-sub-settings-update
                 [subSettings]="irisSettings?.irisChatSettings"
@@ -26,48 +25,66 @@
                 [allIrisModels]="allIrisModels ?? []"
                 [settingsType]="settingsType"
                 (onChanges)="isDirty = true"
-            ></jhi-iris-common-sub-settings-update>
+            />
             <jhi-iris-chat-sub-settings-update
                 [subSettings]="irisSettings?.irisChatSettings"
                 [parentSubSettings]="parentIrisSettings?.irisChatSettings"
                 [rateLimitSettable]="settingsType === GLOBAL"
                 (onChanges)="isDirty = true"
-            ></jhi-iris-chat-sub-settings-update>
+            />
         </div>
         @if (settingsType !== EXERCISE) {
             <div>
                 <hr class="hr" />
-                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.hestiaSettings">Hestia Settings</h3>
+                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.hestiaSettings"></h3>
                 <jhi-iris-common-sub-settings-update
                     [subSettings]="irisSettings?.irisHestiaSettings!"
                     [parentSubSettings]="parentIrisSettings?.irisHestiaSettings"
                     [allIrisModels]="allIrisModels ?? []"
                     [settingsType]="settingsType"
                     (onChanges)="isDirty = true"
-                ></jhi-iris-common-sub-settings-update>
+                />
                 <jhi-iris-hestia-sub-settings-update
                     [subSettings]="irisSettings?.irisHestiaSettings!"
                     [parentSubSettings]="parentIrisSettings?.irisHestiaSettings"
                     (onChanges)="isDirty = true"
-                ></jhi-iris-hestia-sub-settings-update>
+                />
             </div>
         }
         @if (settingsType !== EXERCISE) {
             <div>
                 <hr class="hr" />
-                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.codeEditorSettings">Code Editor Settings</h3>
+                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.codeEditorSettings"></h3>
                 <jhi-iris-common-sub-settings-update
                     [subSettings]="irisSettings?.irisCodeEditorSettings"
                     [parentSubSettings]="parentIrisSettings?.irisCodeEditorSettings"
                     [allIrisModels]="allIrisModels ?? []"
                     [settingsType]="settingsType"
                     (onChanges)="isDirty = true"
-                ></jhi-iris-common-sub-settings-update>
+                />
                 <jhi-iris-code-editor-sub-settings-update
                     [subSettings]="irisSettings?.irisCodeEditorSettings"
                     [parentSubSettings]="parentIrisSettings?.irisCodeEditorSettings"
                     (onChanges)="isDirty = true"
-                ></jhi-iris-code-editor-sub-settings-update>
+                />
+            </div>
+        }
+        @if (settingsType !== EXERCISE) {
+            <div>
+                <hr class="hr" />
+                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.competencyGenerationSettings"></h3>
+                <jhi-iris-common-sub-settings-update
+                    [subSettings]="irisSettings?.irisCompetencyGenerationSettings!"
+                    [parentSubSettings]="parentIrisSettings?.irisCompetencyGenerationSettings"
+                    [allIrisModels]="allIrisModels ?? []"
+                    [settingsType]="settingsType"
+                    (onChanges)="isDirty = true"
+                />
+                <jhi-iris-competency-generation-sub-settings-update
+                    [subSettings]="irisSettings?.irisCompetencyGenerationSettings!"
+                    [parentSubSettings]="parentIrisSettings?.irisCompetencyGenerationSettings"
+                    (onChanges)="isDirty = true"
+                />
             </div>
         }
     </div>

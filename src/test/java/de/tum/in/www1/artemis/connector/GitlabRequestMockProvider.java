@@ -8,6 +8,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Stream;
@@ -25,8 +27,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.client.RequestMatcher;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -43,6 +48,7 @@ import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
 
 @Component
@@ -113,6 +119,10 @@ public class GitlabRequestMockProvider {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
+    public RestTemplate getRestTemplate() {
+        return restTemplate;
+    }
+
     public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServerShortTimeout = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
@@ -148,6 +158,10 @@ public class GitlabRequestMockProvider {
         mockAddUserToGroup(exercise.getProjectKey(), GUEST, "tutor1", 3L);
     }
 
+    public void mockGetUserApi() {
+        doReturn(userApi).when(gitLabApi).getUserApi();
+    }
+
     /**
      * Method to mock the getUser method to return mocked users with their id's
      *
@@ -168,6 +182,14 @@ public class GitlabRequestMockProvider {
      */
     public void mockGetUserID(String username, User user) throws GitLabApiException {
         doReturn(user).when(userApi).getUser(username);
+    }
+
+    public void mockGetUserID(User user) throws GitLabApiException {
+        doReturn(user).when(userApi).getUser(user.getUsername());
+    }
+
+    public void mockGetUserID(List<User> users) throws GitLabApiException {
+        doAnswer(invocation -> users.stream().filter(u -> u.getUsername().equals(invocation.getArgument(0))).findFirst().orElseThrow()).when(userApi).getUser(anyString());
     }
 
     public void mockUpdateUser() throws GitLabApiException {
@@ -285,6 +307,91 @@ public class GitlabRequestMockProvider {
 
         mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens")).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
+    }
+
+    public void mockCreatePersonalAccessTokenError() throws GitLabApiException {
+        when(userApi.createPersonalAccessToken(any(), anyString(), any(), any())).thenThrow(new GitLabApiException("Simulated error"));
+    }
+
+    public void mockCreatePersonalAccessToken(long expectedRequestCount, Map<Object, String> userIdOrUsernameToTokenMap) throws GitLabApiException {
+        for (int i = 0; i < expectedRequestCount; ++i) {
+            when(userApi.createPersonalAccessToken(any(), anyString(), any(), any())).thenAnswer(invocation -> {
+                Object userIdOrUsername = invocation.getArgument(0);
+                String name = invocation.getArgument(1);
+                Date expiresAt = invocation.getArgument(2);
+                ImpersonationToken.Scope[] scopes = invocation.getArgument(3);
+
+                ImpersonationToken result = new ImpersonationToken();
+                result.setName(name);
+                result.setExpiresAt(expiresAt);
+                result.setScopes(scopes == null ? null : Arrays.asList(scopes));
+                result.setToken(userIdOrUsernameToTokenMap.get(userIdOrUsername));
+
+                return result;
+            });
+        }
+    }
+
+    public void mockListAndRevokePersonalAccessTokens(long expectedRequestCount, Map<Long, GitLabPersonalAccessTokenListResponseDTO> responseMap) {
+        final String urlPrefix = gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens";
+        RequestMatcher requestMatcher = request -> {
+            final String url = request.getURI().toString();
+            if (!url.startsWith(urlPrefix)) {
+                throw new AssertionError("URL prefix not matched");
+            }
+        };
+
+        for (int i = 0; i < 2 * expectedRequestCount; ++i) {
+            mockServer.expect(requestMatcher).andRespond(request -> {
+                if (request != null && request.getMethod() == HttpMethod.GET) {
+                    return handleListPersonalAccessTokenRequest(responseMap, request);
+                }
+                else if (request != null && request.getMethod() == HttpMethod.DELETE) {
+                    // Revoking an access token only returns the status code 204 (No Content).
+                    return withStatus(HttpStatus.NO_CONTENT).createResponse(request);
+                }
+                else {
+                    return withStatus(HttpStatus.BAD_REQUEST).createResponse(request);
+                }
+            });
+        }
+    }
+
+    public MockClientHttpResponse handleListPersonalAccessTokenRequest(Map<Long, GitLabPersonalAccessTokenListResponseDTO> responseMap, ClientHttpRequest request)
+            throws JsonProcessingException {
+        final Map<String, String> parameters = getParametersFromHttpRequest(Objects.requireNonNull(request));
+        if (parameters.containsKey("user_id")) {
+            Long userId = Long.parseLong(parameters.get("user_id"));
+            if (responseMap.containsKey(userId)) {
+                var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(List.of(responseMap.get(userId))).getBytes(StandardCharsets.UTF_8), HttpStatus.OK);
+                response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                return response;
+            }
+            else {
+                return new MockClientHttpResponse(new byte[0], HttpStatus.BAD_REQUEST);
+            }
+        }
+        else {
+            var response = new MockClientHttpResponse(new ObjectMapper().writeValueAsString(responseMap.values().stream().toList()).getBytes(StandardCharsets.UTF_8),
+                    HttpStatus.OK);
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return response;
+        }
+    }
+
+    public Map<String, String> getParametersFromHttpRequest(ClientHttpRequest request) {
+        final String queryString = request.getURI().getQuery();
+        final Map<String, String> parameters = new HashMap<>();
+        if (queryString != null) {
+            String[] parameterStrings = queryString.split("&");
+            for (String parameterString : parameterStrings) {
+                int index = parameterString.indexOf("=");
+                String key = URLDecoder.decode(parameterString.substring(0, index), StandardCharsets.UTF_8);
+                String value = URLDecoder.decode(parameterString.substring(index + 1), StandardCharsets.UTF_8);
+                parameters.put(key, value);
+            }
+        }
+        return parameters;
     }
 
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws GitLabApiException {
@@ -519,9 +626,9 @@ public class GitlabRequestMockProvider {
 
         final List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(updatedCourse);
 
-        final var allUsers = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
-        allUsers.addAll(userRepository.findAllInGroupWithAuthorities(oldEditorGroup));
-        allUsers.addAll(userRepository.findAllInGroupWithAuthorities(oldTeachingAssistantGroup));
+        final var allUsers = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(oldInstructorGroup);
+        allUsers.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(oldEditorGroup));
+        allUsers.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(oldTeachingAssistantGroup));
         allUsers.addAll(userRepository.findAllUserInGroupAndNotIn(updatedCourse.getInstructorGroupName(), allUsers));
         allUsers.addAll(userRepository.findAllUserInGroupAndNotIn(updatedCourse.getEditorGroupName(), allUsers));
         allUsers.addAll(userRepository.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), allUsers));

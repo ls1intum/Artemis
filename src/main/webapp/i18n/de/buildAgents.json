@@ -6,7 +6,10 @@
             "maxNumberOfConcurrentBuildJobs": "Maximale Anzahl an parallelen Build Jobs",
             "numberOfCurrentBuildJobs": "Anzahl aktueller Build Jobs",
             "runningBuildJobs": "Laufende Build Jobs",
-            "status": "Status"
+            "status": "Status",
+            "recentBuildJobs": "Letzte Build Jobs",
+            "running": "Laufend",
+            "idle": "Inaktiv"
         }
     }
 }

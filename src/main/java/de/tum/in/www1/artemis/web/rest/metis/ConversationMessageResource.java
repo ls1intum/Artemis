@@ -1,14 +1,18 @@
 package de.tum.in.www1.artemis.web.rest.metis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.util.Collections;
 import java.util.List;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -35,8 +39,9 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller for managing Message Posts.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ConversationMessageResource {
 
     private static final Logger log = LoggerFactory.getLogger(ConversationMessageResource.class);
@@ -78,9 +83,13 @@ public class ConversationMessageResource {
         }
         CreatedConversationMessage createdMessageData = conversationMessagingService.createMessage(courseId, post);
         conversationMessagingService.notifyAboutMessageCreation(createdMessageData);
+
+        Post sendToUserPost = createdMessageData.messageWithHiddenDetails();
+        sendToUserPost.setConversation(sendToUserPost.getConversation().copy());
+        sendToUserPost.getConversation().setConversationParticipants(Collections.emptySet());
+
         log.info("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessageData.messageWithHiddenDetails().getId()))
-                .body(createdMessageData.messageWithHiddenDetails());
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(sendToUserPost);
     }
 
     /**

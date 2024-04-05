@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { faExclamationTriangle, faPencilAlt, faSort, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faPencilAlt, faPlus, faSort, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { SortService } from 'app/shared/service/sort.service';
@@ -28,6 +28,7 @@ export class LtiConfigurationComponent implements OnInit {
     faWrench = faWrench;
     faPencilAlt = faPencilAlt;
     faTrash = faTrash;
+    faPlus = faPlus;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -61,7 +62,7 @@ export class LtiConfigurationComponent implements OnInit {
      * Gets the deep linking url
      */
     getDeepLinkingUrl(): string {
-        return `${location.origin}/api/public/lti13/deep-linking`; // Needs to match url in CustomLti13Configurer
+        return `${location.origin}/lti/deep-linking`; // Needs to match url in CustomLti13Configurer
     }
 
     /**

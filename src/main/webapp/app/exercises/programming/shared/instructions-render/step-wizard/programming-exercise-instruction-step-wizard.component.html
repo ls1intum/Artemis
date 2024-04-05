@@ -17,13 +17,13 @@
                         (click)="showDetailsForTests(step.testIds, step.title)"
                     >
                         @if (step.done === TestCaseState.SUCCESS) {
-                            <fa-icon [icon]="faCheck" size="lg" class="text-success"></fa-icon>
+                            <fa-icon [icon]="faCheck" size="lg" class="text-success" />
                         }
                         @if (step.done === TestCaseState.FAIL) {
-                            <fa-icon [icon]="faTimes" size="lg" class="text-danger"></fa-icon>
+                            <fa-icon [icon]="faTimes" size="lg" class="text-danger" />
                         }
                         @if (step.done === TestCaseState.NOT_EXECUTED || step.done === TestCaseState.NO_RESULT) {
-                            <fa-icon [icon]="faQuestion" size="lg" class="not-done"></fa-icon>
+                            <fa-icon [icon]="faQuestion" size="lg" class="not-done" />
                         }
                     </div>
                 </div>

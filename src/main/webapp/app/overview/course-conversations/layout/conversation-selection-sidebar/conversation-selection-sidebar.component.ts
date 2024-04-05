@@ -1,21 +1,20 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import interact from 'interactjs';
-import { faChevronLeft, faChevronRight, faComments, faCompress, faExpand, faFilter, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
-
+import { faChevronLeft, faChevronRight, faComments, faFilter, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
-import { Channel, ChannelDTO, ChannelSubType, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { Channel, ChannelDTO, ChannelSubType, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
-import { OneToOneChatDTO, isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { OneToOneChatDTO, isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 import { catchError, debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -25,6 +24,7 @@ interface SearchQuery {
     searchTerm: string;
     force: boolean;
 }
+
 @Component({
     selector: 'jhi-conversation-selection-sidebar',
     styleUrls: ['./conversation-selection-sidebar.component.scss'],
@@ -37,16 +37,21 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     searchTerm = '';
     course?: Course;
 
-    activeConversation?: ConversationDto;
-    allConversations: ConversationDto[] = [];
-    starredConversations: ConversationDto[] = [];
-    displayedStarredConversations: ConversationDto[] = [];
+    activeConversation?: ConversationDTO;
+    allConversations: ConversationDTO[] = [];
+
+    starredConversations: ConversationDTO[] = [];
+    displayedStarredConversations: ConversationDTO[] = [];
+
     channelConversations: ChannelDTO[] = [];
     displayedChannelConversations: ChannelDTO[] = [];
+
     oneToOneChats: OneToOneChatDTO[] = [];
     displayedOneToOneChats: OneToOneChatDTO[] = [];
-    groupChats: GroupChatDto[] = [];
-    displayedGroupChats: GroupChatDto[] = [];
+
+    groupChats: GroupChatDTO[] = [];
+    displayedGroupChats: GroupChatDTO[] = [];
+
     collapsed: boolean;
     // Icons
     faChevronLeft = faChevronLeft;
@@ -55,8 +60,6 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     faConversation = faComments;
     faPlus = faPlus;
     faFilter = faFilter;
-    faExpand = faExpand;
-    faCompress = faCompress;
     numberOfConversationsPassingFilter = 0;
 
     canCreateChannel = canCreateChannel;
@@ -85,6 +88,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         this.subscribeToActiveConversation();
         this.subscribeToConversationsOfUser();
     }
+
     private subscribeToSearch() {
         this.search$
             .pipe(
@@ -144,13 +148,13 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((activeConversation: ConversationDto) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((activeConversation: ConversationDTO) => {
             this.activeConversation = activeConversation;
         });
     }
 
     private subscribeToConversationsOfUser() {
-        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDto[]) => {
+        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
             this.onConversationsUpdate(conversations);
         });
     }
@@ -163,7 +167,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         });
     }
 
-    onConversationsUpdate(conversations: ConversationDto[]) {
+    onConversationsUpdate(conversations: ConversationDTO[]) {
         this.allConversations = conversations ?? [];
 
         this.starredConversations = this.allConversations
@@ -176,11 +180,11 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 return bLastMessageDate!.isAfter(aLastMessageDate!) ? 1 : -1;
             });
         this.channelConversations = this.allConversations
-            .filter((conversation) => isChannelDto(conversation) && !conversation.isFavorite)
+            .filter((conversation) => isChannelDTO(conversation) && !conversation.isFavorite)
             .map((channel) => channel as Channel)
             .sort((a, b) => a.name!.localeCompare(b.name!));
         this.oneToOneChats = this.allConversations
-            .filter((conversation) => isOneToOneChatDto(conversation) && !conversation.isFavorite)
+            .filter((conversation) => isOneToOneChatDTO(conversation) && !conversation.isFavorite)
             .map((oneToOneChat) => oneToOneChat as OneToOneChatDTO)
             .sort((a, b) => {
                 // sort by last message date
@@ -190,8 +194,8 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 return bLastMessageDate!.isAfter(aLastMessageDate!) ? 1 : -1;
             });
         this.groupChats = this.allConversations
-            .filter((conversation) => isGroupChatDto(conversation) && !conversation.isFavorite)
-            .map((groupChatDto) => groupChatDto as GroupChatDto)
+            .filter((conversation) => isGroupChatDTO(conversation) && !conversation.isFavorite)
+            .map((groupChatDTO) => groupChatDTO as GroupChatDTO)
             .sort((a, b) => {
                 // sort by last message date
                 const aLastMessageDate = a.lastMessageDate ? a.lastMessageDate : a.creationDate;
@@ -231,7 +235,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             });
     }
 
-    onSettingsChanged() {
+    onSettingsDidChange() {
         this.metisConversationService
             .forceRefresh()
             .pipe(takeUntil(this.ngUnsubscribe))
@@ -260,6 +264,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 });
             });
     }
+
     openCreateGroupChatDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(GroupChatCreateDialogComponent, defaultFirstLayerDialogOptions);
@@ -280,6 +285,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 });
             });
     }
+
     openCreateOneToOneChatDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(OneToOneChatCreateDialogComponent, defaultFirstLayerDialogOptions);
@@ -334,15 +340,11 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             });
     }
 
-    onConversationSelected($event: ConversationDto) {
+    onConversationSelected($event: ConversationDTO) {
         this.metisConversationService.setActiveConversation($event);
     }
 
-    onConversationHiddenStatusChange() {
-        this.onConversationsUpdate([...this.allConversations]);
-    }
-
-    onConversationFavoriteStatusChange() {
+    updateConversations() {
         this.onConversationsUpdate([...this.allConversations]);
     }
 

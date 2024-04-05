@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -190,9 +190,7 @@ public class LtiService {
             uriComponentsBuilder.queryParam("initialize", "");
         }
         else {
-            ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
-            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-
+            prepareLogoutCookie(response);
             uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
         }
     }
@@ -205,5 +203,15 @@ public class LtiService {
      */
     public boolean isLtiCreatedUser(User user) {
         return user.getGroups().contains(LTI_GROUP_NAME);
+    }
+
+    /**
+     * Include logout JWT cookie to response.
+     *
+     * @param response the response to add the JWT cookie to
+     */
+    protected void prepareLogoutCookie(HttpServletResponse response) {
+        ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
     }
 }

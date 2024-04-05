@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.exercise;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -113,24 +112,26 @@ public class ExerciseUtilService {
      * @param exercise The exercise to which the grading instructions should be added.
      * @return The list of grading criteria.
      */
-    public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
+    public Set<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
         GradingCriterion emptyCriterion = ExerciseFactory.generateGradingCriterion(null);
-        List<GradingInstruction> instructionWithNoCriteria = ExerciseFactory.generateGradingInstructions(emptyCriterion, 1, 0);
-        instructionWithNoCriteria.get(0).setCredits(1);
-        instructionWithNoCriteria.get(0).setUsageCount(0);
+        Set<GradingInstruction> instructionWithNoCriteria = ExerciseFactory.generateGradingInstructions(emptyCriterion, 1, 0);
+        assertThat(instructionWithNoCriteria).hasSize(1);
+        GradingInstruction instructionWithNoCriterion = instructionWithNoCriteria.stream().findFirst().orElseThrow();
+        instructionWithNoCriterion.setCredits(1);
+        instructionWithNoCriterion.setUsageCount(0);
         emptyCriterion.setExercise(exercise);
         emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
 
         GradingCriterion testCriterion = ExerciseFactory.generateGradingCriterion("test title");
-        List<GradingInstruction> instructions = ExerciseFactory.generateGradingInstructions(testCriterion, 3, 1);
+        Set<GradingInstruction> instructions = ExerciseFactory.generateGradingInstructions(testCriterion, 3, 1);
         testCriterion.setStructuredGradingInstructions(instructions);
 
         GradingCriterion testCriterion2 = ExerciseFactory.generateGradingCriterion("test title2");
-        List<GradingInstruction> instructionsWithBigLimit = ExerciseFactory.generateGradingInstructions(testCriterion2, 1, 4);
+        Set<GradingInstruction> instructionsWithBigLimit = ExerciseFactory.generateGradingInstructions(testCriterion2, 1, 4);
         testCriterion2.setStructuredGradingInstructions(instructionsWithBigLimit);
 
         testCriterion.setExercise(exercise);
-        var criteria = new ArrayList<GradingCriterion>();
+        Set<GradingCriterion> criteria = new HashSet<>();
         criteria.add(emptyCriterion);
         criteria.add(testCriterion);
         criteria.add(testCriterion2);

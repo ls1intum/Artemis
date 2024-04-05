@@ -26,6 +26,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -49,6 +50,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
+        aeolusRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
@@ -56,12 +58,14 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.tearDown();
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
+        aeolusRequestMockProvider.reset();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "KOTLIN" }, mode = EnumSource.Mode.INCLUDE)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_sequential_validExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_sequential_validExercise_created(programmingLanguage);
     }
 
@@ -69,6 +73,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_validExercise_created(ExerciseMode mode) throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_mode_validExercise_created(mode);
     }
 
@@ -77,13 +82,29 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @EnumSource(value = ProgrammingLanguage.class, names = { "VHDL", "ASSEMBLER", "OCAML" }, mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language) throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language,
                 programmingLanguageFeatureService.getProgrammingLanguageFeatures(language));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(value = ProgrammingLanguage.class, names = { "VHDL", "ASSEMBLER", "OCAML", "C" }, mode = EnumSource.Mode.EXCLUDE)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_custom_build_plan_validExercise_created(ProgrammingLanguage language) throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_custom_build_plan_validExercise_created(language, true);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(value = ProgrammingLanguage.class, names = { "VHDL", "ASSEMBLER", "OCAML", "C" }, mode = EnumSource.Mode.EXCLUDE)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_failed_custom_build_plan_validExercise_created(ProgrammingLanguage language) throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_custom_build_plan_validExercise_created(language, false);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_validExercise_bonusPointsIsNull() throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_validExercise_bonusPointsIsNull();
     }
 
@@ -91,6 +112,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_validExercise_withStaticCodeAnalysis(ProgrammingLanguage language) throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_validExercise_withStaticCodeAnalysis(language,
                 programmingLanguageFeatureService.getProgrammingLanguageFeatures(language));
     }
@@ -98,6 +120,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExerciseForExam_validExercise_created() throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExerciseForExam_validExercise_created();
     }
 
@@ -132,6 +155,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createAndImportJavaProgrammingExercise(staticCodeAnalysisEnabled);
     }
 
@@ -174,12 +198,14 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_validExercise_structureOracle() throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_validExercise_structureOracle();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_noTutors_created() throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_noTutors_created();
     }
 
@@ -219,18 +245,21 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     void importExerciseFromFile_valid_Java_Exercise_importSuccessful(boolean scaEnabled) throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.importFromFile_validJavaExercise_isSuccessfullyImported(scaEnabled);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFile_embeddedFiles_filesCopied() throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.importFromFile_embeddedFiles_embeddedFilesCopied();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFile_buildPlanPresent_buildPlanSet() throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.importFromFile_buildPlanPresent_buildPlanUsed();
     }
 
@@ -238,6 +267,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "PYTHON" }, mode = EnumSource.Mode.INCLUDE)
     void importExerciseFromFile_valid_Exercise_importSuccessful(ProgrammingLanguage language) throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.importFromFile_validExercise_isSuccessfullyImported(language);
     }
 
@@ -500,6 +530,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_setValidExampleSolutionPublicationDate();
     }
 
@@ -557,5 +588,10 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateBuildPlanURL() throws Exception {
         programmingExerciseTestService.updateBuildPlanURL();
+    }
+
+    private void forceDefaultBuildPlanCreation() {
+        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
+        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
     }
 }

@@ -10,18 +10,14 @@
         jhiTranslate="artemisApp.codeHint.management.step3.createManualFragmentButton.label"
         [ngbTooltip]="'artemisApp.codeHint.management.step3.createManualFragmentButton.tooltip' | artemisTranslate"
         (click)="openManualEntryCreationModal()"
-    >
-        Create manual fragment
-    </button>
+    ></button>
     <button
         type="button"
         class="btn btn-primary"
         jhiTranslate="artemisApp.codeHint.management.step3.structuralEntriesButton.label"
         [ngbTooltip]="'artemisApp.codeHint.management.step3.structuralEntriesButton.tooltip' | artemisTranslate"
         (click)="onGenerateStructuralSolutionEntries()"
-    >
-        Generate structural entries
-    </button>
+    ></button>
     @if (!!exercise?.testwiseCoverageEnabled) {
         <button
             type="button"
@@ -29,9 +25,7 @@
             jhiTranslate="artemisApp.codeHint.management.step3.behavioralEntriesButton.label"
             [ngbTooltip]="'artemisApp.codeHint.management.step3.behavioralEntriesButton.tooltip' | artemisTranslate"
             (click)="onGenerateBehavioralSolutionEntries()"
-        >
-            Generate behavioral entries
-        </button>
+        ></button>
     }
     <button
         type="button"
@@ -53,13 +47,13 @@
                         [icon]="testCaseSortOrder === SortingOrder.ASCENDING ? faSortDown : testCaseSortOrder === SortingOrder.DESCENDING ? faSortUp : faSort"
                         class="sort-icon"
                         (click)="changeTestCaseSortOrder()"
-                    ></fa-icon>
+                    />
                 </th>
                 <th scope="col" class="text-left">File Path</th>
                 <th scope="col" class="text-left">{{ 'artemisApp.exerciseHint.content' | artemisTranslate }}</th>
                 <th scope="col" class="text-left">
-                    <span jhiTranslate="artemisApp.codeHint.entryType">Type (S/B)</span>
-                    <jhi-help-icon text="artemisApp.codeHint.entryTypeTooltip"></jhi-help-icon>
+                    <span jhiTranslate="artemisApp.codeHint.entryType"></span>
+                    <jhi-help-icon text="artemisApp.codeHint.entryTypeTooltip" />
                 </th>
             </tr>
         </thead>
@@ -78,8 +72,8 @@
                     <td class="text-left">{{ 'artemisApp.codeHint.entryAbbreviation.' + entry.testCase?.type?.toString()?.toLocaleLowerCase() | artemisTranslate }}</td>
                     <td class="text-right">
                         <div class="d-flex justify-content-end button-row">
-                            <button type="button" class="btn btn-primary" jhiTranslate="entity.action.view" (click)="openSolutionEntryModal(entry, false)">View</button>
-                            <button type="button" class="btn btn-warning" jhiTranslate="entity.action.edit" (click)="openSolutionEntryModal(entry, true)">Edit</button>
+                            <button type="button" class="btn btn-primary" jhiTranslate="entity.action.view" (click)="openSolutionEntryModal(entry, false)"></button>
+                            <button type="button" class="btn btn-warning" jhiTranslate="entity.action.edit" (click)="openSolutionEntryModal(entry, true)"></button>
                             <button
                                 jhiDeleteButton
                                 [entityTitle]="entry?.id?.toString() ?? ''"
@@ -87,7 +81,7 @@
                                 (delete)="deleteSolutionEntry(entry)"
                                 [dialogError]="dialogError$"
                             >
-                                <fa-icon [icon]="faTimes"></fa-icon>
+                                <fa-icon [icon]="faTimes" />
                             </button>
                         </div>
                     </td>
@@ -97,7 +91,7 @@
     </table>
     @if (!solutionEntries?.length) {
         <div class="text-center mt-2">
-            <span jhiTranslate="artemisApp.codeHint.management.step3.notGenerated">No Solution Code Snippets have been generated yet.</span>
+            <span jhiTranslate="artemisApp.codeHint.management.step3.notGenerated"></span>
         </div>
     }
 </div>

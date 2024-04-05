@@ -1,11 +1,16 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -14,9 +19,6 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.config.auth.AthenaAuthorizationInterceptor;
 import de.tum.in.www1.artemis.config.auth.IrisAuthorizationInterceptor;
-import de.tum.in.www1.artemis.config.auth.JiraAuthorizationInterceptor;
-import de.tum.in.www1.artemis.service.connectors.bamboo.BambooAuthorizationInterceptor;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInterceptor;
 
@@ -24,6 +26,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInt
  * For now only provides a basic {@link org.springframework.web.client.RestTemplate RestTemplate} bean. Can be extended
  * to further customize how requests to other REST APIs are handled
  */
+@Profile(PROFILE_CORE)
 @Configuration
 public class RestTemplateConfiguration {
 
@@ -47,25 +50,6 @@ public class RestTemplateConfiguration {
     @Autowired // ok
     public RestTemplate jenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createRestTemplate());
-    }
-
-    @Bean
-    @Profile("jira")
-    @Autowired // ok
-    public RestTemplate jiraRestTemplate(JiraAuthorizationInterceptor jiraAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(jiraAuthorizationInterceptor, createRestTemplate());
-    }
-
-    @Bean
-    @Profile("bitbucket")
-    public RestTemplate bitbucketRestTemplate(BitbucketAuthorizationInterceptor bitbucketAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(bitbucketAuthorizationInterceptor, createRestTemplate());
-    }
-
-    @Bean
-    @Profile("bamboo")
-    public RestTemplate bambooRestTemplate(BambooAuthorizationInterceptor bambooAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(bambooAuthorizationInterceptor, createRestTemplate());
     }
 
     @Bean
@@ -112,25 +96,6 @@ public class RestTemplateConfiguration {
     @Autowired // ok
     public RestTemplate shortTimeoutJenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createShortTimeoutRestTemplate());
-    }
-
-    @Bean
-    @Profile("jira")
-    @Autowired // ok
-    public RestTemplate shortTimeoutJiraRestTemplate(JiraAuthorizationInterceptor jiraAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(jiraAuthorizationInterceptor, createShortTimeoutRestTemplate());
-    }
-
-    @Bean
-    @Profile("bitbucket")
-    public RestTemplate shortTimeoutBitbucketRestTemplate(BitbucketAuthorizationInterceptor bitbucketAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(bitbucketAuthorizationInterceptor, createShortTimeoutRestTemplate());
-    }
-
-    @Bean
-    @Profile("bamboo")
-    public RestTemplate shortTimeoutBambooRestTemplate(BambooAuthorizationInterceptor bambooAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(bambooAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean

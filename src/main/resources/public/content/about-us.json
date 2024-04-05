@@ -1,14 +1,14 @@
 {
     "projectManagers": [
         {
-            "fullName": "Prof. Dr. Stephan Krusche",
+            "fullName": "Stephan Krusche",
             "photoDirectory": "public/images/about/Stephan_Krusche.jpg",
             "role": "projectManager",
             "website": "https://ase.cit.tum.de/people/krusche"
         },
         {
             "fullName": "Patrick Bassner",
-            "photoDirectory": "public/images/about/Patrick_Bassner.png",
+            "photoDirectory": "public/images/about/Patrick_Bassner.jpg",
             "role": "projectManager",
             "website": "https://ase.cit.tum.de/people/bassner"
         },
@@ -27,19 +27,19 @@
     ],
     "contributors": [
         {
-            "fullName": "Dr. Stephan Krusche",
+            "fullName": "Stephan Krusche",
             "sortBy": "Krusche",
             "photoDirectory": "public/images/about/Stephan_Krusche.jpg",
             "website": "https://ase.cit.tum.de/people/krusche"
         },
         {
-            "fullName": "Dr. Jan Philip Bernius",
+            "fullName": "Jan Philip Bernius",
             "sortBy": "Bernius",
             "photoDirectory": "public/images/about/Jan_Philip_Bernius.jpg",
             "website": "https://ase.cit.tum.de/people/alumni/bernius/"
         },
         {
-            "fullName": "Dr. Nadine von Frankenberg",
+            "fullName": "Nadine von Frankenberg",
             "sortBy": "Frankenberg",
             "photoDirectory": "public/images/about/Nadine_von_Frankenberg.jpg"
         },
@@ -189,10 +189,6 @@
             "photoDirectory": "public/images/about/Maximilian_Meier.jpg"
         },
         {
-            "fullName": "Julian Willand",
-            "photoDirectory": "public/images/about/placeholder-man.png"
-        },
-        {
             "fullName": "Riccardo Padovani",
             "photoDirectory": "public/images/about/Riccardo_Padovani.jpg"
         },
@@ -224,10 +220,6 @@
         {
             "fullName": "Valentin Schlattinger",
             "photoDirectory": "public/images/about/Valentin_Schlattinger.jpg"
-        },
-        {
-            "fullName": "Moritz Issig",
-            "photoDirectory": "public/images/about/placeholder-man.png"
         },
         {
             "fullName": "Josias Montag",
@@ -278,10 +270,6 @@
             "photoDirectory": "public/images/about/Birtan_Gueltekin.jpg"
         },
         {
-            "fullName": "Johann Rottenfusser",
-            "photoDirectory": "public/images/about/placeholder-man.png"
-        },
-        {
             "fullName": "Nicolas Ruscher",
             "photoDirectory": "public/images/about/Nicolas_Ruscher.jpg"
         },
@@ -303,7 +291,7 @@
         },
         {
             "fullName": "Patrick Bassner",
-            "photoDirectory": "public/images/about/Patrick_Bassner.png"
+            "photoDirectory": "public/images/about/Patrick_Bassner.jpg"
         },
         {
             "fullName": "Ali Canberk Anar",
@@ -456,6 +444,22 @@
         {
             "fullName": "Xinyao Liu",
             "photoDirectory": "public/images/about/Xinyao_Liu.jpg"
+        },
+        {
+            "fullName": "Raphael Stief",
+            "photoDirectory": "public/images/about/Raphael_Stief.jpg"
+        },
+        {
+            "fullName": "Jonathan Ostertag",
+            "photoDirectory": "public/images/about/Jonathan_Ostertag.jpg"
+        },
+        {
+            "fullName": "Michael Dyer",
+            "photoDirectory": "public/images/about/Michael_Dyer.jpg"
+        },
+        {
+            "fullName": "Mateus Messias Mendes",
+            "photoDirectory": "public/images/about/Mateus_Messias_Mendes.jpg"
         }
     ]
 }

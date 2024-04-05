@@ -87,7 +87,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
     abstract String getTestPrefix();
 
     Set<ConversationParticipant> getParticipants(Long conversationId) {
-        return conversationParticipantRepository.findConversationParticipantByConversationId(conversationId);
+        return conversationParticipantRepository.findConversationParticipantsByConversationId(conversationId);
     }
 
     Post postInConversation(Long conversationId, String authorLoginWithoutPrefix) throws Exception {
@@ -199,7 +199,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
 
     GroupChatDTO createGroupChat(String... userLoginsWithoutPrefix) throws Exception {
         var loginsWithPrefix = Arrays.stream(userLoginsWithoutPrefix).map(login -> testPrefix + login).toArray(String[]::new);
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", Arrays.stream(loginsWithPrefix).toList(), GroupChatDTO.class,
+        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats", Arrays.stream(loginsWithPrefix).toList(), GroupChatDTO.class,
                 HttpStatus.CREATED);
         this.resetWebsocketMock();
         return chat;

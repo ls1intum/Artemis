@@ -2,12 +2,6 @@
     <div>
         @if (course?.complaintsEnabled ?? false) {
             <p>
-                @if (!isExamMode && remainingNumberOfComplaints == undefined) {
-                    <span
-                        [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeam' : 'description')"
-                        [translateValues]="{ maxComplaintNumber: course?.maxComplaints ?? 0 }"
-                    ></span>
-                }
                 @if (!isExamMode && remainingNumberOfComplaints >= 0) {
                     <span
                         [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
@@ -18,7 +12,7 @@
                     <span [jhiTranslate]="'artemisApp.complaint.descriptionExam'"></span>
                 }
                 @if (!isExamMode) {
-                    <fa-icon [icon]="faInfoCircle" title="{{ 'artemisApp.complaint.info' | artemisTranslate }}" class="info-icon"></fa-icon>
+                    <fa-icon [icon]="faInfoCircle" title="{{ 'artemisApp.complaint.info' | artemisTranslate }}" class="info-icon" />
                 }
             </p>
         }
@@ -60,21 +54,16 @@
                     [exercise]="exercise"
                     [resultId]="result!.id!"
                     [examId]="exam?.id!"
-                    [remainingNumberOfComplaints]="remainingNumberOfComplaints"
                     [complaintType]="formComplaintType"
                     [isCurrentUserSubmissionAuthor]="isCorrectUserToFileAction"
                     (submit)="loadPotentialComplaint()"
-                ></jhi-complaint-form>
+                />
             </div>
         }
         @if (complaint) {
             <div class="row">
-                <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint" [maxComplaintTextLimit]="course?.maxComplaintTextLimit!"></jhi-complaint-request>
-                <jhi-complaint-response
-                    class="col-12 col-md-6"
-                    [complaint]="complaint"
-                    [maxComplaintResponseTextLimit]="course?.maxComplaintResponseTextLimit!"
-                ></jhi-complaint-response>
+                <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint" [maxComplaintTextLimit]="course?.maxComplaintTextLimit!" />
+                <jhi-complaint-response class="col-12 col-md-6" [complaint]="complaint" [maxComplaintResponseTextLimit]="course?.maxComplaintResponseTextLimit!" />
             </div>
         }
     </div>

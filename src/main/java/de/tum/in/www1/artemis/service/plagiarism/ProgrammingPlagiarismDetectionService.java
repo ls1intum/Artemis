@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.service.plagiarism.PlagiarismService.filterParticipationMinimumScore;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
@@ -12,12 +15,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.jplag.JPlag;
@@ -30,13 +34,12 @@ import de.jplag.reporting.reportobject.ReportObjectFactory;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -46,6 +49,7 @@ import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingPlagiarismDetectionService {
 
@@ -57,6 +61,8 @@ public class ProgrammingPlagiarismDetectionService {
     private final FileService fileService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final PlagiarismService plagiarismService;
 
     private final GitService gitService;
 
@@ -74,14 +80,13 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
 
-    private final AuthorizationCheckService authCheckService;
-
-    public ProgrammingPlagiarismDetectionService(FileService fileService, ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
+    public ProgrammingPlagiarismDetectionService(FileService fileService, ProgrammingExerciseRepository programmingExerciseRepository, PlagiarismService plagiarismService,
+            GitService gitService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
             PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, UriService uriService,
-            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, AuthorizationCheckService authCheckService) {
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         this.fileService = fileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.plagiarismService = plagiarismService;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
@@ -89,7 +94,6 @@ public class ProgrammingPlagiarismDetectionService {
         this.plagiarismCacheService = plagiarismCacheService;
         this.uriService = uriService;
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
-        this.authCheckService = authCheckService;
     }
 
     /**
@@ -323,18 +327,9 @@ public class ProgrammingPlagiarismDetectionService {
         var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId());
 
         return studentParticipations.parallelStream().filter(participation -> !participation.isPracticeMode())
-                .filter(participation -> participation instanceof ProgrammingExerciseParticipation).filter(participation -> participation.getStudent().isPresent())
-                .filter(participation -> !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, participation.getStudent().get()))
+                .filter(participation -> participation instanceof ProgrammingExerciseStudentParticipation).filter(plagiarismService.filterForStudents())
                 .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUri() != null)
-                .filter(participation -> {
-                    Submission submission = participation.findLatestSubmission().orElse(null);
-                    // filter empty submissions
-                    if (submission == null) {
-                        return false;
-                    }
-                    return minimumScore == 0
-                            || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore;
-                }).toList();
+                .filter(filterParticipationMinimumScore(minimumScore)).toList();
     }
 
     private Optional<Repository> cloneTemplateRepository(ProgrammingExercise programmingExercise, String targetPath) {

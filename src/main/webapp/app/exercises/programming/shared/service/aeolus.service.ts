@@ -54,7 +54,7 @@ export class AeolusService {
             const windFile: WindFile = Object.assign(new WindFile(), templateFile);
             const actions: BuildAction[] = [];
             templateFile.actions.forEach((anyAction: any) => {
-                let action: BuildAction | undefined = undefined;
+                let action: BuildAction | undefined;
                 if (anyAction.script) {
                     action = Object.assign(new ScriptAction(), anyAction);
                 } else {

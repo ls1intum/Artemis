@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../helpers/conversationExampleModels';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -22,30 +22,34 @@ class ConversationSidebarEntryStubComponent {
     course: Course;
 
     @Input()
-    conversation: ConversationDto;
+    conversation: ConversationDTO;
 
     @Input()
-    activeConversation: ConversationDto | undefined;
+    activeConversation: ConversationDTO | undefined;
 
     @Output()
-    settingsChanged = new EventEmitter<void>();
+    settingsDidChange = new EventEmitter<void>();
 
     @Output()
-    conversationHiddenStatusChange = new EventEmitter<void>();
+    conversationIsFavoriteDidChange = new EventEmitter<void>();
 
     @Output()
-    conversationFavoriteStatusChange = new EventEmitter<void>();
+    conversationIsHiddenDidChange = new EventEmitter<void>();
+
+    @Output()
+    conversationIsMutedDidChange = new EventEmitter<void>();
 }
 
-const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 examples.forEach((activeConversation) => {
     describe('ConversationSidebarSectionComponent with ' + (activeConversation?.type || 'no active conversation'), () => {
         let component: ConversationSidebarSectionComponent;
         let fixture: ComponentFixture<ConversationSidebarSectionComponent>;
         const course = { id: 1 } as Course;
 
-        const hiddenConversation = generateExampleChannelDTO({ isHidden: true });
-        const visibleConversation = generateExampleChannelDTO({ isHidden: false });
+        const visibleConversation = generateExampleChannelDTO({ id: 2, isHidden: false });
+        const mutedConversation = generateExampleChannelDTO({ id: 3, unreadMessagesCount: 1, isMuted: true });
+        const hiddenConversation = generateExampleChannelDTO({ id: 4, unreadMessagesCount: 1, isHidden: true });
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
@@ -62,7 +66,7 @@ examples.forEach((activeConversation) => {
             component.activeConversation = activeConversation;
             component.label = 'label';
             component.headerKey = 'headerKey';
-            component.conversations = [hiddenConversation, visibleConversation];
+            component.conversations = [hiddenConversation, mutedConversation, visibleConversation];
             fixture.detectChanges();
         });
 
@@ -70,17 +74,26 @@ examples.forEach((activeConversation) => {
             expect(component).toBeTruthy();
         });
 
-        it('should separate hidden and visible conversations', () => {
-            expect(component.hiddenConversations).toEqual([hiddenConversation]);
+        it('should separate hidden, muted, and visible conversations', () => {
             expect(component.visibleConversations).toEqual([visibleConversation]);
-            expect(component.allConversations).toEqual([hiddenConversation, visibleConversation]);
-            expect(component.numberOfConversations).toBe(2);
+            expect(component.mutedConversations).toEqual([mutedConversation]);
+            expect(component.hiddenConversations).toEqual([hiddenConversation]);
+            expect(component.allConversations).toEqual([hiddenConversation, mutedConversation, visibleConversation]);
+            expect(component.numberOfConversations).toBe(3);
         });
 
         it('should store collapsed status in local storage', () => {
             expect(component.localStorageService.retrieve(component.storageKey)).toBeFalse();
             component.toggleCollapsed();
             expect(component.localStorageService.retrieve(component.storageKey)).toBeTrue();
+            component.toggleCollapsed();
+        });
+
+        it('should display a conversation is unread', () => {
+            component.toggleCollapsed();
+            expect(component.anyConversationUnread).toBeTrue();
+            expect(component.anyHiddenConversationUnread).toBeTrue();
+            component.toggleCollapsed();
         });
 
         it('should hide if empty only if hideIfEmpty is set', () => {

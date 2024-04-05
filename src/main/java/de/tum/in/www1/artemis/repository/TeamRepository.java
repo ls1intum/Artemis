@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,16 +26,17 @@ import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
 /**
  * Spring Data repository for the Team entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = "students")
-    List<Team> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
+    List<Team> findAllByExerciseId(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "students")
-    List<Team> findAllWithStudentsByIdIn(@Param("teamIds") List<Long> teamIds);
+    List<Team> findAllWithStudentsByIdIn(Collection<Long> teamIds);
 
-    List<Team> findAllByExerciseCourseIdAndShortName(@Param("courseId") Long courseId, @Param("shortName") String shortName);
+    List<Team> findAllByExerciseCourseIdAndShortName(Long courseId, String shortName);
 
     /**
      * Fetches the number of teams created for an exercise
@@ -47,28 +51,64 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
             """)
     Integer getNumberOfTeamsForExercise(@Param("exerciseId") Long exerciseId);
 
-    @Query(value = "select distinct team from Team team left join team.students student where team.exercise.course.id = :#{#courseId} and student.id = :#{#userId} order by team.id desc")
+    @Query("""
+            SELECT DISTINCT team
+            FROM Team team
+                LEFT JOIN team.students student
+            WHERE team.exercise.course.id = :courseId
+                AND student.id = :userId
+            ORDER BY team.id DESC
+            """)
     List<Team> findAllByCourseIdAndUserIdOrderByIdDesc(@Param("courseId") long courseId, @Param("userId") long userId);
 
-    boolean existsByExerciseCourseIdAndShortName(@Param("courseId") Long courseId, @Param("shortName") String shortName);
+    boolean existsByExerciseCourseIdAndShortName(Long courseId, String shortName);
 
-    @Query(value = "select team from Team team left join team.students student where team.exercise.id = :#{#exerciseId} and student.id = :#{#userId}")
+    @Query("""
+            SELECT team
+            FROM Team team
+                LEFT JOIN team.students student
+            WHERE team.exercise.id = :exerciseId
+                AND student.id = :userId
+            """)
     Optional<Team> findOneByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
-    @Query(value = "select team from Team team left join team.students student where team.exercise.id = :#{#exerciseId} and student.login = :#{#userLogin}")
+    @Query("""
+            SELECT team
+            FROM Team team
+                LEFT JOIN team.students student
+            WHERE team.exercise.id = :exerciseId
+                AND student.login = :userLogin
+            """)
     Optional<Team> findOneByExerciseIdAndUserLogin(@Param("exerciseId") Long exerciseId, @Param("userLogin") String userLogin);
 
-    @Query(value = "select student.id, team.id from Team team left join team.students student where team.exercise.id = :#{#exerciseId} and student.id in :#{#userIds}")
+    @Query("""
+            SELECT student.id, team.id
+            FROM Team team
+                LEFT JOIN team.students student
+            WHERE team.exercise.id = :exerciseId
+                AND student.id IN :userIds
+            """)
     List<long[]> findAssignedUserIdsWithTeamIdsByExerciseIdAndUserIds(@Param("exerciseId") Long exerciseId, @Param("userIds") List<Long> userIds);
 
-    @Query(value = "select distinct team from Team team left join fetch team.students where team.exercise.id = :#{#exerciseId}")
+    @Query("""
+            SELECT DISTINCT team
+            FROM Team team
+                LEFT JOIN FETCH team.students
+            WHERE team.exercise.id = :exerciseId
+            """)
     List<Team> findAllByExerciseIdWithEagerStudents(@Param("exerciseId") Long exerciseId);
 
-    @Query(value = "select distinct team from Team team left join fetch team.students where team.exercise.id = :#{#exerciseId} and team.owner.id = :#{#teamOwnerId}")
+    @Query("""
+            SELECT DISTINCT team
+            FROM Team team
+                LEFT JOIN FETCH team.students
+            WHERE team.exercise.id = :exerciseId
+                AND team.owner.id = :teamOwnerId
+            """)
     List<Team> findAllByExerciseIdAndTeamOwnerIdWithEagerStudents(@Param("exerciseId") long exerciseId, @Param("teamOwnerId") long teamOwnerId);
 
     @EntityGraph(type = LOAD, attributePaths = "students")
-    Optional<Team> findWithStudentsById(@Param("teamId") Long teamId);
+    Optional<Team> findWithStudentsById(Long teamId);
 
     /**
      * Returns all teams for an exercise (optionally filtered for a specific tutor who owns the teams)
@@ -125,10 +165,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
             }
         });
         return conflicts;
-    }
-
-    default Team findByIdElseThrow(long teamId) throws EntityNotFoundException {
-        return findById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
     }
 
     default Team findWithStudentsByIdElseThrow(long teamId) throws EntityNotFoundException {

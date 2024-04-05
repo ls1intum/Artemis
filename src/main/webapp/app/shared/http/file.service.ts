@@ -85,13 +85,13 @@ export class FileService {
     /**
      * Downloads the merged PDF file.
      *
-     * @param courseId the id of the course
      * @param lectureId the id of the lecture
      */
-    downloadMergedFile(courseId: number, lectureId: number) {
-        const newWindow = window.open('about:blank');
-        newWindow!.location.href = `api/files/attachments/lecture/${lectureId}/merge-pdf`;
-        return newWindow;
+    downloadMergedFile(lectureId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`api/files/attachments/lecture/${lectureId}/merge-pdf`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
     }
 
     /**

@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -10,22 +13,16 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.RelationType;
 
 /**
  * Spring Data JPA repository for the Competency Relation entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface CompetencyRelationRepository extends JpaRepository<CompetencyRelation, Long> {
 
-    @Query("""
-            SELECT relation
-            FROM CompetencyRelation relation
-            WHERE relation.headCompetency.id = :competencyId
-                OR relation.tailCompetency.id = :competencyId
-            """)
-    Set<CompetencyRelation> findAllByCompetencyId(@Param("competencyId") Long competencyId);
-
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     @Query("""
             DELETE FROM CompetencyRelation relation
@@ -42,10 +39,10 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
             WHERE relation.headCompetency.course.id = :courseId
                 AND relation.tailCompetency.course.id = :courseId
             """)
-    Set<CompetencyRelation> findAllWithHeadAndTailByCourseId(@Param("courseId") Long courseId);
+    Set<CompetencyRelation> findAllWithHeadAndTailByCourseId(@Param("courseId") long courseId);
 
     @Query("""
-            SELECT count(cr)
+            SELECT COUNT(cr)
             FROM CompetencyRelation cr
             WHERE cr.headCompetency.course.id = :courseId
                 OR cr.tailCompetency.course.id = :courseId
@@ -58,7 +55,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                 LEFT JOIN relation.headCompetency
                 LEFT JOIN relation.tailCompetency
             WHERE relation.tailCompetency.id IN :competencyIds
-                AND relation.type <> 'MATCHES'
+                AND relation.type <> de.tum.in.www1.artemis.domain.competency.RelationType.MATCHES
             """)
     Set<Long> getPriorCompetenciesByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
 
@@ -71,33 +68,35 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                 AND relation.headCompetency.id IN :competencyHeadIds
                 AND relation.type = :type
             """)
-    long countRelationsOfTypeBetweenCompetencyGroups(@Param("competencyTailIds") Set<Long> competencyTailIds, @Param("type") CompetencyRelation.RelationType type,
+    long countRelationsOfTypeBetweenCompetencyGroups(@Param("competencyTailIds") Set<Long> competencyTailIds, @Param("type") RelationType type,
             @Param("competencyHeadIds") Set<Long> competencyHeadIds);
 
     /**
      * Gets set of all competency ids that are (transitively) connected via a matching relation to the given competency id.
      * <p>
-     * Important: this query is native since JPARepositories don't support recursive queries of this form
+     * Important: this query is native since JPARepositories don't support recursive queries of this form.
      *
      * @param competencyId the id of the competency
      * @return set of all competency ids that are (transitively) connected via a matching relation
      */
     @Query(value = """
-                    WITH RECURSIVE transitive_closure(id) AS
-                    (
-                        (SELECT competency.id FROM learning_goal as competency WHERE competency.id = :competencyId)
-                        UNION
-                        (
-                            SELECT CASE
-                                WHEN relation.tail_learning_goal_id = tc.id THEN relation.head_learning_goal_id
-                                WHEN relation.head_learning_goal_id = tc.id THEN relation.tail_learning_goal_id
-                                END
-                            FROM learning_goal_relation as relation
-                            JOIN transitive_closure AS tc ON relation.tail_learning_goal_id = tc.id OR relation.head_learning_goal_id = tc.id
-                            WHERE relation.type = 'M'
-                        )
-                    )
-                    SELECT * FROM transitive_closure
+            WITH RECURSIVE transitive_closure(id) AS
+            (
+                (SELECT competency.id FROM competency WHERE competency.id = :competencyId)
+                UNION
+                (
+                    SELECT CASE
+                        WHEN relation.tail_competency_id = tc.id THEN relation.head_competency_id
+                        WHEN relation.head_competency_id = tc.id THEN relation.tail_competency_id
+                        END
+                    FROM competency_relation AS relation
+                    JOIN transitive_closure AS tc ON relation.tail_competency_id = tc.id OR relation.head_competency_id = tc.id
+                    WHERE relation.type = :#{T(de.tum.in.www1.artemis.domain.competency.RelationType).MATCHES.ordinal()}
+                )
+            )
+            SELECT * FROM transitive_closure
             """, nativeQuery = true)
     Set<Long> getMatchingCompetenciesByCompetencyId(@Param("competencyId") long competencyId);
+
+    Set<CompetencyRelation> findAllByHeadCompetencyIdInAndTailCompetencyIdIn(Set<Long> headCompetencyIds, Set<Long> tailCompetencyIds);
 }

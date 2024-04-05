@@ -4,6 +4,7 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
+import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-docker-image/programming-exercise-docker-image.component';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -13,6 +14,8 @@ import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.s
 export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+
+    @ViewChild(ProgrammingExerciseDockerImageComponent) programmingExerciseDockerImageComponent?: ProgrammingExerciseDockerImageComponent;
 
     programmingLanguage?: ProgrammingLanguage;
     projectType?: ProjectType;

@@ -2,25 +2,25 @@
     @if (!loadingResults) {
         <div class="f-flex flex-column">
             <div>
-                <span class="me-1" jhiTranslate="artemisApp.participation.templateParticipation">Template</span>
+                <span class="me-1" jhiTranslate="artemisApp.participation.templateParticipation"></span>
                 @if (programmingExercise.templateParticipation) {
                     <jhi-updating-result
                         [exercise]="programmingExercise"
                         [participation]="programmingExercise.templateParticipation!"
                         [showUngradedResults]="true"
                         [personalParticipation]="false"
-                    ></jhi-updating-result>
+                    />
                 }
             </div>
             <div>
-                <span class="me-1" jhiTranslate="artemisApp.participation.solutionParticipation">Solution</span>
+                <span class="me-1" jhiTranslate="artemisApp.participation.solutionParticipation"></span>
                 @if (programmingExercise.solutionParticipation) {
                     <jhi-updating-result
                         [exercise]="programmingExercise"
                         [participation]="programmingExercise.solutionParticipation!"
                         [showUngradedResults]="true"
                         [personalParticipation]="false"
-                    ></jhi-updating-result>
+                    />
                 }
             </div>
         </div>
@@ -34,17 +34,13 @@
         [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
     >
         <span>
-            <fa-icon [icon]="farPlayCircle"></fa-icon>
-            <span jhiTranslate="artemisApp.editor.submit">Submit</span>
+            <fa-icon [icon]="farPlayCircle" />
+            <span jhiTranslate="artemisApp.editor.submit"></span>
         </span>
     </button>
 </div>
 <div class="card build-plan-editor">
-    <jhi-code-editor-header
-        [filename]="'artemisApp.programmingExercise.buildplan' | artemisTranslate"
-        [isLoading]="isLoading"
-        (tabSizeChanged)="updateTabSize($event)"
-    ></jhi-code-editor-header>
+    <jhi-code-editor-header [filename]="'artemisApp.programmingExercise.buildplan' | artemisTranslate" [isLoading]="isLoading" (tabSizeChanged)="updateTabSize($event)" />
     <div class="card-body build-plan-editor__content">
         <jhi-ace-editor
             #editor
@@ -57,7 +53,6 @@
             [tabSize]="tabSize"
             (textChanged)="onTextChanged($event)"
             class="build-plan-editor__content__editor"
-        >
-        </jhi-ace-editor>
+        />
     </div>
 </div>

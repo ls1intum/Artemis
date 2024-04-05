@@ -2,14 +2,30 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.INDIVIDUAL;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
-import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
-import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.C;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.SWIFT;
+import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.BUILD_PLAN_FILE_NAME;
+import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
+import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.GENERATE_TESTS;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.IMPORT;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.ROOT;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.SETUP;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,12 +35,18 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.awaitility.Awaitility;
@@ -53,10 +75,25 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.StaticCodeAnalysisConfigurer;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -74,10 +111,28 @@ import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExamUserRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
@@ -91,16 +146,19 @@ import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseClea
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUri;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
+import de.tum.in.www1.artemis.util.LocalRepository;
+import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.TestConstants;
+import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 
 /**
- * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
- * 1) Bamboo + Bitbucket
- * 2) Jenkins + Gitlab
+ * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
+ * 1) Jenkins + Gitlab
  * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary. See
  * {@link ProgrammingExerciseLocalVCLocalCIIntegrationTest}.
  */
@@ -146,7 +204,7 @@ public class ProgrammingExerciseTestService {
     private SubmissionRepository submissionRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
@@ -405,7 +463,21 @@ public class ProgrammingExerciseTestService {
         exercise.setSequentialTestRuns(true);
         exercise.setChannelName("testchannel-pe");
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
+        validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
+    }
+
+    // TEST
+    void createProgrammingExercise_custom_build_plan_validExercise_created(ProgrammingLanguage programmingLanguage, boolean customBuildPlanWorks) throws Exception {
+        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course, programmingLanguage);
+        String validWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"class\": \"script-action\",\n\"script\": \"echo $PATH\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action1\",\n\"platform\": \"jenkins\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action2\",\n\"script\": \"bash script\",\n\"runAlways\": true\n}\n]\n}";
+        exercise.setBuildPlanConfiguration(validWindfile);
+        if (programmingLanguage == C) {
+            exercise.setProjectType(ProjectType.FACT);
+        }
+        exercise.setChannelName("testchannel-pe");
+        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false, true, customBuildPlanWorks);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
@@ -413,7 +485,7 @@ public class ProgrammingExerciseTestService {
     void createProgrammingExercise_mode_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
         exercise.setChannelName("testchannel-pe");
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
@@ -424,7 +496,7 @@ public class ProgrammingExerciseTestService {
             exercise.setPackageName("swiftTest");
         }
         exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().get(0));
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
@@ -432,7 +504,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createProgrammingExercise_validExercise_bonusPointsIsNull() throws Exception {
         exercise.setBonusPoints(null);
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
         var savedExercise = programmingExerciseRepository.findById(generatedExercise.getId()).orElseThrow();
@@ -590,7 +662,7 @@ public class ProgrammingExerciseTestService {
         else {
             exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().get(0));
         }
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
 
@@ -609,7 +681,7 @@ public class ProgrammingExerciseTestService {
     void createProgrammingExercise_failToCreateProjectInCi() throws Exception {
         exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.setChannelName("testchannel-pe");
-        mockDelegate.mockConnectorRequestsForSetup(exercise, true);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, true, false, false);
         var programmingExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(programmingExercise).isNull();
     }
@@ -618,7 +690,7 @@ public class ProgrammingExerciseTestService {
     void createProgrammingExerciseForExam_validExercise_created() throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
-        mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(examExercise, false, false, false);
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         examExercise.setId(generatedExercise.getId());
@@ -630,7 +702,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createProgrammingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration dates) throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
-        mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(examExercise, false, false, false);
 
         request.postWithResponseBody(ROOT + SETUP, dates.applyTo(examExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -638,7 +710,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createProgrammingExerciseForExam_DatesSet() throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
-        mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(examExercise, false, false, false);
         ZonedDateTime someMoment = ZonedDateTime.of(2000, 6, 15, 0, 0, 0, 0, ZoneId.of("Z"));
         examExercise.setDueDate(someMoment);
 
@@ -655,7 +727,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
         setupRepositoryMocks(exercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setProjectType(ProjectType.MAVEN_MAVEN);
         exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         exercise.setChannelName("testchannel-pe");
@@ -1131,7 +1203,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void createProgrammingExercise_validExercise_structureOracle() throws Exception {
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
 
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
@@ -1160,7 +1232,7 @@ public class ProgrammingExerciseTestService {
     void createProgrammingExercise_noTutors_created() throws Exception {
         course.setTeachingAssistantGroupName(null);
         courseRepository.save(course);
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         validateProgrammingExercise(generatedExercise);
@@ -1450,7 +1522,7 @@ public class ProgrammingExerciseTestService {
     // Test
 
     /**
-     * Test that the export of the instructor material works as expected when no build plan exists (e.g. for bamboo setups at the moment)
+     * Test that the export of the instructor material works as expected when no build plan exists (e.g. for jenkins setups at the moment)
      * <p>
      *
      * @param saveEmbeddedFiles whether embedded files should be saved or not, not saving them simulates that embedded files are no longer stored on the file system
@@ -2321,7 +2393,7 @@ public class ProgrammingExerciseTestService {
         exercise.setDueDate(baseTime.plusHours(3));
         exercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
 
         request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
 
@@ -2343,10 +2415,10 @@ public class ProgrammingExerciseTestService {
         var exampleSolutionPublicationDate = baseTime.plusHours(3);
         exercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
         exercise.setChannelName("testchannel-pe");
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
 
         var result = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
+        assertThat(result.getExampleSolutionPublicationDate()).isCloseTo(exampleSolutionPublicationDate, within(1, ChronoUnit.MILLIS));
     }
 
     // TEST
@@ -2475,12 +2547,12 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseRepository
                 .save(ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.getBuildCount()).isZero();
-        assertThat(statistics.getAgentSetupDuration()).isNull();
-        assertThat(statistics.getTestDuration()).isNull();
-        assertThat(statistics.getScaDuration()).isNull();
-        assertThat(statistics.getTotalJobDuration()).isNull();
-        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+        assertThat(statistics.buildCount()).isZero();
+        assertThat(statistics.agentSetupDuration()).isNull();
+        assertThat(statistics.testDuration()).isNull();
+        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.totalJobDuration()).isNull();
+        assertThat(statistics.dependenciesDownloadedCount()).isNull();
     }
 
     // TEST
@@ -2495,12 +2567,12 @@ public class ProgrammingExerciseTestService {
         buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission2, 8, 15, null, 30, 0));
 
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.getBuildCount()).isEqualTo(2);
-        assertThat(statistics.getAgentSetupDuration()).isEqualTo(9);
-        assertThat(statistics.getTestDuration()).isEqualTo(17.5);
-        assertThat(statistics.getScaDuration()).isEqualTo(30);
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(45);
-        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(2.5);
+        assertThat(statistics.buildCount()).isEqualTo(2);
+        assertThat(statistics.agentSetupDuration()).isEqualTo(9);
+        assertThat(statistics.testDuration()).isEqualTo(17.5);
+        assertThat(statistics.scaDuration()).isEqualTo(30);
+        assertThat(statistics.totalJobDuration()).isEqualTo(45);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(2.5);
     }
 
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {

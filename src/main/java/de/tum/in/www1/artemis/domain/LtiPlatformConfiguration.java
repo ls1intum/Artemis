@@ -3,14 +3,11 @@ package de.tum.in.www1.artemis.domain;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -120,12 +117,13 @@ public class LtiPlatformConfiguration extends DomainObject {
         this.customName = customName;
     }
 
+    /**
+     * Gets initialized online course configurations.
+     *
+     * @return Set of {@link OnlineCourseConfiguration} if initialized, or null if not.
+     */
     public Set<OnlineCourseConfiguration> getOnlineCourseConfigurations() {
-        return onlineCourseConfigurations;
-    }
-
-    public void setOnlineCourseConfigurations(Set<OnlineCourseConfiguration> onlineCourseConfigurations) {
-        this.onlineCourseConfigurations = onlineCourseConfigurations;
+        return Hibernate.isInitialized(this.onlineCourseConfigurations) ? this.onlineCourseConfigurations : null;
     }
 
 }

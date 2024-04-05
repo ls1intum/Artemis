@@ -1,15 +1,16 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import java.util.*;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,8 +38,9 @@ import io.swagger.annotations.ApiResponses;
 /**
  * REST controller for managing ModelingSubmission.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);
@@ -83,7 +85,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param modelingSubmission the modelingSubmission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("/exercises/{exerciseId}/modeling-submissions")
+    @PostMapping("exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, @Valid @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create modeling submission: {}", modelingSubmission.getModel());
@@ -103,7 +105,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingSubmission, or with status 400 (Bad Request) if the modelingSubmission is not valid, or
      *         with status 500 (Internal Server Error) if the modelingSubmission couldn't be updated
      */
-    @PutMapping("/exercises/{exerciseId}/modeling-submissions")
+    @PutMapping("exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, @Valid @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to update modeling submission: {}", modelingSubmission.getModel());
@@ -170,7 +172,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found
      */
-    @GetMapping("/modeling-submissions/{submissionId}")
+    @GetMapping("modeling-submissions/{submissionId}")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId,
@@ -187,7 +189,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         if (!authCheckService.isAllowedToAssessExercise(modelingExercise, user, resultId)) {
             // anonymize and throw exception if not authorized to view submission
-            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(modelingSubmission, userRepository.getUser().getLogin(), modelingExercise.getDueDate());
+            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(modelingSubmission, userRepository.getUser().getLogin(), studentParticipation);
             return ResponseEntity.ok(modelingSubmission);
         }
 
@@ -259,7 +261,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         if (submission != null) {
             // needed to show the grading criteria in the assessment view
-            List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+            Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
             modelingExercise.setGradingCriteria(gradingCriteria);
             // Make sure the exercise is connected to the participation in the json response
             submission.getParticipation().setExercise(modelingExercise);
@@ -275,7 +277,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param participationId the participationId for which to find the submission and data for the modeling editor
      * @return the ResponseEntity with the submission as body
      */
-    @GetMapping("/participations/{participationId}/latest-modeling-submission")
+    @GetMapping("participations/{participationId}/latest-modeling-submission")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);

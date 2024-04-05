@@ -36,6 +36,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { AdminUserService } from 'app/core/user/admin-user.service';
+import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
@@ -66,6 +67,7 @@ describe('UserManagementComponent', () => {
                 UserManagementComponent,
                 MockRouterLinkDirective,
                 MockComponent(ItemCountComponent),
+                MockComponent(UsersImportButtonComponent),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(SortDirective),

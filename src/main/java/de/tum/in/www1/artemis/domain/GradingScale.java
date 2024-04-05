@@ -4,10 +4,10 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.persistence.*;
-import javax.validation.constraints.Size;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -210,7 +210,7 @@ public class GradingScale extends DomainObject {
     }
 
     @JsonIgnore
-    @Nonnull
+    @NotNull
     public String getPlagiarismGradeOrDefault() {
         return Objects.requireNonNullElse(plagiarismGrade, DEFAULT_PLAGIARISM_GRADE);
     }
@@ -224,28 +224,9 @@ public class GradingScale extends DomainObject {
     }
 
     @JsonIgnore
-    @Nonnull
+    @NotNull
     public String getNoParticipationGradeOrDefault() {
         return Objects.requireNonNullElse(noParticipationGrade, DEFAULT_NO_PARTICIPATION_GRADE);
-    }
-
-    /**
-     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
-     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
-     */
-    public enum GradingScaleSearchColumn {
-
-        ID("id"), COURSE_TITLE("course.title"), EXAM_TITLE("exam.title");
-
-        private final String mappedColumnName;
-
-        GradingScaleSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
     }
 
     @Override

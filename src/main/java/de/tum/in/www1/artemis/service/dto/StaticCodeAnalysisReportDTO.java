@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.dto;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,9 +9,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 
+// TODO: convert to record
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class StaticCodeAnalysisReportDTO {
+public class StaticCodeAnalysisReportDTO implements Serializable {
 
     private StaticCodeAnalysisTool tool;
 
@@ -32,9 +34,10 @@ public class StaticCodeAnalysisReportDTO {
         this.issues = issues;
     }
 
+    // TODO: convert to record
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public static final class StaticCodeAnalysisIssue {
+    public static final class StaticCodeAnalysisIssue implements Serializable {
 
         // Path to source file containing the error. Uses unix file separators
         private String filePath;

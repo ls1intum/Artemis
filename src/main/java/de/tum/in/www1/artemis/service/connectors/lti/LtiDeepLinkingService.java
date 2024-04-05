@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.lti;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.glassfish.jersey.uri.UriComponent;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.lti.Lti13DeepLinkingResponse;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
@@ -27,6 +29,8 @@ public class LtiDeepLinkingService {
 
     @Value("${server.url}")
     private String artemisServerUrl;
+
+    private static final double DEFAULT_SCORE_MAXIMUM = 100D;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -49,15 +53,15 @@ public class LtiDeepLinkingService {
      * @param ltiIdToken           OIDC ID token with the user's authentication claims.
      * @param clientRegistrationId Client registration ID for the LTI tool.
      * @param courseId             ID of the course for deep linking.
-     * @param exerciseId           ID of the exercise for deep linking.
+     * @param exerciseIds          Set of IDs of the exercises for deep linking.
      * @return Constructed deep linking response URL.
      * @throws BadRequestAlertException if there are issues with the OIDC ID token claims.
      */
-    public String performDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId, Long courseId, Long exerciseId) {
+    public String performDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId, Long courseId, Set<Long> exerciseIds) {
         // Initialize DeepLinkingResponse
         Lti13DeepLinkingResponse lti13DeepLinkingResponse = new Lti13DeepLinkingResponse(ltiIdToken, clientRegistrationId);
         // Fill selected exercise link into content items
-        String contentItems = this.populateContentItems(String.valueOf(courseId), String.valueOf(exerciseId));
+        String contentItems = this.populateContentItems(String.valueOf(courseId), exerciseIds);
         lti13DeepLinkingResponse.setContentItems(contentItems);
 
         // Prepare return url with jwt and id parameters
@@ -89,27 +93,31 @@ public class LtiDeepLinkingService {
     /**
      * Populate content items for deep linking response.
      *
-     * @param courseId   The course ID.
-     * @param exerciseId The exercise ID.
+     * @param courseId    The course ID.
+     * @param exerciseIds The set of exercise IDs.
      */
-    private String populateContentItems(String courseId, String exerciseId) {
-        JsonObject item = setContentItem(courseId, exerciseId);
+    private String populateContentItems(String courseId, Set<Long> exerciseIds) {
         JsonArray contentItems = new JsonArray();
-        contentItems.add(item);
+        for (Long exerciseId : exerciseIds) {
+            JsonObject item = setContentItem(courseId, String.valueOf(exerciseId));
+            contentItems.add(item);
+        }
         return contentItems.toString();
     }
 
     private JsonObject setContentItem(String courseId, String exerciseId) {
         Optional<Exercise> exerciseOpt = exerciseRepository.findById(Long.valueOf(exerciseId));
         String launchUrl = String.format(artemisServerUrl + "/courses/%s/exercises/%s", courseId, exerciseId);
-        return exerciseOpt.map(exercise -> createContentItem(exercise.getType(), exercise.getTitle(), launchUrl)).orElse(null);
+        return exerciseOpt.map(exercise -> createContentItem(exerciseOpt.get(), launchUrl)).orElse(null);
     }
 
-    private JsonObject createContentItem(String type, String title, String url) {
+    private JsonObject createContentItem(Exercise exercise, String url) {
         JsonObject item = new JsonObject();
-        item.addProperty("type", type);
-        item.addProperty("title", title);
+        item.addProperty("type", exercise.getType());
+        item.addProperty("title", exercise.getTitle());
         item.addProperty("url", url);
+
+        addLineItemIfIncluded(exercise, item);
         return item;
     }
 
@@ -129,5 +137,13 @@ public class LtiDeepLinkingService {
 
     private boolean isEmptyString(String string) {
         return string == null || string.isEmpty();
+    }
+
+    private void addLineItemIfIncluded(Exercise exercise, JsonObject item) {
+        if (exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED) {
+            JsonObject lineItem = new JsonObject();
+            lineItem.addProperty("scoreMaximum", DEFAULT_SCORE_MAXIMUM);
+            item.addProperty("lineItem", lineItem.toString());
+        }
     }
 }

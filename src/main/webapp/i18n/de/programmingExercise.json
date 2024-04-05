@@ -100,11 +100,13 @@
             "openRepository": "Repository Öffnen",
             "buildplans": "Build-Pläne",
             "buildplan": "Build-Plan",
+            "buildConfiguration": "Build Konfiguration",
             "buildPlanEditor": "Build-Plan-Editor",
             "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
             "publishBuildPlanUrl": "Build-Plan veröffentlichen",
             "customizeBuildPlan": "Build-Plan anpassen",
             "customizeBuildPlanWithAeolus": "Build-Plan mit Aeolus anpassen",
+            "revertToTemplateBuildPlan": "Falls Sie mit Ihrem Build-Plan nicht zufrieden sind, können Sie ihn mit dem Zurücksetzen Knopf auf seine Vorlage zurücksetzen.",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
             "script": "Script",
             "parameters": "Parameter",
@@ -435,7 +437,7 @@
                 "templateBuildPlanTooltip": "Der Build-Plan der Vorlage. Lässt alle Tests über die Vorlage der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests fehlschlagen müssen",
                 "solutionBuildPlanTooltip": "Der Build-Plan der Lösung der Aufgabe. Lässt alle Tests über die Lösung der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests erfolgreich sein müssen"
             },
-            "intellij": {
+            "orion": {
                 "openEditor": "Editor Öffnen"
             },
             "reEvaluate": "Alle erneut bewerten",
@@ -534,10 +536,13 @@
                 "tooltipBetweenSubmissions": "Zeigt den detaillierten Git-Diff zwischen der aktuellen und der vorherigen Abgabe.",
                 "title": "Template-Lösungs-Diff",
                 "titleForSubmissions": "Abgaben-Diff",
+                "emptyRepository": "Leeres Repository",
                 "template": "Vorlage",
                 "solution": "Lösung",
                 "previousSubmission": "Vorherige Abgabe",
+                "previousCommit": "Vorheriger Commit",
                 "currentSubmission": "Aktuelle Abgabe",
+                "currentCommit": "Aktueller Commit",
                 "errorWhileFetchingRepos": "Fehler beim Abrufen der Repositories. Bitte überprüfe deine Internetverbindung und öffne das Popup erneut.",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
                 "lineStatLabel": "Zeilen, die zwischen Vorlage und Lösung hinzugefügt/entfernt wurden",
@@ -565,7 +570,8 @@
             "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
             "recordTestwiseCoverage": "Testbasierte Code-Abdeckung aufzeichnen",
             "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testbasierte Code-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java/Kotlin-Aufgaben mit nicht-sequentiellen Testläufen verfügbar.",
-            "customizeBuildPlansWithAeolusTooltip": "Aktivieren Sie diese Option, um die Build-Pläne mit Aeolus anzupassen. Diese Option ist nur während der Übungserstellung verfügbar.",
+            "customizeBuildPlansWithAeolusTooltip": "Aktivieren Sie diese Option, um die Build-Pläne mit Aeolus anzupassen.",
+            "customizeBuildPlansTooltip": "Aktivieren Sie diese Option, um die Build-Pläne für diese Aufgabe anzupassen.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
             "testwiseCoverageReport": {
                 "button": "Testbasierte Code-Abdeckung anzeigen",
@@ -595,7 +601,9 @@
                 "message": "Nachricht",
                 "previousSubmission": "Vorherige Abgabe",
                 "currentSubmission": "Aktuelle Abgabe",
-                "template": "Vorlage"
+                "template": "Vorlage",
+                "history": "Commit-Historie",
+                "result": "Ergebnis"
             }
         },
         "error": {

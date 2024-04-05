@@ -5,7 +5,7 @@
             (onRefresh)="learningPathGraphComponent.refreshData(); learningPathGraphComponent.onCenterView()"
             (onCenterView)="learningPathGraphComponent.onCenterView()"
             (onClose)="close()"
-        ></jhi-learning-path-progress-nav>
+        />
     </div>
     <div class="row">
         @if (courseId && learningPath) {
@@ -19,7 +19,7 @@
                 [panOnZoom]="true"
                 [showMiniMap]="true"
                 (nodeClicked)="onNodeClicked($event)"
-            ></jhi-learning-path-graph>
+            />
         }
     </div>
 </div>

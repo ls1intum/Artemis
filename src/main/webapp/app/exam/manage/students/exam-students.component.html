@@ -2,7 +2,7 @@
     <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
         <div class="mb-0">
             <h3>
-                <span jhiTranslate="artemisApp.examManagement.students">Students</span>
+                <span jhiTranslate="artemisApp.examManagement.students"></span>
                 <span class="text-body-secondary">({{ exam.title }})</span>
             </h3>
         </div>
@@ -16,10 +16,10 @@
                 </span>
             }
             @if (!isTestExam) {
-                <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" [examUserMode]="true" (finish)="reloadExamWithRegisteredUsers()"></jhi-user-import-button>
+                <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" [examUserMode]="true" (finish)="reloadExamWithRegisteredUsers()" />
             }
             @if (!isTestExam) {
-                <jhi-student-upload-images-button [courseId]="courseId" [exam]="exam" (finish)="reloadExamWithRegisteredUsers()"></jhi-student-upload-images-button>
+                <jhi-student-upload-images-button [courseId]="courseId" [exam]="exam" (finish)="reloadExamWithRegisteredUsers()" />
             }
             @if (!isTestExam) {
                 <button
@@ -28,7 +28,7 @@
                     (click)="registerAllStudentsFromCourse()"
                     title="{{ 'artemisApp.examManagement.examStudents.registerAllFromCourseTooltip' | artemisTranslate }}"
                 >
-                    <fa-icon [icon]="faPlus" [fixedWidth]="true"></fa-icon>&nbsp;
+                    <fa-icon [icon]="faPlus" [fixedWidth]="true" />&nbsp;
                     <span jhiTranslate="artemisApp.examManagement.examStudents.registerAllFromCourse"></span>
                 </button>
             }
@@ -38,7 +38,7 @@
                     class="btn btn-info ms-auto"
                     title="{{ 'artemisApp.examManagement.examStudents.verifyAttendanceTooltip' | artemisTranslate }}"
                 >
-                    <fa-icon [icon]="faCheck"></fa-icon>
+                    <fa-icon [icon]="faCheck" />
                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examStudents.verifyAttendanceBtn' | artemisTranslate }}</span>
                 </a>
             }
@@ -60,7 +60,7 @@
                     deleteConfirmationText="artemisApp.studentExams.removeAllStudents.confirmationText"
                 >
                     <span jhiTranslate="artemisApp.studentExams.removeAllStudents.title"></span>
-                    <fa-icon [icon]="faUserSlash"></fa-icon>
+                    <fa-icon [icon]="faUserSlash" />
                 </button>
             }
         </div>
@@ -95,14 +95,14 @@
                 [footerHeight]="settings.footerHeight"
                 [rowHeight]="settings.rowHeight"
                 [rows]="settings.rows"
-                [rowClass]="dataTableRowClass"
+                [rowClass]="settings.rowClass"
                 [scrollbarH]="settings.scrollbarH"
             >
                 <ngx-datatable-column prop="" [minWidth]="60" [width]="80" [maxWidth]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id"> ID </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id"></span>
+                            <fa-icon [icon]="controls.iconForSortPropField('id')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -114,16 +114,16 @@
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="" [minWidth]="60" [width]="80" [maxWidth]="100">
-                    <ng-template ngx-datatable-header-template></ng-template>
+                    <ng-template ngx-datatable-header-template />
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <img [id]="value?.id" class="img-fluid" [src]="value?.studentImagePath ? value?.studentImagePath : missingImage" />
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="" [minWidth]="150" [width]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.login"> Login </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('login')"></fa-icon>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.login"></span>
+                            <fa-icon [icon]="controls.iconForSortPropField('login')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -134,43 +134,43 @@
                         }
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="name" [minWidth]="150" [width]="250" [maxWidth]="250">
+                <ngx-datatable-column prop="name" [minWidth]="120" [width]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.name"> Name </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('name')"></fa-icon>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.name"></span>
+                            <fa-icon [icon]="controls.iconForSortPropField('name')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="email" [minWidth]="200" [maxWidth]="250">
+                <ngx-datatable-column prop="email" [minWidth]="150" [width]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.email"> Email </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('email')"></fa-icon>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.email"></span>
+                            <fa-icon [icon]="controls.iconForSortPropField('email')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="visibleRegistrationNumber" [minWidth]="200">
+                <ngx-datatable-column prop="visibleRegistrationNumber" [minWidth]="100" [width]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('visibleRegistrationNumber')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.registrationNumber"> Email </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('visibleRegistrationNumber')"></fa-icon>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.registrationNumber"></span>
+                            <fa-icon [icon]="controls.iconForSortPropField('visibleRegistrationNumber')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="" [minWidth]="100" [width]="120" [maxWidth]="150">
+                <ngx-datatable-column prop="" [minWidth]="100" [width]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper">
-                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exam.examUsers.room"> Room </span>
+                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exam.examUsers.room"></span>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -187,10 +187,10 @@
                         }
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="" [minWidth]="100" [width]="120" [maxWidth]="150">
+                <ngx-datatable-column prop="" [minWidth]="100" [width]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper">
-                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exam.examUsers.seat"> Seat </span>
+                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exam.examUsers.seat"></span>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -208,10 +208,10 @@
                     </ng-template>
                 </ngx-datatable-column>
                 @if (hasExamEnded) {
-                    <ngx-datatable-column prop="" [minWidth]="70" [width]="70" [maxWidth]="150">
+                    <ngx-datatable-column prop="" [minWidth]="70" [width]="70">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" title="{{ 'artemisApp.exam.examUsers.attendanceStatusTitle' | artemisTranslate }}">
-                                <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exam.examUsers.attendanceStatus"> Status </span>
+                                <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exam.examUsers.attendanceStatus"></span>
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
@@ -221,7 +221,7 @@
                                 (!value.didCheckLogin || !value.didCheckImage || !value.didCheckName || !value.didCheckRegistrationNumber || !value.signingImagePath)
                             ) {
                                 <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}">
-                                    <fa-icon [icon]="faTimes" style="color: red" class="fa-2x"></fa-icon>
+                                    <fa-icon [icon]="faTimes" style="color: red" class="fa-2x" />
                                 </div>
                             }
                             @if (
@@ -234,20 +234,20 @@
                                 hasExamEnded
                             ) {
                                 <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}">
-                                    <fa-icon [icon]="faCheck" style="color: green" class="fa-2x"></fa-icon>
+                                    <fa-icon [icon]="faCheck" style="color: green" class="fa-2x" />
                                 </div>
                             }
                             @if (!value.didExamUserAttendExam) {
                                 <div title="{{ 'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate }}">
-                                    <fa-icon [icon]="faUserTimes" class="fa-2x"></fa-icon>
+                                    <fa-icon [icon]="faUserTimes" class="fa-2x" />
                                 </div>
                             }
                         </ng-template>
                     </ngx-datatable-column>
                 }
                 @if (!isTestExam) {
-                    <ngx-datatable-column prop="" [minWidth]="120" [width]="150">
-                        <ng-template ngx-datatable-header-template></ng-template>
+                    <ngx-datatable-column prop="" [minWidth]="100" [width]="100">
+                        <ng-template ngx-datatable-header-template />
                         <ng-template ngx-datatable-cell-template let-value="value">
                             <div class="w-100 text-end">
                                 <button
@@ -263,7 +263,7 @@
                                     [dialogError]="dialogError$"
                                     [requireConfirmationOnlyForAdditionalChecks]="true"
                                 >
-                                    <fa-icon [icon]="faUserSlash" class="me-1"></fa-icon>
+                                    <fa-icon [icon]="faUserSlash" class="me-1" />
                                 </button>
                             </div>
                         </ng-template>

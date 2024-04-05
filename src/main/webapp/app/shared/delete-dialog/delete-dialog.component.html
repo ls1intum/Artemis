@@ -3,25 +3,25 @@
         <h4 class="modal-title">
             @switch (actionType) {
                 @case (actionTypes.Delete) {
-                    <span jhiTranslate="entity.delete.title">Confirm delete operation</span>
+                    <span jhiTranslate="entity.delete.title"></span>
                 }
                 @case (actionTypes.Reset) {
-                    <span jhiTranslate="entity.reset.title">Confirm reset operation</span>
+                    <span jhiTranslate="entity.reset.title"></span>
                 }
                 @case (actionTypes.Cleanup) {
-                    <span jhiTranslate="entity.cleanup.title">Confirm cleanup operation</span>
+                    <span jhiTranslate="entity.cleanup.title"></span>
                 }
                 @case (actionTypes.Remove) {
-                    <span jhiTranslate="entity.remove.title">Confirm remove operation</span>
+                    <span jhiTranslate="entity.remove.title"></span>
                 }
                 @case (actionTypes.Unlink) {
-                    <span jhiTranslate="entity.unlink.title">Confirm unlink operation</span>
+                    <span jhiTranslate="entity.unlink.title"></span>
                 }
                 @case (actionTypes.NoButtonTextDelete) {
-                    <span jhiTranslate="entity.noButtonTextDelete.title">Confirm delete operation</span>
+                    <span jhiTranslate="entity.noButtonTextDelete.title"></span>
                 }
                 @case (actionTypes.EndNow) {
-                    <span jhiTranslate="entity.endNow.title">Confirm end now operation</span>
+                    <span jhiTranslate="entity.endNow.title"></span>
                 }
             }
         </h4>
@@ -51,7 +51,7 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="submitDisabled">
-            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
         <button
             id="delete"
@@ -61,36 +61,36 @@
             [disabled]="deleteForm.invalid || submitDisabled"
         >
             @if (submitDisabled) {
-                <span><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
+                <span><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;</span>
             }
             @switch (actionType) {
                 @case (actionTypes.Delete) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash"></fa-icon>
-                    <span jhiTranslate="entity.action.delete">Delete</span>
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" />
+                    <span jhiTranslate="entity.action.delete"></span>
                 }
                 @case (actionTypes.Reset) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faUndo"></fa-icon>
-                    <span jhiTranslate="entity.action.reset">Reset</span>
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faUndo" />
+                    <span jhiTranslate="entity.action.reset"></span>
                 }
                 @case (actionTypes.Cleanup) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>
-                    <span jhiTranslate="entity.action.cleanup">Cleanup</span>
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" />
+                    <span jhiTranslate="entity.action.cleanup"></span>
                 }
                 @case (actionTypes.Remove) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash"></fa-icon>
-                    <span jhiTranslate="entity.action.remove">Remove</span>
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" />
+                    <span jhiTranslate="entity.action.remove"></span>
                 }
                 @case (actionTypes.Unlink) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>
-                    <span jhiTranslate="entity.action.unlink">Unlink</span>
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" />
+                    <span jhiTranslate="entity.action.unlink"></span>
                 }
                 @case (actionTypes.NoButtonTextDelete) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash"></fa-icon>
-                    <span jhiTranslate="entity.action.delete">Delete</span>
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" />
+                    <span jhiTranslate="entity.action.delete"></span>
                 }
                 @case (actionTypes.EndNow) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>
-                    <span jhiTranslate="entity.action.endNow">End Now</span>
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" />
+                    <span jhiTranslate="entity.action.endNow"></span>
                 }
             }
         </button>

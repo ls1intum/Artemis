@@ -1,13 +1,21 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import tech.jhipster.config.JHipsterConstants;
 
+/**
+ * Helper service for checking which profiles are active
+ */
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Service
 public class ProfileService {
 
@@ -17,20 +25,63 @@ public class ProfileService {
         this.environment = environment;
     }
 
-    public boolean isDev() {
+    // General profiles
+
+    /**
+     * Checks if a given profile is active. Prefer to use the specific methods for the profiles
+     *
+     * @param profile the profile to check
+     * @return true if the profile is active, false otherwise
+     */
+    public boolean isProfileActive(String profile) {
+        return Set.of(this.environment.getActiveProfiles()).contains(profile);
+    }
+
+    /**
+     * Checks if the development profile is active
+     *
+     * @return true if the development profile is active, false otherwise
+     */
+    public boolean isDevActive() {
         return isProfileActive(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT);
     }
 
-    public boolean isLocalVcsCi() {
-        return isLocalVcs() || isLocalCi();
+    /**
+     * Checks if the scheduling profile is active
+     *
+     * @return true if the scheduling profile is active, false otherwise
+     */
+    public boolean isSchedulingActive() {
+        return isProfileActive("scheduling");
     }
 
-    public boolean isBamboo() {
-        return isProfileActive("bamboo");
+    // VC & CI profiles
+
+    /**
+     * Checks if the gitlabci or jenkins profile is active
+     *
+     * @return true if the gitlabci or jenkins profile is active, false otherwise
+     */
+    public boolean isGitlabCiOrJenkinsActive() {
+        return isProfileActive("gitlabci") || isJenkinsActive();
     }
 
-    public boolean isGitlabCiOrJenkins() {
-        return isProfileActive("gitlabci") || isProfileActive("jenkins");
+    /**
+     * Checks if the jenkins profile is active
+     *
+     * @return true if the jenkins profile is active, false otherwise
+     */
+    public boolean isJenkinsActive() {
+        return isProfileActive("jenkins");
+    }
+
+    /**
+     * Checks if the local VCS or CI profile is active
+     *
+     * @return true if the local VCS or CI profile is active, false otherwise
+     */
+    public boolean isLocalVcsCiActive() {
+        return isLocalVcsActive() || isLocalCiActive();
     }
 
     /**
@@ -38,7 +89,7 @@ public class ProfileService {
      *
      * @return true if the local CI profile is active, false otherwise
      */
-    public boolean isLocalCi() {
+    public boolean isLocalCiActive() {
         return isProfileActive(Constants.PROFILE_LOCALCI);
     }
 
@@ -47,11 +98,27 @@ public class ProfileService {
      *
      * @return true if the local VC profile is active, false otherwise
      */
-    public boolean isLocalVcs() {
+    public boolean isLocalVcsActive() {
         return isProfileActive(Constants.PROFILE_LOCALVC);
     }
 
-    private boolean isProfileActive(String profile) {
-        return Set.of(this.environment.getActiveProfiles()).contains(profile);
+    // Sub-system profiles
+
+    /**
+     * Checks if the aeolus profile is active
+     *
+     * @return true if the aeolus profile is active, false otherwise
+     */
+    public boolean isAeolusActive() {
+        return isProfileActive(Constants.PROFILE_AEOLUS);
+    }
+
+    /**
+     * Checks if the lti profile is active
+     *
+     * @return true if the lti profile is active, false otherwise
+     */
+    public boolean isLtiActive() {
+        return isProfileActive(Constants.PROFILE_LTI);
     }
 }

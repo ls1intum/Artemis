@@ -3,9 +3,13 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.domain.enumeration.AeolusTarget.JENKINS;
 
 import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,11 +17,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -28,9 +32,8 @@ import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
+import de.tum.in.www1.artemis.service.InternalUrlService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.dto.AeolusGenerationResponseDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
 /**
@@ -42,47 +45,82 @@ public class AeolusBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(AeolusBuildPlanService.class);
 
-    private final Optional<BambooInternalUrlService> bambooInternalUrlService;
+    private final Optional<InternalUrlService> internalUrlService;
 
     private final RestTemplate restTemplate;
 
     @Value("${aeolus.url}")
     private URL aeolusUrl;
 
-    @Value("${artemis.continuous-integration.token}")
+    @Value("${aeolus.token:#{null}}")
+    private String token;
+
+    @Value("${artemis.continuous-integration.token:#{null}}")
     private String ciToken;
 
-    @Value("${artemis.continuous-integration.user}")
+    @Value("${artemis.continuous-integration.password:#{null}}")
+    private String ciPassword;
+
+    @Value("${artemis.continuous-integration.user:#{null}}")
     private String ciUsername;
 
-    @Value("${artemis.continuous-integration.url}")
+    @Value("${artemis.continuous-integration.url:#{null}}")
     private String ciUrl;
 
     /**
      * Constructor for the AeolusBuildPlanService
      *
-     * @param restTemplate             the rest template to use
-     * @param bambooInternalUrlService the internal URL service for Bamboo
+     * @param restTemplate       the rest template to use
+     * @param internalUrlService the internal URL service
      */
-    public AeolusBuildPlanService(@Qualifier("aeolusRestTemplate") RestTemplate restTemplate, Optional<BambooInternalUrlService> bambooInternalUrlService) {
+    public AeolusBuildPlanService(@Qualifier("aeolusRestTemplate") RestTemplate restTemplate, Optional<InternalUrlService> internalUrlService) {
         this.restTemplate = restTemplate;
-        this.bambooInternalUrlService = bambooInternalUrlService;
+        this.internalUrlService = internalUrlService;
     }
 
     /**
-     * Returns the internal URL of the CI server for Bamboo
+     * Returns the internal URL of the CI server
      *
      * @return the internal URL of the CI server
      */
     private String getCiUrl() {
-        return bambooInternalUrlService.map(internalUrlService -> internalUrlService.toInternalCiUrl(ciUrl)).orElse(null);
+        if (internalUrlService.isEmpty()) {
+            return ciUrl;
+        }
+        return internalUrlService.get().toInternalCiUrl(ciUrl);
+    }
+
+    /**
+     * Returns the internal VCS URL to the CI server
+     *
+     * @param url the URL of the repository
+     * @return the internal URL to the CI server
+     */
+    private String getVCSUrl(VcsRepositoryUri url) {
+        if (internalUrlService.isEmpty()) {
+            return url.toString();
+        }
+        return internalUrlService.get().toInternalVcsUrl(url).toString();
+    }
+
+    /**
+     * Returns the credentials for the CI server based on the target
+     *
+     * @param target the target to get the credentials for
+     * @return the credentials for the CI server based on the target
+     */
+    private String getCredentialsBasedOnTarget(AeolusTarget target) {
+        if (target == JENKINS) {
+            return ciPassword;
+        }
+        return null;
     }
 
     /**
      * Publishes a build plan using Aeolus
      *
      * @param windfile the build plan to publish
-     * @param target   the target to publish to, either bamboo or jenkins
+     * @param target   the target to publish to jenkins
      * @return the key of the published build plan
      */
     public String publishBuildPlan(Windfile windfile, AeolusTarget target) {
@@ -95,12 +133,15 @@ public class AeolusBuildPlanService {
         String requestUrl = aeolusUrl + "/publish/" + target.getName();
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
         Map<String, Object> jsonObject = new HashMap<>();
+        HttpHeaders headers = getBaseHttpHeaders();
+
+        jsonObject.put("username", token == null ? ciUsername : null);
+        jsonObject.put("token", token == null ? getCredentialsBasedOnTarget(target) : null);
+
         jsonObject.put("url", url);
-        jsonObject.put("username", ciUsername);
-        jsonObject.put("token", ciToken);
         jsonObject.put("windfile", buildPlan);
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(jsonObject, null);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(jsonObject, headers);
         try {
             ResponseEntity<AeolusGenerationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, AeolusGenerationResponseDTO.class);
 
@@ -118,7 +159,7 @@ public class AeolusBuildPlanService {
      * Generates a build script for a programming exercise using Aeolus
      *
      * @param windfile the build plan to generate the build script for
-     * @param target   the target to generate the build script for, either bamboo or jenkins or cli
+     * @param target   the target to generate the build script for jenkins or cli
      * @return the generated build script
      */
     public String generateBuildScript(Windfile windfile, AeolusTarget target) {
@@ -126,9 +167,7 @@ public class AeolusBuildPlanService {
         String requestUrl = aeolusUrl + "/generate/" + target.getName();
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
 
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.add("Content-Type", "application/json");
-        HttpEntity<String> entity = new HttpEntity<>(buildPlan, headers);
+        HttpEntity<String> entity = new HttpEntity<>(buildPlan, getBaseHttpHeaders());
         try {
             ResponseEntity<AeolusGenerationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, AeolusGenerationResponseDTO.class);
             if (response.getBody() != null) {
@@ -139,6 +178,15 @@ public class AeolusBuildPlanService {
             log.error("Error while generating build script for build plan {}", buildPlan, e);
         }
         return null;
+    }
+
+    private HttpHeaders getBaseHttpHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        if (token != null) {
+            headers.setBearerAuth(token);
+        }
+        return headers;
     }
 
     /**
@@ -156,18 +204,15 @@ public class AeolusBuildPlanService {
     public Map<String, AeolusRepository> createRepositoryMapForWindfile(ProgrammingLanguage programmingLanguage, String branch, boolean checkoutSolutionRepository,
             VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri,
             List<AuxiliaryRepository.AuxRepoNameWithUri> auxiliaryRepositories) {
-        if (bambooInternalUrlService.isEmpty()) {
-            throw new ContinuousIntegrationBuildPlanException("Internal URL service for Bamboo is not configured");
-        }
         Map<String, AeolusRepository> repositoryMap = new HashMap<>();
-        repositoryMap.put(ASSIGNMENT_REPO_NAME, new AeolusRepository(bambooInternalUrlService.get().toInternalVcsUrl(repositoryUri).toString(), branch,
-                ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage)));
+        repositoryMap.put(ASSIGNMENT_REPO_NAME,
+                new AeolusRepository(getVCSUrl(repositoryUri), branch, ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage)));
         if (checkoutSolutionRepository) {
-            repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(bambooInternalUrlService.get().toInternalVcsUrl(solutionRepositoryUri).toString(), branch,
+            repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(getVCSUrl(solutionRepositoryUri), branch,
                     ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage)));
         }
-        repositoryMap.put(TEST_REPO_NAME, new AeolusRepository(bambooInternalUrlService.get().toInternalVcsUrl(testRepositoryUri).toString(), branch,
-                ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage)));
+        repositoryMap.put(TEST_REPO_NAME,
+                new AeolusRepository(getVCSUrl(testRepositoryUri), branch, ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage)));
         for (var auxRepo : auxiliaryRepositories) {
             repositoryMap.put(auxRepo.name(), new AeolusRepository(auxRepo.repositoryUri().toString(), branch, auxRepo.name()));
         }

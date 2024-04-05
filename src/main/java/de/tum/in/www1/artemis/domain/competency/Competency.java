@@ -4,46 +4,39 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 
 @Entity
-@Table(name = "learning_goal")
+@Table(name = "competency")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class Competency extends DomainObject {
-
-    @Column(name = "title", nullable = false)
-    private String title;
-
-    @Column(name = "description")
-    private String description;
+public class Competency extends BaseCompetency {
 
     @Column(name = "soft_due_date")
     private ZonedDateTime softDueDate;
 
     @Column(name = "mastery_threshold")
     private Integer masteryThreshold;
-
-    /**
-     * The type of competency according to Bloom's revised taxonomy.
-     *
-     * @see <a href="https://en.wikipedia.org/wiki/Bloom%27s_taxonomy">Wikipedia</a>
-     */
-    @Column(name = "taxonomy")
-    @Convert(converter = CompetencyTaxonomy.TaxonomyConverter.class)
-    @JsonInclude
-    private CompetencyTaxonomy taxonomy;
 
     @Column(name = "optional")
     private boolean optional;
@@ -65,12 +58,12 @@ public class Competency extends DomainObject {
      * A set of courses for which this competency is a prerequisite for.
      */
     @ManyToMany
-    @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"))
+    @JoinTable(name = "competency_course", joinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "competencies", "prerequisites" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Course> consecutiveCourses = new HashSet<>();
 
-    @OneToMany(mappedBy = "learningGoal", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties({ "user", "competency" })
     private Set<CompetencyProgress> userProgress = new HashSet<>();
 
@@ -78,20 +71,19 @@ public class Competency extends DomainObject {
     @JsonIgnoreProperties({ "competencies", "course" })
     private Set<LearningPath> learningPaths = new HashSet<>();
 
-    public String getTitle() {
-        return title;
+    @ManyToOne
+    @JoinColumn(name = "linked_standardized_competency_id")
+    @JsonIgnoreProperties({ "competencies" })
+    private StandardizedCompetency linkedStandardizedCompetency;
+
+    public Competency() {
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
+    public Competency(String title, String description, ZonedDateTime softDueDate, Integer masteryThreshold, CompetencyTaxonomy taxonomy, boolean optional) {
+        super(title, description, taxonomy);
+        this.softDueDate = softDueDate;
+        this.masteryThreshold = masteryThreshold;
+        this.optional = optional;
     }
 
     public ZonedDateTime getSoftDueDate() {
@@ -108,14 +100,6 @@ public class Competency extends DomainObject {
 
     public void setMasteryThreshold(Integer masteryThreshold) {
         this.masteryThreshold = masteryThreshold;
-    }
-
-    public CompetencyTaxonomy getTaxonomy() {
-        return taxonomy;
-    }
-
-    public void setTaxonomy(CompetencyTaxonomy taxonomy) {
-        this.taxonomy = taxonomy;
     }
 
     public boolean isOptional() {
@@ -214,6 +198,14 @@ public class Competency extends DomainObject {
         this.learningPaths = learningPaths;
     }
 
+    public StandardizedCompetency getLinkedStandardizedCompetency() {
+        return linkedStandardizedCompetency;
+    }
+
+    public void setLinkedStandardizedCompetency(StandardizedCompetency linkedStandardizedCompetency) {
+        this.linkedStandardizedCompetency = linkedStandardizedCompetency;
+    }
+
     /**
      * Ensure that exercise units are connected to competencies through the corresponding exercise
      */
@@ -221,20 +213,5 @@ public class Competency extends DomainObject {
     @PreUpdate
     public void prePersistOrUpdate() {
         this.lectureUnits.removeIf(lectureUnit -> lectureUnit instanceof ExerciseUnit);
-    }
-
-    public enum CompetencySearchColumn {
-
-        ID("id"), TITLE("title"), COURSE_TITLE("course.title"), SEMESTER("course.semester");
-
-        private final String mappedColumnName;
-
-        CompetencySearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
     }
 }

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
 import java.io.File;
@@ -10,11 +11,18 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,24 +34,59 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AssessmentDashboardService;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ConductAgreementService;
+import de.tum.in.www1.artemis.service.CourseScoreCalculationService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.GradingScaleService;
+import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
+import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaModuleService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -54,14 +97,27 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseForImportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CoursesForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.OnlineCourseDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
-import de.tum.in.www1.artemis.web.rest.errors.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for managing Course.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class CourseResource {
@@ -106,6 +162,8 @@ public class CourseResource {
 
     private final ConductAgreementService conductAgreementService;
 
+    private final Optional<AthenaModuleService> athenaModuleService;
+
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
@@ -113,15 +171,13 @@ public class CourseResource {
 
     private final ExamRepository examRepository;
 
-    private final FilePathService filePathService;
-
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
-            ConductAgreementService conductAgreementService, ExamRepository examRepository, FilePathService filePathService) {
+            ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -141,8 +197,8 @@ public class CourseResource {
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathService = learningPathService;
         this.conductAgreementService = conductAgreementService;
+        this.athenaModuleService = athenaModuleService;
         this.examRepository = examRepository;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -167,6 +223,8 @@ public class CourseResource {
         }
 
         var timeZoneChanged = (existingCourse.getTimeZone() != null && courseUpdate.getTimeZone() != null && !existingCourse.getTimeZone().equals(courseUpdate.getTimeZone()));
+
+        var athenaModuleAccessChanged = existingCourse.getRestrictedAthenaModulesAccess() != courseUpdate.getRestrictedAthenaModulesAccess();
 
         if (!Objects.equals(existingCourse.getShortName(), courseUpdate.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
@@ -199,6 +257,11 @@ public class CourseResource {
             if (!changedGroupNames.isEmpty()) {
                 throw new BadRequestAlertException("You are not allowed to change the group names of a course", Course.ENTITY_NAME, "groupNamesCannotChange", true);
             }
+            // instructors are not allowed to change the access to restricted Athena modules
+            if (athenaModuleAccessChanged) {
+                throw new BadRequestAlertException("You are not allowed to change the access to restricted Athena modules of a course", Course.ENTITY_NAME,
+                        "restrictedAthenaModulesAccessCannotChange", true);
+            }
         }
 
         if (courseUpdate.getPresentationScore() != null && courseUpdate.getPresentationScore() != 0) {
@@ -229,16 +292,16 @@ public class CourseResource {
 
         if (file != null) {
             Path basePath = FilePathService.getCourseIconFilePath();
-            Path savePath = fileService.saveFile(file, basePath);
-            courseUpdate.setCourseIcon(filePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
+            Path savePath = fileService.saveFile(file, basePath, false);
+            courseUpdate.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
             if (existingCourse.getCourseIcon() != null) {
                 // delete old course icon
-                fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
             }
         }
         else if (courseUpdate.getCourseIcon() == null && existingCourse.getCourseIcon() != null) {
             // delete old course icon
-            fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
@@ -261,6 +324,11 @@ public class CourseResource {
         if (existingCourse.getLearningPathsEnabled() != courseUpdate.getLearningPathsEnabled() && courseUpdate.getLearningPathsEnabled()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesByIdElseThrow(result.getId());
             learningPathService.generateLearningPaths(courseWithCompetencies);
+        }
+
+        // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null
+        if (athenaModuleAccessChanged && !courseUpdate.getRestrictedAthenaModulesAccess()) {
+            athenaModuleService.ifPresent(ams -> ams.revokeAccessToRestrictedFeedbackSuggestionModules(result));
         }
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
@@ -287,6 +355,7 @@ public class CourseResource {
      * @param onlineCourseConfiguration the online course configuration to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated online course configuration
      */
+    // TODO: move into LTIResource
     @PutMapping("courses/{courseId}/onlineCourseConfiguration")
     @EnforceAtLeastInstructor
     @Profile("lti")
@@ -309,11 +378,40 @@ public class CourseResource {
         if (onlineCourseConfigurationService.isPresent()) {
             onlineCourseConfigurationService.get().validateOnlineCourseConfiguration(onlineCourseConfiguration);
             course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+            try {
+                onlineCourseConfigurationService.get().addOnlineCourseConfigurationToLtiConfigurations(onlineCourseConfiguration);
+            }
+            catch (Exception ex) {
+                log.error("Failed to add online course configuration to LTI configurations", ex);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when adding online course configuration to LTI configurations", ex);
+            }
         }
 
         courseRepository.save(course);
 
         return ResponseEntity.ok(onlineCourseConfiguration);
+    }
+
+    /**
+     * GET courses/for-lti-dashboard : Retrieves a list of online courses for a specific LTI dashboard based on the client ID.
+     *
+     * @param clientId the client ID of the LTI platform used to filter the courses.
+     * @return a {@link ResponseEntity} containing a list of {@link OnlineCourseDTO} for the courses the user has access to.
+     */
+    @GetMapping("courses/for-lti-dashboard")
+    @EnforceAtLeastInstructor
+    @Profile("lti")
+    public ResponseEntity<List<OnlineCourseDTO>> findAllOnlineCoursesForLtiDashboard(@RequestParam("clientId") String clientId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get all online courses the user {} has access to", user.getLogin());
+
+        Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);
+
+        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream()
+                .map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(), c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId()))
+                .toList();
+
+        return ResponseEntity.ok(onlineCourseDTOS);
     }
 
     /**
@@ -373,6 +471,22 @@ public class CourseResource {
             userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
         }
         return userCourses.toList();
+    }
+
+    /**
+     * GET /courses/for-import : Get a list of {@link CourseForImportDTO CourseForImportDTOs} where the user is instructor/editor. The result is pageable.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return the ResponseEntity with status 200 (OK) and with body the desired page
+     */
+    @GetMapping("courses/for-import")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<SearchResultPageDTO<CourseForImportDTO>> getCoursesForImport(SearchTermPageableSearchDTO<String> search) {
+        log.debug("REST request to get a list of courses for import.");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        var coursePage = courseService.getAllOnPageWithSize(search, user);
+        var resultsOnPage = coursePage.getResultsOnPage().stream().map(CourseForImportDTO::new).toList();
+        return ResponseEntity.ok(new SearchResultPageDTO<>(resultsOnPage, coursePage.getNumberOfPages()));
     }
 
     /**
@@ -762,7 +876,7 @@ public class CourseResource {
         courseService.archiveCourse(course);
 
         // Note: in the first version, we do not store the results with feedback and other metadata, as those will stay available in Artemis, the main focus is to allow
-        // instructors to download student repos in order to delete those on Bitbucket/Gitlab
+        // instructors to download student repos in order to delete those on Gitlab
 
         // Note: Lectures are not part of the archive at the moment and will be included in a future version
         // 1) Get all lectures (attachments) of the course and store them in a folder
@@ -881,7 +995,7 @@ public class CourseResource {
      * @param roles       the roles which should be searched in
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
-    @GetMapping("/courses/{courseId}/users/search")
+    @GetMapping("courses/{courseId}/users/search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<UserPublicInfoDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName,
             @RequestParam("roles") List<String> roles) {
@@ -1001,7 +1115,7 @@ public class CourseResource {
 
         var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
         List<UserNameAndLoginDTO> searchResults = userRepository.searchAllByLoginOrNameInCourse(Pageable.ofSize(10), searchTerm, course.getId()).stream()
-                .map(user -> new UserNameAndLoginDTO(user.getName(), user.getLogin())).toList();
+                .map(UserNameAndLoginDTO::of).toList();
 
         return ResponseEntity.ok().body(searchResults);
     }
@@ -1098,7 +1212,7 @@ public class CourseResource {
             if (userToAddToGroup.isEmpty()) {
                 throw new EntityNotFoundException("User", userLogin);
             }
-            courseService.addUserToGroup(userToAddToGroup.get(), group, role);
+            courseService.addUserToGroup(userToAddToGroup.get(), group);
             if (role == Role.STUDENT && course.getLearningPathsEnabled()) {
                 Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesByIdElseThrow(course.getId());
                 learningPathService.generateLearningPathForUser(courseWithCompetencies, userToAddToGroup.get());

@@ -5,32 +5,23 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.UriService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
 public class IrisUtilTestService {
 
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultBranch;
-
     @Autowired
     private GitService gitService;
-
-    @Autowired
-    private UriService uriService;
-
-    @Autowired(required = false)
-    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     @Autowired
     private ProgrammingExerciseRepository exerciseRepository;
@@ -45,7 +36,7 @@ public class IrisUtilTestService {
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     /**
      * Sets up a template repository for the given exercise.
@@ -67,9 +58,6 @@ public class IrisUtilTestService {
                 eq(true), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(templateRepoUri),
                 eq(false), any());
-
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(templateRepoUri));
 
         var savedExercise = exerciseRepository.save(exercise);
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
@@ -102,9 +90,6 @@ public class IrisUtilTestService {
                 .getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), eq(true), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), eq(false), any());
-
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(participation.getVcsRepositoryUri()));
     }
 
     /**
@@ -127,9 +112,6 @@ public class IrisUtilTestService {
                 eq(true), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(solutionRepoUri),
                 eq(false), any());
-
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(solutionRepoUri));
 
         var savedExercise = exerciseRepository.save(exercise);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
@@ -163,9 +145,6 @@ public class IrisUtilTestService {
                 any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(false),
                 any());
-
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(testRepoUri));
 
         var savedExercise = exerciseRepository.save(exercise);
         // programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);

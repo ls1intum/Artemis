@@ -608,10 +608,12 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", HttpStatus.OK, params);
         var course = courseRepository.findByIdElseThrow(exampleCourseId);
-        var allStudentLogins = userRepository.findAllInGroup(course.getStudentGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-        var allTutorLogins = userRepository.findAllInGroup(course.getTeachingAssistantGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-        var allEditorLogins = userRepository.findAllInGroup(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-        var allInstructorLogins = userRepository.findAllInGroup(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        var allStudentLogins = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        var allTutorLogins = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().map(User::getLogin)
+                .collect(Collectors.toSet());
+        var allEditorLogins = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        var allInstructorLogins = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()).stream().map(User::getLogin)
+                .collect(Collectors.toSet());
         var allUserLogins = new HashSet<>(allStudentLogins);
         allUserLogins.addAll(allTutorLogins);
         allUserLogins.addAll(allEditorLogins);

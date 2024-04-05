@@ -1,17 +1,20 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
@@ -47,6 +50,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ConversationMessagingService extends PostingService {
 
@@ -99,12 +103,12 @@ public class ConversationMessagingService extends PostingService {
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(newMessage.getConversation().getId(), author, Optional.empty())
-                .orElse(conversationRepository.findByIdElseThrow(newMessage.getConversation().getId()));
+        var conversationId = newMessage.getConversation().getId();
+
+        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
+                .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
         log.debug("      createMessage:conversationService.isMemberOrCreateForCourseWideElseThrow DONE");
 
-        // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
-        conversation.setConversationParticipants(Set.of());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
         // extra checks for channels
@@ -128,8 +132,6 @@ public class ConversationMessagingService extends PostingService {
         log.debug("      conversationMessageRepository.save DONE");
         // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
-        // reduce the payload of the response / websocket message: this is important to avoid overloading the involved subsystems
-        createdMessage.getConversation().hideDetails();
         log.debug("      conversationMessageRepository.save DONE");
 
         createdMessage.setAuthor(author);
@@ -155,6 +157,7 @@ public class ConversationMessagingService extends PostingService {
         ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, conversation, course,
                 createdConversationMessage.mentionedUsers());
         PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE, notification);
+        createdMessage.getConversation().hideDetails();
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
             if (conversationService.isChannelVisibleToStudents(channel)) {
@@ -236,24 +239,24 @@ public class ConversationMessagingService extends PostingService {
      * Filters the given list of recipients for users that should receive a notification about a new message.
      * <p>
      * In all cases, the author will be filtered out.
-     * If the conversation is not an announcement channel, the method filters out participants, that have hidden the conversation.
+     * If the conversation is not an announcement channel, the method filters out participants, that have muted or hidden the conversation.
      * If the conversation is not visible to students, the method also filters out students from the provided list of recipients.
      *
-     * @param author              the author of the message
-     * @param conversation        the conversation the new message has been written in
-     * @param webSocketRecipients the list of users that should be filtered
-     * @param mentionedUsers      users mentioned within the message
+     * @param author                 the author of the message
+     * @param conversation           the conversation the new message has been written in
+     * @param notificationRecipients the list of users that should be filtered
+     * @param mentionedUsers         users mentioned within the message
      * @return filtered list of users that are supposed to receive a notification
      */
-    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationNotificationRecipientSummary> webSocketRecipients,
+    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationNotificationRecipientSummary> notificationRecipients,
             Set<User> mentionedUsers) {
         // Initialize filter with check for author
         Predicate<ConversationNotificationRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.userId(), author.getId());
 
         if (conversation instanceof Channel channel) {
-            // If a channel is not an announcement channel, filter out users, that hid the conversation
+            // If a channel is not an announcement channel, filter out users, that muted or hid the conversation
             if (!channel.getIsAnnouncementChannel()) {
-                filter = filter.and(summary -> !summary.isConversationHidden() || mentionedUsers
+                filter = filter.and(summary -> summary.shouldNotifyRecipient() || mentionedUsers
                         .contains(new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail())));
             }
 
@@ -263,10 +266,10 @@ public class ConversationMessagingService extends PostingService {
             }
         }
         else {
-            filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden());
+            filter = filter.and(ConversationNotificationRecipientSummary::shouldNotifyRecipient);
         }
 
-        return webSocketRecipients.stream().filter(filter)
+        return notificationRecipients.stream().filter(filter)
                 .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
                 .collect(Collectors.toSet());
     }

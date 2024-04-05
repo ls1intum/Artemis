@@ -11,12 +11,12 @@
         >
             @if (isResolvingConflict) {
                 <span>
-                    <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
-                    <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Saving</span>
+                    <fa-icon [icon]="faCircleNotch" [spin]="true" />
+                    <span jhiTranslate="artemisApp.editor.conflict.resolveConflict"></span>
                 </span>
             } @else {
-                <fa-icon [icon]="faTimes"> </fa-icon>
-                <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Resolve conflict</span>
+                <fa-icon [icon]="faTimes" />
+                <span jhiTranslate="artemisApp.editor.conflict.resolveConflict"></span>
             }
         </button>
     </div>
@@ -32,12 +32,12 @@
     >
         @if (editorState === EditorState.REFRESHING) {
             <span>
-                <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
-                <span jhiTranslate="artemisApp.editor.refreshing">Refreshing</span>
+                <fa-icon [icon]="faCircleNotch" [spin]="true" />
+                <span jhiTranslate="artemisApp.editor.refreshing"></span>
             </span>
         } @else {
-            <fa-icon [icon]="faSync"></fa-icon>
-            <span jhiTranslate="artemisApp.editor.refresh.performRefresh">Refresh</span>
+            <fa-icon [icon]="faSync" />
+            <span jhiTranslate="artemisApp.editor.refresh.performRefresh"></span>
         }
     </button>
     <button
@@ -55,8 +55,8 @@
         [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
     >
         <span>
-            <fa-icon [icon]="farPlayCircle"></fa-icon>
-            <span jhiTranslate="artemisApp.editor.submit">Submit</span>
+            <fa-icon [icon]="farPlayCircle" />
+            <span jhiTranslate="artemisApp.editor.submit"></span>
         </span>
     </button>
 }

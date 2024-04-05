@@ -2,22 +2,20 @@
     <h4>{{ (exerciseGroup.id ? 'artemisApp.examManagement.exerciseGroup.update' : 'artemisApp.examManagement.exerciseGroup.create') | artemisTranslate }}</h4>
     <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
         <div class="form-group">
-            <label class="form-check-label" for="title" jhiTranslate="artemisApp.examManagement.exerciseGroup.title">Title</label>
+            <label class="form-check-label" for="title" jhiTranslate="artemisApp.examManagement.exerciseGroup.title"></label>
             <input class="form-control" required type="text" name="title" id="title" [(ngModel)]="exerciseGroup.title" />
         </div>
         <div class="form-check">
             <input class="form-check-input" type="checkbox" id="isMandatory" name="isMandatory" [(ngModel)]="exerciseGroup.isMandatory" />
-            <label class="form-check-label" for="isMandatory" jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"> Mandatory </label>
+            <label class="form-check-label" for="isMandatory" jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"></label>
         </div>
         <ngb-alert [type]="alertType" [dismissible]="false">
             <span>{{ 'artemisApp.examManagement.exerciseGroup.titleInfo' | artemisTranslate }}</span>
         </ngb-alert>
         <div class="mt-3">
-            <button type="button" class="btn btn-secondary" (click)="previousState()">
-                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
-            </button>
+            <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
             <button type="submit" id="save-group" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
-                <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
             </button>
         </div>
     </form>

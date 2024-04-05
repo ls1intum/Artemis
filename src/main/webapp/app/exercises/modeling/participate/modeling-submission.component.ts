@@ -1,12 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
@@ -24,7 +24,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, TeardownLogic } from 'rxjs';
 import { omit } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
@@ -34,6 +34,7 @@ import { getNamesForAssessments } from '../assess/modeling-assessment.util';
 import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
+import { SubmissionPatch } from 'app/entities/submission-patch.model';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -97,10 +98,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     examMode = false;
 
     // submission sync with team members
-    teamSyncInterval: number;
     private submissionChange = new Subject<ModelingSubmission>();
     submissionObservable = this.submissionChange.asObservable();
+    submissionPatchObservable = new Subject<SubmissionPatch>();
 
+    // private modelingEditorInitialized = new ReplaySubject<void>();
     resizeOptions = { verticalResize: true };
 
     // Icons
@@ -317,7 +319,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Check every 2 seconds, if the user made changes for the submission in a team exercise: if yes, send it to the sever
      */
     private setupSubmissionStreamForTeam(): void {
-        this.teamSyncInterval = window.setInterval(() => {
+        const teamSyncInterval = window.setInterval(() => {
             this.isChanged = !this.canDeactivate();
             if (this.isChanged) {
                 // make sure this.submission includes the newest content of the apollon editor
@@ -326,6 +328,36 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.submissionChange.next(this.submission);
             }
         }, AUTOSAVE_TEAM_EXERCISE_INTERVAL);
+
+        this.cleanup(() => clearInterval(teamSyncInterval));
+    }
+
+    /**
+     * Emits submission patches when receiving patches from the modeling editor.
+     * These patches need to be synced with other team members in team exercises.
+     * The observable through which the patches are emitted is passed to the team sync
+     * component, who then sends the patches to the server and other team members.
+     * @param patch The patch to update the submission with.
+     */
+    onModelPatch(patch: Patch) {
+        if (this.modelingExercise.teamMode) {
+            const submissionPatch = new SubmissionPatch(patch);
+            submissionPatch.participation = this.participation;
+            if (submissionPatch.participation?.exercise) {
+                submissionPatch.participation.exercise.studentParticipations = [];
+            }
+            this.submissionPatchObservable.next(Object.assign({}, submissionPatch));
+        }
+    }
+
+    /**
+     * Runs given cleanup logic when the component is destroyed.
+     * @param teardown The cleanup logic to run when the component is destroyed.
+     * @private
+     */
+    private cleanup(teardown: TeardownLogic) {
+        this.subscription ??= new Subscription();
+        this.subscription.add(teardown);
     }
 
     saveDiagram(): void {
@@ -447,6 +479,15 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.updateModelingSubmission(submission);
     }
 
+    /**
+     * This is called when the team sync component receives
+     * patches from the server. Updates the modeling editor with the received patch.
+     * @param submissionPatch
+     */
+    onReceiveSubmissionPatchFromTeam(submissionPatch: SubmissionPatch) {
+        this.modelingEditor.importPatch(submissionPatch.patch);
+    }
+
     private isModelEmpty(model?: string): boolean {
         const umlModel: UMLModel = model ? JSON.parse(model) : undefined;
         return !umlModel || !umlModel.elements || Object.values(umlModel.elements).length === 0;
@@ -455,7 +496,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     ngOnDestroy(): void {
         this.subscription?.unsubscribe();
         clearInterval(this.autoSaveInterval);
-        clearInterval(this.teamSyncInterval);
+
         if (this.automaticSubmissionWebsocketChannel) {
             this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
         }

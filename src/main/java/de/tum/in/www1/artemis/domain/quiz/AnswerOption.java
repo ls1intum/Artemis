@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -41,7 +41,7 @@ public class AnswerOption extends DomainObject implements QuizQuestionComponent<
     @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private MultipleChoiceQuestion question;
 

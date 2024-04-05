@@ -29,7 +29,7 @@ import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../../helpers/mocks/service/mock-notification.service';
-import { ConversationDto, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { User } from 'app/core/user/user.model';
 
@@ -113,7 +113,7 @@ describe('PostReactionsBarComponent', () => {
         { type: ConversationType.CHANNEL, hasChannelModerationRights: true } as ChannelDTO,
         { type: ConversationType.GROUP_CHAT, creator: { id: 99 } },
         { type: ConversationType.ONE_TO_ONE },
-    ])('should initialize user authority and reactions correctly with same user', (dto: ConversationDto) => {
+    ])('should initialize user authority and reactions correctly with same user', (dto: ConversationDTO) => {
         component.posting!.author!.id = 99;
         jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(dto);
         jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ id: 99 } as User);

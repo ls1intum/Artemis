@@ -1,7 +1,7 @@
 export {};
 
 declare global {
-    interface Array<T> {
+    export interface Array<T> {
         last(): T | undefined;
         first(): T | undefined;
 
@@ -13,33 +13,43 @@ declare global {
 }
 
 if (!Array.prototype.last) {
-    Array.prototype.last = function last<T>(): T | undefined {
-        if (!this.length) {
-            return undefined;
-        }
-        return this[this.length - 1];
-    };
+    Object.defineProperty(Array.prototype, 'last', {
+        value: function last<T>(): T | undefined {
+            if (!this.length) {
+                return undefined;
+            }
+            return this[this.length - 1];
+        },
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    });
 }
 
 if (!Array.prototype.first) {
-    Array.prototype.first = function first<T>(): T | undefined {
-        if (!this.length) {
-            return undefined;
-        }
-        return this[0];
-    };
+    Object.defineProperty(Array.prototype, 'first', {
+        value: function first<T>(): T | undefined {
+            if (!this.length) {
+                return undefined;
+            }
+            return this[0];
+        },
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    });
 }
 
 if (!Array.prototype.shuffle) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    Array.prototype.shuffle = function shuffle<T>(): void {
-        if (this.length > 1) {
+    Object.defineProperty(Array.prototype, 'shuffle', {
+        value: function shuffle(): void {
             for (let i = this.length - 1; i > 0; i--) {
-                const randomIndex = Math.floor(Math.random() * (i + 1));
-                const randomElement = this[randomIndex];
-                this[randomIndex] = this[i];
-                this[i] = randomElement;
+                const j = Math.floor(Math.random() * (i + 1));
+                [this[i], this[j]] = [this[j], this[i]]; // This is a more modern approach to swap elements.
             }
-        }
-    };
+        },
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    });
 }

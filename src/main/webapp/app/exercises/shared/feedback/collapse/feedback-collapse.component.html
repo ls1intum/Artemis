@@ -5,7 +5,7 @@
         @if (isCollapsed) {
             <div>
                 <div class="d-inline fa-angle" (click)="isCollapsed = !isCollapsed">
-                    <fa-icon [icon]="faAngleRight"></fa-icon>
+                    <fa-icon [icon]="faAngleRight" />
                     <strong> ({{ 'artemisApp.result.seeMore' | artemisTranslate }}) </strong>
                 </div>
                 <!-- Only show first line as preview -->
@@ -13,8 +13,8 @@
             </div>
         } @else {
             <div>
-                <fa-icon class="fa-angle" [icon]="faAngleDown" (click)="isCollapsed = !isCollapsed"></fa-icon>
-                <jhi-feedback-text [feedback]="feedback"></jhi-feedback-text>
+                <fa-icon class="fa-angle" [icon]="faAngleDown" (click)="isCollapsed = !isCollapsed" />
+                <jhi-feedback-text [feedback]="feedback" />
             </div>
         }
     }

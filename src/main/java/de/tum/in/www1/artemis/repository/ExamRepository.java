@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -7,9 +8,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -27,6 +29,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the ExamRepository entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ExamRepository extends JpaRepository<Exam, Long> {
 
@@ -63,21 +66,22 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                 LEFT JOIN e.examUsers registeredUsers
             WHERE e.course.id IN :courseIds
                 AND e.visibleDate <= :now
-                AND (registeredUsers.user.id = :userId
+                AND (
+                    registeredUsers.user.id = :userId
                     OR e.course.teachingAssistantGroupName IN :groupNames
                     OR e.course.editorGroupName IN :groupNames
                     OR e.course.instructorGroupName IN :groupNames
-                    OR e.testExam = true)
+                    OR e.testExam = TRUE
+                )
             """)
-    Set<Exam> findByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames,
+    Set<Exam> findByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("groupNames") Set<String> groupNames,
             @Param("now") ZonedDateTime now);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.web.rest.dto.CourseContentCount(
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.CourseContentCount(
                 COUNT(e.id),
                 e.course.id
-                )
+            )
             FROM Exam e
             WHERE e.course.id IN :courseIds
                 AND e.visibleDate <= :now
@@ -88,9 +92,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("""
             SELECT exam
             FROM Exam exam
-            WHERE exam.course.testCourse = false
-                AND exam.endDate >= :#{#date}
-            ORDER BY exam.startDate asc
+            WHERE exam.course.testCourse = FALSE
+                AND exam.endDate >= :date
+            ORDER BY exam.startDate ASC
             """)
     List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
@@ -104,7 +108,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return Page with exams
      */
     @Query("""
-            SELECT e FROM Exam e
+            SELECT e
+            FROM Exam e
             WHERE e.course.instructorGroupName IN :groups
                 AND e.visibleDate >= :fromDate
                 AND e.visibleDate <= :toDate
@@ -121,9 +126,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("""
             SELECT COUNT(exam)
             FROM Exam exam
-            WHERE exam.course.testCourse = false
-                AND exam.visibleDate >= :#{#now}
-                AND exam.endDate <= :#{#now}
+            WHERE exam.course.testCourse = FALSE
+                AND exam.visibleDate >= :now
+                AND exam.endDate <= :now
             """)
     Integer countAllActiveExams(@Param("now") ZonedDateTime now);
 
@@ -137,9 +142,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("""
             SELECT COUNT(exam)
             FROM Exam exam
-            WHERE exam.course.testCourse = false
-                AND exam.endDate >= :#{#minDate}
-                AND exam.endDate <= :#{#maxDate}
+            WHERE exam.course.testCourse = FALSE
+                AND exam.endDate >= :minDate
+                AND exam.endDate <= :maxDate
             """)
     Integer countExamsWithEndDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
@@ -154,9 +159,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             SELECT COUNT(DISTINCT examUsers.user.id)
             FROM Exam exam
             JOIN exam.examUsers examUsers
-            WHERE exam.course.testCourse = false
-                AND exam.endDate >= :#{#minDate}
-                AND exam.endDate <= :#{#maxDate}
+            WHERE exam.course.testCourse = FALSE
+                AND exam.endDate >= :minDate
+                AND exam.endDate <= :maxDate
             """)
     Integer countExamUsersInExamsWithEndDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
@@ -170,9 +175,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("""
             SELECT COUNT(exam)
             FROM Exam exam
-            WHERE exam.course.testCourse = false
-                AND exam.startDate >= :#{#minDate}
-                AND exam.startDate <= :#{#maxDate}
+            WHERE exam.course.testCourse = FALSE
+                AND exam.startDate >= :minDate
+                AND exam.startDate <= :maxDate
             """)
     Integer countExamsWithStartDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
@@ -187,9 +192,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             SELECT COUNT(DISTINCT examUsers.user.id)
             FROM Exam exam
             JOIN exam.examUsers examUsers
-            WHERE exam.course.testCourse = false
-                AND exam.startDate >= :#{#minDate}
-                AND exam.startDate <= :#{#maxDate}
+            WHERE exam.course.testCourse = FALSE
+                AND exam.startDate >= :minDate
+                AND exam.startDate <= :maxDate
             """)
     Integer countExamUsersInExamsWithStartDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
@@ -213,18 +218,18 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Optional<Exam> findWithStudentExamsExercisesById(long id);
 
     @Query("""
-                SELECT e
-                FROM Exam e
-                    LEFT JOIN FETCH e.exerciseGroups exg
-                    LEFT JOIN FETCH exg.exercises ex
-                    LEFT JOIN FETCH ex.quizQuestions
-                    LEFT JOIN FETCH ex.templateParticipation tp
-                    LEFT JOIN FETCH ex.solutionParticipation sp
-                    LEFT JOIN FETCH tp.results tpr
-                    LEFT JOIN FETCH sp.results spr
-                WHERE e.id = :examId
-                    AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
-                    AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
+            SELECT e
+            FROM Exam e
+                LEFT JOIN FETCH e.exerciseGroups exg
+                LEFT JOIN FETCH exg.exercises ex
+                LEFT JOIN FETCH ex.quizQuestions
+                LEFT JOIN FETCH ex.templateParticipation tp
+                LEFT JOIN FETCH ex.solutionParticipation sp
+                LEFT JOIN FETCH tp.results tpr
+                LEFT JOIN FETCH sp.results spr
+            WHERE e.id = :examId
+                AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
+                AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
             """)
     Optional<Exam> findWithExerciseGroupsAndExercisesAndDetailsById(@Param("examId") long examId);
 
@@ -233,7 +238,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             FROM Exam e
                 LEFT JOIN FETCH e.exerciseGroups eg
                 LEFT JOIN FETCH eg.exercises ex
-            WHERE e.course.instructorGroupName IN :#{#userGroups}
+            WHERE e.course.instructorGroupName IN :userGroups
                 AND TYPE(ex) = QuizExercise
             """)
     List<Exam> getExamsWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userGroups") List<String> userGroups);
@@ -256,9 +261,14 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return Page with search results
      */
     @Query("""
-            SELECT e FROM Exam e
+            SELECT e
+            FROM Exam e
             WHERE e.course.instructorGroupName IN :groups
-                AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
+                AND (
+                    CONCAT(e.id, '') = :searchTerm
+                    OR e.title LIKE %:searchTerm%
+                    OR e.course.title LIKE %:searchTerm%
+                )
             """)
     Page<Exam> queryBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
 
@@ -271,10 +281,15 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return Page with search results
      */
     @Query("""
-            SELECT e FROM Exam e
+            SELECT e
+            FROM Exam e
             WHERE e.course.instructorGroupName IN :groups
-                AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
                 AND e.exerciseGroups IS NOT EMPTY
+                AND (
+                    CONCAT(e.id, '') = :searchTerm
+                    OR e.title LIKE %:searchTerm%
+                    OR e.course.title LIKE %:searchTerm%
+                )
             """)
     Page<Exam> queryNonEmptyBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
 
@@ -288,7 +303,11 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("""
             SELECT e
             FROM Exam e
-                WHERE (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
+            WHERE (
+                CONCAT(e.id, '') = :searchTerm
+                OR e.title LIKE %:searchTerm%
+                OR e.course.title LIKE %:searchTerm%
+            )
             """)
     Page<Exam> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
 
@@ -302,8 +321,12 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("""
             SELECT e
             FROM Exam e
-            WHERE (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
-                AND e.exerciseGroups IS NOT EMPTY
+            WHERE e.exerciseGroups IS NOT EMPTY
+                AND (
+                    CONCAT(e.id, '') = :searchTerm
+                    OR e.title LIKE %:searchTerm%
+                    OR e.course.title LIKE %:searchTerm%
+                )
             """)
     Page<Exam> queryNonEmptyBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
 
@@ -329,7 +352,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return true if the user is registered for the exam
      */
     @Query("""
-            SELECT CASE WHEN COUNT(exam) > 0 THEN true ELSE false END
+            SELECT COUNT(exam) > 0
             FROM Exam exam
                 LEFT JOIN exam.examUsers examUsers
             WHERE exam.id = :examId
@@ -338,16 +361,16 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     boolean isUserRegisteredForExam(@Param("examId") long examId, @Param("userId") long userId);
 
     @Query("""
-            SELECT exam.id, count(registeredUsers)
+            SELECT exam.id, COUNT(registeredUsers)
             FROM Exam exam
                 LEFT JOIN exam.examUsers registeredUsers
-            WHERE exam.id in :examIds
+            WHERE exam.id IN :examIds
             GROUP BY exam.id
             """)
     List<long[]> countExamUsersByExamIds(@Param("examIds") List<Long> examIds);
 
     @Query("""
-            SELECT count(studentExam)
+            SELECT COUNT(studentExam)
             FROM StudentExam studentExam
             WHERE studentExam.testRun = FALSE
                 AND studentExam.exam.id = :examId
@@ -366,7 +389,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             WHERE e.id = :examId
             """)
     @Cacheable(cacheNames = "examTitle", key = "#examId", unless = "#result == null")
-    String getExamTitle(@Param("examId") Long examId);
+    String getExamTitle(@Param("examId") long examId);
 
     @NotNull
     default Exam findByIdElseThrow(long examId) throws EntityNotFoundException {
@@ -481,8 +504,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             WHERE e.course.id IN :courseIds
                 AND e.visibleDate <= :visible
                 AND e.endDate >= :end
-                AND e.testExam = false
+                AND e.testExam = FALSE
                 AND registeredUsers.user.id = :userId
             """)
-    Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
+    Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
 }

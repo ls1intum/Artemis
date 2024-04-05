@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.exercise;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
@@ -68,7 +66,7 @@ public class ExerciseFactory {
         exercise.setCourse(null);
         if (!(exercise instanceof QuizExercise)) {
             exercise.setGradingInstructions("Grading instructions");
-            exercise.setGradingCriteria(List.of(new GradingCriterion()));
+            exercise.setGradingCriteria(Set.of(new GradingCriterion()));
         }
         return exercise;
     }
@@ -105,10 +103,10 @@ public class ExerciseFactory {
      * @param criterion                The grading criterion of the instructions.
      * @param numberOfTestInstructions The number of instructions that should be created.
      * @param usageCount               The usage count of each instruction.
-     * @return List of generated grading instructions.
+     * @return Set of generated grading instructions.
      */
-    public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
-        var instructions = new ArrayList<GradingInstruction>();
+    public static Set<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
+        var instructions = new HashSet<GradingInstruction>();
         while (numberOfTestInstructions > 0) {
             var exampleInstruction1 = new GradingInstruction();
             exampleInstruction1.setGradingCriterion(criterion);

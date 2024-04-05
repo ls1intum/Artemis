@@ -15,29 +15,29 @@
 @if (student && studentExam) {
     <div>
         <div class="mb-3">
-            <h5><span jhiTranslate="artemisApp.studentExamDetail.student">Student</span></h5>
+            <h5><span jhiTranslate="artemisApp.studentExamDetail.student"></span></h5>
             <ol class="list-without-numeration ms-4">
                 <li>
-                    <strong jhiTranslate="artemisApp.studentExamDetail.name">Name:</strong>
+                    <strong jhiTranslate="artemisApp.studentExamDetail.name"></strong>
                     {{ student.name }}
                 </li>
                 <li>
-                    <strong jhiTranslate="artemisApp.studentExamDetail.login">Login:</strong>
+                    <strong jhiTranslate="artemisApp.studentExamDetail.login"></strong>
                     {{ student.login }}
                 </li>
                 <li>
-                    <strong jhiTranslate="artemisApp.studentExamDetail.email">Email:</strong>
+                    <strong jhiTranslate="artemisApp.studentExamDetail.email"></strong>
                     {{ student.email }}
                 </li>
                 <li>
-                    <strong jhiTranslate="artemisApp.studentExamDetail.matriculationNumber">Matriculation number:</strong>
+                    <strong jhiTranslate="artemisApp.studentExamDetail.matriculationNumber"></strong>
                     {{ student.visibleRegistrationNumber }}
                 </li>
             </ol>
         </div>
         @if (!isTestExam) {
             <div class="mb-3">
-                <h5 jhiTranslate="artemisApp.studentExams.workingTime">Working time</h5>
+                <h5 jhiTranslate="artemisApp.studentExams.workingTime"></h5>
                 <form #form="ngForm" (ngSubmit)="saveWorkingTime()" class="ms-4">
                     <jhi-working-time-control
                         name="workingTime"
@@ -56,21 +56,21 @@
                         </p>
                     }
                     <button id="save" type="submit" class="btn btn-primary mt-2" [disabled]="!form.valid || isWorkingTimeFormDisabled">
-                        <fa-icon [icon]="faSave"></fa-icon>
-                        <span jhiTranslate="entity.action.save">Save</span>
+                        <fa-icon [icon]="faSave" />
+                        <span jhiTranslate="entity.action.save"></span>
                     </button>
                 </form>
             </div>
         }
         @if (isTestExam) {
             <div class="mb-3">
-                <h5 jhiTranslate="artemisApp.studentExams.workingTime">Working time</h5>
-                <span jhiTranslate="artemisApp.studentExams.usedWorkingTime">Used working time</span>:
-                <jhi-testexam-working-time [studentExam]="studentExam"></jhi-testexam-working-time>
+                <h5 jhiTranslate="artemisApp.studentExams.workingTime"></h5>
+                <span jhiTranslate="artemisApp.studentExams.usedWorkingTime"></span>:
+                <jhi-testexam-working-time [studentExam]="studentExam" />
             </div>
         }
         <div class="mb-3">
-            <h5><span jhiTranslate="artemisApp.studentExams.participationStatus">Participation state</span></h5>
+            <h5><span jhiTranslate="artemisApp.studentExams.participationStatus"></span></h5>
             <div class="me-2 ms-4">
                 <ol class="list-without-numeration">
                     <li>
@@ -133,24 +133,22 @@
             <div class="modal-header">
                 <h4 class="modal-title">
                     @if (studentExam.submitted) {
-                        <span jhiTranslate="artemisApp.studentExams.confirmDialog.titleToUnsubmitted">Change Student Exam to Unsubmitted</span>
+                        <span jhiTranslate="artemisApp.studentExams.confirmDialog.titleToUnsubmitted"></span>
                     } @else {
                         @if (!studentExam.submitted) {
-                            <span jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted">Change Student Exam to Submitted</span>
+                            <span jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted"></span>
                         }
                     }
                 </h4>
                 <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
             </div>
             <div class="modal-body">
-                <p jhiTranslate="artemisApp.studentExams.confirmDialog.question">Are you sure you want to change the submission state?</p>
+                <p jhiTranslate="artemisApp.studentExams.confirmDialog.question"></p>
                 @if (!studentExam.submitted) {
-                    <p jhiTranslate="artemisApp.studentExams.confirmDialog.submitText">
-                        This will set the submission date of the exam to this moment, and set the submitted status to 'Yes'. Un-submitting the student exam later is possible.
-                    </p>
+                    <p jhiTranslate="artemisApp.studentExams.confirmDialog.submitText"></p>
                 } @else {
-                    <p jhiTranslate="artemisApp.studentExams.confirmDialog.unSubmitText">This will remove the submission date and set the submitted status to 'No'.</p>
-                    <p jhiTranslate="artemisApp.studentExams.confirmDialog.warningRemove">Recovering those after the deletion is not possible!</p>
+                    <p jhiTranslate="artemisApp.studentExams.confirmDialog.unSubmitText"></p>
+                    <p jhiTranslate="artemisApp.studentExams.confirmDialog.warningRemove"></p>
                 }
             </div>
             <div class="modal-footer">
@@ -163,60 +161,48 @@
                 </button>
             </div>
         </ng-template>
-        @if (course?.isAtLeastInstructor && isExamOver) {
-            <button class="btn btn-danger mb-3" type="button" (click)="openConfirmationModal(toggleSubmitPopUp)" [disabled]="isSaving">
-                @if (!studentExam.submitted) {
-                    <span jhiTranslate="entity.action.toggleToSubmitted"></span>
-                }
-                @if (studentExam.submitted) {
-                    <span jhiTranslate="entity.action.toggleToUnsubmitted"></span>
-                }
-            </button>
-        }
         <div class="mb-3">
-            <h5><span jhiTranslate="artemisApp.studentExams.summary">Student Summary</span></h5>
+            <h5><span jhiTranslate="artemisApp.studentExams.summary"></span></h5>
             <div class="d-flex flex-row">
                 @if (course?.isAtLeastInstructor) {
                     <a class="btn btn-primary summery ms-4" [routerLink]="'./summary'">
-                        <span jhiTranslate="artemisApp.exam.summary">Summary</span>
+                        <span jhiTranslate="artemisApp.exam.summary"></span>
                     </a>
-                }
-                @if (course?.isAtLeastInstructor) {
                     <div ngbTooltip="{{ 'artemisApp.examTimeline.disabledTooltip' | artemisTranslate }}" [disableTooltip]="studentExam?.submitted!">
                         <button class="btn btn-primary mb-auto ms-5" [routerLink]="'./exam-timeline'" [disabled]="!studentExam.submitted">
-                            <span jhiTranslate="artemisApp.examTimeline.breadcrumb">Timeline</span>
+                            <span jhiTranslate="artemisApp.examTimeline.breadcrumb"></span>
                         </button>
                     </div>
                 }
             </div>
         </div>
         <div class="mb-3 mt-3">
-            <h5><span jhiTranslate="artemisApp.studentExams.examSessions">Sessions</span></h5>
+            <h5><span jhiTranslate="artemisApp.studentExams.examSessions"></span></h5>
             @if (studentExam.examSessions && studentExam.examSessions.length > 0) {
                 <div class="exam-session-table-wrapper">
                     <table class="table table-striped">
                         <thead>
                             <tr>
                                 <th class="d-md-table-cell">
-                                    <span jhiTranslate="artemisApp.examSession.id">ID</span>
+                                    <span jhiTranslate="artemisApp.examSession.id"></span>
                                 </th>
                                 <th>
-                                    <span jhiTranslate="artemisApp.examSession.sessionToken">Token</span>
+                                    <span jhiTranslate="artemisApp.examSession.sessionToken"></span>
                                 </th>
                                 <th class="user-agent">
-                                    <span jhiTranslate="artemisApp.examSession.userAgent">User Agent</span>
+                                    <span jhiTranslate="artemisApp.examSession.userAgent"></span>
                                 </th>
                                 <th>
-                                    <span jhiTranslate="artemisApp.examSession.browserFingerprintHash">Browser Fingerprint</span>
+                                    <span jhiTranslate="artemisApp.examSession.browserFingerprintHash"></span>
                                 </th>
                                 <th>
-                                    <span jhiTranslate="artemisApp.examSession.instanceId">Browser Instance ID</span>
+                                    <span jhiTranslate="artemisApp.examSession.instanceId"></span>
                                 </th>
                                 <th>
-                                    <span jhiTranslate="artemisApp.examSession.ipAddress">IP Address</span>
+                                    <span jhiTranslate="artemisApp.examSession.ipAddress"></span>
                                 </th>
                                 <th>
-                                    <span jhiTranslate="artemisApp.examSession.createdDate">Created Date</span>
+                                    <span jhiTranslate="artemisApp.examSession.createdDate"></span>
                                 </th>
                             </tr>
                         </thead>
@@ -236,40 +222,40 @@
                     </table>
                 </div>
             } @else {
-                <div jhiTranslate="artemisApp.studentExamDetail.noSessions" class="ms-4">No sessions</div>
+                <div jhiTranslate="artemisApp.studentExamDetail.noSessions" class="ms-4"></div>
             }
         </div>
         <div class="mb-3 mt-3">
-            <h5 jhiTranslate="artemisApp.studentExamDetail.exercises">Exercises</h5>
+            <h5 jhiTranslate="artemisApp.studentExamDetail.exercises"></h5>
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th class="d-md-table-cell">
-                            <span jhiTranslate="artemisApp.studentExamDetail.id">ID</span>
+                            <span jhiTranslate="artemisApp.studentExamDetail.id"></span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.studentExamDetail.type">Type</span>
+                            <span jhiTranslate="artemisApp.studentExamDetail.type"></span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.studentExamDetail.title">Title</span>
+                            <span jhiTranslate="artemisApp.studentExamDetail.title"></span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.studentExamDetail.result">Your points</span>
+                            <span jhiTranslate="artemisApp.studentExamDetail.result"></span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.exam.examSummary.points.maxPoints">Achievable points</span>
+                            <span jhiTranslate="artemisApp.exam.examSummary.points.maxPoints"></span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.exam.examSummary.points.maxBonus">Achievable bonus points</span>
+                            <span jhiTranslate="artemisApp.exam.examSummary.points.maxBonus"></span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.studentExamDetail.reviewer">Reviewer</span>
+                            <span jhiTranslate="artemisApp.studentExamDetail.reviewer"></span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.studentExamDetail.hasComplaint">Has Complaint</span>
+                            <span jhiTranslate="artemisApp.studentExamDetail.hasComplaint"></span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</span>
+                            <span jhiTranslate="artemisApp.assessment.dashboard.columns.action"></span>
                         </th>
                     </tr>
                 </thead>
@@ -290,7 +276,7 @@
                         <td></td>
                         <td></td>
                         <td class="align-middle">
-                            <span class="text-decoration-underline" jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Points</span>
+                            <span class="text-decoration-underline" jhiTranslate="artemisApp.examScores.overallPointsColumn"></span>
                         </td>
                         <td class="align-middle">
                             <u> {{ achievedTotalPoints }} </u>

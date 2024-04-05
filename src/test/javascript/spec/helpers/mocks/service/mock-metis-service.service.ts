@@ -8,8 +8,8 @@ import { ContextInformation, PageType, PostContextFilter, RouteComponents } from
 import { Course } from 'app/entities/course.model';
 import { Params } from '@angular/router';
 import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
-import { ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 
 let pageType: PageType;
 
@@ -40,7 +40,7 @@ export class MockMetisService {
         pageType = newPageType;
     }
 
-    getCurrentConversation(): ConversationDto | undefined {
+    getCurrentConversation(): ConversationDTO | undefined {
         return this.currentConversation;
     }
 
@@ -115,7 +115,7 @@ export class MockMetisService {
     getContextInformation(post: Post): ContextInformation {
         const routerLinkComponents = ['/courses', post.conversation?.course?.id ?? 1, 'messages'];
         const queryParams = { conversationId: post.conversation?.id };
-        const displayName = getAsChannelDto(post.conversation)?.name ?? 'some context';
+        const displayName = getAsChannelDTO(post.conversation)?.name ?? 'some context';
         return { routerLinkComponents, displayName, queryParams };
     }
 

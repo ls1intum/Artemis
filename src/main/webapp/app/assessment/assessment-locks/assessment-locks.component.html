@@ -14,12 +14,12 @@
                 <thead>
                     <tr>
                         <th class="th-link">Id</th>
-                        <th class="th-link" jhiTranslate="artemisApp.assessment.locks.type">Type</th>
-                        <th class="th-link" jhiTranslate="artemisApp.assessment.locks.exercise">Exercise</th>
-                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</th>
-                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</th>
-                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</th>
-                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</th>
+                        <th class="th-link" jhiTranslate="artemisApp.assessment.locks.type"></th>
+                        <th class="th-link" jhiTranslate="artemisApp.assessment.locks.exercise"></th>
+                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate"></th>
+                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount"></th>
+                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score"></th>
+                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -31,13 +31,13 @@
                                     [icon]="getIcon(submission.participation!.exercise!.type)"
                                     placement="right auto"
                                     [ngbTooltip]="getIconTooltip(submission.participation!.exercise!.type) | artemisTranslate"
-                                ></fa-icon>
+                                />
                             </td>
                             <td>{{ submission.participation!.exercise!.title || '' }}</td>
                             <td>{{ submission.submissionDate | artemisDate: 'long-date' }}</td>
                             <td>{{ submission.participation!.submissions ? submission.participation!.submissions.length : 0 }}</td>
                             <td>
-                                @if (submission.latestResult?.score != undefined) {
+                                @if (submission.latestResult?.score !== undefined) {
                                     <span>{{ submission.latestResult!.score }}%</span>
                                 }
                             </td>
@@ -58,9 +58,7 @@
                                             ]"
                                             class="btn btn-outline-secondary btn-sm mb-1"
                                         >
-                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>&nbsp;{{
-                                                'artemisApp.assessment.dashboard.actions.open' | artemisTranslate
-                                            }}
+                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                                         </a>
                                     }
                                     @if (submission.participation!.exercise!.type !== ExerciseType.TEXT) {
@@ -76,16 +74,14 @@
                                             ]"
                                             class="btn btn-outline-secondary btn-sm mb-1"
                                         >
-                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>&nbsp;{{
-                                                'artemisApp.assessment.dashboard.actions.open' | artemisTranslate
-                                            }}
+                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                                         </a>
                                     }
                                 </span>
                                 <span>
                                     @if (!submission.latestResult!.completionDate) {
                                         <button (click)="cancelAssessment(submission)" class="btn btn-outline-secondary btn-sm mb-1">
-                                            <fa-icon [icon]="faBan" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
+                                            <fa-icon [icon]="faBan" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
                                         </button>
                                     }
                                 </span>
@@ -99,6 +95,6 @@
 }
 @if (submissions.length === 0) {
     <div style="margin-top: 10px">
-        <p jhiTranslate="artemisApp.assessment.locks.empty">No Assessments locked by you!</p>
+        <p jhiTranslate="artemisApp.assessment.locks.empty"></p>
     </div>
 }

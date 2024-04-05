@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import static de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType.*;
+import static de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType.CLEAN;
+import static de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType.CONFLICT;
+import static de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType.UNCOMMITTED_CHANGES;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
@@ -13,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
@@ -21,12 +23,14 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.File;
+import de.tum.in.www1.artemis.domain.FileType;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -147,13 +151,7 @@ public abstract class RepositoryResource {
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
-            byte[] out = repositoryService.getFile(repository, filename);
-            HttpHeaders responseHeaders = new HttpHeaders();
-            var contentType = repositoryService.getFileType(repository, filename);
-            responseHeaders.add("Content-Type", contentType);
-            // Prevent the file from being interpreted as HTML by the browser when opened directly:
-            responseHeaders.setContentDisposition(ContentDisposition.builder("attachment").filename(filename).build());
-            return new ResponseEntity<>(out, responseHeaders, HttpStatus.OK);
+            return repositoryService.getFileFromRepository(filename, repository);
         });
     }
 
@@ -263,9 +261,9 @@ public abstract class RepositoryResource {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
             repositoryService.commitChanges(repository, user);
             // Trigger a build, and process the result. Only implemented for local CI.
-            // For Bitbucket + Bamboo and GitLab + Jenkins, webhooks were added when creating the repository,
+            // For GitLab + Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
-            if (profileService.isLocalVcsCi()) {
+            if (profileService.isLocalVcsCiActive()) {
                 localVCServletService.orElseThrow().processNewPush(null, repository);
             }
             return new ResponseEntity<>(HttpStatus.OK);

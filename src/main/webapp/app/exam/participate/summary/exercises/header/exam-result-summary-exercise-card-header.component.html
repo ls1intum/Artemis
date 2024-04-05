@@ -3,7 +3,7 @@
         <h5 class="mb-0" [id]="'exercise-group-title-' + exercise.id">
             #{{ index + 1 }} &nbsp;
             @if (exercise?.type && exerciseInfo?.icon) {
-                <fa-icon [icon]="exerciseInfo!.icon"></fa-icon>
+                <fa-icon [icon]="exerciseInfo!.icon" />
             }
             &nbsp;
             {{ exercise.exerciseGroup?.title }}
@@ -14,7 +14,7 @@
                     [{{ exerciseInfo?.achievedPoints }} / {{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
                     <div style="margin-left: 1em">
                         @if (exerciseInfo?.resultIconClass) {
-                            <fa-icon [ngClass]="exerciseInfo?.colorClass" [icon]="exerciseInfo?.resultIconClass!" size="lg"></fa-icon>
+                            <fa-icon [ngClass]="exerciseInfo?.colorClass" [icon]="exerciseInfo?.resultIconClass!" size="lg" />
                         }
                         @if (exerciseInfo?.achievedPercentage !== undefined) {
                             <span [class]="exerciseInfo!.colorClass"> {{ exerciseInfo!.achievedPercentage }}% </span>
@@ -28,7 +28,7 @@
     </div>
     @if (exercise.studentParticipations?.[0]?.submissions?.[0]?.type === SUBMISSION_TYPE_ILLEGAL) {
         <div>
-            <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
+            <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"></span>
         </div>
     }
 </div>

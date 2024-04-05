@@ -66,6 +66,7 @@
             "startDate": "Start",
             "endDate": "End",
             "semester": "Semester",
+            "ltiConfiguration": "LTI Configuration",
             "recentlyAccessed": "Recently accessed",
             "maxPoints": {
                 "title": "Maximum number of points for course",
@@ -83,6 +84,10 @@
             "learningPaths": {
                 "label": "Learning Paths Enabled",
                 "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
+            },
+            "restrictedAthenaModulesAccess": {
+                "label": "Access to Restricted Athena Modules Enabled",
+                "tooltip": "If this option is selected, the course's exercises can also use restricted Athena modules for feedback generation."
             },
             "onlineCourse": {
                 "title": "Online Course",
@@ -122,6 +127,7 @@
             "exercise": {
                 "search": {
                     "searchButton": "Search",
+                    "searchPlaceholder": "Search...",
                     "resetButton": "Reset",
                     "toggleButton": {
                         "true": "Hide Advanced Search",
@@ -208,6 +214,12 @@
             },
             "detail": {
                 "title": "Course Details:",
+                "sections": {
+                    "general": "General Information",
+                    "mode": "Mode",
+                    "enrollment": "Enrollment",
+                    "messaging": "Messages & Communication"
+                },
                 "assessmentsTitle": "Total Assessments",
                 "complaintsTitle": "Total Complaints",
                 "moreFeedbackTitle": "More Feedback Requests",

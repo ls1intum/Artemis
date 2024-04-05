@@ -3,10 +3,10 @@
         <div class="notification-text">
             <span class="notification-title">
                 @if ((notification.type || INFO) === INFO) {
-                    <fa-icon [icon]="faInfoCircle" class="left-slide-in"></fa-icon>
+                    <fa-icon [icon]="faInfoCircle" class="left-slide-in" />
                 }
                 @if (notification.type === WARNING) {
-                    <fa-icon [icon]="faExclamationTriangle" class="left-slide-in"></fa-icon>
+                    <fa-icon [icon]="faExclamationTriangle" class="left-slide-in" />
                 }
                 <span class="left-slide-in"
                     >{{ notification.title }}
@@ -17,6 +17,6 @@
             </span>
             <span class="notification-content left-slide-in">{{ notification.text }}</span>
         </div>
-        <fa-icon class="notification-close" [icon]="faTimes" (click)="close(notification)"></fa-icon>
+        <fa-icon class="notification-close" [icon]="faTimes" (click)="close(notification)" />
     </div>
 }

@@ -1,9 +1,9 @@
-<h4 jhiTranslate="metrics.jvm.memory.title">Memory</h4>
+<h4 jhiTranslate="metrics.jvm.memory.title"></h4>
 @if (!updating && jvmMemoryMetrics) {
     <div>
         @for (entry of jvmMemoryMetrics | keyvalue; track entry) {
             <div>
-                @if (entry.value.max != -1) {
+                @if (entry.value.max !== -1) {
                     <span>
                         <span>{{ entry.key }}</span>
                         ({{ entry.value.used / 1048576 | number: '1.0-0' }}M / {{ entry.value.max / 1048576 | number: '1.0-0' }}M)
@@ -14,7 +14,7 @@
                     >
                 }
                 <div>Committed : {{ entry.value.committed / 1048576 | number: '1.0-0' }}M</div>
-                @if (entry.value.max != -1) {
+                @if (entry.value.max !== -1) {
                     <ngb-progressbar type="success" [value]="(100 * entry.value.used) / entry.value.max" [striped]="true" [animated]="false">
                         <span>{{ (entry.value.used * 100) / entry.value.max | number: '1.0-0' }}%</span>
                     </ngb-progressbar>

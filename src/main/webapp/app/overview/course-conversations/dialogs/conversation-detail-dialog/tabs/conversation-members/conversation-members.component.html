@@ -4,7 +4,7 @@
             <div class="col-auto">
                 @if (canAddUsersToConversation(activeConversation)) {
                     <button type="button" class="btn btn-outline-secondary addUsers" (click)="openAddUsersDialog($event)">
-                        <fa-icon [icon]="faUserPlus"></fa-icon>
+                        <fa-icon [icon]="faUserPlus" />
                         {{ 'artemisApp.dialogs.conversationDetail.memberTab.addUsers' | artemisTranslate }}
                     </button>
                 }
@@ -14,7 +14,7 @@
             <div class="col-8">
                 <div class="input-group">
                     <span class="input-group-text">
-                        <fa-icon [icon]="faMagnifyingGlass" size="xs"></fa-icon>
+                        <fa-icon [icon]="faMagnifyingGlass" size="xs" />
                     </span>
                     <input
                         (input)="onSearchQueryInput($event)"
@@ -68,7 +68,7 @@
                 </div>
                 <div class="col-12">
                     <div class="d-flex justify-content-center">
-                        <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
+                        <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
                     </div>
                     <div class="d-flex justify-content-center">
                         <ngb-pagination
@@ -79,7 +79,7 @@
                             [rotate]="true"
                             [boundaryLinks]="true"
                             (pageChange)="transition()"
-                        ></ngb-pagination>
+                        />
                     </div>
                 </div>
             </div>

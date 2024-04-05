@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -10,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +34,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing Course.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/admin/")
 public class AdminCourseResource {
@@ -54,10 +58,8 @@ public class AdminCourseResource {
 
     private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
 
-    private final FilePathService filePathService;
-
     public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, ChannelService channelService, FilePathService filePathService) {
+            FileService fileService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, ChannelService channelService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -65,7 +67,6 @@ public class AdminCourseResource {
         this.fileService = fileService;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.channelService = channelService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -129,8 +130,8 @@ public class AdminCourseResource {
 
         if (file != null) {
             Path basePath = FilePathService.getCourseIconFilePath();
-            Path savePath = fileService.saveFile(file, basePath);
-            createdCourse.setCourseIcon(filePathService.publicPathForActualPathOrThrow(savePath, createdCourse.getId()).toString());
+            Path savePath = fileService.saveFile(file, basePath, false);
+            createdCourse.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, createdCourse.getId()).toString());
             createdCourse = courseRepository.save(createdCourse);
         }
 
@@ -158,7 +159,7 @@ public class AdminCourseResource {
 
         courseService.delete(course);
         if (course.getCourseIcon() != null) {
-            fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())), 0);
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())), 0);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
     }

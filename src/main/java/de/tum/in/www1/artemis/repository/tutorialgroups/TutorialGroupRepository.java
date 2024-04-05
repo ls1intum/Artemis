@@ -1,24 +1,24 @@
 package de.tum.in.www1.artemis.repository.tutorialgroups;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.transaction.Transactional;
-
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Repository
 public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Long> {
 
@@ -26,7 +26,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
                 LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel
-            WHERE tutorialGroup.id = :#{#tutorialGroupId}
+            WHERE tutorialGroup.id = :tutorialGroupId
             """)
     Optional<TutorialGroup> getTutorialGroupWithChannel(@Param("tutorialGroupId") Long tutorialGroupId);
 
@@ -41,28 +41,34 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     @Query("""
             SELECT DISTINCT tutorialGroup.campus
             FROM TutorialGroup tutorialGroup
-            WHERE tutorialGroup.course.instructorGroupName IN (:#{#userGroups}) AND tutorialGroup.campus IS NOT NULL""")
+            WHERE tutorialGroup.course.instructorGroupName IN :userGroups
+                AND tutorialGroup.campus IS NOT NULL
+            """)
     Set<String> findAllUniqueCampusValuesInRegisteredCourse(@Param("userGroups") Set<String> userGroups);
 
     @Query("""
             SELECT DISTINCT tutorialGroup.language
             FROM TutorialGroup tutorialGroup
-            WHERE tutorialGroup.course.instructorGroupName IN (:#{#userGroups}) AND tutorialGroup.language IS NOT NULL""")
+            WHERE tutorialGroup.course.instructorGroupName IN :userGroups
+                AND tutorialGroup.language IS NOT NULL
+            """)
     Set<String> findAllUniqueLanguageValuesInRegisteredCourse(@Param("userGroups") Set<String> userGroups);
 
     @Query("""
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
-            WHERE tutorialGroup.course.id = :#{#courseId}
-            ORDER BY tutorialGroup.title""")
+            WHERE tutorialGroup.course.id = :courseId
+            ORDER BY tutorialGroup.title
+            """)
     Set<TutorialGroup> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
-            LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel
-            WHERE tutorialGroup.course.id = :#{#courseId}
-            ORDER BY tutorialGroup.title""")
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel
+            WHERE tutorialGroup.course.id = :courseId
+            ORDER BY tutorialGroup.title
+            """)
     Set<TutorialGroup> findAllByCourseIdWithChannel(@Param("courseId") Long courseId);
 
     boolean existsByTitleAndCourse(String title, Course course);
@@ -88,7 +94,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
                 LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
                 LEFT JOIN FETCH tutorialGroup.tutorialGroupSchedule
                 LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel
-            WHERE tutorialGroup.course.id = :#{#courseId}
+            WHERE tutorialGroup.course.id = :courseId
             ORDER BY tutorialGroup.title
             """)
     Set<TutorialGroup> findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(@Param("courseId") Long courseId);
@@ -101,45 +107,38 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
                 LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
                 LEFT JOIN FETCH tutorialGroup.tutorialGroupSchedule
                 LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel
-            WHERE tutorialGroup.id = :#{#tutorialGroupId}
+            WHERE tutorialGroup.id = :tutorialGroupId
             """)
     Optional<TutorialGroup> findByIdWithTeachingAssistantAndRegistrationsAndSessions(@Param("tutorialGroupId") long tutorialGroupId);
 
     @Query("""
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
-            LEFT JOIN FETCH tutorialGroup.teachingAssistant
-            LEFT JOIN FETCH tutorialGroup.course
-            WHERE tutorialGroup.id = :#{#tutorialGroupId}
+                LEFT JOIN FETCH tutorialGroup.teachingAssistant
+                LEFT JOIN FETCH tutorialGroup.course
+            WHERE tutorialGroup.id = :tutorialGroupId
             """)
     Optional<TutorialGroup> findByIdWithTeachingAssistantAndCourse(@Param("tutorialGroupId") long tutorialGroupId);
 
     @Query("""
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
-            LEFT JOIN FETCH tutorialGroup.teachingAssistant
-            LEFT JOIN FETCH tutorialGroup.registrations
-            WHERE tutorialGroup.title = :#{#title}
-            AND tutorialGroup.course.id = :#{#courseId}
+                LEFT JOIN FETCH tutorialGroup.teachingAssistant
+                LEFT JOIN FETCH tutorialGroup.registrations
+            WHERE tutorialGroup.title = :title
+                AND tutorialGroup.course.id = :courseId
             """)
-    Optional<TutorialGroup> findByTitleAndCourseIdWithTeachingAssistantAndRegistrations(String title, Long courseId);
+    Optional<TutorialGroup> findByTitleAndCourseIdWithTeachingAssistantAndRegistrations(@Param("title") String title, @Param("courseId") Long courseId);
 
     Optional<TutorialGroup> findByTutorialGroupChannelId(Long channelId);
 
     boolean existsByTitleAndCourseId(String title, Long courseId);
 
-    Set<TutorialGroup> findAllByTeachingAssistant(User teachingAssistant);
-
-    @Transactional
-    @Modifying
-    // ok because of delete
-    void deleteAllByCourse(Course course);
-
     @Query("""
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
-            LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
-            WHERE tutorialGroup.id = :#{#tutorialGroupId}
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
+            WHERE tutorialGroup.id = :tutorialGroupId
             """)
     Optional<TutorialGroup> findByIdWithSessions(@Param("tutorialGroupId") long tutorialGroupId);
 

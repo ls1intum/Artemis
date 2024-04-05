@@ -1,84 +1,91 @@
 <form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
-    <div class="d-flex align-items-center">
-        <div>
-            @if (!modelingExercise.id) {
-                <h2 id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create a new Modeling Exercise</h2>
-            }
-            @if (!isImport && modelingExercise.id) {
-                <h2 id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel">Edit a Modeling Exercise</h2>
-            }
-            @if (isImport) {
-                <h2 id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel">Import Modeling Exercise</h2>
-            }
-        </div>
-        <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+    <div class="d-flex align-items-center gap-2">
+        @if (!modelingExercise.id) {
+            <h2 id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel"></h2>
+        } @else if (!isImport && modelingExercise.id) {
+            <h2 id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel"></h2>
+        } @else if (isImport) {
+            <h2 id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel"></h2>
+        }
+        <jhi-documentation-button [type]="documentationType" />
     </div>
-    <hr />
+    <jhi-form-status-bar [formStatusSections]="formSectionStatus" />
     <div>
-        <h3 jhiTranslate="artemisApp.exercise.sections.general">General Information</h3>
-        <div class="form-group" [hidden]="!modelingExercise.id">
-            <label for="id" jhiTranslate="global.field.id">ID</label>
-            <input type="text" class="form-control" id="id" name="id" [(ngModel)]="modelingExercise.id" readonly />
-        </div>
-        <jhi-exercise-title-channel-name
-            [exercise]="modelingExercise"
-            [course]="modelingExercise.course"
-            [isExamMode]="isExamMode"
-            [isImport]="isImport"
-        ></jhi-exercise-title-channel-name>
+        <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general"></h3>
+        <jhi-exercise-title-channel-name [exercise]="modelingExercise" [course]="modelingExercise.course" [isExamMode]="isExamMode" [isImport]="isImport" />
         @if (!isExamMode) {
             <div class="form-group position-relative">
-                <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
-                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
+                <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
+                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
                 <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
             </div>
         }
-        <h3 jhiTranslate="artemisApp.exercise.sections.mode">Mode</h3>
+        <hr class="mb-5" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.mode" id="artemisApp.exercise.sections.mode"></h3>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
             <div>
-                <jhi-difficulty-picker [exercise]="modelingExercise" id="modeling-difficulty-picker"></jhi-difficulty-picker>
+                <jhi-difficulty-picker [exercise]="modelingExercise" id="modeling-difficulty-picker" />
             </div>
         </div>
-        <jhi-team-config-form-group class="form-element" [exercise]="modelingExercise" [isImport]="isImport"></jhi-team-config-form-group>
-        <h3 jhiTranslate="artemisApp.exercise.sections.problem">Problem Statement</h3>
+        <jhi-team-config-form-group class="form-element" [exercise]="modelingExercise" [isImport]="isImport" />
+        <hr class="mb-5" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
         <div class="form-group" name="problemStatement" id="field_problemStatement">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement"></label>
             <jhi-markdown-editor
                 class="markdown-editor background-editor-color"
                 [domainCommands]="domainCommandsProblemStatement"
                 [(markdown)]="modelingExercise.problemStatement"
+                (markdownChange)="calculateFormSectionStatus()"
                 [editorMode]="EditorMode.LATEX"
-            ></jhi-markdown-editor>
+            />
         </div>
-        <h3 jhiTranslate="artemisApp.exercise.sections.solution">Example Solution</h3>
+        @if (!isExamMode) {
+            <div class="form-group">
+                <jhi-competency-selection
+                    id="competencies"
+                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                    [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+                    [(ngModel)]="modelingExercise.competencies"
+                    name="competencies"
+                />
+            </div>
+        }
+        <hr class="mb-5" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution"></h3>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolution">Example Solution</label>
-            <jhi-modeling-editor [diagramType]="modelingExercise.diagramType" [umlModel]="exampleSolution" [withExplanation]="false"></jhi-modeling-editor>
+            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolution"></label>
+            <jhi-modeling-editor
+                [diagramType]="modelingExercise.diagramType"
+                [umlModel]="exampleSolution"
+                (onModelChanged)="calculateFormSectionStatus()"
+                [withExplanation]="false"
+            />
         </div>
         @if (!isImport) {
             <div class="form-group" name="exampleSolutionExplanation" id="field_exampleSolutionExplanation">
-                <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolutionExplanation" for="field_exampleSolutionExplanation">
-                    Example Solution Explanation
-                </label>
+                <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolutionExplanation" for="field_exampleSolutionExplanation"></label>
                 <jhi-markdown-editor
                     class="markdown-editor background-editor-color"
                     [domainCommands]="domainCommandsSampleSolution"
                     [(markdown)]="modelingExercise.exampleSolutionExplanation"
+                    (markdownChange)="calculateFormSectionStatus()"
                     [editorMode]="EditorMode.LATEX"
-                ></jhi-markdown-editor>
+                />
             </div>
         }
         @if (!isExamMode) {
             <div class="form-group">
                 <jhi-date-time-picker
+                    #solutionPublicationDate
                     class="form-element"
                     name="exampleSolutionPublicationDate"
                     labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
                     [(ngModel)]="modelingExercise.exampleSolutionPublicationDate"
                     [error]="modelingExercise.exampleSolutionPublicationDateError!"
                     (valueChange)="validateDate()"
-                ></jhi-date-time-picker>
+                />
                 @if (modelingExercise.exampleSolutionPublicationDateError) {
                     <span class="invalid-feedback">
                         {{ 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate }}
@@ -86,11 +93,13 @@
                 }
             </div>
         }
-        <h3 jhiTranslate="artemisApp.exercise.sections.grading">Grading</h3>
+        <hr class="mb-5" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
         @if (!isExamMode) {
             <div class="d-flex">
                 <div class="form-group flex-grow-1">
                     <jhi-date-time-picker
+                        #releaseDate
                         class="form-element"
                         id="pick-releaseDate"
                         labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
@@ -98,10 +107,11 @@
                         (valueChange)="validateDate()"
                         [error]="false"
                         name="releaseDate"
-                    ></jhi-date-time-picker>
+                    />
                 </div>
                 <div class="form-group flex-grow-1 ms-3">
                     <jhi-date-time-picker
+                        #startDate
                         class="form-element"
                         id="pick-startDate"
                         name="startDate"
@@ -109,7 +119,7 @@
                         labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
                         [(ngModel)]="modelingExercise.startDate"
-                    ></jhi-date-time-picker>
+                    />
                     @if (modelingExercise.startDateError) {
                         <span class="invalid-feedback">{{ 'artemisApp.exercise.startDateError' | artemisTranslate }}</span>
                     }
@@ -120,6 +130,7 @@
             <div class="d-flex">
                 <div class="form-group flex-grow-1">
                     <jhi-date-time-picker
+                        #dueDate
                         class="form-element"
                         id="pick-dueDate"
                         name="dueDate"
@@ -127,13 +138,14 @@
                         labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
                         [(ngModel)]="modelingExercise.dueDate"
-                    ></jhi-date-time-picker>
+                    />
                     @if (modelingExercise.dueDateError) {
                         <span class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
                     }
                 </div>
                 <div class="form-group flex-grow-1 ms-3">
                     <jhi-date-time-picker
+                        #assessmentDueDate
                         class="form-element"
                         id="pick-assessmentDueDate"
                         name="assessmentDueDate"
@@ -141,7 +153,7 @@
                         labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
                         [(ngModel)]="modelingExercise.assessmentDueDate"
-                    ></jhi-date-time-picker>
+                    />
                     @if (modelingExercise.assessmentDueDateError) {
                         <span class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
                     }
@@ -158,13 +170,13 @@
                     (includedInOverallScoreChange)="validateDate()"
                     [allowNotIncluded]="!isExamMode"
                     id="modeling-includeInScore-picker"
-                ></jhi-included-in-overall-score-picker>
+                />
             </div>
         </div>
         <div class="row">
             <div class="col">
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points">Points</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
                     <input
                         type="number"
                         required
@@ -185,7 +197,7 @@
             </div>
             <div class="col">
                 <div class="form-group" [hidden]="modelingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
-                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints">Bonus Points</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
                     <input
                         type="number"
                         [required]="modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
@@ -206,7 +218,7 @@
             </div>
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType"></label>
             <select
                 [disabled]="isImport || !!modelingExercise.id"
                 class="form-select"
@@ -249,44 +261,21 @@
             </div>
         }
         @if (!isExamMode) {
-            <jhi-exercise-update-plagiarism [exercise]="modelingExercise"> </jhi-exercise-update-plagiarism>
+            <jhi-exercise-update-plagiarism [exercise]="modelingExercise" />
         }
-        <jhi-presentation-score-checkbox [exercise]="modelingExercise"></jhi-presentation-score-checkbox>
+        <jhi-presentation-score-checkbox [exercise]="modelingExercise" />
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
-            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="modelingExercise"></jhi-grading-instructions-details>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="modelingExercise" />
         </div>
-        @if (!isExamMode) {
-            <div class="form-group">
-                <jhi-competency-selection
-                    id="competencies"
-                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
-                    [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
-                    [(ngModel)]="modelingExercise.competencies"
-                    name="competencies"
-                ></jhi-competency-selection>
-            </div>
-        }
-        <jhi-exercise-update-notification [exercise]="modelingExercise" [isImport]="isImport" [(notificationText)]="notificationText"> </jhi-exercise-update-notification>
     </div>
-    <div>
-        <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" (click)="previousState()">
-            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
-        </button>
-        <button
-            type="button"
-            [disabled]="
-                editForm.form.invalid ||
-                isSaving ||
-                modelingExercise.dueDateError ||
-                modelingExercise.assessmentDueDateError ||
-                modelingExercise.exampleSolutionPublicationDateError
-            "
-            class="btn btn-primary"
-            id="modeling-exercise-creation-save"
-            (click)="save()"
-        >
-            <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
-        </button>
-    </div>
+    <jhi-form-footer
+        [isImport]="isImport"
+        [isCreation]="!modelingExercise.id"
+        [isSaving]="isSaving"
+        [isDisabled]="!!(editForm.form.invalid || modelingExercise.dueDateError || modelingExercise.assessmentDueDateError || modelingExercise.exampleSolutionPublicationDateError)"
+        (cancel)="previousState()"
+        (save)="save()"
+        [(notificationText)]="notificationText"
+    />
 </form>

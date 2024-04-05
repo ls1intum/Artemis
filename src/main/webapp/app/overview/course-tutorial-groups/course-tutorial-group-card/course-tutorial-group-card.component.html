@@ -5,7 +5,7 @@
         </div>
         <div class="card-body">
             <div class="d-flex justify-content-center align-items-center">
-                <fa-icon [icon]="faPersonChalkboard" size="2x"></fa-icon>
+                <fa-icon [icon]="faPersonChalkboard" size="2x" />
                 @if (tutorialGroup.nextSession) {
                     <span class="ms-2 card-text">
                         {{ tutorialGroup.nextSession.start | artemisDate: 'long-date' : false : undefined : true }}

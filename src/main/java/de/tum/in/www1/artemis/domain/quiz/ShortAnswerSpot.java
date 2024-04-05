@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -36,10 +36,11 @@ public class ShortAnswerSpot extends TempIdObject implements QuizQuestionCompone
     @JsonView(QuizView.Before.class)
     private Boolean invalid;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private ShortAnswerQuestion question;
 
+    // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "spot")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -85,22 +86,6 @@ public class ShortAnswerSpot extends TempIdObject implements QuizQuestionCompone
 
     public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {
         this.question = shortAnswerQuestion;
-    }
-
-    public Set<ShortAnswerMapping> getMappings() {
-        return mappings;
-    }
-
-    public ShortAnswerSpot addMappings(ShortAnswerMapping mapping) {
-        this.mappings.add(mapping);
-        mapping.setSpot(this);
-        return this;
-    }
-
-    public ShortAnswerSpot removeMappings(ShortAnswerMapping mapping) {
-        this.mappings.remove(mapping);
-        mapping.setSpot(null);
-        return this;
     }
 
     @Override

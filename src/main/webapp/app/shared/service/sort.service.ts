@@ -105,6 +105,11 @@ export class SortService {
             if (!obj) {
                 return obj;
             } else {
+                // Function calls without arguments (e.g. last()) are also supported.
+                if (key.endsWith('()')) {
+                    const functionName = key.substring(0, key.length - 2);
+                    return obj[functionName]?.();
+                }
                 if (obj instanceof Map) {
                     return obj.get(key);
                 } else {

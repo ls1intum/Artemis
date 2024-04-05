@@ -8,12 +8,10 @@
             <h6>{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
         }
         <jhi-grade-key-table />
-        <button type="button" class="btn btn-secondary" (click)="previousState()">
-            <fa-icon [icon]="faChevronLeft"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
-        </button>
+        <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="faChevronLeft" />&nbsp;<span jhiTranslate="entity.action.back"></span></button>
         <button id="exportToPDFButton" class="btn btn-primary" style="float: right" (click)="printPDF()">
-            <fa-icon [icon]="faPrint"></fa-icon>
-            <span jhiTranslate="artemisApp.exam.examSummary.exportPDF">Export PDF</span>
+            <fa-icon [icon]="faPrint" />
+            <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
         </button>
     </div>
 </div>

@@ -15,7 +15,7 @@
                         {{ exam?.title }}
                     </h2>
                 }
-                <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+                <jhi-documentation-button [type]="documentationType" />
             </div>
         </div>
         <div class="col-12 col-lg-5">
@@ -23,19 +23,19 @@
                 <div class="d-flex justify-content-lg-end">
                     @if (course && course.isAtLeastInstructor) {
                         <a [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md">
-                            <fa-icon [icon]="faTable"></fa-icon>
-                            <span jhiTranslate="entity.action.scores">Scores</span>
+                            <fa-icon [icon]="faTable" />
+                            <span jhiTranslate="entity.action.scores"></span>
                         </a>
                     }
                     @if (course && course.isAtLeastInstructor) {
                         <a [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-info btn-md ms-1 me-1">
-                            <fa-icon [icon]="faClipboard"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
+                            <fa-icon [icon]="faClipboard" /> <span jhitranslate="artemisApp.course.gradingSystem"></span>
                         </a>
                     }
                     @if (course && course.isAtLeastInstructor) {
                         <a [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-info btn-md">
-                            <fa-icon [icon]="faHeartBroken"></fa-icon>
-                            <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
+                            <fa-icon [icon]="faHeartBroken" />
+                            <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
                         </a>
                     }
                 </div>
@@ -53,15 +53,13 @@
                 </h4>
             </div>
             @if (course?.isAtLeastInstructor) {
-                <jhi-exam-assessment-buttons class="assessment-button-row"></jhi-exam-assessment-buttons>
+                <jhi-exam-assessment-buttons class="assessment-button-row" />
             }
         </div>
     }
 </div>
 @if (isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1) {
-    <div style="margin-top: 1em" class="alert alert-warning" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint">
-        Hint: The second correction is not applicable to test runs.
-    </div>
+    <div style="margin-top: 1em" class="alert alert-warning" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint"></div>
 }
 @if (course) {
     <div>
@@ -84,8 +82,7 @@
                     [moreFeedbackRequests]="moreFeedbackRequests"
                     [assessmentLocks]="assessmentLocks"
                     [ratings]="ratings"
-                >
-                </jhi-assessment-dashboard-information>
+                />
             </div>
         </div>
         <div class="container-fluid mt-4">
@@ -126,29 +123,29 @@
                         <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" (sortChange)="sortRows()">
                             <th jhiSortBy="type">
                                 <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseType' | artemisTranslate }}</a>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="title">
                                 <a class="th-link">{{ 'artemisApp.assessmentDashboard.exercise' | artemisTranslate }}</a>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             @if (!isTestRun) {
                                 <th>{{ 'artemisApp.assessmentDashboard.yourStatus' | artemisTranslate }}</th>
                             }
                             <th jhiSortBy="averageRating">
                                 <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseAverageRating' | artemisTranslate }}</a>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             @if (!isExamMode) {
                                 <th jhiSortBy="dueDate">
                                     <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseDueDate' | artemisTranslate }}</a>
-                                    <fa-icon [icon]="faSort"></fa-icon>
+                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                             @if (!isExamMode) {
                                 <th jhiSortBy="assessmentDueDate">
                                     <a class="th-link">{{ 'artemisApp.assessmentDashboard.assessmentsDueDate' | artemisTranslate }}</a>
-                                    <fa-icon [icon]="faSort"></fa-icon>
+                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                             <th>{{ 'artemisApp.assessmentDashboard.actions' | artemisTranslate }}</th>
@@ -158,11 +155,11 @@
                         @for (exercise of currentlyShownExercises; track exercise) {
                             <tr>
                                 <td>
-                                    <fa-icon [icon]="getIcon(exercise.type)" placement="right auto" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate"></fa-icon>
+                                    <fa-icon [icon]="getIcon(exercise.type)" placement="right auto" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
                                 </td>
                                 <td>
                                     <span>{{ exercise.title }}</span>
-                                    <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
+                                    <jhi-not-released-tag [exercise]="exercise" />
                                     <span class="badge bg-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
                                 </td>
                                 @if (!isTestRun && exercise.tutorParticipations && exercise.tutorParticipations![0]) {
@@ -178,8 +175,7 @@
                                             [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests || 0"
                                             [numberOfOpenMoreFeedbackRequests]="exercise.numberOfOpenMoreFeedbackRequests || 0"
                                             [numberOfAssessmentsOfCorrectionRounds]="exercise.numberOfAssessmentsOfCorrectionRounds"
-                                        >
-                                        </jhi-tutor-participation-graph>
+                                        />
                                     </td>
                                 }
                                 <td>
@@ -213,7 +209,7 @@
                                                 class="btn btn-info btn-sm me-1 mb-1"
                                                 [class.guided-tour]="exercise === exerciseForGuidedTour"
                                             >
-                                                <span class="d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                                                <span class="d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
                                             </a>
                                         </ng-container>
                                     } @else {
@@ -223,7 +219,7 @@
                                             class="btn btn-info btn-sm me-1 mb-1"
                                             [class.guided-tour]="exercise === exerciseForGuidedTour"
                                         >
-                                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams">Exercise Teams</span>
+                                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams"></span>
                                         </a>
                                     }
                                     @if (
@@ -235,7 +231,7 @@
                                                 (ngModelChange)="toggleSecondCorrection(exercise.id!)"
                                                 [secondCorrectionEnabled]="exercise.secondCorrectionEnabled"
                                                 [togglingSecondCorrectionButton]="isTogglingSecondCorrection.get(exercise.id!)!"
-                                            ></jhi-second-correction-enable-button>
+                                            />
                                         </ng-container>
                                     }
                                 </td>
@@ -289,7 +285,7 @@
             @if (isExamMode) {
                 <h4>{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.examTitle' | artemisTranslate }}</h4>
             }
-            <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
+            <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course" />
         </div>
     </div>
 }

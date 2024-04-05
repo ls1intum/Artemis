@@ -3,45 +3,41 @@
         <form [formGroup]="courseForm" (ngSubmit)="save()" #formDir="ngForm">
             <div class="headline">
                 @if (croppedImage) {
-                    <jhi-secured-image [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"> </jhi-secured-image>
+                    <jhi-secured-image [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
                 }
                 @if (!croppedImage) {
                     <div class="no-image"></div>
                 }
                 @if (!course.id) {
-                    <h4 id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel">Create new Course</h4>
+                    <h4 id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel"></h4>
                 }
                 @if (course.id) {
-                    <h4 id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel">Edit Course</h4>
+                    <h4 id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel"></h4>
                 }
             </div>
             <hr />
             <div>
-                <div class="form-group" [hidden]="!course.id">
-                    <label for="id" jhiTranslate="global.field.id">ID</label>
-                    <input type="text" class="form-control" id="id" name="id" formControlName="id" readonly />
-                </div>
                 <div class="row">
                     <div class="col">
                         <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.course.title" for="field_title">Title</label>
+                            <label class="form-control-label" jhiTranslate="artemisApp.course.title" for="field_title"></label>
                             <input type="text" class="form-control" name="title" id="field_title" formControlName="title" required />
                         </div>
                     </div>
                     <div class="col-2">
                         <div class="form-group" style="position: relative">
-                            <label class="form-control-label" jhiTranslate="artemisApp.course.color" for="field_title">Color</label>
+                            <label class="form-control-label" jhiTranslate="artemisApp.course.color" for="field_title"></label>
                             <div
                                 class="color-preview form-control"
                                 [ngStyle]="{ backgroundColor: courseForm.get('color')!.value || ARTEMIS_DEFAULT_COLOR }"
                                 (click)="openColorSelector($event)"
                             ></div>
-                            <jhi-color-selector (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
+                            <jhi-color-selector (selectedColor)="onSelectedColor($event)" />
                         </div>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.shortName" for="field_shortName">Short Name</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.shortName" for="field_shortName"></label>
                     <input required type="text" class="form-control" name="shortName" id="field_shortName" formControlName="shortName" [readOnly]="course.id" />
                     @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
                         @if ((shortName.errors! | keyvalue | removekeys: ['required']).length > 0) {
@@ -58,7 +54,7 @@
                 <div class="row">
                     <div class="col-sm-9 col-xl-10">
                         <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.course.courseIcon" for="field_shortName">Course Icon</label>
+                            <label class="form-control-label" jhiTranslate="artemisApp.course.courseIcon" for="field_shortName"></label>
                             <div class="input-group background-file">
                                 <div class="custom-file">
                                     <input id="courseImageInput{{ course.id }}" type="file" accept="image/*" class="custom-file-input" (change)="setCourseImage($event)" />
@@ -70,8 +66,8 @@
                         <div>
                             @if (croppedImage && course.courseIcon) {
                                 <button id="delete-course-icon" class="btn btn-danger btn-sm" (click)="deleteCourseIcon()">
-                                    <fa-icon [icon]="faTrash"></fa-icon>
-                                    <span jhiTranslate="artemisApp.course.delete.icon">Remove Icon</span>
+                                    <fa-icon [icon]="faTrash" />
+                                    <span jhiTranslate="artemisApp.course.delete.icon"></span>
                                 </button>
                             }
                         </div>
@@ -91,16 +87,16 @@
                                 (imageCropped)="imageCropped($event)"
                                 (imageLoaded)="imageLoaded()"
                                 [style.display]="showCropper ? null : 'none'"
-                            ></image-cropper>
+                            />
                         </div>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description">Course Description</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description"></label>
                     <textarea id="field_description" class="form-control" rows="2" formControlName="description" [(ngModel)]="course.description"></textarea>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.organizations">Course organizations</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.organizations"></label>
                     <div class="btn-group d-flex flex-wrap">
                         @for (organization of courseOrganizations; track organization) {
                             <div>
@@ -109,7 +105,7 @@
                                         {{ organization.name }}
                                         @if (isAdmin) {
                                             <button id="removeOrganizationButton" type="button" class="btn text-light" (click)="removeOrganizationFromCourse(organization)">
-                                                <fa-icon [icon]="faTimes"></fa-icon>
+                                                <fa-icon [icon]="faTimes" />
                                             </button>
                                         }
                                     </span>
@@ -120,12 +116,12 @@
                     @if (courseOrganizations && courseOrganizations.length === 0) {
                         <div>
                             <h5>
-                                <span class="badge bg-secondary font-weight-normal m-1" jhiTranslate="artemisApp.course.noOrganizations"> No Organizations </span>
+                                <span class="badge bg-secondary font-weight-normal m-1" jhiTranslate="artemisApp.course.noOrganizations"></span>
                                 <fa-icon
                                     [icon]="faQuestionCircle"
                                     class="text-secondary align-middle"
                                     ngbTooltip="{{ 'artemisApp.course.organizationAddingHint' | artemisTranslate }}"
-                                ></fa-icon>
+                                />
                             </h5>
                         </div>
                     }
@@ -141,7 +137,7 @@
                             formControlName="startDate"
                             [(ngModel)]="course.startDate"
                             [error]="!isValidDate"
-                        ></jhi-date-time-picker>
+                        />
                         @if (!isValidDate) {
                             <span class="invalid-feedback"> {{ 'artemisApp.course.form.startDate.invalid' | artemisTranslate }}</span>
                         }
@@ -153,7 +149,7 @@
                             formControlName="endDate"
                             [(ngModel)]="course.endDate"
                             [error]="!isValidDate"
-                        ></jhi-date-time-picker>
+                        />
                         @if (!isValidDate) {
                             <span class="invalid-feedback"> {{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate }}</span>
                         }
@@ -170,25 +166,23 @@
                         (change)="changeTestCourseEnabled()"
                     />
                     <label class="form-control-label" jhiTranslate="artemisApp.course.testCourse.title" for="field_testCourse"></label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.testCourse.description' | artemisTranslate }}"></fa-icon>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.testCourse.description' | artemisTranslate }}" />
                 </div>
                 <div class="form-group">
                     <label for="semester" jhiTranslate="artemisApp.course.semester"></label>
                     <select id="semester" class="form-select" formControlName="semester">
-                        @for (semester of getSemesters(); track semester) {
+                        @for (semester of semesters; track semester) {
                             <option [value]="semester">{{ semester }}</option>
                         }
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" for="field_maxPoints" jhiTranslate="artemisApp.course.maxPoints.title"> Maximum number of points for course </label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.maxPoints.info' | artemisTranslate }}"></fa-icon>
+                    <label class="form-control-label" for="field_maxPoints" jhiTranslate="artemisApp.course.maxPoints.title"></label>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.maxPoints.info' | artemisTranslate }}" />
                     <input type="number" class="form-control" name="maxPoints" id="field_maxPoints" min="1" formControlName="maxPoints" />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" for="field_accuracyOfScores" jhiTranslate="artemisApp.course.accuracyOfScores">
-                        Amount of decimal places used for calculating the scores
-                    </label>
+                    <label class="form-control-label" for="field_accuracyOfScores" jhiTranslate="artemisApp.course.accuracyOfScores"></label>
                     <input required type="number" class="form-control" name="accuracyOfScores" id="field_accuracyOfScores" min="0" max="5" formControlName="accuracyOfScores" />
                 </div>
                 <div class="form-group">
@@ -215,17 +209,13 @@
                             <label class="form-control-label" jhiTranslate="artemisApp.course.customizeGroupNames.title" for="field_customizeGroupNamesEnabled"
                                 >Customize Group Names</label
                             >
-                            <fa-icon
-                                [icon]="faQuestionCircle"
-                                class="text-secondary"
-                                ngbTooltip="{{ 'artemisApp.course.customizeGroupNames.description' | artemisTranslate }}"
-                            ></fa-icon>
+                            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.customizeGroupNames.description' | artemisTranslate }}" />
                         </div>
                     }
                     @if (customizeGroupNames) {
                         <div>
                             <div class="form-group">
-                                <label class="form-control-label" jhiTranslate="artemisApp.course.studentGroupName" for="field_studentGroupName">Student Group Name</label>
+                                <label class="form-control-label" jhiTranslate="artemisApp.course.studentGroupName" for="field_studentGroupName"></label>
                                 <input type="text" class="form-control" name="studentGroupName" id="field_studentGroupName" formControlName="studentGroupName" />
                             </div>
                             <div class="form-group">
@@ -241,11 +231,11 @@
                                 />
                             </div>
                             <div class="form-group">
-                                <label class="form-control-label" jhiTranslate="artemisApp.course.editorGroupName" for="field_editorGroupName">Editor Group Name</label>
+                                <label class="form-control-label" jhiTranslate="artemisApp.course.editorGroupName" for="field_editorGroupName"></label>
                                 <input type="text" class="form-control" name="editorGroupName" id="field_editorGroupName" formControlName="editorGroupName" />
                             </div>
                             <div class="form-group">
-                                <label class="form-control-label" jhiTranslate="artemisApp.course.instructorGroupName" for="field_instructorGroupName">Instructor Group Name</label>
+                                <label class="form-control-label" jhiTranslate="artemisApp.course.instructorGroupName" for="field_instructorGroupName"></label>
                                 <input type="text" class="form-control" name="instructorGroupName" id="field_instructorGroupName" formControlName="instructorGroupName" />
                             </div>
                         </div>
@@ -261,15 +251,13 @@
                         (change)="changeComplaintsEnabled()"
                         formControlName="complaintsEnabled"
                     />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.complaintsEnabled.title" for="field_maxComplaintSettingEnabled">Enable Complaints</label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.complaintsEnabled.description' | artemisTranslate }}"></fa-icon>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.complaintsEnabled.title" for="field_maxComplaintSettingEnabled"></label>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.complaintsEnabled.description' | artemisTranslate }}" />
                 </div>
                 @if (complaintsEnabled) {
                     <div class="form-group">
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaints.title" for="field_maxComplaints">
-                            Maximum amount of complaints per student
-                        </label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.maxComplaints.description' | artemisTranslate }}"></fa-icon>
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaints.title" for="field_maxComplaints"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.maxComplaints.description' | artemisTranslate }}" />
                         <input required type="number" class="form-control" name="maxComplaints" id="field_maxComplaints" formControlName="maxComplaints" />
                     </div>
                 }
@@ -278,46 +266,32 @@
                         <label class="form-control-label" jhiTranslate="artemisApp.course.maxTeamComplaints.title" for="field_maxTeamComplaints"
                             >Maximum amount of complaints per team</label
                         >
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.maxTeamComplaints.description' | artemisTranslate }}"></fa-icon>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.maxTeamComplaints.description' | artemisTranslate }}" />
                         <input required type="number" class="form-control" name="maxTeamComplaints" id="field_maxTeamComplaints" formControlName="maxTeamComplaints" />
                     </div>
                 }
                 @if (complaintsEnabled) {
                     <div class="form-group">
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintTimeDays.title" for="field_maxComplaintTimeDays">
-                            Due date for complaints in days after result date
-                        </label>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            class="text-secondary"
-                            ngbTooltip="{{ 'artemisApp.course.maxComplaintTimeDays.description' | artemisTranslate }}"
-                        ></fa-icon>
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintTimeDays.title" for="field_maxComplaintTimeDays"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.maxComplaintTimeDays.description' | artemisTranslate }}" />
                         <input required type="number" class="form-control" name="maxComplaintTimeDays" id="field_maxComplaintTimeDays" formControlName="maxComplaintTimeDays" />
                     </div>
                 }
                 @if (complaintsEnabled) {
                     <div class="form-group">
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintTextLimit.title" for="field_maxComplaintTextLimit">
-                            Maximum complaint text limit
-                        </label>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            class="text-secondary"
-                            ngbTooltip="{{ 'artemisApp.course.maxComplaintTextLimit.description' | artemisTranslate }}"
-                        ></fa-icon>
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintTextLimit.title" for="field_maxComplaintTextLimit"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.maxComplaintTextLimit.description' | artemisTranslate }}" />
                         <input required type="number" class="form-control" name="maxComplaintTextLimit" id="field_maxComplaintTextLimit" formControlName="maxComplaintTextLimit" />
                     </div>
                 }
                 @if (complaintsEnabled) {
                     <div class="form-group">
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintResponseTextLimit.title" for="field_maxComplaintResponseTextLimit">
-                            Maximum complaint response text limit
-                        </label>
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintResponseTextLimit.title" for="field_maxComplaintResponseTextLimit"></label>
                         <fa-icon
                             [icon]="faQuestionCircle"
                             class="text-secondary"
                             ngbTooltip="{{ 'artemisApp.course.maxComplaintResponseTextLimit.description' | artemisTranslate }}"
-                        ></fa-icon>
+                        />
                         <input
                             required
                             type="number"
@@ -341,22 +315,16 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title" for="field_maxRequestMoreFeedbackSettingEnabled"
                         >Enable More Feedback Requests</label
                     >
-                    <fa-icon
-                        [icon]="faQuestionCircle"
-                        class="text-secondary"
-                        ngbTooltip="{{ 'artemisApp.course.requestMoreFeedbackEnabled.description' | artemisTranslate }}"
-                    ></fa-icon>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.requestMoreFeedbackEnabled.description' | artemisTranslate }}" />
                 </div>
                 @if (requestMoreFeedbackEnabled) {
                     <div class="form-group">
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title" for="field_maxComplaintTimeDays">
-                            Due date for more feedback requests in days after result date
-                        </label>
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title" for="field_maxComplaintTimeDays"></label>
                         <fa-icon
                             [icon]="faQuestionCircle"
                             class="text-secondary"
                             ngbTooltip="{{ 'artemisApp.course.maxRequestMoreFeedbackTimeDays.description' | artemisTranslate }}"
-                        ></fa-icon>
+                        />
                         <input
                             required
                             type="number"
@@ -376,7 +344,7 @@
                             [icon]="faQuestionCircle"
                             class="text-secondary"
                             ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.communicationEnabled.tooltip' | artemisTranslate }}"
-                        ></fa-icon>
+                        />
                     </div>
                     <!-- Not part of model -->
                     <div class="form-check">
@@ -386,18 +354,17 @@
                             [icon]="faQuestionCircle"
                             class="text-secondary"
                             ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.tooltip' | artemisTranslate }}"
-                        ></fa-icon>
+                        />
                     </div>
                     @if (messagingEnabled) {
                         <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.codeOfConduct.title">Messaging Code of Conduct</label>
-                            <jhi-help-icon text="artemisApp.codeOfConduct.tooltip"></jhi-help-icon>
+                            <label class="form-control-label" jhiTranslate="artemisApp.codeOfConduct.title"></label>
+                            <jhi-help-icon text="artemisApp.codeOfConduct.tooltip" />
                             <jhi-markdown-editor
                                 class="markdown-editor"
                                 [(markdown)]="course.courseInformationSharingMessagingCodeOfConduct"
                                 (markdownChange)="updateCourseInformationSharingMessagingCodeOfConduct($event)"
-                            >
-                            </jhi-markdown-editor>
+                            />
                         </div>
                     }
                 </div>
@@ -411,10 +378,26 @@
                             formControlName="learningPathsEnabled"
                             [(ngModel)]="course.learningPathsEnabled"
                         />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.learningPaths.label" for="field_learningPathsEnabled">Learning Paths Enabled</label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.learningPaths.tooltip' | artemisTranslate }}"></fa-icon>
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.learningPaths.label" for="field_learningPathsEnabled"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.learningPaths.tooltip' | artemisTranslate }}" />
                     </div>
                 </div>
+                @if (this.isAdmin && this.isAthenaEnabled) {
+                    <div class="form-check">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            name="restrictedAthenaModulesEnabled"
+                            id="field_restrictedAthenaModulesEnabled"
+                            [checked]="course.restrictedAthenaModulesAccess"
+                            (change)="this.changeRestrictedAthenaModulesEnabled()"
+                        />
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.restrictedAthenaModulesAccess.label" for="field_restrictedAthenaModulesEnabled">
+                            Access to Restricted Athena Modules Enabled
+                        </label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.restrictedAthenaModulesAccess.tooltip' | artemisTranslate }}" />
+                    </div>
+                }
                 @if (ltiEnabled && !this.course.enrollmentEnabled) {
                     <div class="form-check">
                         <input
@@ -426,8 +409,8 @@
                             [checked]="course.onlineCourse"
                             (change)="this.changeOnlineCourse()"
                         />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourse.title" for="field_onlineCourse">Online Course</label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.onlineCourse.description' | artemisTranslate }}"></fa-icon>
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourse.title" for="field_onlineCourse"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.onlineCourse.description' | artemisTranslate }}" />
                     </div>
                 }
                 <!-- enrollment -->
@@ -441,12 +424,8 @@
                             [checked]="course.enrollmentEnabled"
                             (change)="this.changeRegistrationEnabled()"
                         />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.registrationEnabled.title" for="field_registrationEnabled">Registration Enabled</label>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            class="text-secondary"
-                            ngbTooltip="{{ 'artemisApp.course.registrationEnabled.description' | artemisTranslate }}"
-                        ></fa-icon>
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.registrationEnabled.title" for="field_registrationEnabled"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.registrationEnabled.description' | artemisTranslate }}" />
                     </div>
                 }
                 @if (course.enrollmentEnabled) {
@@ -458,7 +437,7 @@
                                 formControlName="enrollmentStartDate"
                                 [(ngModel)]="course.enrollmentStartDate"
                                 [error]="!isValidEnrollmentPeriod"
-                            ></jhi-date-time-picker>
+                            />
                             @if (!isValidEnrollmentPeriod) {
                                 <span class="invalid-feedback"> {{ 'artemisApp.course.form.enrollmentStartDate.invalid' | artemisTranslate }}</span>
                             }
@@ -470,7 +449,7 @@
                                 formControlName="enrollmentEndDate"
                                 [(ngModel)]="course.enrollmentEndDate"
                                 [error]="!isValidEnrollmentPeriod"
-                            ></jhi-date-time-picker>
+                            />
                             @if (!isValidEnrollmentPeriod) {
                                 <span class="invalid-feedback"> {{ 'artemisApp.course.form.enrollmentEndDate.invalid' | artemisTranslate }}</span>
                             }
@@ -486,8 +465,7 @@
                             class="markdown-editor"
                             [(markdown)]="course.enrollmentConfirmationMessage"
                             (markdownChange)="updateRegistrationConfirmationMessage($event)"
-                        >
-                        </jhi-markdown-editor>
+                        />
                     </div>
                 }
                 <!-- unenrollment -->
@@ -501,12 +479,8 @@
                             [checked]="course.unenrollmentEnabled"
                             (change)="this.changeUnenrollmentEnabled()"
                         />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.unenrollmentEnabled.title" for="field_unenrollmentEnabled">Unenrollment Enabled</label>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            class="text-secondary"
-                            ngbTooltip="{{ 'artemisApp.course.unenrollmentEnabled.description' | artemisTranslate }}"
-                        ></fa-icon>
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.unenrollmentEnabled.title" for="field_unenrollmentEnabled"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.unenrollmentEnabled.description' | artemisTranslate }}" />
                     </div>
                 }
                 @if (course.unenrollmentEnabled) {
@@ -517,7 +491,7 @@
                             formControlName="unenrollmentEndDate"
                             [(ngModel)]="course.unenrollmentEndDate"
                             [error]="!isValidUnenrollmentEndDate"
-                        ></jhi-date-time-picker>
+                        />
                         @if (!isValidUnenrollmentEndDate) {
                             <span class="invalid-feedback"> {{ 'artemisApp.course.form.unenrollmentEndDate.invalid' | artemisTranslate }}</span>
                         }
@@ -556,18 +530,18 @@
             }
             <div class="mt-3 d-flex">
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-                    <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
                 @if (courseForm.invalid) {
                     <span [ngbTooltip]="'artemisApp.course.form.invalidForm' | artemisTranslate">
-                        <ng-container *ngTemplateOutlet="saveButtonTpl"></ng-container>
+                        <ng-container *ngTemplateOutlet="saveButtonTpl" />
                     </span>
                 } @else {
-                    <ng-container *ngTemplateOutlet="saveButtonTpl"></ng-container>
+                    <ng-container *ngTemplateOutlet="saveButtonTpl" />
                 }
                 <ng-template #saveButtonTpl>
                     <button type="submit" id="save-entity" [disabled]="courseForm.invalid || isSaving || !isValidConfiguration" class="btn btn-primary ms-2">
-                        <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                        <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                     </button>
                 </ng-template>
             </div>

@@ -290,7 +290,7 @@ public final class Constants {
     public static final String PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM = "AES/CBC/PKCS5Padding";
 
     /**
-     * The name of the Spring profile used to choose the local VC system instead of Bitbucket or GitLab.
+     * The name of the Spring profile used to choose the local VC system instead of GitLab.
      */
     public static final String PROFILE_LOCALVC = "localvc";
 
@@ -298,6 +298,26 @@ public final class Constants {
      * The name of the Spring profile used to choose the local CI system instead of Bamboo, Jenkins, or GitLabCI.
      */
     public static final String PROFILE_LOCALCI = "localci";
+
+    /**
+     * The name of the Spring profile used to process build jobs in a local CI setup.
+     */
+    public static final String PROFILE_BUILDAGENT = "buildagent";
+
+    /**
+     * The name of the Spring profile used for Artemis core functionality.
+     */
+    public static final String PROFILE_CORE = "core";
+
+    /**
+     * The name of the Spring profile used for the Aeolus external system.
+     */
+    public static final String PROFILE_AEOLUS = "aeolus";
+
+    /**
+     * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.in.www1.artemis.web.rest.LtiResource}.
+     */
+    public static final String PROFILE_LTI = "lti";
 
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
@@ -310,14 +330,24 @@ public final class Constants {
     public static final int GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT = 100;
 
     /**
-     * The name of the topic for notifying the client about changes in the exam working time.
-     */
-    public static final String STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC = "/topic/studentExams/%s/working-time-change-during-conduction";
-
-    /**
      * The value of the version field we send with each push notification to the native clients (Android & iOS).
      */
     public static final int PUSH_NOTIFICATION_VERSION = 1;
+
+    /**
+     * The directory in the docker container in which the build script is executed
+     */
+    public static final String LOCALCI_WORKING_DIRECTORY = "/var/tmp";
+
+    /**
+     * The directory in the docker container in which the results can be found
+     */
+    public static final String LOCALCI_RESULTS_DIRECTORY = "/results";
+
+    /**
+     * The directory to which repositories temporarely get cloned for the build job execution
+     */
+    public static final String CHECKED_OUT_REPOS_TEMP_DIR = "checked-out-repos";
 
     private Constants() {
     }

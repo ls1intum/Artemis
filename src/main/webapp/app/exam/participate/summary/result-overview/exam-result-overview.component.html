@@ -41,7 +41,7 @@
                                     &nbsp;
                                     @if (exercise?.type && exerciseInfos[exercise.id!] !== undefined) {
                                         <div class="icon-container">
-                                            <fa-icon [icon]="exerciseInfos[exercise.id!].icon" class="icon"></fa-icon>
+                                            <fa-icon [icon]="exerciseInfos[exercise.id!].icon" class="icon" />
                                         </div>
                                     }
                                     &nbsp;
@@ -54,7 +54,7 @@
                                     {{ studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0 }}
                                 </td>
                                 <td class="text-center">
-                                    @if (exercise.maxPoints != undefined) {
+                                    @if (exercise.maxPoints !== undefined) {
                                         <span>{{ exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints }}</span>
                                     }
                                 </td>
@@ -67,7 +67,7 @@
                                 </td>
                                 @if (studentExamWithGrade?.maxBonusPoints) {
                                     <td>
-                                        @if (exercise.bonusPoints != undefined) {
+                                        @if (exercise.bonusPoints !== undefined) {
                                             <span>{{
                                                 exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? exercise.maxPoints : exercise.bonusPoints
                                             }}</span>
@@ -126,7 +126,7 @@
                                           }
                             }}
                         }
-                        @if (studentExamWithGrade.studentResult.gradeWithBonus != undefined) {
+                        @if (studentExamWithGrade.studentResult.gradeWithBonus !== undefined) {
                             {{
                                 'artemisApp.exam.examSummary.points.youAchievedFromBonus.' + studentExamWithGrade.studentResult.gradeWithBonus.bonusStrategy
                                     | artemisTranslate
@@ -144,7 +144,7 @@
         @if (gradingScaleExists) {
             <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['grading-key']" [toggleCollapse]="toggleCollapse('grading-key')">
                 <div class="header h5">
-                    <fa-icon [icon]="faClipboard"></fa-icon> &nbsp;
+                    <fa-icon [icon]="faClipboard" /> &nbsp;
                     {{ 'artemisApp.exam.examSummary.gradeKey' | artemisTranslate }}
                 </div>
 
@@ -156,7 +156,7 @@
             @if (isBonusGradingKeyDisplayed) {
                 <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['bonus-grading-key']" [toggleCollapse]="toggleCollapse('bonus-grading-key')">
                     <div class="header h5">
-                        <fa-icon [icon]="faAward"></fa-icon>&nbsp;
+                        <fa-icon [icon]="faAward" />&nbsp;
                         {{ 'artemisApp.exam.examSummary.bonusGradeKey' | artemisTranslate }}
                     </div>
 

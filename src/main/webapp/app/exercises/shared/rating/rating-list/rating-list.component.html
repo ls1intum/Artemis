@@ -17,31 +17,31 @@
                 <tr jhiSort [(predicate)]="ratingsSortingPredicate" [(ascending)]="ratingsReverseOrder" (sortChange)="sortRows()">
                     <th jhiSortBy="id">
                         <a class="th-link">#</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="result.participation.exercise.title">
                         <a class="th-link">{{ 'artemisApp.ratingList.exercise' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="result.participation.exercise.type">
                         <a class="th-link">{{ 'artemisApp.ratingList.exerciseType' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="result.assessor.login">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorLogin' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="result.assessor.name">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorName' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="rating.result.assessmentType">
                         <a class="th-link">{{ 'artemisApp.ratingList.assessmentType' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="rating">
                         <a class="th-link">{{ 'artemisApp.ratingList.rating' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th class="text-center">{{ 'artemisApp.ratingList.actions' | artemisTranslate }}</th>
                 </tr>
@@ -68,13 +68,11 @@
                             <span>{{ rating.result?.assessmentType }}</span>
                         </td>
                         <td>
-                            <span
-                                ><star-rating checkedColor="gold" uncheckedColor="grey" [value]="rating.rating || 0" size="24" [readOnly]="true" [totalStars]="5"> </star-rating
-                            ></span>
+                            <span><star-rating checkedColor="gold" uncheckedColor="grey" [value]="rating.rating || 0" size="24" [readOnly]="true" [totalStars]="5" /></span>
                         </td>
                         <td class="text-center">
                             <button class="btn btn-primary btn-sm" (click)="openResult(rating)">
-                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                 <span>{{ 'artemisApp.ratingList.openSubmission' | artemisTranslate }}</span>
                             </button>
                         </td>

@@ -31,10 +31,10 @@ import {
     messagesBetweenUser1User2,
     metisCourse,
     metisExercise,
-    metisExerciseChannelDto,
+    metisExerciseChannelDTO,
     metisExercisePosts,
     metisLecture,
-    metisLectureChannelDto,
+    metisLectureChannelDTO,
     metisPostTechSupport,
 } from '../../../helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -113,7 +113,7 @@ describe('DiscussionSectionComponent', () => {
                 getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: metisLectureChannelDto,
+                            body: metisLectureChannelDTO,
                             status: 200,
                         }),
                     ),
@@ -121,7 +121,7 @@ describe('DiscussionSectionComponent', () => {
                 getChannelOfExerciseSpy = jest.spyOn(channelService, 'getChannelOfExercise').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: metisExerciseChannelDto,
+                            body: metisExerciseChannelDTO,
                             status: 200,
                         }),
                     ),
@@ -143,7 +143,7 @@ describe('DiscussionSectionComponent', () => {
         tick();
         expect(component.course).toEqual(metisCourse);
         expect(component.createdPost).toBeDefined();
-        expect(component.channel).toEqual(metisLectureChannelDto);
+        expect(component.channel).toEqual(metisLectureChannelDTO);
         expect(getChannelOfLectureSpy).toHaveBeenCalled();
         expect(component.posts).toEqual(messagesBetweenUser1User2.reverse());
     }));
@@ -155,7 +155,7 @@ describe('DiscussionSectionComponent', () => {
         tick();
         expect(component.course).toEqual(metisCourse);
         expect(component.createdPost).toBeDefined();
-        expect(component.channel).toEqual(metisExerciseChannelDto);
+        expect(component.channel).toEqual(metisExerciseChannelDTO);
         expect(getChannelOfExerciseSpy).toHaveBeenCalled();
         expect(component.posts).toEqual(messagesBetweenUser1User2.reverse());
     }));
@@ -274,11 +274,11 @@ describe('DiscussionSectionComponent', () => {
         component.setChannel(1);
 
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-            { ...component.currentPostContextFilter, conversationId: metisExerciseChannelDto.id } as PostContextFilter,
+            { ...component.currentPostContextFilter, conversationId: metisExerciseChannelDTO.id } as PostContextFilter,
             true,
-            metisExerciseChannelDto,
+            metisExerciseChannelDTO,
         );
-        expect(component.channel).toBe(metisExerciseChannelDto);
+        expect(component.channel).toBe(metisExerciseChannelDTO);
     }));
 
     it('loads lecture messages if communication only', fakeAsync(() => {
@@ -288,11 +288,11 @@ describe('DiscussionSectionComponent', () => {
         component.setChannel(1);
 
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-            { ...component.currentPostContextFilter, conversationId: metisLectureChannelDto.id },
+            { ...component.currentPostContextFilter, conversationId: metisLectureChannelDTO.id },
             true,
-            metisLectureChannelDto,
+            metisLectureChannelDTO,
         );
-        expect(component.channel).toBe(metisLectureChannelDto);
+        expect(component.channel).toBe(metisLectureChannelDTO);
     }));
 
     it('collapses sidebar if no channel exists', fakeAsync(() => {

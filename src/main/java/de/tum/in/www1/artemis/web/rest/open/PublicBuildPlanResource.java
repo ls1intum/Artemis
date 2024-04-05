@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile("gitlabci | jenkins")
 @RestController
+// TODO: should we adapt the mapping based on the profile?
 @RequestMapping("api/public/")
 public class PublicBuildPlanResource {
 

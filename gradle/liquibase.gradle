@@ -5,10 +5,10 @@ configurations {
 }
 
 dependencies {
-    liquibase "org.liquibase.ext:liquibase-hibernate5:4.24.0"
+    liquibase "org.liquibase.ext:liquibase-hibernate6:${liquibase_version}"
 }
 
-def isWindows = OperatingSystem.current().isWindows()
+ext.isWindows = OperatingSystem.current().isWindows()
 
 if (isWindows) {
     tasks.register('pathingLiquibaseJar', Jar) {
@@ -44,14 +44,14 @@ def liquibaseCommand(command) {
         main = "liquibase.integration.commandline.Main"
 
         args = [
-             "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml",
-             "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQL8Dialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy",
-             "--username=root",
-             "--password=",
-             "--url=jdbc:mysql://localhost:3306/ArTEMiS?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
-             "--driver=com.mysql.cj.jdbc.Driver",
-             command
-        ]
+            "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml",
+            "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQLDialect&hibernate.physical_naming_strategy=org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy",
+            "--username=root",
+            "--password=",
+            "--url=jdbc:mysql://localhost:3306/ArTEMiS?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
+            "--driver=com.mysql.cj.jdbc.Driver",
+            command
+            ]
     }
 }
 

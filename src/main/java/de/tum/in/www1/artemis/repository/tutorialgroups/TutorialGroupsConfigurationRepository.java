@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.repository.tutorialgroups;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Repository
 public interface TutorialGroupsConfigurationRepository extends JpaRepository<TutorialGroupsConfiguration, Long> {
 
@@ -17,7 +21,7 @@ public interface TutorialGroupsConfigurationRepository extends JpaRepository<Tut
             SELECT t
             FROM TutorialGroupsConfiguration t
                 LEFT JOIN t.tutorialGroupFreePeriods
-            WHERE t.id = :#{#tutorialGroupConfigurationId}
+            WHERE t.id = :tutorialGroupConfigurationId
             """)
     Optional<TutorialGroupsConfiguration> findByIdWithEagerTutorialGroupFreePeriods(@Param("tutorialGroupConfigurationId") Long tutorialGroupConfigurationId);
 
@@ -30,7 +34,7 @@ public interface TutorialGroupsConfigurationRepository extends JpaRepository<Tut
             SELECT t
             FROM TutorialGroupsConfiguration t
                 LEFT JOIN FETCH t.tutorialGroupFreePeriods
-            WHERE t.course.id = :#{#courseId}
+            WHERE t.course.id = :courseId
             """)
-    Optional<TutorialGroupsConfiguration> findByCourseIdWithEagerTutorialGroupFreePeriods(Long courseId);
+    Optional<TutorialGroupsConfiguration> findByCourseIdWithEagerTutorialGroupFreePeriods(@Param("courseId") Long courseId);
 }

@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ConversationService {
 
@@ -123,7 +127,7 @@ public class ConversationService {
             return Optional.empty();
         }
 
-        Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+        Conversation conversation = loadConversationWithParticipantsIfGroupChat(conversationId);
 
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
@@ -139,6 +143,20 @@ public class ConversationService {
     }
 
     /**
+     * In certain use cases, we need the conversation participants to generate the human-readable name for a group chat.
+     *
+     * @param conversationId the id of the conversation
+     * @return the conversation that has been loaded
+     */
+    public Conversation loadConversationWithParticipantsIfGroupChat(Long conversationId) {
+        var conversation = conversationRepository.findByIdElseThrow(conversationId);
+        if (conversation instanceof GroupChat) {
+            return conversationRepository.findWithParticipantsById(conversationId).orElseThrow();
+        }
+        return conversation;
+    }
+
+    /**
      * Gets the conversation in a course for which the user is a member
      *
      * @param course         the course
@@ -149,7 +167,7 @@ public class ConversationService {
         var conversationsOfUser = new ArrayList<Conversation>();
         List<Channel> channelsOfUser;
         if (course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
-            var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(course.getId(), requestingUser.getId());
+            var oneToOneChatsOfUser = oneToOneChatRepository.findAllWithParticipantsAndUserGroupsByCourseIdAndUserId(course.getId(), requestingUser.getId());
             conversationsOfUser.addAll(oneToOneChatsOfUser);
 
             var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(course.getId(), requestingUser.getId());
@@ -222,7 +240,7 @@ public class ConversationService {
      * @param memberLimit  the maximum number of members in the conversation
      */
     public void registerUsersToConversation(Course course, Set<User> users, Conversation conversation, Optional<Integer> memberLimit) {
-        var existingUsers = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+        var existingUsers = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         var usersToBeRegistered = users.stream().filter(user -> !existingUsers.contains(user)).collect(Collectors.toSet());
 
@@ -250,7 +268,7 @@ public class ConversationService {
      * @param conversation conversation which members to notify
      */
     public void notifyAllConversationMembersAboutUpdate(Conversation conversation) {
-        var usersToContact = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+        var usersToContact = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.UPDATE, conversation, usersToContact);
     }
@@ -274,7 +292,7 @@ public class ConversationService {
      * @param conversation the conversation from which the users are removed
      */
     public void deregisterUsersFromAConversation(Course course, Set<User> users, Conversation conversation) {
-        var existingUsers = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+        var existingUsers = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         var usersToBeDeregistered = users.stream().filter(existingUsers::contains).collect(Collectors.toSet());
         var remainingUsers = existingUsers.stream().filter(user -> !usersToBeDeregistered.contains(user)).collect(Collectors.toSet());
@@ -381,7 +399,7 @@ public class ConversationService {
      * @param requestingUser the user that wants to switch the favorite status
      * @param favoriteStatus the new favorite status
      */
-    public void switchFavoriteStatus(Long conversationId, User requestingUser, Boolean favoriteStatus) {
+    public void setIsFavorite(Long conversationId, User requestingUser, Boolean favoriteStatus) {
         ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
         conversationParticipant.setIsFavorite(favoriteStatus);
         conversationParticipantRepository.save(conversationParticipant);
@@ -394,9 +412,22 @@ public class ConversationService {
      * @param requestingUser the user that wants to switch the hidden status
      * @param hiddenStatus   the new hidden status
      */
-    public void switchHiddenStatus(Long conversationId, User requestingUser, Boolean hiddenStatus) {
+    public void setIsHidden(Long conversationId, User requestingUser, Boolean hiddenStatus) {
         ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
         conversationParticipant.setIsHidden(hiddenStatus);
+        conversationParticipantRepository.save(conversationParticipant);
+    }
+
+    /**
+     * Set the muted status of a conversation for a user
+     *
+     * @param conversationId the id of the conversation
+     * @param requestingUser the user that wants to switch the muted status
+     * @param isMuted        the new muted status
+     */
+    public void setIsMuted(Long conversationId, User requestingUser, boolean isMuted) {
+        var conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
+        conversationParticipant.setIsMuted(isMuted);
         conversationParticipantRepository.save(conversationParticipant);
     }
 
@@ -419,14 +450,14 @@ public class ConversationService {
     public Set<User> findUsersInDatabase(Course course, boolean findAllStudents, boolean findAllTutors, boolean findAllInstructors) {
         Set<User> users = new HashSet<>();
         if (findAllStudents) {
-            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getStudentGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
         }
         if (findAllTutors) {
-            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()));
-            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getEditorGroupName()));
         }
         if (findAllInstructors) {
-            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
         }
         return users;
     }

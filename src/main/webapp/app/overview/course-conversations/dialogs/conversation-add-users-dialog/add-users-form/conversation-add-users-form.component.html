@@ -32,7 +32,7 @@
                                 formControlName="selectedUsers"
                                 [courseId]="courseId"
                                 [label]="'artemisApp.dialogs.addUsers.addUsersForm.addUserLabel' | artemisTranslate"
-                            ></jhi-course-users-selector>
+                            />
                             @if (selectedUsersControl?.invalid && (selectedUsersControl?.dirty || selectedUsersControl?.touched)) {
                                 <div class="alert alert-danger">
                                     @if (selectedUsersControl?.errors?.required) {

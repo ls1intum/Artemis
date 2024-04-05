@@ -1,5 +1,6 @@
 export enum UserSettingsCategory {
     NOTIFICATION_SETTINGS = 'NOTIFICATION_SETTINGS',
+    SCIENCE_SETTINGS = 'SCIENCE_SETTINGS',
 }
 
 /**
@@ -51,4 +52,9 @@ export enum SettingId {
     NOTIFICATION__USER_NOTIFICATION__CONVERSATION_MESSAGE = 'notification.user-notification.conversation-message',
     NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE = 'notification.user-notification.new-reply-in-conversation',
     NOTIFICATION__USER_NOTIFICATION__USER_MENTION = 'notification.user-notification.user-mention',
+
+    // science settings settingIds
+
+    // science
+    SCIENCE__GENERAL__ACTIVITY_TRACKING = 'science.general.activity-tracking',
 }

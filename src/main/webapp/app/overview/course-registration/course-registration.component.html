@@ -9,15 +9,15 @@
                 <thead>
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
                         <th jhiSortBy="title">
-                            <span jhiTranslate="artemisApp.studentDashboard.course">Course</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <span jhiTranslate="artemisApp.studentDashboard.course"></span>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="semester">
-                            <span jhiTranslate="artemisApp.course.semester">Semester</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <span jhiTranslate="artemisApp.course.semester"></span>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.course.description">Description</span>
+                            <span jhiTranslate="artemisApp.course.description"></span>
                         </th>
                     </tr>
                 </thead>
@@ -34,10 +34,10 @@
                                 <span>{{ course.description }}</span>
                             </td>
                             <td class="text-end">
-                                <jhi-course-prerequisites-button [course]="course"></jhi-course-prerequisites-button>
+                                <jhi-course-prerequisites-button [course]="course" />
                             </td>
                             <td class="text-end">
-                                <jhi-course-registration-button [course]="course" (onRegistration)="removeCourseFromList(course.id!)"></jhi-course-registration-button>
+                                <jhi-course-registration-button [course]="course" (onRegistration)="removeCourseFromList(course.id!)" />
                             </td>
                         </tr>
                     }

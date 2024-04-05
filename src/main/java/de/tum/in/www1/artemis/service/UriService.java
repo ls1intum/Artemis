@@ -1,15 +1,19 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class UriService {
 
@@ -115,7 +119,7 @@ public class UriService {
 
     /**
      * Gets the project key from the given URI
-     *
+     * <p>
      * Examples:
      * https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> EIST2016RME
      * http://localhost:8080/git/TESTCOURSE1TESTEX1/testcourse1testex1-student1.git --> TESTCOURSE1TESTEX1
@@ -133,7 +137,7 @@ public class UriService {
         // Note: pathComponents[0] = "" because the path always starts with "/"
         var projectKey = pathComponents[1];
         if ("scm".equals(pathComponents[1]) || "git".equals(pathComponents[1])) {
-            // special case for Bitbucket and local VC
+            // special case local VC
             projectKey = pathComponents[2];
         }
         return projectKey;

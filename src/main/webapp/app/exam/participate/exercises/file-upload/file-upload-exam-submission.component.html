@@ -10,7 +10,7 @@
       }]
       @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
         <jhi-included-in-score-badge
-        [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+        [includedInOverallScore]="exercise.includedInOverallScore" />
       }</span>
         <!--region Left Panel-->
         <div left-body class="px-2 pb-2 w-100">
@@ -18,7 +18,7 @@
                 @if (isActive && !result && exercise && studentSubmission && !readonly) {
                     <div class="col-12 col-md-10">
                         <div class="form-group">
-                            <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile">Please select </label>
+                            <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
                             <div class="input-group background-file">
                                 <div class="custom-file overflow-ellipsis">
                                     <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />
@@ -29,7 +29,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions">Supported file extensions:</p>
+                            <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></p>
                             @for (extension of exercise.filePattern!.split(','); track extension) {
                                 <div class="d-inline-block">
                                     <span class="ms-1 badge bg-info">
@@ -46,7 +46,7 @@
                     <h6>
                         {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName } }}
                     </h6>
-                    <a class="text-primary" (click)="downloadFile(studentSubmission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
+                    <a class="text-primary" (click)="downloadFile(studentSubmission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download"></a>
                     @if (submittedFileExtension) {
                         <span class="ms-2 badge bg-info">
                             {{ submittedFileExtension | uppercase }}
@@ -64,12 +64,12 @@
         </div>
         <!--endregion-->
         <!--region Right Panel-->
-        <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
-        <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+        <fa-icon right-header [icon]="farListAlt" />&nbsp;
+        <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
         <ng-container right-body>
             <!-- problem statement update & difference highlighter -->
             @if (exercise) {
-                <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)"> </jhi-exam-exercise-update-highlighter>
+                <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
             }
             @if (exercise!.problemStatement) {
                 <p class="mb-3 markdown-preview">

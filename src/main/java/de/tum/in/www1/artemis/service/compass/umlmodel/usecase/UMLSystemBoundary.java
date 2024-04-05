@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.usecase;
 
+import java.util.Objects;
+
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLContainerElement;
@@ -42,6 +44,11 @@ public class UMLSystemBoundary extends UMLContainerElement {
     @Override
     public String getType() {
         return UML_SYSTEM_BOUNDARY_TYPE;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name);
     }
 
     @Override

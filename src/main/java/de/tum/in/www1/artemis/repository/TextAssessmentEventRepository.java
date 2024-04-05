@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.util.stream.Collectors.toMap;
 
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,18 +17,19 @@ import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 /**
  * Spring Data repository for the TextAssessmentEvent entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface TextAssessmentEventRepository extends JpaRepository<TextAssessmentEvent, Long> {
 
-    List<TextAssessmentEvent> findAllByCourseId(Long courseId);
+    List<TextAssessmentEvent> findAllByCourseId(long courseId);
 
     @Query("""
             SELECT COUNT(DISTINCT textAssessmentEvent.userId)
             FROM TextAssessmentEvent textAssessmentEvent
-            WHERE textAssessmentEvent.courseId = :#{#courseId} AND
-                textAssessmentEvent.textExerciseId = :#{#exerciseId}
+            WHERE textAssessmentEvent.courseId = :courseId
+                AND textAssessmentEvent.textExerciseId = :exerciseId
             """)
-    Integer getNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId(@Param("courseId") Long courseId, @Param("exerciseId") Long exerciseId);
+    Integer getNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId(@Param("courseId") long courseId, @Param("exerciseId") long exerciseId);
 
     /**
      * Query and find all events which do not have the respective fields empty. These fields are specifically needed non-empty
@@ -39,14 +42,14 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
     @Query("""
             SELECT textAssessmentEvent
             FROM TextAssessmentEvent textAssessmentEvent
-            WHERE textAssessmentEvent.userId IS NOT NULL AND
-                textAssessmentEvent.submissionId IS NOT NULL AND
-                textAssessmentEvent.participationId IS NOT NULL AND
-                textAssessmentEvent.timestamp IS NOT NULL AND
-                textAssessmentEvent.courseId = :#{#courseId} AND
-                textAssessmentEvent.textExerciseId = :#{#textExerciseId}
+            WHERE textAssessmentEvent.userId IS NOT NULL
+                AND textAssessmentEvent.submissionId IS NOT NULL
+                AND textAssessmentEvent.participationId IS NOT NULL
+                AND textAssessmentEvent.timestamp IS NOT NULL
+                AND textAssessmentEvent.courseId = :courseId
+                AND textAssessmentEvent.textExerciseId = :textExerciseId
             """)
-    List<TextAssessmentEvent> findAllNonEmptyEvents(@Param("courseId") Long courseId, @Param("textExerciseId") Long textExerciseId);
+    List<TextAssessmentEvent> findAllNonEmptyEvents(@Param("courseId") long courseId, @Param("textExerciseId") long textExerciseId);
 
     /**
      * Finds the number of submissions assessed for each tutor listed in the assessment event list
@@ -56,16 +59,17 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
      * @return a TutorAssessedSubmissionsCount interface representing user id and number of submissions involved
      */
     @Query("""
-            SELECT textAssessmentEvent.userId AS tutorId, COUNT(DISTINCT textAssessmentEvent.submissionId) AS submissionsInvolved
+            SELECT textAssessmentEvent.userId AS tutorId,
+                COUNT(DISTINCT textAssessmentEvent.submissionId) AS submissionsInvolved
             FROM TextAssessmentEvent textAssessmentEvent
-            WHERE textAssessmentEvent.userId IS NOT NULL AND
-             textAssessmentEvent.submissionId IS NOT NULL AND
-             textAssessmentEvent.participationId IS NOT NULL AND
-             textAssessmentEvent.courseId = :#{#courseId} AND
-             textAssessmentEvent.textExerciseId = :#{#textExerciseId}
+            WHERE textAssessmentEvent.userId IS NOT NULL
+                AND textAssessmentEvent.submissionId IS NOT NULL
+                AND textAssessmentEvent.participationId IS NOT NULL
+                AND textAssessmentEvent.courseId = :courseId
+                AND textAssessmentEvent.textExerciseId = :textExerciseId
             GROUP BY textAssessmentEvent.userId
             """)
-    List<TutorAssessedSubmissionsCount> findNumberOfSubmissionsAssessedForTutor(@Param("courseId") Long courseId, @Param("textExerciseId") Long textExerciseId);
+    List<TutorAssessedSubmissionsCount> findNumberOfSubmissionsAssessedForTutor(@Param("courseId") long courseId, @Param("textExerciseId") long textExerciseId);
 
     /**
      * An interface representing an intermediate form fitting the JPA query syntax.
@@ -73,9 +77,9 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
      */
     interface TutorAssessedSubmissionsCount {
 
-        Long getTutorId();
+        long getTutorId();
 
-        Integer getSubmissionsInvolved();
+        int getSubmissionsInvolved();
     }
 
     /**
@@ -85,7 +89,7 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
      * @param textExerciseId text exercise id to check
      * @return Map containing user id and respective number of submissions affected
      */
-    default Map<Long, Integer> getAssessedSubmissionCountPerTutor(Long courseId, Long textExerciseId) {
+    default Map<Long, Integer> getAssessedSubmissionCountPerTutor(long courseId, long textExerciseId) {
         return findNumberOfSubmissionsAssessedForTutor(courseId, textExerciseId).stream()
                 .collect(toMap(TutorAssessedSubmissionsCount::getTutorId, TutorAssessedSubmissionsCount::getSubmissionsInvolved));
     }

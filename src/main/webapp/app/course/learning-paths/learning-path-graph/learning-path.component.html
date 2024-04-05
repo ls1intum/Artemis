@@ -4,8 +4,7 @@
             <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
         </div>
     </div>
-}
-@if (!isLoading) {
+} @else {
     <div>
         @for (node of path; track node; let last = $last) {
             <div>
@@ -16,11 +15,11 @@
                         [courseId]="courseId"
                         [node]="node"
                         (click)="nodeClicked.emit(node)"
-                    ></jhi-learning-path-graph-node>
+                    />
                 </div>
                 @if (!last) {
                     <div class="path-edge">
-                        <fa-icon [icon]="faChevronDown"></fa-icon>
+                        <fa-icon [icon]="faChevronDown" />
                     </div>
                 }
             </div>

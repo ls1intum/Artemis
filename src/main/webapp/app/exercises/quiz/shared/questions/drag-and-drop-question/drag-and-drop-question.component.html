@@ -6,7 +6,7 @@
         @if (loadingState !== 'error') {
             <h2>
                 <span style="color: grey"
-                    ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
+                    ><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
                 >
             </h2>
         }
@@ -14,7 +14,7 @@
             <div>
                 <h2>
                     <span style="color: grey"
-                        ><fa-icon [icon]="faExclamationCircle"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.failed' | artemisTranslate }}</span></span
+                        ><fa-icon [icon]="faExclamationCircle" />&nbsp;<span>{{ 'artemisApp.quizQuestion.failed' | artemisTranslate }}</span></span
                     >
                 </h2>
                 <p>
@@ -37,7 +37,7 @@
             <div class="hint">
                 @if (question.hint) {
                     <span class="label label-info" [ngbPopover]="renderedHint" triggers="mouseenter:mouseleave">
-                        <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                        <fa-icon [icon]="faQuestionCircle" />
                         <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                     </span>
                 }
@@ -47,7 +47,7 @@
                 <br />
                 @if (question.explanation && showResult) {
                     <span class="label label-primary" [ngbPopover]="renderedExplanation" triggers="mouseenter:mouseleave">
-                        <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                        <fa-icon [icon]="faExclamationCircle" />
                         <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
                     </span>
                 }
@@ -75,7 +75,7 @@
                         [incorrectlyMappedDragAndDropItems]="incorrectLocationMappings"
                         [mappedLocations]="mappedLocations"
                         [questionIndex]="questionIndex"
-                    ></jhi-quiz-scoring-infostudent-modal>
+                    />
                 </span>
             </div>
         }
@@ -106,10 +106,7 @@
         <div cdkDropListGroup class="drag-and-drop-area">
             <div class="background-area">
                 @if (question.backgroundFilePath) {
-                    <jhi-secured-image
-                        [src]="filePreviewPaths.get(question.backgroundFilePath!) || question.backgroundFilePath!"
-                        (endLoadingProcess)="changeLoading($event)"
-                    ></jhi-secured-image>
+                    <jhi-secured-image [src]="filePreviewPaths.get(question.backgroundFilePath!) || question.backgroundFilePath!" (endLoadingProcess)="changeLoading($event)" />
                 }
                 <div class="click-layer">
                     @if (!showResult) {
@@ -140,7 +137,7 @@
                                             [clickDisabled]="clickDisabled"
                                             [minWidth]="100 + '%'"
                                             [filePreviewPaths]="filePreviewPaths"
-                                        ></jhi-drag-item>
+                                        />
                                     }
                                 </div>
                             }
@@ -173,7 +170,7 @@
                                             !question.invalid
                                         ) {
                                             <div class="result-symbol">
-                                                <fa-icon [icon]="faExclamationTriangle" size="2x" class="warning"></fa-icon>
+                                                <fa-icon [icon]="faExclamationTriangle" size="2x" class="warning" />
                                             </div>
                                         }
                                         <div class="invalid">
@@ -191,7 +188,7 @@
                                                     ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
                                                     style="color: black"
                                                     [icon]="faQuestionCircle"
-                                                ></fa-icon>
+                                                />
                                             }
                                         </div>
                                         @if (dragItemForDropLocation(dropLocation)) {
@@ -200,8 +197,7 @@
                                                 [clickDisabled]="true"
                                                 [minWidth]="100 + '%'"
                                                 [filePreviewPaths]="filePreviewPaths"
-                                            >
-                                            </jhi-drag-item>
+                                            />
                                         }
                                         @if (!dragItemForDropLocation(dropLocation)) {
                                             <div class="drag-item no-click">
@@ -241,7 +237,7 @@
                                             !forceSampleSolution
                                         ) {
                                             <div class="result-symbol">
-                                                <fa-icon [icon]="faExclamationTriangle" size="2x" class="warning"></fa-icon>
+                                                <fa-icon [icon]="faExclamationTriangle" size="2x" class="warning" />
                                             </div>
                                         }
                                         <div class="invalid">
@@ -256,7 +252,7 @@
                                                     ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
                                                     style="color: black"
                                                     [icon]="faQuestionCircle"
-                                                ></fa-icon>
+                                                />
                                             }
                                         </div>
                                         @if (dropLocation && correctDragItemForDropLocation(dropLocation) && !dropLocation.invalid && !question.invalid) {
@@ -265,7 +261,7 @@
                                                 [clickDisabled]="true"
                                                 [minWidth]="100 + '%'"
                                                 [filePreviewPaths]="filePreviewPaths"
-                                            ></jhi-drag-item>
+                                            />
                                         }
                                         @if (!dropLocation || !correctDragItemForDropLocation(dropLocation)) {
                                             <div class="drag-item no-click">
@@ -309,7 +305,7 @@
                                 [clickDisabled]="clickDisabled"
                                 [minWidth]="'160'"
                                 [filePreviewPaths]="filePreviewPaths"
-                            ></jhi-drag-item>
+                            />
                         }
                     </div>
                 }

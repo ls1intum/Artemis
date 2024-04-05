@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.sql.SQLException;
@@ -17,6 +18,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -29,6 +31,7 @@ import liquibase.integration.spring.SpringLiquibase;
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
 
+@Profile(PROFILE_CORE)
 @Configuration
 public class LiquibaseConfiguration {
 
@@ -79,7 +82,7 @@ public class LiquibaseConfiguration {
         liquibase.setDatabaseChangeLogLockTable(liquibaseProperties.getDatabaseChangeLogLockTable());
         liquibase.setDatabaseChangeLogTable(liquibaseProperties.getDatabaseChangeLogTable());
         liquibase.setDropFirst(liquibaseProperties.isDropFirst());
-        liquibase.setLabelFilter(liquibaseProperties.getLabels());
+        liquibase.setLabelFilter(liquibaseProperties.getLabelFilter());
         liquibase.setChangeLogParameters(liquibaseProperties.getParameters());
         liquibase.setRollbackFile(liquibaseProperties.getRollbackFile());
         liquibase.setTestRollbackOnUpdate(liquibaseProperties.isTestRollbackOnUpdate());
@@ -101,17 +104,31 @@ public class LiquibaseConfiguration {
         var migrationPathVersion = new Semver(migrationPathVersion5_12_9_String);
         var version600 = new Semver("6.0.0");
         var version700 = new Semver("7.0.0");
+        var version800 = new Semver("8.0.0");
         if (currentVersion.isLowerThan(version600)) {
             log.info("Migration path check: Not necessary");
+            return;
         }
+        previousVersionString = getPreviousVersionElseThrow();
+        log.info("The previous version was {}", previousVersionString);
+        if (previousVersionString == null) {
+            // this means Artemis was never started before and no DATABASECHANGELOG exists, we can simply proceed
+            log.info("Migration path check: Not necessary");
+            return;
+        }
+        var previousVersion = new Semver(previousVersionString);
         if (currentVersion.isGreaterThanOrEqualTo(version600) && currentVersion.isLowerThan(version700)) {
-            previousVersionString = getPreviousVersionElseThrow();
-            log.info("The previous version was {}", previousVersionString);
-            if (previousVersionString == null) {
-                // this means Artemis was never started before and no DATABASECHANGELOG exists, we can simply proceed
-                return;
+            if (previousVersion.isLowerThan(migrationPathVersion)) {
+                log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_12_9_String);
             }
-            var previousVersion = new Semver(previousVersionString);
+            else if (previousVersion.isEqualTo(migrationPathVersion)) {
+                // this means this is the first start after the mandatory previous update, we need to set the checksum of the initial schema to null
+                updateInitialChecksum();
+                log.info("Successfully cleaned up initial schema during migration");
+            }
+        }
+        if (currentVersion.isGreaterThanOrEqualTo(version700) && currentVersion.isLowerThan(version800)) {
+            // TODO: add the migration check for 6.9.X -> 7.0.0 once it is created.
             if (previousVersion.isLowerThan(migrationPathVersion)) {
                 log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_12_9_String);
             }

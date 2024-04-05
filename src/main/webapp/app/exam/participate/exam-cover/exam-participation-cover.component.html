@@ -25,7 +25,7 @@
         </h2>
     }
     @if (!startView && !studentFailedToSubmit) {
-        <jhi-exam-timer class="col-md-3 justify-content-end" [isEndView]="true" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
+        <jhi-exam-timer class="col-md-3 justify-content-end" [isEndView]="true" [endDate]="graceEndDate" [criticalTime]="criticalTime" />
     }
     @if (startView) {
         <div class="col-md-3"></div>
@@ -115,7 +115,7 @@
                         <div>{{ 'artemisApp.exam.startExamToolTip' | artemisTranslate }}</div>
                     }
                     <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart" type="submit" (click)="startExam()" class="btn btn-primary">
-                        <span jhiTranslate="artemisApp.exam.startExam">Start Exam</span>
+                        <span jhiTranslate="artemisApp.exam.startExam"></span>
                     </button>
                 </ng-container>
             } @else {
@@ -128,9 +128,9 @@
                 }
                 <button id="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
                     @if (submitInProgress) {
-                        <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                        <fa-icon [icon]="faSpinner" [spin]="true" />
                     }
-                    <span jhiTranslate="artemisApp.exam.endExam">Finish</span>
+                    <span jhiTranslate="artemisApp.exam.endExam"></span>
                 </button>
             }
             @if (handInEarly) {
@@ -139,7 +139,7 @@
                         {{ 'artemisApp.examParticipation.continueAfterHandInEarlyDescription' | artemisTranslate }}
                     </div>
                     <button [disabled]="submitInProgress" id="continue" class="btn btn-secondary mt-2" (click)="continueAfterHandInEarly()">
-                        <fa-icon [icon]="faArrowLeft"></fa-icon>
+                        <fa-icon [icon]="faArrowLeft" />
                         {{ 'artemisApp.examParticipation.continueAfterHandInEarly' | artemisTranslate }}
                     </button>
                 </div>

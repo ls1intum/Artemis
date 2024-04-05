@@ -83,7 +83,7 @@
                                     [participation]="participation!"
                                     [showUngradedResults]="!isTmpOrSolutionProgrParticipation"
                                     [showBadge]="!isTmpOrSolutionProgrParticipation"
-                                ></jhi-result>
+                                />
                                 @if (exercise?.isAtLeastInstructor) {
                                     <span
                                         class="badge"
@@ -96,9 +96,12 @@
                                         (delete)="deleteResult(result.submission, result)"
                                         [dialogError]="dialogError$"
                                     >
-                                        <fa-icon [icon]="faTrash"></fa-icon>
+                                        <fa-icon [icon]="faTrash" />
                                         {{ 'artemisApp.result.delete.buttonText' | artemisTranslate }}
                                     </span>
+                                    @if (result?.logsAvailable) {
+                                        <a class="detail-link" (click)="viewBuildLogs(result.id)" jhiTranslate="artemisApp.result.buildLogs.viewLogs"></a>
+                                    }
                                 }
                             </div>
                         }
@@ -175,7 +178,7 @@
                             (delete)="deleteSubmission(value)"
                             [dialogError]="dialogError$"
                         >
-                            <fa-icon [icon]="faTrash"></fa-icon>
+                            <fa-icon [icon]="faTrash" />
                         </button>
                     </ng-template>
                 </ngx-datatable-column>

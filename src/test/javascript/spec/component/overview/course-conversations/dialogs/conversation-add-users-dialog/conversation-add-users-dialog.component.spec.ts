@@ -6,7 +6,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../helpers/conversationExampleModels';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
@@ -17,8 +17,8 @@ import { ChannelIconComponent } from 'app/overview/course-conversations/other/ch
 import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { By } from '@angular/platform-browser';
-import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 @Component({
@@ -31,9 +31,9 @@ class ConversationAddUsersFormStubComponent {
     @Input() maxSelectable?: number = undefined;
 
     @Input()
-    activeConversation: ConversationDto;
+    activeConversation: ConversationDTO;
 }
-const examples: ConversationDto[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 examples.forEach((activeConversation) => {
     describe('ConversationAddUsersDialogComponent with ' + activeConversation.type, () => {
         let component: ConversationAddUsersDialogComponent;
@@ -84,7 +84,7 @@ examples.forEach((activeConversation) => {
             };
             const form: ConversationAddUsersFormStubComponent = fixture.debugElement.query(By.directive(ConversationAddUsersFormStubComponent)).componentInstance;
 
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const activeModal = TestBed.inject(NgbActiveModal);
                 jest.spyOn(activeModal, 'close');
@@ -102,7 +102,7 @@ examples.forEach((activeConversation) => {
                 expect(activeModal.close).toHaveBeenCalledOnce();
             }
 
-            if (isGroupChatDto(activeConversation)) {
+            if (isGroupChatDTO(activeConversation)) {
                 const groupChatService = TestBed.inject(GroupChatService);
                 const activeModal = TestBed.inject(NgbActiveModal);
                 jest.spyOn(activeModal, 'close');

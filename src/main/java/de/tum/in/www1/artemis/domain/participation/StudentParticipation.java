@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.participation;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -84,12 +84,12 @@ public class StudentParticipation extends Participation {
         }
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getParticipantIdentifier() {
         return Optional.ofNullable(getParticipant()).map(Participant::getParticipantIdentifier).orElse(null);
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getParticipantName() {
         return Optional.ofNullable(getParticipant()).map(Participant::getName).orElse(null);
     }
@@ -128,33 +128,6 @@ public class StudentParticipation extends Participation {
     public String toString() {
         String participantString = getStudent().map(student -> "student=" + student).orElse("team=" + team);
         return getClass().getSimpleName() + "{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", " + participantString + "}";
-    }
-
-    @Override
-    public Participation copyParticipationId() {
-        var participation = new StudentParticipation();
-        participation.setId(getId());
-        return participation;
-    }
-
-    /**
-     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.ExampleSubmissionService#getSubmissionsOnPageWithSize(PageableSearchDTO,
-     * Long)}}
-     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
-     */
-    public enum StudentParticipationSearchColumn {
-
-        ID("id"), STUDENT_NAME("student.firstName");
-
-        private final String mappedColumnName;
-
-        StudentParticipationSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
     }
 
 }

@@ -1,10 +1,10 @@
 @if (item) {
     <div class="treeview-item">
-        <ng-template [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ item: item, onCollapseExpand: onCollapseExpand, onCheckedChange: onCheckedChange }"> </ng-template>
+        <ng-template [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ item: item, onCollapseExpand: onCollapseExpand, onCheckedChange: onCheckedChange }" />
         @if (!item.collapsed) {
             <div>
                 @for (child of item.children; track child) {
-                    <treeview-item [item]="child" [template]="template" (checkedChange)="onChildCheckedChange(child, $event)"> </treeview-item>
+                    <treeview-item [item]="child" [template]="template" (checkedChange)="onChildCheckedChange(child, $event)" />
                 }
             </div>
         }

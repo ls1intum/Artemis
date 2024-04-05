@@ -12,7 +12,7 @@ If you are setting Artemis up for the first time, these are the steps you should
 - Install and run Docker: https://docs.docker.com/get-docker
 - Start the database: :ref:`Database Setup`
 - :ref:`Configure Artemis`
-- (optional) :ref:`Configure Jira`
+- (optional) :ref:`Configure Build Management`
 - :ref:`Start Artemis`
 - :ref:`Test the Setup`
 
@@ -40,7 +40,7 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
 
        artemis:
            user-management:
-               use-external: false # if you do not wish to use Jira for user management
+               use-external: false
            version-control:
                url: http://localhost:8080
            # Only necessary on Windows:
@@ -57,48 +57,35 @@ Make sure that Artemis can access docker by activating the "Expose daemon on tcp
 When you start Artemis for the first time, it will automatically create an admin user called "artemis_admin". If this does not work, refer to the guide for the :ref:`Jenkins and GitLab Setup` to manually create an admin user in the database.
 You can then use that admin user to create further users in Artemis' internal user management system.
 
+.. _Configure Build Management:
 
-.. _Configure Jira:
+Configure Build Management
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Configure Jira
-^^^^^^^^^^^^^^
-
-The Integrated Code Lifecycle also works without external user management, therefore this step is **optional**.
-Setting up Jira allows you to run a script that sets up a number of users and groups for you.
-
-If you have already set up your system with Bamboo, Bitbucket, and Jira, you can keep using Jira for user management. Just stop the Bamboo and Bitbucket containers.
-If you want to use Jira for user management, but have not configured it yet, refer to the guide for the :ref:`Bamboo Bitbucket and Jira Setup`.
-You can follow all steps to set up the entire Atlassian stack, or just get the license for Jira and only follow steps 1-3 leaving out the setup of the Bamboo and Bitbucket containers.
-You can stop and remove the Bamboo and Bitbucket containers or just stop them in case you want to set them up later on.
-
-You also need to configure further settings in the ``src/main/resources/config/application-local.yml`` properties:
+The Local CI subsystem of the Integrated Code Lifecycle is used to automatically build and test student submissions. By default, the number of concurrent builds that can be executed is determined by the number of available CPU cores. You can manually determine this number by adding the following property to the ``src/main/resources/config/application-local.yml`` file:
 
 .. code-block:: yaml
 
        artemis:
-           user-management:
-               use-external: true
-               external:
-                   url: http://localhost:8081
-                   user:  <jira-admin-user> # insert the admin user you created in Jira
-                   password: <jira-admin-password> # insert the admin user's password
-                   admin-group-name: instructors
-
+           continuous-integration:
+                specify-concurrent-builds: true
+                // The number of concurrent builds that can be executed
+                concurrent-build-size: 2
 
 .. _Start Artemis:
 
 Start Artemis
 ^^^^^^^^^^^^^
 
-Start Artemis with the profiles ``localci`` and ``localvc`` so that the correct adapters will be used,
+For the development environment, you can start Artemis with the following additional profiles: ``localci``, ``localvc`` and ``buildagent``.
+It is important to consider the **correct order** of the profiles, as the ``core`` profile needs to overwrite the ``buildagent`` profile,
 e.g.:
 
 ::
 
-   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,local
+   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local
 
 All of these profiles are enabled by default when using the ``Artemis (Server, LocalVC & LocalCI)`` run configuration in IntelliJ.
-Add ``jira`` to the list of profiles if you want to use Jira for user management: `dev,localci,localvc,artemis,scheduling,local,jira`
 Please read :ref:`Server Setup` for more details.
 
 
@@ -130,7 +117,7 @@ To create a course with registered users, you can use the scripts from ``support
 - Make sure that the result of your submission is displayed in the Artemis UI.
 
 .. HINT::
-   At the moment, the local VC system only supports accessing repositories via HTTP(S) and Basic Auth. We plan to add SSH support in the future. For now, you need to enter your Artemis credentials (username and password) when accessing template, solution, test, and assignment repositories.
+   At the moment, the Local VC system only supports accessing repositories via HTTP(S) and Basic Auth. We plan to add SSH support in the future. For now, you need to enter your Artemis credentials (username and password) when accessing template, solution, test, and assignment repositories.
 
 For unauthorized access, your Git client will display the respective error message:
 

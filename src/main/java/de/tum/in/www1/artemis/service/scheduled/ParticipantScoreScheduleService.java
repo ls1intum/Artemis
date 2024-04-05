@@ -8,10 +8,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -31,7 +32,7 @@ import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.CompetencyProgressService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 
 /**
@@ -175,9 +176,8 @@ public class ParticipantScoreScheduleService {
 
         // Find all outdated participant scores where the last result is null (because it was deleted)
         var participantScoresToProcess = participantScoreRepository.findAllOutdated();
-        participantScoresToProcess.forEach(participantScore -> {
-            scheduleTask(participantScore.getExercise().getId(), participantScore.getParticipant().getId(), Instant.now(), null);
-        });
+        participantScoresToProcess
+                .forEach(participantScore -> scheduleTask(participantScore.getExercise().getId(), participantScore.getParticipant().getId(), Instant.now(), null));
 
         log.debug("Processing of {} results and {} participant scores.", resultsToProcess.size(), participantScoresToProcess.size());
     }
@@ -315,7 +315,11 @@ public class ParticipantScoreScheduleService {
             }
 
             // Update the progress for competencies linked to this exercise
-            competencyProgressService.updateProgressByLearningObject(score.getExercise(), score.getParticipant().getParticipants());
+            Participant scoreParticipant = score.getParticipant();
+            if (scoreParticipant instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                scoreParticipant = teamRepository.findWithStudentsByIdElseThrow(team.getId());
+            }
+            competencyProgressService.updateProgressByLearningObject(score.getExercise(), scoreParticipant.getParticipants());
         }
         catch (Exception e) {
             log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);

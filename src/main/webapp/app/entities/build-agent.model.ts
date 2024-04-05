@@ -8,5 +8,5 @@ export class BuildAgent implements BaseEntity {
     public numberOfCurrentBuildJobs?: number;
     public runningBuildJobs?: BuildJob[];
     public status?: boolean;
-    public runningBuildJobsIds = '';
+    public recentBuildJobs?: BuildJob[];
 }

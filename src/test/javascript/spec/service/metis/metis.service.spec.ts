@@ -25,17 +25,19 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import { Subject, of } from 'rxjs';
 import {
+    metisChannel,
     metisCourse,
     metisExam,
     metisExercise,
     metisLecture,
-    metisLectureChannelDto,
+    metisLectureChannelDTO,
     metisPostExerciseUser1,
     metisPostInChannel,
     metisReactionUser2,
     metisResolvingAnswerPostUser1,
     metisUser1,
     metisUser2,
+    plagiarismPost,
 } from '../../helpers/sample/metis-sample-data';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
@@ -549,6 +551,52 @@ describe('Metis Service', () => {
             },
         );
 
+        it('should update messages received over WebSocket in private channels', () => {
+            // Setup
+            const mockPostDTO = {
+                post: { ...metisPostInChannel, conversation: { ...metisChannel, isCourseWide: false } },
+                action: MetisPostAction.CREATE,
+            };
+            const mockReceiveObservable = new Subject();
+            websocketServiceReceiveStub.mockReturnValue(mockReceiveObservable.asObservable());
+            metisService.setPageType(PageType.OVERVIEW);
+
+            // set currentPostContextFilter appropriately
+            metisService.getFilteredPosts({ conversationId: metisChannel.id } as PostContextFilter);
+            const markAsReadSpy = jest.spyOn(conversationService, 'markAsRead').mockReturnValue(of());
+
+            metisService['handleNewOrUpdatedMessage'](mockPostDTO);
+
+            // Ensure subscribe to websocket was not called
+            expect(websocketService.subscribe).not.toHaveBeenCalled();
+
+            // Emulate receiving a message
+            mockReceiveObservable.next(mockPostDTO);
+
+            expect(markAsReadSpy).toHaveBeenCalled();
+        });
+
+        it('should update plagiarism posts received over WebSocket', () => {
+            // Setup
+            const mockPostDTO = {
+                post: plagiarismPost,
+                action: MetisPostAction.CREATE,
+            };
+            const mockReceiveObservable = new Subject();
+            websocketServiceReceiveStub.mockReturnValue(mockReceiveObservable.asObservable());
+            metisService.setPageType(PageType.PLAGIARISM_CASE_STUDENT);
+
+            // set currentPostContextFilter appropriately
+            metisService.getFilteredPosts({ plagiarismCaseId: mockPostDTO.post.plagiarismCase?.id } as PostContextFilter);
+
+            // Ensure subscribe to websocket was not called
+            expect(websocketService.subscribe).toHaveBeenCalled();
+
+            // Emulate receiving a message
+            mockReceiveObservable.next(mockPostDTO);
+            expect(metisService['cachedPosts']).toContain(plagiarismPost);
+        });
+
         it('should update displayed conversation messages if new message does not match search text', fakeAsync(() => {
             // Setup
             const channel = 'someChannel';
@@ -591,8 +639,8 @@ describe('Metis Service', () => {
         }));
 
         it('should return current conversation', () => {
-            metisService.getFilteredPosts({ conversationId: metisLectureChannelDto.id } as PostContextFilter, false, metisLectureChannelDto);
-            expect(metisService.getCurrentConversation()).toBe(metisLectureChannelDto);
+            metisService.getFilteredPosts({ conversationId: metisLectureChannelDTO.id } as PostContextFilter, false, metisLectureChannelDTO);
+            expect(metisService.getCurrentConversation()).toBe(metisLectureChannelDTO);
         });
     });
 });
