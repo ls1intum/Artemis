@@ -43,8 +43,8 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
     /**
      * Checks if the group can be used e.g. for specifying it in a course. Depending on the used authentication and
      * group management, some groups cannot be used unless they are also present in the external group management system.
-     * This would be the case for e.g. Jira+Bitbucket+Bamboo, where groups also have to exist in those three systems if
-     * we want to consistently use the in Artemis.
+     * This would be the case when groups also have to exist in those other systems if
+     * we want to consistently use them in Artemis.
      *
      * @param group The name of the group for which the availability should get checked
      * @return True, if the group is available for usage, false otherwise

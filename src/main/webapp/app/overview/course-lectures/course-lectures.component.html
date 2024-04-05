@@ -1,87 +1,17 @@
-<ng-template #controls>
-    @if (course?.lectures && course!.lectures!.length > 0) {
-        <div class="course-overview-controls d-none d-sm-block text-end">
-            <div class="d-inline-block">
-                <button id="flip" (click)="flipOrder()" class="btn btn-primary">
-                    <fa-icon [icon]="sortingOrder === ASC ? faSortNumericUp : faSortNumericDown" />
-                    <span class="ms-1">{{ 'artemisApp.courseOverview.exerciseList.' + (sortingOrder === ASC ? 'oldFirst' : 'newFirst') | artemisTranslate }}</span>
-                </button>
-            </div>
+<div class="d-flex justify-content-between gap-3">
+    @if (course) {
+        <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+            <jhi-sidebar [sidebarData]="sidebarData" />
         </div>
-    }
-</ng-template>
-<div class="row">
-    <div class="col-12 col-md-8">
-        @if (course) {
-            <div class="mt-3 position-relative">
-                @for (weekKey of weeklyIndexKeys; track weekKey) {
-                    <div class="exercise-row-container mb-3">
-                        <div
-                            class="control-label"
-                            [ngClass]="{ 'text-primary': weeklyLecturesGrouped[weekKey]!.isCurrentWeek }"
-                            (click)="weeklyLecturesGrouped[weekKey]!.isCollapsed = !weeklyLecturesGrouped[weekKey]!.isCollapsed"
-                        >
-                            <fa-icon class="pe-3" [icon]="weeklyLecturesGrouped[weekKey]!.isCollapsed ? faAngleDown : faAngleUp" />
-                            @if (weeklyLecturesGrouped[weekKey].start && weeklyLecturesGrouped[weekKey].end) {
-                                <span>
-                                    {{ weeklyLecturesGrouped[weekKey].start | artemisDate: 'long-date' }} -
-                                    {{ weeklyLecturesGrouped[weekKey].end | artemisDate: 'long-date' }}
-                                </span>
-                            }
-                            @if (!weeklyLecturesGrouped[weekKey].start || !weeklyLecturesGrouped[weekKey].end) {
-                                <span>
-                                    {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | artemisTranslate }}
-                                </span>
-                            }
-                            <span
-                                class="ms-2"
-                                style="font-weight: 300"
-                                jhiTranslate="artemisApp.courseOverview.lectureList.lectureGroupHeader"
-                                [translateValues]="{ total: weeklyLecturesGrouped[weekKey]!.lectures.length }"
-                            >
-                                Exercises: {{ weeklyLecturesGrouped[weekKey]!.lectures.length }}
-                            </span>
-                        </div>
-                        @if (!weeklyLecturesGrouped[weekKey]!.isCollapsed) {
-                            <div>
-                                @for (lecture of weeklyLecturesGrouped[weekKey]!.lectures; track lecture) {
-                                    <jhi-course-lecture-row class="pb-1" [lecture]="lecture" [course]="course" />
-                                }
-                            </div>
-                        }
-                        <div class="collapsed"></div>
-                    </div>
-                }
-                @if (!course?.lectures) {
-                    <div>
-                        <div class="row">
-                            <div class="col">
-                                {{ 'artemisApp.courseOverview.lectureList.noLectures' | artemisTranslate }}
-                            </div>
-                        </div>
-                    </div>
-                }
+
+        @if (lectureSelected) {
+            <div class="vw-100 module-bg rounded-3 pb-3">
+                <router-outlet />
+            </div>
+        } @else {
+            <div class="vw-100 module-bg rounded-3 px-3 d-flex justify-content-between">
+                <div class="col-12 text-center my-auto">Please Select an Lecture.</div>
             </div>
         }
-    </div>
-    <div class="col-12 col-md-4 course-information">
-        <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.courseInformation' | artemisTranslate">
-            <div class="row mb-1">
-                <div class="col-8">{{ 'artemisApp.courseOverview.lectureList.totalLectures' | artemisTranslate }}</div>
-                <div class="col-4">{{ course?.lectures ? course!.lectures!.length : 0 }}</div>
-            </div>
-            @if (course?.startDate) {
-                <div class="row mb-1">
-                    <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | artemisTranslate }}</div>
-                    <div class="col-4">{{ course?.startDate | artemisDate }}</div>
-                </div>
-            }
-            @if (course?.endDate) {
-                <div class="row">
-                    <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | artemisTranslate }}</div>
-                    <div class="col-4">{{ course?.endDate | artemisDate }}</div>
-                </div>
-            }
-        </jhi-side-panel>
-    </div>
+    }
 </div>
