@@ -2,7 +2,7 @@
     <div class="card-header">
         <div class="d-flex align-items-center mw-100 clickable" (click)="toggle()">
             <div class="icon-container me-3">
-                <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="isCollapsed" />
+                <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed" />
             </div>
             <h6 class="mb-0 text-nowrap text-truncate overflow-hidden">{{ titleControl.value ?? '' }}</h6>
         </div>
@@ -18,12 +18,13 @@
                     [btnType]="ButtonType.WARNING"
                     [btnSize]="ButtonSize.SMALL"
                     [title]="'entity.action.edit'"
-                    [icon]="faEdit"
+                    [icon]="faPencilAlt"
                     (onClick)="edit()"
                     [shouldSubmit]="false"
                 />
             } @else {
                 <jhi-button
+                    class="me-1"
                     id="saveButton-{{ index }}"
                     [btnType]="ButtonType.SUCCESS"
                     [btnSize]="ButtonSize.SMALL"
@@ -75,7 +76,12 @@
                     [enableFileUpload]="false"
                 />
             } @else {
-                <div id="description-{{ index }}" disabled="true" class="markdown-preview border rounded p-1" [innerHTML]="descriptionControl.value | htmlForMarkdown"></div>
+                <div
+                    id="description-{{ index }}"
+                    disabled="true"
+                    class="markdown-preview border rounded p-1"
+                    [innerHTML]="descriptionControl.value || '&nbsp;' | htmlForMarkdown"
+                ></div>
             }
             @if (descriptionControl.invalid && descriptionControl.dirty) {
                 <div class="alert alert-danger">
