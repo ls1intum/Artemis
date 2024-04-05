@@ -80,7 +80,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
      * Publishes a build plan using Aeolus
      */
     @Test
-    void testSuccessfulPublishBuildPlan() throws com.fasterxml.jackson.core.JsonProcessingException {
+    void testSuccessfulPublishBuildPlan() throws JsonProcessingException {
         Windfile mockWindfile = new Windfile();
         var expectedPlanKey = "PLAN";
         mockWindfile.setId("PROJECT-" + expectedPlanKey);
