@@ -33,10 +33,10 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     exercise?: Exercise;
 
     useSsh = false;
-    sshKeysUrl: string;
+    sshKeysUrl?: string;
     sshEnabled: boolean;
-    sshTemplateUrl: string;
-    repositoryPassword: string;
+    sshTemplateUrl?: string;
+    repositoryPassword?: string;
     versionControlUrl: string;
     versionControlAccessTokenRequired?: boolean;
     localVCEnabled = false;
