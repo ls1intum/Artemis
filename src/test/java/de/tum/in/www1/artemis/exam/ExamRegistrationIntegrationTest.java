@@ -5,7 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -35,7 +39,7 @@ import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "examregistrationtest";
 
@@ -97,16 +101,12 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationBambooBit
         testExam1 = examUtilService.addTestExam(course1);
         examUtilService.addStudentExamForTestExam(testExam1, student1);
 
-        bitbucketRequestMockProvider.enableMockingOfRequests();
-
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
         participantScoreScheduleService.activate();
     }
 
     @AfterEach
     void tearDown() {
-        bitbucketRequestMockProvider.reset();
-
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
         participantScoreScheduleService.shutdown();
     }
@@ -115,10 +115,6 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
         User student42 = userUtilService.getUserByLogin(TEST_PREFIX + "student42");
-        jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
-        bitbucketRequestMockProvider.mockUpdateUserDetails(student42.getLogin(), student42.getEmail(), student42.getName());
-        bitbucketRequestMockProvider.mockAddUserToGroups();
 
         Set<User> studentsInCourseBefore = userRepo.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
@@ -143,8 +139,6 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterUsersInExam() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
-
         var savedExam = examUtilService.addExam(course1);
 
         List<String> registrationNumbers = Arrays.asList("1111111", "1111112", "1111113");
@@ -169,20 +163,10 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationBambooBit
                 .email(STUDENT_111 + "@tum.de");
         doReturn(Optional.of(ldapUser111Dto)).when(ldapUserService).findByRegistrationNumber(registrationNumber111);
 
-        // first mocked call is expected to add student 99 to the course student group
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
-        // second mocked call expected to create student 111
-        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser111Dto.getUsername(), ldapUser111Dto.getFirstName() + " " + ldapUser111Dto.getLastName(),
-                ldapUser111Dto.getEmail());
-        // the last mocked call is expected to add student 111 to the course student group
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
-
-        User student99 = userUtilService.createAndSaveUser("student99"); // not registered for the course
+        userUtilService.createAndSaveUser("student99"); // not registered for the course
         userUtilService.setRegistrationNumberOfUserAndSave("student99", registrationNumber99);
 
-        bitbucketRequestMockProvider.mockUpdateUserDetails(student99.getLogin(), student99.getEmail(), student99.getName());
-        bitbucketRequestMockProvider.mockAddUserToGroups();
-        student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student99").orElseThrow();
+        User student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student99").orElseThrow();
         assertThat(student99.getGroups()).doesNotContain(course1.getStudentGroupName());
 
         // Note: student111 is not yet a user of Artemis and should be retrieved from the LDAP
@@ -244,7 +228,6 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterLDAPUsersInExam() throws Exception {
-        jiraRequestMockProvider.enableMockingOfRequests();
         var savedExam = examUtilService.addExam(course1);
         String student100 = TEST_PREFIX + "student100";
         String student200 = TEST_PREFIX + "student200";
@@ -253,18 +236,12 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationBambooBit
         // setup mocks
         var ldapUser1Dto = new LdapUserDto().firstName(student100).lastName(student100).username(student100).registrationNumber("100000").email(student100 + "@tum.de");
         doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByUsername(student100);
-        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser1Dto.getUsername(), ldapUser1Dto.getFirstName() + " " + ldapUser1Dto.getLastName(), null);
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
 
         var ldapUser2Dto = new LdapUserDto().firstName(student200).lastName(student200).username(student200).registrationNumber("200000").email(student200 + "@tum.de");
         doReturn(Optional.of(ldapUser2Dto)).when(ldapUserService).findByEmail(student200 + "@tum.de");
-        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser2Dto.getUsername(), ldapUser2Dto.getFirstName() + " " + ldapUser2Dto.getLastName(), null);
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
 
         var ldapUser3Dto = new LdapUserDto().firstName(student300).lastName(student300).username(student300).registrationNumber("3000000").email(student300 + "@tum.de");
         doReturn(Optional.of(ldapUser3Dto)).when(ldapUserService).findByRegistrationNumber("3000000");
-        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser3Dto.getUsername(), ldapUser3Dto.getFirstName() + " " + ldapUser3Dto.getLastName(), null);
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
 
         // user with login
         StudentDTO dto1 = new StudentDTO(student100, student100, student100, null, null);
