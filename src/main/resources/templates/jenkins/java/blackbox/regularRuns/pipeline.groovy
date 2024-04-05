@@ -42,13 +42,23 @@ void testRunner() {
 private void setup() {
     // special jobs to run only for the solution repository
     if ("${env.JOB_NAME}" ==~ /.+-SOLUTION$/) {
+        // processing sample solution in this run
+        /*
+        // This flag mounts the maven cache writeable in the container for a sample solution,
+        // see below for the student submission.
         dockerFlags += ' -v artemis_blackbox_maven-cache:/maven_cache'
+        */
     } else {
+        // processing student submission in this run
+        /*
+        // This flag mounts the maven cache read-only in the container for a student solution.
+        // The cache was filled by the run of the corresponding sample solution, see above.
         dockerFlags += ' -v artemis_blackbox_maven-cache:/maven_cache:ro'
 
         // if not solution repo, disallow network access from containers
         dockerFlags += ' --network none'
         mavenFlags += ' --offline'
+        */
     }
 }
 
