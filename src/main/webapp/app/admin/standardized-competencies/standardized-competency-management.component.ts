@@ -19,9 +19,9 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Subject, debounceTime, map } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { getIcon } from 'app/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
@@ -69,7 +69,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         private standardizedCompetencyService: StandardizedCompetencyService,
         private alertService: AlertService,
         private modalService: NgbModal,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
+        private translateService: TranslateService,
     ) {}
 
     ngOnInit() {
@@ -387,10 +387,10 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         return this.knowledgeAreaMap.get(id);
     }
 
-    private openCancelModal(entityName: string, callback: () => void) {
+    private openCancelModal(entityTitle: string, callback: () => void) {
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
-        modalRef.componentInstance.title = 'artemisApp.standardizedCompetency.manage.cancelModalTitle';
-        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.standardizedCompetency.manage.cancelModalText', { entityName: entityName });
+        modalRef.componentInstance.title = 'artemisApp.standardizedCompetency.manage.cancelModal.title';
+        modalRef.componentInstance.text = this.translateService.instant('artemisApp.standardizedCompetency.manage.cancelModal.text', { title: entityTitle });
         modalRef.result.then(() => callback());
     }
 

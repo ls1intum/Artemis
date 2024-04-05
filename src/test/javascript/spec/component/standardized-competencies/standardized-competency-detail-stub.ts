@@ -9,11 +9,11 @@ import { Observable } from 'rxjs';
 export class StandardizedCompetencyDetailStubComponent {
     @Input() knowledgeAreas: KnowledgeArea[] = [];
     @Input() competency: StandardizedCompetencyDTO;
-    @Input() isInEditMode = false;
+    @Input() isEditing = false;
     @Input() dialogError: Observable<string>;
 
     @Output() onSave = new EventEmitter<StandardizedCompetencyDTO>();
     @Output() onDelete = new EventEmitter<void>();
     @Output() onClose = new EventEmitter<void>();
-    @Output() isInEditModeChange = new EventEmitter<boolean>();
+    @Output() isEditingChange = new EventEmitter<boolean>();
 }
