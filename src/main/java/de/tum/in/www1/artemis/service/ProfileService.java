@@ -58,16 +58,6 @@ public class ProfileService {
     // VC & CI profiles
 
     /**
-     * Checks if the bamboo profile is active
-     *
-     * @return true if the bamboo profile is active, false otherwise
-     */
-    @Deprecated
-    public boolean isBambooActive() {
-        return isProfileActive("bamboo");
-    }
-
-    /**
      * Checks if the gitlabci or jenkins profile is active
      *
      * @return true if the gitlabci or jenkins profile is active, false otherwise
