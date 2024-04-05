@@ -127,6 +127,11 @@ public class LocalCITestConfiguration {
         doReturn(removeImageCmd).when(dockerClient).removeImageCmd(anyString());
         doNothing().when(removeImageCmd).exec();
 
+        // Mock removeContainerCmd
+        RemoveContainerCmd removeContainerCmd = mock(RemoveContainerCmd.class);
+        doReturn(removeContainerCmd).when(dockerClient).removeContainerCmd(anyString());
+        doReturn(removeContainerCmd).when(removeContainerCmd).withForce(true);
+
         return dockerClient;
     }
 
