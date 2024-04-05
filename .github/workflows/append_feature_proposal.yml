@@ -43,7 +43,6 @@ jobs:
 
               // Add separator line and remove metadata section
               templateText = '---\n' + templateText.split('---').slice(2).join('---').trim();
-              templateText += "\n" + featureProposalMarker; // Append marker
 
               const updatedBody = issue.data.body + "\n" + templateText;
               
