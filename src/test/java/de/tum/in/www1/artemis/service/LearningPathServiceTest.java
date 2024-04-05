@@ -108,7 +108,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class HeathCheckTest {
+    class HealthCheck {
 
         @BeforeEach
         void setup() {
@@ -168,7 +168,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class GenerateNgxGraphRepresentationBaseTest {
+    class GenerateNgxGraphRepresentationBase {
 
         @Test
         void testEmptyLearningPath() {
@@ -232,7 +232,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class GenerateNgxGraphRepresentationRelationTest {
+    class GenerateNgxGraphRepresentationRelation {
 
         private Competency competency1;
 
@@ -319,7 +319,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class GenerateNgxPathRepresentationTest {
+    class GenerateNgxPathRepresentation {
 
         @BeforeEach
         void setup() {
@@ -360,7 +360,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class GenerateNgxPathRepresentationCompetencyOrderTest {
+    class GenerateNgxPathRepresentationCompetencyOrder {
 
         private Competency competency1;
 
@@ -496,7 +496,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class GenerateNgxPathRepresentationLearningObjectOrderTest {
+    class GenerateNgxPathRepresentationLearningObjectOrder {
 
         private Competency competency;
 

@@ -179,7 +179,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         for (MockMultipartFile file : files) {
             builder.file(file);
         }
-        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
         if (expectedStatus == HttpStatus.CREATED) {
             return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
@@ -194,7 +194,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         for (MockMultipartFile file : files) {
             builder.file(file);
         }
-        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
         if (expectedStatus == HttpStatus.OK) {
             return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
@@ -215,7 +215,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         addFilesToBuilderAndModifyExercise(builder, quizExercise, addBackgroundImage);
         builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
                 .contentType(MediaType.MULTIPART_FORM_DATA);
-        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
         if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
             assertThat(result.getResponse().getContentAsString()).isNotBlank();
@@ -249,7 +249,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         }
         builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
                 .contentType(MediaType.MULTIPART_FORM_DATA);
-        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
         if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
             return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
@@ -274,7 +274,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     private void checkCreatedFile(String path) throws Exception {
-        MvcResult result = request.getMvc().perform(get(path)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM)).andReturn();
+        MvcResult result = request.performMvcRequest(get(path)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM)).andReturn();
         byte[] image = result.getResponse().getContentAsByteArray();
         assertThat(image).isNotEmpty();
     }
@@ -641,7 +641,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         quizExerciseUtilService.renameAndSaveQuiz(quizExercise, searchTerm);
         quizExerciseUtilService.renameAndSaveQuiz(examQuizExercise, searchTerm + "-Morpork");
 
-        exerciseIntegrationTestService.testCourseAndExamFilters("/api/quiz-exercises/", searchTerm);
+        exerciseIntegrationTestService.testCourseAndExamFilters("/api/quiz-exercises", searchTerm);
     }
 
     @Test

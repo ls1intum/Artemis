@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -52,22 +52,6 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
 
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     List<ParticipantScore> findAllByExercise(Exercise exercise);
-
-    @Query("""
-            SELECT p
-            FROM ParticipantScore p
-                LEFT JOIN FETCH p.exercise
-                LEFT JOIN FETCH p.lastResult
-                LEFT JOIN FETCH p.lastRatedResult
-            """)
-    List<ParticipantScore> findAllEagerly();
-
-    @Query("""
-            SELECT AVG(p.lastRatedScore)
-            FROM ParticipantScore p
-            WHERE p.exercise IN :exercises
-            """)
-    Double findAvgRatedScore(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
             SELECT AVG(p.lastScore)

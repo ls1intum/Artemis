@@ -13,12 +13,6 @@
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
 
-management:
-    metrics:
-        export:
-            prometheus:
-                enabled: false
-
 artemis:
     push-notification-relay: https://hermes.artemis.cit.tum.de
 
@@ -42,7 +36,7 @@ spring:
                 prepStmtCacheSqlLimit: 2048
                 useServerPrepStmts: true
     jpa:
-        database-platform: org.hibernate.dialect.MySQL8Dialect
+        database-platform: org.hibernate.dialect.MySQLDialect
         database: MYSQL
         show-sql: false
     mail:

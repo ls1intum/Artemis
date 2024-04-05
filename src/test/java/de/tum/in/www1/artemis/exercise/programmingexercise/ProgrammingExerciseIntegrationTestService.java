@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys.*;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.*;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
@@ -22,7 +22,7 @@ import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
@@ -71,12 +71,12 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPer
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
+import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints;
+import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
 /**
@@ -1628,9 +1628,8 @@ class ProgrammingExerciseIntegrationTestService {
         updates.get(0).setBonusMultiplier(-1.0);
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
 
-        request.getMvc()
-                .perform(MockMvcRequestBuilders.patch(new URI(ROOT + endpoint)).contentType(MediaType.APPLICATION_JSON)
-                        .content(request.getObjectMapper().writeValueAsString(updates)))
+        request.performMvcRequest(
+                MockMvcRequestBuilders.patch(new URI(ROOT + endpoint)).contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsString(updates)))
                 .andExpect(status().isBadRequest()) //
                 .andExpect(jsonPath("$.errorKey").value("settingNegative")) //
                 .andExpect(jsonPath("$.testCase").value(testCases.get(0).getTestName()));
@@ -1702,13 +1701,13 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void lockAllRepositories_asStudent_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
+        request.post(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     void lockAllRepositories_asTutor_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
+        request.post(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     void lockAllRepositories() throws Exception {
@@ -1722,8 +1721,8 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation1.getStudents());
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation2.getStudents());
 
-        final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(ROOT + endpoint, null, HttpStatus.OK);
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
+        request.postWithoutLocation(ROOT + endpoint, null, HttpStatus.OK, null);
 
         verify(versionControlService, timeout(300)).setRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUri(), programmingExercise.getProjectKey(),
                 participation1.getStudents());
@@ -1740,13 +1739,13 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void unlockAllRepositories_asStudent_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
+        request.post(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     void unlockAllRepositories_asTutor_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
+        request.post(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     void unlockAllRepositories() throws Exception {
@@ -1760,8 +1759,8 @@ class ProgrammingExerciseIntegrationTestService {
         mockConfigureRepository(programmingExercise);
         mockDelegate.mockDefaultBranch(programmingExercise);
 
-        final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(ROOT + endpoint, null, HttpStatus.OK);
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
+        request.postWithoutLocation(ROOT + endpoint, null, HttpStatus.OK, null);
 
         verify(versionControlService, timeout(300)).addMemberToRepository(participation1.getVcsRepositoryUri(), participation1.getStudent().orElseThrow(),
                 VersionControlRepositoryPermission.REPO_WRITE);
