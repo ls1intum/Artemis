@@ -171,14 +171,13 @@ public class ComplaintResponseService {
      * @return complaintResponse of resolved complaint
      */
     public ComplaintResponse resolveComplaint(ComplaintResponseUpdateDTO updatedComplaintResponse, Long complaintResponseId) {
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
-
         validateComplaintResponseId(complaintResponseId);
         ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(complaintResponseId);
         validateComplaintResponseEmpty(complaintResponseFromDatabase);
         Complaint originalComplaint = complaintRepository.findByIdElseThrow(complaintResponseFromDatabase.getComplaint().getId());
         validateOriginalComplaintNotAnswered(originalComplaint);
 
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
 
         if (updatedComplaintResponse.complaintIsAccepted() == null) {
@@ -208,8 +207,6 @@ public class ComplaintResponseService {
      * @return complaintResponse of resolved complaint
      */
     public ComplaintResponse resolveComplaint(ComplaintResponse updatedComplaintResponse) {
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
-
         validateComplaintResponseId(updatedComplaintResponse.getId());
         // TODO: make this retrieval redundant by proper fetching
         ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(updatedComplaintResponse.getId());
@@ -218,6 +215,7 @@ public class ComplaintResponseService {
         Complaint originalComplaint = complaintRepository.findByIdElseThrow(complaintResponseFromDatabase.getComplaint().getId());
         validateOriginalComplaintNotAnswered(originalComplaint);
 
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
 
         if (updatedComplaintResponse.getComplaint().isAccepted() == null) {

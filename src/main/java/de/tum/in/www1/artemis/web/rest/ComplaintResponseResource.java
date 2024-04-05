@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.service.ComplaintResponseService;
 import de.tum.in.www1.artemis.service.dto.ComplaintAction;
 import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * REST controller for managing complaints.
@@ -88,7 +89,7 @@ public class ComplaintResponseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> refreshLockOrResolveComplaint(@RequestBody ComplaintResponseUpdateDTO complaintResponseUpdate, @PathVariable long complaintId) {
         if (complaintResponseUpdate.action() == null) {
-            return ResponseEntity.badRequest().build();
+            throw new BadRequestAlertException("A complaint response action can not be null.", ENTITY_NAME, "complaintResponseUpdateActionIsNull");
         }
 
         ComplaintAction action = complaintResponseUpdate.action();

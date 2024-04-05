@@ -32,8 +32,6 @@ describe('ComplaintService', () => {
     clientComplaint1.submittedTime = dayjsTime1;
     clientComplaint1.complaintText = 'Test text';
 
-    // const complaintRequest = new ComplaintRequestDTO(this.resultId, this.complaintType, this.complaintText, this.examId);
-
     const serverComplaint1 = { ...clientComplaint1, submittedTime: stringTime1 };
 
     const clientComplaint2 = new Complaint();

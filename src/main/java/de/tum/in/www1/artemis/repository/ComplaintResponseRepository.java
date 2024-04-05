@@ -114,6 +114,6 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
     void deleteByComplaint_Result_Id(long resultId);
 
     default ComplaintResponse findByIdElseThrow(Long complaintResponseId) {
-        return findById(complaintResponseId).orElseThrow(() -> new EntityNotFoundException("The complaint response was not found in the database"));
+        return findById(complaintResponseId).orElseThrow(() -> new EntityNotFoundException("ComplaintResponse", complaintResponseId));
     }
 }

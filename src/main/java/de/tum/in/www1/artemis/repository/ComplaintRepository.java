@@ -520,6 +520,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<TutorLeaderboardAnsweredMoreFeedbackRequests> findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(@Param("exerciseId") long exerciseId);
 
     default Complaint findByIdElseThrow(Long complaintId) {
-        return findByIdWithEagerAssessor(complaintId).orElseThrow(() -> new EntityNotFoundException("The complaint was not found in the database"));
+        return findByIdWithEagerAssessor(complaintId).orElseThrow(() -> new EntityNotFoundException("Complaint", complaintId));
     }
 }
