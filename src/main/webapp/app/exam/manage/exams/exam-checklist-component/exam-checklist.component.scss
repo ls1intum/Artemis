@@ -1,3 +1,7 @@
 .assessment-check-button:active {
     border-color: transparent !important;
 }
+
+.assessment-container a:not(:last-child)::after {
+    content: ',';
+}

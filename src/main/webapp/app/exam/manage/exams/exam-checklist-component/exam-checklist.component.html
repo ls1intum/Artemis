@@ -475,12 +475,9 @@
                                                     <span style="text-decoration: underline; margin-left: 20px"
                                                         >{{ 'artemisApp.examManagement.checklist.textitems.exercisesAttention' | artemisTranslate }}:</span
                                                     >
-                                                    <div style="margin-left: 20px">
+                                                    <div class="assessment-container" style="margin-left: 20px">
                                                         @for (assessment of unfinishedAssessments; track assessment; let lastAssessment = $last) {
                                                             <a [routerLink]="getAssessmentLinkBySubmission(assessment)">{{ getAssessmentTitle(assessment) }}</a>
-                                                            @if (!lastAssessment) {
-                                                                ,
-                                                            }
                                                         }
                                                     </div>
                                                 </ng-container>
