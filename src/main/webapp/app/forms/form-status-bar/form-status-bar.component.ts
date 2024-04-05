@@ -15,11 +15,12 @@ export class FormStatusBarComponent implements AfterViewInit {
     @Input()
     formStatusSections: FormSectionStatus[];
 
-    headerHeight? = 0;
-
     @HostListener('window:resize')
     onResize() {
-        setTimeout(() => (this.headerHeight = (document.querySelector('jhi-navbar') as HTMLElement).offsetHeight));
+        setTimeout(() => {
+            const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement).offsetHeight;
+            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+        });
     }
 
     ngAfterViewInit() {
