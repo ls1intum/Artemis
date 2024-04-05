@@ -1,0 +1,14 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+  <mirrors>
+    <mirror>
+      <id>nexus</id>
+      <name>Cache</name>
+      <!--Here you can specify another maven proxy e.g. one in your locale network to improve performance-->
+      <url>https://repo1.maven.org/maven2/</url>
+      <mirrorOf>*</mirrorOf>
+      <blocked>false</blocked>
+    </mirror>
+  </mirrors>
+</settings>
