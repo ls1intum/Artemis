@@ -23,6 +23,7 @@ import { By } from '@angular/platform-browser';
 import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+
 import { of } from 'rxjs';
 
 const mockExercise: Exercise = {
@@ -32,6 +33,9 @@ const mockExercise: Exercise = {
     dueDate: dayjs().subtract(3, 'hours'),
     assessmentType: AssessmentType.AUTOMATIC,
     type: ExerciseType.PROGRAMMING,
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: false,
+    studentAssignedTeamIdComputed: false,
 } as Exercise;
 
 const mockParticipation: Participation = {
@@ -63,19 +67,21 @@ const preparedFeedback: FeedbackComponentPreparedParams = {
     latestDueDate: dayjs().subtract(1, 'hours'),
     showMissingAutomaticFeedbackInformation: true,
 };
+const participationServiceMock = {
+    downloadArtifact: jest.fn(),
+};
 
 describe('ResultComponent', () => {
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
     let modalService: NgbModal;
-    let participationService: ParticipationService;
+    let mockLink: HTMLAnchorElement;
 
     beforeEach(async () => {
-        const participationServiceMock = {
-            downloadArtifact: jest.fn(),
-        };
+        participationServiceMock.downloadArtifact = jest.fn() as jest.Mock;
         global.URL.createObjectURL = jest.fn(() => 'blob:test-url');
         global.URL.revokeObjectURL = jest.fn();
+
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe)],
@@ -89,18 +95,21 @@ describe('ResultComponent', () => {
                 fixture = TestBed.createComponent(ResultComponent);
                 comp = fixture.componentInstance;
                 modalService = TestBed.inject(NgbModal);
-                participationService = TestBed.inject(ParticipationService);
+
+                participationServiceMock.downloadArtifact = jest.fn() as jest.Mock;
+
                 comp.badge = {
-                    tooltip: 'Example Tooltip', // Ensure this property is set
-                    // Set other properties expected by your component
+                    tooltip: 'Example Tooltip',
+                    class: 'Example Class',
+                    text: 'Example Test',
                 };
                 fixture.detectChanges();
             });
     });
 
     afterEach(() => {
-        global.URL.revokeObjectURL = jest.fn();
         jest.restoreAllMocks();
+        global.URL.revokeObjectURL = jest.fn();
     });
 
     it('should download build result when participation ID is provided', () => {
@@ -109,20 +118,20 @@ describe('ResultComponent', () => {
             fileContent: new Blob(['test'], { type: 'text/plain' }),
             fileName: 'test.txt',
         };
-        const mockLink = document.createElement('a');
+        mockLink = document.createElement('a');
         jest.spyOn(document, 'createElement').mockReturnValue(mockLink);
         jest.spyOn(document.body, 'appendChild').mockImplementation((child) => child);
         jest.spyOn(document.body, 'removeChild').mockImplementation((child) => child);
 
         const urlSpy = jest.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
 
-        participationService.downloadArtifact.mockReturnValue(of(fakeArtifact));
+        participationServiceMock.downloadArtifact.mockReturnValue(of(fakeArtifact));
 
         // Act
         comp.downloadBuildResult(123);
 
         // Assert
-        expect(participationService.downloadArtifact).toHaveBeenCalledWith(123);
+        expect(participationServiceMock.downloadArtifact).toHaveBeenCalledWith(123);
         expect(document.createElement).toHaveBeenCalledWith('a');
         expect(urlSpy).toHaveBeenCalledWith(fakeArtifact.fileContent);
         expect(mockLink.download).toBe(fakeArtifact.fileName);
@@ -214,7 +223,7 @@ describe('ResultComponent', () => {
 
         comp.isInSidebarCard = false;
         comp.resultIconClass = faTimesCircle;
-        comp.exercise = { type: ExerciseType.PROGRAMMING };
+        comp.exercise = { type: ExerciseType.PROGRAMMING, numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false };
         comp.result = mockResult;
         comp.resultIconClass = faTimesCircle;
         comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
