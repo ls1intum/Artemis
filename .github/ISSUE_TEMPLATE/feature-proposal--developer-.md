@@ -7,6 +7,8 @@ assignees: ''
 
 ---
 
+<!-- Feature Proposal Marker -->
+
 # Feature Proposal
 > Spec Version 0.1.0
 
@@ -16,7 +18,7 @@ assignees: ''
 > Describe the problem that is tackled in this issue
 
 ### Motivation 
-> Describe the motivation WHY the problem needs solving. Include the affected users/roles here.
+> Describe the motivation WHY the problem needs solving. Specify the affected users/roles.
 
 ## Requirements Engineering 
 
@@ -25,7 +27,7 @@ assignees: ''
 > You may include a UML Model here 
 
 ### Proposed System 
-> What should the perfect solution look like? 
+> What would the ideal solution look like?  
 
 ### Requirements 
 > Describe the Functional and Non-Functional Requirements of the feature. Stick to the INVEST methodology! 
@@ -49,14 +51,14 @@ assignees: ''
 
 ### Persistent Data Management
 > Describe the Database changes you intend to make.
-> Outline new config options you will add
+> Outline new configuration options you plan to introduce
 > Describe all other data persistence mechanisms you may use.
 
 ### Access Control / Security Aspects 
 > Describe the access control considerations for your feature
 
 ### Other Design Decisions
-> Potential candidates to discuss here: WebSockets, Test strategy
+> Potential topics to discuss here include: WebSockets, testing strategies.
 
 ## UI/UX Design
 > Describe the user flow (references to dynamic model). 
