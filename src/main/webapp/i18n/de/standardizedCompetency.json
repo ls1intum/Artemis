@@ -8,8 +8,14 @@
                 "createButtonTooltip": "Standardisierte Kompetenz erstellen",
                 "expandButtonTooltip": "Alle Wissensgebiete ausklappen",
                 "collapseButtonTooltip": "Alle Wissensgebiete einklappen",
-                "cancelModalTitle": "Warnung: Ungespeicherte Änderungen",
-                "cancelModalText": "Willst du wirklich die Bearbeitung von \"{{entityName}}\" abbrechen? Klicke auf Abbrechen, um zurückzugehen, oder Bestätigen, um fortzufahren.",
+                "deleteModal": {
+                    "question": "Willst du wirklich die standardisierte Kompetenz <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                    "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen der standardisierten Kompetenz ein."
+                },
+                "cancelModal": {
+                    "title": "Warnung: Ungespeicherte Änderungen",
+                    "text": "Willst du wirklich die Bearbeitung von \"{{title}}\" abbrechen? Klicke auf Abbrechen, um zurückzugehen, oder Bestätigen, um fortzufahren."
+                },
                 "successAlerts": {
                     "create": "Erfolgreich die standardisierte Kompetenz \"{{competencyTitle}}\" erstellt",
                     "update": "Erfolgreich die standardisierte Kompetenz \"{{competencyTitle}}\" aktualisiert",

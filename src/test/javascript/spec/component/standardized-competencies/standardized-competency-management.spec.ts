@@ -18,6 +18,7 @@ import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollaps
 import { By } from '@angular/platform-browser';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('StandardizedCompetencyManagementComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyManagementComponent>;
@@ -27,7 +28,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MatTreeModule, FormsModule, NgbTooltipMocksModule, NgbCollapseMocksModule],
+            imports: [TranslateTestingModule, ArtemisTestModule, MatTreeModule, FormsModule, NgbTooltipMocksModule, NgbCollapseMocksModule],
             declarations: [StandardizedCompetencyManagementComponent, StandardizedCompetencyDetailStubComponent, MockComponent(ButtonComponent), MockRouterLinkDirective],
             providers: [ArtemisTranslatePipe, MockProvider(StandardizedCompetencyService), MockProvider(AdminStandardizedCompetencyService), MockProvider(NgbModal)],
         })
@@ -48,17 +49,6 @@ describe('StandardizedCompetencyManagementComponent', () => {
         componentFixture.detectChanges();
         expect(component).toBeDefined();
     });
-
-    function createCompetencyDTO(id?: number, title?: string, description?: string, taxonomy?: CompetencyTaxonomy, knowledgeAreaId?: number) {
-        const competency: StandardizedCompetencyDTO = {
-            id: id,
-            title: title,
-            description: description,
-            taxonomy: taxonomy,
-            knowledgeAreaId: knowledgeAreaId,
-        };
-        return competency;
-    }
 
     it('should load data on init', () => {
         const tree: KnowledgeAreaDTO[] = [
@@ -413,5 +403,16 @@ describe('StandardizedCompetencyManagementComponent', () => {
         detailComponent.onSave.emit(competencyToUpdate);
 
         expect(updateSpy).toHaveBeenCalled();
+    }
+
+    function createCompetencyDTO(id?: number, title?: string, description?: string, taxonomy?: CompetencyTaxonomy, knowledgeAreaId?: number) {
+        const competency: StandardizedCompetencyDTO = {
+            id: id,
+            title: title,
+            description: description,
+            taxonomy: taxonomy,
+            knowledgeAreaId: knowledgeAreaId,
+        };
+        return competency;
     }
 });

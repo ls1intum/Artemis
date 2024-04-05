@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
 @RequestMapping("api/standardized-competencies/")
 public class StandardizedCompetencyResource {
 
-    private final static Logger log = LoggerFactory.getLogger(StandardizedCompetencyResource.class);
+    private static final Logger log = LoggerFactory.getLogger(StandardizedCompetencyResource.class);
 
     private final StandardizedCompetencyService standardizedCompetencyService;
 
