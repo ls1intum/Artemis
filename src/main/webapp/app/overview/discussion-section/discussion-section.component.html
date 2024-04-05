@@ -54,26 +54,43 @@
                                         <div class="col-auto">
                                             <div class="row">
                                                 <!-- attribute filter -->
-                                                <div class="col-auto px-0 selection-prefix">
-                                                    <fa-icon [icon]="faFilter" />
-                                                    <input
-                                                        class="form-check-input"
-                                                        type="checkbox"
-                                                        formControlName="filterToUnresolved"
-                                                        name="filterToUnresolved"
-                                                        (change)="onSelectContext()"
-                                                    />
-                                                    <span class="px-1">{{ 'artemisApp.metis.overview.filterToUnresolved' | artemisTranslate }}</span>
-                                                    <input class="form-check-input" type="checkbox" formControlName="filterToOwn" name="filterToOwn" (change)="onSelectContext()" />
-                                                    <span class="px-1">{{ 'artemisApp.metis.overview.filterToOwn' | artemisTranslate }}</span>
-                                                    <input
-                                                        class="form-check-input"
-                                                        type="checkbox"
-                                                        formControlName="filterToAnsweredOrReacted"
-                                                        name="filterToAnsweredOrReacted"
-                                                        (change)="onSelectContext()"
-                                                    />
-                                                    <span class="px-1">{{ 'artemisApp.metis.overview.filterToAnsweredOrReacted' | artemisTranslate }}</span>
+                                                <div class="col-auto px-0 selection-prefix d-flex flex-wrap">
+                                                    <fa-icon class="pe-2" [icon]="faFilter" />
+                                                    <div class="form-group pe-2">
+                                                        <input
+                                                            class="form-check-input"
+                                                            type="checkbox"
+                                                            formControlName="filterToUnresolved"
+                                                            name="filterToUnresolved"
+                                                            id="filterToUnresolved"
+                                                            (change)="onSelectContext()"
+                                                        />
+                                                        <label for="filterToUnresolved" class="p-0">{{ 'artemisApp.metis.overview.filterToUnresolved' | artemisTranslate }}</label>
+                                                    </div>
+                                                    <div class="form-group pe-2">
+                                                        <input
+                                                            class="form-check-input"
+                                                            type="checkbox"
+                                                            formControlName="filterToOwn"
+                                                            name="filterToOwn"
+                                                            id="filterToOwn"
+                                                            (change)="onSelectContext()"
+                                                        />
+                                                        <label for="filterToOwn" class="p-0">{{ 'artemisApp.metis.overview.filterToOwn' | artemisTranslate }}</label>
+                                                    </div>
+                                                    <div class="form-group pe-2">
+                                                        <input
+                                                            class="form-check-input"
+                                                            type="checkbox"
+                                                            formControlName="filterToAnsweredOrReacted"
+                                                            name="filterToAnsweredOrReacted"
+                                                            id="filterToAnsweredOrReacted"
+                                                            (change)="onSelectContext()"
+                                                        />
+                                                        <label for="filterToAnsweredOrReacted" class="p-0">{{
+                                                            'artemisApp.metis.overview.filterToAnsweredOrReacted' | artemisTranslate
+                                                        }}</label>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
