@@ -114,6 +114,11 @@ public class ProgrammingExerciseImportBasicService {
         setupTestRepository(newExercise);
         programmingExerciseService.initParticipations(newExercise);
 
+        if (newExercise.getBuildPlanConfiguration() == null) {
+            // this means the user did not override the build plan config when importing the exercise and want to reuse it from the existing exercise
+            newExercise.setBuildPlanConfiguration(templateExercise.getBuildPlanConfiguration());
+        }
+
         // Hints, tasks, test cases and static code analysis categories
         final Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(templateExercise, newExercise);
 
