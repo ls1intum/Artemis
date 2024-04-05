@@ -54,11 +54,14 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         });
 
         const upcomingLecture = this.courseOverviewService.getUpcomingLecture(this.course?.lectures);
+        const lastSelectedLecture = this.getLastSelectedLecture();
         this.paramSubscription = this.route.params.subscribe((params) => {
             const lectureId = parseInt(params.lectureId, 10);
             // If no exercise is selected navigate to the upcoming exercise
-            if (!lectureId && upcomingLecture) {
-                this.router.navigate([upcomingLecture.id], { relativeTo: this.route });
+            if (!lectureId && lastSelectedLecture) {
+                this.router.navigate([lastSelectedLecture], { relativeTo: this.route, replaceUrl: true });
+            } else if (!lectureId && upcomingLecture) {
+                this.router.navigate([upcomingLecture.id], { relativeTo: this.route, replaceUrl: true });
             } else {
                 this.lectureSelected = lectureId ? true : false;
             }
@@ -86,7 +89,11 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     toggleSidebar() {
         this.isCollapsed = !this.isCollapsed;
-        this.courseOverviewService.setSidebarCollapseState('lectures', this.isCollapsed);
+        this.courseOverviewService.setSidebarCollapseState('lecture', this.isCollapsed);
+    }
+
+    getLastSelectedLecture(): string | null {
+        return sessionStorage.getItem('sidebar.lastSelectedItem.' + 'lecture');
     }
 
     ngOnDestroy(): void {

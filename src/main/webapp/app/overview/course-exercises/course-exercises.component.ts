@@ -65,11 +65,14 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
         const upcomingExercise = this.courseOverviewService.getUpcomingExercise(this.course?.exercises);
+        const lastSelectedExercise = this.getLastSelectedExercise();
         this.paramSubscription = this.route.params.subscribe((params) => {
             const exerciseId = parseInt(params.exerciseId, 10);
-            // If no exercise is selected navigate to the upcoming exercise
-            if (!exerciseId && upcomingExercise) {
-                this.router.navigate([upcomingExercise.id], { relativeTo: this.route });
+            // If no exercise is selected navigate to the lastSelected or upcoming exercise
+            if (!exerciseId && lastSelectedExercise) {
+                this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
+            } else if (!exerciseId && upcomingExercise) {
+                this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
             } else {
                 this.exerciseSelected = exerciseId ? true : false;
             }
@@ -79,6 +82,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     toggleSidebar() {
         this.isCollapsed = !this.isCollapsed;
         this.courseOverviewService.setSidebarCollapseState('exercise', this.isCollapsed);
+    }
+
+    getLastSelectedExercise(): string | null {
+        return sessionStorage.getItem('sidebar.lastSelectedItem.' + 'exercise');
     }
 
     prepareSidebarData() {
