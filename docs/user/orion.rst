@@ -10,7 +10,7 @@ Orion
 Overview
 --------
 
-The `Orion plugin <https://github.com/ls1intum/Orion>`_ for `IntelliJ <https://www.jetbrains.com/idea/>`_ supports students, teaching assistants (tutors), and instructors with the conduction of programming exercises. It integrates Artemis in IntelliJ and automates the download (clone) and upload (push) of exercises.
+The `Orion plugin <https://github.com/ls1intum/Orion>`_ for `IntelliJ <https://www.jetbrains.com/idea/>`_ supports students, teaching assistants (tutors), and instructors with the conduction of programming exercises. It integrates Artemis in all JetBrains IDEs and automates the download (clone) and upload (push) of exercises.
 
 Installation
 ^^^^^^^^^^^^
@@ -40,6 +40,7 @@ Settings
 Orion's settings are at *Settings -> Tools -> Orion*. The settings include:
 
 - Artemis base url: Can be changed to switch to a specific Artemis instance. Defaults to https://artemis.cit.tum.de. **Important:** The url must not end with a ``/``, otherwise it does not work!
+- Artemis git url: Can be changed to switch to a specific Artemis instance. Defaults to https://artemis.cit.tum.de/git
 - Artemis exercise paths: Orion suggests to store newly downloaded exercises at ``default-path/course/exercise-name``, with the default path dependent of the setting.
 - Default commit message: The default message for each commit.
 - Change user agent: The user agent is sent to Artemis to identify Orion. Usually, no changes are required.
@@ -56,7 +57,7 @@ Participation in Orion
 Students can participate in programming exercises via Orion by performing the following steps:
 
  1. Navigate to the exercise using the integrated browser.
- 2. After starting the exercise, click |open-in-intellij-button|.
+ 2. After starting the exercise, click |open-in-your-ide-button|.
  3. After cloning, the exercise can be solved in IntelliJ.
  4. To submit the changes, click |submit-button|. This automatically commits and pushes the local changes and displays the result of the automatic tests in IntelliJ.
 
@@ -66,6 +67,28 @@ A Gif showcasing the usage for students:
             :align: center
             :width: 100%
 
+Local Testing in Orion
+-------------------------
+
+Students can download tests and test their code locally.
+This requires that the exercise allows local testing by the instructor by enabling "Include tests into example solution" in the exercise settings.
+
+ 1. Navigate to the exercise using the integrated browser.
+ 2. After starting the exercise, click |open-in-your-ide-button|.
+ 3. After cloning, the exercise can be solved in IntelliJ.
+ 4. To download tests, click |download-tests-button|. This downloads the test repository and sets it up for local testing.
+
+
+Feedback Mode in Orion
+--------------------------
+
+Students can view Feedback in their IDE using Orion.
+This requires, that the exercise has manual tutor feedback enabled. After the deadline has passed and the student received tutor feedback, Orion enters the feedback mode and embeds feedback into the files.
+
+ 1. Open the exercise with Orion
+ 2. Wait until the deadline has passed
+ 3. Review feedback inside of the IDE
+
 Exercise Creation in Orion
 --------------------------
 
@@ -73,7 +96,7 @@ Instructors can set up programming exercises via Orion by performing the followi
 
  1. The exercise needs to be created as described at the :ref:`exercise creation <programming_exercise_creation>` of programming exercises, step 1 and 2.
  2. After the creation, navigate to the instructor exercise overview using the integrated browser.
- 3. Each programming exercise provides a button to edit the exercise in Orion |edit-in-intellij-button|. The button is rightmost in the table and might require scrolling. Clicking it downloads the template, solution and test repository of the exercise.
+ 3. Each programming exercise provides a button to edit the exercise in Orion |edit-in-your-ide-button|. The button is rightmost in the table and might require scrolling. Clicking it downloads the template, solution and test repository of the exercise.
  4. Edit the repository files in IntelliJ.
  5. To submit the changes, click |submit-button|. This commits and pushes all local changes to their respective repository.
  6. The integrated browser displays the editor to update the problem statement.
@@ -91,6 +114,7 @@ Tutors can assess programming exercises via Orion by performing the following st
  5. Opening a file in either ``assignment`` or ``studentSubmission`` opens the editor with two available modes that can be switched using the tabs at the bottom of the editor.
 
    - In edit mode ("Text" tab), the files can be edited regularly, e.g. to try out fixes.
+   - The diff mode ("Diff" tab), in which the student code is compared to the code of the template repository.
    - In assessment mode ("Assessment" tab), the student's submission without the local changes is displayed in read-only mode. In this mode, assessment comments can be added, similar to the assessment in Artemis. Click the plus on the gutter on the left of the editor to add a new comment.
 
  6. The integrated browser displays the problem statement, the assessment instructions, and the buttons to edit the general feedback.
@@ -99,7 +123,8 @@ Tutors can assess programming exercises via Orion by performing the following st
 .. |help-button| image:: orion/help-button.png
 .. |submit-button| image:: orion/submit-button.png
 .. |test-locally-button| image:: orion/test-locally-button.png
-.. |open-in-intellij-button| image:: orion/open-in-intellij-button.png
-.. |edit-in-intellij-button| image:: orion/edit-in-intellij-button.png
+.. |open-in-your-ide-button| image:: orion/open-in-your-ide-button.png
+.. |edit-in-your-ide-button| image:: orion/edit-in-your-ide-button.png
 .. |assess-in-orion-button| image:: orion/assess-in-orion-button.png
 .. |start-assessment-in-orion-button| image:: orion/start-assessment-in-orion-button.png
+.. |download-tests-button| image:: orion/download-tests-button.png
