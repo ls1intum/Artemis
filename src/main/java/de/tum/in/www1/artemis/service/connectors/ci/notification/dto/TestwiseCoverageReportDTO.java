@@ -1,14 +1,16 @@
-package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
+package de.tum.in.www1.artemis.service.connectors.ci.notification.dto;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 // TODO: convert to record
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TestwiseCoverageReportDTO implements Serializable {
 
     @JsonProperty("uniformPath")
@@ -55,7 +57,9 @@ public class TestwiseCoverageReportDTO implements Serializable {
         this.coveredPathsPerTestDTOs = coveredPathsPerTestDTOs;
     }
 
+    // TODO: convert to record
     @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static final class CoveredPathsPerTestDTO implements Serializable {
 
         @JsonProperty("path")
@@ -81,7 +85,9 @@ public class TestwiseCoverageReportDTO implements Serializable {
         }
     }
 
+    // TODO: convert to record
     @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static final class CoveredFilesPerTestDTO implements Serializable {
 
         @JsonProperty("fileName")
