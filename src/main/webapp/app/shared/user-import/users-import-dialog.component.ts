@@ -4,6 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
+import { cleanString } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -114,7 +115,7 @@ export class UsersImportDialogComponent implements OnDestroy {
             this.isParsing = false;
         }
         if (csvUsers.length > 0) {
-            this.performExtraValidations(csvFile, csvUsers);
+            this.performExtraValidations(csvUsers);
         } else if (csvUsers.length === 0) {
             this.noUsersFoundError = true;
         }
@@ -165,10 +166,9 @@ export class UsersImportDialogComponent implements OnDestroy {
      * Performs validations on the parsed users
      * - checks if values for the required column {csvColumns.registrationNumber} are present
      *
-     * @param csvFile File that contains one user per row and has at least the columns specified in csvColumns
      * @param csvUsers Parsed list of users
      */
-    performExtraValidations(csvFile: File, csvUsers: CsvUser[]) {
+    performExtraValidations(csvUsers: CsvUser[]) {
         const invalidUserEntries = this.computeInvalidUserEntries(csvUsers);
         if (invalidUserEntries) {
             const maxLength = 30;
@@ -212,7 +212,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         return new Promise((resolve, reject) => {
             parse(csvFile, {
                 header: true,
-                transformHeader: (header: string) => header.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', ''),
+                transformHeader: (header: string) => cleanString(header),
                 skipEmptyLines: true,
                 complete: (results) => resolve(results.data as CsvUser[]),
                 error: (error) => reject(error),
