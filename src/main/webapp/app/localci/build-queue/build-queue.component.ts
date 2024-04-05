@@ -14,8 +14,8 @@ import { TriggeredByPushTo } from 'app/entities/repository-info.model';
 })
 export class BuildQueueComponent implements OnInit, OnDestroy {
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
-    queuedBuildJobs: BuildJob[];
-    runningBuildJobs: BuildJob[];
+    queuedBuildJobs: BuildJob[] = [];
+    runningBuildJobs: BuildJob[] = [];
     courseChannels: string[] = [];
 
     //icons
