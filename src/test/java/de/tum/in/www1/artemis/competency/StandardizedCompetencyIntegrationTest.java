@@ -325,7 +325,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
                 long validId = knowledgeArea.getId();
                 invalidKnowledgeArea.setId(validId);
 
-                request.put("/api/admin/standardized-competencies/knowledge-areas" + validId, invalidKnowledgeArea, HttpStatus.BAD_REQUEST);
+                request.put("/api/admin/standardized-competencies/knowledge-areas/" + validId, invalidKnowledgeArea, HttpStatus.BAD_REQUEST);
             }
 
             @Test
@@ -333,11 +333,11 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
             void shouldReturnBadRequestForCircularDependency() throws Exception {
                 var knowledgeArea1 = standardizedCompetencyUtilService.saveKnowledgeArea("KA1", "KA1", "d1", null);
                 var knowledgeArea2 = standardizedCompetencyUtilService.saveKnowledgeArea("KA2", "KA2", "d2", knowledgeArea1);
-                var knowledgeArea3 = standardizedCompetencyUtilService.saveKnowledgeArea("KA2", "KA2", "d3", knowledgeArea2);
+                var knowledgeArea3 = standardizedCompetencyUtilService.saveKnowledgeArea("KA3", "KA3", "d3", knowledgeArea2);
 
                 knowledgeArea1.setParent(knowledgeArea3);
 
-                request.put("/api/admin/standardized-competencies/knowledge-areas" + knowledgeArea1.getId(), knowledgeArea1, HttpStatus.BAD_REQUEST);
+                request.put("/api/admin/standardized-competencies/knowledge-areas/" + knowledgeArea1.getId(), knowledgeArea1, HttpStatus.BAD_REQUEST);
             }
         }
 
