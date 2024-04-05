@@ -327,10 +327,10 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.visibleDate = undefined;
             fixture.detectChanges();
 
-            expect(component.isVisibleDate).toBeFalse();
+            expect(component.isVisibleDateSet).toBeFalse();
 
             examWithoutExercises.visibleDate = dayjs().add(2, 'hours');
-            expect(component.isVisibleDate).toBeTrue();
+            expect(component.isVisibleDateSet).toBeTrue();
         });
 
         it('validates the start of working time for real exams correctly', () => {
@@ -340,10 +340,10 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.visibleDate = undefined;
             fixture.detectChanges();
 
-            expect(component.isStartDate).toBeFalse();
+            expect(component.isStartDateSet).toBeFalse();
 
             examWithoutExercises.startDate = dayjs().add(2, 'hours');
-            expect(component.isStartDate).toBeTrue();
+            expect(component.isStartDateSet).toBeTrue();
 
             examWithoutExercises.visibleDate = dayjs().add(3, 'hours');
             expect(component.isValidStartDate).toBeFalse();
@@ -359,10 +359,10 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.endDate = undefined;
             fixture.detectChanges();
 
-            expect(component.isEndDate).toBeFalse();
+            expect(component.isEndDateSet).toBeFalse();
 
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            expect(component.isEndDate).toBeTrue();
+            expect(component.isEndDateSet).toBeTrue();
 
             examWithoutExercises.startDate = dayjs().add(3, 'hours');
             expect(component.isValidEndDate).toBeFalse();

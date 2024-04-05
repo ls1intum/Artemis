@@ -73,7 +73,7 @@
                         labelName="{{ 'artemisApp.examManagement.visibleDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.visibleDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.visibleDate"
-                        [error]="!isVisibleDate"
+                        [error]="!isVisibleDateSet"
                         [startAt]="exam.visibleDate"
                         [requiredField]="true"
                         name="visibleDate"
@@ -86,13 +86,13 @@
                         labelTooltip="{{ 'artemisApp.examManagement.startDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.startDate"
                         (valueChange)="updateExamWorkingTime()"
-                        [error]="!isStartDate || !isValidStartDate"
+                        [error]="!isStartDateSet || !isValidStartDate"
                         [startAt]="exam.startDate || exam.visibleDate"
                         [requiredField]="true"
                         name="startDate"
                         id="startDate"
                     />
-                    @if (isStartDate && isValidStartDateValue && !isValidStartDate) {
+                    @if (isStartDateSet && isValidStartDateValue && !isValidStartDate) {
                         <span class="invalid-feedback"> {{ 'entity.startDateError' | artemisTranslate }}</span>
                     }
                 </div>
@@ -102,13 +102,13 @@
                         labelTooltip="{{ 'artemisApp.examManagement.endDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.endDate"
                         (valueChange)="updateExamWorkingTime()"
-                        [error]="!isEndDate || !isValidEndDate"
+                        [error]="!isEndDateSet || !isValidEndDate"
                         [startAt]="exam.endDate || exam.startDate"
                         [requiredField]="true"
                         name="endDate"
                         id="endDate"
                     />
-                    @if (isEndDate && isValidEndDateValue && !isValidEndDate) {
+                    @if (isEndDateSet && isValidEndDateValue && !isValidEndDate) {
                         <span class="invalid-feedback"> {{ 'entity.endDateError' | artemisTranslate }}</span>
                     }
                 </div>

@@ -250,7 +250,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     get isValidConfiguration(): boolean {
-        const examConductionDatesValid = this.isVisibleDate && this.isStartDate && this.isValidStartDate && this.isEndDate && this.isValidEndDate;
+        const examConductionDatesValid = this.isVisibleDateSet && this.isStartDateSet && this.isValidStartDate && this.isEndDateSet && this.isValidEndDate;
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;
@@ -271,7 +271,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      *
      * @returns {boolean} `true` if the exam's visible date is set, `false` otherwise.
      */
-    get isVisibleDate(): boolean {
+    get isVisibleDateSet(): boolean {
         return !!this.exam.visibleDate;
     }
 
@@ -302,7 +302,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      *
      * @returns {boolean} `true` if the exam's start date is set, `false` otherwise.
      */
-    get isStartDate(): boolean {
+    get isStartDateSet(): boolean {
         return !!this.exam.startDate;
     }
 
@@ -324,7 +324,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         if (this.exam.testExam) {
             return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
         } else {
-            if (this.isVisibleDate && this.isValidVisibleDateValue) {
+            if (this.isVisibleDateSet && this.isValidVisibleDateValue) {
                 return dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
             }
         }
@@ -336,7 +336,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      *
      * @returns {boolean} `true` if the exam's end date is set, `false` otherwise.
      */
-    get isEndDate(): boolean {
+    get isEndDateSet(): boolean {
         return !!this.exam.endDate;
     }
 
@@ -353,7 +353,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * Validates the EndDate inputted by the user.
      */
     get isValidEndDate(): boolean {
-        if (this.isStartDate && this.isValidStartDateValue) {
+        if (this.isStartDateSet && this.isValidStartDateValue) {
             return dayjs(this.exam.endDate).isAfter(this.exam.startDate);
         }
         return true;

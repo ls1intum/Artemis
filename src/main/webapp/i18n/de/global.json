@@ -315,8 +315,8 @@
         },
         "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone.",
         "dateMissingOrNotValid": "'{{labelName}}' fehlt/ungültig",
-        "startDateError": "Das 'Bearbeitungszeit ab' sollte zwischen 'Sichtbar ab' und 'Bearbeitungszeit bis' liegen",
-        "endDateError": "Das 'Bearbeitungszeit bis' sollte nach dem 'Bearbeitungszeit ab' liegen"
+        "startDateError": "'Bearbeitungszeit ab' sollte zwischen 'Sichtbar ab' und 'Bearbeitungszeit bis' liegen",
+        "endDateError": "'Bearbeitungszeit bis' sollte nach 'Bearbeitungszeit ab' liegen"
     },
     "aboutUs": "Über",
     "contact": "Kontaktiere uns",
