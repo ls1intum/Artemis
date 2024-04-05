@@ -176,7 +176,7 @@ public class ComplaintResponseService {
         validateComplaintResponseId(complaintResponseId);
         ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(complaintResponseId);
         validateComplaintResponseEmpty(complaintResponseFromDatabase);
-        Complaint originalComplaint = complaintRepository.fetchOriginalComplaintOrThrow(complaintResponseFromDatabase.getId());
+        Complaint originalComplaint = complaintRepository.findByIdElseThrow(complaintResponseFromDatabase.getComplaint().getId());
         validateOriginalComplaintNotAnswered(originalComplaint);
 
         validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
@@ -215,7 +215,7 @@ public class ComplaintResponseService {
         ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(updatedComplaintResponse.getId());
         validateComplaintResponseEmpty(complaintResponseFromDatabase);
         // TODO: make this retrieval redundant by proper fetching
-        Complaint originalComplaint = complaintRepository.fetchOriginalComplaintOrThrow(complaintResponseFromDatabase.getId());
+        Complaint originalComplaint = complaintRepository.findByIdElseThrow(complaintResponseFromDatabase.getComplaint().getId());
         validateOriginalComplaintNotAnswered(originalComplaint);
 
         validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
