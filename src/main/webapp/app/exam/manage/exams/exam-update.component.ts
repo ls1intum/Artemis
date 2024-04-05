@@ -250,7 +250,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     get isValidConfiguration(): boolean {
-        const examConductionDatesValid = this.isVisibleDateSet && this.isStartDateSet && this.isValidStartDate && this.isEndDateSet && this.isValidEndDate;
+        const examConductionDatesValid =
+            this.isVisibleDateSet && this.isStartDateSet && this.isValidStartDate && this.isEndDateSet && this.isValidEndDate && this.isValidVisibleDateValue;
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;
@@ -321,10 +322,10 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * For test exams, the visibleDate has to be prior or equal to the startDate.
      */
     get isValidStartDate(): boolean {
-        if (this.exam.testExam) {
-            return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
-        } else {
-            if (this.isVisibleDateSet && this.isValidVisibleDateValue) {
+        if (this.isVisibleDateSet && this.isValidVisibleDateValue) {
+            if (this.exam.testExam) {
+                return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
+            } else {
                 return dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
             }
         }
