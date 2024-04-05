@@ -17,10 +17,10 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Complaint;
-import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Complaint entity.
@@ -519,7 +519,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             """)
     List<TutorLeaderboardAnsweredMoreFeedbackRequests> findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(@Param("exerciseId") long exerciseId);
 
-    default Complaint fetchOriginalComplaintOrThrow(ComplaintResponse complaintResponse) {
-        return findByIdWithEagerAssessor(complaintResponse.getComplaint().getId()).orElseThrow(() -> new IllegalArgumentException("The complaint was not found in the database"));
+    default Complaint fetchOriginalComplaintOrThrow(Long complaintResponseId) {
+        return findByIdWithEagerAssessor(complaintResponseId).orElseThrow(() -> new EntityNotFoundException("The complaint was not found in the database"));
     }
 }
