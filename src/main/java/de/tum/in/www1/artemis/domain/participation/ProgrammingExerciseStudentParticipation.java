@@ -120,10 +120,4 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
                 + getIndividualDueDate() + "'" + ", presentationScore=" + getPresentationScore() + "}";
     }
 
-    @Override
-    public Participation copyParticipationId() {
-        var participation = new ProgrammingExerciseStudentParticipation();
-        participation.setId(getId());
-        return participation;
-    }
 }
