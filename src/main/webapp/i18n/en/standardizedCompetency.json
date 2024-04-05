@@ -35,11 +35,24 @@
             }
         },
         "knowledgeArea": {
+            "empty": "This knowledge area has no content yet",
             "model": {
                 "title": "Title",
-                "description": "Description"
+                "shortTitle": "Short title",
+                "description": "Description",
+                "parent": "Parent Knowledge Area"
             },
-            "empty": "This knowledge area has no content yet"
+            "details": {
+                "title": "Knowledge Area Details",
+                "titleCreate": "Create Knowledge Area",
+                "titleEdit": "Edit Knowledge Area",
+                "titleRequiredError": "A knowledge area needs to have a title",
+                "titleMaxLengthError": "The title of a knowledge area is limited to {{max}} characters",
+                "shortTitleRequiredError": "A knowledge area needs to have a short title",
+                "shortTitleMaxLengthError": "The short title of a knowledge area is limited to {{max}} characters",
+                "descriptionMaxLengthError": "The description of a knowledge area is limited to {{max}} characters",
+                "parentIdCircleError": "A knowledge area cannot have itself or one of its descendants as parent"
+            }
         }
     }
 }

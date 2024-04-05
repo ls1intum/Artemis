@@ -52,6 +52,12 @@ export enum StandardizedCompetencyValidators {
     DESCRIPTION_MAX = 2000,
 }
 
+export enum KnowledgeAreaValidators {
+    TITLE_MAX = 255,
+    SHORT_TITLE_MAX = 10,
+    DESCRIPTION_MAX = 2000,
+}
+
 /**
  * KnowledgeAreaDTO with additional information for the tree view:
  * isVisible: if it should be shown or not (used for filters)
