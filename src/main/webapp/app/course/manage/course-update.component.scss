@@ -9,8 +9,7 @@
     width: 100%;
 
     .no-image {
-        background: #dddddd url('../../../content/images/image-placeholder.png') no-repeat center;
-        background-size: 100%;
+        background-size: 100% !important;
         border-radius: 50%;
         height: 100px;
         width: 100px;
@@ -21,6 +20,14 @@
             height: 50px;
             width: auto;
         }
+    }
+
+    .no-image.en {
+        background: #dddddd url('../../../content/images/image-placeholder-en.png') no-repeat center;
+    }
+
+    .no-image.de {
+        background: #dddddd url('../../../content/images/image-placeholder-de.png') no-repeat center;
     }
 
     jhi-secured-image {

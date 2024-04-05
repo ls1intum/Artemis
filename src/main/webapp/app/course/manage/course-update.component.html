@@ -17,7 +17,7 @@
                     </div>
                 }
                 @if (!croppedImage) {
-                    <div class="no-image" (click)="triggerFileInput()"></div>
+                    <div [ngClass]="'artemisApp.course.imageCropper.uploadImageClass' | artemisTranslate" (click)="triggerFileInput()"></div>
                 }
                 <div class="row">
                     <div class="col">

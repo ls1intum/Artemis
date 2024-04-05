@@ -229,7 +229,8 @@
             "noOrganizations": "No Organizations",
             "organizationAddingHint": "Administrators can add organizations to courses.",
             "imageCropper": {
-                "title": "Crop your image"
+                "title": "Crop your image",
+                "uploadImageClass": "no-image en"
             }
         },
         "courseStatistics": {
