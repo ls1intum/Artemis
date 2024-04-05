@@ -11,6 +11,12 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StandardizedCompetencyDTO(long id, String title, String description, CompetencyTaxonomy taxonomy, String version, Long knowledgeAreaId, Long sourceId) {
 
+    /**
+     * Creates a StandardizedCompetencyDTO from the given StandardizedCompetency
+     *
+     * @param competency the StandardizedCompetency
+     * @return the created StandardizedCompetencyDTO
+     */
     public static StandardizedCompetencyDTO of(StandardizedCompetency competency) {
         Long sourceId = competency.getSource() == null ? null : competency.getSource().getId();
         Long knowledgeAreaId = competency.getKnowledgeArea() == null ? null : competency.getKnowledgeArea().getId();

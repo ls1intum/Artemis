@@ -13,6 +13,12 @@ import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
 public record KnowledgeAreaDTO(long id, String title, String shortTitle, String description, Long parentId, List<KnowledgeAreaDTO> children,
         List<StandardizedCompetencyDTO> competencies) {
 
+    /**
+     * Creates a KnowledgeAreaDTO from the given KnowledgeArea
+     *
+     * @param knowledgeArea the KnowledgeArea
+     * @return the created KnowledgeAreaDTO
+     */
     public static KnowledgeAreaDTO of(KnowledgeArea knowledgeArea) {
         Long parentId = knowledgeArea.getParent() == null ? null : knowledgeArea.getParent().getId();
         var children = knowledgeArea.getChildren().stream().map(KnowledgeAreaDTO::of).toList();
