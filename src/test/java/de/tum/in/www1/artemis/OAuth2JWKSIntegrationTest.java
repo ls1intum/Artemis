@@ -16,23 +16,17 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
-import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 
 class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final String TEST_PREFIX = "oauth2jwksintegrationtest";
 
     @Autowired
     private CourseRepository courseRepository;
 
     @Autowired
     private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
-
-    @Autowired
-    private OAuth2JWKSService oAuth2JWKSService;
-
-    @Autowired
-    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
     @Test
     @WithAnonymousUser
@@ -52,7 +46,7 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest
         courseRepository.save(course);
         OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", "url");
         LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
-        ltiPlatformConfiguration.setRegistrationId("registrationId");
+        ltiPlatformConfiguration.setRegistrationId(TEST_PREFIX + "registrationId");
         ltiPlatformConfiguration.setClientId("clientId");
         ltiPlatformConfiguration.setAuthorizationUri("authUri");
         ltiPlatformConfiguration.setTokenUri("tokenUri");
@@ -60,7 +54,7 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
         ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
         onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
-        oAuth2JWKSService.updateKey("registrationId");
+        oAuth2JWKSService.updateKey(TEST_PREFIX + "registrationId");
 
         String keyset = request.get("/.well-known/jwks.json", HttpStatus.OK, String.class);
         JsonObject jsonKeyset = JsonParser.parseString(keyset).getAsJsonObject();

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.ci;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,7 +10,8 @@ import java.util.regex.Pattern;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -67,7 +69,7 @@ public interface ContinuousIntegrationService {
     /**
      * Configure the build plan with the given participation on the CI system. Common configurations: - update the repository in the build plan - set appropriate user permissions -
      * initialize/enable the build plan so that it works
-     *
+     * <p>
      * **Important**: make sure that participation.programmingExercise.templateParticipation is initialized, otherwise an org.hibernate.LazyInitializationException can occur
      *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
@@ -92,8 +94,7 @@ public interface ContinuousIntegrationService {
 
     /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
-     * (bamboo|jenkins)-server-notification-plugin, the body is described here: <a href="https://github.com/ls1intum/bamboo-server-notification-plugin">...</a> or here:
-     * <a href="https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
+     * jenkins-server-notification-plugin, the body is described here: <a href="https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build

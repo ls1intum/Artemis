@@ -56,8 +56,8 @@ class AeolusTest {
         platformAction.setName("platformAction");
         platformAction.setWorkdir("workdir");
         platformAction.setRunAlways(true);
-        platformAction.setPlatform("bamboo");
-        platformAction.setPlatform("bamboo");
+        platformAction.setPlatform("jenkins");
+        platformAction.setPlatform("jenkins");
         platformAction.setKind("junit");
         AeolusResult result = new AeolusResult();
         result.setName("name");
@@ -117,7 +117,7 @@ class AeolusTest {
         assertThat(platformAction.getWorkdir()).isEqualTo("workdir");
         assertThat(platformAction.getName()).isEqualTo("platformAction");
         assertThat(platformAction.isRunAlways()).isEqualTo(true);
-        assertThat(platformAction.getPlatform()).isEqualTo("bamboo");
+        assertThat(platformAction.getPlatform()).isEqualTo("jenkins");
     }
 
     @Test
