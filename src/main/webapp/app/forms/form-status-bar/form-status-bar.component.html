@@ -1,4 +1,4 @@
-<div class="form-status-bar-container py-3">
+<div class="form-status-bar-container py-3" [style]="{ top: (headerHeight ?? 0) - 2 + 'px' }">
     <hr class="form-status-line" />
     <div class="d-flex justify-content-between">
         @for (formStatusSection of formStatusSections; track formStatusSection.title) {
