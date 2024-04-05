@@ -1139,6 +1139,11 @@ public class CourseService {
     public long calculateWeeksBetweenDates(ZonedDateTime startDate, ZonedDateTime endDate) {
         var mondayInWeekOfStart = startDate.with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
         var mondayInWeekOfEnd = endDate.plusWeeks(1).with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        // Special handling in case there was a change from standard time to daylight saving time between the two dates
+        var hoursDifference = ChronoUnit.HOURS.between(mondayInWeekOfStart, mondayInWeekOfEnd);
+        if (hoursDifference % 24 == 23) {
+            return mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS) + 1;
+        }
         return mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS);
     }
 
