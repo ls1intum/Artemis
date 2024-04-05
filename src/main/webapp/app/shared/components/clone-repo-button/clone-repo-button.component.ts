@@ -104,7 +104,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     getHttpOrSshRepositoryUri(insertPlaceholder = true): string {
-        if (this.useSsh) {
+        if (this.useSsh && this.sshEnabled) {
             return this.getSshCloneUrl(this.getRepositoryUri()) || this.getRepositoryUri();
         }
 
