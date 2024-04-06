@@ -70,6 +70,16 @@ $footer-height-prod: 142px;
             margin-left: $menu-width-closed !important;
         }
     }
+    @media screen and (max-width: 960px) {
+        .mat-drawer {
+            width: $menu-width-closed;
+        }
+
+        .mat-drawer-content {
+            width: calc(100vw - $menu-width-closed);
+            margin-left: $menu-width-closed !important;
+        }
+    }
 }
 
 a:not(.btn):not(.tab-link):hover {
@@ -77,6 +87,7 @@ a:not(.btn):not(.tab-link):hover {
 }
 
 .nav-link {
+    white-space: nowrap;
     color: var(--bs-body-color);
 }
 
@@ -142,8 +153,9 @@ a:not(.btn):not(.tab-link):hover {
 jhi-secured-image {
     ::ng-deep img {
         border-radius: 50%;
-        height: 32px;
+        height: 36px;
         width: auto;
+        margin-right: 0.75rem;
     }
 }
 
@@ -170,9 +182,39 @@ jhi-secured-image {
 }
 
 .course-circle {
-    height: 32px;
-    min-width: 32px;
+    height: 36px;
+    min-width: 36px;
     background-color: var(--course-image-bg);
     border-radius: 50%;
     display: inline-block;
+    margin-right: 0.75rem;
+}
+
+.max-width-collapsed {
+    max-width: 44px !important;
+    min-width: 44px !important;
+}
+
+@media screen and (max-width: 960px) {
+    .sidebar-container {
+        width: $menu-width-closed !important;
+    }
+    .auto-collapse {
+        display: none;
+    }
+    .newMessage:after {
+        @extend %message-block;
+        margin-left: -0.9rem;
+    }
+}
+
+.btn-sidebar-collapse {
+    background-color: var(--link-item-bg);
+    &:hover {
+        background-color: var(--gray-200);
+        color: var(--primary);
+    }
+    &:focus {
+        border-color: transparent;
+    }
 }
