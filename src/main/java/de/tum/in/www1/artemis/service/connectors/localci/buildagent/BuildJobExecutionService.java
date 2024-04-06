@@ -406,23 +406,7 @@ public class BuildJobExecutionService {
             String error = xmlStreamReader.getAttributeValue(null, "message");
 
             if (error == null && xmlStreamReader.hasNext()) {
-                // JUnit legacy report format:
-                // The old report format does not use the message attribute, but instead has the error message as a child element
-                xmlStreamReader.next();
-                if (xmlStreamReader.isCharacters()) {
-                    StringBuilder stringBuilder = new StringBuilder(xmlStreamReader.getText());
-                    xmlStreamReader.next();
-                    // The report can contain multiple character elements,
-                    // all of them must be combined to one feedback message
-                    while (xmlStreamReader.hasNext() && xmlStreamReader.isCharacters()) {
-                        stringBuilder.append(xmlStreamReader.getText());
-                        xmlStreamReader.next();
-                    }
-                    error = stringBuilder.toString();
-                }
-                else if (!xmlStreamReader.isEndElement()) {
-                    error = xmlStreamReader.getText();
-                }
+                error = readTestMessageFromLegacyReport(xmlStreamReader);
             }
 
             // Add the failed test to the list of failed tests.
@@ -433,6 +417,27 @@ public class BuildJobExecutionService {
             // Add the successful test to the list of successful tests.
             successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, List.of()));
         }
+    }
+
+    private String readTestMessageFromLegacyReport(XMLStreamReader xmlStreamReader) throws XMLStreamException {
+        // JUnit legacy report format:
+        // The old report format does not use the message attribute, but instead has the error message as a child element
+        xmlStreamReader.next();
+        if (xmlStreamReader.isCharacters()) {
+            StringBuilder stringBuilder = new StringBuilder(xmlStreamReader.getText());
+            xmlStreamReader.next();
+            // The report can contain multiple character elements,
+            // all of them must be combined to one feedback message
+            while (xmlStreamReader.hasNext() && xmlStreamReader.isCharacters()) {
+                stringBuilder.append(xmlStreamReader.getText());
+                xmlStreamReader.next();
+            }
+            return stringBuilder.toString();
+        }
+        else if (!xmlStreamReader.isEndElement()) {
+            return xmlStreamReader.getText();
+        }
+        return null;
     }
 
     private void forwardToNextStartElement(XMLStreamReader xmlStreamReader) throws XMLStreamException {
