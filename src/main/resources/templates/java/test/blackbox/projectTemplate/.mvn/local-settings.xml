@@ -5,7 +5,7 @@
     <mirror>
       <id>nexus</id>
       <name>Cache</name>
-      <!--Here you can specify another maven proxy e.g. one in your locale network to improve performance-->
+      <!--Here you can specify another Maven proxy e.g. one in your local network to improve performance-->
       <url>https://repo1.maven.org/maven2/</url>
       <mirrorOf>*</mirrorOf>
       <blocked>false</blocked>
