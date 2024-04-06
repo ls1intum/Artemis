@@ -119,7 +119,7 @@ public class UriService {
 
     /**
      * Gets the project key from the given URI
-     *
+     * <p>
      * Examples:
      * https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> EIST2016RME
      * http://localhost:8080/git/TESTCOURSE1TESTEX1/testcourse1testex1-student1.git --> TESTCOURSE1TESTEX1
@@ -137,7 +137,7 @@ public class UriService {
         // Note: pathComponents[0] = "" because the path always starts with "/"
         var projectKey = pathComponents[1];
         if ("scm".equals(pathComponents[1]) || "git".equals(pathComponents[1])) {
-            // special case for Bitbucket and local VC
+            // special case local VC
             projectKey = pathComponents[2];
         }
         return projectKey;

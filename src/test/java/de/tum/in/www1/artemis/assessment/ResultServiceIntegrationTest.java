@@ -25,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -75,12 +75,11 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "resultserviceintegration";
 
@@ -543,7 +542,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         result = participationUtilService.addSampleFeedbackToResults(result);
         request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK);
         assertThat(resultRepository.existsById(result.getId())).isFalse();
-        request.delete("api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.NOT_FOUND);
+        request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -587,13 +586,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission_programmingExercise() throws Exception {
-        bitbucketRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.enableMockingOfRequests();
         var studentLogin = TEST_PREFIX + "student1";
         User user = userRepository.findOneByLogin(studentLogin).orElseThrow();
-        final var repositorySlug = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase();
-        bitbucketRequestMockProvider.mockSetStudentRepositoryPermission(repositorySlug, programmingExercise.getProjectKey(), studentLogin,
-                VersionControlRepositoryPermission.REPO_READ);
         mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true);
         Result result = new Result().rated(false);
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(5));
