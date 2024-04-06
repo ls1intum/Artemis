@@ -421,11 +421,10 @@ dependencies {
     // use newest version of plexus to avoid security issues through outdated dependencies
     checkstyle "org.codehaus.plexus:plexus-container-default:2.1.1"
     checkstyle "org.codehaus.plexus:plexus-classworlds:2.8.0"
+    checkstyle "com.puppycrawl.tools:checkstyle:${checkstyle_version}"
 
 
     // ---- TEST DEPENDENCIES ----
-
-
 
     testImplementation("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
         exclude group: "org.junit.vintage", module: "junit-vintage-engine"
