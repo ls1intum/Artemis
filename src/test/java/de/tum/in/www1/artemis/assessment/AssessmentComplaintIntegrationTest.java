@@ -600,22 +600,20 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 1, ComplaintType.COMPLAINT);
         complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
 
-        String complaintsUrl = "/api/complaints";
-        LinkedMultiValueMap<String, String> paramsExercise = new LinkedMultiValueMap<>();
-        LinkedMultiValueMap<String, String> paramsCourse = new LinkedMultiValueMap<>();
-        paramsExercise.add("complaintType", ComplaintType.COMPLAINT.toString());
-        paramsExercise.add("exerciseId", modelingExercise.getId().toString());
-        paramsCourse.add("complaintType", ComplaintType.COMPLAINT.toString());
-        paramsCourse.add("courseId", modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId().toString());
-        List<Complaint> complaintsByCourse = request.getList(complaintsUrl, HttpStatus.OK, Complaint.class, paramsCourse);
-        List<Complaint> complaintsByExercise = request.getList(complaintsUrl, HttpStatus.OK, Complaint.class, paramsExercise);
+        String exercisesUrl = "/api/exercises/" + modelingExercise.getId() + "/complaints";
+        String coursesUrl = "/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints";
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("complaintType", ComplaintType.COMPLAINT.toString());
+        List<Complaint> complaintsByCourse = request.getList(coursesUrl, HttpStatus.OK, Complaint.class, params);
+        List<Complaint> complaintsByExercise = request.getList(exercisesUrl, HttpStatus.OK, Complaint.class, params);
         assertThat(complaintsByExercise).hasSameSizeAs(complaintsByCourse).hasSize(1);
+        assertThat(complaintsByCourse).hasSize(1).allMatch(complaint -> complaint.getComplaintType() == ComplaintType.COMPLAINT);
 
-        paramsCourse.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
-        paramsExercise.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
-        complaintsByCourse = request.getList(complaintsUrl, HttpStatus.OK, Complaint.class, paramsCourse);
-        complaintsByExercise = request.getList(complaintsUrl, HttpStatus.OK, Complaint.class, paramsExercise);
+        params.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
+        complaintsByCourse = request.getList(coursesUrl, HttpStatus.OK, Complaint.class, params);
+        complaintsByExercise = request.getList(exercisesUrl, HttpStatus.OK, Complaint.class, params);
         assertThat(complaintsByCourse).hasSameSizeAs(complaintsByExercise).hasSize(2);
+        assertThat(complaintsByCourse).hasSize(2).allMatch(complaint -> complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK);
     }
 
     @Test
