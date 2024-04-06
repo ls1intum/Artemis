@@ -2,7 +2,13 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -165,8 +171,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(createdPost.getConversation().getId()).isNotNull();
         var requestingUser = userRepository.getUser();
 
-        PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        postContextFilter.setConversationId(createdPost.getConversation().getId());
+        PostContextFilter postContextFilter = PostContextFilter.of(courseId, createdPost.getConversation().getId());
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(1);
 
         // both conversation participants should be notified
@@ -337,8 +342,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
         var requestingUser = userRepository.getUser();
 
-        PostContextFilter postContextFilter = new PostContextFilter(course.getId());
-        postContextFilter.setConversationId(posts.get(0).getConversation().getId());
+        PostContextFilter postContextFilter = PostContextFilter.of(courseId, posts.get(0).getConversation().getId());
         if (pageSize == LOWER_PAGE_SIZE) {
             assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize), requestingUser.getId())).hasSize(LOWER_PAGE_SIZE);
         }
@@ -358,8 +362,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         var requestingUser = userRepository.getUser();
 
-        PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        postContextFilter.setConversationId(postToSave.getConversation().getId());
+        PostContextFilter postContextFilter = PostContextFilter.of(courseId, postToSave.getConversation().getId());
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
 
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.BAD_REQUEST);
@@ -385,8 +388,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(existingConversationMessages.get(0).getConversation());
         var requestingUser = userRepository.getUser();
 
-        PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        postContextFilter.setConversationId(postToSave.getConversation().getId());
+        PostContextFilter postContextFilter = PostContextFilter.of(courseId, postToSave.getConversation().getId());
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
 
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.FORBIDDEN);

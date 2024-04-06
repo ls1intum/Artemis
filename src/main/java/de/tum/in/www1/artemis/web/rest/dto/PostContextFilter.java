@@ -1,122 +1,37 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import jakarta.validation.constraints.NotBlank;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 
+/**
+ * A DTO representing a filter for posts in a course or a conversation.
+ *
+ * @param courseId                  The id of the course
+ * @param courseWideChannelIds      The ids of the course-wide channels
+ * @param plagiarismCaseId          The id of the plagiarism case
+ * @param conversationId            The id of the conversation
+ * @param searchText                The text to search for
+ * @param filterToUnresolved        Whether to filter to unresolved posts
+ * @param filterToOwn               Whether to filter to own posts
+ * @param filterToAnsweredOrReacted Whether to filter to answered or reacted posts
+ * @param postSortCriterion         The criterion to sort the posts by
+ * @param sortingOrder              The order to sort the posts in
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PostContextFilter {
+public record PostContextFilter(long courseId, long[] courseWideChannelIds, Long plagiarismCaseId, Long conversationId, String searchText, boolean filterToUnresolved,
+        boolean filterToOwn, boolean filterToAnsweredOrReacted, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
 
-    @NotBlank
-    private Long courseId;
-
-    private long[] courseWideChannelIds;
-
-    private Long plagiarismCaseId;
-
-    private Long conversationId;
-
-    private String searchText;
-
-    private boolean filterToUnresolved = false;
-
-    private boolean filterToOwn = false;
-
-    private boolean filterToAnsweredOrReacted = false;
-
-    private PostSortCriterion postSortCriterion;
-
-    private SortingOrder sortingOrder;
-
-    /**
-     * Constructor for PostContextFilter, which sets every member as null, except boolean members and courseId
-     *
-     * @param courseId id of the course that the posts belong to
-     */
-    public PostContextFilter(long courseId) {
-        this.courseId = courseId;
+    public static PostContextFilter of(long courseId) {
+        return new PostContextFilter(courseId, null, null, null, null, false, false, false, null, null);
     }
 
-    public Long getCourseId() {
-        return courseId;
+    public static PostContextFilter of(long courseId, long[] courseWideChannelIds) {
+        return new PostContextFilter(courseId, courseWideChannelIds, null, null, null, false, false, false, null, null);
     }
 
-    public void setCourseId(Long courseId) {
-        this.courseId = courseId;
-    }
-
-    public long[] getCourseWideChannelIds() {
-        return courseWideChannelIds;
-    }
-
-    public void setCourseWideChannelIds(long[] courseWideChannelIds) {
-        this.courseWideChannelIds = courseWideChannelIds;
-    }
-
-    public Long getPlagiarismCaseId() {
-        return plagiarismCaseId;
-    }
-
-    public void setPlagiarismCaseId(Long plagiarismCaseId) {
-        this.plagiarismCaseId = plagiarismCaseId;
-    }
-
-    public Long getConversationId() {
-        return conversationId;
-    }
-
-    public void setConversationId(Long conversationId) {
-        this.conversationId = conversationId;
-    }
-
-    public String getSearchText() {
-        return searchText;
-    }
-
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
-    }
-
-    public boolean getFilterToUnresolved() {
-        return filterToUnresolved;
-    }
-
-    public void setFilterToUnresolved(boolean filterToUnresolved) {
-        this.filterToUnresolved = filterToUnresolved;
-    }
-
-    public boolean getFilterToOwn() {
-        return filterToOwn;
-    }
-
-    public void setFilterToOwn(boolean filterToOwn) {
-        this.filterToOwn = filterToOwn;
-    }
-
-    public boolean getFilterToAnsweredOrReacted() {
-        return filterToAnsweredOrReacted;
-    }
-
-    public void setFilterToAnsweredOrReacted(boolean filterToAnsweredOrReacted) {
-        this.filterToAnsweredOrReacted = filterToAnsweredOrReacted;
-    }
-
-    public PostSortCriterion getPostSortCriterion() {
-        return postSortCriterion;
-    }
-
-    public void setPostSortCriterion(PostSortCriterion postSortCriterion) {
-        this.postSortCriterion = postSortCriterion;
-    }
-
-    public SortingOrder getSortingOrder() {
-        return sortingOrder;
-    }
-
-    public void setSortingOrder(SortingOrder sortingOrder) {
-        this.sortingOrder = sortingOrder;
+    public static PostContextFilter of(long courseId, long conversationId) {
+        return new PostContextFilter(courseId, null, null, conversationId, null, false, false, false, null, null);
     }
 }

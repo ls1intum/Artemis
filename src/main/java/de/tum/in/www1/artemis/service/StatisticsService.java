@@ -3,9 +3,19 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
@@ -23,7 +33,14 @@ import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore;
 import de.tum.in.www1.artemis.domain.statistics.ScoreDistribution;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.StatisticsRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -180,7 +197,6 @@ public class StatisticsService {
      */
     public ExerciseManagementStatisticsDTO getExerciseStatistics(Exercise exercise) throws EntityNotFoundException {
         var course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        var exerciseManagementStatisticsDTO = new ExerciseManagementStatisticsDTO();
 
         // number of students or teams and number of participations of students or teams
         long numberOfParticipationsOfStudentsOrTeams;
@@ -197,21 +213,15 @@ public class StatisticsService {
 
             numberOfStudentsOrTeams = userRepository.countUserInGroup(course.getStudentGroupName());
         }
-        exerciseManagementStatisticsDTO.setNumberOfParticipations(numberOfParticipationsOfStudentsOrTeams);
-        exerciseManagementStatisticsDTO.setNumberOfStudentsOrTeamsInCourse(numberOfStudentsOrTeams);
 
         // post stats
         long numberOfExercisePosts = statisticsRepository.getNumberOfExercisePosts(exercise.getId());
-        exerciseManagementStatisticsDTO.setNumberOfPosts(numberOfExercisePosts);
         long resolvedExercisePosts = statisticsRepository.getNumberOfResolvedExercisePosts(exercise.getId());
-        exerciseManagementStatisticsDTO.setNumberOfResolvedPosts(resolvedExercisePosts);
 
         // average score & max points
-        Double maxPoints = exercise.getMaxPoints();
-        exerciseManagementStatisticsDTO.setMaxPointsOfExercise(Objects.requireNonNullElse(maxPoints, 0D));
+        double maxPoints = Objects.requireNonNullElse(exercise.getMaxPoints(), 0D);
         Double averageScore = participantScoreRepository.findAvgScore(Set.of(exercise));
         double averageScoreForExercise = averageScore != null ? roundScoreSpecifiedByCourseSettings(averageScore, course) : 0.0;
-        exerciseManagementStatisticsDTO.setAverageScoreOfExercise(averageScoreForExercise);
         List<ScoreDistribution> scores = participantScoreRepository.getScoreDistributionForExercise(exercise.getId());
         var scoreDistribution = new int[10];
         Arrays.fill(scoreDistribution, 0);
@@ -226,10 +236,8 @@ public class StatisticsService {
             }
         });
 
-        exerciseManagementStatisticsDTO.setScoreDistribution(scoreDistribution);
-        exerciseManagementStatisticsDTO.setNumberOfExerciseScores(scores.size());
-
-        return exerciseManagementStatisticsDTO;
+        return new ExerciseManagementStatisticsDTO(averageScoreForExercise, maxPoints, scoreDistribution, scores.size(), numberOfParticipationsOfStudentsOrTeams,
+                numberOfStudentsOrTeams, numberOfExercisePosts, resolvedExercisePosts);
     }
 
     /**
