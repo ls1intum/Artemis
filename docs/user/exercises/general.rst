@@ -1,3 +1,5 @@
+.. _exercises-general-information:
+
 General Information
 ===================
 

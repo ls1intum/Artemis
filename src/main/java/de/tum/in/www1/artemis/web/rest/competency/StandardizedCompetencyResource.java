@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 @RequestMapping("api/")
 public class StandardizedCompetencyResource {
 
-    private final static Logger log = LoggerFactory.getLogger(StandardizedCompetencyResource.class);
+    private static final Logger log = LoggerFactory.getLogger(StandardizedCompetencyResource.class);
 
     private final StandardizedCompetencyRepository standardizedCompetencyRepository;
 
