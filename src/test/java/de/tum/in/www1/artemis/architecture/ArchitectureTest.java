@@ -66,6 +66,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hazelcast.core.HazelcastInstance;
 import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
@@ -78,6 +79,7 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+import com.tngtech.archunit.lang.syntax.elements.GivenClassesConjunction;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
 import de.tum.in.www1.artemis.AbstractArchitectureTest;
@@ -518,5 +520,33 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 }
             }
         };
+    }
+
+    @Test
+    void testNoRestControllersImported() {
+        final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest" };
+        classesExcept(exceptions).should(IMPORT_RESTCONTROLLER).check(allClasses);
+    }
+
+    private static final ArchCondition<JavaClass> IMPORT_RESTCONTROLLER = new ArchCondition<>("import RestController") {
+
+        @Override
+        public void check(JavaClass item, ConditionEvents events) {
+            item.getDirectDependenciesFromSelf().stream().map(Dependency::getTargetClass).filter(targetClass -> targetClass.isAnnotatedWith(RestController.class))
+                    .forEach(targetClass -> {
+                        events.add(violated(item, "%s imports the RestController %s".formatted(item.getName(), targetClass.getName())));
+                    });
+        }
+    };
+
+    /**
+     * Excludes the classes with the given simple names from the ArchUnit rule checks.
+     *
+     * @param exceptions The simple names of the classes to be excluded.
+     * @return A GivenClassesConjunction excluding the specified classes.
+     */
+    private GivenClassesConjunction classesExcept(String... exceptions) {
+        var predicates = Arrays.stream(exceptions).map(JavaClass.Predicates::simpleName).toList();
+        return classes().that(not(or(predicates)));
     }
 }
