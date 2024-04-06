@@ -124,6 +124,18 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the passed user is at least an editor in the given course.
+     *
+     * @param login    the login of the user that needs to be checked
+     * @param courseId the id of the course that needs to be checked
+     * @return true if the user is at least an editor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastEditorInCourse(String login, long courseId) {
+        return userRepository.isAtLeastEditorInCourse(login, courseId);
+    }
+
+    /**
      * Checks if the current user is at least an editor in the given course.
      *
      * @param courseId the id of the course that needs to be checked
@@ -151,7 +163,7 @@ public class AuthorizationCheckService {
      * Given any type of exercise, the method returns if the current user is at least TA for the course the exercise belongs to. If exercise is not present, it will return false,
      * because the optional will be empty, and therefore `isPresent()` will return false This is due how `filter` works: If a value is present, apply the provided mapping function
      * to it, and if the result is non-null, return an Optional describing the result. Otherwise, return an empty Optional.
-     * https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html#filter(java.util.function.Predicate)
+     * https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html#filter(java.util.function.Predicate)
      *
      * @param exercise the exercise that needs to be checked
      * @param <T>      The type of the concrete exercise, because Exercise is an abstract class
@@ -236,6 +248,18 @@ public class AuthorizationCheckService {
     public boolean isAtLeastTeachingAssistantInCourse(@NotNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
+    }
+
+    /**
+     * Checks if the passed user is at least a teaching assistant in the given course.
+     *
+     * @param login    the login of the user that needs to be checked
+     * @param courseId the id of the course that needs to be checked
+     * @return true if the user is at least a teaching assistant in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastTeachingAssistantInCourse(String login, long courseId) {
+        return userRepository.isAtLeastTeachingAssistantInCourse(login, courseId);
     }
 
     /**
@@ -411,6 +435,18 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the passed user is at least a student in the given course.
+     *
+     * @param login    the login of the user that needs to be checked
+     * @param courseId the id of the course that needs to be checked
+     * @return true if the user is at least a student in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastStudentInCourse(String login, long courseId) {
+        return userRepository.isAtLeastStudentInCourse(login, courseId);
+    }
+
+    /**
      * Checks if the current user is at least a student in the given course.
      *
      * @param courseId the id of the course that needs to be checked
@@ -528,6 +564,18 @@ public class AuthorizationCheckService {
     public boolean isAtLeastInstructorInCourse(@NotNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin(user);
+    }
+
+    /**
+     * Checks if the passed user is at least an instructor in the given course.
+     *
+     * @param login    the login of the user that needs to be checked
+     * @param courseId the id of the course that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastInstructorInCourse(String login, long courseId) {
+        return userRepository.isAtLeastInstructorInCourse(login, courseId);
     }
 
     /**
@@ -774,6 +822,17 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the passed user is an admin user
+     *
+     * @param login the login of the user that needs to be checked
+     * @return true, if user is admin, otherwise false
+     */
+    @CheckReturnValue
+    public boolean isAdmin(@NotNull String login) {
+        return userRepository.isAdmin(login);
+    }
+
+    /**
      * Checks if the passed user is an admin user. Throws an AccessForbiddenException in case the user is not an admin
      *
      * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
@@ -909,6 +968,18 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the passed user is at least a student in the given exercise.
+     *
+     * @param login      the login of the user that needs to be checked
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user is at least a student in the exercise, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastStudentInExercise(String login, long exerciseId) {
+        return userRepository.isAtLeastStudentInExercise(login, exerciseId);
+    }
+
+    /**
      * Checks if the current user is at least an instructor in the given exercise.
      *
      * @param exerciseId the id of the exercise that needs to be checked
@@ -918,6 +989,18 @@ public class AuthorizationCheckService {
     public boolean isAtLeastTeachingAssistantInExercise(long exerciseId) {
         final var login = SecurityUtils.getCurrentUserLogin();
         return login.filter(s -> userRepository.isAtLeastTeachingAssistantInExercise(s, exerciseId)).isPresent();
+    }
+
+    /**
+     * Checks if the passed user is at least a teaching assistant in the given exercise.
+     *
+     * @param login      the login of the user that needs to be checked
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user is at least a teaching assistant in the exercise, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastTeachingAssistantInExercise(String login, long exerciseId) {
+        return userRepository.isAtLeastTeachingAssistantInExercise(login, exerciseId);
     }
 
     /**
@@ -933,6 +1016,18 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the passed user is at least an editor in the given exercise.
+     *
+     * @param login      the login of the user that needs to be checked
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user is at least an editor in the exercise, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastEditorInExercise(String login, long exerciseId) {
+        return userRepository.isAtLeastEditorInExercise(login, exerciseId);
+    }
+
+    /**
      * Checks if the current user is at least an instructor in the given exercise.
      *
      * @param exerciseId the id of the exercise that needs to be checked
@@ -942,6 +1037,18 @@ public class AuthorizationCheckService {
     public boolean isAtLeastInstructorInExercise(long exerciseId) {
         final var login = SecurityUtils.getCurrentUserLogin();
         return login.filter(s -> userRepository.isAtLeastInstructorInExercise(s, exerciseId)).isPresent();
+    }
+
+    /**
+     * Checks if the passed user is at least an instructor in the given exercise.
+     *
+     * @param login      the login of the user that needs to be checked
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user is at least an instructor in the exercise, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastInstructorInExercise(String login, long exerciseId) {
+        return userRepository.isAtLeastInstructorInExercise(login, exerciseId);
     }
 
     /**
