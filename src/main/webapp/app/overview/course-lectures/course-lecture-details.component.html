@@ -7,140 +7,140 @@
 }
 @if (lecture) {
     <div>
-        <!-- HEADER INFORMATION START -->
-        <div class="course-info-bar">
-            <div class="row">
-                <div class="col general-info">
-                    <h3>
-                        <span>{{ lecture!.title }}</span>
-                    </h3>
-                    <h4>
-                        @if (lecture?.startDate && lecture?.endDate) {
-                            <span class="me-2">
-                                {{ 'artemisApp.courseOverview.lectureDetails.date' | artemisTranslate }} {{ lecture!.startDate | artemisDate }} -
-                                {{ lecture!.endDate | artemisDate: 'time' }}
-                            </span>
-                        }
-                    </h4>
-                </div>
-                @if (lecture?.course?.isAtLeastEditor) {
-                    <div class="col-auto d-flex align-items-center">
-                        <button id="manageLectureButton" class="btn btn-secondary" (click)="redirectToLectureManagement()">
-                            {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
-                        </button>
+        <div class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+            <!-- HEADER INFORMATION START -->
+            <div class="course-info-bar">
+                <div class="row">
+                    <div class="col general-info">
+                        <h3>
+                            <span>{{ lecture!.title }}</span>
+                        </h3>
+                        <h4>
+                            @if (lecture?.startDate && lecture?.endDate) {
+                                <span class="me-2">
+                                    {{ 'artemisApp.courseOverview.lectureDetails.date' | artemisTranslate }} {{ lecture!.startDate | artemisDate }} -
+                                    {{ lecture!.endDate | artemisDate: 'time' }}
+                                </span>
+                            }
+                        </h4>
                     </div>
-                }
-            </div>
-        </div>
-        <!-- HEADER INFORMATION END -->
-        <!-- LECTURE START -->
-        <div class="row mt-2">
-            <div class="col pe-0 flex-grow-1">
-                @if (lecture!.description) {
-                    <div class="row mb-2 mt-2 align-items-baseline">
-                        <div class="col-auto">
-                            <h3>{{ 'artemisApp.courseOverview.lectureDetails.description' | artemisTranslate }}</h3>
-                        </div>
-                    </div>
-                }
-                @if (lecture!.description) {
-                    <div class="row mb-2 markdown-preview">
-                        <div class="col-12 col-md-12 markdown-preview" [innerHTML]="lecture.description | htmlForMarkdown"></div>
-                    </div>
-                }
-                <!-- LECTURE UNITS START-->
-                @if (lecture!.lectureUnits) {
-                    <div class="row mb-2 mt-2 align-items-baseline">
-                        <div class="col-auto">
-                            <h3>{{ 'artemisApp.courseOverview.lectureDetails.lectureUnits' | artemisTranslate }}</h3>
-                        </div>
-                        @if (hasPdfLectureUnit) {
-                            <button id="downloadButton" class="col-auto btn btn-primary btn-sm rounded-pill" (click)="downloadMergedFiles()">
-                                {{ 'artemisApp.courseOverview.lectureDetails.downloadMergedPdf' | artemisTranslate }}
+                    @if (lecture?.course?.isAtLeastEditor) {
+                        <div class="col-auto d-flex align-items-center">
+                            <button id="manageLectureButton" class="btn btn-secondary" (click)="redirectToLectureManagement()">
+                                {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
                             </button>
-                        }
-                    </div>
-                }
-                @for (lectureUnit of lectureUnits; track lectureUnit) {
-                    <div class="row m-0">
-                        <div class="col-11">
-                            @switch (lectureUnit.type) {
-                                @case (LectureUnitType.EXERCISE) {
-                                    <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="lecture!.course!" />
-                                }
-                                @case (LectureUnitType.ATTACHMENT) {
-                                    <jhi-attachment-unit [attachmentUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
-                                }
-                                @case (LectureUnitType.VIDEO) {
-                                    <jhi-video-unit [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
-                                }
-                                @case (LectureUnitType.TEXT) {
-                                    <jhi-text-unit [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
-                                }
-                                @case (LectureUnitType.ONLINE) {
-                                    <jhi-online-unit [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
-                                }
-                            }
                         </div>
-                        <div class="col-1 my-auto mx-auto">
-                            <jhi-competencies-popover
-                                [hidden]="!lectureUnit.competencies || lectureUnit.competencies!.length === 0"
-                                [courseId]="lecture!.course!.id!"
-                                [competencies]="lectureUnit.competencies || []"
-                                [navigateTo]="'courseCompetencies'"
-                            />
-                        </div>
-                    </div>
-                }
-                <!-- LECTURE UNITS END-->
-                @if (lecture!.attachments) {
-                    <div class="row mb-2 mt-2 align-items-baseline">
-                        <div class="col-auto">
-                            <h3>{{ 'artemisApp.courseOverview.lectureDetails.attachments' | artemisTranslate }}</h3>
-                        </div>
-                    </div>
-                }
-                @if (lecture!.attachments) {
-                    <div class="mb-2">
-                        <ul>
-                            @for (attachment of lecture!.attachments; track attachment) {
-                                <li class="mb-3">
-                                    <h5 class="mb-1">
-                                        @if (!isDownloadingLink) {
-                                            <a class="text-primary" (click)="downloadAttachment(attachment.link)">
-                                                {{ attachment.name }}
-                                            </a>
-                                        }
-                                        @if (isDownloadingLink === attachment.link) {
-                                            <a class="text-primary">
-                                                <fa-icon [icon]="faSpinner" [spin]="true" />
-                                                {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
-                                            </a>
-                                        }
-                                        <span class="ms-1 badge bg-info">
-                                            {{ attachmentExtension(attachment) | uppercase }}
-                                        </span>
-                                        @if (attachmentNotReleased(attachment)) {
-                                            <span class="ms-1 badge bg-warning">
-                                                {{ 'artemisApp.courseOverview.lectureDetails.notReleased' | artemisTranslate }}
-                                            </span>
-                                        }
-                                    </h5>
-                                    <h6 class="text-secondary mb-0 lecture-attachment-details">
-                                        ({{ 'artemisApp.courseOverview.lectureDetails.version' | artemisTranslate }}: {{ attachment.version }} -
-                                        {{ 'artemisApp.courseOverview.lectureDetails.date' | artemisTranslate }}: {{ attachment.uploadDate | artemisDate }})
-                                    </h6>
-                                </li>
-                            }
-                        </ul>
-                    </div>
-                }
+                    }
+                </div>
             </div>
-            <!-- LECTURE END -->
-            <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
-                @if (lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) {
-                    <router-outlet class="ms-3" (activate)="onChildActivate($event)" />
-                }
+            <!-- HEADER INFORMATION END -->
+            <!-- LECTURE START -->
+            <div class="row mt-2">
+                <div class="col pe-0 flex-grow-1">
+                    @if (lecture.description) {
+                        <div class="row mb-2 mt-2 align-items-baseline">
+                            <div class="col-auto">
+                                <h3>{{ 'artemisApp.courseOverview.lectureDetails.description' | artemisTranslate }}</h3>
+                            </div>
+                        </div>
+                        <div class="row mb-2 markdown-preview">
+                            <div class="col-12 col-md-12 markdown-preview" [innerHTML]="lecture.description | htmlForMarkdown"></div>
+                        </div>
+                    }
+                    <!-- LECTURE UNITS START-->
+                    @if (lecture.lectureUnits) {
+                        <div class="row mb-2 mt-2 align-items-baseline">
+                            <div class="col-auto">
+                                <h3>{{ 'artemisApp.courseOverview.lectureDetails.lectureUnits' | artemisTranslate }}</h3>
+                            </div>
+                            @if (hasPdfLectureUnit) {
+                                <button id="downloadButton" class="col-auto btn btn-primary btn-sm rounded-pill" (click)="downloadMergedFiles()">
+                                    {{ 'artemisApp.courseOverview.lectureDetails.downloadMergedPdf' | artemisTranslate }}
+                                </button>
+                            }
+                        </div>
+                    }
+                    @for (lectureUnit of lectureUnits; track lectureUnit) {
+                        <div class="row m-0 d-flex flex-nowrap">
+                            <div class="col-lg-11 col-10">
+                                @switch (lectureUnit.type) {
+                                    @case (LectureUnitType.EXERCISE) {
+                                        <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="lecture!.course!" />
+                                    }
+                                    @case (LectureUnitType.ATTACHMENT) {
+                                        <jhi-attachment-unit [attachmentUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @case (LectureUnitType.VIDEO) {
+                                        <jhi-video-unit [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @case (LectureUnitType.TEXT) {
+                                        <jhi-text-unit [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @case (LectureUnitType.ONLINE) {
+                                        <jhi-online-unit [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                }
+                            </div>
+                            <div class="col-lg-1 col-2 my-auto mx-auto width-fit-content">
+                                <jhi-competencies-popover
+                                    [hidden]="!lectureUnit.competencies || lectureUnit.competencies!.length === 0"
+                                    [courseId]="lecture!.course!.id!"
+                                    [competencies]="lectureUnit.competencies || []"
+                                    [navigateTo]="'courseCompetencies'"
+                                />
+                            </div>
+                        </div>
+                    }
+                    <!-- LECTURE UNITS END-->
+                    @if (lecture.attachments) {
+                        <div class="row mb-2 mt-2 align-items-baseline">
+                            <div class="col-auto">
+                                <h3>{{ 'artemisApp.courseOverview.lectureDetails.attachments' | artemisTranslate }}</h3>
+                            </div>
+                        </div>
+                    }
+                    @if (lecture.attachments) {
+                        <div class="mb-2">
+                            <ul>
+                                @for (attachment of lecture.attachments; track attachment) {
+                                    <li class="mb-3">
+                                        <h5 class="mb-1">
+                                            @if (!isDownloadingLink) {
+                                                <a class="text-primary" (click)="downloadAttachment(attachment.link)">
+                                                    {{ attachment.name }}
+                                                </a>
+                                            }
+                                            @if (isDownloadingLink === attachment.link) {
+                                                <a class="text-primary">
+                                                    <fa-icon [icon]="faSpinner" [spin]="true" />
+                                                    {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
+                                                </a>
+                                            }
+                                            <span class="ms-1 badge bg-info">
+                                                {{ attachmentExtension(attachment) | uppercase }}
+                                            </span>
+                                            @if (attachmentNotReleased(attachment)) {
+                                                <span class="ms-1 badge bg-warning">
+                                                    {{ 'artemisApp.courseOverview.lectureDetails.notReleased' | artemisTranslate }}
+                                                </span>
+                                            }
+                                        </h5>
+                                        <h6 class="text-secondary mb-0 lecture-attachment-details">
+                                            ({{ 'artemisApp.courseOverview.lectureDetails.version' | artemisTranslate }}: {{ attachment.version }} -
+                                            {{ 'artemisApp.courseOverview.lectureDetails.date' | artemisTranslate }}: {{ attachment.uploadDate | artemisDate }})
+                                        </h6>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+                <!-- LECTURE END -->
+                <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
+                    @if (lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) {
+                        <router-outlet class="ms-3" (activate)="onChildActivate($event)" />
+                    }
+                </div>
             </div>
         </div>
     </div>

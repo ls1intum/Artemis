@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.domain.enumeration.AeolusTarget.JENKINS;
 
 import java.net.URL;
 import java.util.HashMap;
@@ -107,18 +110,17 @@ public class AeolusBuildPlanService {
      * @return the credentials for the CI server based on the target
      */
     private String getCredentialsBasedOnTarget(AeolusTarget target) {
-        return switch (target) {
-            case BAMBOO -> ciToken != null ? ciToken : ciPassword;
-            case JENKINS -> ciPassword;
-            default -> null;
-        };
+        if (target == JENKINS) {
+            return ciPassword;
+        }
+        return null;
     }
 
     /**
      * Publishes a build plan using Aeolus
      *
      * @param windfile the build plan to publish
-     * @param target   the target to publish to, either bamboo or jenkins
+     * @param target   the target to publish to jenkins
      * @return the key of the published build plan
      */
     public String publishBuildPlan(Windfile windfile, AeolusTarget target) {
@@ -157,7 +159,7 @@ public class AeolusBuildPlanService {
      * Generates a build script for a programming exercise using Aeolus
      *
      * @param windfile the build plan to generate the build script for
-     * @param target   the target to generate the build script for, either bamboo or jenkins or cli
+     * @param target   the target to generate the build script for jenkins or cli
      * @return the generated build script
      */
     public String generateBuildScript(Windfile windfile, AeolusTarget target) {

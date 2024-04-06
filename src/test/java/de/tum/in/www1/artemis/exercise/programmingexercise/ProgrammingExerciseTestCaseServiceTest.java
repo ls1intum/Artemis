@@ -1,13 +1,19 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,7 +21,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -30,7 +36,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseSer
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 
-class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "progextestcase";
 
@@ -68,12 +74,6 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         SecurityUtils.setAuthorizationObject();
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
-        bambooRequestMockProvider.enableMockingOfRequests();
-    }
-
-    @AfterEach
-    void tearDown() {
-        bambooRequestMockProvider.reset();
     }
 
     @Test
@@ -83,10 +83,6 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         when(gitService.getLastCommitHash(any())).thenReturn(ObjectId.fromString(dummyHash));
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
         new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50.0);
-
-        // After a test case reset, the solution and template repository should be built, so the ContinuousIntegrationService needs to be triggered
-        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
-        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getTemplateParticipation());
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();
 
@@ -111,9 +107,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void shouldUpdateTestWeight() throws Exception {
-        // After a test case update, the solution and template repository should be build, so the ContinuousIntegrationService needs to be triggered
-        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
-        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getTemplateParticipation());
+        ;
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
 
@@ -147,14 +141,11 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldAllowTestCaseWeightSumZero(AssessmentType assessmentType) throws Exception {
-        // for non-automatic exercises the update succeeds and triggers an update
-        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
-        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getTemplateParticipation());
-
         programmingExercise.setAssessmentType(assessmentType);
         programmingExerciseRepository.save(programmingExercise);
 
-        var result = ProgrammingExerciseFactory.generateBambooBuildResult("SOLUTION", null, null, null, List.of("test1", "test2", "test3"), Collections.emptyList(), null);
+        var result = ProgrammingExerciseFactory.generateTestResultDTO(null, "SOLUTION", null, programmingExercise.getProgrammingLanguage(), false,
+                List.of("test1", "test2", "test3"), Collections.emptyList(), null, null, null);
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());

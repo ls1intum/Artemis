@@ -33,10 +33,4 @@ public class SolutionProgrammingExerciseParticipation extends AbstractBaseProgra
         return "solution";
     }
 
-    @Override
-    public Participation copyParticipationId() {
-        var participation = new SolutionProgrammingExerciseParticipation();
-        participation.setId(getId());
-        return participation;
-    }
 }
