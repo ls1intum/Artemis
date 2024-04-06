@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { ApollonEditor, ApollonMode, UMLDiagramType, UMLElementType, UMLModel, UMLRelationship, UMLRelationshipType } from '@ls1intum/apollon';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLElementType, UMLModel, UMLRelationship, UMLRelationshipType } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -7,12 +7,14 @@ import { isFullScreen } from 'app/shared/util/fullscreen.util';
 import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Patch } from '@ls1intum/apollon';
 
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
     @Input() showHelpButton = true;
@@ -37,9 +39,13 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     mouseDownListener: ((this: Document, ev: MouseEvent) => any) | undefined;
     scrollListener: ((this: Document, ev: Event) => any) | undefined;
 
+    readonlyApollonDiagram?: SVG;
+    readOnlySVG?: SafeHtml;
+
     constructor(
         private modalService: NgbModal,
         private guidedTourService: GuidedTourService,
+        private sanitizer: DomSanitizer,
     ) {
         super();
     }
@@ -49,15 +55,23 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * If this is a guided tour, then calls assessModelForGuidedTour.
      * If resizeOptions is set to true, resizes the editor according to interactions.
      */
-    ngAfterViewInit(): void {
+    async ngAfterViewInit(): Promise<void> {
         this.initializeApollonEditor();
-        this.guidedTourService.checkModelingComponent().subscribe((key) => {
-            if (key) {
-                this.assessModelForGuidedTour(key, this.getCurrentModel());
+        if (this.readOnly) {
+            await this.apollonEditor?.nextRender;
+            this.readonlyApollonDiagram = await this.apollonEditor?.exportAsSVG();
+            if (this.readonlyApollonDiagram?.svg) {
+                this.readOnlySVG = this.sanitizer.bypassSecurityTrustHtml(this.readonlyApollonDiagram.svg);
             }
-        });
-        this.setupInteract();
-        this.setupSafariScrollFix();
+        } else {
+            this.guidedTourService.checkModelingComponent().subscribe((key) => {
+                if (key) {
+                    this.assessModelForGuidedTour(key, this.getCurrentModel());
+                }
+            });
+            this.setupInteract();
+            this.setupSafariScrollFix();
+        }
     }
 
     /**
