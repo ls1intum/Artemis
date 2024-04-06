@@ -9,8 +9,6 @@
     </properties>
     <testcase name="testMergeSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.059">
         <failure type="org.opentest4j.AssertionFailedError"><![CDATA[org.opentest4j.AssertionFailedError: Deine Einreichung enthält keine Ausgabe. (67cac2)
-at x10wdh04.TestAufgabe2.setup(TestAufgabe2.java:43)
-at x10wdh04.TestAufgabe2.A2lineLength(TestAufgabe2.java:111)
 ]]></failure>
     </testcase>
     <testcase name='testBubbleSort()' classname="testpackage.SortingExampleBehaviorTest" time='0.000306'>
