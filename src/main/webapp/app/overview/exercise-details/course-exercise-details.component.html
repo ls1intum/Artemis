@@ -1,11 +1,8 @@
 @if (exercise) {
-    <div>
-        <!-- HEADER INFORMATION START -->
+    <div class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
         <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" [submissionPolicy]="submissionPolicy" [course]="course">
             <span pagetitle>{{ exercise.title }}</span>
         </jhi-header-exercise-page-with-details>
-        <!-- HEADER INFORMATION END -->
-        <!-- EXERCISE ACTIONS START -->
         <div class="tab-bar-exercise-details justify-content-end">
             <jhi-exercise-details-student-actions
                 class="col"
@@ -34,11 +31,11 @@
                     />
                 </div>
                 @if (exercise.isAtLeastTutor) {
-                    <div class="col-auto d-md-flex align-items-center instructor-actions">
+                    <div class="col-auto d-flex flex-wrap align-items-center instructor-actions">
                         <span class="me-1 d-none d-md-inline">{{
                             'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise.isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate
                         }}</span>
-                        <div class="gap-1">
+                        <div class="gap-1 d-flex">
                             <!-- Actions for Tutors, Editors and Instructors -->
                             <a [routerLink]="baseResource" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faEye" />
@@ -175,7 +172,7 @@
                     @if (!exampleSolutionCollapsed) {
                         <dl class="row-md jh-entity-details markdown-preview">
                             @if (exampleSolutionInfo?.exampleSolutionUML && exampleSolutionInfo?.modelingExercise) {
-                                <dd class="editor-outline-background">
+                                <dd>
                                     <jhi-modeling-editor
                                         [readOnly]="true"
                                         [diagramType]="exampleSolutionInfo?.modelingExercise?.diagramType"
