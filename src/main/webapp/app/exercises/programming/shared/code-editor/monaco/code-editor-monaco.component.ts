@@ -43,7 +43,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     @Input()
     isTutorAssessment: boolean = false;
     @Input()
-    selectedFile: string | undefined = undefined;
+    selectedFile?: string;
     @Input()
     sessionId: number | string;
     @Input()
@@ -59,6 +59,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
     isLoading = false;
 
     fileSession: FileSession = {};
+
+    // Expose to template
+    protected readonly Feedback = Feedback;
+    protected readonly CommitState = CommitState;
 
     constructor(
         private repositoryFileService: CodeEditorRepositoryFileService,
@@ -210,8 +214,4 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.commitState === CommitState.UNCOMMITTED_CHANGES,
         );
     }
-
-    // Expose to template
-    protected readonly Feedback = Feedback;
-    protected readonly CommitState = CommitState;
 }
