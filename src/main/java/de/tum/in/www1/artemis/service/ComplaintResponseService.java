@@ -172,7 +172,9 @@ public class ComplaintResponseService {
      */
     public ComplaintResponse resolveComplaint(ComplaintResponseUpdateDTO updatedComplaintResponse, Long complaintResponseId) {
         validateComplaintResponseId(complaintResponseId);
+        // TODO: make this retrieval redundant by proper fetching
         ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(complaintResponseId);
+        // TODO: make this retrieval redundant by proper fetching
         Complaint originalComplaint = complaintRepository.findByIdElseThrow(complaintResponseFromDatabase.getComplaint().getId());
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
         validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
