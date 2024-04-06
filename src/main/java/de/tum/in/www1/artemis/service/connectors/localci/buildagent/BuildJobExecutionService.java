@@ -409,7 +409,7 @@ public class BuildJobExecutionService {
                 // JUnit legacy report format:
                 // The old report format does not use the message attribute, but instead has the error message as a child element
                 xmlStreamReader.next();
-                if (xmlStreamReader.isCharacters()) {
+                if (!xmlStreamReader.isEndElement()) {
                     error = xmlStreamReader.getText();
                 }
             }

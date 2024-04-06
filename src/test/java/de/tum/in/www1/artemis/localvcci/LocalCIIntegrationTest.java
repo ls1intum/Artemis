@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
@@ -293,6 +294,28 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         // Should notify the user.
         verifyUserNotification(studentParticipation,
                 "java.util.concurrent.ExecutionException: de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testLegacyResultFormat() throws IOException {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        localVCLocalCITestService.mockTestResults(dockerClient, OLD_REPORT_FORMAT_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, false);
+
+        studentParticipation = programmingExerciseStudentParticipationRepository
+                .findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(studentParticipation.getId(), ZonedDateTime.now()).orElseThrow();
+        var result = studentParticipation.getResults().iterator().next();
+
+        var noPrintTest = result.getFeedbacks().stream().filter(feedback -> feedback.getTestCase().getTestName().equals("testMergeSort()")).findFirst().orElseThrow();
+        assertThat(noPrintTest.getDetailText()).isEqualTo("Deine Einreichung enthält keine Ausgabe. (67cac2)");
+        var todoTest = result.getFeedbacks().stream().filter(feedback -> feedback.getTestCase().getTestName().equals("testBubbleSort()")).findFirst().orElseThrow();
+        assertThat(todoTest.getDetailText()).isEqualTo("""
+                test `add` failed on ≥ 1 cases:
+                (0, 0)
+                Your submission raised an error Failure("TODO add")""");
     }
 
     @Test
