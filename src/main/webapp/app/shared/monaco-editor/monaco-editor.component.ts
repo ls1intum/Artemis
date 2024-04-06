@@ -24,7 +24,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     constructor(private themeService: ThemeService) {}
 
     @Input()
-    textChangedEmitDelay: number | undefined;
+    textChangedEmitDelay?: number;
 
     @Input()
     set readOnly(value: boolean) {
@@ -41,7 +41,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Output()
     textChanged = new EventEmitter<string>();
 
-    private textChangedEmitTimeout: NodeJS.Timeout | undefined = undefined;
+    private textChangedEmitTimeout?: NodeJS.Timeout;
 
     ngOnInit(): void {
         this._editor = monaco.editor.create(this.monacoEditorContainer.nativeElement, {
