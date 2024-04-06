@@ -33,6 +33,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() showUngradedResults = false;
     @Input() showBadge = false;
     @Input() showIcon = true;
+    @Input() isInSidebarCard = false;
     /**
      * @property personalParticipation Whether the participation belongs to the user (by being a student) or not (by being an instructor)
      */
