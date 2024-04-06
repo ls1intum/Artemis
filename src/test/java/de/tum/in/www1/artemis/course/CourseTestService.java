@@ -524,7 +524,7 @@ public class CourseTestService {
         courses.add(course3);
         addConversationsToCourse(course3);
         examUtilService.addExamWithExerciseGroup(courses.get(0), true);
-        // mock certain requests to JIRA Bitbucket and Bamboo
+        // mock certain requests
         for (Course course : courses) {
             if (course.getStudentGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
                 mockDelegate.mockDeleteGroupInUserManagement(course.getStudentGroupName());

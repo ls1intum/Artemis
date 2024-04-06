@@ -8,8 +8,11 @@ import java.util.List;
 
 import org.springframework.util.ObjectUtils;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
@@ -19,6 +22,8 @@ import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
  * Represents all the information returned by the local CI system about a build.
  * Note: due to limitations with inheritance, we cannot declare this as a record, but we can use it in a similar way with final fields.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO implements Serializable {
 
     private final String assignmentRepoBranchName;

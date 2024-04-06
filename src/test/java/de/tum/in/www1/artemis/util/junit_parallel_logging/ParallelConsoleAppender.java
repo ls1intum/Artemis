@@ -10,8 +10,11 @@ import java.util.concurrent.ConcurrentMap;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import de.tum.in.www1.artemis.*;
 import de.tum.in.www1.artemis.AbstractArtemisIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 
 /**
  * This custom appender is used to capture the logs of multiple tests running in parallel.
@@ -28,8 +31,8 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
 
     private static final ConcurrentMap<Class<?>, ByteArrayOutputStream> TEST_GROUP_TO_ENCODED_LOGS = new ConcurrentHashMap<>();
 
-    private static final Set<Class<?>> TEST_GROUPS = Set.of(AbstractSpringIntegrationBambooBitbucketJiraTest.class, AbstractSpringIntegrationGitlabCIGitlabSamlTest.class,
-            AbstractSpringIntegrationJenkinsGitlabTest.class, AbstractSpringIntegrationLocalCILocalVCTest.class, AbstractSpringIntegrationIndependentTest.class);
+    private static final Set<Class<?>> TEST_GROUPS = Set.of(AbstractSpringIntegrationGitlabCIGitlabSamlTest.class, AbstractSpringIntegrationJenkinsGitlabTest.class,
+            AbstractSpringIntegrationLocalCILocalVCTest.class, AbstractSpringIntegrationIndependentTest.class);
 
     @Override
     protected synchronized void append(ILoggingEvent loggingEvent) {

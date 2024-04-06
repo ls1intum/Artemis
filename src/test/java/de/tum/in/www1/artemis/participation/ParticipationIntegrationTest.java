@@ -39,7 +39,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
@@ -96,7 +95,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
-class ParticipationIntegrationTest extends AbstractAthenaTest {
+class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "participationintegration";
 
@@ -382,7 +381,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         prepareMocksForProgrammingExercise(user.getLogin(), true);
-        mockConnectorRequestsForStartPractice(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true);
+
+        mockConnectorRequestsForStartPractice(programmingExercise, TEST_PREFIX + "student1", Set.of(user));
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations/practice", null,
                 StudentParticipation.class, HttpStatus.CREATED);
@@ -416,8 +416,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     private void prepareMocksForProgrammingExercise(String userLogin, boolean practiceMode) throws Exception {
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bambooRequestMockProvider.enableMockingOfRequests(true);
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);
         repo.configureRepos("studentRepo", "studentOriginRepo");
@@ -520,6 +520,29 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteParticipation_notFound() throws Exception {
         request.delete("/api/participations/" + -1, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestFeedbackScoreNotFull() throws Exception {
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+
+        var result = ParticipationFactory.generateResult(true, 90).participation(participation);
+        result.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result);
+
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.BAD_REQUEST);
+        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -1133,7 +1156,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
      * When using {@code List<StudentParticipation>} directly as body in the unit tests, the deserialization fails as
      * there no longer is a {@code type} attribute due to type erasure. Therefore, Jackson does not know which subtype
      * of {@link Participation} is stored in the list.
-     *
+     * <p>
      * Using this wrapper-class avoids this issue.
      */
     private static class StudentParticipationList extends ArrayList<StudentParticipation> {
@@ -1189,8 +1212,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
             exerciseRepo.save(programmingExercise);
         }
-        bambooRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.mockDeleteBambooBuildPlan(participation.getBuildPlanId(), false);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        mockDeleteBuildPlan(programmingExercise.getProjectKey(), participation.getBuildPlanId(), false);
         var actualParticipation = request.putWithResponseBody("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, Participation.class, HttpStatus.OK);
         assertThat(actualParticipation).isEqualTo(participation);
         assertThat(actualParticipation.getInitializationState()).isEqualTo(!practiceMode && afterDueDate ? InitializationState.FINISHED : InitializationState.INACTIVE);
