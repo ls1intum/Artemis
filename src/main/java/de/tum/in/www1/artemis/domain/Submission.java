@@ -10,7 +10,21 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
@@ -265,14 +279,6 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     public void setParticipation(Participation participation) {
         this.participation = participation;
-    }
-
-    public Set<SubmissionVersion> getVersions() {
-        return versions;
-    }
-
-    public void setVersions(Set<SubmissionVersion> submissionVersions) {
-        this.versions = submissionVersions;
     }
 
     public Submission submissionDate(ZonedDateTime submissionDate) {

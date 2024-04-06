@@ -3,7 +3,19 @@ package de.tum.in.www1.artemis.domain.metis;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
@@ -154,38 +166,6 @@ public class Post extends Posting {
 
     public void addTag(String tag) {
         this.tags.add(tag);
-    }
-
-    public Exercise getExercise() {
-        return exercise;
-    }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
-    }
-
-    public Lecture getLecture() {
-        return lecture;
-    }
-
-    public void setLecture(Lecture lecture) {
-        this.lecture = lecture;
-    }
-
-    public Course getCourse() {
-        return course;
-    }
-
-    public void setCourse(Course course) {
-        this.course = course;
-    }
-
-    public CourseWideContext getCourseWideContext() {
-        return courseWideContext;
-    }
-
-    public void setCourseWideContext(CourseWideContext courseWideContext) {
-        this.courseWideContext = courseWideContext;
     }
 
     public Conversation getConversation() {
