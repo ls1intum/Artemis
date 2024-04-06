@@ -51,14 +51,14 @@ jobs:
     timeout-minutes: 60
     steps:
     - uses: actions/checkout@v4
+    - name: Install apt dependencies
+      run: sudo apt-get install -y fontconfig maven zstd
     - name: Setup Java
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '${{ env.java }}'
+        java-version: '${{ env.java }}'setup-java-Linux-gradle-9481918dd59429c770ae34087300838a3dc89bb4c9574b5b2f5442a0e68f5b1f
         cache: 'gradle'
-    - name: Install apt dependencies
-      run: sudo apt-get install -y fontconfig maven
     - name: Java Tests
       run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Print failed tests
