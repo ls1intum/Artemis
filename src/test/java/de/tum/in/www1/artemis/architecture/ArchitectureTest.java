@@ -528,7 +528,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         classesExcept(exceptions).should(IMPORT_RESTCONTROLLER).check(allClasses);
     }
 
-    private static final ArchCondition<JavaClass> IMPORT_RESTCONTROLLER = new ArchCondition<>("import RestController") {
+    private static final ArchCondition<JavaClass> IMPORT_RESTCONTROLLER = new ArchCondition<>("not import RestController") {
 
         @Override
         public void check(JavaClass item, ConditionEvents events) {
