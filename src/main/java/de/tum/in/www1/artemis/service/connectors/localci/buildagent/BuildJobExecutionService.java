@@ -269,7 +269,7 @@ public class BuildJobExecutionService {
         List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
         TarArchiveEntry tarEntry;
-        while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
+        while ((tarEntry = testResultsTarInputStream.getNextEntry()) != null) {
             // Go through all tar entries that are test result files.
             if (!isValidTestResultFile(tarEntry)) {
                 continue;
@@ -300,7 +300,7 @@ public class BuildJobExecutionService {
         String result = (lastIndexOfSlash != -1 && lastIndexOfSlash + 1 < name.length()) ? name.substring(lastIndexOfSlash + 1) : name;
 
         // Java test result files are named "TEST-*.xml", Python test result files are named "*results.xml".
-        return !tarArchiveEntry.isDirectory() && ((result.endsWith(".xml") && !result.equals("pom.xml")));
+        return !tarArchiveEntry.isDirectory() && result.endsWith(".xml") && !result.equals("pom.xml");
     }
 
     /**
@@ -361,13 +361,13 @@ public class BuildJobExecutionService {
         XMLStreamReader xmlStreamReader = localCIXMLInputFactory.createXMLStreamReader(new StringReader(testResultFileString));
 
         // Move to the first start element.
-        while (xmlStreamReader.hasNext() && !xmlStreamReader.isStartElement()) {
-            xmlStreamReader.next();
-        }
+        forwardToNextStartElement(xmlStreamReader);
 
         if ("testsuites".equals(xmlStreamReader.getLocalName())) {
             xmlStreamReader.next();
         }
+
+        forwardToNextStartElement(xmlStreamReader);
 
         // Check if the start element is the "testsuite" node.
         if (!("testsuite".equals(xmlStreamReader.getLocalName()))) {
@@ -377,6 +377,7 @@ public class BuildJobExecutionService {
         // Go through all testcase nodes.
         while (xmlStreamReader.hasNext()) {
             xmlStreamReader.next();
+            forwardToNextStartElement(xmlStreamReader);
 
             if (!xmlStreamReader.isStartElement() || !("testcase".equals(xmlStreamReader.getLocalName()))) {
                 continue;
@@ -399,12 +400,17 @@ public class BuildJobExecutionService {
         // Call next() until there is an end element (no failure node exists inside the testcase node) or a start element (failure node exists inside the
         // testcase node).
         xmlStreamReader.next();
-        while (!(xmlStreamReader.isEndElement() || xmlStreamReader.isStartElement())) {
-            xmlStreamReader.next();
-        }
+        forwardToNextStartElement(xmlStreamReader);
         if (xmlStreamReader.isStartElement() && "failure".equals(xmlStreamReader.getLocalName())) {
             // Extract the message attribute from the "failure" node.
             String error = xmlStreamReader.getAttributeValue(null, "message");
+
+            if (error == null) {
+                // JUnit legacy report format:
+                // The old report format does not use the message attribute, but instead has the error message as a child element
+                xmlStreamReader.next();
+                error = xmlStreamReader.getText();
+            }
 
             // Add the failed test to the list of failed tests.
             List<String> errors = error != null ? List.of(error) : List.of();
@@ -413,6 +419,12 @@ public class BuildJobExecutionService {
         else if (!"skipped".equals(xmlStreamReader.getLocalName())) {
             // Add the successful test to the list of successful tests.
             successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, List.of()));
+        }
+    }
+
+    private void forwardToNextStartElement(XMLStreamReader xmlStreamReader) throws XMLStreamException {
+        while (xmlStreamReader.hasNext() && !xmlStreamReader.isStartElement()) {
+            xmlStreamReader.next();
         }
     }
 
