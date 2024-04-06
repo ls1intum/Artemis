@@ -52,7 +52,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install apt dependencies
-      run: sudo apt-get install -y fontconfig maven zstd
+      run: sudo apt-get install -y zstd
     - name: Setup Java
       uses: actions/setup-java@v4
       with:
