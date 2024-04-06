@@ -12,6 +12,7 @@ import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { NegatedTypeCheckPipe } from 'app/shared/pipes/negated-type-check.pipe';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 
 @NgModule({
     declarations: [
@@ -27,6 +28,7 @@ import { NegatedTypeCheckPipe } from 'app/shared/pipes/negated-type-check.pipe';
         TruncatePipe,
         AverageByPipe,
         GradeStepBoundsPipe,
+        SearchFilterPipe,
     ],
     exports: [
         SafeHtmlPipe,
@@ -41,6 +43,7 @@ import { NegatedTypeCheckPipe } from 'app/shared/pipes/negated-type-check.pipe';
         SafeResourceUrlPipe,
         AverageByPipe,
         GradeStepBoundsPipe,
+        SearchFilterPipe,
     ],
     providers: [SafeResourceUrlPipe, ArtemisTranslatePipe],
 })

@@ -23,6 +23,13 @@ export const cartesianProduct = (a: any[], b: any[], ...c: any[][]): any[] => {
     return cartesianProduct(fab, b2, ...c2);
 };
 
+export function cleanString(str?: string): string {
+    if (!str) {
+        return '';
+    }
+    return str.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', '').trim();
+}
+
 /**
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value
  * Stringify a circular JSON structure by omitting keys that would close a circle
