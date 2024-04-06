@@ -22,12 +22,6 @@
                     (onError)="onError($event)"
                 />
             }
-            @if (allowSwitchEditor) {
-                <button id="switch_editor_button" type="button" class="btn btn-primary" [disabled]="editorState !== EditorState.CLEAN" (click)="toggleMonacoEditor()">
-                    <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
-                    <span jhiTranslate="artemisApp.editor.switchEditors"></span>
-                </button>
-            }
         </div>
     </div>
     <jhi-code-editor-file-browser

@@ -24,7 +24,7 @@
     }
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
         <jhi-code-editor-container
-            [allowSwitchEditor]="true"
+            [useMonacoEditor]="true"
             [editable]="!repositoryIsLocked"
             [participation]="participation"
             [showEditorInstructions]="showEditorInstructions"
