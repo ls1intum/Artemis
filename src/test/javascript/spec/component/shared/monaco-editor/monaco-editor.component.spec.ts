@@ -40,11 +40,6 @@ describe('MonacoEditorComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(comp).toBeDefined();
-    });
-
     it('should set the text of the editor', () => {
         fixture.detectChanges();
         comp.setText(singleLineText);

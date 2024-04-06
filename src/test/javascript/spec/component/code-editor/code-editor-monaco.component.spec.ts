@@ -72,11 +72,6 @@ describe('CodeEditorMonacoComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(comp).toBeDefined();
-    });
-
     it('should hide the editor if no file is selected', () => {
         comp.sessionId = 'test';
         fixture.detectChanges();
