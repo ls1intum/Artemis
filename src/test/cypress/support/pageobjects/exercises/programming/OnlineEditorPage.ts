@@ -1,6 +1,6 @@
 import { courseList, courseOverview } from '../../../artemis';
 import { DELETE } from '../../../constants';
-import { BASE_API, GET, POST } from '../../../constants';
+import { BASE_API, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 import { getExercise } from '../../../utils';
 
@@ -29,17 +29,17 @@ export class OnlineEditorPage {
             } else {
                 this.createFileInRootPackage(exerciseID, newFile.name, submission.packageName!);
             }
-            cy.fixture(newFile.path).then(($fileContent) => {
-                cy.window().then((win) => {
-                    getExercise(exerciseID)
-                        .find('#ace-code-editor')
-                        .then(($el) => {
-                            // @ts-expect-error ace does not exists on windows, but works without issue
-                            const editor = win.ace.edit($el.get(0));
-                            editor.setValue($fileContent, 1);
+            cy.fixture(newFile.path)
+                .then(($fileContent) => {
+                    cy.window().then((win) => {
+                        win.navigator.clipboard.writeText($fileContent).then(() => {
+                            // Some files have 200+ lines; typing would be too slow.
+                            // view-lines is the class of the text area in monaco.
+                            getExercise(exerciseID).find('.view-lines').click().type('{ctrl}v');
                         });
-                });
-            });
+                    });
+                })
+                .wait(500);
         }
         cy.wait(500);
     }
@@ -98,16 +98,11 @@ export class OnlineEditorPage {
      */
     createFileInRootFolder(exerciseID: number, fileName: string) {
         const postRequestId = 'createFile' + fileName;
-        const getRequestId = 'getFile' + fileName;
         const requestPath = `${BASE_API}/repository/*/file?file=${fileName}`;
         getExercise(exerciseID).find('[id="create_file_root"]').click().wait(500);
         cy.intercept(POST, requestPath).as(postRequestId);
-        cy.intercept(GET, requestPath).as(getRequestId);
         getExercise(exerciseID).find('#file-browser-create-node').type(fileName).wait(500).type('{enter}');
         cy.wait('@' + postRequestId)
-            .its('response.statusCode')
-            .should('eq', 200);
-        cy.wait('@' + getRequestId)
             .its('response.statusCode')
             .should('eq', 200);
         this.findFileBrowser(exerciseID).contains(fileName).should('be.visible').wait(500);
@@ -123,16 +118,11 @@ export class OnlineEditorPage {
         const packagePath = packageName.replace(/\./g, '/');
         const filePath = `src/${packagePath}/${fileName}`;
         const postRequestId = 'createFile' + fileName;
-        const getRequestId = 'getFile' + fileName;
         const requestPath = `${BASE_API}/repository/*/file?file=${filePath}`;
         getExercise(exerciseID).find('[id="file-browser-folder-create-file"]').eq(2).click().wait(500);
         cy.intercept(POST, requestPath).as(postRequestId);
-        cy.intercept(GET, requestPath).as(getRequestId);
         getExercise(exerciseID).find('#file-browser-create-node').type(fileName).wait(500).type('{enter}');
         cy.wait('@' + postRequestId)
-            .its('response.statusCode')
-            .should('eq', 200);
-        cy.wait('@' + getRequestId)
             .its('response.statusCode')
             .should('eq', 200);
         this.findFileBrowser(exerciseID).contains(fileName).should('be.visible').wait(500);
