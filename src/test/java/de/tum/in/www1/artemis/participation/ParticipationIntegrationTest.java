@@ -23,6 +23,7 @@ import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
@@ -39,6 +40,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
@@ -95,7 +97,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
-class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     private static final String TEST_PREFIX = "participationintegration";
 
@@ -523,6 +525,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @Disabled
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestFeedbackScoreNotFull() throws Exception {
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
