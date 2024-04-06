@@ -11,8 +11,8 @@ export class CourseOverviewPage {
         cy.get('#exercise-search-button').click();
     }
 
-    startExercise(exerciseId: number) {
-        cy.reloadUntilFound('#start-exercise-' + exerciseId);
+    startExercise(exerciseId: number, refreshInterval?: number) {
+        cy.reloadUntilFound('#start-exercise-' + exerciseId, refreshInterval);
         cy.get('#start-exercise-' + exerciseId).click();
     }
 

@@ -191,13 +191,15 @@ export class OnlineEditorPage {
      * Starts the participation in the test programming exercise.
      */
     startParticipation(courseId: number, exerciseId: number, credentials: CypressCredentials) {
+        // For shorter intervals, the reload may come before the app can render the elements.
+        const reloadInterval = 4000;
         cy.login(credentials, '/');
         cy.url().should('include', '/courses');
         cy.log('Participating in the programming exercise as a student...');
         courseList.openCourse(courseId!);
         cy.url().should('include', '/exercises');
-        courseOverview.startExercise(exerciseId);
-        cy.reloadUntilFound('#open-exercise-' + exerciseId);
+        courseOverview.startExercise(exerciseId, reloadInterval);
+        cy.reloadUntilFound('#open-exercise-' + exerciseId, reloadInterval);
         courseOverview.openRunningProgrammingExercise(exerciseId);
     }
 }
