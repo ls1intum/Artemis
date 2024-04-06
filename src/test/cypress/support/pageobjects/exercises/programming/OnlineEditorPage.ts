@@ -33,9 +33,11 @@ export class OnlineEditorPage {
                 .then(($fileContent) => {
                     cy.window().then((win) => {
                         win.navigator.clipboard.writeText($fileContent).then(() => {
-                            // Some files have 200+ lines; typing would be too slow.
+                            // Some files have 200+ lines; typing would be too slow. Instead, paste the file content.
+                            // On MacOS (darwin), the keyboard shortcut is CMD (meta) + V instead of CTRL + V.
+                            const keyModifier = Cypress.platform === 'darwin' ? 'meta' : 'ctrl';
                             // view-lines is the class of the text area in monaco.
-                            getExercise(exerciseID).find('.view-lines').click().type('{ctrl}v');
+                            getExercise(exerciseID).find('.view-lines').click().type(`{${keyModifier}}v`);
                         });
                     });
                 })
