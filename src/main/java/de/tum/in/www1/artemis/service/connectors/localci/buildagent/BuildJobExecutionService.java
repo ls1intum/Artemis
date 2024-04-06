@@ -269,7 +269,7 @@ public class BuildJobExecutionService {
         List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
         TarArchiveEntry tarEntry;
-        while ((tarEntry = testResultsTarInputStream.getNextEntry()) != null) {
+        while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
             // Go through all tar entries that are test result files.
             if (!isValidTestResultFile(tarEntry)) {
                 continue;
@@ -300,7 +300,7 @@ public class BuildJobExecutionService {
         String result = (lastIndexOfSlash != -1 && lastIndexOfSlash + 1 < name.length()) ? name.substring(lastIndexOfSlash + 1) : name;
 
         // Java test result files are named "TEST-*.xml", Python test result files are named "*results.xml".
-        return !tarArchiveEntry.isDirectory() && result.endsWith(".xml") && !result.equals("pom.xml");
+        return !tarArchiveEntry.isDirectory() && ((result.endsWith(".xml") && !result.equals("pom.xml")));
     }
 
     /**
@@ -365,9 +365,8 @@ public class BuildJobExecutionService {
 
         if ("testsuites".equals(xmlStreamReader.getLocalName())) {
             xmlStreamReader.next();
+            // forwardToNextStartElement(xmlStreamReader);
         }
-
-        forwardToNextStartElement(xmlStreamReader);
 
         // Check if the start element is the "testsuite" node.
         if (!("testsuite".equals(xmlStreamReader.getLocalName()))) {
@@ -377,7 +376,6 @@ public class BuildJobExecutionService {
         // Go through all testcase nodes.
         while (xmlStreamReader.hasNext()) {
             xmlStreamReader.next();
-            forwardToNextStartElement(xmlStreamReader);
 
             if (!xmlStreamReader.isStartElement() || !("testcase".equals(xmlStreamReader.getLocalName()))) {
                 continue;
@@ -405,12 +403,17 @@ public class BuildJobExecutionService {
             // Extract the message attribute from the "failure" node.
             String error = xmlStreamReader.getAttributeValue(null, "message");
 
-            if (error == null) {
-                // JUnit legacy report format:
-                // The old report format does not use the message attribute, but instead has the error message as a child element
-                xmlStreamReader.next();
-                error = xmlStreamReader.getText();
-            }
+            /*
+             * if (error == null && xmlStreamReader.hasNext()) {
+             * // JUnit legacy report format:
+             * // The old report format does not use the message attribute, but instead has the error message as a child element
+             * xmlStreamReader.next();
+             * if (xmlStreamReader.isEndElement()) {
+             * } else {
+             * error = xmlStreamReader.getText();
+             * }
+             * }
+             */
 
             // Add the failed test to the list of failed tests.
             List<String> errors = error != null ? List.of(error) : List.of();
