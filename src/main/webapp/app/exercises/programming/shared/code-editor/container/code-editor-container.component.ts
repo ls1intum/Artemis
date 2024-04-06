@@ -48,7 +48,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
-    @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
+    @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor?: CodeEditorAceComponent;
     @ViewChild('codeEditorMonaco', { static: false }) monacoEditor?: CodeEditorMonacoComponent;
     @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
 
@@ -288,10 +288,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
             this.onResizeEditorInstructions.emit();
         }
-        if (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
-            if (!this.useMonacoEditor) {
-                this.aceEditor.editor.getEditor().resize();
-            }
+        if (this.aceEditor && (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM)) {
+            this.aceEditor.editor.getEditor().resize();
         }
     }
 
