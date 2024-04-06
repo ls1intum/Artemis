@@ -1,3 +1,7 @@
+$footer-height-dev: 164px;
+$header-height: 84px;
+$footer-height-prod: 142px;
+
 /* ==========================================================================
 Course Info Bar
 ========================================================================== */
@@ -7,7 +11,6 @@ Course Info Bar
     // move instructor actions onto their own line for small/medium devices
     .instructor-actions {
         width: 100%;
-        flex-basis: 100%;
         justify-content: flex-end;
     }
 }
@@ -206,4 +209,21 @@ canvas#complete-chart {
         visibility: visible;
         opacity: 1;
     }
+}
+
+.module-bg {
+    background-color: var(--module-bg);
+}
+
+.scrollable-content {
+    height: calc(100vh - $footer-height-prod - $header-height);
+    overflow-y: auto;
+
+    &.content-height-dev {
+        height: calc(100vh - $footer-height-dev - $header-height);
+    }
+}
+
+.sidebar-collapsed {
+    display: none;
 }

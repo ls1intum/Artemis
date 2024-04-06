@@ -220,8 +220,6 @@ function computeDropLocation(
     elementLocation: { x: number; y: number; width: number; height: number },
     totalSize: { x?: number; y?: number; width: number; height: number },
 ): DropLocation {
-    console.log('elementLocation', elementLocation);
-    console.log('totalSize', totalSize);
     const dropLocation = new DropLocation();
     // on quiz exercise generation, svg exports adds 15px padding
     elementLocation.x += 15;

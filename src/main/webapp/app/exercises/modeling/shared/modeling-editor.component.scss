@@ -1,5 +1,9 @@
 $draggable-width: 15px;
 
+.readonly-diagram svg text {
+    fill: var(--apollon-primary-contrast);
+}
+
 .modeling-editor {
     position: relative;
     height: 100%;
