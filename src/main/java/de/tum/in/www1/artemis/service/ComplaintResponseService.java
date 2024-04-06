@@ -173,12 +173,11 @@ public class ComplaintResponseService {
     public ComplaintResponse resolveComplaint(ComplaintResponseUpdateDTO updatedComplaintResponse, Long complaintResponseId) {
         validateComplaintResponseId(complaintResponseId);
         ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(complaintResponseId);
-        validateComplaintResponseEmpty(complaintResponseFromDatabase);
         Complaint originalComplaint = complaintRepository.findByIdElseThrow(complaintResponseFromDatabase.getComplaint().getId());
-        validateOriginalComplaintNotAnswered(originalComplaint);
-
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
         validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
+        validateComplaintResponseEmpty(complaintResponseFromDatabase);
+        validateOriginalComplaintNotAnswered(originalComplaint);
 
         if (updatedComplaintResponse.complaintIsAccepted() == null) {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
@@ -210,13 +209,12 @@ public class ComplaintResponseService {
         validateComplaintResponseId(updatedComplaintResponse.getId());
         // TODO: make this retrieval redundant by proper fetching
         ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(updatedComplaintResponse.getId());
-        validateComplaintResponseEmpty(complaintResponseFromDatabase);
         // TODO: make this retrieval redundant by proper fetching
         Complaint originalComplaint = complaintRepository.findByIdElseThrow(complaintResponseFromDatabase.getComplaint().getId());
-        validateOriginalComplaintNotAnswered(originalComplaint);
-
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
         validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
+        validateComplaintResponseEmpty(complaintResponseFromDatabase);
+        validateOriginalComplaintNotAnswered(originalComplaint);
 
         if (updatedComplaintResponse.getComplaint().isAccepted() == null) {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
