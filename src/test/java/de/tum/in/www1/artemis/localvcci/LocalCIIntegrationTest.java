@@ -311,11 +311,18 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         var noPrintTest = result.getFeedbacks().stream().filter(feedback -> feedback.getTestCase().getTestName().equals("testMergeSort()")).findFirst().orElseThrow();
         assertThat(noPrintTest.getDetailText()).isEqualTo("Deine Einreichung enthält keine Ausgabe. (67cac2)");
+
         var todoTest = result.getFeedbacks().stream().filter(feedback -> feedback.getTestCase().getTestName().equals("testBubbleSort()")).findFirst().orElseThrow();
         assertThat(todoTest.getDetailText()).isEqualTo("""
                 test `add` failed on ≥ 1 cases:
                 (0, 0)
                 Your submission raised an error Failure("TODO add")""");
+
+        var filterTest = result.getFeedbacks().stream().filter(feedback -> feedback.getTestCase().getTestName().equals("testUseMergeSortForBigList()")).findFirst().orElseThrow();
+        assertThat(filterTest.getDetailText()).isEqualTo("""
+                test `filter` failed on ≥ 1 cases:
+                (even, [1; 2; 3; 4])
+                Your submission raised an error Failure("TODO filter")""");
     }
 
     @Test
