@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.plagiarism.PlagiarismService.filterParticipationMinimumScore;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -206,10 +207,9 @@ public class ProgrammingPlagiarismDetectionService {
         String topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
         plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of("Running JPlag..."));
 
-        JPlag jplag = new JPlag(options);
         JPlagResult result;
         try {
-            result = jplag.run();
+            result = JPlag.run(options);
         }
         catch (Exception e) {
             // Handling small or invalid base codes
@@ -217,8 +217,7 @@ public class ProgrammingPlagiarismDetectionService {
             log.warn("Retrying JPlag Plagiarism Check without BaseCode");
             try {
                 options = options.withBaseCodeSubmissionDirectory(null);
-                jplag = new JPlag(options);
-                result = jplag.run();
+                result = JPlag.run(options);
             }
             catch (Exception ex) {
                 log.info("FAILED: Retrying JPlag Plagiarism Check without BaseCode");
@@ -254,10 +253,14 @@ public class ProgrammingPlagiarismDetectionService {
 
         // Write JPlag report result to the file.
         log.info("Write JPlag report to file system and zip it");
-        ReportObjectFactory reportObjectFactory = new ReportObjectFactory();
-        reportObjectFactory.createAndSaveReport(jPlagResult, reportFolder.toString());
-        // JPlag automatically zips the report
-
+        try {
+            ReportObjectFactory reportObjectFactory = new ReportObjectFactory(reportFolder.toFile());
+            reportObjectFactory.createAndSaveReport(jPlagResult);
+            // JPlag automatically zips the report
+        }
+        catch (FileNotFoundException e) {
+            log.error("Failed to write JPlag report to file: {}", reportFolder, e);
+        }
         var zipFile = new File(reportFolder + ".zip");
         fileService.schedulePathForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
         return zipFile;
@@ -305,11 +308,11 @@ public class ProgrammingPlagiarismDetectionService {
 
     private Language getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
         return switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA -> new de.jplag.java.Language();
-            case C -> new de.jplag.cpp.Language();
-            case PYTHON -> new de.jplag.python3.Language();
-            case SWIFT -> new de.jplag.swift.Language();
-            case KOTLIN -> new de.jplag.kotlin.Language();
+            case JAVA -> new de.jplag.java.JavaLanguage();
+            case C -> new de.jplag.cpp.CPPLanguage();
+            case PYTHON -> new de.jplag.python3.PythonLanguage();
+            case SWIFT -> new de.jplag.swift.SwiftLanguage();
+            case KOTLIN -> new de.jplag.kotlin.KotlinLanguage();
             default -> throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
                     "ProgrammingExercise", "notSupported");
         };
