@@ -3,8 +3,9 @@ package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.thoughtworks.qdox.model.*;
 
 /**
@@ -13,6 +14,8 @@ import com.thoughtworks.qdox.model.*;
  */
 class SerializerUtil {
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     /**
      * This method is used to serialize the string representations of each modifier into a JSON array.
      *
@@ -20,31 +23,25 @@ class SerializerUtil {
      * @param javaMember The model of the {@link java.lang.reflect.Member} for which all modifiers should get serialized
      * @return The JSON array containing the string representations of the modifiers.
      */
-    static JsonArray serializeModifiers(Set<String> modifiers, JavaMember javaMember) {
-        JsonArray modifiersArray = new JsonArray();
+    static ArrayNode serializeModifiers(Set<String> modifiers, JavaMember javaMember) {
+        ArrayNode modifiersArray = mapper.createArrayNode();
         if (javaMember.getDeclaringClass().isInterface()) {
-            // Add some additional modifiers that are not reported by the qdox framework
             if (javaMember instanceof JavaMethod method) {
                 if (method.isDefault() || method.isStatic()) {
-                    // default and static interface methods are always public
                     modifiers.add("public");
                 }
                 else if (!method.isPrivate()) {
-                    // "normal" interface methods are always public and abstract
                     modifiers.add("public");
                     modifiers.add("abstract");
                 }
             }
             else if (javaMember instanceof JavaField) {
-                // interface attributes are always public, static and final
                 modifiers.add("public");
                 modifiers.add("static");
                 modifiers.add("final");
             }
         }
-        for (String modifier : modifiers) {
-            modifiersArray.add(modifier);
-        }
+        modifiers.forEach(modifiersArray::add);
         return modifiersArray;
     }
 
@@ -54,12 +51,10 @@ class SerializerUtil {
      * @param annotations The annotations of the java member (e.g. Override, Inject, etc.)
      * @return The JSON array containing the string representations of the modifiers.
      */
-    static JsonArray serializeAnnotations(List<JavaAnnotation> annotations) {
+    static ArrayNode serializeAnnotations(List<JavaAnnotation> annotations) {
         filterAnnotations(annotations);
-        JsonArray annotationsArray = new JsonArray();
-        for (JavaAnnotation annotation : annotations) {
-            annotationsArray.add(annotation.getType().getSimpleName());
-        }
+        ArrayNode annotationsArray = mapper.createArrayNode();
+        annotations.forEach(annotation -> annotationsArray.add(annotation.getType().getSimpleName()));
         return annotationsArray;
     }
 
@@ -79,12 +74,9 @@ class SerializerUtil {
      * @param parameters A collection of modifiers that needs to get serialized.
      * @return The JSON array containing the string representations of the parameter types.
      */
-    static JsonArray serializeParameters(List<JavaParameter> parameters) {
-        JsonArray parametersArray = new JsonArray();
-        for (JavaParameter parameter : parameters) {
-            parametersArray.add(parameter.getType().getValue());
-        }
-
+    static ArrayNode serializeParameters(List<JavaParameter> parameters) {
+        ArrayNode parametersArray = mapper.createArrayNode();
+        parameters.forEach(parameter -> parametersArray.add(parameter.getType().getValue()));
         return parametersArray;
     }
 
@@ -98,12 +90,12 @@ class SerializerUtil {
      * @return A new JSON object containing all serialized modifiers under the {@code "modifiers"} key and the name of
      *         the object under the {@code "name"} key
      */
-    static JsonObject createJsonObject(String name, Set<String> modifiers, JavaMember javaMember, List<JavaAnnotation> annotations) {
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("name", name);
-        jsonObject.add("modifiers", serializeModifiers(modifiers, javaMember));
+    static ObjectNode createJsonObject(String name, Set<String> modifiers, JavaMember javaMember, List<JavaAnnotation> annotations) {
+        ObjectNode jsonObject = mapper.createObjectNode();
+        jsonObject.put("name", name);
+        jsonObject.set("modifiers", serializeModifiers(modifiers, javaMember));
         if (!annotations.isEmpty()) {
-            jsonObject.add("annotations", serializeAnnotations(annotations));
+            jsonObject.set("annotations", serializeAnnotations(annotations));
         }
         return jsonObject;
     }
