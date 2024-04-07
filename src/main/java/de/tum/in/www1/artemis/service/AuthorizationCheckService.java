@@ -163,7 +163,7 @@ public class AuthorizationCheckService {
      * Given any type of exercise, the method returns if the current user is at least TA for the course the exercise belongs to. If exercise is not present, it will return false,
      * because the optional will be empty, and therefore `isPresent()` will return false This is due how `filter` works: If a value is present, apply the provided mapping function
      * to it, and if the result is non-null, return an Optional describing the result. Otherwise, return an empty Optional.
-     * https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html#filter(java.util.function.Predicate)
+     * https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html#filter(java.util.function.Predicate)
      *
      * @param exercise the exercise that needs to be checked
      * @param <T>      The type of the concrete exercise, because Exercise is an abstract class
