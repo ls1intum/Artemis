@@ -425,12 +425,13 @@ public class BuildJobExecutionService {
         xmlStreamReader.next();
         if (xmlStreamReader.isCharacters()) {
             StringBuilder stringBuilder = new StringBuilder(xmlStreamReader.getText());
-            xmlStreamReader.next();
             // The report can contain multiple character elements,
             // all of them must be combined to one feedback message
             while (xmlStreamReader.hasNext() && xmlStreamReader.isCharacters()) {
-                stringBuilder.append(xmlStreamReader.getText());
                 xmlStreamReader.next();
+                if (xmlStreamReader.isCharacters()) {
+                    stringBuilder.append(xmlStreamReader.getText());
+                }
             }
             return stringBuilder.toString();
         }
