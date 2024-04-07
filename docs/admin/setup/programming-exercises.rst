@@ -106,8 +106,120 @@ The ``pipeline.groovy`` file can be customized further by instructors after crea
 Artemis via the ‘Edit Build Plan’ button on the details page of the exercise.
 
 
-Caching example for Maven
-^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _dependecies-sonatype-nexus:
+
+Caching with Sonatype Nexus
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+With Sonatype Nexus you can run a caching server in your local network for Maven dependencies.
+An alternative approach for caching is with docker volumes, see :ref:`dependecies-docker-volumes`.
+
+.. note::
+
+    The following steps assume ``artemis.example.com`` is the host and ``8443`` the port for the cache.
+    Adapt the URLs for your actual setup.
+
+Setup Sonatype Nexus
+""""""""""""""""""""
+
+1. Set up Sonatype Nexus to run on ``artemis.example.com:8443`` e.g. in a `docker container <https://hub.docker.com/r/sonatype/nexus3/>`_ behind a `proxy <https://help.sonatype.com/en/run-behind-a-reverse-proxy.html>`_.
+2. In the initial setup steps: Allow anonymous access.
+3. Set up the Maven proxy repository:
+    a. Create a new repository (**Repository - Repositories - Create repository**) of type ``maven2 (proxy)`` with name ``maven-proxy``.
+    b. The remote URL is https://repo1.maven.org/maven2/.
+4. Optionally create a new cleanup policy under **Repository - Cleanup Policies**
+    a. Format: ``maven2``
+    b. Release type: Releases & Pre-releases/Snapshots
+    c. Cleanup criteria: e.g. ‘Component Usage 14’ will remove all files that have not been downloaded for 14 days.
+    d. You can now add this cleanup policy to the policies in the repository you created earlier.
+
+Adding proxy to a Maven build
+"""""""""""""""""""""""""""""
+
+Option 1
+========
+
+``pom.xml``
+
+.. code:: xml
+
+    <repositories>
+        <repository>
+            <id>artemis-cache</id>
+            <url>https://artemis.example.com:8443/repository/maven-proxy/</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>artemis-cache</id>
+            <url>https://artemis.example.com:8443/repository/maven-proxy/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+Option 2 (more rigorous alternative)
+====================================
+
+``.mvn/local-settings.xml``
+
+.. code:: xml
+
+    <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+    <mirrors>
+        <mirror>
+        <id>artemis-cache</id>
+        <name>Artemis Cache</name>
+        <url>https://artemis.example.com:8443/repository/maven-proxy/</url>
+        <mirrorOf>*</mirrorOf>
+        <blocked>false</blocked>
+        </mirror>
+    </mirrors>
+    </settings>
+
+``.mvn/maven.config``
+
+.. code:: shell
+
+    --settings
+    ./.mvn/local-settings.xml
+
+Adding proxy to a Gradle build
+""""""""""""""""""""""""""""""
+
+``build.gradle``
+
+.. code:: groovy
+
+    repositories {
+        maven {
+            url "https://artemis.example.com:8443/repository/maven-proxy/"
+        }
+        // …
+    }
+
+Gradle ``build.gradle.kts``
+
+.. code:: kotlin
+
+    repositories {
+        maven {
+            url = uri("https://artemis.example.com:8443/repository/maven-proxy/")
+        }
+        // …
+    }
+
+
+.. _dependecies-docker-volumes:
+
+Caching with docker volumes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+With docker volumes you can cache mave dependencies.
+An alternative approach for caching is with Sonatype Nexus, see :ref:`dependecies-sonatype-nexus`.
+
+Example for Maven
+"""""""""""""""""
 
 The container image used to run the maven-tests already contains a set of commonly used dependencies
 (see `artemis-maven-docker <https://github.com/ls1intum/artemis-maven-docker>`__).
@@ -160,8 +272,8 @@ This mounts the cache as writeable only when executing the tests for the solutio
 running the tests for students’ code.
 
 
-Caching example for Gradle
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example for Gradle
+""""""""""""""""""
 
 In case of always writeable caches you can set ``-e GRADLE_USER_HOME=/gradle_cache`` as part of the ``dockerFlags``
 instead of the ``MAVEN_OPTS`` like above.
