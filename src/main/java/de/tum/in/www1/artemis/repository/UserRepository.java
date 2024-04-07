@@ -904,6 +904,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("""
             SELECT COUNT(user) > 0
             FROM User user
+            WHERE user.login = :login
+                AND :#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+            """)
+    boolean isAdmin(@Param("login") String login);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
             INNER JOIN Course course
             ON user.login = :login
                 AND course.id = :courseId
