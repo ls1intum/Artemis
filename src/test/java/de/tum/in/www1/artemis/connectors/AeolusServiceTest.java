@@ -175,7 +175,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testBuildScriptGeneration() {
+    void testBuildScriptGeneration() throws JsonProcessingException {
         aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
         String script = aeolusBuildPlanService.generateBuildScript(getWindfile(), AeolusTarget.CLI);
         assertThat(script).isNotNull();

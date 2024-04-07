@@ -15,6 +15,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
  */
 public class Windfile {
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     private String api;
 
     private WindfileMetadata metadata;
@@ -157,7 +159,6 @@ public class Windfile {
      * @throws JsonProcessingException if the json string is not valid.
      */
     public static Windfile deserialize(String json) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Action.class, new ActionDeserializer());
         mapper.registerModule(module);

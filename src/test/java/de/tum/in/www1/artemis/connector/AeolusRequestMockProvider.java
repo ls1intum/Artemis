@@ -22,7 +22,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 
@@ -39,6 +38,8 @@ public class AeolusRequestMockProvider {
     private URL aeolusUrl;
 
     private MockRestServiceServer mockServer;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Constructor for the AeolusRequestMockProvider
@@ -68,7 +69,7 @@ public class AeolusRequestMockProvider {
         Map<String, String> responseBody = new HashMap<>();
         responseBody.put("key", expectedKey);
         responseBody.put("result", "imagine a result here");
-        String json = new ObjectMapper().writeValueAsString(responseBody);
+        String json = objectMapper.writeValueAsString(responseBody);
 
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).body(json).contentType(org.springframework.http.MediaType.APPLICATION_JSON));
@@ -101,12 +102,12 @@ public class AeolusRequestMockProvider {
      *
      * @param target the target to generate for
      */
-    public void mockGeneratePreview(AeolusTarget target) {
+    public void mockGeneratePreview(AeolusTarget target) throws JsonProcessingException {
         final var uriPattern = Pattern.compile(aeolusUrl + "/generate/" + target.getName());
 
         Map<String, String> responseBody = new HashMap<>();
         responseBody.put("result", "imagine a result here");
-        String json = new Gson().toJson(responseBody);
+        String json = objectMapper.writeValueAsString(responseBody);
 
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).body(json).contentType(org.springframework.http.MediaType.APPLICATION_JSON));

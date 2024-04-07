@@ -69,6 +69,8 @@ public class AeolusBuildPlanService {
     @Value("${artemis.continuous-integration.url:#{null}}")
     private String ciUrl;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     /**
      * Constructor for the AeolusBuildPlanService
      *
@@ -127,7 +129,7 @@ public class AeolusBuildPlanService {
      */
     public String publishBuildPlan(Windfile windfile, AeolusTarget target) throws JsonProcessingException {
         String url = getCiUrl();
-        String buildPlan = new ObjectMapper().writeValueAsString(windfile);
+        String buildPlan = objectMapper.writeValueAsString(windfile);
         if (url == null) {
             log.error("Could not publish build plan {} to Aeolus target {}, no CI URL configured", buildPlan, target);
             return null;

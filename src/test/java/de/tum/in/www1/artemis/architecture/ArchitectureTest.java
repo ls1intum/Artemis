@@ -245,15 +245,17 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testJSONImplementations() {
-        ArchRule jsonObject = noClasses().should().dependOnClassesThat(have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson"))));
-
-        ArchRule jsonArray = noClasses().should().dependOnClassesThat(have(simpleName("JsonArray").or(simpleName("JSONArray"))).and(not(resideInAPackage("com.google.gson"))));
-
-        ArchRule jsonParser = noClasses().should().dependOnClassesThat(have(simpleName("JsonParser").or(simpleName("JSONParser"))).and(not(resideInAPackage("com.google.gson"))));
-
-        jsonObject.check(allClasses);
-        jsonArray.check(allClasses);
-        jsonParser.check(allClasses);
+        // Note: we should only use Jackson. There are rare cases where gson is still used
+        // TODO: Replace all uses of gson with Jackson and check that gson is not used any more
+        noClasses().should().dependOnClassesThat(
+                have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
+                .check(allClasses);
+        noClasses().should().dependOnClassesThat(
+                have(simpleName("JsonArray").or(simpleName("JSONArray"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
+                .check(allClasses);
+        noClasses().should().dependOnClassesThat(
+                have(simpleName("JsonParser").or(simpleName("JSONParser"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
+                .check(allClasses);
     }
 
     @Test

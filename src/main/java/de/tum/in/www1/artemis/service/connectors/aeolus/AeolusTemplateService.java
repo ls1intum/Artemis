@@ -42,6 +42,8 @@ public class AeolusTemplateService {
 
     private final BuildScriptProviderService buildScriptProviderService;
 
+    private static final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
             BuildScriptProviderService buildScriptProviderService) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -95,11 +97,10 @@ public class AeolusTemplateService {
      *                         does not match the expected schema.
      */
     private static Windfile readWindfile(String yaml) throws IOException {
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Action.class, new ActionDeserializer());
-        mapper.registerModule(module);
-        return mapper.readValue(yaml, Windfile.class);
+        yamlMapper.registerModule(module);
+        return yamlMapper.readValue(yaml, Windfile.class);
     }
 
     /**
