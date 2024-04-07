@@ -41,6 +41,11 @@ public interface KnowledgeAreaRepository extends JpaRepository<KnowledgeArea, Lo
         return findById(knowledgeAreaId).orElseThrow(() -> new EntityNotFoundException("KnowledgeArea", knowledgeAreaId));
     }
 
+    // this method is needed as native MySQL queries do not get automatically cast to boolean
+    default boolean isDescendantOf(long descendantId, long parentId) {
+        return isDescendantOfAsLong(descendantId, parentId) != 0;
+    }
+
     @Query(value = """
             WITH RECURSIVE transitive_closure(id) AS
             (
@@ -52,7 +57,7 @@ public interface KnowledgeAreaRepository extends JpaRepository<KnowledgeArea, Lo
                     JOIN transitive_closure AS tc ON ka.parent_id = tc.id
                 )
             )
-            SELECT EXISTS(SELECT * FROM transitive_closure WHERE transitive_closure.id = :descendantId)
+            SELECT COUNT(*) FROM transitive_closure WHERE transitive_closure.id = :descendantId
             """, nativeQuery = true)
-    boolean isDescendantOf(@Param("descendantId") long descendantId, @Param("parentId") long parentId);
+    long isDescendantOfAsLong(@Param("descendantId") long descendantId, @Param("parentId") long parentId);
 }
