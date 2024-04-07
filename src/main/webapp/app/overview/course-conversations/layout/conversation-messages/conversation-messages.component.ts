@@ -56,6 +56,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     getAsChannel = getAsChannelDTO;
 
+    protected readonly getAsChannelDTO = getAsChannelDTO;
+
     canCreateNewMessageInConversation = canCreateNewMessageInConversation;
 
     previousScrollDistanceFromTop: number;
@@ -246,6 +248,4 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.searchInput.nativeElement.dispatchEvent(new Event('input'));
         }
     }
-
-    protected readonly getAsChannelDTO = getAsChannelDTO;
 }
