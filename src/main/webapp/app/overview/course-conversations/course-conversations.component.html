@@ -1,4 +1,17 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
+    <div class="input-group">
+        <!-- search bar -->
+        <input
+            name="searchText"
+            id="search"
+            [(ngModel)]="searchText"
+            class="form-control"
+            (keyup.enter)="onSelectContext()"
+            placeholder="{{ 'artemisApp.metis.discussionSection.searchBarDefault' | artemisTranslate }}"
+        />
+        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()" />
+        <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()" />
+    </div>
     @if (course && !isCodeOfConductAccepted) {
         <div>
             <jhi-course-conversations-code-of-conduct [course]="course!" />
@@ -20,7 +33,7 @@
             <div class="col pe-0 flex-grow-1" [ngClass]="{ 'card-border': activeConversation }" style="min-width: 200px">
                 @if (activeConversation) {
                     <jhi-conversation-header />
-                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" />
+                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" [allSearch]="this.searchText ?? ''" />
                 }
             </div>
             @if (activeConversation) {

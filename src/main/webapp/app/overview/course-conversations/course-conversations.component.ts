@@ -8,6 +8,8 @@ import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course } from 'app/entities/course.model';
 import { PageType } from 'app/shared/metis/metis.util';
+import { faFilter, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-course-conversations',
@@ -27,6 +29,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     isCodeOfConductAccepted: boolean = false;
     isCodeOfConductPresented: boolean = false;
+
+    protected readonly ButtonType = ButtonType;
+    searchText?: string;
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faFilter = faFilter;
+    faSearch = faSearch;
 
     // MetisConversationService is created in course overview, so we can use it here
     constructor(
@@ -134,5 +144,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if (this.course) {
             this.metisConversationService.acceptCodeOfConduct(this.course);
         }
+    }
+
+    onSelectContext() {
+        const index = this.conversationsOfUser.findIndex((channel) => getAsChannelDTO(channel)?.name == 'all-messages');
+        this.metisConversationService.setActiveConversation(this.conversationsOfUser[index]);
     }
 }

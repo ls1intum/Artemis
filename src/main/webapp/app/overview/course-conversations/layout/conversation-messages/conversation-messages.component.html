@@ -79,11 +79,12 @@
                             [showAnswers]="false"
                             [readOnlyMode]="!!getAsChannel(_activeConversation)?.isArchived"
                             [isCourseMessagesPage]="true"
+                            [isCommunicationPage]="getAsChannelDTO(_activeConversation)?.name === 'all-messages'"
                             (openThread)="setPostForThread($event)"
                         />
                     }
                 </div>
-                @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation)) {
+                @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && getAsChannel(_activeConversation)?.name !== 'all-messages') {
                     <div>
                         @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
                             <div class="pt-2">

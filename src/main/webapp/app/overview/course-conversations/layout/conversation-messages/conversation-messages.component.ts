@@ -41,6 +41,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     @Output() openThread = new EventEmitter<Post>();
 
+    @Input()
+    allSearch: string;
+
     @ViewChild('searchInput')
     searchInput: ElementRef;
 
@@ -125,9 +128,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private onActiveConversationChange() {
         if (this.course && this._activeConversation) {
             if (this.searchInput) {
-                this.searchInput.nativeElement.value = '';
-                this.searchText = '';
+                this.searchInput.nativeElement.value = this.allSearch;
+                this.searchText = this.allSearch;
             }
+            this.search$.next(this.searchText);
             this.onSearch();
             this.createEmptyPost();
         }
@@ -145,7 +149,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private refreshMetisConversationPostContextFilter(): void {
         this.currentPostContextFilter = {
             courseId: this.course?.id,
-            conversationId: this._activeConversation?.id,
             searchText: this.searchText ? this.searchText.trim() : undefined,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
@@ -153,6 +156,14 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             page: this.page - 1,
             pageSize: 50,
         };
+        if (this.getAsChannel(this._activeConversation)?.name == 'all-messages') {
+            this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
+                this.currentPostContextFilter!.courseWideChannelIds = conversations.map((conversation) => conversation!.id!);
+                this.currentPostContextFilter!.sortingOrder = SortDirection.ASCENDING;
+            });
+        } else {
+            this.currentPostContextFilter.conversationId = this._activeConversation?.id;
+        }
     }
 
     setPosts(posts: Post[]): void {
@@ -235,4 +246,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.searchInput.nativeElement.dispatchEvent(new Event('input'));
         }
     }
+
+    protected readonly getAsChannelDTO = getAsChannelDTO;
 }
