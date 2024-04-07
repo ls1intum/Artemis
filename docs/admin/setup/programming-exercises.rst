@@ -141,14 +141,14 @@ and changing the ``testRunner`` method into
 .. code:: groovy
 
   void testRunner() {
-      setDockerFlags()
+      setup()
 
       docker.image(dockerImage).inside(dockerFlags) { c ->
           runTestSteps()
       }
   }
 
-  private void setDockerFlags() {
+  private void setup() {
       if (isSolutionBuild) {
           dockerFlags += " -v artemis_maven_cache:/maven_cache"
       } else {
@@ -166,11 +166,11 @@ Caching example for Gradle
 In case of always writeable caches you can set ``-e GRADLE_USER_HOME=/gradle_cache`` as part of the ``dockerFlags``
 instead of the ``MAVEN_OPTS`` like above.
 
-For read-only caches like in the Maven example, define ``setDockerFlags()`` as
+For read-only caches like in the Maven example, define ``setup()`` as
 
 .. code:: groovy
 
-  private void setDockerFlags() {
+  private void setup() {
       if (isSolutionBuild) {
           dockerFlags += ' -e GRADLE_USER_HOME="/gradle_cache"'
           dockerFlags += ' -v artemis_gradle_cache:/gradle_cache'
