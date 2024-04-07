@@ -1,180 +1,104 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { ActivatedRoute } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs/esm';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
-import { LocalStorageService } from 'ngx-webstorage';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { faAngleDown, faAngleUp, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
-import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { AccordionGroups, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { CourseOverviewService } from '../course-overview.service';
 
-export enum LectureSortingOrder {
-    ASC = 1,
-    DESC = -1,
-}
-
-enum SortFilterStorageKey {
-    ORDER = 'artemis.course.lectures.order',
-}
+const DEFAULT_UNIT_GROUPS: AccordionGroups = {
+    future: { entityData: [] },
+    current: { entityData: [] },
+    past: { entityData: [] },
+    noDate: { entityData: [] },
+};
 
 @Component({
     selector: 'jhi-course-lectures',
     templateUrl: './course-lectures.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
+export class CourseLecturesComponent implements OnInit, OnDestroy {
     private courseId: number;
     private paramSubscription: Subscription;
+    private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
-    private translateSubscription: Subscription;
-    public course?: Course;
-    public weeklyIndexKeys: string[];
-    public weeklyLecturesGrouped: object;
+    course?: Course;
 
-    public exerciseCountMap: Map<string, number>;
-
-    readonly ASC = LectureSortingOrder.ASC;
-    readonly DESC = LectureSortingOrder.DESC;
-
-    // Icons
-    faSortNumericDown = faSortNumericDown;
-    faSortNumericUp = faSortNumericUp;
-    faAngleUp = faAngleUp;
-    faAngleDown = faAngleDown;
-
-    sortingOrder: LectureSortingOrder;
-
-    // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
-    @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
-    // Provides the control configuration to be read and used by "CourseOverviewComponent"
-    public readonly controlConfiguration: BarControlConfiguration = {
-        subject: new Subject<TemplateRef<any>>(),
-    };
+    lectureSelected: boolean = true;
+    sidebarData: SidebarData;
+    accordionLectureGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
+    sortedLectures: Lecture[] = [];
+    sidebarLectures: SidebarCardElement[] = [];
+    isCollapsed: boolean = false;
 
     constructor(
         private courseStorageService: CourseStorageService,
-        private translateService: TranslateService,
-        private exerciseService: ExerciseService,
         private route: ActivatedRoute,
-        private localStorage: LocalStorageService,
+        private router: Router,
+        private courseOverviewService: CourseOverviewService,
     ) {}
 
     ngOnInit() {
-        this.exerciseCountMap = new Map<string, number>();
-        this.loadSortingOrder();
-        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
+        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('lectures');
+        this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
+            this.courseId = parseInt(params.courseId, 10);
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);
-        this.onCourseLoad();
-
+        this.prepareSidebarData();
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.course = course;
-            this.onCourseLoad();
+            this.prepareSidebarData();
         });
 
-        this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
-            this.groupLectures();
+        const upcomingLecture = this.courseOverviewService.getUpcomingLecture(this.course?.lectures);
+        const lastSelectedLecture = this.getLastSelectedLecture();
+        this.paramSubscription = this.route.params.subscribe((params) => {
+            const lectureId = parseInt(params.lectureId, 10);
+            // If no exercise is selected navigate to the upcoming exercise
+            if (!lectureId && lastSelectedLecture) {
+                this.router.navigate([lastSelectedLecture], { relativeTo: this.route, replaceUrl: true });
+            } else if (!lectureId && upcomingLecture) {
+                this.router.navigate([upcomingLecture.id], { relativeTo: this.route, replaceUrl: true });
+            } else {
+                this.lectureSelected = lectureId ? true : false;
+            }
         });
     }
 
-    ngAfterViewInit(): void {
-        // Send our controls template to parent so it will be rendered in the top bar
-        if (this.controls) {
-            this.controlConfiguration.subject!.next(this.controls);
+    prepareSidebarData() {
+        if (!this.course?.lectures) {
+            return;
         }
+        this.sortedLectures = this.courseOverviewService.sortLectures(this.course.lectures);
+        this.sidebarLectures = this.courseOverviewService.mapLecturesToSidebarCardElements(this.sortedLectures);
+        this.accordionLectureGroups = this.courseOverviewService.groupLecturesByStartDate(this.sortedLectures);
+        this.updateSidebarData();
+    }
+
+    updateSidebarData() {
+        this.sidebarData = {
+            groupByCategory: true,
+            storageId: 'lecture',
+            groupedData: this.accordionLectureGroups,
+            ungroupedData: this.sidebarLectures,
+        };
+    }
+
+    toggleSidebar() {
+        this.isCollapsed = !this.isCollapsed;
+        this.courseOverviewService.setSidebarCollapseState('lecture', this.isCollapsed);
+    }
+
+    getLastSelectedLecture(): string | null {
+        return sessionStorage.getItem('sidebar.lastSelectedItem.' + 'lecture');
     }
 
     ngOnDestroy(): void {
-        this.translateSubscription.unsubscribe();
-        this.courseUpdatesSubscription.unsubscribe();
-        this.paramSubscription.unsubscribe();
-    }
-
-    /**
-     * Loads the sorting order from local storage
-     */
-    private loadSortingOrder() {
-        const orderInStorage = this.localStorage.retrieve(SortFilterStorageKey.ORDER);
-        const parsedOrderInStorage = Object.keys(LectureSortingOrder).find((exerciseOrder) => exerciseOrder === orderInStorage);
-        this.sortingOrder = parsedOrderInStorage ? (+parsedOrderInStorage as LectureSortingOrder) : LectureSortingOrder.ASC;
-    }
-
-    private onCourseLoad() {
-        this.groupLectures();
-    }
-
-    /**
-     * Reorders all displayed lectures
-     */
-    flipOrder() {
-        this.sortingOrder = this.sortingOrder === this.ASC ? this.DESC : this.ASC;
-        this.localStorage.store(SortFilterStorageKey.ORDER, this.sortingOrder.toString());
-        this.groupLectures();
-    }
-
-    public groupLectures(): void {
-        this.weeklyLecturesGrouped = {};
-        this.weeklyIndexKeys = [];
-        const groupedLectures = {};
-        const indexKeys: string[] = [];
-        const courseLectures = this.course?.lectures ? [...this.course!.lectures] : [];
-        const sortedLectures = this.sortLectures(courseLectures, this.sortingOrder);
-        const notAssociatedLectures: Lecture[] = [];
-        sortedLectures.forEach((lecture) => {
-            const dateValue = lecture.startDate ? dayjs(lecture.startDate) : undefined;
-            if (!dateValue) {
-                notAssociatedLectures.push(lecture);
-                return;
-            }
-            const dateIndex = dateValue ? dayjs(dateValue).startOf('week').format('YYYY-MM-DD') : 'NoDate';
-            if (!groupedLectures[dateIndex]) {
-                indexKeys.push(dateIndex);
-                if (dateValue) {
-                    groupedLectures[dateIndex] = {
-                        start: dayjs(dateValue).startOf('week'),
-                        end: dayjs(dateValue).endOf('week'),
-                        isCollapsed: dateValue.isBefore(dayjs(), 'week') || dateValue.isAfter(dayjs(), 'week'),
-                        isCurrentWeek: dateValue.isSame(dayjs(), 'week'),
-                        lectures: [],
-                    };
-                } else {
-                    groupedLectures[dateIndex] = {
-                        isCollapsed: false,
-                        isCurrentWeek: false,
-                        lectures: [],
-                    };
-                }
-            }
-            groupedLectures[dateIndex].lectures.push(lecture);
-        });
-        if (notAssociatedLectures.length > 0) {
-            this.weeklyLecturesGrouped = {
-                ...groupedLectures,
-                noDate: {
-                    label: this.translateService.instant('artemisApp.courseOverview.exerciseList.noExerciseDate'),
-                    isCollapsed: false,
-                    isCurrentWeek: false,
-                    lectures: notAssociatedLectures,
-                },
-            };
-            this.weeklyIndexKeys = [...indexKeys, 'noDate'];
-        } else {
-            this.weeklyLecturesGrouped = groupedLectures;
-            this.weeklyIndexKeys = indexKeys;
-        }
-    }
-
-    private sortLectures(lectures: Lecture[], selectedOrder: number): Lecture[] {
-        return lectures.sort((a, b) => {
-            const aValue = a.startDate ? a.startDate.valueOf() : dayjs().valueOf();
-            const bValue = b.startDate ? b.startDate.valueOf() : dayjs().valueOf();
-
-            return selectedOrder * (aValue - bValue);
-        });
+        this.courseUpdatesSubscription?.unsubscribe();
+        this.paramSubscription?.unsubscribe();
+        this.parentParamSubscription?.unsubscribe();
     }
 }
