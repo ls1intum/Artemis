@@ -28,32 +28,35 @@ import { MultipleChoiceQuiz } from '../../support/pageobjects/exercises/quiz/Mul
 import { TextEditorPage } from '../../support/pageobjects/exercises/text/TextEditorPage';
 import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
 import { generateUUID, newBrowserPage } from '../../support/utils';
+import examStatisticsSample from '../../fixtures/exam/statistics.json';
+import { ExamScoresPage } from '../../support/pageobjects/exam/ExamScoresPage';
 
 let exam: Exam;
 
+let course: Course;
+let examEnd: Dayjs;
+let studentOneName: string;
+
+test.beforeAll('Create course', async ({ browser }) => {
+    const page = await newBrowserPage(browser);
+    const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
+
+    await Commands.login(page, admin);
+    course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
+    await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+    await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
+    await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
+    await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
+    await courseManagementAPIRequests.addTutorToCourse(course, tutor);
+    await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
+
+    studentOneName = (await users.getUserInfo(studentOne.username, page)).name!;
+});
+
 test.describe('Exam assessment', () => {
-    let course: Course;
-    let examEnd: Dayjs;
     let programmingAssessmentSuccessful = false;
     let modelingAssessmentSuccessful = false;
     let textAssessmentSuccessful = false;
-    let studentOneName: string;
-
-    test.beforeAll('Create course', async ({ browser }) => {
-        const page = await newBrowserPage(browser);
-        const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
-
-        await Commands.login(page, admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
-        await courseManagementAPIRequests.addTutorToCourse(course, tutor);
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-
-        studentOneName = (await users.getUserInfo(studentOne.username, page)).name!;
-    });
 
     test.describe.serial('Programming exercise assessment', () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
@@ -182,7 +185,9 @@ test.describe('Exam assessment', () => {
             await examParticipation.checkResultScore('50%');
         });
     });
+});
 
+test.describe('Exam grading', () => {
     test.describe.serial('Instructor sets grades and student receives a grade', () => {
         let exam: Exam;
 
@@ -192,17 +197,17 @@ test.describe('Exam assessment', () => {
             exam = await prepareExam(course, examEnd, ExerciseType.TEXT, page);
         });
 
-        test('Set exam gradings', async ({ login, page, examManagement, examGradingPage }) => {
+        test('Set exam gradings', async ({ login, page, examManagement, examGrading }) => {
             await login(instructor);
             await page.goto(`course-management/${course.id}/exams/${exam.id}`);
             await examManagement.openGradingKey();
-            await examGradingPage.addGradeStep(40, '5.0');
-            await examGradingPage.addGradeStep(15, '4.0');
-            await examGradingPage.addGradeStep(15, '3.0');
-            await examGradingPage.addGradeStep(15, '2.0');
-            await examGradingPage.enterLastGradeName('1.0');
-            await examGradingPage.selectFirstPassingGrade('4.0');
-            await examGradingPage.saveGradingKey();
+            await examGrading.addGradeStep(40, '5.0');
+            await examGrading.addGradeStep(15, '4.0');
+            await examGrading.addGradeStep(15, '3.0');
+            await examGrading.addGradeStep(15, '2.0');
+            await examGrading.enterLastGradeName('1.0');
+            await examGrading.selectFirstPassingGrade('4.0');
+            await examGrading.saveGradingKey();
             await page.locator('button[deletequestion="artemisApp.gradingSystem.deleteQuestion"]').waitFor({ state: 'visible' });
         });
 
@@ -216,85 +221,85 @@ test.describe('Exam assessment', () => {
             expect(response.status()).toBe(200);
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('70%');
-            textAssessmentSuccessful = true;
             await examParticipation.verifyGradingKeyOnFinalPage('2.0');
         });
     });
+});
 
-    test.describe('Exam statistics', () => {
-        let exerciseArray: Array<Exercise> = [];
+test.describe('Exam statistics', () => {
+    let exercise: Exercise;
+    const students = [studentOne, studentTwo, studentThree, studentFour];
 
-        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
-            await login(admin);
-            const examConfig = {
-                course,
-                title: 'exam' + generateUUID(),
-                visibleDate: dayjs().subtract(3, 'minutes'),
-                startDate: dayjs().subtract(2, 'minutes'),
-                endDate: dayjs().add(1, 'minutes'),
-                examMaxPoints: 40,
-                numberOfExercisesInExam: 4,
-            };
-            exam = await examAPIRequests.createExam(examConfig);
-            const textFixture = 'loremIpsum.txt';
-            const textExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
-            const textExercise2 = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
-            const textExercise3 = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
-            const textExercise4 = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
-            // const programmingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaAllSuccessfulSubmission });
-            // const quizExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
-            // const modelingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING);
-            // exerciseArray = [textExercise, programmingExercise, quizExercise, modelingExercise];
-            exerciseArray = [textExercise, textExercise2, textExercise3, textExercise4];
-
-            await examAPIRequests.registerStudentForExam(exam, studentOne);
-            await examAPIRequests.registerStudentForExam(exam, studentTwo);
-            await examAPIRequests.registerStudentForExam(exam, studentThree);
-            await examAPIRequests.registerStudentForExam(exam, studentFour);
-            await examAPIRequests.generateMissingIndividualExams(exam);
-            await examAPIRequests.prepareExerciseStartForExam(exam);
-        });
-
-        test.beforeEach('Set exam grading and participate in exam', async ({ login, page, examManagement, examGradingPage }) => {
-            await login(instructor);
-            await page.goto(`course-management/${course.id}/exams/${exam.id}`);
-            await examManagement.openGradingKey();
-            await examGradingPage.generateDefaultGrading();
-            await examGradingPage.saveGradingKey();
-        });
-
-        test.beforeEach('Participate in exam', async ({ examParticipation, examNavigation }) => {
-            const students = [studentOne, studentTwo, studentThree, studentFour];
-            for (const student of students) {
-                await examParticipation.startParticipation(student, course, exam);
-                for (let j = 0; j < exerciseArray.length; j++) {
-                    const exercise = exerciseArray[j];
-                    await examNavigation.openExerciseAtIndex(j);
-                    await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-                }
-                await examParticipation.handInEarly();
-            }
-        });
-
-        test.beforeEach('Assess a text exercise submission', async ({ login, examManagement, examAssessment, courseAssessment, exerciseAssessment }) => {
-            await login(tutor);
-            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
-            for (let i = 0; i < exerciseArray.length; i++) {
-                await examAssessment.addNewFeedback(7, 'Good job');
-                const response = await examAssessment.submitTextAssessment();
-                expect(response.status()).toBe(200);
-                await examAssessment.nextAssessment();
-            }
-        });
-
-        test('Check exam statistics', async () => {});
+    test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+        await login(admin);
+        const examConfig = {
+            course,
+            title: 'exam' + generateUUID(),
+            visibleDate: dayjs().subtract(3, 'minutes'),
+            startDate: dayjs().subtract(2, 'minutes'),
+            endDate: dayjs().add(1, 'minutes'),
+            examMaxPoints: 10,
+            numberOfExercisesInExam: 1,
+        };
+        exam = await examAPIRequests.createExam(examConfig);
+        const textFixture = 'loremIpsum.txt';
+        exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
+        await examAPIRequests.registerStudentForExam(exam, studentOne);
+        await examAPIRequests.registerStudentForExam(exam, studentTwo);
+        await examAPIRequests.registerStudentForExam(exam, studentThree);
+        await examAPIRequests.registerStudentForExam(exam, studentFour);
+        await examAPIRequests.generateMissingIndividualExams(exam);
+        await examAPIRequests.prepareExerciseStartForExam(exam);
     });
 
-    test.afterAll('Delete course', async ({ browser }) => {
-        const page = await newBrowserPage(browser);
-        const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
-        await courseManagementAPIRequests.deleteCourse(course, admin);
+    test.beforeEach('Set exam grading', async ({ login, page, examManagement, examGrading }) => {
+        await login(instructor);
+        await page.goto(`course-management/${course.id}/exams/${exam.id}`);
+        await examManagement.openGradingKey();
+        await examGrading.generateDefaultGrading();
+        await examGrading.saveGradingKey();
     });
+
+    test.beforeEach('Participate in exam', async ({ examParticipation, examNavigation }) => {
+        for (const student of students) {
+            await examParticipation.startParticipation(student, course, exam);
+            await examNavigation.openExerciseAtIndex(0);
+            await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
+            await examParticipation.handInEarly();
+        }
+    });
+
+    test.beforeEach('Assess a text exercise submission', async ({ login, examManagement, examAssessment, courseAssessment, exerciseAssessment }) => {
+        await login(tutor);
+        await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
+
+        const assessment = examStatisticsSample.assessment;
+        for (let i = 0; i < students.length; i++) {
+            await examAssessment.addNewFeedback(assessment[i].points, assessment[i].feedback);
+            const response = await examAssessment.submitTextAssessment();
+            expect(response.status()).toBe(200);
+            await examAssessment.nextAssessment();
+        }
+    });
+
+    test('Check exam statistics', async ({ login, page, examManagement, examAPIRequests }) => {
+        await login(instructor);
+        await page.goto(`course-management/${course.id}/exams/${exam.id}`);
+        await examManagement.openScoresPage();
+        await page.waitForURL(`**/exams/${exam.id}/scores`);
+        await page.waitForLoadState('load');
+        const examScores = new ExamScoresPage(page);
+        await examScores.checkExamStatistics(examStatisticsSample.statistics);
+        await examScores.checkGradeDistributionChart(examStatisticsSample.gradeDistribution);
+        const scores = await examAPIRequests.getExamScores(exam);
+        await examScores.checkStudentResults(scores.studentResults);
+    });
+});
+
+test.afterAll('Delete course', async ({ browser }) => {
+    const page = await newBrowserPage(browser);
+    const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
+    await courseManagementAPIRequests.deleteCourse(course, admin);
 });
 
 async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseType, page: Page): Promise<Exam> {

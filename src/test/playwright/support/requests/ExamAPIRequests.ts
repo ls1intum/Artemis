@@ -170,4 +170,13 @@ export class ExamAPIRequests {
     async prepareExerciseStartForExam(exam: Exam) {
         await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/start-exercises`);
     }
+
+    /**
+     * Gets the exam scores
+     * @param exam the exam to get the scores for
+     */
+    async getExamScores(exam: Exam) {
+        const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/scores`);
+        return await response.json();
+    }
 }

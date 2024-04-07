@@ -46,6 +46,7 @@ export abstract class AbstractExerciseAssessmentPage {
 
     async nextAssessment() {
         await this.page.locator('#assessNextButton').click();
+        await this.page.locator('#assessNextButton').waitFor({ state: 'hidden' });
     }
 
     private async handleComplaint(response: string, accept: boolean, exerciseType: ExerciseType, examMode: boolean) {

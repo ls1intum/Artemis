@@ -1,0 +1,194 @@
+{
+    "assessment": [
+        {
+            "points": 7,
+            "feedback": "Good job"
+        },
+        {
+            "points": 5,
+            "feedback": "Could be better"
+        },
+        {
+            "points": 3,
+            "feedback": "Not good"
+        },
+        {
+            "points": 2,
+            "feedback": "Bad"
+        }
+    ],
+    "statistics": [
+        {
+            "stat": "Exams",
+            "passed": "2",
+            "submitted": "4",
+            "total": "4"
+        },
+        {
+            "stat": "Average Points",
+            "passed": "6",
+            "submitted": "4.3",
+            "total": "4.3"
+        },
+        {
+            "stat": "Average Grade",
+            "passed": "3.3",
+            "submitted": "4.7",
+            "total": "4.7"
+        },
+        {
+            "stat": "Median Points",
+            "passed": "6",
+            "submitted": "4",
+            "total": "4"
+        },
+        {
+            "stat": "Median Grade",
+            "passed": "3.3",
+            "submitted": "4.7",
+            "total": "4.7"
+        },
+        {
+            "stat": "Standard Point Deviation",
+            "passed": "1",
+            "submitted": "1.9",
+            "total": "1.9"
+        },
+        {
+            "stat": "Standard Grade Deviation",
+            "passed": "0.6",
+            "submitted": "0.9",
+            "total": "0.9"
+        }
+    ],
+    "gradingKey": [
+        {
+            "interval": "40",
+            "gradeName": "5.0"
+        },
+        {
+            "interval": "5",
+            "gradeName": "4.7"
+        },
+        {
+            "interval": "5",
+            "gradeName": "4.3"
+        },
+        {
+            "interval": "5",
+            "gradeName": "4.0"
+        },
+        {
+            "interval": "5",
+            "gradeName": "3.7"
+        },
+        {
+            "interval": "5",
+            "gradeName": "3.3"
+        },
+        {
+            "interval": "5",
+            "gradeName": "3.0"
+        },
+        {
+            "interval": "5",
+            "gradeName": "2.7"
+        },
+        {
+            "interval": "5",
+            "gradeName": "2.3"
+        },
+        {
+            "interval": "5",
+            "gradeName": "2.0"
+        },
+        {
+            "interval": "5",
+            "gradeName": "1.7"
+        },
+        {
+            "interval": "5",
+            "gradeName": "1.3"
+        },
+        {
+            "interval": "5",
+            "gradeName": "1.0"
+        }
+    ],
+    "gradeDistribution": [
+        {
+            "name": "5.0",
+            "count": "2"
+        },
+        {
+            "name": "4.7",
+            "count": "0"
+        },
+        {
+            "name": "4.3",
+            "count": "0"
+        },
+        {
+            "name": "4.0",
+            "count": "1"
+        },
+        {
+            "name": "3.7",
+            "count": "0"
+        },
+        {
+            "name": "3.3",
+            "count": "0"
+        },
+        {
+            "name": "3.0",
+            "count": "0"
+        },
+        {
+            "name": "2.7",
+            "count": "1"
+        },
+        {
+            "name": "2.3",
+            "count": "0"
+        },
+        {
+            "name": "2.0",
+            "count": "0"
+        },
+        {
+            "name": "1.7",
+            "count": "0"
+        },
+        {
+            "name": "1.3",
+            "count": "0"
+        },
+        {
+            "name": "1.0",
+            "count": "0"
+        }
+    ],
+    "studentResults": [
+        {
+            "overallPoints": "2",
+            "overallScore": "20",
+            "overallGrade": "5.0"
+        },
+        {
+            "overallPoints": "5",
+            "overallScore": "50",
+            "overallGrade": "4.0"
+        },
+        {
+            "overallPoints": "7",
+            "overallScore": "70",
+            "overallGrade": "2.7"
+        },
+        {
+            "overallPoints": "3",
+            "overallScore": "30",
+            "overallGrade": "5.0"
+        }
+    ]
+}
