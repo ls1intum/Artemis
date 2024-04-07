@@ -15,12 +15,12 @@
                 },
                 "cancelModal": {
                     "title": "Warning: Unsaved Changes",
-                    "text": "Are you sure you want to cancel editing <strong>{{title}}</strong>? Press Cancel to go back, or Confirm to proceed."
+                    "text": "Are you sure you want to cancel editing the standardized competency <strong>{{title}}</strong>? Press Cancel to go back, or Confirm to proceed."
                 },
                 "successAlerts": {
-                    "create": "Successfully created standardized competency <strong>{{competencyTitle}}</strong>",
-                    "update": "Successfully updated standardized competency <strong>{{competencyTitle}}</strong>",
-                    "delete": "Successfully deleted standardized competency <strong>{{competencyTitle}}</strong>"
+                    "create": "Successfully created standardized competency <strong>{{title}}</strong>",
+                    "update": "Successfully updated standardized competency <strong>{{title}}</strong>",
+                    "delete": "Successfully deleted standardized competency <strong>{{title}}</strong>"
                 }
             },
             "model": {
@@ -51,21 +51,27 @@
                 "parent": "Parent Knowledge Area"
             },
             "manage": {
-                "createButtonTooltip": "Create knowledge area",
+                "detailsTooltip": "Open knowledge area details",
                 "deleteModal": {
                     "question": "Do you really want to delete the knowledge area <strong>{{title}}</strong>? You can not undo this action! <strong>This will also delete all knowledge areas and standardized competencies contained!</strong>",
                     "typeNameToConfirm": "Please enter the name of the knowledge area for confirmation."
                 },
+                "cancelModal": {
+                    "title": "Warning: Unsaved Changes",
+                    "text": "Are you sure you want to cancel editing the knowledge area <strong>{{title}}</strong>? Press Cancel to go back, or Confirm to proceed."
+                },
                 "successAlerts": {
-                    "create": "Successfully created knowledge area <strong>{{competencyTitle}}</strong>",
-                    "update": "Successfully updated knowledge area <strong>{{competencyTitle}}</strong>",
-                    "delete": "Successfully deleted knowledge area <strong>{{competencyTitle}}</strong>"
+                    "create": "Successfully created knowledge area <strong>{{title}}</strong>",
+                    "update": "Successfully updated knowledge area <strong>{{title}}</strong>",
+                    "delete": "Successfully deleted knowledge area <strong>{{title}}</strong>"
                 }
             },
             "details": {
                 "title": "Knowledge Area Details",
                 "titleCreate": "Create Knowledge Area",
                 "titleEdit": "Edit Knowledge Area",
+                "createKnowledgeAreaButton": "Add knowledge area",
+                "createCompetencyButton": "Add Competency",
                 "error": {
                     "titleRequired": "A knowledge area needs to have a title",
                     "titleMaxLength": "The title of a knowledge area is limited to {{max}} characters",

@@ -164,9 +164,9 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
     }
 
     //methods handling the knowledge area detail component
-    openNewKnowledgeArea(parent?: KnowledgeArea) {
+    openNewKnowledgeArea(parentId?: number) {
         const newKnowledgeArea: KnowledgeAreaDTO = {
-            parentId: parent?.id,
+            parentId: parentId,
         };
         this.setSelectedKnowledgeAreaAndEditing(newKnowledgeArea, true);
     }
@@ -182,29 +182,27 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         this.setSelectedKnowledgeAreaAndEditing(undefined, false);
     }
 
-    //TODO: make delete functions use the id | undefined :)
-    //TODO: make setSelectedKnowledgeAreaAndEditing show that it does this safely!
-    deleteKnowledgeArea() {
-        //if the knowledge area does not exist just close the detail component
-        if (this.selectedKnowledgeArea?.id === undefined) {
-            this.isEditing = false;
-            this.selectedKnowledgeArea = undefined;
-            return;
-        }
-
-        this.adminStandardizedCompetencyService.deleteKnowledgeArea(this.selectedKnowledgeArea.id).subscribe({
+    //TODO: make setSelectedKnowledgeAreaAndEditing show that it does this safely! > this is ok because we can compare against the id?
+    deleteKnowledgeArea(id: number) {
+        this.adminStandardizedCompetencyService.deleteKnowledgeArea(id).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.delete', { title: this.selectedKnowledgeArea?.title });
                 //TODO: update the tree
                 this.dialogErrorSource.next('');
-                //close the detail component
-                this.isEditing = false;
-                this.selectedKnowledgeArea = undefined;
+                //close the detail component if it is still open
+                if (this.selectedKnowledgeArea?.id !== id) {
+                    this.isEditing = false;
+                    this.selectedKnowledgeArea = undefined;
+                }
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 
+    /**
+     * Saves the given knowledge area by either creating a new one (if it has no id) or updating an existing one
+     * @param knowledgeAreaDTO the knowledgeArea to save
+     */
     saveKnowledgeArea(knowledgeAreaDTO: KnowledgeAreaDTO) {
         //TODO: make a method out of this or just always use the DTOs since they make more sense.
         const knowledgeArea: KnowledgeArea = {
@@ -222,11 +220,12 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                 .subscribe({
                     next: (resultKnowledgeArea) => {
                         //TODO: convert to dto again.
-                        this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.create', { competencyTitle: resultKnowledgeArea.title });
+                        this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.create', { title: resultKnowledgeArea.title });
                         //TODO: update tree
-                        //update the detail view
-                        //TODO: what do we do when we are editing smth -> do the safe operation here aswell?
-                        this.selectedKnowledgeArea = resultKnowledgeArea;
+                        //update the detail view if it is still open
+                        if (knowledgeAreaDTO.id === this.selectedKnowledgeArea?.id) {
+                            this.selectedKnowledgeArea = resultKnowledgeArea;
+                        }
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -237,10 +236,12 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                 .subscribe({
                     next: (resultKnowledgeArea) => {
                         //TODO: convert to dto again.
-                        this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.update', { competencyTitle: resultKnowledgeArea.title });
+                        this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.update', { title: resultKnowledgeArea.title });
                         //TODO: update tree
-                        //update the detail view
-                        this.selectedKnowledgeArea = resultKnowledgeArea;
+                        //update the detail view if it is still open
+                        if (knowledgeAreaDTO.id === this.selectedKnowledgeArea?.id) {
+                            this.selectedKnowledgeArea = resultKnowledgeArea;
+                        }
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -249,9 +250,9 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
 
     //methods handling the competency detail component
 
-    openNewCompetency(knowledgeArea?: KnowledgeArea) {
+    openNewCompetency(knowledgeAreaId: number) {
         const newCompetency: StandardizedCompetencyDTO = {
-            knowledgeAreaId: knowledgeArea?.id,
+            knowledgeAreaId: knowledgeAreaId,
         };
         this.setSelectedCompetencyAndEditing(newCompetency, true);
     }
@@ -267,22 +268,17 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         this.setSelectedCompetencyAndEditing(undefined, false);
     }
 
-    deleteCompetency() {
-        //if the competency does not exist just close the detail component
-        if (this.selectedCompetency?.id === undefined) {
-            this.isEditing = false;
-            this.selectedCompetency = undefined;
-            return;
-        }
-
-        this.adminStandardizedCompetencyService.deleteStandardizedCompetency(this.selectedCompetency.id).subscribe({
+    deleteCompetency(id: number) {
+        this.adminStandardizedCompetencyService.deleteStandardizedCompetency(id).subscribe({
             next: () => {
-                this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.delete', { competencyTitle: this.selectedCompetency?.title });
+                this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.delete', { title: this.selectedCompetency?.title });
                 this.updateTreeAfterDelete();
                 this.dialogErrorSource.next('');
-                //close the detail component
-                this.isEditing = false;
-                this.selectedCompetency = undefined;
+                //close the detail component if it is still open
+                if (id === this.selectedCompetency?.id) {
+                    this.isEditing = false;
+                    this.selectedCompetency = undefined;
+                }
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -302,10 +298,12 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                 .subscribe({
                     next: (resultCompetency) => {
                         resultCompetency = convertToStandardizedCompetencyDTO(resultCompetency);
-                        this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.create', { competencyTitle: resultCompetency.title });
+                        this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.create', { title: resultCompetency.title });
                         this.updateTreeAfterCreate(resultCompetency);
-                        //update the detail view
-                        this.selectedCompetency = resultCompetency;
+                        //update the detail view if it is still open
+                        if (competencyDTO.id === this.selectedCompetency?.id) {
+                            this.selectedCompetency = resultCompetency;
+                        }
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -316,10 +314,12 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                 .subscribe({
                     next: (resultCompetency) => {
                         resultCompetency = convertToStandardizedCompetencyDTO(resultCompetency);
-                        this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.update', { competencyTitle: resultCompetency.title });
+                        this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.update', { title: resultCompetency.title });
                         this.updateTreeAfterUpdate(resultCompetency);
-                        //update the detail view
-                        this.selectedCompetency = resultCompetency;
+                        //update the detail view if it is still open
+                        if (competencyDTO.id === this.selectedCompetency?.id) {
+                            this.selectedCompetency = resultCompetency;
+                        }
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -452,7 +452,8 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
 
     private openCancelModal(title: string, entityType: 'standardizedCompetency' | 'knowledgeArea', callback: () => void) {
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
-        modalRef.componentInstance.title = 'artemisApp.standardizedCompetency.manage.cancelModal.title';
+        modalRef.componentInstance.textIsMarkdown = true;
+        modalRef.componentInstance.title = `artemisApp.${entityType}.manage.cancelModal.title`;
         modalRef.componentInstance.text = this.translateService.instant(`artemisApp.${entityType}.manage.cancelModal.text`, { title: title });
         modalRef.result.then(() => callback());
     }

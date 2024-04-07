@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { faBan, faPencil, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faPencil, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, KnowledgeAreaDTO, KnowledgeAreaValidators } from 'app/entities/competency/standardized-competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
@@ -46,7 +46,9 @@ export class KnowledgeAreaDetailComponent {
     @Input() dialogError: Observable<string>;
 
     @Output() onSave = new EventEmitter<KnowledgeAreaDTO>();
-    @Output() onDelete = new EventEmitter<void>();
+    @Output() onDelete = new EventEmitter<number>();
+    @Output() onOpenNewCompetency = new EventEmitter<number>();
+    @Output() onOpenNewKnowledgeArea = new EventEmitter<number>();
     @Output() onClose = new EventEmitter<void>();
     @Output() isEditingChange = new EventEmitter<boolean>();
 
@@ -66,6 +68,7 @@ export class KnowledgeAreaDetailComponent {
     readonly faTrash = faTrash;
     readonly faBan = faBan;
     readonly faSave = faSave;
+    readonly faPlus = faPlus;
     //other constants
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
@@ -81,7 +84,15 @@ export class KnowledgeAreaDetailComponent {
     }
 
     delete() {
-        this.onDelete.emit();
+        this.onDelete.emit(this.knowledgeArea.id);
+    }
+
+    openNewCompetency() {
+        this.onOpenNewCompetency.emit(this.knowledgeArea.id);
+    }
+
+    openNewKnowledgeArea() {
+        this.onOpenNewKnowledgeArea.emit(this.knowledgeArea.id);
     }
 
     close() {

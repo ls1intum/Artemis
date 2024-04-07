@@ -15,12 +15,12 @@
                 },
                 "cancelModal": {
                     "title": "Warnung: Ungespeicherte Änderungen",
-                    "text": "Willst du wirklich die Bearbeitung von <strong>{{title}}</strong> abbrechen? Klicke auf Abbrechen, um zurückzugehen, oder Bestätigen, um fortzufahren."
+                    "text": "Willst du wirklich die Bearbeitung der standardisierten Kompetenz <strong>{{title}}</strong> abbrechen? Klicke auf Abbrechen, um zurückzugehen, oder Bestätigen, um fortzufahren."
                 },
                 "successAlerts": {
-                    "create": "Erfolgreich die standardisierte Kompetenz <strong>{{competencyTitle}}</strong> erstellt",
-                    "update": "Erfolgreich die standardisierte Kompetenz <strong>{{competencyTitle}}</strong> aktualisiert",
-                    "delete": "Erfolgreich die standardisierte Kompetenz <strong>{{competencyTitle}}</strong> gelöscht"
+                    "create": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> erstellt",
+                    "update": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> aktualisiert",
+                    "delete": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> gelöscht"
                 }
             },
             "model": {
@@ -51,10 +51,14 @@
                 "parent": "Übergeordnetes Wissensgebiet"
             },
             "manage": {
-                "createButtonTooltip": "Wissensgebiet erstellen",
+                "detailsTooltip": "Wissensgebiet-Details öffnen",
                 "deleteModal": {
-                    "question": "Willst du wirklich die standardisierte Kompetenz <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen! <strong>Damit werden auch alle enthaltenen Wissensbereiche und standardisierten Kompetenzen gelöscht!</strong>",
+                    "question": "Willst du wirklich das Wissensgebiet <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen! <strong>Damit werden auch alle enthaltenen Wissensgebiete und standardisierten Kompetenzen gelöscht!</strong>",
                     "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen des Wissensgebiets ein."
+                },
+                "cancelModal": {
+                    "title": "Warnung: Ungespeicherte Änderungen",
+                    "text": "Willst du wirklich die Bearbeitung des Wissensgebiets <strong>{{title}}</strong> abbrechen? Klicke auf Abbrechen, um zurückzugehen, oder Bestätigen, um fortzufahren."
                 },
                 "successAlerts": {
                     "create": "Erfolgreich das Wissensgebiet <strong>{{title}}</strong> erstellt",
@@ -66,6 +70,8 @@
                 "title": "Wissensgebiet",
                 "titleCreate": "Wissensgebiet Erstellen",
                 "titleEdit": "Wissensgebiet Bearbeiten",
+                "createKnowledgeAreaButton": "Wissensgebiet hinzufügen",
+                "createCompetencyButton": "Kompetenz hinzufügen",
                 "error": {
                     "titleRequired": "Ein Wissensgebiet muss einen Titel haben",
                     "titleMaxLength": "Der Titel eines Wissensgebietes darf maximal {{max}} Zeichen lang sein",

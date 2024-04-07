@@ -19,7 +19,7 @@
                     [entityTitle]="competency.title ?? ''"
                     [deleteQuestion]="'artemisApp.standardizedCompetency.manage.deleteModal.question'"
                     [deleteConfirmationText]="'artemisApp.standardizedCompetency.manage.deleteModal.typeNameToConfirm'"
-                    (delete)="delete()"
+                    (delete)="onDelete.emit(competency.id)"
                     [dialogError]="dialogError"
                 >
                     <fa-icon [icon]="faTrash" />

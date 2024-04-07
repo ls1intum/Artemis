@@ -47,7 +47,7 @@ export class StandardizedCompetencyDetailComponent {
     @Input() dialogError: Observable<string>;
 
     @Output() onSave = new EventEmitter<StandardizedCompetencyDTO>();
-    @Output() onDelete = new EventEmitter<void>();
+    @Output() onDelete = new EventEmitter<number>();
     @Output() onClose = new EventEmitter<void>();
     @Output() isEditingChange = new EventEmitter<boolean>();
 
@@ -80,7 +80,7 @@ export class StandardizedCompetencyDetailComponent {
     }
 
     delete() {
-        this.onDelete.emit();
+        this.onDelete.emit(this.competency.id);
     }
 
     close() {
