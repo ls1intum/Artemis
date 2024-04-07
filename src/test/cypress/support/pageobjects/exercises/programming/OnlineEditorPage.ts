@@ -37,7 +37,7 @@ export class OnlineEditorPage {
                             // On MacOS (darwin), the keyboard shortcut is CMD (meta) + V instead of CTRL + V.
                             const keyModifier = Cypress.platform === 'darwin' ? 'meta' : 'ctrl';
                             // view-lines is the class of the text area in monaco.
-                            getExercise(exerciseID).find('.view-lines').click().type(`{${keyModifier}}v`);
+                            getExercise(exerciseID).find('.view-lines').click().type(`{${keyModifier}}v`).wait(200);
                         });
                     });
                 })
