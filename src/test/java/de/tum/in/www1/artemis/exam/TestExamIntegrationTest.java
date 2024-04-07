@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class TestExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "testexamintegration";
 
@@ -82,8 +82,6 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         testExam1 = examUtilService.addTestExam(course1);
         examUtilService.addStudentExamForTestExam(testExam1, student1);
-
-        bitbucketRequestMockProvider.enableMockingOfRequests();
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
         participantScoreScheduleService.activate();
