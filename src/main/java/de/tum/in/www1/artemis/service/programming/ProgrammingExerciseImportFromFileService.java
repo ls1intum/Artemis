@@ -26,10 +26,19 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ProfileService;
+import de.tum.in.www1.artemis.service.RepositoryService;
+import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -106,7 +115,7 @@ public class ProgrammingExerciseImportFromFileService {
             copyEmbeddedFiles(pathToDirectoryWithImportedContent);
             importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, oldShortName, user);
             newProgrammingExercise.setCourse(course);
-            // It doesn't make sense to import a build plan on a bamboo or local CI setup.
+            // It doesn't make sense to import a build plan on a local CI setup.
             if (profileService.isGitlabCiOrJenkinsActive()) {
                 importBuildPlanIfExisting(newProgrammingExercise, pathToDirectoryWithImportedContent);
             }

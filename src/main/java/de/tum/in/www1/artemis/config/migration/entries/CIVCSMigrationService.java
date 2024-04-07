@@ -56,7 +56,7 @@ public interface CIVCSMigrationService {
     void overrideRepositoriesToCheckout(String buildPlanKey, List<AuxiliaryRepository> auxiliaryRepositoryList, ProgrammingLanguage programmingLanguage);
 
     /**
-     * Jenkins and Bamboo need different results, this method is used to get the correct participations.
+     * Gets the correct participations.
      *
      * @param programmingExerciseStudentParticipationRepository the repository to get the participations from
      * @param pageable                                          the pageable object
