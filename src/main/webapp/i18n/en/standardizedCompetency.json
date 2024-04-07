@@ -8,6 +8,7 @@
                 "createButtonTooltip": "Create standardized competency",
                 "expandButtonTooltip": "Expand all knowledge areas",
                 "collapseButtonTooltip": "Collapse all knowledge areas",
+                "updateTreeError": "Something went wrong while updating the knowledge area tree. Please reload the page.",
                 "deleteModal": {
                     "question": "Do you really want to delete the standardized competency <strong>{{title}}</strong>? You can not undo this action!",
                     "typeNameToConfirm": "Please enter the name of the standardized competency for confirmation."
@@ -17,11 +18,10 @@
                     "text": "Are you sure you want to cancel editing <strong>{{title}}</strong>? Press Cancel to go back, or Confirm to proceed."
                 },
                 "successAlerts": {
-                    "create": "Successfully created standardized competency \"{{competencyTitle}}\"",
-                    "update": "Successfully updated standardized competency \"{{competencyTitle}}\"",
-                    "delete": "Successfully deleted standardized competency \"{{competencyTitle}}\""
-                },
-                "updateTreeError": "Something went wrong while updating the knowledge area tree. Please reload the page."
+                    "create": "Successfully created standardized competency <strong>{{competencyTitle}}</strong>",
+                    "update": "Successfully updated standardized competency <strong>{{competencyTitle}}</strong>",
+                    "delete": "Successfully deleted standardized competency <strong>{{competencyTitle}}</strong>"
+                }
             },
             "model": {
                 "title": "Title",
@@ -34,10 +34,12 @@
                 "title": "Standardized Competency Details",
                 "titleCreate": "Create Standardized Competency",
                 "titleEdit": "Edit Standardized Competency",
-                "titleRequiredError": "A standardized competency needs to have a title",
-                "titleMaxLengthError": "The title of a standardized competency is limited to {{max}} characters",
-                "descriptionMaxLengthError": "The description of a standardized competency is limited to {{max}} characters",
-                "knowledgeAreaRequiredError": "A standardized competency needs to have a knowledge area"
+                "error": {
+                    "titleRequired": "A standardized competency needs to have a title",
+                    "titleMaxLength": "The title of a standardized competency is limited to {{max}} characters",
+                    "descriptionMaxLength": "The description of a standardized competency is limited to {{max}} characters",
+                    "knowledgeAreaRequired": "A standardized competency needs to have a knowledge area"
+                }
             }
         },
         "knowledgeArea": {
@@ -48,16 +50,30 @@
                 "description": "Description",
                 "parent": "Parent Knowledge Area"
             },
+            "manage": {
+                "createButtonTooltip": "Create knowledge area",
+                "deleteModal": {
+                    "question": "Do you really want to delete the knowledge area <strong>{{title}}</strong>? You can not undo this action! <strong>This will also delete all knowledge areas and standardized competencies contained!</strong>",
+                    "typeNameToConfirm": "Please enter the name of the knowledge area for confirmation."
+                },
+                "successAlerts": {
+                    "create": "Successfully created knowledge area <strong>{{competencyTitle}}</strong>",
+                    "update": "Successfully updated knowledge area <strong>{{competencyTitle}}</strong>",
+                    "delete": "Successfully deleted knowledge area <strong>{{competencyTitle}}</strong>"
+                }
+            },
             "details": {
                 "title": "Knowledge Area Details",
                 "titleCreate": "Create Knowledge Area",
                 "titleEdit": "Edit Knowledge Area",
-                "titleRequiredError": "A knowledge area needs to have a title",
-                "titleMaxLengthError": "The title of a knowledge area is limited to {{max}} characters",
-                "shortTitleRequiredError": "A knowledge area needs to have a short title",
-                "shortTitleMaxLengthError": "The short title of a knowledge area is limited to {{max}} characters",
-                "descriptionMaxLengthError": "The description of a knowledge area is limited to {{max}} characters",
-                "parentIdCircleError": "A knowledge area cannot have itself or one of its descendants as parent"
+                "error": {
+                    "titleRequired": "A knowledge area needs to have a title",
+                    "titleMaxLength": "The title of a knowledge area is limited to {{max}} characters",
+                    "shortTitleRequired": "A knowledge area needs to have a short title",
+                    "shortTitleMaxLength": "The short title of a knowledge area is limited to {{max}} characters",
+                    "descriptionMaxLength": "The description of a knowledge area is limited to {{max}} characters",
+                    "parentIdCircle": "A knowledge area cannot have itself or one of its descendants as parent"
+                }
             }
         }
     }

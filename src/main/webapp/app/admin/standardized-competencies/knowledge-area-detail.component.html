@@ -12,14 +12,13 @@
             @if (!isEditing) {
                 <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.edit'" [icon]="faPencil" (onClick)="edit()" />
             }
-            <!-- do not display the delete button when creating new competencies -->
+            <!-- do not display the delete button when creating new knowledge areas -->
             @if (knowledgeArea.id) {
-                <!-- TODO: fix the text and also fix it for standardized competencies!!! -->
                 <button
                     jhiDeleteButton
                     [entityTitle]="knowledgeArea.title ?? ''"
-                    [deleteQuestion]="'artemisApp.competency.competencyCard.delete.question'"
-                    [deleteConfirmationText]="'artemisApp.competency.competencyCard.delete.typeNameToConfirm'"
+                    [deleteQuestion]="'artemisApp.knowledgeArea.manage.deleteModal.question'"
+                    [deleteConfirmationText]="'artemisApp.knowledgeArea.manage.deleteModal.typeNameToConfirm'"
                     (delete)="delete()"
                     [dialogError]="dialogError"
                 >
@@ -35,10 +34,10 @@
             @if (form.controls.title.invalid && (form.controls.title.dirty || form.controls.title.touched)) {
                 <div class="alert alert-danger">
                     @if (form.controls.title.errors?.required) {
-                        <div jhiTranslate="artemisApp.knowledgeArea.details.titleRequiredError"></div>
+                        <div jhiTranslate="artemisApp.knowledgeArea.details.error.titleRequired"></div>
                     }
                     @if (form.controls.title.errors?.maxlength) {
-                        <div jhiTranslate="artemisApp.knowledgeArea.details.titleMaxLengthError" [translateValues]="{ max: validators.TITLE_MAX }"></div>
+                        <div jhiTranslate="artemisApp.knowledgeArea.details.error.titleMaxLength" [translateValues]="{ max: validators.TITLE_MAX }"></div>
                     }
                 </div>
             }
@@ -49,10 +48,10 @@
             @if (form.controls.shortTitle.invalid && (form.controls.shortTitle.dirty || form.controls.shortTitle.touched)) {
                 <div class="alert alert-danger">
                     @if (form.controls.shortTitle.errors?.required) {
-                        <div jhiTranslate="artemisApp.knowledgeArea.details.shortTitleRequiredError"></div>
+                        <div jhiTranslate="artemisApp.knowledgeArea.details.error.shortTitleRequired"></div>
                     }
                     @if (form.controls.shortTitle.errors?.maxlength) {
-                        <div jhiTranslate="artemisApp.knowledgeArea.details.shortTitleMaxLengthError" [translateValues]="{ max: validators.SHORT_TITLE_MAX }"></div>
+                        <div jhiTranslate="artemisApp.knowledgeArea.details.error.shortTitleMaxLength" [translateValues]="{ max: validators.SHORT_TITLE_MAX }"></div>
                     }
                 </div>
             }
@@ -72,7 +71,7 @@
             @if (form.controls.description.invalid && form.controls.description.dirty) {
                 <div
                     class="alert alert-danger"
-                    jhiTranslate="artemisApp.knowledgeArea.details.descriptionMaxLengthError"
+                    jhiTranslate="artemisApp.knowledgeArea.details.error.descriptionMaxLength"
                     [translateValues]="{ max: validators.DESCRIPTION_MAX }"
                 ></div>
             }
@@ -80,6 +79,7 @@
         <div class="form-group">
             <label for="knowledge-area-select" jhiTranslate="artemisApp.knowledgeArea.model.parent"></label>
             <select id="knowledge-area-select" class="form-select" formControlName="parentId">
+                <option [ngValue]="undefined"></option>
                 @for (knowledgeArea of knowledgeAreas; track knowledgeArea.id) {
                     <option [ngValue]="knowledgeArea.id">
                         {{ knowledgeArea.title }}
@@ -87,7 +87,7 @@
                 }
             </select>
             @if (form.controls.parentId.invalid && (form.controls.parentId.dirty || form.controls.parentId.touched)) {
-                <div class="alert alert-danger" jhiTranslate="artemisApp.knowledgeArea.details.parentIdCircleError"></div>
+                <div class="alert alert-danger" jhiTranslate="artemisApp.knowledgeArea.details.error.parentIdCircle"></div>
             }
         </div>
     </div>

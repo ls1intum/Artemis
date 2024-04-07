@@ -16,16 +16,14 @@ export class KnowledgeAreaDetailComponent {
         this._knowledgeArea = knowledgeArea;
         this.form = this.formBuilder.nonNullable.group({
             title: [knowledgeArea.title, [Validators.required, Validators.maxLength(KnowledgeAreaValidators.TITLE_MAX)]],
-            shortTile: [knowledgeArea.shortTitle, [Validators.required, Validators.maxLength(KnowledgeAreaValidators.SHORT_TITLE_MAX)]],
+            shortTitle: [knowledgeArea.shortTitle, [Validators.required, Validators.maxLength(KnowledgeAreaValidators.SHORT_TITLE_MAX)]],
             description: [knowledgeArea.description, [Validators.maxLength(KnowledgeAreaValidators.DESCRIPTION_MAX)]],
-            parentId: [knowledgeArea.parentId],
+            parentId: [knowledgeArea.parentId, [this.createNoCircularDependencyValidator()]],
         });
         if (!this.isEditing) {
             this.form.disable();
         }
     }
-    //TODO: add a custom validator that checks parentId against self or children!
-    //TODO: another name for short title
 
     get knowledgeArea() {
         return this._knowledgeArea;
@@ -56,10 +54,12 @@ export class KnowledgeAreaDetailComponent {
     private _knowledgeArea: KnowledgeAreaDTO;
     form: FormGroup<{
         title: FormControl<string | undefined>;
-        shortTile: FormControl<string | undefined>;
+        shortTitle: FormControl<string | undefined>;
         description: FormControl<string | undefined>;
         parentId: FormControl<number | undefined>;
     }>;
+
+    //TODO: see if i can have a base class for a lot of this stuff?
 
     //icons
     readonly faPencil = faPencil;
@@ -109,5 +109,47 @@ export class KnowledgeAreaDetailComponent {
     updateDescriptionControl(content: string) {
         this.form.controls.description.setValue(content);
         this.form.controls.description.markAsDirty();
+    }
+
+    /**
+     * Creates a validator that verifies that updating a knowledge area cannot lead to circular dependencies
+     * (I.e. the new parent of a knowledge area must not be itself or one of its current descendants)
+     */
+    private createNoCircularDependencyValidator() {
+        //if the knowledgeArea is new, no validator is needed.
+        if (this.knowledgeArea.id === undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            return (parentIdControl: FormControl<number | undefined>) => null;
+        }
+
+        return (parentIdControl: FormControl<number | undefined>) => {
+            if (parentIdControl.value === undefined) {
+                return null;
+            }
+            if (this.selfOrDescendantsHaveId(this.knowledgeArea, parentIdControl.value)) {
+                return {
+                    circularDependency: true,
+                };
+            }
+            return null;
+        };
+    }
+
+    /**
+     * Checks if the given knowledge or one of its descendants have the given id
+     * @param knowledgeArea the knowledge area to check
+     * @param id the id to check for
+     */
+    selfOrDescendantsHaveId(knowledgeArea: KnowledgeAreaDTO, id: number) {
+        if (knowledgeArea.id === id) {
+            return true;
+        }
+
+        for (const child of knowledgeArea.children ?? []) {
+            if (this.selfOrDescendantsHaveId(child, id)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

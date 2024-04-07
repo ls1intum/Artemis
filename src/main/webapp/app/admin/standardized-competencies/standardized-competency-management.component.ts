@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
-import { faChevronRight, faDownLeftAndUpRightToCenter, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeArea,
     KnowledgeAreaDTO,
@@ -32,8 +32,10 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
     protected isLoading = false;
     //true if a competency is getting edited in the detail component
     protected isEditing = false;
-    //the competency to hand to the detail component
+    //the competency displayed in the detail component
     protected selectedCompetency?: StandardizedCompetencyDTO;
+    //the knowledge area displayed in the detail component
+    protected selectedKnowledgeArea?: KnowledgeAreaDTO;
     protected knowledgeAreaFilter?: KnowledgeAreaDTO;
     protected competencyTitleFilter?: string;
     protected titleFilterSubject = new Subject<void>();
@@ -58,6 +60,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
     protected readonly faPlus = faPlus;
     protected readonly faMinimize = faDownLeftAndUpRightToCenter;
     protected readonly faMaximize = faUpRightAndDownLeftFromCenter;
+    protected readonly faEye = faEye;
     //Other constants for template
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
@@ -160,48 +163,108 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         return hasMatch;
     }
 
-    //Callback methods for the competency detail component
+    //methods handling the knowledge area detail component
+    openNewKnowledgeArea(parent?: KnowledgeArea) {
+        const newKnowledgeArea: KnowledgeAreaDTO = {
+            parentId: parent?.id,
+        };
+        this.setSelectedKnowledgeAreaAndEditing(newKnowledgeArea, true);
+    }
+
+    selectKnowledgeArea(knowledgeArea: KnowledgeAreaDTO) {
+        if (this.selectedKnowledgeArea?.id === knowledgeArea.id) {
+            return;
+        }
+        this.setSelectedKnowledgeAreaAndEditing(knowledgeArea, false);
+    }
+
+    closeKnowledgeArea() {
+        this.setSelectedKnowledgeAreaAndEditing(undefined, false);
+    }
+
+    //TODO: make delete functions use the id | undefined :)
+    //TODO: make setSelectedKnowledgeAreaAndEditing show that it does this safely!
+    deleteKnowledgeArea() {
+        //if the knowledge area does not exist just close the detail component
+        if (this.selectedKnowledgeArea?.id === undefined) {
+            this.isEditing = false;
+            this.selectedKnowledgeArea = undefined;
+            return;
+        }
+
+        this.adminStandardizedCompetencyService.deleteKnowledgeArea(this.selectedKnowledgeArea.id).subscribe({
+            next: () => {
+                this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.delete', { title: this.selectedKnowledgeArea?.title });
+                //TODO: update the tree
+                this.dialogErrorSource.next('');
+                //close the detail component
+                this.isEditing = false;
+                this.selectedKnowledgeArea = undefined;
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    saveKnowledgeArea(knowledgeAreaDTO: KnowledgeAreaDTO) {
+        //TODO: make a method out of this or just always use the DTOs since they make more sense.
+        const knowledgeArea: KnowledgeArea = {
+            id: knowledgeAreaDTO.id,
+            title: knowledgeAreaDTO.title,
+            shortTitle: knowledgeAreaDTO.shortTitle,
+            description: knowledgeAreaDTO.description,
+            parent: knowledgeAreaDTO.parentId === undefined || knowledgeAreaDTO.parentId === null ? undefined : { id: knowledgeAreaDTO.parentId },
+        };
+
+        if (knowledgeArea.id === undefined) {
+            this.adminStandardizedCompetencyService
+                .createKnowledgeArea(knowledgeArea)
+                .pipe(map((response) => response.body!))
+                .subscribe({
+                    next: (resultKnowledgeArea) => {
+                        //TODO: convert to dto again.
+                        this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.create', { competencyTitle: resultKnowledgeArea.title });
+                        //TODO: update tree
+                        //update the detail view
+                        //TODO: what do we do when we are editing smth -> do the safe operation here aswell?
+                        this.selectedKnowledgeArea = resultKnowledgeArea;
+                    },
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
+        } else {
+            this.adminStandardizedCompetencyService
+                .updateKnowledgeArea(knowledgeArea)
+                .pipe(map((response) => response.body!))
+                .subscribe({
+                    next: (resultKnowledgeArea) => {
+                        //TODO: convert to dto again.
+                        this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.update', { competencyTitle: resultKnowledgeArea.title });
+                        //TODO: update tree
+                        //update the detail view
+                        this.selectedKnowledgeArea = resultKnowledgeArea;
+                    },
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
+        }
+    }
+
+    //methods handling the competency detail component
 
     openNewCompetency(knowledgeArea?: KnowledgeArea) {
         const newCompetency: StandardizedCompetencyDTO = {
             knowledgeAreaId: knowledgeArea?.id,
         };
-        if (this.isEditing) {
-            this.openCancelModal(this.selectedCompetency?.title ?? '', () => {
-                this.isEditing = true;
-                this.selectedCompetency = newCompetency;
-            });
-        } else {
-            this.isEditing = true;
-            this.selectedCompetency = newCompetency;
-        }
+        this.setSelectedCompetencyAndEditing(newCompetency, true);
     }
 
     selectCompetency(competency: StandardizedCompetencyDTO) {
         if (this.selectedCompetency?.id === competency.id) {
             return;
         }
-
-        if (this.selectedCompetency && this.isEditing) {
-            this.openCancelModal(this.selectedCompetency.title ?? '', () => {
-                this.isEditing = false;
-                this.selectedCompetency = competency;
-            });
-        } else {
-            this.selectedCompetency = competency;
-        }
+        this.setSelectedCompetencyAndEditing(competency, false);
     }
 
     closeCompetency() {
-        if (this.isEditing) {
-            this.openCancelModal(this.selectedCompetency?.title ?? '', () => {
-                this.isEditing = false;
-                this.selectedCompetency = undefined;
-            });
-        } else {
-            this.isEditing = false;
-            this.selectedCompetency = undefined;
-        }
+        this.setSelectedCompetencyAndEditing(undefined, false);
     }
 
     deleteCompetency() {
@@ -387,10 +450,10 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         return this.knowledgeAreaMap.get(id);
     }
 
-    private openCancelModal(entityTitle: string, callback: () => void) {
+    private openCancelModal(title: string, entityType: 'standardizedCompetency' | 'knowledgeArea', callback: () => void) {
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
         modalRef.componentInstance.title = 'artemisApp.standardizedCompetency.manage.cancelModal.title';
-        modalRef.componentInstance.text = this.translateService.instant('artemisApp.standardizedCompetency.manage.cancelModal.text', { title: entityTitle });
+        modalRef.componentInstance.text = this.translateService.instant(`artemisApp.${entityType}.manage.cancelModal.text`, { title: title });
         modalRef.result.then(() => callback());
     }
 
@@ -461,5 +524,52 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         const filterLower = filter.toLowerCase();
 
         return titleLower.includes(filterLower);
+    }
+
+    /**
+     * Sets the selectedKnowledgeArea and isEditing properties. Also sets selectedCompetency to undefined
+     *
+     * @param knowledgeArea the new value for selectedKnowledgeArea
+     * @param isEditing the new value for isEditing
+     * @private
+     */
+    private setSelectedKnowledgeAreaAndEditing(knowledgeArea: KnowledgeAreaDTO | undefined, isEditing: boolean) {
+        this.setSelectedObjectsAndEditing(undefined, knowledgeArea, isEditing);
+    }
+
+    /**
+     * Sets the selectedCompetency and isEditing properties. Also sets selectedKnowledgeArea to undefined
+     *
+     * @param competency the new value for selectedCompetency
+     * @param isEditing the new value for isEditing
+     * @private
+     */
+    private setSelectedCompetencyAndEditing(competency: StandardizedCompetencyDTO | undefined, isEditing: boolean) {
+        this.setSelectedObjectsAndEditing(competency, undefined, isEditing);
+    }
+
+    /**
+     * **Never call this method directly!** Always use {@link setSelectedCompetencyAndEditing} or {@link setSelectedKnowledgeAreaAndEditing}
+     * Sets the selected competency and knowledge area, as well as the isEditing property.
+     *
+     * @param competency the new value for selectedCompetency
+     * @param knowledgeArea the new value for selectedKnowledgeArea
+     * @param isEditing the new value for isEditing
+     * @private
+     */
+    private setSelectedObjectsAndEditing(competency: StandardizedCompetencyDTO | undefined, knowledgeArea: KnowledgeAreaDTO | undefined, isEditing: boolean) {
+        if ((this.selectedCompetency || this.selectedKnowledgeArea) && this.isEditing) {
+            const title = this.selectedCompetency?.title ?? this.selectedKnowledgeArea?.title ?? '';
+            const entityType = this.selectedCompetency ? 'standardizedCompetency' : 'knowledgeArea';
+            this.openCancelModal(title, entityType, () => {
+                this.isEditing = isEditing;
+                this.selectedCompetency = competency;
+                this.selectedKnowledgeArea = knowledgeArea;
+            });
+        } else {
+            this.isEditing = isEditing;
+            this.selectedCompetency = competency;
+            this.selectedKnowledgeArea = knowledgeArea;
+        }
     }
 }

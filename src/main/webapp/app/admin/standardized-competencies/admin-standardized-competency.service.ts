@@ -23,7 +23,7 @@ export class AdminStandardizedCompetencyService {
     }
 
     createKnowledgeArea(knowledgeArea: KnowledgeArea) {
-        return this.httpClient.post<StandardizedCompetency>(`${this.resourceURL}/knowledge-areas`, knowledgeArea, { observe: 'response' });
+        return this.httpClient.post<KnowledgeArea>(`${this.resourceURL}/knowledge-areas`, knowledgeArea, { observe: 'response' });
     }
 
     updateKnowledgeArea(knowledgeArea: KnowledgeArea) {

@@ -30,6 +30,13 @@
     <div class="d-flex flex-wrap align-items-center mb-2">
         <h3 class="me-3 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
         <jhi-button
+            class="me-3"
+            [btnSize]="ButtonSize.SMALL"
+            [icon]="faPlus"
+            (onClick)="openNewKnowledgeArea(undefined)"
+            tooltip="artemisApp.knowledgeArea.manage.createButtonTooltip"
+        />
+        <jhi-button
             class="me-1"
             [btnSize]="ButtonSize.SMALL"
             [icon]="faMinimize"
@@ -49,6 +56,8 @@
                         <h5 class="mb-0">{{ node.title }}</h5>
                     </div>
                     <div class="tree-card-row">
+                        <!-- TODO: tooltip -->
+                        <fa-icon class="me-2 clickable" [icon]="faEye" [fixedWidth]="true" (click)="selectKnowledgeArea(node)" />
                         <jhi-button
                             [btnSize]="ButtonSize.SMALL"
                             [icon]="faPlus"
@@ -89,6 +98,19 @@
                     (onSave)="saveCompetency($event)"
                     (onDelete)="deleteCompetency()"
                     (onClose)="closeCompetency()"
+                    [dialogError]="dialogError"
+                />
+            </div>
+        } @else if (selectedKnowledgeArea) {
+            <!-- TODO: add create stdcomp, create ka buttons-->
+            <div class="card light-background d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
+                <jhi-knowledge-area-detail
+                    [knowledgeArea]="selectedKnowledgeArea"
+                    [knowledgeAreas]="knowledgeAreasForSelect"
+                    [(isEditing)]="isEditing"
+                    (onSave)="saveKnowledgeArea($event)"
+                    (onDelete)="deleteKnowledgeArea()"
+                    (onClose)="closeKnowledgeArea()"
                     [dialogError]="dialogError"
                 />
             </div>
