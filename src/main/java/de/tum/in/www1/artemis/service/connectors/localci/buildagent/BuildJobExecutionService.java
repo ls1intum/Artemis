@@ -401,7 +401,7 @@ public class BuildJobExecutionService {
             xmlStreamReader.next();
         }
         while (!(xmlStreamReader.isEndElement() || xmlStreamReader.isStartElement()));
-        if (xmlStreamReader.isStartElement() && "failure".equals(xmlStreamReader.getLocalName())) {
+        if (xmlStreamReader.isStartElement() && ("failure".equals(xmlStreamReader.getLocalName()) || "error".equals(xmlStreamReader.getLocalName()))) {
             // Extract the message attribute from the "failure" node.
             String error = xmlStreamReader.getAttributeValue(null, "message");
 
