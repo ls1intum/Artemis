@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -78,51 +79,26 @@ public class AthenaModuleService {
     }
 
     /**
-     * Get all available Athena programming modules for a specific course.
+     * Get all available Athena modules for a specific course and exercise type
      *
-     * @param course The course for which the modules should be retrieved
+     * @param course       The course for which the modules should be retrieved
+     * @param exerciseType The exercise type for which the modules should be retrieved
      * @return The list of available Athena text modules for the course
      * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
      */
-    public List<String> getAthenaProgrammingModulesForCourse(Course course) throws NetworkingException {
-        List<String> availableProgrammingModules = getAthenaModules().stream().filter(module -> "programming".equals(module.type)).map(module -> module.name).toList();
-        if (!course.getRestrictedAthenaModulesAccess()) {
-            // filter out restricted modules
-            availableProgrammingModules = availableProgrammingModules.stream().filter(moduleName -> !restrictedModules.contains(moduleName)).toList();
-        }
-        return availableProgrammingModules;
-    }
+    public List<String> getAthenaModulesForCourse(Course course, ExerciseType exerciseType) throws NetworkingException {
 
-    /**
-     * Get all available Athena text modules for a specific course.
-     *
-     * @param course The course for which the modules should be retrieved
-     * @return The list of available Athena text modules for the course
-     * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
-     */
-    public List<String> getAthenaTextModulesForCourse(Course course) throws NetworkingException {
-        List<String> availableTextModules = getAthenaModules().stream().filter(module -> "text".equals(module.type)).map(module -> module.name).toList();
-        if (!course.getRestrictedAthenaModulesAccess()) {
-            // filter out restricted modules
-            availableTextModules = availableTextModules.stream().filter(moduleName -> !restrictedModules.contains(moduleName)).toList();
-        }
-        return availableTextModules;
-    }
+        // This check and corresponding assigment is only necessary as long as the modeling exercise module in Athena is
+        // spelled "modelling" rather than "modeling". The name of the module will be changed and this check removed in
+        // a follow-up PR.
+        final String exerciseTypeName = exerciseType == ExerciseType.MODELING ? "modelling" : exerciseType.getExerciseTypeAsReadableString();
 
-    /**
-     * Get all available Athena modeling modules for a specific course.
-     *
-     * @param course The course for which the modules should be retrieved
-     * @return The list of available Athena modeling modules for the course
-     * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
-     */
-    public List<String> getAthenaModelingModulesForCourse(Course course) throws NetworkingException {
-        List<String> availableModelingModules = getAthenaModules().stream().filter(module -> "modelling".equals(module.type)).map(module -> module.name).toList();
+        List<String> availableModules = getAthenaModules().stream().filter(module -> exerciseTypeName.equals(module.type)).map(module -> module.name).toList();
         if (!course.getRestrictedAthenaModulesAccess()) {
             // filter out restricted modules
-            availableModelingModules = availableModelingModules.stream().filter(moduleName -> !restrictedModules.contains(moduleName)).toList();
+            availableModules = availableModules.stream().filter(moduleName -> !restrictedModules.contains(moduleName)).toList();
         }
-        return availableModelingModules;
+        return availableModules;
     }
 
     /**
