@@ -116,7 +116,7 @@ An alternative approach for caching is with docker volumes, see :ref:`dependecie
 
 .. note::
 
-    The following steps assume ``artemis.example.com`` is the host and ``8443`` the port for the cache.
+    The following steps assume ``artemis.example.com`` is the host ``8443`` the port and ``10.0.73.42`` for the cache.
     Adapt the URLs for your actual setup.
 
 Sonatype Nexus Setup
@@ -223,10 +223,12 @@ Jenkins
 =======
 
 In Jenkins setups, you can restrict the network access by adjusting the ``pipeline.groovy`` script.
-Adjust the ``dockerFlags`` variable
-…
-and change the `testRunner` method to
-…
+Add some flags to the ``dockerFlags`` variable:
+
+.. code:: groovy
+
+    dockerFlags += '--add-host "artemis.example.com:10.0.73.42" \
+        --network "artemis-restricted"'
 
 Additionally, on the CI runner host you will have to create the `artemis-restricted` Docker network and some iptables firewall rules to restrict traffic:
 
@@ -317,3 +319,21 @@ For read-only caches like in the Maven example, define ``setup()`` as
       }
   }
 
+Security Considerations
+"""""""""""""""""""""""
+
+When you are using secret tests as part of your exercise, you might want to disable network traffic leaving the CI run to avoid students leaking information.
+Thanks to the fact that the cache is prepared while running for the solution, you can disable the network for students submissions.
+Adjust ``dockerFlags`` and ``mavenFlags`` only for student submissions, like this:
+
+.. code:: groovy
+
+  private void setup() {
+      if (isSolutionBuild) {
+          // handle docker flags
+      } else {
+          // handle docker flags
+          // if not solution repo, disallow network access from containers
+          dockerFlags += ' --network none'
+          mavenFlags += ' --offline'
+      }
