@@ -1,4 +1,4 @@
-<div class="form-status-bar-container py-3">
+<div class="form-status-bar-container py-3 pt-2">
     <hr class="form-status-line" />
     <div class="d-flex justify-content-between">
         @for (formStatusSection of formStatusSections; track formStatusSection.title) {
@@ -10,6 +10,7 @@
                     <jhi-checklist-check
                         [checkAttribute]="formStatusSection.valid"
                         [iconColor]="formStatusSection.empty && formStatusSection.valid ? 'var(--bs-gray)' : undefined"
+                        [size]="'xs'"
                     />
                 </div>
                 <a (click)="scrollToHeadline(formStatusSection.title)" class="link-primary">{{ formStatusSection.title | artemisTranslate }}</a>
