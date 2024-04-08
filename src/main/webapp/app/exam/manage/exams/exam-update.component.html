@@ -120,6 +120,7 @@
                             [customMin]="1"
                             [customMax]="maxWorkingTimeInMinutes"
                             [(ngModel)]="workingTimeInMinutes"
+                            (focusin)="roundWorkingTime()"
                             (focusout)="roundWorkingTime()"
                         />
                     }
