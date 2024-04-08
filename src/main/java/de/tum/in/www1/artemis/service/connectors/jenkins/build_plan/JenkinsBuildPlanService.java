@@ -511,9 +511,8 @@ public class JenkinsBuildPlanService {
                 throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle());
             }
         }
-        catch (ContinuousIntegrationBuildPlanException e) {
-            log.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
-                    + ", will create default build plan", e);
+        catch (ContinuousIntegrationBuildPlanException | JsonProcessingException e) {
+            log.error("Custom build plan creation for exercise {} with id {} failed -> use default build plan", programmingExercise.getTitle(), programmingExercise.getId(), e);
         }
         return null;
     }
