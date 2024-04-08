@@ -24,16 +24,10 @@ Generate programming exercise
     .. figure:: programming/course-management-exercise-dashboard.png
               :align: center
 
-    - **Guided Mode**: The form for generating new programming exercises offers the option to switch to the guided mode by clicking the |switch-to-guided-mode-btn|.
-      This mode splits up the generation of a programming exercise into multiple steps. The following video shows an exemplary use of the guided mode.
+    - The guided mode has been removed. We now introduced a validation bar to navigate through sections and help the user validation the form.
+      For more information, watch the video below.
 
-    |
-
-    .. raw:: html
-
-        <iframe src="https://live.rbg.tum.de/w/artemisintro/26850?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
-            Watch this video on TUM-Live.
-        </iframe>
+    Todo: Upload new screen cast
 
 - Artemis provides various options to customize programming exercises:
 
@@ -221,13 +215,6 @@ Generate programming exercise
 
   - **Template:** also called BASE, basic configuration for the test + template repository, used to create student build plans
   - **Solution:** also called SOLUTION, configuration for the test + solution repository, used to manage test cases and to verify the exercise configuration
-
-  .. figure:: programming/programming-view-1.png
-            :align: center
-  .. figure:: programming/programming-view-2.png
-            :align: center
-  .. figure:: programming/programming-view-3.png
-            :align: center
 
 Update exercise code in repositories
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
