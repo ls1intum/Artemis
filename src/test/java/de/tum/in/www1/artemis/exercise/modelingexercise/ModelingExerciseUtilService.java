@@ -376,7 +376,7 @@ public class ModelingExerciseUtilService {
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
-        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(result.getId());
+        return resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsByIdElseThrow(result.getId());
     }
 
     /**
@@ -399,7 +399,7 @@ public class ModelingExerciseUtilService {
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
-        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(result.getId());
+        return resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsByIdElseThrow(result.getId());
     }
 
     /**

@@ -43,9 +43,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
- * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
- * 1) Bamboo + Bitbucket
- * 2) Jenkins + Gitlab
+ * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
+ * 1) Jenkins + Gitlab
  */
 @Service
 public class UserTestService {

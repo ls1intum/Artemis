@@ -160,6 +160,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     Optional<StudentParticipation> findByIdWithEagerTeamStudents(@Param("participationId") long participationId);
 
     @Query("""
+            SELECT COUNT(p) > 0
+            FROM StudentParticipation p
+                LEFT JOIN p.team.students u
+                LEFT JOIN p.student s
+            WHERE p.id = :participationId AND
+                (s.login = :login OR u.login = :login)
+            """)
+    boolean existsByIdAndParticipatingStudentLogin(@Param("participationId") long participationId, @Param("login") String login);
+
+    @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
@@ -422,10 +432,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students s
             WHERE p.exercise.id = :exerciseId
-                AND p.team.id = :teamId
+                AND s.id = :studentId
             """)
-    List<StudentParticipation> findAllByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+    List<StudentParticipation> findAllWithTeamStudentsByExerciseIdAndTeamStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT DISTINCT p

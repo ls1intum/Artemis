@@ -128,12 +128,12 @@
                 "title": "Allow Online Editor",
                 "alert": "At least one option (Offline IDE or Online Editor) must be selected"
             },
-            "onlineEditor": "Online Editor",
+            "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Allow Offline IDE",
                 "alert": "At least one option (Offline IDE or Online Editor) must be selected"
             },
-            "offlineIde": "Offline IDE",
+            "offlineIde": "IDE",
             "showTestNamesToStudents": "Show Test Names to Students",
             "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
             "participationMode": "Participation Mode",

@@ -3,9 +3,14 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Base class for the actions that can be defined in a {@link Windfile}
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Action {
 
     private String name;
