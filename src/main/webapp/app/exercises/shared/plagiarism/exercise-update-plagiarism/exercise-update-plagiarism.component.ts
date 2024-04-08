@@ -10,11 +10,11 @@ import { Subject, Subscription } from 'rxjs';
 })
 export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, AfterViewInit {
     @Input() exercise: Exercise;
-    @ViewChild('continuous_plagiarism_control_enabled') fieldCPCEnabled: NgModel;
-    @ViewChild('exercise.plagiarismDetectionConfig!.similarityThreshol') fieldThreshhold: NgModel;
-    @ViewChild('exercise.plagiarismDetectionConfig.minimumScore') fieldMinScore: NgModel;
-    @ViewChild('exercise.plagiarismDetectionConfig.minimumSize') fieldMinSize: NgModel;
-    @ViewChild('exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod') fieldResponsePeriod: NgModel;
+    @ViewChild('continuous_plagiarism_control_enabled') fieldCPCEnabled?: NgModel;
+    @ViewChild('exercise.plagiarismDetectionConfig!.similarityThreshol') fieldThreshhold?: NgModel;
+    @ViewChild('exercise.plagiarismDetectionConfig.minimumScore') fieldMinScore?: NgModel;
+    @ViewChild('exercise.plagiarismDetectionConfig.minimumSize') fieldMinSize?: NgModel;
+    @ViewChild('exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod') fieldResponsePeriod?: NgModel;
     fieldCPCEnabledSubscription?: Subscription;
     fieldTreshholdSubscription?: Subscription;
     fieldMinScoreSubscription?: Subscription;
@@ -38,11 +38,11 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
     }
 
     ngAfterViewInit(): void {
-        this.fieldCPCEnabledSubscription = this.fieldCPCEnabled.valueChanges?.subscribe(() => this.calculateFormValid());
-        this.fieldTreshholdSubscription = this.fieldThreshhold.valueChanges?.subscribe(() => this.calculateFormValid());
-        this.fieldMinScoreSubscription = this.fieldMinScore.valueChanges?.subscribe(() => this.calculateFormValid());
-        this.fieldMinSizeSubscription = this.fieldMinSize.valueChanges?.subscribe(() => this.calculateFormValid());
-        this.fieldResponsePeriodSubscription = this.fieldResponsePeriod.valueChanges?.subscribe(() => this.calculateFormValid());
+        this.fieldCPCEnabledSubscription = this.fieldCPCEnabled?.valueChanges?.subscribe(() => this.calculateFormValid());
+        this.fieldTreshholdSubscription = this.fieldThreshhold?.valueChanges?.subscribe(() => this.calculateFormValid());
+        this.fieldMinScoreSubscription = this.fieldMinScore?.valueChanges?.subscribe(() => this.calculateFormValid());
+        this.fieldMinSizeSubscription = this.fieldMinSize?.valueChanges?.subscribe(() => this.calculateFormValid());
+        this.fieldResponsePeriodSubscription = this.fieldResponsePeriod?.valueChanges?.subscribe(() => this.calculateFormValid());
     }
 
     ngOnDestroy() {
@@ -56,7 +56,7 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
     calculateFormValid(): void {
         this.formValid = Boolean(
             !this.exercise.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled ||
-                (this.fieldThreshhold.valid && this.fieldMinScore.valid && this.fieldMinSize.valid && this.fieldResponsePeriod.valid),
+                (this.fieldThreshhold?.valid && this.fieldMinScore?.valid && this.fieldMinSize?.valid && this.fieldResponsePeriod?.valid),
         );
         this.formValidChanges.next(this.formValid);
     }
