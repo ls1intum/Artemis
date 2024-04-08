@@ -122,7 +122,7 @@ An alternative approach for caching is with docker volumes, see :ref:`dependecie
 Sonatype Nexus Setup
 """"""""""""""""""""
 
-1. Set up Sonatype Nexus to run on ``artemis.example.com:8443`` e.g. in a `docker container <https://hub.docker.com/r/sonatype/nexus3/>`_ behind a `proxy <https://help.sonatype.com/en/run-behind-a-reverse-proxy.html>`_.
+1. Set up Sonatype Nexus to run on ``artemis.example.com:8443`` e.g. in a `Docker container <https://hub.docker.com/r/sonatype/nexus3/>`_ behind a `proxy <https://help.sonatype.com/en/run-behind-a-reverse-proxy.html>`_.
 2. In the initial setup steps: Allow anonymous access.
 3. Set up the Maven proxy repository:
     a. Create a new repository (**Repository - Repositories - Create repository**) of type ``maven2 (proxy)`` with name ``maven-proxy``.
