@@ -107,6 +107,14 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         return this.exam.workingTime ? this.exam.workingTime / 60 : 0;
     }
 
+    /**
+     * Returns the exma working time in minutes, rounded to one decimal place.
+     * Used for display purposes.
+     */
+    get workingTimeInMinutesRounded(): number {
+        return Math.round(this.workingTimeInMinutes * 10) / 10;
+    }
+
     get oldWorkingTime(): number | undefined {
         return normalWorkingTime(this.originalStartDate, this.originalEndDate);
     }
@@ -133,6 +141,16 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         this.exam.workingTime = examWorkingTime(this.exam) ?? 0;
     }
 
+    onExamModeChange() {
+        if (this.exam.testExam) {
+            // In a test exam, the working time has a different meaning (no longer derived from start / end date), so we discard its value
+            this.workingTimeInMinutes = 0;
+        } else {
+            // Otherwise, the working time should depend on the dates as usual.
+            this.updateExamWorkingTime();
+        }
+    }
+
     /**
      * Returns the maximum working time in minutes for test exams.
      */
@@ -140,7 +158,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         if (!this.exam.testExam) return 0;
 
         if (this.exam.startDate && this.exam.endDate) {
-            return dayjs(this.exam.endDate).diff(this.exam.startDate, 'm');
+            // This considers decimal places as well.
+            return dayjs(this.exam.endDate).diff(this.exam.startDate, 'm', true);
         } else {
             // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
             return this.isImport ? this.workingTimeInMinutes : 0;

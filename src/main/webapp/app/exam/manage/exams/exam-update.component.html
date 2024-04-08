@@ -33,7 +33,7 @@
                     <label class="form-check-label" jhiTranslate="artemisApp.examManagement.testExam.examMode"></label>
                     <jhi-help-icon text="artemisApp.examManagement.testExam.examModeTooltip" />
                 </div>
-                <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined" />
+                <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined" (examModeChanged)="onExamModeChange()" />
             </div>
             <div class="row mb-3">
                 <div class="col-sm-4 form-group">
@@ -109,7 +109,7 @@
                     <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
                     <jhi-help-icon [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'" />
                     @if (!exam.testExam) {
-                        <input readonly disabled type="text" class="form-control" [value]="workingTimeInMinutes" />
+                        <input readonly disabled type="text" class="form-control" [value]="workingTimeInMinutesRounded" />
                     }
                     @if (exam.testExam) {
                         <input
