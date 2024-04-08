@@ -5,7 +5,11 @@
     <mirror>
       <id>artemis-cache</id>
       <name>Artemis Cache</name>
-      <!--Here you can specify another Maven proxy e.g. one in your local network to improve performance-->
+      <!--
+        Here you can specify another Maven proxy e.g. one in your local network to improve performance
+        Details are in the documentation:
+        https://docs.artemis.cit.tum.de/admin/setup/programming-exercises.html#caching-maven-dependencies-with-sonatype-nexus
+      -->
       <url>https://repo1.maven.org/maven2/</url>
       <mirrorOf>*</mirrorOf>
       <blocked>false</blocked>

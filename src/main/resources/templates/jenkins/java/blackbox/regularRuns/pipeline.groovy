@@ -44,7 +44,9 @@ private void setup() {
      * This may for example be useful when caching dependencies either in container volumes
      * or an external cache to enforce the appropriate access restrictions. You can find
      * more information on that in the documentation at
-     * https://docs.artemis.cit.tum.de/admin/setup/programming-exercises.html#caching-example-for-maven
+     * https://docs.artemis.cit.tum.de/admin/setup/programming-exercises.html#caching-with-docker-volumes
+     * and
+     * https://docs.artemis.cit.tum.de/admin/setup/programming-exercises.html#caching-maven-dependencies-with-sonatype-nexus
      */
     if ("${env.JOB_NAME}" ==~ /.+-SOLUTION$/) {
         // processing sample solution in this run
