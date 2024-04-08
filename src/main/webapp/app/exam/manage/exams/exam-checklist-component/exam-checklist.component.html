@@ -466,21 +466,23 @@
                                                 <jhi-checklist-check [checkAttribute]="!!exam.publishResultsDate" />
                                                 <span>{{ 'artemisApp.examManagement.checklist.textitems.pulishingdateset' | artemisTranslate }}</span>
                                             </li>
-                                            <li class="list-group-item border-1">
-                                                <jhi-checklist-check [checkAttribute]="allAssessmentsFinished" />
-                                                <span>{{ 'artemisApp.examManagement.checklist.textitems.exercisesAssessed' | artemisTranslate }}</span>
-                                            </li>
-                                            @if (!allAssessmentsFinished) {
-                                                <ng-container>
-                                                    <span style="text-decoration: underline; margin-left: 20px"
-                                                        >{{ 'artemisApp.examManagement.checklist.textitems.exercisesAttention' | artemisTranslate }}:</span
-                                                    >
-                                                    <div class="assessment-container" style="margin-left: 20px">
-                                                        @for (assessment of unfinishedAssessments; track assessment; let lastAssessment = $last) {
-                                                            <a [routerLink]="getAssessmentLinkBySubmission(assessment)">{{ getAssessmentTitle(assessment) }}</a>
-                                                        }
-                                                    </div>
-                                                </ng-container>
+                                            @if (exam.publishResultsDate) {
+                                                <li class="list-group-item border-1">
+                                                    <jhi-checklist-check [checkAttribute]="allAssessmentsFinished" />
+                                                    <span>{{ 'artemisApp.examManagement.checklist.textitems.exercisesAssessed' | artemisTranslate }}</span>
+                                                </li>
+                                                @if (!allAssessmentsFinished) {
+                                                    <ng-container>
+                                                        <span style="text-decoration: underline; margin-left: 20px"
+                                                            >{{ 'artemisApp.examManagement.checklist.textitems.exercisesAttention' | artemisTranslate }}:</span
+                                                        >
+                                                        <div class="assessment-container" style="margin-left: 20px">
+                                                            @for (assessment of unfinishedAssessments; track assessment; let lastAssessment = $last) {
+                                                                <a [routerLink]="getAssessmentLinkBySubmission(assessment)">{{ getAssessmentTitle(assessment) }}</a>
+                                                            }
+                                                        </div>
+                                                    </ng-container>
+                                                }
                                             }
                                         </span>
                                     </li>
