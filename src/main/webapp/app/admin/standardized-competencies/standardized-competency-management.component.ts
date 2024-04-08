@@ -187,10 +187,10 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         this.adminStandardizedCompetencyService.deleteKnowledgeArea(id).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.delete', { title: this.selectedKnowledgeArea?.title });
-                //TODO: update the tree
                 this.dialogErrorSource.next('');
+                this.updateAfterDeleteKnowledgeArea(id);
                 //close the detail component if it is still open
-                if (this.selectedKnowledgeArea?.id !== id) {
+                if (this.selectedKnowledgeArea?.id === id) {
                     this.isEditing = false;
                     this.selectedKnowledgeArea = undefined;
                 }
@@ -219,12 +219,19 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                 .pipe(map((response) => response.body!))
                 .subscribe({
                     next: (resultKnowledgeArea) => {
+                        const resultDTO: KnowledgeAreaDTO = {
+                            id: resultKnowledgeArea.id,
+                            title: resultKnowledgeArea.title,
+                            shortTitle: resultKnowledgeArea.shortTitle,
+                            description: resultKnowledgeArea.description,
+                            parentId: resultKnowledgeArea.parent?.id,
+                        };
                         //TODO: convert to dto again.
                         this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.create', { title: resultKnowledgeArea.title });
-                        //TODO: update tree
+                        this.updateAfterCreateKnowledgeArea(resultDTO);
                         //update the detail view if it is still open
                         if (knowledgeAreaDTO.id === this.selectedKnowledgeArea?.id) {
-                            this.selectedKnowledgeArea = resultKnowledgeArea;
+                            this.selectedKnowledgeArea = resultDTO;
                         }
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -237,7 +244,8 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                     next: (resultKnowledgeArea) => {
                         //TODO: convert to dto again.
                         this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.update', { title: resultKnowledgeArea.title });
-                        //TODO: update tree
+                        //TODO: udpate tree
+                        this.updateAfterUpdateKnowledgeArea(resultKnowledgeArea);
                         //update the detail view if it is still open
                         if (knowledgeAreaDTO.id === this.selectedKnowledgeArea?.id) {
                             this.selectedKnowledgeArea = resultKnowledgeArea;
@@ -269,6 +277,8 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
     }
 
     deleteCompetency(id: number) {
+        //TODO: somehow solve the problem of clicking on another comp -> may screw up the tree.
+        //TODO: probably hand over the competency completely/save stdcomp at the start!
         this.adminStandardizedCompetencyService.deleteStandardizedCompetency(id).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.delete', { title: this.selectedCompetency?.title });
@@ -297,6 +307,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                 .pipe(map((response) => response.body!))
                 .subscribe({
                     next: (resultCompetency) => {
+                        //todo: this is illegal btw. use a new variable
                         resultCompetency = convertToStandardizedCompetencyDTO(resultCompetency);
                         this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.create', { title: resultCompetency.title });
                         this.updateTreeAfterCreate(resultCompetency);
@@ -324,6 +335,78 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
         }
+    }
+
+    //TODO: move and javadoc.
+    private refreshTree() {
+        const _data = this.dataSource.data;
+        this.dataSource.data = [];
+        this.dataSource.data = _data;
+    }
+
+    private updateAfterDeleteKnowledgeArea(id: number) {
+        const parent = this.getKnowledgeAreaByIdIfExists(this.selectedKnowledgeArea?.parentId);
+        //TODO: do this in the step before and hand over the ka :)
+        const self = this.getKnowledgeAreaByIdIfExists(id);
+        if (!self) {
+            this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');
+            return;
+        }
+
+        if (parent) {
+            parent.children = parent.children?.filter((ka) => ka.id !== id);
+            this.refreshTree();
+        } else {
+            this.dataSource.data = this.dataSource.data.filter((ka) => ka.id !== id);
+            //TODO: see if i need to clear it from the control aswell.
+        }
+        const descendantIds = this.getIdsOfSelfAndAllDescendants(self);
+        descendantIds.forEach((id) => this.knowledgeAreaMap.delete(id));
+        this.knowledgeAreasForSelect = this.knowledgeAreasForSelect.filter((ka) => ka.id === undefined || !descendantIds.includes(ka.id));
+    }
+
+    private updateAfterCreateKnowledgeArea(knowledgeArea: KnowledgeAreaDTO) {
+        const parent = this.getKnowledgeAreaByIdIfExists(knowledgeArea.parentId);
+        //TODO: check if it should be visible!
+        //TODO: convert methods...
+        const knowledgeAreaForTree: KnowledgeAreaForTree = { ...knowledgeArea, level: parent?.level ?? 0, isVisible: true, children: [], competencies: [] };
+        this.knowledgeAreaMap.set(knowledgeArea.id!, knowledgeAreaForTree);
+
+        if (parent) {
+            //TODO: write a function that sees where the knowledge area should get inserted -> or maybe we just always unshift? ^^
+            parent.children = (parent.children ?? []).concat(knowledgeAreaForTree);
+            this.refreshTree();
+        } else {
+            //TODO: redo this.
+            this.dataSource.data = this.dataSource.data.concat(knowledgeAreaForTree);
+            //Add directly to data source.
+        }
+        //TODO: this could probably be done nicer
+        this.knowledgeAreasForSelect = [];
+        this.dataSource.data.forEach((knowledgeArea) => this.addSelfAndDescendantsToSelectArray(knowledgeArea));
+    }
+
+    private updateAfterUpdateKnowledgeArea(knowledgeArea: KnowledgeAreaDTO) {
+        console.log(knowledgeArea);
+        //TODO: convert to tree
+        //TODO: update values (title etc)
+        //TODO: do not forget to do parentId
+
+        //TODO: SEE IF PARENT CHANGED!!!
+        //if not: refresh tree, change title for select (if needed)
+
+        //TODO: if changed, get parent.
+        //TODO: delete self from old parent
+        //TODO: add self to new parent
+        //TODO: completely redo knowledgeAreasForSelect
+    }
+
+    private getIdsOfSelfAndAllDescendants(knowledgeArea: KnowledgeAreaDTO): number[] {
+        const childrenIds = (knowledgeArea.children ?? []).map((child) => this.getIdsOfSelfAndAllDescendants(child)).flat();
+        if (knowledgeArea.id !== undefined) {
+            return childrenIds.concat(knowledgeArea.id);
+        }
+        return childrenIds;
     }
 
     //functions that update the tree structure in the user interface
