@@ -17,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -30,7 +31,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 /**
@@ -84,9 +84,9 @@ public class PublicUserJwtResource {
 
             return ResponseEntity.ok().build();
         }
-        catch (CaptchaRequiredException ex) {
-            log.warn("CAPTCHA required in JIRA during login for user {}", loginVM.getUsername());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", ex.getMessage()).build();
+        catch (BadCredentialsException ex) {
+            log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
     }
 
