@@ -143,12 +143,19 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 
     onExamModeChange() {
         if (this.exam.testExam) {
-            // In a test exam, the working time has a different meaning (no longer derived from start / end date), so we discard its value
-            this.workingTimeInMinutes = 0;
+            // Preserve the rounded value
+            this.roundWorkingTime();
         } else {
-            // Otherwise, the working time should depend on the dates as usual.
+            // Otherwise, the working time should depend on the dates as usual
             this.updateExamWorkingTime();
         }
+    }
+
+    /**
+     * Rounds the working time of the exam in minutes such that it only has one decimal place.
+     */
+    roundWorkingTime() {
+        this.workingTimeInMinutes = this.workingTimeInMinutesRounded;
     }
 
     /**
