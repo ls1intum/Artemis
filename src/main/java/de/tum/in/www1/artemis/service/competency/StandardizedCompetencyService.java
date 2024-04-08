@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import jakarta.ws.rs.BadRequestException;
@@ -126,9 +126,9 @@ public class StandardizedCompetencyService {
         var idMap = new HashMap<Long, KnowledgeArea>();
 
         var knowledgeAreas = knowledgeAreaRepository.findAllWithCompetenciesByOrderByTitleAsc();
-
         for (var knowledgeArea : knowledgeAreas) {
-            knowledgeArea.setChildren(new HashSet<>());
+            // use a linked hash set to retain order
+            knowledgeArea.setChildren(new LinkedHashSet<>());
             idMap.put(knowledgeArea.getId(), knowledgeArea);
         }
 
