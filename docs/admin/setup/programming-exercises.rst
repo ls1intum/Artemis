@@ -142,8 +142,8 @@ Option 1
 
 Configure Maven so that it can find your Maven cache:
 
-.. code:: xml
-   :caption: ``pom.xml``
+.. code-block:: xml
+    :caption: ``pom.xml``
 
     <repositories>
         <repository>
@@ -163,8 +163,8 @@ Option 2 (more rigorous alternative)
 
 This setup forces Maven to exclusively download dependencies from the own proxy.
 
-.. code:: xml
-   :caption: ``.mvn/local-settings.xml``
+.. code-block:: xml
+    :caption: ``.mvn/local-settings.xml``
 
     <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
