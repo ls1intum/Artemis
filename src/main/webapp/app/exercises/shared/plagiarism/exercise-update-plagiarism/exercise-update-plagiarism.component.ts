@@ -21,6 +21,8 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
     fieldMinSizeSubscription?: Subscription;
     fieldResponsePeriodSubscription?: Subscription;
 
+    isCPCCollapsed = true;
+
     minimumSizeTooltip?: string;
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
