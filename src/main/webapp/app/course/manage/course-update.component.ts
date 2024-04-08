@@ -354,10 +354,11 @@ export class CourseUpdateComponent implements OnInit {
      */
     setCourseImage(event: Event): void {
         const element = event.currentTarget as HTMLInputElement;
-        if (element.files?.[0]) {
+        if (element.files && element.files.length > 0) {
             this.courseImageUploadFile = element.files[0];
+            this.openCropper();
         }
-        this.openCropper();
+        element.value = '';
     }
 
     /**
