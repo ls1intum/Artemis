@@ -1,12 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 /**
  * Represents a windfile, the definition file for an aeolus build plan that
@@ -14,13 +15,15 @@ import com.google.gson.JsonSyntaxException;
  */
 public class Windfile {
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     private String api;
 
     private WindfileMetadata metadata;
 
-    private List<Action> actions;
+    private List<Action> actions = new ArrayList<>();
 
-    private Map<String, AeolusRepository> repositories;
+    private Map<String, AeolusRepository> repositories = new HashMap<>();
 
     public String getApi() {
         return api;
@@ -153,13 +156,13 @@ public class Windfile {
      *
      * @param json the json string to deserialize.
      * @return the deserialized windfile.
-     * @throws JsonSyntaxException if the json string is not valid.
+     * @throws JsonProcessingException if the json string is not valid.
      */
-    public static Windfile deserialize(String json) throws JsonSyntaxException {
-        GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(Action.class, new ActionDeserializer());
-        Gson gson = builder.create();
-        return gson.fromJson(json, Windfile.class);
+    public static Windfile deserialize(String json) throws JsonProcessingException {
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Action.class, new ActionDeserializer());
+        mapper.registerModule(module);
+        return mapper.readValue(json, Windfile.class);
     }
 
     /**
