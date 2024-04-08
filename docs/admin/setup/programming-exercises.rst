@@ -180,9 +180,9 @@ This setup forces Maven to exclusively download dependencies from the own proxy.
     </mirrors>
     </settings>
 
-``.mvn/maven.config``
 
-.. code:: shell
+.. code-block:: shell
+    :caption: ``.mvn/maven.config``
 
     --settings
     ./.mvn/local-settings.xml
@@ -192,7 +192,8 @@ Adding proxy to a Gradle build
 
 The following changes have to be made inside the `tests` repository.
 
-.. code:: groovy
+.. code-block:: groovy
+    :caption: ``build.gradle``
 
     repositories {
         maven {
@@ -201,9 +202,9 @@ The following changes have to be made inside the `tests` repository.
         // …
     }
 
-Gradle ``build.gradle.kts``
 
-.. code:: kotlin
+.. code-block:: kotlin
+    :caption: Gradle ``build.gradle.kts``
 
     repositories {
         maven {
