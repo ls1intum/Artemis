@@ -9,14 +9,7 @@ tool = getToolName()
 hasSecretTestFiles = secretTestFilesFolderExists()
 
 dockerImage = '#dockerImage'
-dockerFlags = '#dockerArgs \
-        --add-host "host.docker.internal:host-gateway" \
-        --add-host "repo1.maven.org:146.75.120.209"'
-        /* The following is part of restricting network to only necessary hosts.
-         * You can find more information about on the documentation at
-         * https://docs.artemis.cit.tum.de/admin/setup/programming-exercises.html#caching-example-for-maven
-         */
-        // + '--network "artemis-restricted"'
+dockerFlags = '#dockerArgs'
 isStaticCodeAnalysisEnabled = #isStaticCodeAnalysisEnabled
 
 /**

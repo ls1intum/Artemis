@@ -209,7 +209,27 @@ Gradle ``build.gradle.kts``
         // …
     }
 
+Security Considerations
+"""""""""""""""""""""""
 
+When you are using secret tests as part of your exercise, you might want to restrict network traffic leaving the CI run to avoid students leaking information.
+
+Jenkins
+=======
+
+In Jenkins setups, you can restrict the network access by adjusting the ``pipeline.groovy`` script.
+Adjust the ``dockerFlags`` variable
+…
+and change the `testRunner` method to
+…
+
+Additionally, on the CI runner host you will have to create the `artemis-restricted` Docker network and some iptables firewall rules to restrict traffic:
+
+.. code-block:: sh
+
+   docker network create --opt com.docker.network.bridge.name=artemis-restr artemis-restricted
+   iptables -I DOCKER-USER -i artemis-restr -j DROP
+   iptables -I DOCKER-USER -i artemis-restr -d $IP_OF_ARTEMIS_EXAMPLE_COM_CACHE -p tcp --dport 8443 -j ACCEPT
 .. _dependecies-docker-volumes:
 
 Caching with docker volumes
