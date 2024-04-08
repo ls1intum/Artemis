@@ -137,6 +137,7 @@ Adding proxy to a Maven build
 """""""""""""""""""""""""""""
 
 The following changes have to be made inside the `tests` repository.
+
 Option 1
 ========
 
