@@ -1,25 +1,10 @@
 .quiz-content {
-    margin-top: 6px;
-    margin-bottom: 110px;
-    min-height: calc(100vh - 400px);
-    padding-left: 40px;
-
     .question-index {
         padding: 2px 6px;
     }
 }
 
 .quiz-navigation {
-    width: 45px;
-    height: 100%;
-    position: absolute;
-    padding: 0 10px;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 8;
-    background: var(--quiz-navigation-background);
-
     .draganddropcolor-question {
         background-color: var(--quiz-participation-footer-dnd-background) !important;
     }
@@ -40,12 +25,6 @@
 }
 
 .quiz-navigation-content {
-    height: 300px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
     .form-control,
     .input-group-btn {
         width: auto;
@@ -102,20 +81,7 @@
 }
 
 .stepwizardquiz {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    overflow: visible;
-    position: fixed;
-    height: 90vh;
-    top: 45%;
-
     &__step {
-        display: inline-block;
-        text-align: center;
-        position: relative;
-        margin-bottom: 15px;
-
         .fa {
             vertical-align: initial;
         }
