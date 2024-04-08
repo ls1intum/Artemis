@@ -23,8 +23,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() disabled: boolean;
     @Input() error: boolean;
     @Input() startAt?: dayjs.Dayjs; // Default selected date. By default this sets it to the current time without seconds or milliseconds;
-    @Input() min: dayjs.Dayjs; // Dates before this date are not selectable.
-    @Input() max: dayjs.Dayjs; // Dates after this date are not selectable.
+    @Input() min?: dayjs.Dayjs; // Dates before this date are not selectable.
+    @Input() max?: dayjs.Dayjs; // Dates after this date are not selectable.
     @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
     @Output() valueChange = new EventEmitter();
 
