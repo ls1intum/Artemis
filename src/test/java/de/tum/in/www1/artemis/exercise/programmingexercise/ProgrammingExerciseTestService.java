@@ -470,7 +470,34 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createProgrammingExercise_custom_build_plan_validExercise_created(ProgrammingLanguage programmingLanguage, boolean customBuildPlanWorks) throws Exception {
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course, programmingLanguage);
-        String validWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"class\": \"script-action\",\n\"script\": \"echo $PATH\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action1\",\n\"platform\": \"jenkins\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action2\",\n\"script\": \"bash script\",\n\"runAlways\": true\n}\n]\n}";
+        String validWindfile = """
+                {
+                  "api": "v0.0.1",
+                  "metadata": {
+                    "name": "example windfile",
+                    "description": "example windfile",
+                    "id": "example-windfile"
+                  },
+                  "actions": [
+                    {
+                      "name": "valid-action",
+                      "class": "script-action",
+                      "script": "echo $PATH",
+                      "runAlways": true
+                    },
+                    {
+                      "name": "valid-action1",
+                      "platform": "bamboo",
+                      "runAlways": true
+                    },
+                    {
+                      "name": "valid-action2",
+                      "script": "bash script",
+                      "runAlways": true
+                    }
+                  ]
+                }""";
+
         exercise.setBuildPlanConfiguration(validWindfile);
         if (programmingLanguage == C) {
             exercise.setProjectType(ProjectType.FACT);
