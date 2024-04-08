@@ -280,13 +280,19 @@ public class BuildJobExecutionService {
             // Get the file name of the tar entry.
             String fileName = getFileName(tarEntry);
 
-            // Check if the file is a static code analysis report file
-            if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
-                processStaticCodeAnalysisReportFile(fileName, xmlString, staticCodeAnalysisReports);
+            try {
+                // Check if the file is a static code analysis report file
+                if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
+                    processStaticCodeAnalysisReportFile(fileName, xmlString, staticCodeAnalysisReports);
+                }
+                else {
+                    // ugly workaround because in swift result files \n\t breaks the parsing
+                    processTestResultFile(xmlString.replace("\n\t", ""), failedTests, successfulTests);
+                }
             }
-            else {
-                // ugly workaround because in swift result files \n\t breaks the parsing
-                processTestResultFile(xmlString.replace("\n\t", ""), failedTests, successfulTests);
+            catch (IllegalStateException e) {
+                // Exceptions due to one invalid sca file should not lead to the whole build to fail.
+                log.warn("Invalid report format in file {}, ignoring.", fileName, e);
             }
         }
 
