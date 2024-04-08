@@ -13,7 +13,7 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import io.github.classgraph.AnnotationEnumValue;
@@ -55,7 +55,8 @@ class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationInde
                     }).sorted().toList();
 
             // Signature as JSON.
-            var actualSignature = new GsonBuilder().setPrettyPrinting().create().toJson(signatures);
+            var actualSignature = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(signatures);
+            ;
             var expectedSignature = readPlaceholderText(
                     Objects.requireNonNull(NotificationPlaceholderSignatureTest.class.getClassLoader().getResource("placeholder-signatures.json")));
 
