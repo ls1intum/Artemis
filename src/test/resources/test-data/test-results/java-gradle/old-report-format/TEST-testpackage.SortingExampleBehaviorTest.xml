@@ -17,8 +17,8 @@
 Your submission raised an error Failure(&quot;TODO add&quot;)</failure>
     </testcase>
     <testcase name='testUseMergeSortForBigList()' classname="testpackage.SortingExampleBehaviorTest" time='0.000219'>
-        <failure>test `filter` failed on ≥ 1 cases:
+        <error>test `filter` failed on ≥ 1 cases:
 (even, [1; 2; 3; 4])
-Your submission raised an error Failure(&quot;TODO filter&quot;)</failure>
+Your submission raised an error Failure(&quot;TODO filter&quot;)</error>
     </testcase>
 </testsuite>
