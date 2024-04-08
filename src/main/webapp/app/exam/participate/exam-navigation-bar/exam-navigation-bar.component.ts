@@ -109,7 +109,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     ngAfterViewInit() {
         // Use setTimeout to ensure the DOM is fully loaded before calculating headerHeight
         setTimeout(() => {
-            const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement).offsetHeight;
+            const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement)?.offsetHeight;
             document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
         });
     }
