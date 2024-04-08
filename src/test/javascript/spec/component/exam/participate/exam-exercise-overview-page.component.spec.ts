@@ -64,7 +64,10 @@ describe('ExamExerciseOverviewPageComponent', () => {
     });
 
     it('jhi-updating-result component should be defined', () => {
-        const exerciseWithParticipations = comp.studentExam.exercises.find((ex) => ex.studentParticipations && ex.studentParticipations.length > 0);
+        const exerciseWithParticipations =
+            comp.studentExam !== undefined && comp.studentExam.exercises !== undefined
+                ? comp.studentExam.exercises.find((ex) => ex.studentParticipations && ex.studentParticipations.length > 0)
+                : undefined;
         expect(exerciseWithParticipations).toBeDefined();
 
         fixture.detectChanges();
