@@ -136,6 +136,7 @@ Setup Sonatype Nexus
 Adding proxy to a Maven build
 """""""""""""""""""""""""""""
 
+The following changes have to be made inside the `tests` repository.
 Option 1
 ========
 
@@ -189,7 +190,7 @@ This setup forces Maven to exclusively download dependencies from the own proxy.
 Adding proxy to a Gradle build
 """"""""""""""""""""""""""""""
 
-``build.gradle``
+The following changes have to be made inside the `tests` repository.
 
 .. code:: groovy
 
