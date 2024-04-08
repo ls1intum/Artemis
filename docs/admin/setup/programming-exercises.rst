@@ -127,7 +127,7 @@ Sonatype Nexus Setup
 3. Set up the Maven proxy repository:
     a. Create a new repository (**Repository - Repositories - Create repository**) of type ``maven2 (proxy)`` with name ``maven-proxy``.
     b. The remote URL is https://repo1.maven.org/maven2/.
-4. Optionally create a new cleanup policy under **Repository - Cleanup Policies**
+4. Optionally create a new cleanup policy under *Repository - Cleanup Policies*
     a. Format: ``maven2``
     b. Release type: Releases & Pre-releases/Snapshots
     c. Cleanup criteria: e.g. ‘Component Usage 14’ will remove all files that have not been downloaded for 14 days.
