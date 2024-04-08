@@ -7,7 +7,7 @@
 
 .form-status-line {
     position: absolute;
-    top: calc(20px + 0.5rem);
+    top: calc(16px + 0.5rem);
     right: 0;
     left: 0;
     margin: 0;
@@ -16,8 +16,8 @@
 .form-status-circle {
     position: relative;
     z-index: 8;
-    height: 40px;
-    width: 40px;
+    height: 32px;
+    width: 32px;
     background-color: var(--bs-card-bg);
     cursor: pointer;
 }
