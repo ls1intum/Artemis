@@ -55,12 +55,27 @@
                         {{ item.exercise.maxPoints }}
                     </td>
                     <td style="max-width: 50px; font-weight: bold">
-                        <div
-                            style="max-width: 10px"
-                            [ngClass]="setExerciseIconStatus(item)"
-                            [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(item.exercise) | artemisTranslate"
-                        >
-                            <fa-icon [icon]="item.icon!" />
+                        <div style="display: flex; align-items: center">
+                            <div
+                                style="max-width: 10px; margin-right: 10px"
+                                [ngClass]="setExerciseIconStatus(item)"
+                                [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(item.exercise) | artemisTranslate"
+                            >
+                                <fa-icon [icon]="item.icon!" />
+                            </div>
+                            <div>
+                                @if (item.exercise.studentParticipations !== undefined && item.exercise.studentParticipations.length > 0) {
+                                    <jhi-updating-result
+                                        id="jhi-updating-result-{{ i }}"
+                                        [exercise]="item.exercise"
+                                        [showUngradedResults]="true"
+                                        [showBadge]="true"
+                                        [participation]="item.exercise.studentParticipations[0]"
+                                        [personalParticipation]="true"
+                                        class="me-2"
+                                    />
+                                }
+                            </div>
                         </div>
                     </td>
                 </tr>
