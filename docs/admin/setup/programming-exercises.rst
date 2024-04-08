@@ -234,10 +234,10 @@ Additionally, on the CI runner host you will have to create the `artemis-restric
    iptables -I DOCKER-USER -i artemis-restr -d $IP_OF_ARTEMIS_EXAMPLE_COM_CACHE -p tcp --dport 8443 -j ACCEPT
 .. _dependecies-docker-volumes:
 
-Caching with docker volumes
+Caching with Docker Volumes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-With docker volumes you can cache mave dependencies.
+With Docker volumes you can cache Maven dependencies.
 An alternative approach for caching is with Sonatype Nexus, see :ref:`dependecies-sonatype-nexus`.
 
 Example for Maven
