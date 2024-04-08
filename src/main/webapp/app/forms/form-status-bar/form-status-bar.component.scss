@@ -1,6 +1,6 @@
 .form-status-bar-container {
     position: sticky;
-    top: 0;
+    top: var(--header-height);
     z-index: 7;
     background-color: var(--bs-card-bg);
 }
