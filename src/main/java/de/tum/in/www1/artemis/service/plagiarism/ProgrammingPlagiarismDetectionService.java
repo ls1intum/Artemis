@@ -28,10 +28,15 @@ import org.springframework.stereotype.Service;
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
 import de.jplag.Language;
+import de.jplag.c.CLanguage;
 import de.jplag.clustering.ClusteringOptions;
 import de.jplag.exceptions.ExitException;
+import de.jplag.java.JavaLanguage;
+import de.jplag.kotlin.KotlinLanguage;
 import de.jplag.options.JPlagOptions;
+import de.jplag.python3.PythonLanguage;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
+import de.jplag.swift.SwiftLanguage;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
@@ -308,11 +313,11 @@ public class ProgrammingPlagiarismDetectionService {
 
     private Language getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
         return switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA -> new de.jplag.java.JavaLanguage();
-            case C -> new de.jplag.cpp.CPPLanguage();
-            case PYTHON -> new de.jplag.python3.PythonLanguage();
-            case SWIFT -> new de.jplag.swift.SwiftLanguage();
-            case KOTLIN -> new de.jplag.kotlin.KotlinLanguage();
+            case JAVA -> new JavaLanguage();
+            case C -> new CLanguage();
+            case PYTHON -> new PythonLanguage();
+            case SWIFT -> new SwiftLanguage();
+            case KOTLIN -> new KotlinLanguage();
             default -> throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
                     "ProgrammingExercise", "notSupported");
         };
