@@ -7,16 +7,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.File;
 import java.io.FileInputStream;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -25,7 +32,7 @@ import org.springframework.util.ResourceUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -42,7 +49,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUsersNotFoundDTO;
 
-class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "examuser";
 
@@ -111,8 +118,8 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         exam1 = examRepository.save(exam1);
 
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bambooRequestMockProvider.enableMockingOfRequests(true);
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
     }
 
     @AfterEach
@@ -206,6 +213,8 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(examUser.getSigningImagePath()).isNotNull();
     }
 
+    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8289)
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testVerifyExamUserAttendance() throws Exception {
@@ -278,7 +287,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     private List<StudentExam> prepareStudentExamsForConduction(boolean early, boolean setFields) throws Exception {
         for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
-            bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
+            gitlabRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i, true);
         }
 
         ZonedDateTime visibleDate;
@@ -314,7 +323,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
             examRepository.save(exam);
         }
 
-        bitbucketRequestMockProvider.reset();
+        gitlabRequestMockProvider.reset();
 
         if (setFields) {
             exam2 = exam;

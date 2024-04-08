@@ -5,7 +5,10 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -604,7 +607,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
 
     /**
-     * For an explanation, see {@link de.tum.in.www1.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long,long)}
+     * For an explanation, see {@link de.tum.in.www1.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}
      *
      * @param examId the id of the exam for which we want to get all exercises with potential plagiarism
      * @return a list of exercises with potential plagiarism
@@ -618,4 +621,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 AND TYPE (e) IN (ModelingExercise, TextExercise, ProgrammingExercise)
             """)
     Set<Exercise> findAllExercisesWithPotentialPlagiarismByExamId(@Param("examId") long examId);
+
+    @Query("""
+            SELECT count(e) > 0
+            FROM Exercise e
+            WHERE e.id = :exerciseId
+                AND e.exerciseGroup IS NOT NULL
+            """)
+    boolean isExamExercise(@Param("exerciseId") long exerciseId);
 }
