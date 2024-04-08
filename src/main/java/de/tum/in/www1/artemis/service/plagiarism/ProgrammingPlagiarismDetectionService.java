@@ -4,8 +4,8 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.plagiarism.PlagiarismService.filterParticipationMinimumScore;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -247,28 +247,24 @@ public class ProgrammingPlagiarismDetectionService {
     public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) {
         final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 5);
         final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + " JPlag Report");
-        final var reportFolderFile = reportFolder.toFile();
+        final var reportZipFile = reportFolder.resolve("report.zip").toFile();
 
-        // Create directories.
-        if (!reportFolderFile.mkdirs()) {
-            log.error("Cannot generate JPlag report because directories couldn't be created: {}", reportFolder);
-            // this error is unlikely to happen
-            return null;
-        }
-
-        // Write JPlag report result to the file.
-        log.info("Write JPlag report to file system and zip it");
         try {
-            ReportObjectFactory reportObjectFactory = new ReportObjectFactory(reportFolder.toFile());
+            // Create directories.
+            Files.createDirectories(reportFolder);
+
+            // Write JPlag report result to the file.
+            log.info("Write JPlag report into folder {} and zip it", reportFolder);
+
+            ReportObjectFactory reportObjectFactory = new ReportObjectFactory(reportZipFile);
             reportObjectFactory.createAndSaveReport(jPlagResult);
             // JPlag automatically zips the report
         }
-        catch (FileNotFoundException e) {
+        catch (IOException e) {
             log.error("Failed to write JPlag report to file: {}", reportFolder, e);
         }
-        var zipFile = new File(reportFolder + ".zip");
-        fileService.schedulePathForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
-        return zipFile;
+        fileService.schedulePathForDeletion(reportZipFile.getAbsoluteFile().toPath(), 1);
+        return reportZipFile;
     }
 
     private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final Path targetPath) {
