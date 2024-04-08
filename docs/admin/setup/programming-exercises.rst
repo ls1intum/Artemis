@@ -108,8 +108,8 @@ Artemis via the ‘Edit Build Plan’ button on the details page of the exercise
 
 .. _dependecies-sonatype-nexus:
 
-Caching with Sonatype Nexus
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Caching Maven Dependencies with Sonatype Nexus
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 With Sonatype Nexus you can run a caching server in your local network for Maven dependencies.
 An alternative approach for caching is with docker volumes, see :ref:`dependecies-docker-volumes`.
