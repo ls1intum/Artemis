@@ -119,7 +119,7 @@ An alternative approach for caching is with docker volumes, see :ref:`dependecie
     The following steps assume ``artemis.example.com`` is the host and ``8443`` the port for the cache.
     Adapt the URLs for your actual setup.
 
-Setup Sonatype Nexus
+Sonatype Nexus Setup
 """"""""""""""""""""
 
 1. Set up Sonatype Nexus to run on ``artemis.example.com:8443`` e.g. in a `docker container <https://hub.docker.com/r/sonatype/nexus3/>`_ behind a `proxy <https://help.sonatype.com/en/run-behind-a-reverse-proxy.html>`_.
