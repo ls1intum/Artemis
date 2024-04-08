@@ -116,12 +116,12 @@
                 "title": "Online-Editor erlauben",
                 "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
-            "onlineEditor": "Online-Editor",
+            "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Offline-IDE erlauben",
                 "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
-            "offlineIde": "Offline-IDE",
+            "offlineIde": "IDE",
             "showTestNamesToStudents": "Zeige die Test Namen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",
