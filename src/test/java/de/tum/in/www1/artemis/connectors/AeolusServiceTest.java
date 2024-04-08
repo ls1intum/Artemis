@@ -19,8 +19,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
-import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
@@ -81,7 +82,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
      * Publishes a build plan using Aeolus
      */
     @Test
-    void testSuccessfulPublishBuildPlan() {
+    void testSuccessfulPublishBuildPlan() throws JsonProcessingException {
         Windfile mockWindfile = new Windfile();
         var expectedPlanKey = "PLAN";
         mockWindfile.setId("PROJECT-" + expectedPlanKey);
@@ -95,7 +96,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
      * Fails in publishing a build plan using Aeolus
      */
     @Test
-    void testFailedPublishBuildPlan() {
+    void testFailedPublishBuildPlan() throws JsonProcessingException {
         Windfile mockWindfile = new Windfile();
         var expectedPlanKey = "PLAN";
         mockWindfile.setId("PROJECT-" + expectedPlanKey);
@@ -168,13 +169,13 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testReturnsNullonUrlNull() {
+    void testReturnsNullonUrlNull() throws JsonProcessingException {
         ReflectionTestUtils.setField(aeolusBuildPlanService, "ciUrl", null);
         assertThat(aeolusBuildPlanService.publishBuildPlan(new Windfile(), AeolusTarget.JENKINS)).isNull();
     }
 
     @Test
-    void testBuildScriptGeneration() {
+    void testBuildScriptGeneration() throws JsonProcessingException {
         aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
         String script = aeolusBuildPlanService.generateBuildScript(getWindfile(), AeolusTarget.CLI);
         assertThat(script).isNotNull();
