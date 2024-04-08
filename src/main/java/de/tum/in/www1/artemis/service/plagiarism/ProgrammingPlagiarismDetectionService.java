@@ -246,25 +246,24 @@ public class ProgrammingPlagiarismDetectionService {
      */
     public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) {
         final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 5);
-        final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + " JPlag Report");
-        final var reportZipFile = reportFolder.resolve("report.zip").toFile();
+        final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + "-JPlag-Report.zip");
 
         try {
             // Create directories.
-            Files.createDirectories(reportFolder);
+            Files.createDirectories(targetPath);
 
             // Write JPlag report result to the file.
             log.info("Write JPlag report into folder {} and zip it", reportFolder);
 
-            ReportObjectFactory reportObjectFactory = new ReportObjectFactory(reportZipFile);
+            ReportObjectFactory reportObjectFactory = new ReportObjectFactory(reportFolder.toFile());
             reportObjectFactory.createAndSaveReport(jPlagResult);
             // JPlag automatically zips the report
         }
         catch (IOException e) {
             log.error("Failed to write JPlag report to file: {}", reportFolder, e);
         }
-        fileService.schedulePathForDeletion(reportZipFile.getAbsoluteFile().toPath(), 1);
-        return reportZipFile;
+        fileService.schedulePathForDeletion(reportFolder.toAbsolutePath(), 1);
+        return reportFolder.toFile();
     }
 
     private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final Path targetPath) {
