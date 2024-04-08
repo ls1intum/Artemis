@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.domain.enumeration.AeolusTarget.JENKINS;
 
 import java.net.URL;
 import java.util.HashMap;
@@ -23,6 +26,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
@@ -63,6 +68,8 @@ public class AeolusBuildPlanService {
 
     @Value("${artemis.continuous-integration.url:#{null}}")
     private String ciUrl;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Constructor for the AeolusBuildPlanService
@@ -107,23 +114,22 @@ public class AeolusBuildPlanService {
      * @return the credentials for the CI server based on the target
      */
     private String getCredentialsBasedOnTarget(AeolusTarget target) {
-        return switch (target) {
-            case BAMBOO -> ciToken != null ? ciToken : ciPassword;
-            case JENKINS -> ciPassword;
-            default -> null;
-        };
+        if (target == JENKINS) {
+            return ciPassword;
+        }
+        return null;
     }
 
     /**
      * Publishes a build plan using Aeolus
      *
      * @param windfile the build plan to publish
-     * @param target   the target to publish to, either bamboo or jenkins
+     * @param target   the target to publish to jenkins
      * @return the key of the published build plan
      */
-    public String publishBuildPlan(Windfile windfile, AeolusTarget target) {
+    public String publishBuildPlan(Windfile windfile, AeolusTarget target) throws JsonProcessingException {
         String url = getCiUrl();
-        String buildPlan = new Gson().toJson(windfile);
+        String buildPlan = objectMapper.writeValueAsString(windfile);
         if (url == null) {
             log.error("Could not publish build plan {} to Aeolus target {}, no CI URL configured", buildPlan, target);
             return null;
@@ -144,7 +150,7 @@ public class AeolusBuildPlanService {
             ResponseEntity<AeolusGenerationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, AeolusGenerationResponseDTO.class);
 
             if (response.getBody() != null) {
-                return response.getBody().getKey();
+                return response.getBody().key();
             }
         }
         catch (RestClientException e) {
@@ -157,7 +163,7 @@ public class AeolusBuildPlanService {
      * Generates a build script for a programming exercise using Aeolus
      *
      * @param windfile the build plan to generate the build script for
-     * @param target   the target to generate the build script for, either bamboo or jenkins or cli
+     * @param target   the target to generate the build script for jenkins or cli
      * @return the generated build script
      */
     public String generateBuildScript(Windfile windfile, AeolusTarget target) {
@@ -169,7 +175,7 @@ public class AeolusBuildPlanService {
         try {
             ResponseEntity<AeolusGenerationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, AeolusGenerationResponseDTO.class);
             if (response.getBody() != null) {
-                return response.getBody().getResult();
+                return response.getBody().result();
             }
         }
         catch (RestClientException e) {

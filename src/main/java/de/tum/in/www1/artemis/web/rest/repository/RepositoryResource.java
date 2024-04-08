@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import static de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType.*;
+import static de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType.CLEAN;
+import static de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType.CONFLICT;
+import static de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType.UNCOMMITTED_CHANGES;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
@@ -24,7 +26,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.File;
+import de.tum.in.www1.artemis.domain.FileType;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -255,7 +261,7 @@ public abstract class RepositoryResource {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
             repositoryService.commitChanges(repository, user);
             // Trigger a build, and process the result. Only implemented for local CI.
-            // For Bitbucket + Bamboo and GitLab + Jenkins, webhooks were added when creating the repository,
+            // For GitLab + Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
             if (profileService.isLocalVcsCiActive()) {
                 localVCServletService.orElseThrow().processNewPush(null, repository);
