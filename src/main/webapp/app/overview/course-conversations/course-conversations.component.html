@@ -1,5 +1,6 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    @if (course && !isCodeOfConductAccepted) {
+    <!-- only display after isCodeOfConductAccepted is loaded ( !== undefined) -->
+    @if (course && isCodeOfConductAccepted !== undefined && !isCodeOfConductAccepted) {
         <div>
             <jhi-course-conversations-code-of-conduct [course]="course!" />
             <button id="acceptCodeOfConductButton" class="btn btn-primary" type="button" (click)="acceptCodeOfConduct()">
