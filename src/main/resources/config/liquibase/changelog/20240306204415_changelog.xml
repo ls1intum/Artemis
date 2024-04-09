@@ -4,15 +4,12 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20240306204415" author="mkawka">
         <addColumn tableName="exam">
-            <column name="exam_with_attendance_check"
+            <column defaultValueBoolean="false"
+                    name="exam_with_attendance_check"
                     type="boolean">
                 <constraints nullable="false"/>
             </column>
 
         </addColumn>
-
-        <sql>
-            UPDATE exam SET exam_with_attendance_check = FALSE;
-        </sql>
     </changeSet>
 </databaseChangeLog>
