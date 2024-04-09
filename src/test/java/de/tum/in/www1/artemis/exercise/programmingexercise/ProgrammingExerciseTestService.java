@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -43,13 +42,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
-import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -1464,9 +1463,9 @@ public class ProgrammingExerciseTestService {
 
         var url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        Awaitility.setDefaultTimeout(Duration.ofSeconds(20));
-        await().until(() -> programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId()).isPresent()
-                && participationRepository.findByIdElseThrow(participation.getId()).getInitializationState().hasCompletedState(InitializationState.INITIALIZED));
+        await().timeout(20, TimeUnit.SECONDS)
+                .until(() -> programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId()).isPresent()
+                        && participationRepository.findByIdElseThrow(participation.getId()).getInitializationState().hasCompletedState(InitializationState.INITIALIZED));
 
         // Fetch updated participation and assert
         ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
