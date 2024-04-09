@@ -5,7 +5,6 @@
             "manage": {
                 "title": "Standardized Competency Management",
                 "filter": "Filter competencies",
-                "createButtonTooltip": "Create standardized competency",
                 "expandButtonTooltip": "Expand all knowledge areas",
                 "collapseButtonTooltip": "Collapse all knowledge areas",
                 "updateTreeError": "Something went wrong while updating the knowledge area tree. Please reload the page.",
@@ -51,6 +50,7 @@
                 "parent": "Parent Knowledge Area"
             },
             "manage": {
+                "createButtonTooltip": "Create knowledge area",
                 "detailsTooltip": "Open knowledge area details",
                 "deleteModal": {
                     "question": "Do you really want to delete the knowledge area <strong>{{title}}</strong>? You can not undo this action! <strong>This will also delete all knowledge areas and standardized competencies contained!</strong>",

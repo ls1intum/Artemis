@@ -118,3 +118,24 @@ export function convertToStandardizedCompetencyForTree(competencyDTO: Standardiz
     const competencyForTree: StandardizedCompetencyForTree = { ...competencyDTO, isVisible: isVisible };
     return competencyForTree;
 }
+
+export function convertToKnowledgeAreaDTO(knowledgeArea: KnowledgeArea) {
+    const children = knowledgeArea.children?.map((child) => convertToKnowledgeAreaDTO(child));
+    const competencies = knowledgeArea.competencies?.map((competency) => convertToStandardizedCompetencyDTO(competency));
+    const knowledgeAreaDTO: KnowledgeAreaDTO = {
+        id: knowledgeArea.id,
+        title: knowledgeArea.title,
+        shortTitle: knowledgeArea.shortTitle,
+        description: knowledgeArea.description,
+        parentId: knowledgeArea.parent?.id,
+        children: children,
+        competencies: competencies,
+    };
+    return knowledgeAreaDTO;
+}
+
+export function convertToKnowledgeAreaForTree(knowledgeAreaDTO: KnowledgeAreaDTO, isVisible = true, level = 0): KnowledgeAreaForTree {
+    const children = knowledgeAreaDTO.children?.map((child) => convertToKnowledgeAreaForTree(child, isVisible, level + 1));
+    const competencies = knowledgeAreaDTO.competencies?.map((competency) => convertToStandardizedCompetencyForTree(competency, isVisible));
+    return { ...knowledgeAreaDTO, children: children, competencies: competencies, level: level, isVisible: isVisible };
+}
