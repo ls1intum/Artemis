@@ -5,7 +5,10 @@
     <changeSet id="20240306204415" author="mkawka">
         <addColumn tableName="exam">
             <column name="exam_with_attendance_check"
-                    type="boolean"/>
+                    type="boolean">
+                <constraints nullable="false"/>
+            </column>
+
         </addColumn>
 
         <sql>
