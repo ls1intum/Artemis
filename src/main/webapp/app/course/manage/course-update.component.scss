@@ -9,25 +9,26 @@
     width: 100%;
 
     .no-image {
-        background-size: 100% !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background-color: #ccc;
         border-radius: 50%;
         height: 100px;
         width: 100px;
-        flex: 0 0 100px;
         margin-right: 20px;
+        text-align: center;
+        color: var(--black);
 
-        img {
-            height: 50px;
-            width: auto;
+        .plus-sign {
+            font-size: 24px;
+            font-weight: bold;
         }
-    }
 
-    .no-image.en {
-        background: #dddddd url('../../../content/images/image-placeholder-en.png') no-repeat center;
-    }
-
-    .no-image.de {
-        background: #dddddd url('../../../content/images/image-placeholder-de.png') no-repeat center;
+        .text {
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
     }
 
     jhi-secured-image {
@@ -41,17 +42,8 @@
     }
 }
 
-.delete-course-icon button {
-    width: 100%;
-}
-
-.image-with-icons {
-    position: relative;
-}
-
 .icon-button-wrapper {
     position: absolute;
-    margin-left: 8px;
     background-color: var(--gray-500);
     border-radius: 50%;
     display: inline-flex;
@@ -62,14 +54,14 @@
     box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, 0.1);
 }
 
-.icon-button-1 {
+.delete-button {
     top: 70px;
     right: 85px;
     color: var(--red);
     border: 1px solid var(--red);
 }
 
-.icon-button-2 {
+.edit-button {
     top: 70px;
     right: 25px;
     border: 1px solid var(--black);

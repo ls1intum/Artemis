@@ -4,32 +4,31 @@
             <div class="container headline">
                 <input type="file" #fileInput style="display: none" (change)="setCourseImage($event)" />
                 @if (croppedImage) {
-                    <div class="image-with-icons">
+                    <div style="position: relative">
                         <jhi-secured-image class="secured-image" [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
 
-                        <button type="submit" class="btn icon-button-wrapper icon-button-1" (click)="deleteCourseIcon()">
+                        <button type="button" class="btn icon-button-wrapper delete-button" (click)="deleteCourseIcon()">
                             <fa-icon [icon]="faTrash" />
                         </button>
 
-                        <button type="button" class="btn icon-button-wrapper icon-button-2" (click)="triggerFileInput()">
+                        <button type="button" class="btn icon-button-wrapper edit-button" (click)="triggerFileInput()">
                             <fa-icon [icon]="faPen" />
                         </button>
                     </div>
                 }
                 @if (!croppedImage) {
-                    <div [ngClass]="'artemisApp.course.imageCropper.uploadImageClass' | artemisTranslate" (click)="triggerFileInput()"></div>
+                    <div class="no-image" (click)="triggerFileInput()">
+                        <div class="plus-sign">+</div>
+                        <div class="text">{{ 'artemisApp.course.imageCropper.uploadTitle' | artemisTranslate }}</div>
+                    </div>
                 }
                 <div class="row">
                     <div class="col">
                         @if (!course.id) {
-                            <div class="d-flex align-items-center justify-content-center">
-                                <h4 id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel"></h4>
-                            </div>
+                            <h4 id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel"></h4>
                         }
                         @if (course.id) {
-                            <div class="d-flex flex-column align-items-start">
-                                <h4 id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel"></h4>
-                            </div>
+                            <h4 id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel"></h4>
                         }
                     </div>
                 </div>
