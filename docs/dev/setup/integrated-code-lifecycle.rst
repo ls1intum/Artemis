@@ -13,7 +13,6 @@ If you are setting Artemis up for the first time, these are the steps you should
 - Start the database: :ref:`Database Setup`
 - :ref:`Configure Artemis`
 - (optional) :ref:`Configure Build Management`
-- (optional) :ref:`Configure Jira`
 - :ref:`Start Artemis`
 - :ref:`Test the Setup`
 
@@ -41,7 +40,7 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
 
        artemis:
            user-management:
-               use-external: false # if you do not wish to use Jira for user management
+               use-external: false
            version-control:
                url: http://localhost:8080
            # Only necessary on Windows:
@@ -73,34 +72,6 @@ The Local CI subsystem of the Integrated Code Lifecycle is used to automatically
                 // The number of concurrent builds that can be executed
                 concurrent-build-size: 2
 
-
-.. _Configure Jira:
-
-Configure Jira
-^^^^^^^^^^^^^^
-
-The Integrated Code Lifecycle also works without external user management, therefore this step is **optional**.
-Setting up Jira allows you to run a script that sets up a number of users and groups for you.
-
-If you have already set up your system with Bamboo, Bitbucket, and Jira, you can keep using Jira for user management. Just stop the Bamboo and Bitbucket containers.
-If you want to use Jira for user management, but have not configured it yet, refer to the guide for the :ref:`Bamboo Bitbucket and Jira Setup`.
-You can follow all steps to set up the entire Atlassian stack, or just get the license for Jira and only follow steps 1-3 leaving out the setup of the Bamboo and Bitbucket containers.
-You can stop and remove the Bamboo and Bitbucket containers or just stop them in case you want to set them up later on.
-
-You also need to configure further settings in the ``src/main/resources/config/application-local.yml`` properties:
-
-.. code-block:: yaml
-
-       artemis:
-           user-management:
-               use-external: true
-               external:
-                   url: http://localhost:8081
-                   user:  <jira-admin-user> # insert the admin user you created in Jira
-                   password: <jira-admin-password> # insert the admin user's password
-                   admin-group-name: instructors
-
-
 .. _Start Artemis:
 
 Start Artemis
@@ -115,7 +86,6 @@ e.g.:
    --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local
 
 All of these profiles are enabled by default when using the ``Artemis (Server, LocalVC & LocalCI)`` run configuration in IntelliJ.
-Add ``jira`` to the list of profiles if you want to use Jira for user management: `dev,localci,localvc,artemis,scheduling,buildagent,core,local,jira`
 Please read :ref:`Server Setup` for more details.
 
 
