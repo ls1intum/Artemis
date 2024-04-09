@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation } from '@angular/core';
 import * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
@@ -9,19 +9,34 @@ import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'ap
 type EditorPosition = { row: number; column: number };
 @Component({
     selector: 'jhi-monaco-editor',
-    templateUrl: 'monaco-editor.component.html',
+    template: '',
     styleUrls: ['monaco-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
 export class MonacoEditorComponent implements OnInit, OnDestroy {
-    @ViewChild('monacoEditorContainer', { static: true }) private monacoEditorContainer: ElementRef;
     private _editor: monaco.editor.IStandaloneCodeEditor;
+    private monacoEditorContainerElement: HTMLElement;
     themeSubscription?: Subscription;
     models: monaco.editor.IModel[] = [];
     lineWidgets: MonacoEditorLineWidget[] = [];
     editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
 
-    constructor(private themeService: ThemeService) {}
+    constructor(
+        private themeService: ThemeService,
+        elementRef: ElementRef,
+        renderer: Renderer2,
+    ) {
+        this.monacoEditorContainerElement = renderer.createElement('div');
+        renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
+        renderer.addClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
+        this._editor = monaco.editor.create(this.monacoEditorContainerElement, {
+            value: '',
+            glyphMargin: true,
+            minimap: { enabled: false },
+            readOnly: this._readOnly,
+        });
+        renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
+    }
 
     @Input()
     textChangedEmitDelay?: number;
@@ -29,11 +44,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Input()
     set readOnly(value: boolean) {
         this._readOnly = value;
-        if (this._editor) {
-            this._editor.updateOptions({
-                readOnly: value,
-            });
-        }
+        this._editor.updateOptions({
+            readOnly: value,
+        });
     }
 
     private _readOnly: boolean = false;
@@ -44,17 +57,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private textChangedEmitTimeout?: NodeJS.Timeout;
 
     ngOnInit(): void {
-        this._editor = monaco.editor.create(this.monacoEditorContainer.nativeElement, {
-            value: '',
-            glyphMargin: true,
-            minimap: { enabled: false },
-            readOnly: this._readOnly,
-        });
-
         const resizeObserver = new ResizeObserver(() => {
             this._editor.layout();
         });
-        resizeObserver.observe(this.monacoEditorContainer.nativeElement);
+        resizeObserver.observe(this.monacoEditorContainerElement);
 
         this._editor.onDidChangeModelContent(() => {
             this.emitTextChangeEvent();
@@ -149,10 +155,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     reset(): void {
-        if (this._editor) {
-            this.disposeEditorElements();
-            this.disposeModels();
-        }
+        this.disposeEditorElements();
+        this.disposeModels();
     }
 
     disposeEditorElements(): void {
@@ -187,9 +191,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param outdated Whether the specified annotations are already outdated and should be grayed out.
      */
     setAnnotations(annotations: Annotation[], outdated: boolean = false): void {
-        if (!this._editor) {
-            return;
-        }
         this.disposeAnnotations();
         for (const annotation of annotations) {
             const lineNumber = annotation.row + 1;
