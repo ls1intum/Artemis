@@ -142,12 +142,26 @@ describe('CloneRepoButtonComponent', () => {
         component.ngOnChanges();
 
         component.useSsh = true;
+        component.sshEnabled = true;
 
         expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
 
         participation.team = undefined;
         component.isTeamParticipation = false;
         expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
+    });
+
+    it('should not use ssh when ssh is not enabled (even if useSsh is set)', () => {
+        participation.repositoryUri = `https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        component.participations = [participation];
+        component.useSsh = true;
+        component.isTeamParticipation = false;
+        component.versionControlAccessTokenRequired = true;
+        component.ngOnInit();
+        component.ngOnChanges();
+
+        const url = component.getHttpOrSshRepositoryUri();
+        expect(url).toBe(`https://${component.user.login}:**********@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
     it('should get html url (not the same url for team and individual participation)', () => {
