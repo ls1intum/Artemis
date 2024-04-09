@@ -16,7 +16,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     updatedProblemStatementWithHighlightedDifferences: string;
     updatedProblemStatement: string;
     showHighlightedDifferences = true;
-    private _isHidden = false;
+    isHidden = false;
     @Input() exercise: Exercise;
 
     @Output() problemStatementUpdateEvent: EventEmitter<string> = new EventEmitter<string>();
@@ -27,16 +27,12 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
             if (update) {
                 this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
-                this._isHidden = false;
+                this.isHidden = false;
             } else {
                 // No update so hide the component
-                this._isHidden = true;
+                this.isHidden = true;
             }
         });
-    }
-
-    get isHidden(): boolean {
-        return this.previousProblemStatementUpdate === undefined || this._isHidden;
     }
 
     ngOnDestroy(): void {
