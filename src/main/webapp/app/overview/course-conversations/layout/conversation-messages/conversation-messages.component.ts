@@ -42,7 +42,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     @Output() openThread = new EventEmitter<Post>();
 
     @Input()
-    allSearch: string;
+    channelWideSearchInput: string;
 
     @ViewChild('searchInput')
     searchInput: ElementRef;
@@ -55,8 +55,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     course?: Course;
 
     getAsChannel = getAsChannelDTO;
-
-    protected readonly getAsChannelDTO = getAsChannelDTO;
 
     canCreateNewMessageInConversation = canCreateNewMessageInConversation;
 
@@ -73,6 +71,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     totalNumberOfPosts = 0;
     page = 1;
     public isFetchingPosts = true;
+    isallMessagesPage = false;
     // Icons
     faTimes = faTimes;
     faSearch = faSearch;
@@ -89,6 +88,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.subscribeToSearch();
         this.subscribeToMetis();
         this.subscribeToActiveConversation();
+        this.updateIsAllMessagesPage();
         this.cdr.detectChanges();
     }
 
@@ -128,12 +128,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private onActiveConversationChange() {
+        this.updateIsAllMessagesPage();
         if (this.course && this._activeConversation) {
             if (this.searchInput) {
-                this.searchInput.nativeElement.value = this.allSearch;
-                this.searchText = this.allSearch;
+                this.searchInput.nativeElement.value = this.searchText = this.isallMessagesPage ? this.channelWideSearchInput : '';
             }
-            this.search$.next(this.searchText);
             this.onSearch();
             this.createEmptyPost();
         }
@@ -158,7 +157,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             page: this.page - 1,
             pageSize: 50,
         };
-        if (this.getAsChannel(this._activeConversation)?.name == 'all-messages') {
+        if (this.isallMessagesPage) {
             this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
                 this.currentPostContextFilter!.courseWideChannelIds = conversations.map((conversation) => conversation!.id!);
                 this.currentPostContextFilter!.sortingOrder = SortDirection.ASCENDING;
@@ -247,5 +246,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.searchInput.nativeElement.value = '';
             this.searchInput.nativeElement.dispatchEvent(new Event('input'));
         }
+    }
+
+    updateIsAllMessagesPage() {
+        this.isallMessagesPage = this.getAsChannel(this._activeConversation)?.name == 'all-messages';
     }
 }
