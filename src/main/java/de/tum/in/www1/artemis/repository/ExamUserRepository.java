@@ -65,7 +65,7 @@ public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
                 LEFT JOIN examUser.exam exam
                 LEFT JOIN exam.studentExams studentExams ON studentExams.user.id = examUser.user.id
             WHERE exam.id = :examId
-                AND examUser.user.id = :userId
+                AND examUser.user.login = :login
                 AND studentExams.started IS TRUE
                 AND examUser.signingImagePath != NULL
                 AND examUser.signingImagePath != ''
@@ -74,5 +74,5 @@ public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
                 AND examUser.didCheckRegistrationNumber = TRUE
                 AND examUser.didCheckName = TRUE
             """)
-    boolean isAttendanceChecked(@Param("examId") long examId, @Param("userId") long userId);
+    boolean isAttendanceChecked(@Param("examId") long examId, @Param("login") String login);
 }

@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.FileService;
@@ -142,8 +142,8 @@ public class ExamUserResource {
     public ResponseEntity<Boolean> isAttendanceChecked(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to verify attendance of a student for exam with id: {}", examId);
         examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
-        User user = userRepository.getUser();
-        return ResponseEntity.ok().body(examUserRepository.isAttendanceChecked(examId, user.getId()));
+        String login = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new EntityNotFoundException("ERROR: No current user login found!"));
+        return ResponseEntity.ok().body(examUserRepository.isAttendanceChecked(examId, login));
     }
 
 }
