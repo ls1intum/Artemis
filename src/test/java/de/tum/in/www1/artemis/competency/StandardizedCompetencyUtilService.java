@@ -28,17 +28,6 @@ public class StandardizedCompetencyUtilService {
     private StandardizedCompetencyRepository standardizedCompetencyRepository;
 
     /**
-     * Builds a knowledge area with id -1000, which cannot exist.
-     *
-     * @return the non-existent knowledge area
-     */
-    public static KnowledgeArea buildKnowledgeAreaNotExisting() {
-        var knowledgeArea = new KnowledgeArea();
-        knowledgeArea.setId(ID_NOT_EXISTS);
-        return knowledgeArea;
-    }
-
-    /**
      * builds a new knowledge area with the given parameters and saves it to the database
      *
      * @param title       the knowledge area title
@@ -90,24 +79,14 @@ public class StandardizedCompetencyUtilService {
         return standardizedCompetencyRepository.save(competency);
     }
 
-    /**
-     * Builds a source with id -1000, which cannot exist.
-     *
-     * @return the non-existent source
-     */
-    public static Source buildSourceNotExisting() {
-        var source = new Source();
-        source.setId(ID_NOT_EXISTS);
-        return source;
-    }
-
     static class CheckStandardizedCompetencyValidationProvider implements ArgumentsProvider {
 
         @Override
         public Stream<Arguments> provideArguments(ExtensionContext extensionContext) {
             // competencies need a knowledge area.
             // use a non-existing id to see that the validation is executed before the knowledge area gets retrieved.
-            var kaNotExisting = buildKnowledgeAreaNotExisting();
+            var kaNotExisting = new KnowledgeArea();
+            kaNotExisting.setId(ID_NOT_EXISTS);
             var kaNoId = new KnowledgeArea();
 
             var competencies = new ArrayList<StandardizedCompetency>();

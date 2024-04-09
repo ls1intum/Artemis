@@ -193,7 +193,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const modalService = TestBed.inject(NgbModal);
         const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
 
-        component['openCancelModal']('title', () => {});
+        component['openCancelModal']('title', 'standardizedCompetency', () => {});
 
         expect(openSpy).toHaveBeenCalledOnce();
     });
@@ -203,16 +203,16 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const knowledgeArea2: KnowledgeAreaDTO = { id: 2 };
         const expectedCompetency: StandardizedCompetencyDTO = { knowledgeAreaId: 1 };
         const expectedCompetency2: StandardizedCompetencyDTO = { knowledgeAreaId: 2 };
-        const cancelModalSpy = jest.spyOn(component as any, 'openCancelModal').mockImplementation((title, callback: () => void) => callback());
+        const cancelModalSpy = jest.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
 
         component['isEditing'] = false;
-        component.openNewCompetency(knowledgeArea);
+        component.openNewCompetency(knowledgeArea.id!);
 
         expect(cancelModalSpy).not.toHaveBeenCalled();
         expect(component['selectedCompetency']).toEqual(expectedCompetency);
         expect(component['isEditing']).toBeTrue();
 
-        component.openNewCompetency(knowledgeArea2);
+        component.openNewCompetency(knowledgeArea2.id!);
         expect(cancelModalSpy).toHaveBeenCalled();
         expect(component['selectedCompetency']).toEqual(expectedCompetency2);
     });
@@ -220,7 +220,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     it('should select competency', () => {
         const expectedCompetency = createCompetencyDTO(1, 'title1', 'description1');
         const expectedCompetency2 = createCompetencyDTO(2, 'title2', 'description2');
-        const cancelModalSpy = jest.spyOn(component as any, 'openCancelModal').mockImplementation((title, callback: () => void) => callback());
+        const cancelModalSpy = jest.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
 
         component['isEditing'] = false;
         component.selectCompetency(expectedCompetency);
@@ -239,7 +239,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     });
 
     it('should close competency', () => {
-        const cancelModalSpy = jest.spyOn(component as any, 'openCancelModal').mockImplementation((title, callback: () => void) => callback());
+        const cancelModalSpy = jest.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
         const expectedCompetency = createCompetencyDTO(1, 'title1', 'description1');
         component['selectedCompetency'] = expectedCompetency;
         component['isEditing'] = false;
@@ -256,17 +256,6 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
         expect(cancelModalSpy).toHaveBeenCalled();
         expect(component['selectedCompetency']).toBeUndefined();
-    });
-
-    it('should not delete if there is no selected competency', () => {
-        const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
-        const deleteSpy = jest.spyOn(adminStandardizedCompetencyService, 'deleteStandardizedCompetency');
-        component['selectedCompetency'] = { title: 'title1', description: 'description1' };
-
-        component.deleteCompetency();
-
-        expect(component['selectedCompetency']).toBeUndefined();
-        expect(deleteSpy).not.toHaveBeenCalled();
     });
 
     it('should delete competency', () => {
@@ -286,7 +275,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         componentFixture.detectChanges();
 
         const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyDetailStubComponent)).componentInstance;
-        detailComponent.onDelete.emit();
+        detailComponent.onDelete.emit(competencyToDelete.id);
 
         expect(deleteSpy).toHaveBeenCalledOnce();
         const competencies = component['knowledgeAreaMap'].get(1)!.competencies!;
@@ -305,8 +294,8 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
         //important that this has no id, so we create a competency!
         const competencyToCreate: StandardizedCompetencyDTO = { title: 'competency1', knowledgeAreaId: 1 };
-        const createdCompetency: StandardizedCompetency = { id: 5, title: 'competency1', knowledgeArea: { id: 1 } };
-        const expectedCompetencyInTree: StandardizedCompetencyForTree = { id: 5, title: 'competency1', knowledgeAreaId: 1, isVisible: true };
+        const createdCompetency: StandardizedCompetencyDTO = { id: 5, ...competencyToCreate };
+        const expectedCompetencyInTree: StandardizedCompetencyForTree = { ...createdCompetency, isVisible: true };
         component['selectedCompetency'] = competencyToCreate;
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
         const createSpy = jest.spyOn(adminStandardizedCompetencyService, 'createStandardizedCompetency');
@@ -324,21 +313,8 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
     it('should update competency', () => {
         const competencyToUpdate = createCompetencyDTO(1, 'title', 'description', CompetencyTaxonomy.ANALYZE, 1);
-        const updatedCompetency: StandardizedCompetency = {
-            id: 1,
-            title: 'new title',
-            description: 'new description',
-            taxonomy: CompetencyTaxonomy.CREATE,
-            knowledgeArea: { id: 1 },
-        };
-        const expectedCompetencyInTree: StandardizedCompetencyForTree = {
-            id: 1,
-            title: 'new title',
-            description: 'new description',
-            taxonomy: CompetencyTaxonomy.CREATE,
-            knowledgeAreaId: 1,
-            isVisible: true,
-        };
+        const updatedCompetency = createCompetencyDTO(1, 'new title', 'new description', CompetencyTaxonomy.CREATE, 1);
+        const expectedCompetencyInTree: StandardizedCompetencyForTree = { ...updatedCompetency, isVisible: true };
         const tree: KnowledgeAreaDTO[] = [
             {
                 id: 1,
@@ -355,21 +331,8 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
     it('should move competency on update', () => {
         const competencyToUpdate = createCompetencyDTO(1, 'title', 'description', CompetencyTaxonomy.ANALYZE, 1);
-        const updatedCompetency: StandardizedCompetency = {
-            id: 1,
-            title: 'new title',
-            description: 'new description',
-            taxonomy: CompetencyTaxonomy.CREATE,
-            knowledgeArea: { id: 2 },
-        };
-        const expectedCompetencyInTree: StandardizedCompetencyForTree = {
-            id: 1,
-            title: 'new title',
-            description: 'new description',
-            taxonomy: CompetencyTaxonomy.CREATE,
-            knowledgeAreaId: 2,
-            isVisible: true,
-        };
+        const updatedCompetency = createCompetencyDTO(1, 'new title', 'new description', CompetencyTaxonomy.ANALYZE, 2);
+        const expectedCompetencyInTree: StandardizedCompetencyForTree = { ...updatedCompetency, isVisible: true };
         const tree: KnowledgeAreaDTO[] = [
             {
                 id: 1,
