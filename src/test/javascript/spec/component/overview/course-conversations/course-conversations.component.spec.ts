@@ -20,6 +20,8 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { CourseConversationsCodeOfConductComponent } from 'app/overview/course-conversations/code-of-conduct/course-conversations-code-of-conduct.component';
 import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { FormsModule } from 'app/forms/forms.module';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -45,6 +47,7 @@ examples.forEach((activeConversation) => {
                     MockComponent(ConversationMessagesComponent),
                     MockComponent(ConversationThreadSidebarComponent),
                     MockComponent(CourseConversationsCodeOfConductComponent),
+                    MockComponent(ButtonComponent),
                     MockPipe(ArtemisTranslatePipe),
                     MockPipe(HtmlForMarkdownPipe),
                 ],
@@ -66,6 +69,7 @@ examples.forEach((activeConversation) => {
                         },
                     },
                 ],
+                imports: [FormsModule], // Needs to be explicitly included, otherwise an error occurs because of the input tag
             }).compileComponents();
 
             const metisConversationService = new MockMetisConversationService();
