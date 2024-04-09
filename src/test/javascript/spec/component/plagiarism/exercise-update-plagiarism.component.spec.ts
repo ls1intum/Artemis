@@ -97,14 +97,14 @@ describe('Exercise Update Plagiarism Component', () => {
             expect((comp[fieldName].valueChanges! as Subject<boolean>).observed).toBeTrue();
         }
 
-        (comp.fieldCPCEnabled.valueChanges! as Subject<boolean>).next(false);
+        (comp.fieldCPCEnabled!.valueChanges! as Subject<boolean>).next(false);
         expect(calculateValidSpy).toHaveBeenCalledOnce();
         expect(comp.formValid).toBeTrue();
 
         // @ts-ignore
         comp.fieldCPCEnabled.valid = true;
         comp.exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled = true;
-        (comp.fieldCPCEnabled.valueChanges! as Subject<boolean>).next(true);
+        (comp.fieldCPCEnabled!.valueChanges! as Subject<boolean>).next(true);
 
         expect(calculateValidSpy).toHaveBeenCalledTimes(2);
         expect(comp.formValid).toBeFalse();
