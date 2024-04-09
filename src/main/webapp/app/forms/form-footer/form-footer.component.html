@@ -4,7 +4,7 @@
     }
     <div class="update-footer-content d-flex gap-2">
         @if (isSaving) {
-            <span jhiTranslate="entity.action.saving" class="badge bg-secondary"></span>
+            <span jhiTranslate="entity.action.saving" class="badge bg-secondary align-content-center"></span>
         }
         <ng-template #tooltipTranslate>
             @for (reason of invalidReasons; track reason) {
