@@ -49,7 +49,10 @@ $border-color: #dee2e6;
 
 // Footer
 $footer-bg: $white;
-$footer-height: 4rem;
+$footer-height-dev: 4rem;
+$footer-height-prod: 2.5rem;
+$sidebar-footer-height-dev: 164px;
+$sidebar-footer-height-prod: 142px;
 
 //Module and Navigationbar
 $module-bg: $white;

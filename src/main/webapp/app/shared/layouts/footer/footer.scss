@@ -1,13 +1,19 @@
 :host {
     display: block;
     position: fixed;
-    height: var(--footer-height);
+    height: var(--footer-height-prod);
     left: 0;
     bottom: 0;
     background-color: var(--footer-bg);
     padding: 0.5rem 1rem;
     width: 100%;
     z-index: 20;
+    &.footer-height-dev {
+        height: var(--footer-height-dev);
+    }
+    @media (max-width: 768px) {
+        height: var(--footer-height-prod) !important;
+    }
 
     .footer-text {
         font-weight: normal;

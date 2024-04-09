@@ -4,18 +4,15 @@
 }
 
 .quiz-content {
-    min-height: calc(100vh - 400px);
-
     .question-index {
         padding: 2px 6px;
     }
 }
 
 .quiz-footer {
-    height: 90px;
+    height: 70px;
     position: sticky;
     padding: 0 10px;
-    bottom: var(--footer-height);
     left: 0;
     right: 0;
     z-index: 10;

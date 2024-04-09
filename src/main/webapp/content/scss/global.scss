@@ -282,7 +282,13 @@ Generic styles
     overflow-y: auto;
     overflow-x: hidden;
     background-color: var(--bs-body-bg);
-    padding-bottom: var(--footer-height);
+    padding-bottom: var(--footer-height-prod);
+    @media (max-width: 768px) {
+        padding-bottom: var(--footer-height-prod);
+    }
+    &.footer-height-dev {
+        padding-bottom: var(--footer-height-dev);
+    }
 }
 
 .main-container {

@@ -1,4 +1,4 @@
-<footer class="d-none d-md-flex row" id="footer">
+<footer class="d-none d-md-flex row" id="footer" [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }">
     <div class="guided-tour-footer-about col-sm-6">
         <a [routerLink]="['/about']" id="about" jhiTranslate="aboutUs" class="footer-text"></a>
     </div>
@@ -8,7 +8,7 @@
         <a [routerLink]="['/privacy']" id="privacy" jhiTranslate="artemisApp.legal.privacyStatement.title" class="footer-text ms-3"></a>
         <a [routerLink]="['/imprint']" id="imprint" jhiTranslate="artemisApp.legal.imprint.title" class="footer-text ms-3"></a>
     </div>
-    @if (!inProduction || testServer) {
+    @if (!isProduction || isTestServer) {
         <div class="col-sm-12 footer-git-wrapper">
             <div class="footer-git">{{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranch }} •</div>
             <div class="footer-git">{{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId }} •</div>
