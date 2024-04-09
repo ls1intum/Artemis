@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest.open;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -15,14 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -75,15 +75,14 @@ public class PublicAccountResource {
      * {@code POST /register} : register the user.
      *
      * @param managedUserVM the managed user View Model.
-     * @return ResponseEntity with status 200
+     * @return ResponseEntity with status 201 (Created) if the user is registered.
      * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the password does not meet the requirements.
      * @throws EmailAlreadyUsedException             {@code 400 (Bad Request)} if the email is already used.
      * @throws LoginAlreadyUsedException             {@code 400 (Bad Request)} if the login is already used.
      */
     @PostMapping("register")
     @EnforceNothing
-    @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Void> registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) {
+    public ResponseEntity<Void> registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
 
         if (accountService.isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
@@ -103,7 +102,7 @@ public class PublicAccountResource {
 
         User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
         mailService.sendActivationEmail(user);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.created(new URI("/api/register/" + user.getId())).build();
     }
 
     /**
