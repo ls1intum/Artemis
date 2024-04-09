@@ -27,6 +27,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noCodeUnits;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
 import java.util.Set;
@@ -199,7 +200,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..").because("we use an alternative JSON parsing library.");
         var result = gsonUsageRule.evaluate(allClasses);
         // TODO: reduce the following number to 0
-        Assertions.assertThat(result.getFailureReport().getDetails()).hasSize(840);
+        assertThat(result.getFailureReport().getDetails()).hasSize(840);
     }
 
     /**

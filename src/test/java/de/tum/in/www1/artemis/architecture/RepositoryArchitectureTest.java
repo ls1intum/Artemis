@@ -39,6 +39,7 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
     void shouldBeNamedRepository() {
         ArchRule rule = classes().that().areAnnotatedWith(Repository.class).should().haveSimpleNameEndingWith("Repository")
                 .because("repositories should have a name ending with 'Repository'.");
+        rule.check(productionClasses);
     }
 
     @Test
