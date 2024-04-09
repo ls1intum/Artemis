@@ -91,7 +91,7 @@ export class CourseCommunicationPage {
      * @param search - The search term to use.
      */
     async searchForMessage(search: string) {
-        await this.page.locator('#search').fill(search);
+        await this.page.locator('input[name="searchText"]').fill(search);
         await this.page.locator('#search-submit').click();
     }
 
