@@ -149,8 +149,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     reset(): void {
-        this.disposeEditorElements();
-        this.disposeModels();
+        if (this._editor) {
+            this.disposeEditorElements();
+            this.disposeModels();
+        }
     }
 
     disposeEditorElements(): void {
