@@ -349,7 +349,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     }
 
     private setDisplayedChannels(channels: ChannelDTO[]): void {
-        this.displayedChannelConversations = channels;
+        this.displayedChannelConversations = channels.filter((channel) => channel.name !== 'all-messages');
         this.displayedGeneralChannels = this.filterChannelsOfType(ChannelSubType.GENERAL);
         this.displayedExerciseChannels = this.filterChannelsOfType(ChannelSubType.EXERCISE);
         this.displayedLectureChannels = this.filterChannelsOfType(ChannelSubType.LECTURE);
