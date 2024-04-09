@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
 import { FormsModule } from '@angular/forms';
-import { MockModule } from 'ng-mocks';
+import { MockModule, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('ExerciseUpdateNotificationComponent', () => {
     let component: ExerciseUpdateNotificationComponent;
@@ -11,7 +12,7 @@ describe('ExerciseUpdateNotificationComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockModule(FormsModule)],
-            declarations: [ExerciseUpdateNotificationComponent],
+            declarations: [ExerciseUpdateNotificationComponent, MockPipe(ArtemisTranslatePipe)],
         });
         fixture = TestBed.createComponent(ExerciseUpdateNotificationComponent);
         component = fixture.componentInstance;
