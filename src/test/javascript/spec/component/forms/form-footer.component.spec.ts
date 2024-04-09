@@ -58,7 +58,7 @@ describe('FormFooterComponent', () => {
     });
 
     it('should display invalid input badge when there are invalid reasons', () => {
-        comp.invalidReasons = [{ translateKey: 'test.key' }];
+        comp.invalidReasons = [{ translateKey: 'test.key', translateValues: 'test.value' }];
         fixture.detectChanges();
         const invalidBadge = fixture.debugElement.query(By.css('.badge.bg-danger'));
         expect(invalidBadge).toBeTruthy();
