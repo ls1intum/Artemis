@@ -33,7 +33,7 @@
             <div class="col pe-0 flex-grow-1" [ngClass]="{ 'card-border': activeConversation }" style="min-width: 200px">
                 @if (activeConversation) {
                     <jhi-conversation-header />
-                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" [channelWideSearchInput]="this.searchText ?? ''" />
+                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" [courseWideSearchInput]="this.searchText ?? ''" />
                 }
             </div>
             @if (activeConversation) {
