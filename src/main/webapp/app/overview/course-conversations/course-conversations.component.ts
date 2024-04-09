@@ -30,7 +30,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isCodeOfConductAccepted: boolean = false;
     isCodeOfConductPresented: boolean = false;
 
-    protected readonly ButtonType = ButtonType;
+    readonly ButtonType = ButtonType;
     searchText?: string;
     // Icons
     faPlus = faPlus;
