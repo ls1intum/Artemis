@@ -57,13 +57,13 @@
                     "infrastructureStepTitle": "Infrastruktur"
                 },
                 "detailedSteps": {
-                    "generalInfoStepTitle": "Allgemeine Informationen",
+                    "generalInfoStepTitle": "Allgemein",
                     "generalInfoStepMessage": "Eingabe von Informationen, die die Grundlage für die Programmieraufgabe bilden",
                     "difficultyStepTitle": "Modus",
                     "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
-                    "languageStepTitle": "Programmiersprache",
+                    "languageStepTitle": "Sprache",
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Programmiersprache",
-                    "problemStepTitle": "Aufgabenstellung",
+                    "problemStepTitle": "Aufgabe",
                     "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
                     "gradingStepTitle": "Bewertung",
                     "gradingStepMessage": "Definiere die Bewertungskriterien für diese Aufgabe und wie sich das Ergebnis auf die Gesamtnote des Kurses auswirkt"
