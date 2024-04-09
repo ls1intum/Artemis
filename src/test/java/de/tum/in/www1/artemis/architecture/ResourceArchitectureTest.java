@@ -3,10 +3,10 @@ package de.tum.in.www1.artemis.architecture;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
 
 import com.tngtech.archunit.lang.ArchRule;
 
@@ -25,10 +25,10 @@ class ResourceArchitectureTest extends AbstractArchitectureTest {
         rule.check(productionClasses);
     }
 
-    // TODO: enable this test once the existing endpoints are migrated (Follow-up PR)
-    @Disabled
     @Test
     void allPublicMethodsShouldReturnResponseEntity() {
-        methods().that().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().arePublic().should().haveRawReturnType(ResponseEntity.class).check(allClasses);
+        // REST controller methods should return ResponseEntity ("normal" endpoints) or ModelAndView (for redirects)
+        methods().that().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().arePublic().should().haveRawReturnType(ResponseEntity.class).orShould()
+                .haveRawReturnType(ModelAndView.class).check(allClasses);
     }
 }

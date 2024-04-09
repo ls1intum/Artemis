@@ -14,7 +14,12 @@ import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
@@ -28,31 +33,83 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.exam.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.SuspiciousSessionsAnalysisOptions;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.service.AssessmentDashboardService;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.exam.*;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.exam.ExamDeletionService;
+import de.tum.in.www1.artemis.service.exam.ExamImportService;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
+import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
+import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.exam.ExamSessionService;
+import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.CourseWithIdDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamWithIdAndCourseDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseForPlagiarismCasesOverviewDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseGroupWithIdAndExamDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SuspiciousExamSessionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.errors.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
@@ -1185,16 +1242,16 @@ public class ExamResource {
      *
      * @param courseId the id of the course the exam belongs to
      * @param examId   the id of the exam for which to find exercises with potential plagiarism
-     * @return the list of exercises with potential plagiarism
+     * @return the ResponseEntity with status 200 (OK) and with body the list of exercises with potential plagiarism
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism")
     @EnforceAtLeastInstructor
-    public List<ExerciseForPlagiarismCasesOverviewDTO> getAllExercisesWithPotentialPlagiarismForExam(@PathVariable long courseId, @PathVariable long examId) {
+    public ResponseEntity<List<ExerciseForPlagiarismCasesOverviewDTO>> getAllExercisesWithPotentialPlagiarismForExam(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request to get all exercises with potential plagiarism cases for exam : {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         Set<Exercise> exercises = exerciseRepository.findAllExercisesWithPotentialPlagiarismByExamId(examId);
-        return exercises.stream().map(this::convertToDto).toList();
+        return ResponseEntity.ok(exercises.stream().map(this::convertToDto).toList());
     }
 
     private ExerciseForPlagiarismCasesOverviewDTO convertToDto(Exercise exercise) {
@@ -1219,11 +1276,11 @@ public class ExamResource {
      * @param analyzeSessionsIpOutsideOfRange                                      whether to analyze sessions with IP addresses outside a given subnet
      *                                                                                 If this is true, the subnet needs to be provided as a request parameter
      * @param ipSubnet                                                             the subnet to use for analyzing sessions with IP addresses outside the subnet (optional)
-     * @return a set containing all tuples of exam sessions that are suspicious.
+     * @return the ResponseEntity with status 200 (OK) and with body a set containing all tuples of exam sessions that are suspicious.
      */
     @GetMapping("courses/{courseId}/exams/{examId}/suspicious-sessions")
     @EnforceAtLeastInstructor
-    public Set<SuspiciousExamSessionsDTO> getAllSuspiciousExamSessions(@PathVariable long courseId, @PathVariable long examId,
+    public ResponseEntity<Set<SuspiciousExamSessionsDTO>> getAllSuspiciousExamSessions(@PathVariable long courseId, @PathVariable long examId,
             @RequestParam("differentStudentExamsSameIPAddress") boolean analyzeSessionsWithTheSameIp,
             @RequestParam("differentStudentExamsSameBrowserFingerprint") boolean analyzeSessionsWithTheSameBrowserFingerprint,
             @RequestParam("sameStudentExamDifferentIPAddresses") boolean analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses,
@@ -1241,6 +1298,6 @@ public class ExamResource {
         SuspiciousSessionsAnalysisOptions options = new SuspiciousSessionsAnalysisOptions(analyzeSessionsWithTheSameIp, analyzeSessionsWithTheSameBrowserFingerprint,
                 analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses, analyzeSessionsForTheSameStudentExamWithDifferentBrowserFingerprints,
                 analyzeSessionsIpOutsideOfRange);
-        return examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId, options, Optional.ofNullable(ipSubnet));
+        return ResponseEntity.ok(examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId, options, Optional.ofNullable(ipSubnet)));
     }
 }

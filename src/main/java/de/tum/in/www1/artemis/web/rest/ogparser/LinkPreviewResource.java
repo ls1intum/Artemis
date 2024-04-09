@@ -6,7 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.linkpreview.LinkPreviewService;
@@ -32,13 +36,13 @@ public class LinkPreviewResource {
      * POST /link-preview : link preview for given url.
      *
      * @param url the url to parse
-     * @return the LinkPreviewDTO containing the meta information
+     * @return the ResponseEntity with status 200 (OK) and with body the LinkPreviewDTO containing the meta information
      */
     @PostMapping("link-preview")
     @EnforceAtLeastStudent
     @Cacheable(value = "linkPreview", key = "#url", unless = "#result == null")
-    public LinkPreviewDTO getLinkPreview(@RequestBody String url) {
+    public ResponseEntity<LinkPreviewDTO> getLinkPreview(@RequestBody String url) {
         log.debug("REST request to get link preview for url: {}", url);
-        return linkPreviewService.getLinkPreview(url);
+        return ResponseEntity.ok(linkPreviewService.getLinkPreview(url));
     }
 }
