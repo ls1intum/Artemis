@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,8 +40,8 @@ public class LinkPreviewResource {
     @PostMapping("link-preview")
     @EnforceAtLeastStudent
     @Cacheable(value = "linkPreview", key = "#url", unless = "#result == null")
-    public ResponseEntity<LinkPreviewDTO> getLinkPreview(@RequestBody String url) {
+    public LinkPreviewDTO getLinkPreview(@RequestBody String url) {
         log.debug("REST request to get link preview for url: {}", url);
-        return ResponseEntity.ok(linkPreviewService.getLinkPreview(url));
+        return linkPreviewService.getLinkPreview(url);
     }
 }
