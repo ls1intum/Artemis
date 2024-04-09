@@ -64,7 +64,11 @@
                                 <fa-icon [icon]="item.icon!" />
                             </div>
                             <div>
-                                @if (item.exercise.studentParticipations !== undefined && item.exercise.studentParticipations.length > 0) {
+                                @if (
+                                    item.exercise.studentParticipations !== undefined &&
+                                    item.exercise.type === ExerciseType.PROGRAMMING &&
+                                    item.exercise.studentParticipations.length > 0
+                                ) {
                                     <jhi-updating-result
                                         id="jhi-updating-result-{{ i }}"
                                         [exercise]="item.exercise"
