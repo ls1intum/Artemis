@@ -18,7 +18,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { faCircleNotch, faCodeBranch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
@@ -163,7 +162,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 const programmingExercise = this.exercise as ProgrammingExercise;
                 if (programmingExercise.projectKey) {
                     this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                        setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, (this.exercise as ProgrammingExercise).projectKey);
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                     });
                 }

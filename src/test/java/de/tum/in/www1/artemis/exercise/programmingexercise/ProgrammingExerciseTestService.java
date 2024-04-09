@@ -2235,7 +2235,6 @@ public class ProgrammingExerciseTestService {
         exercise3 = programmingExerciseRepository.save(exercise3);
 
         var exercise4 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
-        exercise4.setPublishBuildPlanUrl(true);
         exercise4 = programmingExerciseRepository.save(exercise4);
 
         // Note participationXa will always be cleaned up, while participationXb will NOT be cleaned up

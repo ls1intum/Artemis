@@ -42,6 +42,8 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
 
+    // TODO: delete publish_build_plan_url from exercise using liquibase
+
     // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
     public String getType() {
         return "programming";
@@ -56,9 +58,6 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     @OrderColumn(name = "programming_exercise_auxiliary_repositories_order")
     private List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
-
-    @Column(name = "publish_build_plan_url")
-    private Boolean publishBuildPlanUrl;
 
     @Column(name = "allow_online_editor", table = "programming_exercise_details")
     private Boolean allowOnlineEditor;
@@ -252,14 +251,6 @@ public class ProgrammingExercise extends Exercise {
         if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
             this.solutionParticipation.setBuildPlanId(solutionBuildPlanId);
         }
-    }
-
-    public Boolean isPublishBuildPlanUrl() {
-        return publishBuildPlanUrl;
-    }
-
-    public void setPublishBuildPlanUrl(Boolean publishBuildPlanUrl) {
-        this.publishBuildPlanUrl = publishBuildPlanUrl;
     }
 
     public Boolean isAllowOnlineEditor() {
@@ -739,9 +730,9 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public String toString() {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUri='" + getTemplateRepositoryUri() + "'" + ", solutionRepositoryUri='" + getSolutionRepositoryUri()
-                + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
-                + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
-                + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
+                + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", allowOnlineEditor='"
+                + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='"
+                + testCasesChanged + "'" + "}";
     }
 
     public boolean getCheckoutSolutionRepository() {
