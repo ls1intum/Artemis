@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.authorization;
 
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -8,8 +10,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.tngtech.archunit.lang.ArchRule;
 
-import de.tum.in.www1.artemis.AbstractArchitectureTest;
-import de.tum.in.www1.artemis.security.annotations.*;
+import de.tum.in.www1.artemis.architecture.AbstractArchitectureTest;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
+import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 
 class AuthorizationArchitectureTest extends AbstractArchitectureTest {
 
