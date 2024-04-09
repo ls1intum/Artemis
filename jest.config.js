@@ -42,6 +42,7 @@ const esModules = [
     'franc-min',
     'internmap',
     'lodash-es',
+    'monaco-editor',
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
@@ -148,5 +149,7 @@ module.exports = {
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
         '@sentry/angular-ivy': '<rootDir>/node_modules/@sentry/angular-ivy/bundles/sentry-angular-ivy.umd.js',
+        '\\.css$': '<rootDir>/stub.js',
+        '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
     },
 };
