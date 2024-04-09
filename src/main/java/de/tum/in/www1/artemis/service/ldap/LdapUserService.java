@@ -18,6 +18,7 @@ import org.springframework.ldap.query.SearchScope;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.LdapUserRepository;
 
 @Service
 @Profile("ldap | ldap-only")
