@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
 import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.StandardizedCompetencyDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -49,17 +50,17 @@ public class StandardizedCompetencyService {
      * @param competency the standardized competency to create
      * @return the created standardized competency
      */
-    public StandardizedCompetency createStandardizedCompetency(StandardizedCompetency competency) {
+    public StandardizedCompetency createStandardizedCompetency(StandardizedCompetencyDTO competency) {
         standardizedCompetencyIsValidOrElseThrow(competency);
 
         // fetch the knowledge area and source from the database if they exist
-        KnowledgeArea knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(competency.getKnowledgeArea().getId());
-        Source source = competency.getSource();
-        if (source != null) {
-            source = sourceRepository.findByIdElseThrow(source.getId());
+        KnowledgeArea knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(competency.knowledgeAreaId());
+        Source source = null;
+        if (competency.sourceId() != null) {
+            source = sourceRepository.findByIdElseThrow(competency.sourceId());
         }
 
-        var competencyToCreate = new StandardizedCompetency(competency.getTitle().trim(), competency.getDescription(), competency.getTaxonomy(), FIRST_VERSION);
+        var competencyToCreate = new StandardizedCompetency(competency.title().trim(), competency.description(), competency.taxonomy(), FIRST_VERSION);
         competencyToCreate.setKnowledgeArea(knowledgeArea);
         competencyToCreate.setSource(source);
 
@@ -75,29 +76,26 @@ public class StandardizedCompetencyService {
      * @param competency competency object containing the data to update
      * @return the updated standardized competency
      */
-    public StandardizedCompetency updateStandardizedCompetency(StandardizedCompetency competency) {
+    public StandardizedCompetency updateStandardizedCompetency(StandardizedCompetencyDTO competency) {
         standardizedCompetencyIsValidOrElseThrow(competency);
-        var existingCompetency = standardizedCompetencyRepository.findByIdElseThrow(competency.getId());
+        var existingCompetency = standardizedCompetencyRepository.findByIdElseThrow(competency.id());
 
-        if (competency.getVersion() != null && !competency.getVersion().equals(existingCompetency.getVersion())) {
+        if (competency.version() != null && !competency.version().equals(existingCompetency.getVersion())) {
             throw new BadRequestException("You cannot change the version of a standardized competency");
         }
-        if (competency.getFirstVersion() != null && !competency.getFirstVersion().equals(existingCompetency.getFirstVersion())) {
-            throw new BadRequestException("You cannot change the first version of a standardized competency");
-        }
 
-        existingCompetency.setTitle(competency.getTitle());
-        existingCompetency.setDescription(competency.getDescription());
-        existingCompetency.setTaxonomy(competency.getTaxonomy());
-        if (competency.getSource() == null) {
+        existingCompetency.setTitle(competency.title());
+        existingCompetency.setDescription(competency.description());
+        existingCompetency.setTaxonomy(competency.taxonomy());
+        if (competency.sourceId() == null) {
             existingCompetency.setSource(null);
         }
-        else if (!competency.getSource().equals(existingCompetency.getSource())) {
-            var source = sourceRepository.findByIdElseThrow(competency.getSource().getId());
+        else if (existingCompetency.getSource() == null || !competency.sourceId().equals(existingCompetency.getSource().getId())) {
+            var source = sourceRepository.findByIdElseThrow(competency.sourceId());
             existingCompetency.setSource(source);
         }
-        if (!competency.getKnowledgeArea().equals(existingCompetency.getKnowledgeArea())) {
-            var knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(competency.getKnowledgeArea().getId());
+        if (!competency.knowledgeAreaId().equals(existingCompetency.getKnowledgeArea().getId())) {
+            var knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(competency.knowledgeAreaId());
             existingCompetency.setKnowledgeArea(knowledgeArea);
         }
 
@@ -154,11 +152,10 @@ public class StandardizedCompetencyService {
      *
      * @param competency the standardized competency to verify
      */
-    private void standardizedCompetencyIsValidOrElseThrow(StandardizedCompetency competency) throws BadRequestException {
-        boolean titleIsInvalid = competency.getTitle() == null || competency.getTitle().trim().isEmpty()
-                || competency.getTitle().length() > StandardizedCompetency.MAX_TITLE_LENGTH;
-        boolean descriptionIsInvalid = competency.getDescription() != null && competency.getDescription().length() > StandardizedCompetency.MAX_DESCRIPTION_LENGTH;
-        boolean knowledgeAreaIsInvalid = competency.getKnowledgeArea() == null || competency.getKnowledgeArea().getId() == null;
+    private void standardizedCompetencyIsValidOrElseThrow(StandardizedCompetencyDTO competency) throws BadRequestException {
+        boolean titleIsInvalid = competency.title() == null || competency.title().trim().isEmpty() || competency.title().length() > StandardizedCompetency.MAX_TITLE_LENGTH;
+        boolean descriptionIsInvalid = competency.description() != null && competency.description().length() > StandardizedCompetency.MAX_DESCRIPTION_LENGTH;
+        boolean knowledgeAreaIsInvalid = competency.knowledgeAreaId() == null;
 
         if (titleIsInvalid) {
             throw new BadRequestException("A standardized competency must have a title and it cannot be longer than " + StandardizedCompetency.MAX_TITLE_LENGTH + " characters");
@@ -167,7 +164,7 @@ public class StandardizedCompetencyService {
             throw new BadRequestException("The description of a standardized competency cannot be longer than " + StandardizedCompetency.MAX_DESCRIPTION_LENGTH + " characters");
         }
         if (knowledgeAreaIsInvalid) {
-            throw new BadRequestException("A standardized competency must be part of a knowledge area whose id is not null");
+            throw new BadRequestException("A standardized competency must be part of a knowledge area");
         }
     }
 }

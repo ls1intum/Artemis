@@ -3,14 +3,10 @@ import { NestedTreeControl } from '@angular/cdk/tree';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
-    KnowledgeArea,
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
     StandardizedCompetencyDTO,
-    convertToKnowledgeAreaDTO,
     convertToKnowledgeAreaForTree,
-    convertToStandardizedCompetency,
-    convertToStandardizedCompetencyDTO,
     convertToStandardizedCompetencyForTree,
 } from 'app/entities/competency/standardized-competency.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -203,28 +199,19 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
 
     /**
      * Saves the given knowledge area by either creating a new one (if it has no id) or updating an existing one
-     * @param knowledgeAreaDTO the knowledgeArea to save
+     * @param knowledgeArea the knowledgeArea to save
      */
-    saveKnowledgeArea(knowledgeAreaDTO: KnowledgeAreaDTO) {
-        //TODO: use DTO for the calls.
-        const knowledgeArea: KnowledgeArea = {
-            id: knowledgeAreaDTO.id,
-            title: knowledgeAreaDTO.title,
-            shortTitle: knowledgeAreaDTO.shortTitle,
-            description: knowledgeAreaDTO.description,
-            parent: knowledgeAreaDTO.parentId === undefined || knowledgeAreaDTO.parentId === null ? undefined : { id: knowledgeAreaDTO.parentId },
-        };
-
+    saveKnowledgeArea(knowledgeArea: KnowledgeAreaDTO) {
         if (knowledgeArea.id === undefined) {
             this.adminStandardizedCompetencyService
                 .createKnowledgeArea(knowledgeArea)
-                .pipe(map((response) => convertToKnowledgeAreaDTO(response.body!)))
+                .pipe(map((response) => response.body!))
                 .subscribe({
                     next: (resultKnowledgeArea) => {
                         this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.create', { title: resultKnowledgeArea.title });
                         this.updateAfterCreateKnowledgeArea(resultKnowledgeArea);
-                        //update the detail view if it is still open
-                        if (knowledgeAreaDTO.id === this.selectedKnowledgeArea?.id) {
+                        //update the detail view if no other was opened
+                        if (!(this.selectedKnowledgeArea?.id || this.selectedCompetency) && !this.isEditing) {
                             this.selectedKnowledgeArea = resultKnowledgeArea;
                         }
                     },
@@ -233,13 +220,13 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         } else {
             this.adminStandardizedCompetencyService
                 .updateKnowledgeArea(knowledgeArea)
-                .pipe(map((response) => convertToKnowledgeAreaDTO(response.body!)))
+                .pipe(map((response) => response.body!))
                 .subscribe({
                     next: (resultKnowledgeArea) => {
                         this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.update', { title: resultKnowledgeArea.title });
                         this.updateAfterUpdateKnowledgeArea(resultKnowledgeArea);
                         //update the detail view if it is still open
-                        if (knowledgeAreaDTO.id === this.selectedKnowledgeArea?.id) {
+                        if (resultKnowledgeArea.id === this.selectedKnowledgeArea?.id) {
                             this.selectedKnowledgeArea = resultKnowledgeArea;
                         }
                     },
@@ -287,15 +274,13 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
 
     /**
      * Saves the given standardized competency by either creating a new one (if it has no id) or updating an existing one
-     * @param competencyDTO the competency to save
+     * @param competency the competency to save
      */
-    saveCompetency(competencyDTO: StandardizedCompetencyDTO) {
-        const competency = convertToStandardizedCompetency(competencyDTO);
-
+    saveCompetency(competency: StandardizedCompetencyDTO) {
         if (competency.id === undefined) {
             this.adminStandardizedCompetencyService
                 .createStandardizedCompetency(competency)
-                .pipe(map((response) => convertToStandardizedCompetencyDTO(response.body!)))
+                .pipe(map((response) => response.body!))
                 .subscribe({
                     next: (resultCompetency) => {
                         this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.create', { title: resultCompetency.title });
@@ -312,7 +297,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
             const previousCompetency = this.selectedCompetency?.id === competency.id ? this.selectedCompetency : undefined;
             this.adminStandardizedCompetencyService
                 .updateStandardizedCompetency(competency)
-                .pipe(map((response) => convertToStandardizedCompetencyDTO(response.body!)))
+                .pipe(map((response) => response.body!))
                 .subscribe({
                     next: (resultCompetency) => {
                         this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.update', { title: resultCompetency.title });
@@ -613,6 +598,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
      * Recursively sets visibility of a knowledge area as well as all its descendants.
      *
      * @param knowledgeArea the knowledge area to set visible
+     * @param isVisible if the knowledge areas should be set visible
      * @private
      */
     private setVisibilityOfSelfAndDescendants(knowledgeArea: KnowledgeAreaForTree, isVisible: boolean) {

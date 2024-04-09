@@ -78,60 +78,9 @@ export interface StandardizedCompetencyForTree extends StandardizedCompetencyDTO
     isVisible: boolean;
 }
 
-export function convertToStandardizedCompetencyDTO(competency: StandardizedCompetency) {
-    const competencyDTO: StandardizedCompetencyDTO = {
-        id: competency.id,
-        title: competency.title,
-        description: competency.description,
-        taxonomy: competency.taxonomy,
-        version: competency.version,
-        knowledgeAreaId: competency.knowledgeArea?.id,
-        sourceId: competency.source?.id,
-    };
-    return competencyDTO;
-}
-
-export function convertToStandardizedCompetency(competencyDTO: StandardizedCompetencyDTO) {
-    const competency: StandardizedCompetency = {
-        id: competencyDTO.id,
-        title: competencyDTO.title,
-        description: competencyDTO.description,
-        taxonomy: competencyDTO.taxonomy,
-        version: competencyDTO.version,
-    };
-
-    if (competencyDTO.knowledgeAreaId) {
-        competency.knowledgeArea = {
-            id: competencyDTO.knowledgeAreaId,
-        };
-    }
-    if (competencyDTO.sourceId) {
-        competency.source = {
-            id: competencyDTO.sourceId,
-        };
-    }
-
-    return competency;
-}
-
 export function convertToStandardizedCompetencyForTree(competencyDTO: StandardizedCompetencyDTO, isVisible: boolean) {
     const competencyForTree: StandardizedCompetencyForTree = { ...competencyDTO, isVisible: isVisible };
     return competencyForTree;
-}
-
-export function convertToKnowledgeAreaDTO(knowledgeArea: KnowledgeArea) {
-    const children = knowledgeArea.children?.map((child) => convertToKnowledgeAreaDTO(child));
-    const competencies = knowledgeArea.competencies?.map((competency) => convertToStandardizedCompetencyDTO(competency));
-    const knowledgeAreaDTO: KnowledgeAreaDTO = {
-        id: knowledgeArea.id,
-        title: knowledgeArea.title,
-        shortTitle: knowledgeArea.shortTitle,
-        description: knowledgeArea.description,
-        parentId: knowledgeArea.parent?.id,
-        children: children,
-        competencies: competencies,
-    };
-    return knowledgeAreaDTO;
 }
 
 export function convertToKnowledgeAreaForTree(knowledgeAreaDTO: KnowledgeAreaDTO, isVisible = true, level = 0): KnowledgeAreaForTree {

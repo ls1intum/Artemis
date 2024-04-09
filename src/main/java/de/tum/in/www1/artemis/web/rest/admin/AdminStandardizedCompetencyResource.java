@@ -19,11 +19,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.competency.KnowledgeAreaService;
 import de.tum.in.www1.artemis.service.competency.StandardizedCompetencyService;
+import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.StandardizedCompetencyDTO;
 
 /**
  * Admin REST controller for managing {@link StandardizedCompetency} entities.
@@ -53,12 +54,12 @@ public class AdminStandardizedCompetencyResource {
      */
     @PostMapping("standardized-competencies")
     @EnforceAdmin
-    public ResponseEntity<StandardizedCompetency> createStandardizedCompetency(@RequestBody StandardizedCompetency competency) throws URISyntaxException {
+    public ResponseEntity<StandardizedCompetencyDTO> createStandardizedCompetency(@RequestBody StandardizedCompetencyDTO competency) throws URISyntaxException {
         log.debug("REST request to create standardized competency : {}", competency);
 
         var persistedCompetency = standardizedCompetencyService.createStandardizedCompetency(competency);
 
-        return ResponseEntity.created(new URI("/api/standardized-competencies/" + persistedCompetency.getId())).body(persistedCompetency);
+        return ResponseEntity.created(new URI("/api/standardized-competencies/" + persistedCompetency.getId())).body(StandardizedCompetencyDTO.of(persistedCompetency));
     }
 
     /**
@@ -70,16 +71,16 @@ public class AdminStandardizedCompetencyResource {
      */
     @PutMapping("standardized-competencies/{competencyId}")
     @EnforceAdmin
-    public ResponseEntity<StandardizedCompetency> updateStandardizedCompetency(@PathVariable long competencyId, @RequestBody StandardizedCompetency competency) {
+    public ResponseEntity<StandardizedCompetencyDTO> updateStandardizedCompetency(@PathVariable long competencyId, @RequestBody StandardizedCompetencyDTO competency) {
         log.debug("REST request to update standardized competency : {}", competency);
 
-        if (competencyId != competency.getId()) {
+        if (competencyId != competency.id()) {
             throw new BadRequestException("The competency id in the body and path do not match");
         }
 
         var persistedCompetency = standardizedCompetencyService.updateStandardizedCompetency(competency);
 
-        return ResponseEntity.ok(persistedCompetency);
+        return ResponseEntity.ok(StandardizedCompetencyDTO.of(persistedCompetency));
     }
 
     /**
@@ -107,12 +108,12 @@ public class AdminStandardizedCompetencyResource {
      */
     @PostMapping("standardized-competencies/knowledge-areas")
     @EnforceAdmin
-    public ResponseEntity<KnowledgeArea> createKnowledgeArea(@RequestBody KnowledgeArea knowledgeArea) throws URISyntaxException {
+    public ResponseEntity<KnowledgeAreaDTO> createKnowledgeArea(@RequestBody KnowledgeAreaDTO knowledgeArea) throws URISyntaxException {
         log.debug("REST request to create knowledge area : {}", knowledgeArea);
 
         var persistedKnowledgeArea = knowledgeAreaService.createKnowledgeArea(knowledgeArea);
 
-        return ResponseEntity.created(new URI("/api/standardized-competencies/knowledge-areas" + persistedKnowledgeArea.getId())).body(persistedKnowledgeArea);
+        return ResponseEntity.created(new URI("/api/standardized-competencies/knowledge-areas" + persistedKnowledgeArea.getId())).body(KnowledgeAreaDTO.of(persistedKnowledgeArea));
     }
 
     /**
@@ -124,16 +125,16 @@ public class AdminStandardizedCompetencyResource {
      */
     @PutMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
     @EnforceAdmin
-    public ResponseEntity<KnowledgeArea> updateKnowledgeArea(@PathVariable long knowledgeAreaId, @RequestBody KnowledgeArea knowledgeArea) {
+    public ResponseEntity<KnowledgeAreaDTO> updateKnowledgeArea(@PathVariable long knowledgeAreaId, @RequestBody KnowledgeAreaDTO knowledgeArea) {
         log.debug("REST request to update knowledge area : {}", knowledgeArea);
 
-        if (knowledgeAreaId != knowledgeArea.getId()) {
+        if (knowledgeAreaId != knowledgeArea.id()) {
             throw new BadRequestException("The knowledge area id in the body and path do not match");
         }
 
         var persistedKnowledgeArea = knowledgeAreaService.updateKnowledgeArea(knowledgeArea);
 
-        return ResponseEntity.ok(persistedKnowledgeArea);
+        return ResponseEntity.ok(KnowledgeAreaDTO.of(persistedKnowledgeArea));
     }
 
     /**
