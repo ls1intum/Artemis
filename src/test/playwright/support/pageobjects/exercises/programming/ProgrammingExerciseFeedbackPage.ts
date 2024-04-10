@@ -24,7 +24,7 @@ export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
         // Playwright handles visibility checks differently, so the check is incorporated into the expect statement.
         // Note: Playwright's visibility checks are more strict than Cypress's.
         // If the element's visibility varies dynamically, you may need to adjust the logic.
-        const feedbackElement = this.page.locator('jhi-ace-editor [id*="code-editor-inline-feedback-"]');
+        const feedbackElement = this.page.locator('[id*="code-editor-inline-feedback-"]');
         await expect(feedbackElement).toBeVisible();
         return feedbackElement;
     }

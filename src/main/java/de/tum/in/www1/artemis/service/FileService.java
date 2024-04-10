@@ -204,6 +204,7 @@ public class FileService implements DisposableBean {
      * @param fullSanitizedPath the full path to save the file to
      * @return the path where the file was saved
      */
+    @NotNull
     public Path saveFile(MultipartFile file, Path fullSanitizedPath) {
         copyFile(file, fullSanitizedPath);
         return fullSanitizedPath;
