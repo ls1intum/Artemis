@@ -188,19 +188,19 @@ describe('CodeEditorMonacoComponent', () => {
         [new ConnectionError(), 'loadingFailedInternetDisconnected'],
         [new Error(), 'loadingFailed'],
     ])('should emit the correct error and update the file session when loading a file fails', async (error: Error, errorCode: string) => {
-        const fileToLoad = 'file-to-load';
+        const fileToLoad = { fileName: 'file-to-load', fileContent: 'some code that will not be loaded' };
         const errorCallbackStub = jest.fn();
-        const loadFileSubject = new BehaviorSubject(undefined);
+        const loadFileSubject = new BehaviorSubject(fileToLoad);
         loadFileFromRepositoryStub.mockReturnValue(loadFileSubject);
         loadFileSubject.error(error);
         comp.fileSession = {};
-        comp.selectedFile = fileToLoad;
+        comp.selectedFile = fileToLoad.fileName;
         comp.onError.subscribe(errorCallbackStub);
         fixture.detectChanges();
-        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, fileToLoad, false) });
+        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, fileToLoad.fileName, false) });
         expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
         expect(errorCallbackStub).toHaveBeenCalledExactlyOnceWith(errorCode);
-        expect(comp.fileSession).toEqual({ [fileToLoad]: { code: '', loadingError: true, cursor: { row: 0, column: 0 } } });
+        expect(comp.fileSession).toEqual({ [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { row: 0, column: 0 } } });
     });
 
     it('should discard local changes when the editor is refreshed', async () => {
