@@ -337,7 +337,8 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         }
 
         const isVisible = !this.knowledgeAreaFilter || this.isAncestorOf(this.knowledgeAreaFilter, knowledgeArea);
-        const knowledgeAreaForTree: KnowledgeAreaForTree = convertToKnowledgeAreaForTree(knowledgeArea, isVisible, parent?.level ?? 0);
+        const level = parent ? parent.level + 1 : 0;
+        const knowledgeAreaForTree: KnowledgeAreaForTree = convertToKnowledgeAreaForTree(knowledgeArea, isVisible, level);
 
         if (parent) {
             parent.children = this.insertBasedOnTitle(knowledgeAreaForTree, parent.children);
@@ -368,7 +369,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         //set children and competencies to previous values as they don't get updated and we do not get all descendants from the server
         const knowledgeAreaForTree: KnowledgeAreaForTree = {
             ...knowledgeArea,
-            level: parent?.level ? parent.level + 1 : 0,
+            level: parent ? parent.level + 1 : 0,
             isVisible: true,
             children: previousKnowledgeArea.children,
             competencies: previousKnowledgeArea.competencies,
@@ -567,7 +568,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         }
 
         //find the index of the first knowledge area with a "larger" title
-        const insertIndex = array.findIndex((ka) => ka.title!.localeCompare(knowledgeArea.title!) > -1);
+        const insertIndex = array.findIndex((ka) => (ka.title ? ka.title.localeCompare(knowledgeArea.title!) > -1 : false));
         if (insertIndex === -1) {
             return array.concat(knowledgeArea);
         }

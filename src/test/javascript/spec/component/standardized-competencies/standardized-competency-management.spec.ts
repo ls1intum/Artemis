@@ -10,7 +10,13 @@ import { MatTreeModule } from '@angular/material/tree';
 import { StandardizedCompetencyDetailStubComponent } from './standardized-competency-detail-stub';
 import { StandardizedCompetencyService } from 'app/admin/standardized-competencies/standardized-competency.service';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
-import { KnowledgeAreaDTO, StandardizedCompetency, StandardizedCompetencyDTO, StandardizedCompetencyForTree } from 'app/entities/competency/standardized-competency.model';
+import {
+    KnowledgeAreaDTO,
+    KnowledgeAreaForTree,
+    StandardizedCompetencyDTO,
+    StandardizedCompetencyForTree,
+    convertToKnowledgeAreaForTree,
+} from 'app/entities/competency/standardized-competency.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
@@ -19,6 +25,7 @@ import { By } from '@angular/platform-browser';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { KnowledgeAreaDetailStubComponent } from './knowledge-area-detail-stub.component';
 
 describe('StandardizedCompetencyManagementComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyManagementComponent>;
@@ -29,7 +36,13 @@ describe('StandardizedCompetencyManagementComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateTestingModule, ArtemisTestModule, MatTreeModule, FormsModule, NgbTooltipMocksModule, NgbCollapseMocksModule],
-            declarations: [StandardizedCompetencyManagementComponent, StandardizedCompetencyDetailStubComponent, MockComponent(ButtonComponent), MockRouterLinkDirective],
+            declarations: [
+                StandardizedCompetencyManagementComponent,
+                StandardizedCompetencyDetailStubComponent,
+                KnowledgeAreaDetailStubComponent,
+                MockComponent(ButtonComponent),
+                MockRouterLinkDirective,
+            ],
             providers: [ArtemisTranslatePipe, MockProvider(StandardizedCompetencyService), MockProvider(AdminStandardizedCompetencyService), MockProvider(NgbModal)],
         })
             .compileComponents()
@@ -354,7 +367,167 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(competencies2).toHaveLength(2);
     });
 
-    function prepareAndExecuteCompetencyUpdate(tree: KnowledgeAreaDTO[], competencyToUpdate: StandardizedCompetencyDTO, updatedCompetency: StandardizedCompetency) {
+    it('should select knoweldgeArea', () => {
+        const expectedKnowledgeArea = createKnowledgeAreaDTO(1, 'title1', 't1');
+        const expectedKnowledgeArea2 = createKnowledgeAreaDTO(2, 'title2', 't2');
+        const cancelModalSpy = jest.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
+
+        component['isEditing'] = false;
+        component.selectKnowledgeArea(expectedKnowledgeArea);
+        expect(cancelModalSpy).not.toHaveBeenCalled();
+        expect(component['selectKnowledgeArea']).toEqual(expectedKnowledgeArea);
+
+        //nothing should happen if the same competency is selected twice
+        component['isEditing'] = true;
+        component.selectKnowledgeArea(expectedKnowledgeArea);
+        expect(cancelModalSpy).not.toHaveBeenCalled();
+
+        component.selectKnowledgeArea(expectedKnowledgeArea2);
+        expect(cancelModalSpy).toHaveBeenCalled();
+        expect(component['selectKnowledgeArea']).toEqual(expectedKnowledgeArea2);
+    });
+
+    it('should close knowledgeArea', () => {
+        const cancelModalSpy = jest.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
+        const expectedKnowledgeArea = createKnowledgeAreaDTO(1, 'title1', 't1');
+        component['selectedKnowledgeArea'] = expectedKnowledgeArea;
+        component['isEditing'] = false;
+
+        component.closeKnowledgeArea();
+
+        expect(cancelModalSpy).not.toHaveBeenCalled();
+        expect(component['selectedKnowledgeArea']).toBeUndefined();
+
+        component['selectedKnowledgeArea'] = expectedKnowledgeArea;
+        component['isEditing'] = true;
+
+        component.closeKnowledgeArea();
+
+        expect(cancelModalSpy).toHaveBeenCalled();
+        expect(component['selectedKnowledgeArea']).toBeUndefined();
+    });
+
+    it('should delete knowledgeArea', () => {
+        const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
+        const deleteSpy = jest.spyOn(adminStandardizedCompetencyService, 'deleteKnowledgeArea').mockReturnValue(of(new HttpResponse<void>()));
+        const knowledgeAreaToDelete = createKnowledgeAreaDTO(1, 'title', 't1', 'd1');
+        const ka2: KnowledgeAreaForTree = { id: 2, title: 'title2', isVisible: true, level: 0 };
+        const ka3: KnowledgeAreaForTree = { id: 3, title: 'title2', isVisible: true, level: 0 };
+        const tree: KnowledgeAreaDTO[] = [knowledgeAreaToDelete, ka2, ka3];
+        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+        component['selectedKnowledgeArea'] = knowledgeAreaToDelete;
+        componentFixture.detectChanges();
+
+        const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaDetailStubComponent)).componentInstance;
+        detailComponent.onDelete.emit(knowledgeAreaToDelete.id);
+
+        expect(deleteSpy).toHaveBeenCalledOnce();
+        const knowledgeAreas = Array.from(component['knowledgeAreaMap'].values());
+        expect(knowledgeAreas).toContainAllValues([ka2, ka3]);
+        expect(knowledgeAreas).toHaveLength(2);
+    });
+
+    it('should delete knowledgeArea and descendants', () => {
+        const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
+        const deleteSpy = jest.spyOn(adminStandardizedCompetencyService, 'deleteKnowledgeArea').mockReturnValue(of(new HttpResponse<void>()));
+
+        const deletedIds = [10, 11, 12, 13];
+        const childToDelete2_2 = createKnowledgeAreaDTO(deletedIds[3], 'titleA', 'tA', '', deletedIds[2]);
+        const childToDelete2 = createKnowledgeAreaDTO(deletedIds[2], 'titleB', 'tB', '', deletedIds[0], [childToDelete2_2]);
+        const childToDelete1 = createKnowledgeAreaDTO(deletedIds[1], 'titleC', 'tC', '', deletedIds[0]);
+        const knowledgeAreaToDelete = createKnowledgeAreaDTO(deletedIds[0], 'kaToDelete', 'kTD', '', 1, [childToDelete1, childToDelete2]);
+
+        const tree: KnowledgeAreaDTO[] = [
+            {
+                id: 1,
+                title: 'ka1',
+                children: [knowledgeAreaToDelete],
+            },
+            {
+                id: 2,
+                title: 'ka2',
+            },
+        ];
+        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+        component['selectedKnowledgeArea'] = knowledgeAreaToDelete;
+        componentFixture.detectChanges();
+
+        const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaDetailStubComponent)).componentInstance;
+        detailComponent.onDelete.emit(knowledgeAreaToDelete.id);
+
+        expect(deleteSpy).toHaveBeenCalledOnce();
+        const knowledgeAreaMap = component['knowledgeAreaMap'];
+        for (const id of deletedIds) {
+            const deletedKnowledgeArea = knowledgeAreaMap.get(id);
+            expect(deletedKnowledgeArea).toBeUndefined();
+        }
+        expect(knowledgeAreaMap.get(1)).toBeDefined();
+        expect(knowledgeAreaMap.get(2)).toBeDefined();
+    });
+
+    it('should create knowledgeArea', () => {
+        const tree: KnowledgeAreaDTO[] = [
+            {
+                id: 1,
+            },
+        ];
+        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+
+        //important that this has no id, so we create!
+        const knowledgeAreaToCreate: KnowledgeAreaDTO = { title: 'ka1', parentId: 1 };
+        const createdKnowledgeArea: KnowledgeAreaDTO = { id: 5, ...knowledgeAreaToCreate };
+        const expectedKnowledgeAreaInTree = convertToKnowledgeAreaForTree(createdKnowledgeArea, true, 1);
+        component['selectedKnowledgeArea'] = knowledgeAreaToCreate;
+        const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
+        const createSpy = jest.spyOn(adminStandardizedCompetencyService, 'createKnowledgeArea');
+        createSpy.mockReturnValue(of(new HttpResponse({ body: createdKnowledgeArea })));
+        componentFixture.detectChanges();
+
+        const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaDetailStubComponent)).componentInstance;
+        detailComponent.onSave.emit(knowledgeAreaToCreate);
+
+        expect(createSpy).toHaveBeenCalled();
+        const knowledgeAreaMap = component['knowledgeAreaMap'];
+        expect(knowledgeAreaMap.size).toBe(2);
+        expect(knowledgeAreaMap.get(5)).toEqual(expectedKnowledgeAreaInTree);
+    });
+
+    it('should update knowledgeArea', () => {
+        const knowledgeAreaToUpdate = createKnowledgeAreaDTO(1, 'long title', 'title', 'description');
+        const updatedKnowledgeArea = createKnowledgeAreaDTO(1, 'new long title', 'new title', 'new description');
+        const expectedKnowledgeAreaInTree = convertToKnowledgeAreaForTree(updatedKnowledgeArea, true, 0);
+        const tree: KnowledgeAreaDTO[] = [knowledgeAreaToUpdate, { id: 2, title: 'another title' }];
+
+        prepareAndExecuteKnowledgeAreaUpdate(tree, knowledgeAreaToUpdate, updatedKnowledgeArea);
+
+        const knowledgeAreaMap = component['knowledgeAreaMap'];
+        expect(knowledgeAreaMap.get(1)).toEqual(expectedKnowledgeAreaInTree);
+        expect(knowledgeAreaMap.size).toBe(2);
+    });
+
+    it('should move knowledgeArea on update', () => {
+        const parentId = 1;
+        const newParentId = 2;
+        const knowledgeAreaToUpdate = createKnowledgeAreaDTO(10, 'long title', 'title', 'description', parentId);
+        const updatedKnowledgeArea = createKnowledgeAreaDTO(10, 'new long title', 'new title', 'new description', newParentId);
+        const expectedKnowledgeAreaInTree = convertToKnowledgeAreaForTree(updatedKnowledgeArea, true, 1);
+        const tree: KnowledgeAreaDTO[] = [
+            { id: parentId, title: 'title1', children: [knowledgeAreaToUpdate, { id: 3 }] },
+            { id: newParentId, title: 'title2', children: [{ id: 4 }] },
+        ];
+
+        prepareAndExecuteKnowledgeAreaUpdate(tree, knowledgeAreaToUpdate, updatedKnowledgeArea);
+
+        const knowledgeAreaMap = component['knowledgeAreaMap'];
+        const oldParent = knowledgeAreaMap.get(parentId)!;
+        expect(oldParent.children).toHaveLength(1);
+        expect(oldParent.children).not.toContainEqual([expectedKnowledgeAreaInTree]);
+        const newParent = knowledgeAreaMap.get(newParentId)!;
+        expect(newParent.children).toHaveLength(2);
+        expect(newParent.children).toContainEqual(expectedKnowledgeAreaInTree);
+    });
+
+    function prepareAndExecuteCompetencyUpdate(tree: KnowledgeAreaDTO[], competencyToUpdate: StandardizedCompetencyDTO, updatedCompetency: StandardizedCompetencyDTO) {
         getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
         component['selectedCompetency'] = competencyToUpdate;
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
@@ -368,6 +541,20 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(updateSpy).toHaveBeenCalled();
     }
 
+    function prepareAndExecuteKnowledgeAreaUpdate(tree: KnowledgeAreaDTO[], knowledgeAreaToUpdate: KnowledgeAreaDTO, updatedKnowledgeArea: KnowledgeAreaDTO) {
+        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+        component['selectedKnowledgeArea'] = knowledgeAreaToUpdate;
+        const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
+        const updateSpy = jest.spyOn(adminStandardizedCompetencyService, 'updateKnowledgeArea');
+        updateSpy.mockReturnValue(of(new HttpResponse({ body: updatedKnowledgeArea })));
+        componentFixture.detectChanges();
+
+        const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaDetailStubComponent)).componentInstance;
+        detailComponent.onSave.emit(knowledgeAreaToUpdate);
+
+        expect(updateSpy).toHaveBeenCalled();
+    }
+
     function createCompetencyDTO(id?: number, title?: string, description?: string, taxonomy?: CompetencyTaxonomy, knowledgeAreaId?: number) {
         const competency: StandardizedCompetencyDTO = {
             id: id,
@@ -377,5 +564,26 @@ describe('StandardizedCompetencyManagementComponent', () => {
             knowledgeAreaId: knowledgeAreaId,
         };
         return competency;
+    }
+
+    function createKnowledgeAreaDTO(
+        id?: number,
+        title?: string,
+        shortTitle?: string,
+        description?: string,
+        parentId?: number,
+        children?: KnowledgeAreaDTO[],
+        competencies?: StandardizedCompetencyDTO[],
+    ) {
+        const knowledgeArea: KnowledgeAreaDTO = {
+            id: id,
+            title: title,
+            shortTitle: shortTitle,
+            description: description,
+            parentId: parentId,
+            children: children,
+            competencies: competencies,
+        };
+        return knowledgeArea;
     }
 });
