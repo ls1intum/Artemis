@@ -274,8 +274,6 @@ describe('ProgrammingExercise Management Detail Component', () => {
     it.each([
         ['jenkins', true],
         ['gitlabci', true],
-        ['bamboo', false],
-        ['bitbucket', false],
         ['gitlab', false],
     ])('should show the build plan edit button for profile %s: %s', (profile, editable) => {
         profileInfo.activeProfiles = [profile];

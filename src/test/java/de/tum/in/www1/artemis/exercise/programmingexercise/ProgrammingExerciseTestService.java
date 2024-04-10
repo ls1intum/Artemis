@@ -486,7 +486,7 @@ public class ProgrammingExerciseTestService {
                     },
                     {
                       "name": "valid-action1",
-                      "platform": "bamboo",
+                      "platform": "jenkins",
                       "runAlways": true
                     },
                     {
