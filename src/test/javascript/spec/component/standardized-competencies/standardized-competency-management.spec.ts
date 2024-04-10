@@ -367,6 +367,23 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(competencies2).toHaveLength(2);
     });
 
+    it('should open new knowledgeArea', () => {
+        const expectedKnowledgeArea1: KnowledgeAreaDTO = { parentId: 1 };
+        const expectedKnowledgeArea2: KnowledgeAreaDTO = { parentId: 2 };
+        const cancelModalSpy = jest.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
+
+        component['isEditing'] = false;
+        component.openNewKnowledgeArea(expectedKnowledgeArea1.parentId);
+
+        expect(cancelModalSpy).not.toHaveBeenCalled();
+        expect(component['selectedKnowledgeArea']).toEqual(expectedKnowledgeArea1);
+        expect(component['isEditing']).toBeTrue();
+
+        component.openNewKnowledgeArea(expectedKnowledgeArea2.parentId);
+        expect(cancelModalSpy).toHaveBeenCalled();
+        expect(component['selectedKnowledgeArea']).toEqual(expectedKnowledgeArea2);
+    });
+
     it('should select knowledgeArea', () => {
         const expectedKnowledgeArea = createKnowledgeAreaDTO(1, 'title1', 't1');
         const expectedKnowledgeArea2 = createKnowledgeAreaDTO(2, 'title2', 't2');
@@ -489,6 +506,34 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(createSpy).toHaveBeenCalled();
         const knowledgeAreaMap = component['knowledgeAreaMap'];
         expect(knowledgeAreaMap.size).toBe(2);
+        expect(knowledgeAreaMap.get(5)).toEqual(expectedKnowledgeAreaInTree);
+    });
+
+    it('should hide created knowledgeArea if it is not in the filter', () => {
+        component['knowledgeAreaFilter'] = { id: 2 };
+        const tree: KnowledgeAreaDTO[] = [
+            {
+                id: 1,
+                title: 'title',
+                children: [{ id: 2, title: 'ka2' }],
+            },
+        ];
+        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+
+        //important that this has no id, so we create!
+        const knowledgeAreaToCreate: KnowledgeAreaDTO = { title: 'ka1', parentId: 1 };
+        const createdKnowledgeArea: KnowledgeAreaDTO = { id: 5, ...knowledgeAreaToCreate };
+        const expectedKnowledgeAreaInTree = convertToKnowledgeAreaForTree(createdKnowledgeArea, false, 1);
+        const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
+        const createSpy = jest.spyOn(adminStandardizedCompetencyService, 'createKnowledgeArea');
+        createSpy.mockReturnValue(of(new HttpResponse({ body: createdKnowledgeArea })));
+        componentFixture.detectChanges();
+
+        component.saveKnowledgeArea(knowledgeAreaToCreate);
+
+        expect(createSpy).toHaveBeenCalled();
+        const knowledgeAreaMap = component['knowledgeAreaMap'];
+        expect(knowledgeAreaMap.size).toBe(3);
         expect(knowledgeAreaMap.get(5)).toEqual(expectedKnowledgeAreaInTree);
     });
 
