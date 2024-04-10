@@ -13,7 +13,7 @@
         <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()" />
         <jhi-documentation-button [type]="documentationType" class="information-button" />
     </div>
-    @if (course && !isCodeOfConductAccepted) {
+    @if (course && isCodeOfConductAccepted === false) {
         <div>
             <jhi-course-conversations-code-of-conduct [course]="course!" />
             <button id="acceptCodeOfConductButton" class="btn btn-primary" type="button" (click)="acceptCodeOfConduct()">
