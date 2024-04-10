@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,7 +163,9 @@ public class ProgrammingExerciseGradingService {
         try {
             ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
             var buildResult = ciResultService.convertBuildResult(requestBody);
+
             checkCorrectBranchElseThrow(participation, buildResult);
+            checkHasCommitHashElseThrow(buildResult);
 
             ProgrammingExercise exercise = participation.getProgrammingExercise();
 
@@ -236,6 +239,18 @@ public class ProgrammingExerciseGradingService {
             if (!Objects.equals(branchName, participationDefaultBranch)) {
                 throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
             }
+        }
+    }
+
+    /**
+     * Build notifications need to provide an assignment commit hash to find the related submission.
+     * If the information is missing, the result will not be processed further.
+     *
+     * @param buildResult The build result received from the CI system.
+     */
+    private void checkHasCommitHashElseThrow(final AbstractBuildResultNotificationDTO buildResult) {
+        if (StringUtils.isEmpty(buildResult.getCommitHash(SubmissionType.MANUAL))) {
+            throw new IllegalArgumentException("The provided result does not specify the assignment commit hash. The result will not get processed.");
         }
     }
 
