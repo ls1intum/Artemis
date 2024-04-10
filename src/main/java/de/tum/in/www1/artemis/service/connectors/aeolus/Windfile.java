@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 
 /**
  * Represents a windfile, the definition file for an aeolus build plan that
- * can then be used to generate a Bamboo build plan or a Jenkinsfile.
+ * can then be used to generate a Jenkinsfile.
  */
 public class Windfile {
 

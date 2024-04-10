@@ -119,7 +119,7 @@ public class UriService {
      * Gets the project key from the given URI
      * <p>
      * Examples:
-     * https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> EIST2016RME
+     * https://ga42xab@https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git --> TESTADAPTER
      * http://localhost:8080/git/TESTCOURSE1TESTEX1/testcourse1testex1-student1.git --> TESTCOURSE1TESTEX1
      *
      * @param uri The complete repository uri (including protocol, host and the complete path)
@@ -143,7 +143,7 @@ public class UriService {
 
     /**
      * Gets the plain URI from the given repository URI,
-     * https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> https://bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+     * https://username@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username --> https://artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username
      *
      * @param repositoryUri The repository uri object
      * @return The plain URI
