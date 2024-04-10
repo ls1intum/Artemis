@@ -367,7 +367,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(competencies2).toHaveLength(2);
     });
 
-    it('should select knoweldgeArea', () => {
+    it('should select knowledgeArea', () => {
         const expectedKnowledgeArea = createKnowledgeAreaDTO(1, 'title1', 't1');
         const expectedKnowledgeArea2 = createKnowledgeAreaDTO(2, 'title2', 't2');
         const cancelModalSpy = jest.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
@@ -375,7 +375,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         component['isEditing'] = false;
         component.selectKnowledgeArea(expectedKnowledgeArea);
         expect(cancelModalSpy).not.toHaveBeenCalled();
-        expect(component['selectKnowledgeArea']).toEqual(expectedKnowledgeArea);
+        expect(component['selectedKnowledgeArea']).toEqual(expectedKnowledgeArea);
 
         //nothing should happen if the same competency is selected twice
         component['isEditing'] = true;
@@ -384,7 +384,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
         component.selectKnowledgeArea(expectedKnowledgeArea2);
         expect(cancelModalSpy).toHaveBeenCalled();
-        expect(component['selectKnowledgeArea']).toEqual(expectedKnowledgeArea2);
+        expect(component['selectedKnowledgeArea']).toEqual(expectedKnowledgeArea2);
     });
 
     it('should close knowledgeArea', () => {
