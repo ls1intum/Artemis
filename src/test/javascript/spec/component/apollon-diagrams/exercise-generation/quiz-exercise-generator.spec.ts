@@ -2,13 +2,18 @@ import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { Selection, UMLModel } from '@ls1intum/apollon';
+import { Selection, UMLModel, UMLModelElement, findElement } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
+import {
+    computeDropLocation,
+    generateDragAndDropItemForElement,
+    generateDragAndDropQuizExercise,
+} from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
+import * as SVGRendererAPI from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -17,6 +22,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
+import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -81,5 +87,72 @@ describe('QuizExercise Generator', () => {
         expect(generatedQuestion.dropLocations).toHaveLength(selectedElements.length + selectedRelationships.length);
         // if there are no similar elements -> amount of correct mappings = interactive elements
         expect(generatedQuestion.correctMappings).toHaveLength(selectedElements.length + selectedRelationships.length);
+    });
+
+    it('computeDropLocation with totalSize x and y coordinates', async () => {
+        const elementLocation = { x: 20, y: 20, width: 400, height: 500 };
+        const totalSize = { x: 10, y: 10, width: 400, height: 500 };
+
+        const dropLocation = computeDropLocation(elementLocation, totalSize);
+
+        expect(dropLocation.posX).toBe(5);
+        expect(dropLocation.posY).toBe(4);
+        expect(dropLocation.width).toBe(200);
+        expect(dropLocation.height).toBe(200);
+    });
+
+    it('computeDropLocation without totalSize x and y coordinates', async () => {
+        const elementLocation = { x: 10, y: 20, width: 400, height: 500 };
+        const totalSize = { width: 400, height: 500 };
+
+        const dropLocation = computeDropLocation(elementLocation, totalSize);
+
+        expect(dropLocation.posX).toBe(5);
+        expect(dropLocation.posY).toBe(8);
+        expect(dropLocation.width).toBe(200);
+        expect(dropLocation.height).toBe(200);
+    });
+
+    it('computeDropLocation with negative element location coordinates', async () => {
+        const elementLocation = { x: -10, y: -10, width: 400, height: 500 };
+        const totalSize = { x: 10, y: 10, width: 400, height: 500 };
+
+        const dropLocation = computeDropLocation(elementLocation, totalSize);
+
+        expect(dropLocation.posX).toBe(-10);
+        expect(dropLocation.posY).toBe(-8);
+        expect(dropLocation.width).toBe(200);
+        expect(dropLocation.height).toBe(200);
+    });
+
+    it('generateDragAndDropItemForElement', async () => {
+        jest.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob([]));
+
+        const umlModel: UMLModel = testClassDiagram as unknown as UMLModel;
+
+        const umlModelElement: UMLModelElement = findElement(umlModel, 'fea23cbc-8df0-4dcc-9d7a-eb86fbb2ce9d')!;
+
+        const fileMap = new Map<string, File>();
+
+        const dragAndDropMapping: DragAndDropMapping = await generateDragAndDropItemForElement(
+            umlModelElement,
+            umlModel,
+            {
+                height: 400,
+                width: 400,
+            },
+            fileMap,
+        );
+
+        const expectedFileName = `element-${umlModelElement.id}.png`;
+
+        expect(fileMap.get(expectedFileName)).toBeDefined();
+        expect(dragAndDropMapping.dragItem?.pictureFilePath).toEqual(expectedFileName);
+        expect(dragAndDropMapping.dropLocation?.posX).toBe(292.5);
+        expect(dragAndDropMapping.dropLocation?.posY).toBe(207.5);
+        expect(dragAndDropMapping.dropLocation?.width).toBe(114.5);
+        expect(dragAndDropMapping.dropLocation?.height).toBe(30);
+
+        jest.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReset();
     });
 });

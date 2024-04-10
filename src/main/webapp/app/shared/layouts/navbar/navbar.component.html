@@ -292,6 +292,14 @@
                             <span jhiTranslate="global.menu.admin.lti"></span>
                         </a>
                     }
+                    @if (standardizedCompetenciesEnabled) {
+                        <li>
+                            <a class="dropdown-item" routerLink="/admin/standardized-competencies" routerLinkActive="active" (click)="collapseNavbar()">
+                                <fa-icon [icon]="faFlag" [fixedWidth]="true" />
+                                <span jhiTranslate="global.menu.admin.standardizedCompetencies"></span>
+                            </a>
+                        </li>
+                    }
                     <!-- jhipster-needle-add-element-to-admin-menu - JHipster will add entities to the admin menu here -->
                 </ul>
             </li>
