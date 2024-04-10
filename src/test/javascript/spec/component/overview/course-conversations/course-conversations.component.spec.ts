@@ -21,7 +21,7 @@ import { CourseConversationsCodeOfConductComponent } from 'app/overview/course-c
 import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { FormsModule } from 'app/forms/forms.module';
+import { FormsModule } from '@angular/forms';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
