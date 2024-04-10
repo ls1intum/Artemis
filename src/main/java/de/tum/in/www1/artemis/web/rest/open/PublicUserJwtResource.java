@@ -22,7 +22,11 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.UserNotActivatedException;
@@ -85,7 +89,7 @@ public class PublicUserJwtResource {
             return ResponseEntity.ok().build();
         }
         catch (CaptchaRequiredException ex) {
-            log.warn("CAPTCHA required in JIRA during login for user {}", loginVM.getUsername());
+            log.warn("CAPTCHA required during login for user {}", loginVM.getUsername());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", ex.getMessage()).build();
         }
     }
