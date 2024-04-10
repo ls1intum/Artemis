@@ -16,7 +16,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { SimpleChange } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
-import { CreateFileChange, DeleteFileChange, EditorState, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 describe('CodeEditorMonacoComponent', () => {
     let comp: CodeEditorMonacoComponent;
@@ -109,6 +109,24 @@ describe('CodeEditorMonacoComponent', () => {
         expect(element).not.toBeNull();
         expect(element!.hidden).toBeFalse();
         expect(comp.editor.isReadOnly()).toBeFalse();
+    });
+
+    it.each([
+        [() => {}, false],
+        [() => (comp.isTutorAssessment = true), true],
+        [() => (comp.disableActions = true), true],
+        [() => (comp.commitState = CommitState.CONFLICT), true],
+        [() => (comp.selectedFile = undefined), true],
+        [() => (comp.fileSession['file'].loadingError = true), true],
+    ])('should correctly lock the editor on changes', (setup: () => void, shouldLock: boolean) => {
+        comp.selectedFile = 'file';
+        comp.fileSession = {
+            [comp.selectedFile]: { code: 'some code', cursor: { row: 0, column: 0 }, loadingError: false },
+        };
+        fixture.detectChanges();
+        setup(comp);
+        comp.ngOnChanges({});
+        expect(comp.editorLocked).toBe(shouldLock);
     });
 
     it('should update the file session and notify when the file content changes', () => {
