@@ -100,6 +100,43 @@ public class AdminStandardizedCompetencyResource {
     }
 
     /**
+     * PUT api/admin/standardized-competencies/{competencyId} : Updates an existing standardized competency
+     *
+     * @param competencyId the id of the competency that should be updated
+     * @param competency   the updated competency
+     * @return the ResponseEntity with status 200 (OK) and with body the updated standardized competency
+     */
+    @PutMapping("standardized-competencies/{competencyId}")
+    @EnforceAdmin
+    public ResponseEntity<StandardizedCompetency> updateStandardizedCompetency(@PathVariable long competencyId, @RequestBody StandardizedCompetency competency) {
+        log.debug("REST request to update standardized competency : {}", competency);
+
+        if (competencyId != competency.getId()) {
+            throw new BadRequestException("The competency id in the body and path do not match");
+        }
+
+        var persistedCompetency = standardizedCompetencyService.updateStandardizedCompetency(competency);
+
+        return ResponseEntity.ok(persistedCompetency);
+    }
+
+    /**
+     * DELETE api/admin/standardized-competencies/{competencyId} : Deletes a standardized competency
+     *
+     * @param competencyId the id of the competency that should be deleted
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("standardized-competencies/{competencyId}")
+    @EnforceAdmin
+    public ResponseEntity<Void> deleteStandardizedCompetency(@PathVariable long competencyId) {
+        log.debug("REST request to delete standardized competency : {}", competencyId);
+
+        standardizedCompetencyService.deleteStandardizedCompetencyElseThrow(competencyId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * POST api/admin/standardized-competencies/knowledge-areas : Creates a new knowledge area
      *
      * @param knowledgeArea the knowledge area that should be created
