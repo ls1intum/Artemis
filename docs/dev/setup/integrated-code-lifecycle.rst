@@ -138,6 +138,12 @@ You can also use Docker Compose to set up Integrated Code Lifecycle. Using the f
 
     docker compose -f docker/artemis-dev-local-vc-local-ci-mysql.yml up
 
+You can also use the following command to start the webapp container along with the Artemis and MySQL containers:
+
+.. code-block:: bash
+
+    docker compose -f docker/webapp-artemis-localci-localvc-mysql-dev.yml up
+
 .. HINT::
     Unix systems: When running the Artemis container on a Unix system, you will have to give the user running the container permission to access the Docker socket by adding them to the ``docker`` group. You can do this by changing the value of ``services.artemis-app.group_add`` in the ``docker/artemis-dev-local-vc-local-ci-mysql.yml`` file to the group ID of the ``docker`` group on your system. You can find the group ID by running ``getent group docker | cut -d: -f3``. The default value is ``999``.
 
