@@ -69,14 +69,18 @@ describe('ParticipationSubmissionComponent', () => {
     let debugElement: DebugElement;
     let router: Router;
     const route = () => ({ params: of({ participationId: 1, exerciseId: 42 }) });
-    // Template for Bitbucket commit hash url
-    const commitHashURLTemplate = 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
+    // Template for commit hash url
+    const commitHashURLTemplate = 'https://gitlab.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
 
     const result1 = { id: 44 } as Result;
     const result2 = { id: 45 } as Result;
     const participation1 = { id: 66 } as Participation;
     const submissionWithTwoResults = { id: 77, results: [result1, result2], participation: participation1 } as Submission;
-    const submissionWithTwoResults2 = { id: 78, results: [result1, result2], participation: participation1 } as Submission;
+    const submissionWithTwoResults2 = {
+        id: 78,
+        results: [result1, result2],
+        participation: participation1,
+    } as Submission;
 
     const programmingExercise1 = { id: 100, type: ExerciseType.PROGRAMMING } as Exercise;
     const modelingExercise = { id: 100, type: ExerciseType.MODELING } as Exercise;
@@ -205,7 +209,11 @@ describe('ParticipationSubmissionComponent', () => {
                 participation: templateParticipation,
             },
         ] as ProgrammingSubmission[];
-        const programmingExercise = { type: ExerciseType.PROGRAMMING, projectKey: 'SUBMISSION1', templateParticipation } as ProgrammingExercise;
+        const programmingExercise = {
+            type: ExerciseType.PROGRAMMING,
+            projectKey: 'SUBMISSION1',
+            templateParticipation,
+        } as ProgrammingExercise;
         const findWithTemplateAndSolutionParticipationStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
         findWithTemplateAndSolutionParticipationStub.mockReturnValue(of(new HttpResponse({ body: programmingExercise })));
 
@@ -245,7 +253,11 @@ describe('ParticipationSubmissionComponent', () => {
                 participation: solutionParticipation,
             },
         ] as ProgrammingSubmission[];
-        const programmingExercise = { type: ExerciseType.PROGRAMMING, projectKey: 'SUBMISSION1', solutionParticipation } as ProgrammingExercise;
+        const programmingExercise = {
+            type: ExerciseType.PROGRAMMING,
+            projectKey: 'SUBMISSION1',
+            solutionParticipation,
+        } as ProgrammingExercise;
         const findWithTemplateAndSolutionParticipationStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
         findWithTemplateAndSolutionParticipationStub.mockReturnValue(of(new HttpResponse({ body: programmingExercise })));
 
