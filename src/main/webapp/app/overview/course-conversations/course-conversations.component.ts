@@ -10,6 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { PageType } from 'app/shared/metis/metis.util';
 import { faFilter, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-course-conversations',
@@ -30,6 +31,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isCodeOfConductAccepted: boolean = false;
     isCodeOfConductPresented: boolean = false;
 
+    readonly documentationType: DocumentationType = 'Communications';
     readonly ButtonType = ButtonType;
     searchText?: string;
     // Icons

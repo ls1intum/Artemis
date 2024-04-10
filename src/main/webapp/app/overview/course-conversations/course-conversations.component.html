@@ -11,6 +11,7 @@
         />
         <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()" />
         <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()" />
+        <jhi-documentation-button [type]="documentationType" class="information-button" />
     </div>
     @if (course && !isCodeOfConductAccepted) {
         <div>

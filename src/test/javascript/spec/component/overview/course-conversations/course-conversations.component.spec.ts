@@ -22,6 +22,7 @@ import { MockMetisConversationService } from '../../../helpers/mocks/service/moc
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule } from '@angular/forms';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -44,6 +45,7 @@ examples.forEach((activeConversation) => {
                     LoadingIndicatorContainerStubComponent,
                     MockComponent(ConversationSelectionSidebarComponent),
                     MockComponent(ConversationHeaderComponent),
+                    MockComponent(DocumentationButtonComponent),
                     MockComponent(ConversationMessagesComponent),
                     MockComponent(ConversationThreadSidebarComponent),
                     MockComponent(CourseConversationsCodeOfConductComponent),
