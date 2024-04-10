@@ -56,7 +56,6 @@ class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationInde
 
             // Signature as JSON.
             var actualSignature = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(signatures);
-            ;
             var expectedSignature = readPlaceholderText(
                     Objects.requireNonNull(NotificationPlaceholderSignatureTest.class.getClassLoader().getResource("placeholder-signatures.json")));
 
