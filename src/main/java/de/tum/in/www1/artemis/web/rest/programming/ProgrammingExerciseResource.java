@@ -1,25 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.AUXILIARY_REPOSITORY;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.BUILD_LOG_STATISTICS;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.GENERATE_TESTS;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.GET_FOR_COURSE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROBLEM;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISES;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.REEVALUATE_EXERCISE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.RESET;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.SETUP;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.SOLUTION_REPOSITORY_FILES_WITH_CONTENT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.SOLUTION_REPOSITORY_FILE_NAMES;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.TASKS;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.TEMPLATE_REPOSITORY_FILES_WITH_CONTENT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.TEST_CASE_STATE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.TIMELINE;
 import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.AUXILIARY_REPOSITORY;
 import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.BUILD_LOG_STATISTICS;
 import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS;

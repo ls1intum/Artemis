@@ -18,9 +18,9 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 
-class VersioningTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class VersioningTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private List<Integer> apiVersions;
@@ -32,6 +32,7 @@ class VersioningTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
      * Tests for each controller if there exist two methods representing the same API route while the annotated
      * version ranges collide
      */
+    // TODO: Find solution to test this for all different profiles
     @Test
     void testDuplicateRoutes() {
         var requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
@@ -98,7 +99,7 @@ class VersioningTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private void checkCollisionForEndpoints(List<Method> methodList) {
         while (!methodList.isEmpty()) {
-            var method = methodList.remove(0);
+            var method = methodList.removeFirst();
 
             VersionRangesRequestCondition condition = new VersionRangesRequestCondition(apiVersions, getVersionRangeFromMethod(method));
 
