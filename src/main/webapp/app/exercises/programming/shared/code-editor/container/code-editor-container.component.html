@@ -68,11 +68,13 @@
                 [editorState]="editorState"
                 [course]="course"
                 [feedbacks]="participation?.results?.[0]?.feedbacks ?? []"
+                [disableActions]="!editable"
                 [isTutorAssessment]="isTutorAssessment"
                 [selectedFile]="selectedFile"
                 [buildAnnotations]="annotations"
                 [sessionId]="participation?.id ?? 'test'"
                 (onFileContentChange)="onFileContentChange($event)"
+                (onError)="onError($event)"
             />
         }
     </ng-container>

@@ -8,7 +8,7 @@ import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.modul
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
-import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -129,7 +129,7 @@ describe('CodeEditorMonacoComponent', () => {
         });
     });
 
-    it('should load a selected file only if it is not present yet', async () => {
+    it('should load a selected file if it is not present yet', async () => {
         const fileToLoad = { fileName: 'file-to-load', fileContent: 'some code' };
         const loadedFileSubject = new BehaviorSubject(fileToLoad);
         loadFileFromRepositoryStub.mockReturnValue(loadedFileSubject);
@@ -150,6 +150,39 @@ describe('CodeEditorMonacoComponent', () => {
         });
         expect(setPositionStub).toHaveBeenCalledTimes(2);
         expect(changeModelStub).toHaveBeenCalledTimes(2);
+    });
+
+    it('should load a selected file after a loading error', async () => {
+        const fileToLoad = { fileName: 'file-to-load', fileContent: 'some code' };
+        // File session after loading fails
+        const fileSession = { [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { row: 0, column: 0 } } };
+        const loadedFileSubject = new BehaviorSubject(fileToLoad);
+        loadFileFromRepositoryStub.mockReturnValue(loadedFileSubject);
+        comp.fileSession = fileSession;
+        comp.selectedFile = fileToLoad.fileName;
+        fixture.detectChanges();
+        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, fileToLoad, false) });
+        expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
+        expect(comp.fileSession).toEqual({ [fileToLoad.fileName]: { code: fileToLoad.fileContent, loadingError: false, cursor: { row: 0, column: 0 } } });
+    });
+
+    it.each([
+        [new ConnectionError(), 'loadingFailedInternetDisconnected'],
+        [new Error(), 'loadingFailed'],
+    ])('should emit the correct error and update the file session when loading a file fails', async (error: Error, errorCode: string) => {
+        const fileToLoad = 'file-to-load';
+        const errorCallbackStub = jest.fn();
+        const loadFileSubject = new BehaviorSubject(undefined);
+        loadFileFromRepositoryStub.mockReturnValue(loadFileSubject);
+        loadFileSubject.error(error);
+        comp.fileSession = {};
+        comp.selectedFile = fileToLoad;
+        comp.onError.subscribe(errorCallbackStub);
+        fixture.detectChanges();
+        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, fileToLoad, false) });
+        expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
+        expect(errorCallbackStub).toHaveBeenCalledExactlyOnceWith(errorCode);
+        expect(comp.fileSession).toEqual({ [fileToLoad]: { code: '', loadingError: true, cursor: { row: 0, column: 0 } } });
     });
 
     it('should discard local changes when the editor is refreshed', async () => {
