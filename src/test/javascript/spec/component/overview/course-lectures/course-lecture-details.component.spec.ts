@@ -8,8 +8,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
-import { of } from 'rxjs';
-import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { BehaviorSubject, of } from 'rxjs';
+import { CourseLectureDetailsComponent } from '../../../../../../main/webapp/app/overview/course-lectures/course-lecture-details.component';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
@@ -42,6 +42,9 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ScienceService } from 'app/shared/science/science.service';
 import * as DownloadUtils from 'app/shared/util/download.util';
+import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -51,6 +54,9 @@ describe('CourseLectureDetailsComponent', () => {
     let lectureUnit2: AttachmentUnit;
     let lectureUnit3: TextUnit;
     let debugElement: DebugElement;
+    let profileService: ProfileService;
+
+    let getProfileInfoMock: jest.SpyInstance;
 
     beforeEach(() => {
         const releaseDate = dayjs('18-03-2020', 'DD-MM-YYYY');
@@ -118,6 +124,7 @@ describe('CourseLectureDetailsComponent', () => {
                 MockProvider(AlertService),
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -133,6 +140,13 @@ describe('CourseLectureDetailsComponent', () => {
                 fixture = TestBed.createComponent(CourseLectureDetailsComponent);
                 courseLecturesDetailsComponent = fixture.componentInstance;
                 debugElement = fixture.debugElement;
+
+                // mock profileService
+                profileService = fixture.debugElement.injector.get(ProfileService);
+                getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
+                const profileInfo = { inProduction: false } as ProfileInfo;
+                const profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
+                getProfileInfoMock.mockReturnValue(profileInfoSubject);
             });
     });
 
@@ -142,8 +156,8 @@ describe('CourseLectureDetailsComponent', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-
         expect(courseLecturesDetailsComponent).not.toBeNull();
+        courseLecturesDetailsComponent.ngOnDestroy();
     });
 
     it('should display all three lecture units: 2 attachment units and 1 text unit', fakeAsync(() => {

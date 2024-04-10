@@ -1,13 +1,19 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static org.mockito.Mockito.*;
-import static tech.jhipster.config.JHipsterConstants.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
@@ -25,7 +31,11 @@ import com.offbytwo.jenkins.JenkinsServer;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.connector.JenkinsRequestMockProvider;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
@@ -36,7 +46,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 
 @ResourceLock("AbstractSpringIntegrationJenkinsGitlabTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "gitlab", "jenkins", "athena", "scheduling", "lti", "aeolus" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "gitlab", "jenkins", "athena", "scheduling", "lti", "aeolus", "apollon" })
 @TestPropertySource(properties = { "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
         "info.guided-tour.course-group-editors=artemis-artemistutorial-editors", "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors",
         "artemis.user-management.use-external=false", "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$" })
@@ -222,6 +232,21 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         // Step 2b)
         jenkinsRequestMockProvider.mockConfigureBuildPlan(exercise, username);
         // Note: Step 2c) is not needed in the Jenkins setup
+    }
+
+    public void mockConnectorRequestsForStartPractice(ProgrammingExercise exercise, String username, Set<User> users) throws IOException, URISyntaxException, GitLabApiException {
+        // Step 1a)
+        gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
+        // Step 1c)
+        gitlabRequestMockProvider.mockConfigureRepository(exercise, users, true);
+        // Step 2a)
+        jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
+        // Step 2b)
+        // Note: no need to mock empty commit (Step 2c) because this is done on a git repository
+        mockUpdatePlanRepositoryForParticipation(exercise, username);
+
+        // Mock Default Branch
+        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
     }
 
     @Override
@@ -480,5 +505,35 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockUserExists(String username) throws Exception {
         gitlabRequestMockProvider.mockUserExists(username, true);
+    }
+
+    /**
+     * Configures the mock requests needed to delete a programming exercise in an exam.
+     *
+     * @param programmingExercise the programming exercise to delete
+     * @param registeredUsers     the users registered to the exam (users with repos)
+     * @throws Exception exception
+     */
+    public void mockDeleteProgrammingExercise(ProgrammingExercise programmingExercise, Set<User> registeredUsers) throws Exception {
+        final String projectKey = programmingExercise.getProjectKey();
+
+        List<String> studentLogins = registeredUsers.stream().map(User::getLogin).toList();
+        jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey, false);
+        List<String> planNames = new ArrayList<>(studentLogins);
+        planNames.add(TEMPLATE.getName());
+        planNames.add(SOLUTION.getName());
+        for (final String planName : planNames) {
+            jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+        List<String> repoNames = new ArrayList<>(studentLogins);
+
+        for (final var repoType : RepositoryType.values()) {
+            gitlabRequestMockProvider.mockDeleteRepository(programmingExercise.generateRepositoryName(repoType), false);
+        }
+
+        for (final var repoName : repoNames) {
+            gitlabRequestMockProvider.mockDeleteRepository((projectKey + "-" + repoName).toLowerCase(), false);
+        }
+        gitlabRequestMockProvider.mockDeleteProject(projectKey, false);
     }
 }

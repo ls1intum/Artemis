@@ -20,13 +20,6 @@ Authentication is handled by an external user management system (UMS).
 
     Top-Level Design
 
-While Artemis includes generic adapters to these three external systems with a defined protocol that can be instantiated
-to connect to any VCS, CIS or UMS, it also provides 3 concrete implementations for these adapters to connect to:
-
-1. **VCS:** Atlassian Bitbucket Server
-2. **CIS:** Atlassian Bamboo Server
-3. **UMS:** Atlassian JIRA Server (more specifically Atlassian Crowd on the JIRA Server)
-
 .. _deployment:
 
 Deployment

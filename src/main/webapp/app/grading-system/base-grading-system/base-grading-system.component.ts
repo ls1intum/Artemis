@@ -710,7 +710,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      */
     async onCSVFileSelect(event: any) {
         if (event.target.files.length > 0) {
-            await this.readGradingStepsFromCSVFile(event, event.target.files[0]);
+            await this.readGradingStepsFromCSVFile(event.target.files[0]);
             this.lowerBoundInclusivity = true;
             this.setInclusivity();
             this.maxPoints = 100;
@@ -722,10 +722,9 @@ export abstract class BaseGradingSystemComponent implements OnInit {
 
     /**
      * Import grade steps from csv file
-     * @param event the read event
      * @param csvFile the csv file
      */
-    private async readGradingStepsFromCSVFile(event: any, csvFile: File) {
+    private async readGradingStepsFromCSVFile(csvFile: File) {
         let csvGradeSteps: CsvGradeStep[] = [];
         try {
             csvGradeSteps = await this.parseCSVFile(csvFile);

@@ -2,16 +2,19 @@ package de.tum.in.www1.artemis.service.connectors.ci.notification.dto;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.BuildLogParseUtils;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
@@ -36,11 +39,8 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     private final List<TestSuiteDTO> results;
 
-    // For an unknown reason, the deserialization only works with this annotation
-    @JsonProperty("staticCodeAnalysisReports")
     private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
 
-    // For an unknown reason, the deserialization only works with this annotation
     private final List<TestwiseCoverageReportDTO> testwiseCoverageReport;
 
     private final ZonedDateTime runDate;
@@ -109,24 +109,24 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     }
 
     @Override
-    public Optional<String> getCommitHashFromAssignmentRepo() {
+    protected String getCommitHashFromAssignmentRepo() {
         final var testRepoNameSuffix = RepositoryType.TESTS.getName();
         final var firstCommit = getCommits().stream().filter(commit -> !commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
-        return firstCommit.map(CommitDTO::hash);
+        return firstCommit.map(CommitDTO::hash).orElse(null);
     }
 
     @Override
-    public Optional<String> getCommitHashFromTestsRepo() {
+    protected String getCommitHashFromTestsRepo() {
         final var testRepoNameSuffix = RepositoryType.TESTS.getName();
         final var firstCommit = getCommits().stream().filter(commit -> commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
-        return firstCommit.map(CommitDTO::hash);
+        return firstCommit.map(CommitDTO::hash).orElse(null);
     }
 
     @Override
-    public Optional<String> getBranchNameFromAssignmentRepo() {
+    public String getBranchNameFromAssignmentRepo() {
         final var testRepoNameSuffix = RepositoryType.TESTS.getName();
         final var firstCommit = getCommits().stream().filter(commit -> !commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
-        return firstCommit.map(CommitDTO::branchName);
+        return firstCommit.map(CommitDTO::branchName).orElse(null);
     }
 
     private int getSum() {
