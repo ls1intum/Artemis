@@ -121,6 +121,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -312,6 +313,9 @@ public class ProgrammingExerciseTestService {
     private MockDelegate mockDelegate;
 
     private String userPrefix;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     public void setupTestUsers(String userPrefix, int additionalStudents, int additionalTutors, int additionalEditors, int additionalInstructors) {
         this.userPrefix = userPrefix;
@@ -1931,7 +1935,7 @@ public class ProgrammingExerciseTestService {
 
         // start exercises
         Set<Long> peIds = exam.getExerciseGroups().get(6).getExercises().stream().map(Exercise::getId).collect(Collectors.toSet());
-        List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllWithTemplateAndSolutionParticipationByIdIn(peIds);
+        List<ProgrammingExercise> programmingExercises = programmingExerciseTestRepository.findAllWithTemplateAndSolutionParticipationByIdIn(peIds);
         exam.getExerciseGroups().get(6).setExercises(new HashSet<>(programmingExercises));
         for (var exercise : programmingExercises) {
 

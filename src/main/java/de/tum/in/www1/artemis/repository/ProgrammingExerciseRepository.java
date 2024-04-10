@@ -427,9 +427,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     List<ProgrammingExercise> findAllByCourse_TeachingAssistantGroupNameIn(Set<String> groupNames);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
-    List<ProgrammingExercise> findAllWithTemplateAndSolutionParticipationByIdIn(Set<Long> exerciseIds);
-
     // Note: we have to use left join here to avoid issues in the where clause, there can be at most one indirection (e.g. c1.editorGroupName) in the WHERE clause when using "OR"
     // Multiple different indirection in the WHERE clause (e.g. pe.course.instructorGroupName and ex.course.instructorGroupName) would not work
     @Query("""
@@ -829,5 +826,4 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             save(exercise);
         }
     }
-
 }
