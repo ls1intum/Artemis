@@ -27,7 +27,13 @@ Generate programming exercise
     - The guided mode has been removed. We now introduced a validation bar to navigate through sections and help the user validation the form.
       For more information, watch the video below.
 
-    Todo: Upload new screen cast
+    |
+
+    .. raw:: html
+
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/45894?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+            Watch this video on TUM-Live.
+        </iframe>
 
 - Artemis provides various options to customize programming exercises:
 
