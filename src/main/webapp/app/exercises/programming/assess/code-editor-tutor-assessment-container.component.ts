@@ -307,7 +307,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param selectedFile name of the file which is currently displayed
      */
     onFileLoad(selectedFile: string): void {
-        if (selectedFile && this.codeEditorContainer?.selectedFile) {
+        if (selectedFile && this.codeEditorContainer?.selectedFile && this.codeEditorContainer.aceEditor) {
             // When the selectedFile is not part of the template, then this is a new file and all lines in code editor are highlighted
             if (!this.templateFileSession[selectedFile]) {
                 const lastLine = this.codeEditorContainer.aceEditor.editorSession.getLength() - 1;
@@ -343,7 +343,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private highlightLines(firstLine: number, lastLine: number) {
-        this.codeEditorContainer.aceEditor.highlightLines(firstLine, lastLine, 'diff-newLine', 'gutter-diff-newLine');
+        if (this.codeEditorContainer?.aceEditor) {
+            this.codeEditorContainer.aceEditor.highlightLines(firstLine, lastLine, 'diff-newLine', 'gutter-diff-newLine');
+        }
     }
 
     /**

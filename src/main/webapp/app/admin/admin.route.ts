@@ -17,6 +17,7 @@ import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.compone
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { ltiConfigurationRoute } from 'app/admin/lti-configuration/lti-configuration.route';
 import { BuildAgentsComponent } from 'app/localci/build-agents/build-agents.component';
+import { StandardizedCompetencyManagementComponent } from 'app/admin/standardized-competencies/standardized-competency-management.component';
 
 export const adminState: Routes = [
     {
@@ -98,6 +99,13 @@ export const adminState: Routes = [
                     pageTitle: 'artemisApp.buildAgents.title',
                 },
                 canActivate: [LocalCIGuard],
+            },
+            {
+                path: 'standardized-competencies',
+                component: StandardizedCompetencyManagementComponent,
+                data: {
+                    pageTitle: 'artemisApp.standardizedCompetency.title',
+                },
             },
             {
                 path: 'privacy-statement',
