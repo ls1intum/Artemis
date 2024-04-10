@@ -89,7 +89,7 @@ public class PublicUserJwtResource {
             return ResponseEntity.ok().build();
         }
         catch (CaptchaRequiredException ex) {
-            log.warn("CAPTCHA required in JIRA during login for user {}", loginVM.getUsername());
+            log.warn("CAPTCHA required during login for user {}", loginVM.getUsername());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", ex.getMessage()).build();
         }
     }

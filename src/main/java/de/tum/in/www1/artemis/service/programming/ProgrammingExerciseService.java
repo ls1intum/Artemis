@@ -229,7 +229,6 @@ public class ProgrammingExerciseService {
      * <li>All repositories (test, exercise, solution)</li>
      * <li>The template and solution participation</li>
      * <li>VCS webhooks</li>
-     * <li>Bamboo build plans</li>
      * </ul>
      * The exercise gets set up in the following order:
      * <ol>
