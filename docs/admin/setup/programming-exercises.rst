@@ -237,6 +237,8 @@ Additionally, on the CI runner host you will have to create the `artemis-restric
    docker network create --opt com.docker.network.bridge.name=artemis-restr artemis-restricted
    iptables -I DOCKER-USER -i artemis-restr -j DROP
    iptables -I DOCKER-USER -i artemis-restr -d $IP_OF_ARTEMIS_EXAMPLE_COM_CACHE -p tcp --dport 8443 -j ACCEPT
+
+
 .. _dependecies-docker-volumes:
 
 Caching with Docker Volumes
