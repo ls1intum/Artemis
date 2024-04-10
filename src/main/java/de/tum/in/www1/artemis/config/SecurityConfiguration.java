@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
@@ -192,10 +191,6 @@ public class SecurityConfiguration {
                 .requestMatchers("/api/{version:v\\d+}/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/{version:v\\d+}/public/**").permitAll()
-                // TODO: Remove the following three lines in April 2024 together with LegacyResource
-                .requestMatchers(HttpMethod.POST, "/api/programming-exercises/new-result").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/programming-submissions/*").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*").permitAll()
                 .requestMatchers("/websocket/**").permitAll()
                 .requestMatchers("/.well-known/jwks.json").permitAll()
                 .requestMatchers("/git/**").permitAll()

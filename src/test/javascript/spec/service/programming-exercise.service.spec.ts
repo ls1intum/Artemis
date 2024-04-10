@@ -371,7 +371,7 @@ describe('ProgrammingExercise Service', () => {
             service.lockAllRepositories(exerciseId).subscribe();
         }
         const url = `${resourceUrl}/${exerciseId}/${lockUnlock}-all-repositories`;
-        const req = httpMock.expectOne({ method: 'PUT', url });
+        const req = httpMock.expectOne({ method: 'POST', url });
         req.flush({ body: 'something' });
     });
 

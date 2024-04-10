@@ -448,7 +448,7 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     @Override
-    String getEntityName() {
+    public String getEntityName() {
         return ENTITY_NAME;
     }
 

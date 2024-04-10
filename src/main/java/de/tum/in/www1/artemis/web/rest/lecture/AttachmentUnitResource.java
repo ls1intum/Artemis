@@ -19,7 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -41,8 +41,6 @@ public class AttachmentUnitResource {
     private static final Logger log = LoggerFactory.getLogger(AttachmentUnitResource.class);
 
     private static final String ENTITY_NAME = "attachmentUnit";
-
-    private static final Gson GSON = new Gson();
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
@@ -187,7 +185,7 @@ public class AttachmentUnitResource {
         }
         try {
             String filename = lectureUnitProcessingService.saveTempFileForProcessing(lectureId, file, minutesUntilDeletion);
-            return ResponseEntity.ok().body(GSON.toJson(filename));
+            return ResponseEntity.ok().body(new ObjectMapper().writeValueAsString(filename));
         }
         catch (IOException e) {
             log.error("Could not save file {}", originalFilename, e);
