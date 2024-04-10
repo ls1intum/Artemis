@@ -230,7 +230,7 @@ public class ParticipantScoreScheduleService {
      */
     private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
         long start = System.currentTimeMillis();
-        log.info("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
+        log.debug("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
         try {
             SecurityUtils.setAuthorizationObject();
 
@@ -328,7 +328,7 @@ public class ParticipantScoreScheduleService {
             scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId).hashCode());
         }
         long end = System.currentTimeMillis();
-        log.info("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);
+        log.debug("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);
     }
 
     /**
