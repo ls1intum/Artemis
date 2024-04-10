@@ -86,6 +86,7 @@ import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.ExamSessionService;
+import de.tum.in.www1.artemis.service.exam.ExamUserService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
