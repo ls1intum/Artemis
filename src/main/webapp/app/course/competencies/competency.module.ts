@@ -58,6 +58,6 @@ import { CompetencyRelationGraphComponent } from 'app/course/competencies/compet
         TaxonomySelectComponent,
         CompetencyRelationGraphComponent,
     ],
-    exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent],
+    exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent, TaxonomySelectComponent],
 })
 export class ArtemisCompetenciesModule {}
