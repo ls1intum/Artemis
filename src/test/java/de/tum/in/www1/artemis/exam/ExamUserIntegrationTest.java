@@ -193,10 +193,27 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(exam1.getId());
         // 4 exam users, 3 new and 1 already existing
         assertThat(exam.getExamUsers()).hasSize(4);
-        exam.getExamUsers().forEach(eu -> {
-            assertThat(eu.getStudentImagePath()).isNotNull();
-            assertThat(eu.getStudentImagePath()).isNotNull();
-        });
+        for (ExamUser examUser : exam.getExamUsers()) {
+            assertThat(examUser.getStudentImagePath()).isNotNull();
+            assertThat(request.getFile(examUser.getStudentImagePath(), HttpStatus.OK)).isNotEmpty();
+        }
+
+        // reupload the same file, should not change anything
+
+        // upload exam user images
+        imageUploadResponse = request.performMvcRequest(buildUploadExamUserImages(course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
+        examUsersNotFoundDTO = mapper.readValue(imageUploadResponse.getResponse().getContentAsString(), ExamUsersNotFoundDTO.class);
+
+        assertThat(examUsersNotFoundDTO.numberOfUsersNotFound()).isZero();
+
+        // check if exam users have been updated with the images
+        exam = examRepository.findByIdWithExamUsersElseThrow(exam1.getId());
+        // 4 exam users, 3 new and 1 already existing
+        assertThat(exam.getExamUsers()).hasSize(4);
+        for (ExamUser examUser : exam.getExamUsers()) {
+            assertThat(examUser.getStudentImagePath()).isNotNull();
+            assertThat(request.getFile(examUser.getStudentImagePath(), HttpStatus.OK)).isNotEmpty();
+        }
     }
 
     @Test
