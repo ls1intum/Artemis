@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -16,22 +18,28 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.service.competency.StandardizedCompetencyService;
+import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
 
 /**
  * REST controller for managing {@link StandardizedCompetency} entities.
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/standardized-competencies/")
 public class StandardizedCompetencyResource {
 
     private static final Logger log = LoggerFactory.getLogger(StandardizedCompetencyResource.class);
+
+    private final StandardizedCompetencyService standardizedCompetencyService;
 
     private final StandardizedCompetencyRepository standardizedCompetencyRepository;
 
     private final KnowledgeAreaRepository knowledgeAreaRepository;
 
-    public StandardizedCompetencyResource(StandardizedCompetencyRepository standardizedCompetencyRepository, KnowledgeAreaRepository knowledgeAreaRepository) {
+    public StandardizedCompetencyResource(StandardizedCompetencyService standardizedCompetencyService, StandardizedCompetencyRepository standardizedCompetencyRepository,
+            KnowledgeAreaRepository knowledgeAreaRepository) {
+        this.standardizedCompetencyService = standardizedCompetencyService;
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
         this.knowledgeAreaRepository = knowledgeAreaRepository;
     }
@@ -42,8 +50,7 @@ public class StandardizedCompetencyResource {
      * @param competencyId the id of the standardized competency to get
      * @return the ResponseEntity with status 200 (OK) and with body containing the standardized competency, or with status 404 (Not Found)
      */
-
-    @GetMapping("standardized-competencies/{competencyId}")
+    @GetMapping("{competencyId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<StandardizedCompetency> getStandardizedCompetency(@PathVariable long competencyId) {
         log.debug("REST request to get standardized competency with id : {}", competencyId);
@@ -54,17 +61,32 @@ public class StandardizedCompetencyResource {
     }
 
     /**
+     * GET api/standardized-competencies/for-tree-view : Gets a hierarchical structure of all knowledge areas including their competencies
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body containing the knowledge areas
+     */
+    @GetMapping("for-tree-view")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<KnowledgeAreaDTO>> getAllForTreeView() {
+        log.debug("REST request to all knowledge areas for tree view");
+
+        List<KnowledgeAreaDTO> knowledgeAreas = standardizedCompetencyService.getAllForTreeView();
+
+        return ResponseEntity.ok().body(knowledgeAreas);
+    }
+
+    /**
      * GET api/standardized-competencies/knowledge-areas/{knowledgeAreaId} : Gets a knowledge area with its children and competencies
      *
      * @param knowledgeAreaId the id of the knowledge area to get
      * @return the ResponseEntity with status 200 (OK) and with body containing the knowledge area, or with status 404 (Not Found)
      */
-    @GetMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
+    @GetMapping("knowledge-areas/{knowledgeAreaId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<KnowledgeArea> getKnowledgeArea(@PathVariable long knowledgeAreaId) {
         log.debug("REST request to get knowledge area with id : {}", knowledgeAreaId);
 
-        var knowledgeArea = knowledgeAreaRepository.findByIdWithChildrenAndCompetenciesElseThrow(knowledgeAreaId);
+        var knowledgeArea = knowledgeAreaRepository.findWithChildrenAndCompetenciesByIdElseThrow(knowledgeAreaId);
 
         return ResponseEntity.ok().body(knowledgeArea);
     }
