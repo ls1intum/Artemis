@@ -10,7 +10,7 @@
                     <jhi-checklist-check
                         [checkAttribute]="formStatusSection.valid"
                         [iconColor]="formStatusSection.empty && formStatusSection.valid ? 'var(--bs-gray)' : undefined"
-                        [size]="'sm'"
+                        class="fa-sm"
                     />
                 </div>
                 <a (click)="scrollToHeadline(formStatusSection.title)" class="d-none d-sm-inline link-primary">{{ formStatusSection.title | artemisTranslate }}</a>
