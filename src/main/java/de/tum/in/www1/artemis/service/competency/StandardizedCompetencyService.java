@@ -2,6 +2,11 @@ package de.tum.in.www1.artemis.service.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+
 import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
@@ -13,6 +18,8 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
+import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service for managing {@link StandardizedCompetency} entities.
@@ -66,17 +73,100 @@ public class StandardizedCompetencyService {
     }
 
     /**
-     * Verifies that a standardized competency that should be created is valid or throws a BadRequestException
+     * Updates an existing standardized competency with the provided competency data
+     *
+     * @param competency competency object containing the data to update
+     * @return the updated standardized competency
+     */
+    public StandardizedCompetency updateStandardizedCompetency(StandardizedCompetency competency) {
+        standardizedCompetencyIsValidOrElseThrow(competency);
+        var existingCompetency = standardizedCompetencyRepository.findByIdElseThrow(competency.getId());
+
+        if (competency.getVersion() != null && !competency.getVersion().equals(existingCompetency.getVersion())) {
+            throw new BadRequestException("You cannot change the version of a standardized competency");
+        }
+        if (competency.getFirstVersion() != null && !competency.getFirstVersion().equals(existingCompetency.getFirstVersion())) {
+            throw new BadRequestException("You cannot change the first version of a standardized competency");
+        }
+
+        existingCompetency.setTitle(competency.getTitle());
+        existingCompetency.setDescription(competency.getDescription());
+        existingCompetency.setTaxonomy(competency.getTaxonomy());
+        if (competency.getSource() == null) {
+            existingCompetency.setSource(null);
+        }
+        else if (!competency.getSource().equals(existingCompetency.getSource())) {
+            var source = sourceRepository.findByIdElseThrow(competency.getSource().getId());
+            existingCompetency.setSource(source);
+        }
+        if (competency.getKnowledgeArea() == null) {
+            existingCompetency.setKnowledgeArea(null);
+        }
+        else if (!competency.getKnowledgeArea().equals(existingCompetency.getKnowledgeArea())) {
+            var knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(competency.getKnowledgeArea().getId());
+            existingCompetency.setKnowledgeArea(knowledgeArea);
+        }
+
+        return standardizedCompetencyRepository.save(existingCompetency);
+    }
+
+    /**
+     * Deletes an existing standardized competency with the given id or throws an EntityNotFoundException
+     *
+     * @param competencyId the id of the competency to delete
+     */
+    public void deleteStandardizedCompetencyElseThrow(long competencyId) throws EntityNotFoundException {
+        if (!standardizedCompetencyRepository.existsById(competencyId)) {
+            throw new EntityNotFoundException("StandardizedCompetency", competencyId);
+        }
+        standardizedCompetencyRepository.deleteById(competencyId);
+    }
+
+    /**
+     * Gets a hierarchical structure of all knowledge areas including their competencies, sorted by their title
+     *
+     * @return the list of knowledge areas with no parent, containing all their descendants and competencies
+     */
+    public List<KnowledgeAreaDTO> getAllForTreeView() {
+        var knowledgeAreasForTreeView = new ArrayList<KnowledgeArea>();
+        var idMap = new HashMap<Long, KnowledgeArea>();
+
+        var knowledgeAreas = knowledgeAreaRepository.findAllWithCompetenciesByOrderByTitleAsc();
+
+        for (var knowledgeArea : knowledgeAreas) {
+            knowledgeArea.setChildren(new HashSet<>());
+            idMap.put(knowledgeArea.getId(), knowledgeArea);
+        }
+
+        for (var knowledgeArea : knowledgeAreas) {
+            // if the knowledge area has no parent add it to the result list
+            if (knowledgeArea.getParent() == null) {
+                knowledgeAreasForTreeView.add(knowledgeArea);
+                continue;
+            }
+            // otherwise add it to the children of its parents
+            var parent = idMap.get(knowledgeArea.getParent().getId());
+            if (parent == null) {
+                continue;
+            }
+            parent.addToChildren(knowledgeArea);
+        }
+
+        return knowledgeAreasForTreeView.stream().map(KnowledgeAreaDTO::of).toList();
+    }
+
+    /**
+     * Verifies that a standardized competency that is valid or throws a BadRequestException
      *
      * @param competency the standardized competency to verify
      */
     private void standardizedCompetencyIsValidOrElseThrow(StandardizedCompetency competency) throws BadRequestException {
-        boolean TitleIsInvalid = competency.getTitle() == null || competency.getTitle().trim().isEmpty()
+        boolean titleIsInvalid = competency.getTitle() == null || competency.getTitle().trim().isEmpty()
                 || competency.getTitle().length() > StandardizedCompetency.MAX_TITLE_LENGTH;
-        boolean DescriptionIsInvalid = competency.getDescription() != null && competency.getDescription().length() > StandardizedCompetency.MAX_DESCRIPTION_LENGTH;
+        boolean descriptionIsInvalid = competency.getDescription() != null && competency.getDescription().length() > StandardizedCompetency.MAX_DESCRIPTION_LENGTH;
         boolean knowledgeAreaIsInvalid = competency.getKnowledgeArea() == null;
 
-        if (TitleIsInvalid || DescriptionIsInvalid || knowledgeAreaIsInvalid) {
+        if (titleIsInvalid || descriptionIsInvalid || knowledgeAreaIsInvalid) {
             throw new BadRequestException();
         }
     }

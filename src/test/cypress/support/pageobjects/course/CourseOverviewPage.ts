@@ -10,8 +10,8 @@ export class CourseOverviewPage {
         cy.get('input[formcontrolname="searchFilter"]').type(term);
     }
 
-    startExercise(exerciseId: number) {
-        cy.reloadUntilFound('#start-exercise-' + exerciseId);
+    startExercise(exerciseId: number, refreshInterval?: number) {
+        cy.reloadUntilFound('#start-exercise-' + exerciseId, refreshInterval);
         cy.get('#start-exercise-' + exerciseId).click();
     }
 
