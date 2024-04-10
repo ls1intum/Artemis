@@ -6,10 +6,10 @@
                 "createLabel": "Übung erstellen"
             },
             "sections": {
-                "general": "Informationen",
+                "general": "Allgemein",
                 "mode": "Modus",
                 "grading": "Bewertung",
-                "problem": "Aufgabenstellung",
+                "problem": "Aufgabe",
                 "solution": "Lösung"
             },
             "details": "Aufgabendetails",
