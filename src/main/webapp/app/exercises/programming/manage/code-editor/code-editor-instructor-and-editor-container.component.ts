@@ -123,7 +123,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 for (const path of reloadPaths) {
                     this.codeEditorContainer.fileBrowser.handleFileChange(new CreateFileChange(FileType.FILE, path));
                 }
-                this.codeEditorContainer.aceEditor.forceReloadAll(reloadPaths);
+                this.codeEditorContainer.aceEditor?.forceReloadAll(reloadPaths);
             }
         }
         const widget = this.chatbotButton?.dialogRef?.componentRef?.instance; // Access the widget via the button even if it is not open

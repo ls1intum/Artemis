@@ -112,7 +112,8 @@
                 "database": "Database",
                 "iris": "Iris Settings",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
-                "lti": "LTI Configuration"
+                "lti": "LTI Configuration",
+                "standardizedCompetencies": "Standardized Competencies"
             },
             "language": "Language",
             "settings": "Settings",
@@ -324,8 +325,9 @@
     "contact": "Contact us",
     "bug": "Report a bug",
     "feature": "Request a feature",
+    "releases": "Releases",
     "releaseNotes": "Release notes",
-    "requestChange": "Request change",
+    "feedback": "Feedback",
     "justNow": "just now",
     "pendingChanges": "WARNING: You have unsaved changes. Press Cancel to go back and save these changes, or OK to lose these changes.",
     "overview": {
