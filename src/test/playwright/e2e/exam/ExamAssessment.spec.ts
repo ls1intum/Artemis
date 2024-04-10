@@ -252,12 +252,9 @@ test.describe('Exam statistics', () => {
         await examAPIRequests.prepareExerciseStartForExam(exam);
     });
 
-    test.beforeEach('Set exam grading', async ({ login, page, examManagement, examGrading }) => {
+    test.beforeEach('Set exam grading', async ({ examAPIRequests, login }) => {
         await login(instructor);
-        await page.goto(`course-management/${course.id}/exams/${exam.id}`);
-        await examManagement.openGradingKey();
-        await examGrading.generateDefaultGrading();
-        await examGrading.saveGradingKey();
+        await examAPIRequests.setExamGradingScale(exam, examStatisticsSample.gradingScale);
     });
 
     test.beforeEach('Participate in exam', async ({ examParticipation, examNavigation }) => {

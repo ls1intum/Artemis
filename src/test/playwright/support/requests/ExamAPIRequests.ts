@@ -179,4 +179,12 @@ export class ExamAPIRequests {
         const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/scores`);
         return await response.json();
     }
+
+    async setExamGradingScale(exam: Exam, gradingScale: any) {
+        const data = {
+            exam,
+            ...gradingScale,
+        };
+        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/grading-scale`, { data });
+    }
 }
