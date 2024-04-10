@@ -35,7 +35,7 @@
                         <span class="me-1 d-none d-md-inline">{{
                             'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise.isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate
                         }}</span>
-                        <div class="gap-1 d-flex">
+                        <div class="gap-1 d-flex flex-wrap">
                             <!-- Actions for Tutors, Editors and Instructors -->
                             <a [routerLink]="baseResource" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faEye" />
