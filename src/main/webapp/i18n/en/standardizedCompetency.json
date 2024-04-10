@@ -1,0 +1,51 @@
+{
+    "artemisApp": {
+        "standardizedCompetency": {
+            "title": "Standardized Competencies",
+            "manage": {
+                "title": "Standardized Competency Management",
+                "filter": "Filter competencies",
+                "createButtonTooltip": "Create standardized competency",
+                "expandButtonTooltip": "Expand all knowledge areas",
+                "collapseButtonTooltip": "Collapse all knowledge areas",
+                "deleteModal": {
+                    "question": "Do you really want to delete the standardized competency <strong>{{title}}</strong>? You can not undo this action!",
+                    "typeNameToConfirm": "Please enter the name of the standardized competency for confirmation."
+                },
+                "cancelModal": {
+                    "title": "Warning: Unsaved Changes",
+                    "text": "Are you sure you want to cancel editing <strong>{{title}}</strong>? Press Cancel to go back, or Confirm to proceed."
+                },
+                "successAlerts": {
+                    "create": "Successfully created standardized competency \"{{competencyTitle}}\"",
+                    "update": "Successfully updated standardized competency \"{{competencyTitle}}\"",
+                    "delete": "Successfully deleted standardized competency \"{{competencyTitle}}\""
+                },
+                "updateTreeError": "Something went wrong while updating the knowledge area tree. Please reload the page."
+            },
+            "model": {
+                "title": "Title",
+                "description": "Description",
+                "taxonomy": "Taxonomy",
+                "knowledgeArea": "Knowledge Area",
+                "version": "Version"
+            },
+            "details": {
+                "title": "Standardized Competency Details",
+                "titleCreate": "Create Standardized Competency",
+                "titleEdit": "Edit Standardized Competency",
+                "titleRequiredError": "A standardized competency needs to have a title",
+                "titleMaxLengthError": "The title of a standardized competency is limited to {{max}} characters",
+                "descriptionMaxLengthError": "The description of a standardized competency is limited to {{max}} characters",
+                "knowledgeAreaRequiredError": "A standardized competency needs to have a knowledge area"
+            }
+        },
+        "knowledgeArea": {
+            "model": {
+                "title": "Title",
+                "description": "Description"
+            },
+            "empty": "This knowledge area has no content yet"
+        }
+    }
+}

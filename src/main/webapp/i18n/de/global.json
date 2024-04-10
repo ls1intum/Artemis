@@ -111,7 +111,8 @@
                 "database": "Datenbank",
                 "iris": "Iris Einstellungen",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
-                "lti": "LTI Konfiguration"
+                "lti": "LTI Konfiguration",
+                "standardizedCompetencies": "Standardisierte Kompetenzen"
             },
             "language": "Sprache",
             "settings": "Einstellungen",
