@@ -90,7 +90,7 @@ public class PublicUserJwtResource {
         }
         catch (BadCredentialsException ex) {
             log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 
