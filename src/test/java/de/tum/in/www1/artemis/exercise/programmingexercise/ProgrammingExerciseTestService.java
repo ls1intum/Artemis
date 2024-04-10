@@ -2,32 +2,53 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.INDIVIDUAL;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
-import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
-import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.C;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.SWIFT;
+import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.BUILD_PLAN_FILE_NAME;
+import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
+import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
-import static org.assertj.core.api.Assertions.*;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.GENERATE_TESTS;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.IMPORT;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.ROOT;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.SETUP;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
-import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -53,10 +74,25 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.StaticCodeAnalysisConfigurer;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -74,10 +110,29 @@ import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExamUserRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
@@ -91,16 +146,19 @@ import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseClea
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUri;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
+import de.tum.in.www1.artemis.util.LocalRepository;
+import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.TestConstants;
+import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 
 /**
- * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
- * 1) Bamboo + Bitbucket
- * 2) Jenkins + Gitlab
+ * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
+ * 1) Jenkins + Gitlab
  * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary. See
  * {@link ProgrammingExerciseLocalVCLocalCIIntegrationTest}.
  */
@@ -255,6 +313,9 @@ public class ProgrammingExerciseTestService {
     private MockDelegate mockDelegate;
 
     private String userPrefix;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     public void setupTestUsers(String userPrefix, int additionalStudents, int additionalTutors, int additionalEditors, int additionalInstructors) {
         this.userPrefix = userPrefix;
@@ -412,7 +473,34 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createProgrammingExercise_custom_build_plan_validExercise_created(ProgrammingLanguage programmingLanguage, boolean customBuildPlanWorks) throws Exception {
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course, programmingLanguage);
-        String validWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"class\": \"script-action\",\n\"script\": \"echo $PATH\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action1\",\n\"platform\": \"bamboo\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action2\",\n\"script\": \"bash script\",\n\"runAlways\": true\n}\n]\n}";
+        String validWindfile = """
+                {
+                  "api": "v0.0.1",
+                  "metadata": {
+                    "name": "example windfile",
+                    "description": "example windfile",
+                    "id": "example-windfile"
+                  },
+                  "actions": [
+                    {
+                      "name": "valid-action",
+                      "class": "script-action",
+                      "script": "echo $PATH",
+                      "runAlways": true
+                    },
+                    {
+                      "name": "valid-action1",
+                      "platform": "jenkins",
+                      "runAlways": true
+                    },
+                    {
+                      "name": "valid-action2",
+                      "script": "bash script",
+                      "runAlways": true
+                    }
+                  ]
+                }""";
+
         exercise.setBuildPlanConfiguration(validWindfile);
         if (programmingLanguage == C) {
             exercise.setProjectType(ProjectType.FACT);
@@ -1379,9 +1467,9 @@ public class ProgrammingExerciseTestService {
 
         var url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        Awaitility.setDefaultTimeout(Duration.ofSeconds(20));
-        await().until(() -> programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId()).isPresent()
-                && participationRepository.findByIdElseThrow(participation.getId()).getInitializationState().hasCompletedState(InitializationState.INITIALIZED));
+        await().timeout(20, TimeUnit.SECONDS)
+                .until(() -> programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId()).isPresent()
+                        && participationRepository.findByIdElseThrow(participation.getId()).getInitializationState().hasCompletedState(InitializationState.INITIALIZED));
 
         // Fetch updated participation and assert
         ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
@@ -1464,7 +1552,7 @@ public class ProgrammingExerciseTestService {
     // Test
 
     /**
-     * Test that the export of the instructor material works as expected when no build plan exists (e.g. for bamboo setups at the moment)
+     * Test that the export of the instructor material works as expected when no build plan exists (e.g. for jenkins setups at the moment)
      * <p>
      *
      * @param saveEmbeddedFiles whether embedded files should be saved or not, not saving them simulates that embedded files are no longer stored on the file system
@@ -1846,16 +1934,16 @@ public class ProgrammingExerciseTestService {
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
 
         // start exercises
-        List<ProgrammingExercise> programmingExercises = new ArrayList<>();
-        for (var exercise : exam.getExerciseGroups().get(6).getExercises()) {
-            var programmingExercise = (ProgrammingExercise) exercise;
-            programmingExercises.add(programmingExercise);
+        Set<Long> peIds = exam.getExerciseGroups().get(6).getExercises().stream().map(Exercise::getId).collect(Collectors.toSet());
+        List<ProgrammingExercise> programmingExercises = programmingExerciseTestRepository.findAllWithTemplateAndSolutionParticipationByIdIn(peIds);
+        exam.getExerciseGroups().get(6).setExercises(new HashSet<>(programmingExercises));
+        for (var exercise : programmingExercises) {
 
-            setupRepositoryMocks(programmingExercise);
+            setupRepositoryMocks(exercise);
             for (var examUser : exam.getExamUsers()) {
                 var repo = new LocalRepository(defaultBranch);
                 repo.configureRepos("studentRepo", "studentOriginRepo");
-                setupRepositoryMocksParticipant(programmingExercise, examUser.getUser().getLogin(), repo);
+                setupRepositoryMocksParticipant(exercise, examUser.getUser().getLogin(), repo);
                 studentRepos.add(repo);
             }
         }
