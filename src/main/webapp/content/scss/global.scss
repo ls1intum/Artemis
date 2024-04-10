@@ -761,6 +761,7 @@ Course Info Bar
 
 [id^='plantUml-'] > * {
     height: 100% !important;
+    max-width: 100%;
 }
 
 .ngb-tooltip-window {
@@ -881,6 +882,10 @@ Course Info Bar
 
 /* Custom fixes for printing */
 @media print {
+    /* Without this property only the first page is printed and the scroll bar is visible in the pdf */
+    * {
+        overflow: visible !important;
+    }
     .container {
         min-width: 0 !important;
     }

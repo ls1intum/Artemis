@@ -1,10 +1,10 @@
-<div class="row">
+<div class="w-auto m-0 pb-5">
     @if (quizConfiguration.quizQuestions && !examTimeline) {
-        <div class="quiz-navigation sticky-top">
-            <div class="quiz-navigation-content">
-                <div class="stepwizardquiz">
+        <div class="position-fixed d-flex align-items-center justify-content-center">
+            <div class="p-0 col-md-auto quiz-navigation sticky-top">
+                <div class="stepwizardquiz col-6">
                     @for (question of quizConfiguration.quizQuestions; track question; let i = $index) {
-                        <div class="stepwizardquiz__step">
+                        <div class="stepwizardquiz__step mb-3">
                             @if (question.type === DRAG_AND_DROP) {
                                 <span
                                     class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
@@ -35,8 +35,8 @@
                                     <b class="fa">SA</b>
                                 </span>
                             }
-                            <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }}</ng-template>
-                            <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }}</ng-template>
+                            <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }} </ng-template>
+                            <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }} </ng-template>
                         </div>
                     }
                 </div>
@@ -44,7 +44,7 @@
         </div>
     }
     @if (quizConfiguration.quizQuestions) {
-        <div class="quiz-content container">
+        <div class="ms-5">
             <h4 class="exercise-title">
                 {{ examTimeline ? quizConfiguration.title : quizConfiguration?.exerciseGroup?.title ?? '-' }}
                 <span
