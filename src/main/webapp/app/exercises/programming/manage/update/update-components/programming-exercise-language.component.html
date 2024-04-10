@@ -172,7 +172,6 @@
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recordTestwiseCoverageTooltip" />
         </div>
     }
-    <!-- Setting whether the solution repository should be checked out is only supported for OCAML and Haskell exercises and is only available for new exercises -->
     @if (!programmingExercise.id && programmingExercise.programmingLanguage && programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed) {
         <div class="form-check">
             <label class="form-check-label" for="field_checkoutSolutionRepository">
