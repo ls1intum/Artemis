@@ -124,7 +124,7 @@ describe('CodeEditorMonacoComponent', () => {
             [comp.selectedFile]: { code: 'some code', cursor: { row: 0, column: 0 }, loadingError: false },
         };
         fixture.detectChanges();
-        setup(comp);
+        setup();
         comp.ngOnChanges({});
         expect(comp.editorLocked).toBe(shouldLock);
     });
