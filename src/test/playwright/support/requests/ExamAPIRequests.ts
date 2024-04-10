@@ -180,6 +180,11 @@ export class ExamAPIRequests {
         return await response.json();
     }
 
+    /**
+     * Sets the exam grading scale
+     * @param exam the exam for which the grading scale is set
+     * @param gradingScale the grading scale to set
+     */
     async setExamGradingScale(exam: Exam, gradingScale: any) {
         const data = {
             exam,
