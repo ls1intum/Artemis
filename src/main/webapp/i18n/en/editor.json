@@ -127,7 +127,8 @@
             },
             "orion": {
                 "testLocally": "Test Locally"
-            }
+            },
+            "switchEditors": "Switch code editor"
         }
     }
 }
