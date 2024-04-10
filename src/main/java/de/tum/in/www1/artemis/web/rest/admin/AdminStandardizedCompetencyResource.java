@@ -5,11 +5,16 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import jakarta.ws.rs.BadRequestException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -54,6 +59,43 @@ public class AdminStandardizedCompetencyResource {
         var persistedCompetency = standardizedCompetencyService.createStandardizedCompetency(competency);
 
         return ResponseEntity.created(new URI("/api/standardized-competencies/" + persistedCompetency.getId())).body(persistedCompetency);
+    }
+
+    /**
+     * PUT api/admin/standardized-competencies/{competencyId} : Updates an existing standardized competency
+     *
+     * @param competencyId the id of the competency that should be updated
+     * @param competency   the updated competency
+     * @return the ResponseEntity with status 200 (OK) and with body the updated standardized competency
+     */
+    @PutMapping("standardized-competencies/{competencyId}")
+    @EnforceAdmin
+    public ResponseEntity<StandardizedCompetency> updateStandardizedCompetency(@PathVariable long competencyId, @RequestBody StandardizedCompetency competency) {
+        log.debug("REST request to update standardized competency : {}", competency);
+
+        if (competencyId != competency.getId()) {
+            throw new BadRequestException("The competency id in the body and path do not match");
+        }
+
+        var persistedCompetency = standardizedCompetencyService.updateStandardizedCompetency(competency);
+
+        return ResponseEntity.ok(persistedCompetency);
+    }
+
+    /**
+     * DELETE api/admin/standardized-competencies/{competencyId} : Deletes a standardized competency
+     *
+     * @param competencyId the id of the competency that should be deleted
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("standardized-competencies/{competencyId}")
+    @EnforceAdmin
+    public ResponseEntity<Void> deleteStandardizedCompetency(@PathVariable long competencyId) {
+        log.debug("REST request to delete standardized competency : {}", competencyId);
+
+        standardizedCompetencyService.deleteStandardizedCompetencyElseThrow(competencyId);
+
+        return ResponseEntity.ok().build();
     }
 
     /**

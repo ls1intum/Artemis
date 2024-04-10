@@ -46,7 +46,7 @@ public class KnowledgeArea extends DomainObject {
     private KnowledgeArea parent;
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({ "parent", "children" })
+    @JsonIgnoreProperties({ "parent" })
     private Set<KnowledgeArea> children = new HashSet<>();
 
     @OneToMany(mappedBy = "knowledgeArea", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -109,5 +109,9 @@ public class KnowledgeArea extends DomainObject {
 
     public void setCompetencies(Set<StandardizedCompetency> competencies) {
         this.competencies = competencies;
+    }
+
+    public void addToChildren(KnowledgeArea knowledgeArea) {
+        this.children.add(knowledgeArea);
     }
 }

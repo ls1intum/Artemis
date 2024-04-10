@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { VERSION } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
@@ -8,8 +7,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
     styleUrls: ['./footer.scss'],
 })
 export class FooterComponent implements OnInit {
-    readonly releaseNotesUrl = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
-    readonly requestChangeUrl = 'https://github.com/ls1intum/Artemis/issues/new/choose';
+    readonly releaseUrl = 'https://github.com/ls1intum/Artemis/releases';
+    readonly feedbackUrl = 'https://github.com/ls1intum/Artemis/issues/new/choose';
 
     email: string;
     gitBranch: string;

@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { merge } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from './services/programming-exercise.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -87,7 +87,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private accountService: AccountService,
         private alertService: AlertService,
         private modalService: NgbModal,
-        private router: Router,
         private sortService: SortService,
         private profileService: ProfileService,
         courseService: CourseManagementService,
