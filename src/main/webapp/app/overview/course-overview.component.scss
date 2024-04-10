@@ -29,6 +29,7 @@ $menu-width-open: 220px;
     &.sidenav-height-dev {
         height: calc(100vh - var(--sidebar-footer-height-dev));
     }
+
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
     }
@@ -62,6 +63,7 @@ $menu-width-open: 220px;
         &.sidenav-height-dev {
             height: calc(100vh - var(--sidebar-footer-height-dev));
         }
+
         @media (max-width: 768px) {
             height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
         }
@@ -77,6 +79,7 @@ $menu-width-open: 220px;
             margin-left: $menu-width-closed !important;
         }
     }
+
     @media screen and (max-width: 960px) {
         .mat-drawer {
             width: $menu-width-closed;
