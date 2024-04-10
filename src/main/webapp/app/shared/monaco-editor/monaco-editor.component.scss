@@ -1,0 +1,51 @@
+@import 'node_modules/@vscode/codicons/dist/codicon.css';
+
+.monaco-editor-container {
+    width: 100%;
+    height: 100%;
+}
+
+/*
+ * The monaco editor can only grow (but not shrink) when its container is resized.
+ * Along with a corresponding ResizeObserver that calls layout(), this style forces the editor to shrink
+ * when its container's size is reduced.
+ */
+.monaco-shrink-to-fit {
+    max-width: 99%;
+    max-height: 99%;
+}
+
+/*
+ * Adjusts the font size to better match the glyph margin
+ */
+[class*='codicon-']::before {
+    font-size: 19px;
+}
+
+.monaco-glyph-error {
+    color: var(--monaco-editor-build-annotation-error-glyph);
+}
+
+.monaco-glyph-warning {
+    color: var(--monaco-editor-build-annotation-warning-glyph);
+}
+
+.monaco-glyph-outdated {
+    color: var(--monaco-editor-build-annotation-outdated-glyph);
+}
+
+.monaco-annotation-error {
+    background: var(--monaco-editor-build-annotation-error-background);
+}
+
+.monaco-annotation-warning {
+    background: var(--monaco-editor-build-annotation-warning-background);
+}
+
+.monaco-annotation-outdated {
+    background: var(--monaco-editor-build-annotation-outdated-background);
+}
+
+.monaco-hidden-element {
+    display: none;
+}
