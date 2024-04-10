@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
  */
 @Profile(PROFILE_CORE)
 @RestController
+@RequestMapping("public/")
 public class PublicUserJwtResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicUserJwtResource.class);

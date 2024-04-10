@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -31,7 +30,6 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Profile("iris")
 @RestController
-@RequestMapping("api/iris/")
 public class IrisChatSessionResource extends IrisExerciseChatBasedSessionResource<ProgrammingExercise, IrisChatSession> {
 
     private final IrisChatSessionRepository irisChatSessionRepository;
@@ -44,12 +42,12 @@ public class IrisChatSessionResource extends IrisExerciseChatBasedSessionResourc
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/sessions/current: Retrieve the current iris session for the programming exercise.
+     * GET /iris/programming-exercises/{exerciseId}/sessions/current: Retrieve the current iris session for the programming exercise.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris session for the exercise or {@code 404 (Not Found)} if no session exists
      */
-    @GetMapping("programming-exercises/{exerciseId}/sessions/current")
+    @GetMapping("iris/programming-exercises/{exerciseId}/sessions/current")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisChatSession> getCurrentSession(@PathVariable Long exerciseId) {
         return super.getCurrentSession(exerciseId, IrisSubSettingsType.CHAT, Role.STUDENT,
@@ -57,12 +55,12 @@ public class IrisChatSessionResource extends IrisExerciseChatBasedSessionResourc
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/sessions: Retrieve all Iris Sessions for the programming exercise
+     * GET /iris/programming-exercises/{exerciseId}/sessions: Retrieve all Iris Sessions for the programming exercise
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the exercise or {@code 404 (Not Found)} if no session exists
      */
-    @GetMapping("programming-exercises/{exerciseId}/sessions")
+    @GetMapping("iris/programming-exercises/{exerciseId}/sessions")
     @EnforceAtLeastStudent
     public ResponseEntity<List<IrisChatSession>> getAllSessions(@PathVariable Long exerciseId) {
         return super.getAllSessions(exerciseId, IrisSubSettingsType.CHAT, Role.STUDENT,
@@ -70,14 +68,14 @@ public class IrisChatSessionResource extends IrisExerciseChatBasedSessionResourc
     }
 
     /**
-     * POST programming-exercises/{exerciseId}/session: Create a new iris session for an exercise and user.
+     * POST /iris/programming-exercises/{exerciseId}/session: Create a new iris session for an exercise and user.
      * If there already exists an iris session for the exercise and user, a new one is created.
      * Note: The old session including messages is not deleted and can still be retrieved
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new iris session for the exercise
      */
-    @PostMapping("programming-exercises/{exerciseId}/sessions")
+    @PostMapping("iris/programming-exercises/{exerciseId}/sessions")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisChatSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         return super.createSessionForExercise(exerciseId, IrisSubSettingsType.CHAT, Role.STUDENT, (exercise, user) -> {
@@ -91,13 +89,13 @@ public class IrisChatSessionResource extends IrisExerciseChatBasedSessionResourc
     }
 
     /**
-     * GET iris/sessions/{sessionId}/active: Retrieve if Iris is active for a session
+     * GET /iris/sessions/{sessionId}/active: Retrieve if Iris is active for a session
      * This checks if the used model is healthy.
      *
      * @param sessionId id of the session
      * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
      */
-    @GetMapping("sessions/{sessionId}/active")
+    @GetMapping("iris/sessions/{sessionId}/active")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisHealthDTO> isIrisActive(@PathVariable Long sessionId) {
         var session = irisChatSessionRepository.findByIdElseThrow(sessionId);

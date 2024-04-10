@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * Handles administrative actions for LTI platforms, including configuration, deletion, and dynamic registration.
  */
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 @Profile("lti")
 public class AdminLtiConfigurationResource {
 

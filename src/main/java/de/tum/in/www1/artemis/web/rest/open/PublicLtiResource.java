@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 @Profile("lti")
 @RestController
 // TODO: should we adapt the mapping based on the profile?
-@RequestMapping("api/public/")
+@RequestMapping("public/")
 public class PublicLtiResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicLtiResource.class);

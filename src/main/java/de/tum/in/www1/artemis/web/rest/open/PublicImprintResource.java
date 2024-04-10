@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.service.LegalDocumentService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/public/")
+@RequestMapping("public/")
 public class PublicImprintResource {
 
     private final LegalDocumentService legalDocumentService;

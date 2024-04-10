@@ -1319,7 +1319,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         dto.setFeedbacks(feedbacks);
 
         // These two lines ensure the call count verification near the end of this test can spot the call
-        // made during the PUT /api/participations/:id/text-assessment request and not other places.
+        // made during the PUT /participations/:id/text-assessment request and not other places.
         int irrelevantCallCount = 1;
         verify(textBlockService, times(irrelevantCallCount)).findAllBySubmissionId(textSubmissionWithoutAssessment.getId());
 

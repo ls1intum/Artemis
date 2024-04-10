@@ -48,7 +48,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/public/")
+@RequestMapping("public/")
 public class PublicAccountResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicAccountResource.class);

@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class DataExportResource {
 
     private final int DAYS_BETWEEN_DATA_EXPORTS;

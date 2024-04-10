@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
  */
 @Profile("iris")
 @RestController
-@RequestMapping("api/")
 public class IrisSettingsResource {
 
     private final UserRepository userRepository;

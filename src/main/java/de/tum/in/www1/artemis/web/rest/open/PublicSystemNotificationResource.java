@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.SystemNotificationService;
 /** REST controller for public system notifications. */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/public/")
+@RequestMapping("public/")
 public class PublicSystemNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicSystemNotificationResource.class);

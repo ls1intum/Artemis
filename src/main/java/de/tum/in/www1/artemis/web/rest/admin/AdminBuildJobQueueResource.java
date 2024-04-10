@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
 
 @Profile("localci")
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminBuildJobQueueResource {
 
     private final SharedQueueManagementService localCIBuildJobQueueService;

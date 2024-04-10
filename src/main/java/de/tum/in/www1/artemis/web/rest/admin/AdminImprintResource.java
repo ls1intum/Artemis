@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.LegalDocumentService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminImprintResource {
 
     private final LegalDocumentService legalDocumentService;

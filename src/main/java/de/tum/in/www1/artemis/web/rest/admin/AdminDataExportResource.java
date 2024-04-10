@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminDataExportResource {
 
     private final DataExportService dataExportService;

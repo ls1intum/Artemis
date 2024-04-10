@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Profile("iris")
 @RestController
-@RequestMapping("api/iris/")
 public class IrisCodeEditorMessageResource {
 
     private final IrisCodeEditorSessionService irisCodeEditorSessionService;
@@ -39,7 +38,7 @@ public class IrisCodeEditorMessageResource {
     }
 
     /**
-     * Put code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}/execute: Execute a
+     * Put /iris/code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}/execute: Execute a
      * step of an exercise plan
      *
      * @param sessionId of the session
@@ -49,7 +48,7 @@ public class IrisCodeEditorMessageResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status
      *         {@code 404 (Not Found)} if the session could not be found.
      */
-    @PostMapping("code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}/execute")
+    @PostMapping("iris/code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}/execute")
     @EnforceAtLeastEditor
     public ResponseEntity<Void> executeExercisePlanStep(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long planId, @PathVariable Long stepId) {
         var step = irisExercisePlanStepRepository.findByIdElseThrow(stepId);
@@ -64,7 +63,7 @@ public class IrisCodeEditorMessageResource {
     }
 
     /**
-     * PUT code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}: Update the
+     * PUT /iris/code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}: Update the
      * instructions of an exercise plan step
      *
      * @param sessionId   of the session
@@ -75,7 +74,7 @@ public class IrisCodeEditorMessageResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated component, or with
      *         status {@code 404 (Not Found)} if the component could not be found.
      */
-    @PutMapping("code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}")
+    @PutMapping("iris/code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}")
     @EnforceAtLeastEditor
     public ResponseEntity<IrisExercisePlanStep> updateExercisePlanStep(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long planId,
             @PathVariable Long stepId, @RequestBody IrisExercisePlanStep updatedStep) {

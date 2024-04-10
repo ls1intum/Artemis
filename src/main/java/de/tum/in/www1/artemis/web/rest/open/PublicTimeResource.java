@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.versioning.IgnoreGlobalMapping;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/public/")
+@RequestMapping("public/")
 public class PublicTimeResource {
 
     /**

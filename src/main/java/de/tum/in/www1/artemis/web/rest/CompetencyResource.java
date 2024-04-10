@@ -41,7 +41,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class CompetencyResource {
 
     @Value("${jhipster.clientApp.name}")

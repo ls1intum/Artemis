@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -31,7 +30,6 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Profile("iris")
 @RestController
-@RequestMapping("api/iris/")
 public class IrisCodeEditorSessionResource extends IrisExerciseChatBasedSessionResource<ProgrammingExercise, IrisCodeEditorSession> {
 
     private final IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
@@ -44,14 +42,14 @@ public class IrisCodeEditorSessionResource extends IrisExerciseChatBasedSessionR
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/code-editor-sessions/current: Retrieve the current iris code editor
+     * GET /iris/programming-exercises/{exerciseId}/code-editor-sessions/current: Retrieve the current iris code editor
      * session for the programming exercise.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris code editor
      *         session for the exercise or {@code 404 (Not Found)} if no session exists
      */
-    @GetMapping("programming-exercises/{exerciseId}/code-editor-sessions/current")
+    @GetMapping("iris/programming-exercises/{exerciseId}/code-editor-sessions/current")
     @EnforceAtLeastEditor
     public ResponseEntity<IrisCodeEditorSession> getCurrentSession(@PathVariable Long exerciseId) {
         return super.getCurrentSession(exerciseId, IrisSubSettingsType.CODE_EDITOR, Role.EDITOR,
@@ -59,14 +57,14 @@ public class IrisCodeEditorSessionResource extends IrisExerciseChatBasedSessionR
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/code-editor-sessions: Retrieve all Iris Code Editor Sessions for the
+     * GET /iris/programming-exercises/{exerciseId}/code-editor-sessions: Retrieve all Iris Code Editor Sessions for the
      * programming exercise
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris code editor
      *         sessions for the exercise or {@code 404 (Not Found)} if no session exists
      */
-    @GetMapping("programming-exercises/{exerciseId}/code-editor-sessions")
+    @GetMapping("iris/programming-exercises/{exerciseId}/code-editor-sessions")
     @EnforceAtLeastEditor
     public ResponseEntity<List<IrisCodeEditorSession>> getAllSessions(@PathVariable Long exerciseId) {
         return super.getAllSessions(exerciseId, IrisSubSettingsType.CODE_EDITOR, Role.EDITOR,
@@ -74,7 +72,7 @@ public class IrisCodeEditorSessionResource extends IrisExerciseChatBasedSessionR
     }
 
     /**
-     * POST programming-exercises/{exerciseId}/code-editor-sessions: Create a new iris code editor session for an
+     * POST /programming-exercises/{exerciseId}/code-editor-sessions: Create a new iris code editor session for an
      * exercise and user. If there already exists an iris session for the exercise and user, a new one is created. Note:
      * The old session including messages is not deleted and can still be retrieved
      *
@@ -82,7 +80,7 @@ public class IrisCodeEditorSessionResource extends IrisExerciseChatBasedSessionR
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new iris code editor session
      *         for the exercise
      */
-    @PostMapping("programming-exercises/{exerciseId}/code-editor-sessions")
+    @PostMapping("iris/programming-exercises/{exerciseId}/code-editor-sessions")
     @EnforceAtLeastEditor
     public ResponseEntity<IrisCodeEditorSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         return super.createSessionForExercise(exerciseId, IrisSubSettingsType.CODE_EDITOR, Role.EDITOR, (exercise, user) -> {
@@ -102,7 +100,7 @@ public class IrisCodeEditorSessionResource extends IrisExerciseChatBasedSessionR
      * @param sessionId id of the session
      * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
      */
-    @GetMapping("code-editor-sessions/{sessionId}/active")
+    @GetMapping("iris/code-editor-sessions/{sessionId}/active")
     @EnforceAtLeastEditor
     public ResponseEntity<Boolean> isIrisActive(@PathVariable Long sessionId) {
         var session = irisCodeEditorSessionRepository.findByIdElseThrow(sessionId);

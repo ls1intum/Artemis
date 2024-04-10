@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.web.rest.dto.LinkPreviewDTO;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class LinkPreviewResource {
 
     private static final Logger log = LoggerFactory.getLogger(LinkPreviewResource.class);

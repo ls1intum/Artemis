@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.web.rest.dto.science.ScienceEventDTO;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class ScienceResource {
 
     private static final Logger log = LoggerFactory.getLogger(ScienceResource.class);

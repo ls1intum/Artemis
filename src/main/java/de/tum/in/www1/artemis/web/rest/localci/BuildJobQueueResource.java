@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Profile("localci")
 @RestController
-@RequestMapping("/api")
 public class BuildJobQueueResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobQueueResource.class);

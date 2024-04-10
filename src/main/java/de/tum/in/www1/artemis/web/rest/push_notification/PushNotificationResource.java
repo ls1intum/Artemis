@@ -35,7 +35,6 @@ import io.jsonwebtoken.*;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/push_notification")
 public class PushNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationResource.class);
@@ -66,12 +65,12 @@ public class PushNotificationResource {
     }
 
     /**
-     * API Endpoint which native clients use to register with their device token to enable push notification support
+     * POST /push_notification/register - registers native clients with their device token to enable push notification support
      *
      * @param pushNotificationRegisterBody contains all information required to store the device token for a specific user
      * @return an DTO containing information about the encryption
      */
-    @PostMapping("register")
+    @PostMapping("push_notification/register")
     @EnforceAtLeastStudent
     public ResponseEntity<PushNotificationRegisterDTO> register(@Valid @RequestBody PushNotificationRegisterBody pushNotificationRegisterBody) {
         var newKey = aesKeyGenerator.generateKey();
@@ -105,12 +104,12 @@ public class PushNotificationResource {
     }
 
     /**
-     * API Endpoint used by native clients to unregister for push notifications.
+     * DELETE /push_notification/unregister - unregisters native clients for push notifications.
      *
      * @param body contains information on which device token should be removed for what user
      * @return HttpStatus as ResponseEntity
      */
-    @DeleteMapping("unregister")
+    @DeleteMapping("push_notification/unregister")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> unregister(@Valid @RequestBody PushNotificationUnregisterRequest body) {
         final var id = new PushNotificationDeviceConfigurationId(userRepository.getUser(), body.token(), body.deviceType());

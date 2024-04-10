@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class LogResource {
 
     /**

@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class ScienceSettingsResource {
 
     private static final Logger log = LoggerFactory.getLogger(ScienceSettingsResource.class);
