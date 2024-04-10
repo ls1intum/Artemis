@@ -3,8 +3,15 @@ package de.tum.in.www1.artemis.service.tutorialgroups;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.util.DateUtil.getFirstDateOfWeekDay;
 
-import java.time.*;
-import java.util.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -12,13 +19,14 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
-import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupSessionResource;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.ScheduleOverlapsWithSessionException;
 import de.tum.in.www1.artemis.web.rest.util.DateUtil;
 
@@ -129,9 +137,29 @@ public class TutorialGroupScheduleService {
         session.setTutorialGroup(tutorialGroupSchedule.getTutorialGroup());
 
         var overlappingPeriod = tutorialGroupFreePeriodService.findOverlappingPeriod(course, session).stream().findFirst();
-        TutorialGroupSessionResource.updateTutorialGroupSession(session, overlappingPeriod);
+        updateTutorialGroupSession(session, overlappingPeriod);
         session.setLocation(tutorialGroupSchedule.getLocation());
         return session;
+    }
+
+    /**
+     * Updates the status and associated free period of a tutorial group session based on the presence of an overlapping free period.
+     *
+     * @param newSession        the tutorial group session to be updated.
+     * @param overlappingPeriod an Optional that may contain a TutorialGroupFreePeriod if there is an overlapping free period.
+     */
+    public static void updateTutorialGroupSession(TutorialGroupSession newSession, Optional<TutorialGroupFreePeriod> overlappingPeriod) {
+        if (overlappingPeriod.isPresent()) {
+            newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
+            // the status explanation is set to null, as it is specified in the TutorialGroupFreePeriod
+            newSession.setStatusExplanation(null);
+            newSession.setTutorialGroupFreePeriod(overlappingPeriod.get());
+        }
+        else {
+            newSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
+            newSession.setStatusExplanation(null);
+            newSession.setTutorialGroupFreePeriod(null);
+        }
     }
 
     /**
