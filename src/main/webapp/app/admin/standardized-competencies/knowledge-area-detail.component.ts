@@ -61,8 +61,6 @@ export class KnowledgeAreaDetailComponent {
         parentId: FormControl<number | undefined>;
     }>;
 
-    //TODO: see if i can have a base class for a lot of this stuff?
-
     //icons
     readonly faPencil = faPencil;
     readonly faTrash = faTrash;
@@ -132,7 +130,6 @@ export class KnowledgeAreaDetailComponent {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             return (parentIdControl: FormControl<number | undefined>) => null;
         }
-
         return (parentIdControl: FormControl<number | undefined>) => {
             if (parentIdControl.value === undefined) {
                 return null;
@@ -150,8 +147,9 @@ export class KnowledgeAreaDetailComponent {
      * Checks if the given knowledge or one of its descendants have the given id
      * @param knowledgeArea the knowledge area to check
      * @param id the id to check for
+     * @private
      */
-    selfOrDescendantsHaveId(knowledgeArea: KnowledgeAreaDTO, id: number) {
+    private selfOrDescendantsHaveId(knowledgeArea: KnowledgeAreaDTO, id: number) {
         if (knowledgeArea.id === id) {
             return true;
         }

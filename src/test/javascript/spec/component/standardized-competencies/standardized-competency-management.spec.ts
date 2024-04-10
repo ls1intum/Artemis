@@ -322,7 +322,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
             },
         ];
 
-        prepareAndExecuteUpdateTest(tree, competencyToUpdate, updatedCompetency);
+        prepareAndExecuteCompetencyUpdate(tree, competencyToUpdate, updatedCompetency);
 
         const competencies = component['knowledgeAreaMap'].get(1)!.competencies!;
         expect(competencies).toContainEqual(expectedCompetencyInTree);
@@ -344,7 +344,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
             },
         ];
 
-        prepareAndExecuteUpdateTest(tree, competencyToUpdate, updatedCompetency);
+        prepareAndExecuteCompetencyUpdate(tree, competencyToUpdate, updatedCompetency);
 
         const competencies1 = component['knowledgeAreaMap'].get(1)!.competencies!;
         expect(competencies1).not.toContainEqual(expectedCompetencyInTree);
@@ -354,7 +354,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(competencies2).toHaveLength(2);
     });
 
-    function prepareAndExecuteUpdateTest(tree: KnowledgeAreaDTO[], competencyToUpdate: StandardizedCompetencyDTO, updatedCompetency: StandardizedCompetency) {
+    function prepareAndExecuteCompetencyUpdate(tree: KnowledgeAreaDTO[], competencyToUpdate: StandardizedCompetencyDTO, updatedCompetency: StandardizedCompetency) {
         getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
         component['selectedCompetency'] = competencyToUpdate;
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
