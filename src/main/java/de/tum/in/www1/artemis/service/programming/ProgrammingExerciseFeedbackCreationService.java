@@ -27,13 +27,11 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
@@ -66,8 +64,6 @@ public class ProgrammingExerciseFeedbackCreationService {
      */
     private static final Pattern STRUCTURAL_TEST_PATTERN = Pattern.compile("test(Methods|Attributes|Constructors|Class)\\[.+]");
 
-    private final ProfileService profileService;
-
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -76,10 +72,8 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public ProgrammingExerciseFeedbackCreationService(ProfileService profileService, ProgrammingExerciseTestCaseRepository testCaseRepository,
-            WebsocketMessagingService websocketMessagingService, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
-        this.profileService = profileService;
+    public ProgrammingExerciseFeedbackCreationService(ProgrammingExerciseTestCaseRepository testCaseRepository, WebsocketMessagingService websocketMessagingService,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.testCaseRepository = testCaseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
@@ -91,11 +85,10 @@ public class ProgrammingExerciseFeedbackCreationService {
      * the programming language, or just reformatting it to only show the most important details.
      *
      * @param programmingLanguage The programming language for which the feedback was generated
-     * @param projectType         The project type for which the feedback was generated
      * @param errorMessage        The raw error message in the feedback
      * @return A filtered and better formatted error message
      */
-    private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final ProjectType projectType, final String errorMessage) {
+    private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String errorMessage) {
         final String timeoutDetailText = "The test case execution timed out. This indicates issues in your code such as endless loops, issues with recursion or really slow performance. Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.";
         final String exceptionPrefix = "Exception message: ";
         // Overwrite timeout exception messages for Junit4, Junit5 and other
@@ -132,7 +125,7 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     /**
-     * Builds the regex used in {@link #processResultErrorMessage(ProgrammingLanguage, ProjectType, String)} on results from JVM languages.
+     * Builds the regex used in {@link #processResultErrorMessage(ProgrammingLanguage, String)} on results from JVM languages.
      *
      * @param jvmExceptionsToFilter Exceptions at the start of lines that should be filtered out in the processing step
      * @return A regex that can be used to process result messages
@@ -238,8 +231,8 @@ public class ProgrammingExerciseFeedbackCreationService {
         }
 
         if (!successful) {
-            String errorMessageString = testMessages.stream()
-                    .map(errorString -> processResultErrorMessage(exercise.getProgrammingLanguage(), exercise.getProjectType(), errorString)).collect(Collectors.joining("\n\n"));
+            String errorMessageString = testMessages.stream().map(errorString -> processResultErrorMessage(exercise.getProgrammingLanguage(), errorString))
+                    .collect(Collectors.joining("\n\n"));
             feedback.setDetailText(errorMessageString);
         }
         else if (!testMessages.isEmpty()) {

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.architecture;
 
 import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableFrom;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
 
-import de.tum.in.www1.artemis.AbstractArchitectureTest;
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.service.FeedbackService;
 
 class FeedbackArchitectureTest extends AbstractArchitectureTest {
@@ -29,7 +29,7 @@ class FeedbackArchitectureTest extends AbstractArchitectureTest {
 
         // internal usage for the Feedback and its tests okay, the service needs it for Hibernate lazy initialisation checks
         final JavaClasses classesToCheck = allClasses
-                .that(are(not(assignableFrom(Feedback.class).or(assignableFrom(FeedbackTest.class)).or(assignableFrom(FeedbackService.class)))));
+                .that(are(not(assignableFrom(Feedback.class).or(assignableFrom("de.tum.in.www1.artemis.domain.FeedbackTest")).or(assignableFrom(FeedbackService.class)))));
 
         getLongFeedbackTextUsage.check(classesToCheck);
     }
