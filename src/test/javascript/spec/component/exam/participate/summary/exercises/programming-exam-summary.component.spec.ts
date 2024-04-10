@@ -52,7 +52,7 @@ const programmingParticipation = {
     submissions: [programmingSubmission],
     type: ParticipationType.PROGRAMMING,
     participantIdentifier: 'student1',
-    repositoryUri: 'https://bitbucket.ase.in.tum.de/projects/TEST/repos/test-exercise',
+    repositoryUri: 'https://username@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username',
 } as ProgrammingExerciseStudentParticipation;
 
 const programmingExercise = {
@@ -107,7 +107,14 @@ describe('ProgrammingExamSummaryComponent', () => {
                 MockComponent(ComplaintsStudentViewComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [MockProvider(ExerciseService), MockProvider(ExerciseCacheService), { provide: ProfileService, useValue: new MockProfileService() }],
+            providers: [
+                MockProvider(ExerciseService),
+                MockProvider(ExerciseCacheService),
+                {
+                    provide: ProfileService,
+                    useValue: new MockProfileService(),
+                },
+            ],
         })
             .compileComponents()
             .then(() => {
