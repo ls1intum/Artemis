@@ -116,7 +116,7 @@ An alternative approach for caching is with docker volumes, see :ref:`dependecie
 
 .. note::
 
-    The following steps assume ``artemis.example.com`` is the host ``8443`` the port and ``10.0.73.42`` for the cache.
+    The following steps assume ``artemis.example.com`` is the host ``10.0.73.42`` and is using port ``8443`` for the cache.
     Adapt the URLs for your actual setup.
 
 Sonatype Nexus Setup
