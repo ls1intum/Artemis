@@ -35,7 +35,7 @@ public class LinkPreviewResource {
      * POST /link-preview : link preview for given url.
      *
      * @param url the url to parse
-     * @return the ResponseEntity with status 200 (OK) and with body the LinkPreviewDTO containing the meta information
+     * @return the LinkPreviewDTO containing the meta information
      */
     @PostMapping("link-preview")
     @EnforceAtLeastStudent
