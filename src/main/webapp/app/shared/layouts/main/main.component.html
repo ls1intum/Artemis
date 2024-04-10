@@ -1,8 +1,8 @@
 <jhi-alert-overlay />
-<div class="page-wrapper">
+<div class="page-wrapper" cdkScrollable>
     <jhi-page-ribbon />
     @if (showSkeleton) {
-        <div>
+        <div class="sticky-top">
             <router-outlet name="navbar" />
         </div>
     }

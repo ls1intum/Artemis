@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.domain.notification;
 
 import java.time.ZonedDateTime;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -70,7 +70,7 @@ public abstract class Notification extends DomainObject {
     /**
      * The String target is created based on a custom JAVA class
      * which hold the needed information to build a valid URL/Link
-     * it is used to create Emails without the need to parse the target (e.g. via GSON)
+     * it is used to create Emails without the need to parse the target (e.g. via json)
      */
     @Transient
     private transient NotificationTarget targetTransient;

@@ -111,7 +111,8 @@
                 "database": "Datenbank",
                 "iris": "Iris Einstellungen",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
-                "lti": "LTI Konfiguration"
+                "lti": "LTI Konfiguration",
+                "standardizedCompetencies": "Standardisierte Kompetenzen"
             },
             "language": "Sprache",
             "settings": "Einstellungen",
@@ -319,8 +320,9 @@
     "contact": "Kontaktiere uns",
     "bug": "Melde einen Fehler",
     "feature": "Beantrage ein Feature",
+    "releases": "Versionen",
     "releaseNotes": "Versionshinweise",
-    "requestChange": "Änderung beantragen",
+    "feedback": "Feedback",
     "justNow": "gerade eben",
     "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen.",
     "overview": {
@@ -328,6 +330,7 @@
         "aboutUs": "Über",
         "course": "Kursdetails",
         "exercise": "Aufgabendetails",
+        "exercises": "Aufgaben",
         "lectures": "Vorlesungen",
         "competencies": "Kompetenzen",
         "learningPath": "Lernpfad",

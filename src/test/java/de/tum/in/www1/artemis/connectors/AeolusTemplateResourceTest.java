@@ -3,16 +3,18 @@ package de.tum.in.www1.artemis.connectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.google.gson.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
@@ -35,54 +37,81 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
     }
 
-    @Test
+    private static Stream<Arguments> templateProvider() {
+        return Stream.of(new Object[][] { { "JAVA/PLAIN_GRADLE", 1 }, { "JAVA/PLAIN_GRADLE?sequentialRuns=true", 2 }, { "JAVA/PLAIN_GRADLE?staticAnalysis=true", 2 },
+                { "JAVA/PLAIN_GRADLE?staticAnalysis=true&testCoverage=true", 2 }, { "JAVA/PLAIN_MAVEN", 1 }, { "JAVA/PLAIN_MAVEN?sequentialRuns=true", 2 },
+                { "JAVA/PLAIN_MAVEN?staticAnalysis=true", 2 }, { "JAVA/PLAIN_MAVEN?staticAnalysis=true&testCoverage=true", 3 }, { "JAVA/MAVEN_BLACKBOX", 5 },
+                { "JAVA/MAVEN_BLACKBOX?staticAnalysis=true", 6 }, { "ASSEMBLER", 4 }, { "C/FACT", 2 }, { "C/GCC", 3 }, { "C/GCC?staticAnalysis=true", 3 }, { "KOTLIN", 1 },
+                { "KOTLIN?testCoverage=true", 2 }, { "KOTLIN?sequentialRuns=true", 3 }, { "VHDL", 4 }, { "HASKELL", 1 }, { "HASKELL?sequentialRuns=true", 2 }, { "OCAML", 2 },
+                { "SWIFT/PLAIN", 1 }, { "SWIFT/PLAIN?staticAnalysis=true", 2 } }).map(params -> Arguments.of(params[0], params[1]));
+    }
+
+    @ParameterizedTest
+    @MethodSource("templateProvider")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAeolusTemplateFile() throws Exception {
-        Map<String, Integer> templatesWithExpectedScriptActions = new HashMap<>();
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE", 1);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?sequentialRuns=true", 2);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true", 2);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true&testCoverage=true", 2);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN", 1);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?sequentialRuns=true", 2);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true", 2);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true&testCoverage=true", 3);
-        templatesWithExpectedScriptActions.put("ASSEMBLER", 4);
-        templatesWithExpectedScriptActions.put("C/FACT", 2);
-        templatesWithExpectedScriptActions.put("C/GCC", 3);
-        templatesWithExpectedScriptActions.put("C/GCC?staticAnalysis=true", 3);
-        templatesWithExpectedScriptActions.put("KOTLIN", 1);
-        templatesWithExpectedScriptActions.put("KOTLIN?testCoverage=true", 2);
-        templatesWithExpectedScriptActions.put("KOTLIN?sequentialRuns=true", 3);
-        templatesWithExpectedScriptActions.put("VHDL", 4);
-        templatesWithExpectedScriptActions.put("HASKELL", 1);
-        templatesWithExpectedScriptActions.put("HASKELL?sequentialRuns=true", 2);
-        templatesWithExpectedScriptActions.put("OCAML", 2);
-        templatesWithExpectedScriptActions.put("SWIFT/PLAIN", 1);
-        templatesWithExpectedScriptActions.put("SWIFT/PLAIN?staticAnalysis=true", 2);
-        for (Map.Entry<String, Integer> entry : templatesWithExpectedScriptActions.entrySet()) {
-            String template = request.get("/api/aeolus/templates/" + entry.getKey(), HttpStatus.OK, String.class);
-            assertThat(template).isNotEmpty();
-            Windfile windfile = Windfile.deserialize(template);
-            this.assertWindfileIsCorrect(windfile, entry.getValue());
-        }
+    void testGetAeolusTemplateFile(String templateKey, Integer expectedScriptActions) throws Exception {
+        String template = request.get("/api/aeolus/templates/" + templateKey, HttpStatus.OK, String.class);
+        assertThat(template).isNotEmpty();
+        Windfile windfile = Windfile.deserialize(template);
+        assertWindfileIsCorrect(windfile, expectedScriptActions);
     }
 
     @Test()
     void testInvalidWindfileDeserialization() {
         try {
-            String invalidWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"invalid-action\",\n\"runAlways\": true\n}\n]\n}";
+            String invalidWindfile = """
+                    {
+                      "api": "v0.0.1",
+                      "metadata": {
+                        "name": "example windfile",
+                        "description": "example windfile",
+                        "id": "example-windfile"
+                      },
+                      "actions": [
+                        {
+                          "name": "invalid-action",
+                          "runAlways": true
+                        }
+                      ]
+                    }""";
             Windfile.deserialize(invalidWindfile);
             fail("Should have thrown an exception as there is no script or platform in the actions object");
         }
-        catch (JsonParseException e) {
-            assertThat(e.getMessage()).isEqualTo("Cannot determine type");
+        catch (JsonProcessingException e) {
+            assertThat(e.getMessage()).startsWith("Cannot determine type");
         }
     }
 
     @Test()
-    void testValidWindfileDeserializationWithClass() {
-        String validWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"class\": \"script-action\",\n\"script\": \"echo $PATH\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action1\",\n\"platform\": \"bamboo\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action2\",\n\"script\": \"bash script\",\n\"runAlways\": true\n}\n]\n}";
+    void testValidWindfileDeserializationWithClass() throws JsonProcessingException {
+        String validWindfile = """
+                {
+                  "api": "v0.0.1",
+                  "metadata": {
+                    "name": "example windfile",
+                    "description": "example windfile",
+                    "id": "example-windfile"
+                  },
+                  "actions": [
+                    {
+                      "name": "valid-action",
+                      "class": "script-action",
+                      "script": "echo $PATH",
+                      "runAlways": true
+                    },
+                    {
+                      "name": "valid-action1",
+                      "platform": "bamboo",
+                      "runAlways": true
+                    },
+                    {
+                      "name": "valid-action2",
+                      "script": "bash script",
+                      "runAlways": true
+                    }
+                  ]
+                }""";
+
         Windfile windfile = Windfile.deserialize(validWindfile);
         assertThat(windfile).isNotNull();
         assertThat(windfile.getActions().get(0)).isInstanceOf(ScriptAction.class);
@@ -90,13 +119,31 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Test()
     void testValidWindfileWithInvalidAction() {
-        String invalidWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"clsas\": \"script-action\",\n\"scri\": \"echo $PATH\",\n\"runAlways\": true\n}\n]\n}";
+        // NOTE: the misspellings are intended
+        String invalidWindfile = """
+                {
+                  "api": "v0.0.1",
+                  "metadata": {
+                    "name": "example windfile",
+                    "description": "example windfile",
+                    "id": "example-windfile"
+                  },
+                  "actions": [
+                    {
+                      "name": "valid-action",
+                      "clsas": "script-action",
+                      "scri": "echo $PATH",
+                      "runAlways": true
+                    }
+                  ]
+                }""";
+
         try {
             Windfile.deserialize(invalidWindfile);
             fail("Should have thrown an exception as there is no script or platform in the actions object");
         }
-        catch (JsonParseException exception) {
-            assertThat(exception.getMessage()).isEqualTo("Cannot determine type");
+        catch (JsonProcessingException exception) {
+            assertThat(exception.getMessage()).startsWith("Cannot determine type");
         }
     }
 

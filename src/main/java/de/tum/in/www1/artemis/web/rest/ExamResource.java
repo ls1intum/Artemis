@@ -16,8 +16,8 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,8 +77,6 @@ public class ExamResource {
     @Value("${artemis.course-archives-path}")
     private String examArchivesDirPath;
 
-    private final ProfileService profileService;
-
     private final UserRepository userRepository;
 
     private final CourseRepository courseRepository;
@@ -105,8 +103,6 @@ public class ExamResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
-    private final StudentExamRepository studentExamRepository;
-
     private final ExamImportService examImportService;
 
     private final CustomAuditEventRepository auditEventRepository;
@@ -121,14 +117,14 @@ public class ExamResource {
 
     private final StudentExamService studentExamService;
 
-    public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
-            ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
-            SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
-            TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
-            StudentExamRepository studentExamRepository, ExamImportService examImportService, CustomAuditEventRepository auditEventRepository, ChannelService channelService,
-            ChannelRepository channelRepository, ExerciseRepository exerciseRepository, ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService,
-            StudentExamService studentExamService) {
-        this.profileService = profileService;
+    private final ExamUserService examUserService;
+
+    public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
+            ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
+            AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
+            AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
+            CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
+            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -142,7 +138,6 @@ public class ExamResource {
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.assessmentDashboardService = assessmentDashboardService;
-        this.studentExamRepository = studentExamRepository;
         this.examImportService = examImportService;
         this.auditEventRepository = auditEventRepository;
         this.channelService = channelService;
@@ -151,6 +146,7 @@ public class ExamResource {
         this.examSessionService = examSessionRepository;
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
+        this.examUserService = examUserService;
     }
 
     /**
@@ -177,11 +173,8 @@ public class ExamResource {
         }
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
-
         Exam savedExam = examRepository.save(exam);
-
         channelService.createExamChannel(savedExam, Optional.ofNullable(exam.getChannelName()));
-
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
 
@@ -240,7 +233,8 @@ public class ExamResource {
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
         if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
             int workingTimeChange = savedExam.getDuration() - originalExamDuration;
-            updateStudentExamsAndRescheduleExercises(examWithExercises, originalExamDuration, workingTimeChange);
+            Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
+            examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
         }
 
         if (updatedChannel != null) {
@@ -269,8 +263,9 @@ public class ExamResource {
             throw new BadRequestException();
         }
 
-        // NOTE: We have to get exercise groups as `scheduleModelingExercises` needs them
-        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
+        // NOTE: We have to get exercise groups as `scheduleModelingExercises` needs them.
+        // We also need all student exams for updateStudentExamsAndRescheduleExercises.
+        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         var originalExamDuration = exam.getDuration();
 
         // 1. Update the end date & working time of the exam
@@ -279,49 +274,9 @@ public class ExamResource {
         examRepository.save(exam);
 
         // 2. Re-calculate the working times of all student exams
-        updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
+        examService.updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
 
         return ResponseEntity.ok(exam);
-    }
-
-    private void updateStudentExamsAndRescheduleExercises(Exam exam, Integer originalExamDuration, Integer workingTimeChange) {
-        var now = now();
-
-        User instructor = userRepository.getUser();
-
-        var studentExams = studentExamRepository.findByExamId(exam.getId());
-        for (var studentExam : studentExams) {
-            Integer originalStudentWorkingTime = studentExam.getWorkingTime();
-            int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
-            // NOTE: take the original working time extensions into account
-            if (originalTimeExtension == 0) {
-                studentExam.setWorkingTime(originalStudentWorkingTime + workingTimeChange);
-            }
-            else {
-                double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
-                int newNormalWorkingTime = originalExamDuration + workingTimeChange;
-                int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
-                int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
-                studentExam.setWorkingTime(adjustedWorkingTime);
-            }
-            // TODO: probably batch these updates?
-            var savedStudentExam = studentExamRepository.save(studentExam);
-
-            // NOTE: if the exam is already visible, notify the student about the working time change
-            if (now.isAfter(exam.getVisibleDate())) {
-                examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, savedStudentExam.getWorkingTime(), originalStudentWorkingTime, true, instructor);
-            }
-        }
-
-        // NOTE: if the exam is already visible, notify instances about the working time change
-        if (now.isAfter(exam.getVisibleDate())) {
-            instanceMessageSendService.sendRescheduleAllStudentExams(exam.getId());
-        }
-
-        // NOTE: potentially re-schedule clustering of modeling submissions (in case Compass is active)
-        if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
-            examService.scheduleModelingExercises(exam);
-        }
     }
 
     /**
@@ -337,9 +292,7 @@ public class ExamResource {
     public ResponseEntity<ExamWideAnnouncementEventDTO> createExamAnnouncement(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody String message) {
         long start = System.nanoTime();
         log.debug("REST request to create an announcement for exam with id {}", examId);
-
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-
         var exam = examRepository.findByIdElseThrow(examId);
 
         if (!exam.isVisibleToStudents()) {
@@ -347,7 +300,6 @@ public class ExamResource {
         }
 
         var event = examLiveEventsService.createAndDistributeExamAnnouncementEvent(exam, message, userRepository.getUser());
-
         log.debug("createExamAnnouncement took {} for exam {}", TimeLogUtil.formatDurationFrom(start), examId);
         return ResponseEntity.ok(event.asDTO());
     }
@@ -389,13 +341,9 @@ public class ExamResource {
      * @param exam     which should be checked.
      */
     private void checkForExamConflictsElseThrow(Long courseId, Exam exam) {
-
         checkExamCourseIdElseThrow(courseId, exam);
-
         checkExamForDatesConflictsElseThrow(exam);
-
         checkExamForWorkingTimeConflictsElseThrow(exam);
-
         checkExamPointsAndCorrectionRoundsElseThrow(exam);
     }
 
@@ -793,10 +741,14 @@ public class ExamResource {
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to delete exam : {}", examId);
 
-        var exam = examRepository.findByIdElseThrow(examId);
+        var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         examDeletionService.delete(examId);
+
+        // delete all exam user signatures and images
+        exam.getExamUsers().forEach(examUserService::deleteAvailableExamUserImages);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
     }
 
@@ -871,15 +823,12 @@ public class ExamResource {
         log.info("REST request to generate student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
-
         // Reset existing student exams & participations in case they already exist
         examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
 
         List<StudentExam> studentExams = studentExamService.generateStudentExams(exam);
-
         // we need to break a cycle for the serialization
         breakCyclesForSerialization(studentExams);
-
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
         return ResponseEntity.ok().body(studentExams);
     }
@@ -947,7 +896,6 @@ public class ExamResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Integer> evaluateQuizExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to evaluate quiz exercises of exam {}", examId);
-
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         if (examDateService.getLatestIndividualExamEndDate(examId).isAfter(ZonedDateTime.now())) {
@@ -960,64 +908,8 @@ public class ExamResource {
         }
 
         Integer numOfEvaluatedExercises = examService.evaluateQuizExercises(exam);
-
         log.info("Evaluated {} quiz exercises of exam {}", numOfEvaluatedExercises, examId);
-
         return ResponseEntity.ok().body(numOfEvaluatedExercises);
-    }
-
-    /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories : Unlock all repositories of the exam
-     *
-     * @param courseId the course to which the exam belongs to
-     * @param examId   the id of the exam
-     * @return the number of unlocked exercises
-     */
-    @PostMapping("courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
-        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
-        // LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        log.info("REST request to unlock all repositories of exam {}", examId);
-
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-
-        Integer numOfUnlockedExercises = examService.unlockAllRepositories(examId);
-
-        log.info("Unlocked {} programming exercises of exam {}", numOfUnlockedExercises, examId);
-
-        return ResponseEntity.ok().body(numOfUnlockedExercises);
-    }
-
-    /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories : Lock all repositories of the exam
-     *
-     * @param courseId the course to which the exam belongs to
-     * @param examId   the id of the exam
-     * @return the number of locked exercises
-     */
-    @PostMapping("courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
-        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
-        // LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        log.info("REST request to lock all repositories of exam {}", examId);
-
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-
-        Integer numOfLockedExercises = examService.lockAllRepositories(examId);
-
-        log.info("Locked {} programming exercises of exam {}", numOfLockedExercises, examId);
-
-        return ResponseEntity.ok().body(numOfLockedExercises);
     }
 
     /**
@@ -1056,9 +948,7 @@ public class ExamResource {
     public ResponseEntity<Void> registerCourseStudents(@PathVariable Long courseId, @PathVariable Long examId) {
         // get all students enrolled in the course
         log.debug("REST request to add all students to exam {} with courseId {}", examId, courseId);
-
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
         if (exam.isTestExam()) {
@@ -1066,7 +956,6 @@ public class ExamResource {
         }
 
         examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
-
         return ResponseEntity.ok().body(null);
     }
 
@@ -1312,17 +1201,14 @@ public class ExamResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         Set<Exercise> exercises = exerciseRepository.findAllExercisesWithPotentialPlagiarismByExamId(examId);
-        List<ExerciseForPlagiarismCasesOverviewDTO> exerciseForPlagiarismCasesOverviewDTOS = new ArrayList<>();
-        for (Exercise exercise : exercises) {
-            var courseDTO = new CourseWithIdDTO(exercise.getExerciseGroup().getExam().getCourse().getId());
-            var examDTO = new ExamWithIdAndCourseDTO(exercise.getExerciseGroup().getExam().getId(), courseDTO);
-            var exerciseGroupDTO = new ExerciseGroupWithIdAndExamDTO(exercise.getExerciseGroup().getId(), examDTO);
-            ExerciseForPlagiarismCasesOverviewDTO exerciseForPlagiarismCasesOverviewDTO = new ExerciseForPlagiarismCasesOverviewDTO(exercise.getId(), exercise.getTitle(),
-                    exercise.getType(), exerciseGroupDTO);
-            exerciseForPlagiarismCasesOverviewDTOS.add(exerciseForPlagiarismCasesOverviewDTO);
-        }
-        return exerciseForPlagiarismCasesOverviewDTOS;
+        return exercises.stream().map(this::convertToDto).toList();
+    }
 
+    private ExerciseForPlagiarismCasesOverviewDTO convertToDto(Exercise exercise) {
+        var courseDTO = new CourseWithIdDTO(exercise.getExerciseGroup().getExam().getCourse().getId());
+        var examDTO = new ExamWithIdAndCourseDTO(exercise.getExerciseGroup().getExam().getId(), courseDTO);
+        var exerciseGroupDTO = new ExerciseGroupWithIdAndExamDTO(exercise.getExerciseGroup().getId(), examDTO);
+        return new ExerciseForPlagiarismCasesOverviewDTO(exercise.getId(), exercise.getTitle(), exercise.getType(), exerciseGroupDTO);
     }
 
     /**
@@ -1363,7 +1249,5 @@ public class ExamResource {
                 analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses, analyzeSessionsForTheSameStudentExamWithDifferentBrowserFingerprints,
                 analyzeSessionsIpOutsideOfRange);
         return examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId, options, Optional.ofNullable(ipSubnet));
-
     }
-
 }

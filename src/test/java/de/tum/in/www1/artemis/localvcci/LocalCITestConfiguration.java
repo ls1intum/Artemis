@@ -22,6 +22,7 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
+import de.tum.in.www1.artemis.util.FixMissingServletPathProcessor;
 
 /**
  * This class is used to overwrite the configuration of the local CI system ({@link LocalCIConfiguration}).
@@ -126,6 +127,16 @@ public class LocalCITestConfiguration {
         doReturn(removeImageCmd).when(dockerClient).removeImageCmd(anyString());
         doNothing().when(removeImageCmd).exec();
 
+        // Mock removeContainerCmd
+        RemoveContainerCmd removeContainerCmd = mock(RemoveContainerCmd.class);
+        doReturn(removeContainerCmd).when(dockerClient).removeContainerCmd(anyString());
+        doReturn(removeContainerCmd).when(removeContainerCmd).withForce(true);
+
         return dockerClient;
+    }
+
+    @Bean
+    public FixMissingServletPathProcessor fixMissingServletPathProcessor() {
+        return new FixMissingServletPathProcessor();
     }
 }

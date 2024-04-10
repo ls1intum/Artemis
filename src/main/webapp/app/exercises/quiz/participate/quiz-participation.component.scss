@@ -4,8 +4,6 @@
 }
 
 .quiz-content {
-    margin-top: 6px;
-    margin-bottom: 110px;
     min-height: calc(100vh - 400px);
 
     .question-index {
@@ -15,12 +13,12 @@
 
 .quiz-footer {
     height: 90px;
-    position: fixed;
+    position: sticky;
     padding: 0 10px;
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 10;
+    z-index: 30;
     box-shadow: 0 0 3px var(--quiz-participation-footer-box-shadow);
     background: var(--quiz-participation-footer-background);
 

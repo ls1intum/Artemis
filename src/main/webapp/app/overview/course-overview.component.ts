@@ -1,4 +1,17 @@
-import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    EmbeddedViewRef,
+    HostListener,
+    OnDestroy,
+    OnInit,
+    QueryList,
+    TemplateRef,
+    ViewChild,
+    ViewChildren,
+    ViewContainerRef,
+} from '@angular/core';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
@@ -13,16 +26,21 @@ import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import {
+    IconDefinition,
+    faChalkboardUser,
     faChartBar,
+    faChevronRight,
     faCircleNotch,
     faClipboard,
     faComment,
     faComments,
+    faDoorOpen,
     faEye,
     faFilePdf,
     faFlag,
     faGraduationCap,
     faListAlt,
+    faListCheck,
     faNetworkWired,
     faPersonChalkboard,
     faSync,
@@ -35,11 +53,36 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
+import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
+import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
+import { facSidebar } from '../../content/icons/icons';
+
+interface CourseActionItem {
+    title: string;
+    icon?: IconDefinition;
+    translation: string;
+    action?: (item?: CourseActionItem) => void;
+}
+interface SidebarItem {
+    routerLink: string;
+    icon?: IconDefinition;
+    title: string;
+    testId?: string;
+    translation: string;
+    hasInOrionProperty?: boolean;
+    showInOrionWindow?: boolean;
+    guidedTour?: boolean;
+    featureToggle?: FeatureToggle;
+}
 
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
-    styleUrls: ['course-overview.scss', '../shared/tab-bar/tab-bar.scss'],
+    styleUrls: ['course-overview.scss', 'course-overview.component.scss'],
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -47,16 +90,28 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     private courseId: number;
     private subscription: Subscription;
-    public course?: Course;
-    public refreshingCourse = false;
+    course?: Course;
+    refreshingCourse = false;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
-    public hasUnreadMessages: boolean;
-    public messagesRouteLoaded: boolean;
-    public communicationRouteLoaded: boolean;
+    hasUnreadMessages: boolean;
+    messagesRouteLoaded: boolean;
+    communicationRouteLoaded: boolean;
+    isProduction = true;
+    isTestServer = false;
+    pageTitle: string;
+    hasSidebar: boolean = false;
+    sidebarItems: SidebarItem[];
+    courseActionItems: CourseActionItem[];
+    isNotManagementView: boolean;
+    canUnenroll: boolean;
+    isNavbarCollapsed = false;
+    isSidebarCollapsed = false;
+    profileSubscription?: Subscription;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
+    activatedComponentReference: CourseExercisesComponent | CourseLecturesComponent;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -89,12 +144,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faComments = faComments;
     faClipboard = faClipboard;
     faGraduationCap = faGraduationCap;
-    faPersonChalkboard = faPersonChalkboard;
     faSync = faSync;
     faCircleNotch = faCircleNotch;
     faNetworkWired = faNetworkWired;
+    faChalkboardUser = faChalkboardUser;
+    faChevronRight = faChevronRight;
+    faListCheck = faListCheck;
+    faDoorOpen = faDoorOpen;
+    facSidebar = facSidebar;
 
     FeatureToggle = FeatureToggle;
+    CachingStrategy = CachingStrategy;
 
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -112,20 +172,185 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private metisConversationService: MetisConversationService,
         private router: Router,
         private courseAccessStorageService: CourseAccessStorageService,
+        private profileService: ProfileService,
+        private modalService: NgbModal,
     ) {}
 
     async ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
+            this.courseId = parseInt(params.courseId, 10);
         });
-
+        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo?.inProduction;
+            this.isTestServer = profileInfo.testServer ?? false;
+        });
+        this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
-
+        this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
         this.courseAccessStorageService.onCourseAccessed(this.courseId);
 
         await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
+        this.sidebarItems = this.getSidebarItems();
+        this.courseActionItems = this.getCourseActionItems();
+    }
+
+    getCourseActionItems(): CourseActionItem[] {
+        const courseActionItems = [];
+        this.canUnenroll = this.canStudentUnenroll();
+        if (this.canUnenroll) {
+            const unenrollItem: CourseActionItem = this.getUnenrollItem();
+            courseActionItems.push(unenrollItem);
+        }
+        return courseActionItems;
+    }
+    getSidebarItems(): SidebarItem[] {
+        const sidebarItems = this.getDefaultItems();
+        if (this.course?.lectures) {
+            const lecturesItem: SidebarItem = this.getLecturesItems();
+            sidebarItems.splice(-1, 0, lecturesItem);
+        }
+        if (this.course?.exams && this.hasVisibleExams()) {
+            const examsItem: SidebarItem = this.getExamsItems();
+            sidebarItems.unshift(examsItem);
+        }
+        if (isCommunicationEnabled(this.course)) {
+            const communicationItem: SidebarItem = this.getCommunicationItems();
+            sidebarItems.push(communicationItem);
+        }
+
+        if (isMessagingEnabled(this.course) || isCommunicationEnabled(this.course)) {
+            const messagesItem: SidebarItem = this.getMessagesItems();
+            sidebarItems.push(messagesItem);
+        }
+
+        if (this.hasTutorialGroups()) {
+            const tutorialGroupsItem: SidebarItem = this.getTutorialGroupsItems();
+            sidebarItems.push(tutorialGroupsItem);
+        }
+
+        if (this.hasCompetencies()) {
+            const competenciesItem: SidebarItem = this.getCompetenciesItems();
+            sidebarItems.push(competenciesItem);
+            if (this.course?.learningPathsEnabled) {
+                const learningPathItem: SidebarItem = this.getLearningPathItems();
+                sidebarItems.push(learningPathItem);
+            }
+        }
+
+        return sidebarItems;
+    }
+
+    getUnenrollItem() {
+        const unenrollItem: CourseActionItem = {
+            title: 'Unenroll',
+            icon: faDoorOpen,
+            translation: 'artemisApp.courseOverview.exerciseList.details.unenrollmentButton',
+            action: () => this.openUnenrollStudentModal(),
+        };
+        return unenrollItem;
+    }
+    getLecturesItems() {
+        const lecturesItem: SidebarItem = {
+            routerLink: 'lectures',
+            icon: faChalkboardUser,
+            title: 'Lectures',
+            translation: 'artemisApp.courseOverview.menu.lectures',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+        };
+        return lecturesItem;
+    }
+    getExamsItems() {
+        const examsItem: SidebarItem = {
+            routerLink: 'exams',
+            icon: faGraduationCap,
+            title: 'Exams',
+            testId: 'exam-tab',
+            translation: 'artemisApp.courseOverview.menu.exams',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+        };
+        return examsItem;
+    }
+    getCommunicationItems() {
+        const communicationItem: SidebarItem = {
+            routerLink: 'discussion',
+            icon: faComment,
+            title: 'Communication',
+            translation: 'artemisApp.courseOverview.menu.communication',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+        };
+        return communicationItem;
+    }
+    getMessagesItems() {
+        const messagesItem: SidebarItem = {
+            routerLink: 'messages',
+            icon: faComments,
+            title: 'Messages',
+            translation: 'artemisApp.courseOverview.menu.messages',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+        };
+        return messagesItem;
+    }
+    getTutorialGroupsItems() {
+        const tutorialGroupsItem: SidebarItem = {
+            routerLink: 'tutorial-groups',
+            icon: faPersonChalkboard,
+            title: 'Tutorials',
+            translation: 'artemisApp.courseOverview.menu.tutorialGroups',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            featureToggle: FeatureToggle.TutorialGroups,
+        };
+        return tutorialGroupsItem;
+    }
+    getCompetenciesItems() {
+        const competenciesItem: SidebarItem = {
+            routerLink: 'competencies',
+            icon: faFlag,
+            title: 'Competencies',
+            translation: 'artemisApp.courseOverview.menu.competencies',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+        };
+        return competenciesItem;
+    }
+    getLearningPathItems() {
+        const learningPathItem: SidebarItem = {
+            routerLink: 'learning-path',
+            icon: faNetworkWired,
+            title: 'Learning Path',
+            translation: 'artemisApp.courseOverview.menu.learningPath',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            featureToggle: FeatureToggle.LearningPaths,
+        };
+        return learningPathItem;
+    }
+
+    getDefaultItems() {
+        const exercisesItem: SidebarItem = {
+            routerLink: 'exercises',
+            icon: faListCheck,
+            title: 'Exercises',
+            translation: 'artemisApp.courseOverview.menu.exercises',
+        };
+
+        const statisticsItem: SidebarItem = {
+            routerLink: 'statistics',
+            icon: faListAlt,
+            title: 'Statistics',
+            translation: 'artemisApp.courseOverview.menu.statistics',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            guidedTour: true,
+        };
+
+        return [exercisesItem, statisticsItem];
     }
 
     async initAfterCourseLoad() {
@@ -156,6 +381,21 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    canStudentUnenroll(): boolean {
+        return !!this.course?.unenrollmentEnabled && dayjs().isBefore(this.course?.unenrollmentEndDate);
+    }
+
+    courseActionItemClick(item?: CourseActionItem) {
+        if (item?.action) {
+            item.action(item);
+        }
+    }
+
+    openUnenrollStudentModal() {
+        const modalRef = this.modalService.open(CourseUnenrollmentModalComponent, { size: 'xl' });
+        modalRef.componentInstance.course = this.course;
+    }
+
     ngAfterViewInit() {
         // Check if controls mount point is available, if not, wait for it
         if (this.controlsViewContainer) {
@@ -177,10 +417,13 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * @param componentRef the sub route component that has been mounted into the router outlet
      */
     onSubRouteActivate(componentRef: any) {
+        this.getPageTitle();
         this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
         this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'discussion';
 
         this.setUpConversationService();
+
+        this.hasSidebar = this.getHasSidebar();
 
         if (componentRef.controlConfiguration) {
             const provider = componentRef as BarControlConfigurationProvider;
@@ -191,12 +434,37 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 this.controlConfiguration.subject?.subscribe((controls: TemplateRef<any>) => {
                     this.controls = controls;
                     this.tryRenderControls();
-                    // Since we might be pulling data upwards during a render cycle, we need to re-run change detection
-                    this.changeDetectorRef.detectChanges();
                 }) || undefined;
         }
+        if (componentRef instanceof CourseExercisesComponent || componentRef instanceof CourseLecturesComponent) {
+            this.activatedComponentReference = componentRef;
+        }
+
+        // Since we change the pageTitle + might be pulling data upwards during a render cycle, we need to re-run change detection
+        this.changeDetectorRef.detectChanges();
     }
 
+    toggleSidebar() {
+        if (!this.activatedComponentReference) {
+            return;
+        }
+        const childRouteComponent = this.activatedComponentReference;
+        childRouteComponent.toggleSidebar();
+    }
+
+    @HostListener('window:keydown.Control.Shift.b', ['$event'])
+    onKeyDownControlShiftB(event: KeyboardEvent) {
+        event.preventDefault();
+        this.toggleSidebar();
+    }
+    getPageTitle(): void {
+        const routePageTitle: string = this.route.snapshot.firstChild?.data?.pageTitle;
+        this.pageTitle = routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
+    }
+
+    getHasSidebar(): boolean {
+        return this.route.snapshot.firstChild?.data?.hasSidebar;
+    }
     /**
      * Removes the controls component from the DOM and cancels the listener for controls changes.
      * Called by the router outlet as soon as the currently mounted component is removed
@@ -315,7 +583,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.controlsSubscription?.unsubscribe();
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
-        this.ngUnsubscribe.next(undefined);
+        this.profileSubscription?.unsubscribe();
+        this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
 
@@ -377,5 +646,21 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 exercise.studentParticipations = teamAssignment.studentParticipations;
             }
         });
+    }
+
+    @HostListener('window:keydown.Control.m', ['$event'])
+    onKeyDownControlM(event: KeyboardEvent) {
+        event.preventDefault();
+        this.toggleCollapseState();
+    }
+
+    getCollapseStateFromStorage() {
+        const storedCollapseState: string | null = localStorage.getItem('navbar.collapseState');
+        if (storedCollapseState) this.isNavbarCollapsed = JSON.parse(storedCollapseState);
+    }
+
+    toggleCollapseState() {
+        this.isNavbarCollapsed = !this.isNavbarCollapsed;
+        localStorage.setItem('navbar.collapseState', JSON.stringify(this.isNavbarCollapsed));
     }
 }

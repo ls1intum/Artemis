@@ -17,9 +17,8 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItem;
@@ -39,12 +38,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
 
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
+import de.tum.in.www1.artemis.service.util.CommonsMultipartFile;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -205,6 +204,7 @@ public class FileService implements DisposableBean {
      * @param fullSanitizedPath the full path to save the file to
      * @return the path where the file was saved
      */
+    @NotNull
     public Path saveFile(MultipartFile file, Path fullSanitizedPath) {
         copyFile(file, fullSanitizedPath);
         return fullSanitizedPath;
@@ -227,7 +227,7 @@ public class FileService implements DisposableBean {
      * @return the sanitized filename
      * @throws IllegalArgumentException if the filename is null
      */
-    @Nonnull
+    @NotNull
     public String checkAndSanitizeFilename(@Nullable String filename) {
         if (filename == null) {
             throw new IllegalArgumentException("Filename cannot be null");

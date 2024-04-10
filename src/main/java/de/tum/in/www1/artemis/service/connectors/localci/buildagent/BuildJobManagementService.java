@@ -6,9 +6,10 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,11 +40,11 @@ public class BuildJobManagementService {
 
     private final BuildJobContainerService buildJobContainerService;
 
-    private final LocalCIDockerService localCIDockerService;
-
     private final HazelcastInstance hazelcastInstance;
 
-    @Value("${artemis.continuous-integration.timeout-seconds:120}")
+    private final ReentrantLock lock = new ReentrantLock();
+
+    @Value("${artemis.continuous-integration.timeout-seconds:240}")
     private int timeoutSeconds;
 
     @Value("${artemis.continuous-integration.asynchronous:true}")
@@ -66,11 +67,10 @@ public class BuildJobManagementService {
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
     public BuildJobManagementService(HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService, ExecutorService localCIBuildExecutorService,
-            BuildJobContainerService buildJobContainerService, LocalCIDockerService localCIDockerService) {
+            BuildJobContainerService buildJobContainerService) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.buildJobContainerService = buildJobContainerService;
-        this.localCIDockerService = localCIDockerService;
         this.hazelcastInstance = hazelcastInstance;
     }
 
@@ -83,8 +83,14 @@ public class BuildJobManagementService {
         ITopic<String> canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
         canceledBuildJobsTopic.addMessageListener(message -> {
             String buildJobId = message.getMessageObject();
-            if (runningFutures.containsKey(buildJobId)) {
-                cancelBuildJob(buildJobId);
+            lock.lock();
+            try {
+                if (runningFutures.containsKey(buildJobId)) {
+                    cancelBuildJob(buildJobId);
+                }
+            }
+            finally {
+                lock.unlock();
             }
         });
     }
@@ -98,9 +104,6 @@ public class BuildJobManagementService {
      */
     public CompletableFuture<LocalCIBuildResult> executeBuildJob(LocalCIBuildJobQueueItem buildJobItem) throws LocalCIException {
 
-        // Check if the Docker image is available. If not, pull it.
-        localCIDockerService.pullDockerImage(buildJobItem.buildConfig().dockerImage());
-
         // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
         String containerName = buildContainerPrefix + buildJobItem.participationId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
@@ -112,9 +115,22 @@ public class BuildJobManagementService {
          * createCompletableFuture() is only used to provide a way to run build jobs synchronously for testing and debugging purposes and depends on the
          * artemis.continuous-integration.asynchronous environment variable.
          * Usually, when using asynchronous build jobs, it will just resolve to "CompletableFuture.supplyAsync".
+         * The future is stored in the runningFutures map so that it can be cancelled if needed.
+         * We add a lock to prevent the job from being submitted even though it was cancelled.
          */
-        Future<LocalCIBuildResult> future = localCIBuildExecutorService.submit(buildJob);
-        runningFutures.put(buildJobItem.id(), future);
+        lock.lock();
+        Future<LocalCIBuildResult> future;
+        try {
+            if (cancelledBuildJobs.contains(buildJobItem.id())) {
+                finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
+                throw new CompletionException("Build job with id " + buildJobItem.id() + " was cancelled.", null);
+            }
+            future = localCIBuildExecutorService.submit(buildJob);
+            runningFutures.put(buildJobItem.id(), future);
+        }
+        finally {
+            lock.unlock();
+        }
 
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
             try {

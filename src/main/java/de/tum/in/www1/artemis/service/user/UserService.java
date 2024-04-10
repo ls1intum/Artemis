@@ -1,20 +1,30 @@
 package de.tum.in.www1.artemis.service.user;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MIN_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MIN_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE;
+import static de.tum.in.www1.artemis.config.Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE;
+import static de.tum.in.www1.artemis.config.Constants.USER_LAST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.in.www1.artemis.security.Role.ADMIN;
 import static de.tum.in.www1.artemis.security.Role.STUDENT;
 
+import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,13 +43,17 @@ import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
-import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
+import de.tum.in.www1.artemis.service.connectors.ldap.LdapAuthenticationProvider;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
+import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
@@ -95,10 +109,12 @@ public class UserService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final FileService fileService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, InstanceMessageSendService instanceMessageSendService) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, InstanceMessageSendService instanceMessageSendService, FileService fileService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -111,6 +127,7 @@ public class UserService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.fileService = fileService;
     }
 
     /**
@@ -419,7 +436,7 @@ public class UserService {
 
     /**
      * Updates the user (and synchronizes its password) and its groups in the connected version control system (e.g. GitLab if available).
-     * Also updates the user groups in the used authentication provider (like {@link JiraAuthenticationProvider}.
+     * Also updates the user groups in the used authentication provider (like {@link LdapAuthenticationProvider}).
      *
      * @param oldUserLogin The username of the user. If the username is updated in the user object, it must be the one before the update in order to find the user in the VCS
      * @param user         The updated user in Artemis (this method assumes that the user including its groups was already saved to the Artemis database)
@@ -468,6 +485,7 @@ public class UserService {
         final String originalLogin = user.getLogin();
         final Set<String> originalGroups = user.getGroups();
         final String randomPassword = RandomUtil.generatePassword();
+        final String userImageString = user.getImageUrl();
 
         user.setFirstName(USER_FIRST_NAME_AFTER_SOFT_DELETE);
         user.setLastName(USER_LAST_NAME_AFTER_SOFT_DELETE);
@@ -482,6 +500,10 @@ public class UserService {
         userRepository.save(user);
         clearUserCaches(user);
         userRepository.flush();
+
+        if (userImageString != null) {
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(URI.create(userImageString)), 0);
+        }
 
         updateUserInConnectorsAndAuthProvider(user, originalLogin, originalGroups, randomPassword);
     }
@@ -633,9 +655,8 @@ public class UserService {
      *
      * @param user  the user
      * @param group the group
-     * @param role  the role
      */
-    public void addUserToGroup(User user, String group, Role role) {
+    public void addUserToGroup(User user, String group) {
         addUserToGroupInternal(user, group); // internal Artemis database
         try {
             artemisAuthenticationProvider.addUserToGroup(user, group);  // e.g. JIRA
@@ -672,7 +693,7 @@ public class UserService {
     public void removeUserFromGroup(User user, String group) {
         removeUserFromGroupInternal(user, group); // internal Artemis database
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
-        // e.g. Gitlab/Bitbucket
+        // e.g. Gitlab
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of()));
         // e.g. Jenkins
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.removeUserFromGroups(user.getLogin(), Set.of(group)));
@@ -708,62 +729,82 @@ public class UserService {
      * @param registrationNumber the registration number of the user
      * @param login              the login of the user
      * @param email              the email of the user
-     * @param courseGroupName    the courseGroup the user has to be added to
-     * @param courseGroupRole    the courseGroupRole enum
      * @return the found student, otherwise returns an empty optional
      */
-    public Optional<User> findUserAndAddToCourse(@Nullable String registrationNumber, @Nullable String login, @Nullable String email, String courseGroupName,
-            Role courseGroupRole) {
+    public Optional<User> findUser(@Nullable String registrationNumber, @Nullable String login, @Nullable String email) {
         if (!StringUtils.hasText(login) && !StringUtils.hasText(email) && !StringUtils.hasText(registrationNumber)) {
             // if none of the three values is specified, the user cannot be found
             return Optional.empty();
         }
         try {
-            Optional<User> optionalStudent = Optional.empty();
-            if (StringUtils.hasText(login)) {
-                optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
-            }
-            if (optionalStudent.isEmpty() && StringUtils.hasText(email)) {
-                optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByEmail(email);
-            }
-            if (optionalStudent.isEmpty() && StringUtils.hasText(registrationNumber)) {
-                optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+            var optionalUser = findUserInDatabase(registrationNumber, login, email);
+            if (optionalUser.isEmpty()) {
+                // In this case, the user was NOT found in the database! We can try to create it from the external user management, in case it is configured
+                optionalUser = findUserInLdap(registrationNumber, login, email);
             }
 
-            if (optionalStudent.isPresent()) {
-                var student = optionalStudent.get();
-                // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the
-                // course
-                if (!student.getGroups().contains(courseGroupName)) {
-                    this.addUserToGroup(student, courseGroupName, courseGroupRole);
-                }
-                return optionalStudent;
-            }
-
-            // In this case, the user was NOT found in the database! We can try to create it from the external user management, in case it is configured
-            if (StringUtils.hasText(login)) {
-                optionalStudent = createUserFromLdapWithLogin(login);
-            }
-            if (optionalStudent.isEmpty() && StringUtils.hasText(email)) {
-                optionalStudent = createUserFromLdapWithEmail(email);
-            }
-            if (optionalStudent.isEmpty() && StringUtils.hasText(registrationNumber)) {
-                optionalStudent = createUserFromLdapWithRegistrationNumber(registrationNumber);
-            }
-
-            if (optionalStudent.isPresent()) {
-                var student = optionalStudent.get();
-                // the newly created user needs to get the rights to access the course
-                this.addUserToGroup(student, courseGroupName, courseGroupRole);
-                return optionalStudent;
+            if (optionalUser.isPresent()) {
+                return optionalUser;
             }
 
             log.warn("User with registration number '{}', login '{}' and email '{}' NOT found in Artemis user database NOR in connected LDAP", registrationNumber, login, email);
         }
         catch (Exception ex) {
-            log.warn("Error while processing user with registration number {}", registrationNumber, ex);
+            log.warn("Error while trying to find user with registration number {}, login {}, email {}", registrationNumber, login, email, ex);
         }
         return Optional.empty();
+    }
+
+    /**
+     * This method first tries to find the user and then adds the user to the course
+     *
+     * @param registrationNumber the registration number of the user
+     * @param login              the login of the user
+     * @param email              the email of the user
+     * @param courseGroupName    the courseGroup the user has to be added to
+     * @return the found user, otherwise returns an empty optional
+     */
+    public Optional<User> findUserAndAddToCourse(@Nullable String registrationNumber, @Nullable String login, @Nullable String email, String courseGroupName) {
+        var optionalUser = findUser(registrationNumber, login, email);
+
+        if (optionalUser.isPresent()) {
+            var user = optionalUser.get();
+            // we only need to add the user to the course group, if the user is not yet part of it, otherwise the user cannot access the course
+            if (!user.getGroups().contains(courseGroupName)) {
+                this.addUserToGroup(user, courseGroupName);
+            }
+            return optionalUser;
+        }
+
+        return Optional.empty();
+    }
+
+    private Optional<User> findUserInDatabase(@Nullable String registrationNumber, @Nullable String login, @Nullable String email) {
+        Optional<User> optionalUser = Optional.empty();
+        if (StringUtils.hasText(login)) {
+            optionalUser = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
+        }
+        if (optionalUser.isEmpty() && StringUtils.hasText(email)) {
+            optionalUser = userRepository.findUserWithGroupsAndAuthoritiesByEmail(email);
+        }
+        if (optionalUser.isEmpty() && StringUtils.hasText(registrationNumber)) {
+            optionalUser = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+        }
+        return optionalUser;
+    }
+
+    private Optional<User> findUserInLdap(@Nullable String registrationNumber, @Nullable String login, @Nullable String email) {
+        Optional<User> optionalUser = Optional.empty();
+        if (StringUtils.hasText(login)) {
+            optionalUser = createUserFromLdapWithLogin(login);
+        }
+        if (optionalUser.isEmpty() && StringUtils.hasText(email)) {
+            optionalUser = createUserFromLdapWithEmail(email);
+        }
+        if (optionalUser.isEmpty() && StringUtils.hasText(registrationNumber)) {
+            optionalUser = createUserFromLdapWithRegistrationNumber(registrationNumber);
+        }
+        return optionalUser;
     }
 
     public void updateUserNotificationVisibility(Long userId, ZonedDateTime hideUntil) {
@@ -772,5 +813,23 @@ public class UserService {
 
     public void updateUserLanguageKey(Long userId, String languageKey) {
         userRepository.updateUserLanguageKey(userId, languageKey);
+    }
+
+    /**
+     * This method first tries to find and then to add each user of the given list to the course
+     *
+     * @param userDtos users to be added to the course
+     * @return a list of not found users
+     */
+    public List<StudentDTO> importUsers(List<StudentDTO> userDtos) {
+        List<StudentDTO> notFoundUsers = new ArrayList<>();
+        for (var userDto : userDtos) {
+            var optionalStudent = findUser(userDto.registrationNumber(), userDto.login(), userDto.email());
+            if (optionalStudent.isEmpty()) {
+                notFoundUsers.add(userDto);
+            }
+        }
+
+        return notFoundUsers;
     }
 }

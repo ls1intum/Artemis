@@ -8,7 +8,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -50,6 +50,10 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -77,15 +81,18 @@ const exam2: Exam = { id: 4, course: courseEmpty };
 const exams: Exam[] = [exam1, exam2];
 const course1: Course = {
     id: 1,
+    title: 'Course1',
     exams,
     exercises: [exercise1],
     description:
         'Nihilne te nocturnum praesidium Palati, nihil urbis vigiliae. Salutantibus vitae elit libero, a pharetra augue. Quam diu etiam furor iste tuus nos eludet? ' +
         'Fabio vel iudice vincam, sunt in culpa qui officia. Quam temere in vitiis, legem sancimus haerentia. Quisque ut dolor gravida, placerat libero vel, euismod.',
     courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
+    courseIcon: 'path/to/icon.png',
 };
 const course2: Course = {
     id: 2,
+    title: 'Course2',
     exercises: [exercise2],
     exams: [exam2],
     description: 'Short description of course 2',
@@ -141,11 +148,12 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
             declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(OrionFilterDirective),
+                MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
@@ -216,6 +224,8 @@ describe('CourseOverviewComponent', () => {
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
         const notifyAboutCourseAccessStub = jest.spyOn(courseAccessStorageService, 'onCourseAccessed');
+        const getSidebarItems = jest.spyOn(component, 'getSidebarItems');
+        const getCourseActionItems = jest.spyOn(component, 'getCourseActionItems');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
@@ -224,7 +234,17 @@ describe('CourseOverviewComponent', () => {
         expect(getCourseStub).toHaveBeenCalled();
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
+        expect(getSidebarItems).toHaveBeenCalledOnce();
+        expect(getCourseActionItems).toHaveBeenCalledOnce();
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+    });
+
+    it('should create sidebar items with default items', () => {
+        component.course = { id: 123, lectures: [], exams: [] };
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
+        expect(sidebarItems[0].title).toContain('Exercises');
+        expect(sidebarItems[1].title).toContain('Lectures');
     });
 
     it('loads conversations when switching to message tab once', async () => {
@@ -486,5 +506,69 @@ describe('CourseOverviewComponent', () => {
         const expectedButton = fixture.debugElement.query(By.css('#test-button'));
         expect(expectedButton).not.toBeNull();
         expect(expectedButton.nativeElement.innerHTML).toBe('TestButton');
+    });
+
+    it('should toggle sidebar based on isNavbarCollapsed', () => {
+        component.isNavbarCollapsed = true;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.container-closed')).not.toBeNull();
+
+        component.isNavbarCollapsed = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.container-closed')).toBeNull();
+    });
+
+    it('should display course title when navbar is not collapsed', () => {
+        component.isNavbarCollapsed = false;
+        fixture.detectChanges();
+
+        const titleElement = fixture.nativeElement.querySelector('#test-course-title');
+        expect(titleElement.textContent).toContain(component.course?.title);
+    });
+
+    it('should display course icon when available', () => {
+        fixture.detectChanges();
+
+        const iconElement = fixture.nativeElement.querySelector('jhi-secured-image');
+        expect(iconElement).not.toBeNull();
+    });
+
+    it('should not display course icon when not available', () => {
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
+        getCourseStub.mockReturnValue(course2);
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
+
+        component.ngOnInit();
+
+        fixture.detectChanges();
+
+        const iconElement = fixture.nativeElement.querySelector('jhi-secured-image');
+        const iconElement2 = fixture.nativeElement.querySelector('.course-circle');
+        expect(iconElement).toBeNull();
+        expect(iconElement2).not.toBeNull();
+    });
+
+    it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
+        component.toggleCollapseState();
+        expect(component.isNavbarCollapsed).toBeTrue();
+
+        component.toggleCollapseState();
+        expect(component.isNavbarCollapsed).toBeFalse();
+    });
+
+    it('should call courseActionItemClick on course action item click', () => {
+        // Mock a courseActionItem if not already done
+        component.courseActionItems = [
+            {
+                title: 'Unenroll',
+                translation: 'artemisApp.courseOverview.exerciseList.details.unenrollmentButton',
+            },
+        ];
+        fixture.detectChanges();
+
+        jest.spyOn(component, 'courseActionItemClick');
+        const actionItem = fixture.nativeElement.querySelector('.nav-link-sidebar');
+        actionItem.click();
+        expect(component.courseActionItemClick).toHaveBeenCalledWith(component.courseActionItems[0]);
     });
 });

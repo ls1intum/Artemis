@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupScheduleService.updateTutorialGroupSession;
 import static de.tum.in.www1.artemis.web.rest.util.DateUtil.interpretInTimeZone;
 
 import java.net.URI;
@@ -11,24 +12,37 @@ import java.time.ZoneId;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import javax.ws.rs.BadRequestException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
-import de.tum.in.www1.artemis.repository.tutorialgroups.*;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupFreePeriodRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
@@ -216,26 +230,6 @@ public class TutorialGroupSessionResource {
 
         return ResponseEntity.created(URI.create("/api/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
                 .body(TutorialGroupSession.preventCircularJsonConversion(newSession));
-    }
-
-    /**
-     * Updates the status and associated free period of a tutorial group session based on the presence of an overlapping free period.
-     *
-     * @param newSession        the tutorial group session to be updated.
-     * @param overlappingPeriod an Optional that may contain a TutorialGroupFreePeriod if there is an overlapping free period.
-     */
-    public static void updateTutorialGroupSession(TutorialGroupSession newSession, Optional<TutorialGroupFreePeriod> overlappingPeriod) {
-        if (overlappingPeriod.isPresent()) {
-            newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
-            // the status explanation is set to null, as it is specified in the TutorialGroupFreePeriod
-            newSession.setStatusExplanation(null);
-            newSession.setTutorialGroupFreePeriod(overlappingPeriod.get());
-        }
-        else {
-            newSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
-            newSession.setStatusExplanation(null);
-            newSession.setTutorialGroupFreePeriod(null);
-        }
     }
 
     private TutorialGroupsConfiguration validateTutorialGroupConfiguration(@PathVariable Long courseId) {

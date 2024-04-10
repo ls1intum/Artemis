@@ -59,6 +59,7 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 import { onError } from 'app/shared/util/global.utils';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Title } from '@angular/platform-browser';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -91,6 +92,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     irisEnabled: boolean;
     localCIActive: boolean = false;
     ltiEnabled: boolean;
+    standardizedCompetenciesEnabled = false;
 
     courseTitle?: string;
     exerciseTitle?: string;
@@ -123,6 +125,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faGears = faGears;
     faPuzzlePiece = faPuzzlePiece;
 
+    private standardizedCompetencySubscription: Subscription;
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
     private studentExam?: StudentExam;
@@ -155,6 +158,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         public themeService: ThemeService,
         private entityTitleService: EntityTitleService,
         private titleService: Title,
+        private featureToggleService: FeatureToggleService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
@@ -210,6 +214,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
             }
         });
 
+        this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
+            this.standardizedCompetenciesEnabled = isActive;
+        });
+
         this.subscribeForGuidedTourAvailability();
 
         // The current user is needed to hide menu items for not logged-in users.
@@ -242,6 +250,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
         if (this.examActiveCheckFuture) {
             clearTimeout(this.examActiveCheckFuture);
+        }
+        if (this.standardizedCompetencySubscription) {
+            this.standardizedCompetencySubscription.unsubscribe();
         }
     }
 

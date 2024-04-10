@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +40,8 @@ import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.websocket.dto.OnlineTeamStudentDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.SubmissionPatch;
+import de.tum.in.www1.artemis.web.websocket.dto.SubmissionPatchPayload;
 import de.tum.in.www1.artemis.web.websocket.dto.SubmissionSyncPayload;
 
 @Controller
@@ -145,8 +147,22 @@ public class ParticipationTeamWebsocketService {
     @MessageMapping("topic/participations/{participationId}/team/modeling-submissions/update")
     public void updateModelingSubmission(@DestinationVariable Long participationId, @Payload ModelingSubmission modelingSubmission, Principal principal) {
         long start = System.currentTimeMillis();
-        updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions");
+        updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions", false);
         log.info("Websocket endpoint updateModelingSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, modelingSubmission.getId());
+    }
+
+    /**
+     * Called by a student of a team to update the modeling submission of the team for their participation
+     *
+     * @param participationId id of participation
+     * @param submissionPatch patch to be applied to modeling submission
+     * @param principal       principal of user who wants to update the text submission
+     */
+    @MessageMapping("/topic/participations/{participationId}/team/modeling-submissions/patch")
+    public void patchModelingSubmission(@DestinationVariable Long participationId, @Payload SubmissionPatch submissionPatch, Principal principal) {
+        long start = System.currentTimeMillis();
+        patchSubmission(participationId, submissionPatch, principal, "/modeling-submissions");
+        log.info("Websocket endpoint patchModelingSubmission took {}ms", System.currentTimeMillis() - start);
     }
 
     /**
@@ -159,7 +175,7 @@ public class ParticipationTeamWebsocketService {
     @MessageMapping("topic/participations/{participationId}/team/text-submissions/update")
     public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
         long start = System.currentTimeMillis();
-        updateSubmission(participationId, textSubmission, principal, "/text-submissions");
+        updateSubmission(participationId, textSubmission, principal, "/text-submissions", true);
         log.info("Websocket endpoint updateTextSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, textSubmission.getId());
     }
 
@@ -170,8 +186,9 @@ public class ParticipationTeamWebsocketService {
      * @param submission      updated modeling text submission
      * @param principal       principal of user who wants to update the submission
      * @param topicPath       path of websocket destination topic where to send the new submission
+     * @param syncTeammates   flag whether to send the updated submission to all teammates
      */
-    private void updateSubmission(@DestinationVariable Long participationId, @Payload Submission submission, Principal principal, String topicPath) {
+    private void updateSubmission(@DestinationVariable Long participationId, @Payload Submission submission, Principal principal, String topicPath, boolean syncTeammates) {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
 
@@ -197,11 +214,40 @@ public class ParticipationTeamWebsocketService {
             throw new IllegalArgumentException("Submission type '" + submission.getType() + "' not allowed.");
         }
 
+        if (syncTeammates) {
+            // update the last action date for the user and send out list of team members
+            updateValue(lastActionTracker, participationId, principal.getName());
+            sendOnlineTeamStudents(participationId);
+
+            SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
+            websocketMessagingService.sendMessage(getDestination(participationId, topicPath), payload);
+        }
+    }
+
+    /**
+     * Called by a student for updating a shared submission being collaborated on by the whole team.
+     *
+     * @param participationId id of participation
+     * @param submissionPatch patch to be applied to submission (changes made by calling student)
+     * @param principal       principal of user who wants to update the submission
+     * @param topicPath       path of websocket destination topic where to send the new submission
+     */
+    private void patchSubmission(@DestinationVariable Long participationId, @Payload SubmissionPatch submissionPatch, Principal principal, String topicPath) {
+        // Without this, custom jpa repository methods don't work in websocket channel.x
+        SecurityUtils.setAuthorizationObject();
+
+        // user must belong to the team who owns the participation in order to update a submission
+        boolean isValidUser = studentParticipationRepository.existsByIdAndParticipatingStudentLogin(participationId, principal.getName());
+
+        if (!isValidUser) {
+            return;
+        }
+
         // update the last action date for the user and send out list of team members
         updateValue(lastActionTracker, participationId, principal.getName());
         sendOnlineTeamStudents(participationId);
 
-        SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
+        SubmissionPatchPayload payload = new SubmissionPatchPayload(submissionPatch, principal.getName());
         websocketMessagingService.sendMessage(getDestination(participationId, topicPath), payload);
     }
 

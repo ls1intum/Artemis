@@ -18,7 +18,7 @@
       "prefix": "jhi",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser-esbuild",
+          "builder": "@angular-devkit/build-angular:application",
           "options": {
             "allowedCommonJsDependencies": [
               "brace",
@@ -56,9 +56,15 @@
               "webcola",
               "webstomp-client"
             ],
-            "outputPath": "build/resources/main/static/",
+            "outputPath": {
+                "base": "build/resources/main/static/",
+                "browser": ""
+            },
+            "loader": {
+                ".ttf": "file"
+            },
             "index": "src/main/webapp/index.html",
-            "main": "src/main/webapp/app/app.main.ts",
+            "browser": "src/main/webapp/app/app.main.ts",
             "polyfills": [
                 "src/main/webapp/app/polyfills.ts"
             ],
@@ -105,6 +111,11 @@
                 "glob": "**/*",
                 "input": "src/main/webapp/swagger-ui/",
                 "output": "swagger-ui"
+              },
+              {
+                "glob": "**/*",
+                "input": "./node_modules/monaco-editor/min/vs",
+                "output": "vs"
               }
             ],
             "styles": [
@@ -113,7 +124,8 @@
                 "bundleName": "theme-dark",
                 "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
                 "inject": false
-              }
+              },
+              "node_modules/monaco-editor/min/vs/editor/editor.main.css"
             ],
             "scripts": []
           },
@@ -137,8 +149,7 @@
               "namedChunks": true,
               "aot": true,
               "extractLicenses": false,
-              "serviceWorker": true,
-              "ngswConfigPath": "src/main/webapp/ngsw-config.json",
+              "serviceWorker": "src/main/webapp/ngsw-config.json",
               "statsJson": false,
               "budgets": [
                 {

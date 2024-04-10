@@ -31,7 +31,7 @@ export class LoginPage {
     }
 
     shouldShowRequestChangeInFooter() {
-        cy.get('#request-change').should('be.visible').and('have.attr', 'href');
+        cy.get('#feedback').should('be.visible').and('have.attr', 'href');
     }
 
     shouldShowReleaseNotesInFooter() {
