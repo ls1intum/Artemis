@@ -112,7 +112,8 @@
                 "database": "Database",
                 "iris": "Iris Settings",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
-                "lti": "LTI Configuration"
+                "lti": "LTI Configuration",
+                "standardizedCompetencies": "Standardized Competencies"
             },
             "language": "Language",
             "settings": "Settings",
@@ -315,7 +316,10 @@
             "patternLogin": "This field may only contain letters, digits and e-mail addresses.",
             "invalidPattern": "This field contains an invalid e-mail pattern."
         },
-        "timeZoneWarning": "You are currently in the {{ timeZone }} time zone."
+        "timeZoneWarning": "You are currently in the {{ timeZone }} time zone.",
+        "dateMissingOrNotValid": "'{{labelName}}' is missing/invalid",
+        "startDateError": "'Start of working time' should be between 'Visible from' and 'End of working time'",
+        "endDateError": "'End of working time' should be later than 'Start of working time'"
     },
     "aboutUs": "About",
     "contact": "Contact us",

@@ -46,7 +46,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
                 });
             }
         }
-        // Get active profiles, to distinguish between Bitbucket and GitLab, and to check if localVC is enabled
+        // Get active profiles, to distinguish between VC systems, and to check if localVC is enabled
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
             this.localVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);

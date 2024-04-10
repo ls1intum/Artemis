@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 public interface ContinuousIntegrationResultService {
 
     /**
-     * converts the object from the CI system (Bamboo, Jenkins, or GitLabCI) into a proper Java DTO
+     * converts the object from the CI system (Jenkins, or GitLabCI) into a proper Java DTO
      *
      * @param requestBody the object sent from the CI system to Artemis
      * @return the DTO with all information in Java Object form

@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 /**
  * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.
- * Note: Because the ContinuousIntegrationSystem and the AbstractContinuousIntegrationService were designed with Bamboo and Jenkins integration in mind, some methods here are not
+ * Note: Because the ContinuousIntegrationSystem and the AbstractContinuousIntegrationService were designed with Jenkins integration in mind, some methods here are not
  * needed and thus contain an empty implementation.
  */
 @Service
@@ -153,7 +153,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     /**
-     * Extract the plan key from the Bamboo requestBody.
+     * Extract the plan key from the requestBody.
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key or null if it can't be found.
