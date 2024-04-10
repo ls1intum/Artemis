@@ -33,7 +33,7 @@ describe('ExerciseUpdateNotificationComponent', () => {
         const inputElement = fixture.debugElement.query(By.css('#field_notification_text')).nativeElement;
         expect(inputElement.minLength).toBe(3);
         expect(inputElement.type).toBe('text');
-        expect(inputElement.className).toBe('form-control');
+        expect(inputElement.className).toBe('form-control form-control-sm');
         expect(inputElement.name).toBe('notificationText');
         expect(inputElement.id).toBe('field_notification_text');
     });
