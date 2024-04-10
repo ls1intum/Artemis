@@ -2,7 +2,7 @@
     <hr class="form-status-line" />
     <div class="d-flex justify-content-between">
         @for (formStatusSection of formStatusSections; track formStatusSection.title) {
-            <div class="d-flex flex-column align-items-center gap-1">
+            <div class="d-flex flex-column align-items-center">
                 <div
                     class="d-flex align-items-center justify-content-center border rounded-circle border-secondary form-status-circle"
                     (click)="scrollToHeadline(formStatusSection.title)"
@@ -10,10 +10,10 @@
                     <jhi-checklist-check
                         [checkAttribute]="formStatusSection.valid"
                         [iconColor]="formStatusSection.empty && formStatusSection.valid ? 'var(--bs-gray)' : undefined"
-                        [size]="'xs'"
+                        [size]="'sm'"
                     />
                 </div>
-                <a (click)="scrollToHeadline(formStatusSection.title)" class="link-primary">{{ formStatusSection.title | artemisTranslate }}</a>
+                <a (click)="scrollToHeadline(formStatusSection.title)" class="d-none d-sm-inline link-primary">{{ formStatusSection.title | artemisTranslate }}</a>
             </div>
         }
     </div>
