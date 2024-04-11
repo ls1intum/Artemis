@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.websocket;
 import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -107,19 +108,19 @@ public class ResultWebsocketService {
      * @return flag whether the destination is a 'non-personal' exercise result subscription
      */
     public static boolean isNonPersonalExerciseResultDestination(String destination) {
-        return getExerciseIdFromNonPersonalExerciseResultDestination(destination) != null;
+        return getExerciseIdFromNonPersonalExerciseResultDestination(destination).isPresent();
     }
 
     /**
      * Returns the exercise id from the destination route
      *
      * @param destination Websocket destination topic from which to extract the exercise id
-     * @return exercise id
+     * @return optional containing the exercise id was found, empty otherwise
      */
-    public static Long getExerciseIdFromNonPersonalExerciseResultDestination(String destination) {
+    public static Optional<Long> getExerciseIdFromNonPersonalExerciseResultDestination(String destination) {
         Pattern pattern = Pattern.compile("^" + getNonPersonalExerciseResultDestination("(\\d*)"));
         Matcher matcher = pattern.matcher(destination);
-        return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
+        return matcher.find() ? Optional.of(Long.parseLong(matcher.group(1))) : Optional.empty();
     }
 
     private static String getNonPersonalExerciseResultDestination(long exerciseId) {
