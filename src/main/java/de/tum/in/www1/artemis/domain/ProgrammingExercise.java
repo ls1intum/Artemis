@@ -4,22 +4,49 @@ import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.PROGRAMMING
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.SecondaryTable;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -153,7 +180,7 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
-     * This is currently only supported for HASKELL and OCAML on BAMBOO, thus the default value is false.
+     * This is currently only supported for HASKELL and OCAML, thus the default value is false.
      */
     @Column(name = "checkout_solution_repository", table = "programming_exercise_details", columnDefinition = "boolean default false")
     private boolean checkoutSolutionRepository;
@@ -356,7 +383,7 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Generates a unique project key based on the course short name and the exercise short name. This should only be used
      * for instantiating a new exercise
-     *
+     * <p>
      * The key concatenates the course short name and the exercise short name (in upper case letters), e.g.: <br>
      * Course: <code>crs</code> <br>
      * Exercise: <code>exc</code> <br>
