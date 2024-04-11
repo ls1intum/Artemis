@@ -88,7 +88,7 @@ class PlagiarismDetectionServiceTest {
                 .thenReturn(programmingPlagiarismResult);
 
         // and
-        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, true, false, false, emptyList(), false, false, false);
+        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, true, false, false, emptyList(), false, false);
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // when
@@ -102,7 +102,7 @@ class PlagiarismDetectionServiceTest {
     void shouldThrowExceptionOnUnsupportedProgrammingLanguage() {
         // given
         var programmingExercise = new ProgrammingExercise();
-        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, false, false, false, emptyList(), false, false, false);
+        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, false, false, false, emptyList(), false, false);
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // expect
@@ -120,7 +120,7 @@ class PlagiarismDetectionServiceTest {
                 .thenReturn(zipFile);
 
         // and
-        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, true, false, false, emptyList(), false, false, false);
+        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, true, false, false, emptyList(), false, false);
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // when
@@ -134,7 +134,7 @@ class PlagiarismDetectionServiceTest {
     void shouldThrowExceptionOnUnsupportedProgrammingLanguageForChecksWithJplagReport() {
         // given
         var programmingExercise = new ProgrammingExercise();
-        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, false, false, false, emptyList(), false, false, false);
+        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, false, false, false, emptyList(), false, false);
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // expect

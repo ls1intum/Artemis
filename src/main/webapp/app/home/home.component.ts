@@ -3,7 +3,6 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
-import { HttpErrorResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { isOrion } from 'app/shared/orion/orion';
@@ -27,7 +26,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
     PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     authenticationError = false;
-    authenticationAttempts = 0;
     account: User;
     modalRef: NgbModalRef;
     password: string;
@@ -36,7 +34,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     needsToAcceptTerms = false;
     userAcceptedTerms = false;
     username: string;
-    captchaRequired = false;
     credentials: Credentials;
     isRegistrationEnabled = false;
     isPasswordLoginDisabled = false;
@@ -49,8 +46,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     accountName?: string; // additional information in the welcome message
 
     externalUserManagementActive = true;
-    externalUserManagementUrl: string;
-    externalUserManagementName: string;
 
     isSubmittingLogin = false;
 
@@ -158,11 +153,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 rememberMe: this.rememberMe,
             })
             .then(() => this.handleLoginSuccess())
-            .catch((error: HttpErrorResponse) => {
-                // TODO: if registration is enabled, handle the case "User was not activated"
-                this.captchaRequired = error.headers.get('X-artemisApp-error') === 'CAPTCHA required';
+            .catch(() => {
                 this.authenticationError = true;
-                this.authenticationAttempts++;
             })
             .finally(() => (this.isSubmittingLogin = false));
     }
@@ -172,8 +164,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
      */
     private handleLoginSuccess() {
         this.authenticationError = false;
-        this.authenticationAttempts = 0;
-        this.captchaRequired = false;
 
         if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
             this.router.navigate(['']);
