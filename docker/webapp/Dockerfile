@@ -24,7 +24,7 @@ RUN npm run build
 
 
 # Use the latest version of the official Nginx image as the base image
-FROM nginx:latest AS proxy
+FROM nginx:1.23 AS proxy
 # copy the built application from the build stage to the nginx html
 # directory
 COPY --from=build /app/build/resources/main/static /usr/share/nginx/html
