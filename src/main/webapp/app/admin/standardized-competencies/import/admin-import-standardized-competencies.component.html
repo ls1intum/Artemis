@@ -1,0 +1,19 @@
+<div class="container">
+    <div class="d-flex flex-wrap">
+        <div class="d-flex align-items-center">
+            <h2 jhiTranslate="artemisApp.standardizedCompetency.manage.import.title"></h2>
+        </div>
+        <div class="ms-auto justify-content-end"></div>
+    </div>
+    <div>
+        <input type="file" accept="application/json" (change)="setImportCompetencies($event)" />
+        <!-- TODO: some kind of preview -->
+        <jhi-button
+            id="upload-competencies-button"
+            [disabled]="importData === undefined"
+            [icon]="faUpload"
+            [title]="'artemisApp.programmingExercise.importFromFile.uploadForImport'"
+            (onClick)="uploadCompetencies()"
+        />
+    </div>
+</div>

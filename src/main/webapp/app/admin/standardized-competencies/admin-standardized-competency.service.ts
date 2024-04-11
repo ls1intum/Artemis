@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { KnowledgeAreaDTO, StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeAreaDTO, KnowledgeAreasForImportDTO, StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
 
 @Injectable({
     providedIn: 'root',
@@ -32,5 +32,10 @@ export class AdminStandardizedCompetencyService {
 
     deleteKnowledgeArea(knowledgeAreaId: number) {
         return this.httpClient.delete<void>(`${this.resourceURL}/knowledge-areas/${knowledgeAreaId}`, { observe: 'response' });
+    }
+
+    //TODO: see what kind of return type makes sense. & also if this should be put or not.
+    importCompetencies(dto: KnowledgeAreasForImportDTO) {
+        return this.httpClient.post<void>(`${this.resourceURL}/import`, dto, { observe: 'response' });
     }
 }

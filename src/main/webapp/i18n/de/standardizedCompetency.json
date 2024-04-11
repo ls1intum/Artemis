@@ -20,6 +20,17 @@
                     "create": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> erstellt",
                     "update": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> aktualisiert",
                     "delete": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> gelöscht"
+                },
+                "import": {
+                    "title": "Standardisierte Kompetenzen Importieren",
+                    "error": {
+                        "fileCount": "Bitte lade nur eine Datei hoch",
+                        "fileExtension": "Falscher Dateityp. Bitte lade eine .json Datei hoch",
+                        "fileTooBig": "Die Datei ist zu groß. Bitte lade eine Datei mit maxima 20 MB hoch",
+                        "fileStructure": "Die Datei hat eine inkorrekte Struktur",
+                        "noCompetencies": "Es sind keine standardisierten Kompetenzen zum Import vorhanden"
+                    },
+                    "success": "Erfolgreich {{numCompetencies}} standardisierte Kompetenzen aus {{numKnowledgeAreas}} Wissensgebieten importiert"
                 }
             },
             "model": {
