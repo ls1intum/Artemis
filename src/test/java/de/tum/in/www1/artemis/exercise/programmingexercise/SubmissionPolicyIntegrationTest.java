@@ -499,8 +499,6 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGi
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
         gitlabRequestMockProvider.enableMockingOfRequests();
         mockSetRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), programmingExercise.getProjectKey(), Set.of(student));
-        // bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, programmingExercise.getProjectKey().toLowerCase() + "-student1");
-
     }
 
     private void test_getSubmissionPolicyOfProgrammingExercise_forbidden() throws Exception {

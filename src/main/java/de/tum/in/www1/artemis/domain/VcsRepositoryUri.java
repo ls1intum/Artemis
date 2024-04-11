@@ -14,7 +14,7 @@ public class VcsRepositoryUri {
         // NOTE: this constructor should not be used and only exists to prevent compile errors
     }
 
-    // Create the url from a uriSpecString, e.g. https://ab123cd@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab123cd
+    // Create the url from a uriSpecString, e.g. https://username@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username
     public VcsRepositoryUri(String uriSpecString) throws URISyntaxException {
         this.uri = new URI(uriSpecString);
     }
@@ -67,8 +67,7 @@ public class VcsRepositoryUri {
      * For URLs pointing to remote git repositories, we use the whole path
      * <p>
      * Examples:
-     * https://bitbucket.ase.in.tum.de/scm/eist20l06e03/eist20l06e03-ab123cd.git --> eist20l06e03/eist20l06e03-ab123cd
-     * ssh://git@bitbucket.ase.in.tum.de:7999/eist20l06e03/eist20l06e03-ab123cd.git --> eist20l06e03/eist20l06e03-ab123cd
+     * https://username@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username --> FTCSCAGRADING1/ftcscagrading1-username
      * file:C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950 --> studentOriginRepo1644180397872264950
      * file:/var/folders/vc/sk85td_s54v7w9tjq07b0_q80000gn/T/studentTeamOriginRepo420037178325056205/ --> studentTeamOriginRepo420037178325056205
      *
@@ -93,7 +92,7 @@ public class VcsRepositoryUri {
 
     /**
      * Retrieves the repository name without the project key and the optional practice prefix from the URI.
-     *
+     * <p>
      * Examples:
      * http://localhost:8080/git/GREAT/great-artemis_admin.git --> artemis_admin
      * http://localhost:8080/git/GREAT/great-practice-artemis_admin.git --> artemis_admin
