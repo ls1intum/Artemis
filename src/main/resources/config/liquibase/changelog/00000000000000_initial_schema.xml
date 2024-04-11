@@ -1891,7 +1891,7 @@
             <column name="submission_id" type="bigint"/>
         </createTable>
         <createTable tableName="text_block">
-            <column name="id" type="CHAR(40)">
+            <column name="id" type="char(40)">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="text" type="longtext">
@@ -2054,895 +2054,895 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
         </createTable>
-        <createIndex associatedWith="" indexName="FK11jgyics37wyibhhpp866exa8" tableName="quiz_statistic_counter">
+        <createIndex indexName="FK11jgyics37wyibhhpp866exa8" tableName="quiz_statistic_counter">
             <column name="drag_and_drop_question_statistic_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK1903cc755394da0466c4ec0934" tableName="competency_user">
+        <createIndex indexName="FK1903cc755394da0466c4ec0934" tableName="competency_user">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK1af36a86bcc816f7ce70a9ef1" tableName="lecture_unit_user">
+        <createIndex indexName="FK1af36a86bcc816f7ce70a9ef1" tableName="lecture_unit_user">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK2kwul05ckvpi145gc0bmf7obh" tableName="short_answer_spot">
+        <createIndex indexName="FK2kwul05ckvpi145gc0bmf7obh" tableName="short_answer_spot">
             <column name="question_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK2qvynpew0iu557b4qk9go0u0c" tableName="notification">
+        <createIndex indexName="FK2qvynpew0iu557b4qk9go0u0c" tableName="notification">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK3bqk45run356e20sqmf3sak1o" tableName="quiz_statistic_counter">
+        <createIndex indexName="FK3bqk45run356e20sqmf3sak1o" tableName="quiz_statistic_counter">
             <column name="quiz_point_statistic_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK48u8v93a8nmwv58c7eyjp25nt" tableName="student_exam_exercise">
+        <createIndex indexName="FK48u8v93a8nmwv58c7eyjp25nt" tableName="student_exam_exercise">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK4ehrp6xueea0pyiiidtuouc0s" tableName="short_answer_mapping">
+        <createIndex indexName="FK4ehrp6xueea0pyiiidtuouc0s" tableName="short_answer_mapping">
             <column name="question_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK4rflk0awb45txqagwpq2islj2" tableName="competency_lecture_unit">
+        <createIndex indexName="FK4rflk0awb45txqagwpq2islj2" tableName="competency_lecture_unit">
             <column name="lecture_unit_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK5opt512154y0g5llppcaqe19e" tableName="short_answer_mapping">
+        <createIndex indexName="FK5opt512154y0g5llppcaqe19e" tableName="short_answer_mapping">
             <column name="spot_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK5qmi3mh5y1mt9ysht4nx34nvf" tableName="drag_and_drop_mapping">
+        <createIndex indexName="FK5qmi3mh5y1mt9ysht4nx34nvf" tableName="drag_and_drop_mapping">
             <column name="drag_item_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK62a43f39191eabc8ec94a2385" tableName="competency_course">
+        <createIndex indexName="FK62a43f39191eabc8ec94a2385" tableName="competency_course">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK6drbcvqf26cahd0j1u9ff0rtr" tableName="submitted_answer">
+        <createIndex indexName="FK6drbcvqf26cahd0j1u9ff0rtr" tableName="submitted_answer">
             <column name="quiz_question_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK6kgo0sse7sait8q665s16wynf" tableName="post">
+        <createIndex indexName="FK6kgo0sse7sait8q665s16wynf" tableName="post">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK6pok2pdckbv609q1kjcxnguha" tableName="exam_session">
+        <createIndex indexName="FK6pok2pdckbv609q1kjcxnguha" tableName="exam_session">
             <column name="student_exam_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK6qk07o5uhre61g1egc064wmmc" tableName="drag_item">
+        <createIndex indexName="FK6qk07o5uhre61g1egc064wmmc" tableName="drag_item">
             <column name="question_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK71cxcwaglhos8x0qxs61vpxkb" tableName="course_organization">
+        <createIndex indexName="FK71cxcwaglhos8x0qxs61vpxkb" tableName="course_organization">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK7p8h4scvkiilws9d5dxsdxkwy" tableName="drag_and_drop_mapping">
+        <createIndex indexName="FK7p8h4scvkiilws9d5dxsdxkwy" tableName="drag_and_drop_mapping">
             <column name="question_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK840kdpn5r9l2wyhq83gl6sx2g" tableName="attachment">
+        <createIndex indexName="FK840kdpn5r9l2wyhq83gl6sx2g" tableName="attachment">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK87gmes7g3ad3qf3wmx3lu0iq0" tableName="multiple_choice_submitted_answer_selected_options">
+        <createIndex indexName="FK87gmes7g3ad3qf3wmx3lu0iq0" tableName="multiple_choice_submitted_answer_selected_options">
             <column name="selected_options_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK8cduvvvsh3ki4y8ssmm8r6hmb" tableName="exercise">
+        <createIndex indexName="FK8cduvvvsh3ki4y8ssmm8r6hmb" tableName="exercise">
             <column name="exercise_group_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK9kic2piykbv64dc8kjcxnlagu" tableName="exam_user">
+        <createIndex indexName="FK9kic2piykbv64dc8kjcxnlagu" tableName="exam_user">
             <column name="student_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_EXERCISE_ON_BUILDPLAN" tableName="exercise">
+        <createIndex indexName="FK_EXERCISE_ON_BUILDPLAN" tableName="exercise">
             <column name="build_plan_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_EXERCISE_ON_PLAGIARISM_DETECTION_CONFIG" tableName="exercise">
+        <createIndex indexName="FK_EXERCISE_ON_PLAGIARISM_DETECTION_CONFIG" tableName="exercise">
             <column name="plagiarism_detection_config_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_IRIS_SETTINGS_ON_IRIS_CHAT_SETTINGS" tableName="iris_settings">
+        <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_CHAT_SETTINGS" tableName="iris_settings">
             <column name="iris_chat_settings_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_IRIS_SETTINGS_ON_IRIS_CODE_EDITOR_SETTINGS" tableName="iris_settings">
+        <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_CODE_EDITOR_SETTINGS" tableName="iris_settings">
             <column name="iris_code_editor_settings_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_IRIS_SETTINGS_ON_IRIS_COMPETENCY_GENERATION_SETTINGS" tableName="iris_settings">
+        <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_COMPETENCY_GENERATION_SETTINGS" tableName="iris_settings">
             <column name="iris_competency_generation_settings_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_IRIS_SETTINGS_ON_IRIS_HESTIA_SETTINGS" tableName="iris_settings">
+        <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_HESTIA_SETTINGS" tableName="iris_settings">
             <column name="iris_hestia_settings_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_IRIS_SUB_SETTINGS_ON_CHATTEMPLATE" tableName="iris_code_editor_sub_settings">
+        <createIndex indexName="FK_IRIS_SUB_SETTINGS_ON_CHATTEMPLATE" tableName="iris_code_editor_sub_settings">
             <column name="chat_template_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_IRIS_SUB_SETTINGS_ON_PROBLEMSTATEMENTGENERATIONTEMPLATE" tableName="iris_code_editor_sub_settings">
+        <createIndex indexName="FK_IRIS_SUB_SETTINGS_ON_PROBLEMSTATEMENTGENERATIONTEMPLATE" tableName="iris_code_editor_sub_settings">
             <column name="problem_statement_generation_template_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_IRIS_SUB_SETTINGS_ON_SOLUTIONREPOGENERATIONTEMPLATE" tableName="iris_code_editor_sub_settings">
+        <createIndex indexName="FK_IRIS_SUB_SETTINGS_ON_SOLUTIONREPOGENERATIONTEMPLATE" tableName="iris_code_editor_sub_settings">
             <column name="solution_repo_generation_template_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_IRIS_SUB_SETTINGS_ON_TEMPLATE" tableName="iris_sub_settings">
+        <createIndex indexName="FK_IRIS_SUB_SETTINGS_ON_TEMPLATE" tableName="iris_sub_settings">
             <column name="template_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_IRIS_SUB_SETTINGS_ON_TEMPLATEREPOGENERATIONTEMPLATE" tableName="iris_code_editor_sub_settings">
+        <createIndex indexName="FK_IRIS_SUB_SETTINGS_ON_TEMPLATEREPOGENERATIONTEMPLATE" tableName="iris_code_editor_sub_settings">
             <column name="template_repo_generation_template_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_IRIS_SUB_SETTINGS_ON_TESTREPOGENERATIONTEMPLATE" tableName="iris_code_editor_sub_settings">
+        <createIndex indexName="FK_IRIS_SUB_SETTINGS_ON_TESTREPOGENERATIONTEMPLATE" tableName="iris_code_editor_sub_settings">
             <column name="test_repo_generation_template_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_course_id" tableName="conversation">
+        <createIndex indexName="FK_course_id" tableName="conversation">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_exam_id" tableName="exam_user">
+        <createIndex indexName="FK_exam_id" tableName="exam_user">
             <column name="exam_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_feedback_test_case_id" tableName="feedback">
+        <createIndex indexName="FK_feedback_test_case_id" tableName="feedback">
             <column name="test_case_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_qhsd8ovn89o4usyr3fgaqkdjt" tableName="user_groups">
+        <createIndex indexName="FK_qhsd8ovn89o4usyr3fgaqkdjt" tableName="user_groups">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_slide_id" tableName="slide">
+        <createIndex indexName="FK_slide_id" tableName="slide">
             <column name="attachment_unit_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FK_student_id_data_export" tableName="data_export">
+        <createIndex indexName="FK_student_id_data_export" tableName="data_export">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKa6apwe76xlljxtm3nimrlvppf" tableName="attachment">
+        <createIndex indexName="FKa6apwe76xlljxtm3nimrlvppf" tableName="attachment">
             <column name="lecture_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKa9cfgroc0t8ujct9ux7ub1nyo" tableName="drag_and_drop_mapping">
+        <createIndex indexName="FKa9cfgroc0t8ujct9ux7ub1nyo" tableName="drag_and_drop_mapping">
             <column name="submitted_answer_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKadxqkurtxseqg3esqrajuanb2" tableName="tutor_participation_trained_example_submissions">
+        <createIndex indexName="FKadxqkurtxseqg3esqrajuanb2" tableName="tutor_participation_trained_example_submissions">
             <column name="trained_example_submissions_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKannvxhl5djc6qrwntuip91egx" tableName="example_submission">
+        <createIndex indexName="FKannvxhl5djc6qrwntuip91egx" tableName="example_submission">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKarrnc5l01jjyixrw6jbu18k6a" tableName="build_log_entry">
+        <createIndex indexName="FKarrnc5l01jjyixrw6jbu18k6a" tableName="build_log_entry">
             <column name="programming_submission_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKarrnc5l01jjyixrw6jbu18k6b" tableName="build_log_statistics_entry">
+        <createIndex indexName="FKarrnc5l01jjyixrw6jbu18k6b" tableName="build_log_statistics_entry">
             <column name="programming_submission_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKawq05c6hvxl400ouw5sg89xp9" tableName="drag_and_drop_mapping">
+        <createIndex indexName="FKawq05c6hvxl400ouw5sg89xp9" tableName="drag_and_drop_mapping">
             <column name="drop_location_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKbiq7gp760m9y8xpycnguw78dp" tableName="short_answer_mapping">
+        <createIndex indexName="FKbiq7gp760m9y8xpycnguw78dp" tableName="short_answer_mapping">
             <column name="solution_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKbkorhj5lm1jf4ogh2cgxo2v6k" tableName="push_notification_device_configuration">
+        <createIndex indexName="FKbkorhj5lm1jf4ogh2cgxo2v6k" tableName="push_notification_device_configuration">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKc5ylgocmwyffladuv6454evje" tableName="attachment">
+        <createIndex indexName="FKc5ylgocmwyffladuv6454evje" tableName="attachment">
             <column name="attachment_unit_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKcu2dpdk9qef0yaithkxcjebwg" tableName="post">
+        <createIndex indexName="FKcu2dpdk9qef0yaithkxcjebwg" tableName="post">
             <column name="lecture_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKcw89k10abejup8p3hif0kjpw" tableName="quiz_question">
+        <createIndex indexName="FKcw89k10abejup8p3hif0kjpw" tableName="quiz_question">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKdbjfaktpewig8lac4jimhf34l" tableName="guided_tour_setting">
+        <createIndex indexName="FKdbjfaktpewig8lac4jimhf34l" tableName="guided_tour_setting">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKdls9xttqemxxt0qljxop5v8rt" tableName="competency_exercise">
+        <createIndex indexName="FKdls9xttqemxxt0qljxop5v8rt" tableName="competency_exercise">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKdr9d160441fo4llod8gq74jwp" tableName="lecture_unit">
+        <createIndex indexName="FKdr9d160441fo4llod8gq74jwp" tableName="lecture_unit">
             <column name="lecture_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKeap67y7pxd6ffvwbs6d6sfhmq" tableName="submission">
+        <createIndex indexName="FKeap67y7pxd6ffvwbs6d6sfhmq" tableName="submission">
             <column name="participation_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKejag8le5jrd03enkmhxircugx" tableName="short_answer_solution">
+        <createIndex indexName="FKejag8le5jrd03enkmhxircugx" tableName="short_answer_solution">
             <column name="question_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKf3ah8uajs8wfda872mvl56hq4" tableName="notification">
+        <createIndex indexName="FKf3ah8uajs8wfda872mvl56hq4" tableName="notification">
             <column name="recipient_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKfIH1sii1GTGlX7wfMoVrr8AAb" tableName="quiz_question">
+        <createIndex indexName="FKfIH1sii1GTGlX7wfMoVrr8AAb" tableName="quiz_question">
             <column name="quiz_pool_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKfcsbwug74umq05n5g5lnbku85" tableName="exercise_group">
+        <createIndex indexName="FKfcsbwug74umq05n5g5lnbku85" tableName="exercise_group">
             <column name="exam_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKfe9vnvra5xx2kulv4h27seksa" tableName="answer_post">
+        <createIndex indexName="FKfe9vnvra5xx2kulv4h27seksa" tableName="answer_post">
             <column name="post_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKfqeqisl0e28xp3yn9bmlgkhej" tableName="answer_option">
+        <createIndex indexName="FKfqeqisl0e28xp3yn9bmlgkhej" tableName="answer_option">
             <column name="question_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKfwgc3a5vd0cxt5jsvvxm2tstf" tableName="submitted_answer">
+        <createIndex indexName="FKfwgc3a5vd0cxt5jsvvxm2tstf" tableName="submitted_answer">
             <column name="submission_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKg8sxrh7ha8nl46lbljs12mtxy" tableName="notification">
+        <createIndex indexName="FKg8sxrh7ha8nl46lbljs12mtxy" tableName="notification">
             <column name="author_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKgdd6qiyjtlrjgf2dsse32r8y5" tableName="answer_post">
+        <createIndex indexName="FKgdd6qiyjtlrjgf2dsse32r8y5" tableName="answer_post">
             <column name="author_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKhascwjyvee25c0k3tay04ghog" tableName="quiz_statistic_counter">
+        <createIndex indexName="FKhascwjyvee25c0k3tay04ghog" tableName="quiz_statistic_counter">
             <column name="short_answer_question_statistic_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKiub3ue9adasdas24v9ns656n" tableName="grade_step">
+        <createIndex indexName="FKiub3ue9adasdas24v9ns656n" tableName="grade_step">
             <column name="grading_scale_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKiub3ue9adasdas2789ns656n" tableName="grading_scale">
+        <createIndex indexName="FKiub3ue9adasdas2789ns656n" tableName="grading_scale">
             <column name="exam_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKiub3ue9cklcyyra24v9ns656n" tableName="exam">
+        <createIndex indexName="FKiub3ue9cklcyyra24v9ns656n" tableName="exam">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKiub3uexsbasdas24v9ns656n" tableName="grading_scale">
+        <createIndex indexName="FKiub3uexsbasdas24v9ns656n" tableName="grading_scale">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKjkn43f39191eamelk94a9837" tableName="course">
+        <createIndex indexName="FKjkn43f39191eamelk94a9837" tableName="course">
             <column name="online_course_configuration_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKjoc9yetfohpygdvx5wv385vwb" tableName="lecture">
+        <createIndex indexName="FKjoc9yetfohpygdvx5wv385vwb" tableName="lecture">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKjpgnpph3i2h0n8xekqiytaers" tableName="post">
+        <createIndex indexName="FKjpgnpph3i2h0n8xekqiytaers" tableName="post">
             <column name="author_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKkYIc8NStrPM5ULjNkq417ssEc" tableName="quiz_question">
+        <createIndex indexName="FKkYIc8NStrPM5ULjNkq417ssEc" tableName="quiz_question">
             <column name="quiz_group_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKkkdvousfa95ueh46xg741fadg" tableName="result">
+        <createIndex indexName="FKkkdvousfa95ueh46xg741fadg" tableName="result">
             <column name="assessor_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKkp1tfjoaawuiskayomp85e0lj" tableName="short_answer_submitted_text">
+        <createIndex indexName="FKkp1tfjoaawuiskayomp85e0lj" tableName="short_answer_submitted_text">
             <column name="submitted_answer_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKlbu6qm8ykqhtb5xm911bg5ct7" tableName="drop_location">
+        <createIndex indexName="FKlbu6qm8ykqhtb5xm911bg5ct7" tableName="drop_location">
             <column name="question_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKlndcce3s82xwv8rumk2cjm2q0" tableName="competency">
+        <createIndex indexName="FKlndcce3s82xwv8rumk2cjm2q0" tableName="competency">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKm3tx9n7w4hpjyu130hp3bueh7" tableName="student_exam">
+        <createIndex indexName="FKm3tx9n7w4hpjyu130hp3bueh7" tableName="student_exam">
             <column name="exam_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKmaiyumo49qyke2ijh8h575yy2" tableName="feedback">
+        <createIndex indexName="FKmaiyumo49qyke2ijh8h575yy2" tableName="feedback">
             <column name="result_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKnfyuy63doxihtl3pu8rnm46n4" tableName="user_organization">
+        <createIndex indexName="FKnfyuy63doxihtl3pu8rnm46n4" tableName="user_organization">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKoh69hhnfcimvw7i1cwhepvt5g" tableName="quiz_statistic_counter">
+        <createIndex indexName="FKoh69hhnfcimvw7i1cwhepvt5g" tableName="quiz_statistic_counter">
             <column name="multiple_choice_question_statistic_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKpkb6e1yjqhma5tgvabb9smyv4" tableName="short_answer_submitted_text">
+        <createIndex indexName="FKpkb6e1yjqhma5tgvabb9smyv4" tableName="short_answer_submitted_text">
             <column name="spot_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKqdemq87pe28lexkg6kh73vueg" tableName="exercise_categories">
+        <createIndex indexName="FKqdemq87pe28lexkg6kh73vueg" tableName="exercise_categories">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKrx11lk6gxgpcg2vw96ay8id8p" tableName="lecture_unit">
+        <createIndex indexName="FKrx11lk6gxgpcg2vw96ay8id8p" tableName="lecture_unit">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKsqyvk8gb9eiknlgrj6xld1nel" tableName="student_exam">
+        <createIndex indexName="FKsqyvk8gb9eiknlgrj6xld1nel" tableName="student_exam">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="FKtyzazcKwI6xRpuhH0DoNiZeWH" tableName="quiz_pool">
+        <createIndex indexName="FKtyzazcKwI6xRpuhH0DoNiZeWH" tableName="quiz_pool">
             <column name="exam_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UC_COMPLAintRESULT_ID_COL" tableName="complaint" unique="true">
+        <createIndex indexName="UC_COMPLAintRESULT_ID_COL" tableName="complaint" unique="true">
             <column name="result_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UC_COMPLAint_RESPONSECOMPLAint_ID_COL" tableName="complaint_response" unique="true">
+        <createIndex indexName="UC_COMPLAint_RESPONSECOMPLAint_ID_COL" tableName="complaint_response" unique="true">
             <column name="complaint_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UC_EXAMPLE_SUBMISSIONSUBMISSION_ID_COL" tableName="example_submission" unique="true">
+        <createIndex indexName="UC_EXAMPLE_SUBMISSIONSUBMISSION_ID_COL" tableName="example_submission" unique="true">
             <column name="submission_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UC_EXERCISETEMPLATE_PARTICIPATION_ID_COL" tableName="exercise" unique="true">
+        <createIndex indexName="UC_EXERCISETEMPLATE_PARTICIPATION_ID_COL" tableName="exercise" unique="true">
             <column name="template_participation_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UC_EXERCISEUBMISSION_POLICY_ID_COL" tableName="exercise" unique="true">
+        <createIndex indexName="UC_EXERCISEUBMISSION_POLICY_ID_COL" tableName="exercise" unique="true">
             <column name="submission_policy_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS" tableName="participation" unique="true">
+        <createIndex indexName="UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS" tableName="participation" unique="true">
             <column name="team_id"/>
             <column name="exercise_id"/>
             <column name="initialization_state"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL" tableName="quiz_question" unique="true">
+        <createIndex indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL" tableName="quiz_question" unique="true">
             <column name="quiz_question_statistic_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UC_STATISTIC_COUNTERANSWER_ID_COL" tableName="quiz_statistic_counter" unique="true">
+        <createIndex indexName="UC_STATISTIC_COUNTERANSWER_ID_COL" tableName="quiz_statistic_counter" unique="true">
             <column name="answer_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UC_STATISTIC_COUNTERDROP_LOCATION_ID_COL" tableName="quiz_statistic_counter" unique="true">
+        <createIndex indexName="UC_STATISTIC_COUNTERDROP_LOCATION_ID_COL" tableName="quiz_statistic_counter" unique="true">
             <column name="drop_location_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UC_STATISTIC_COUNTERSPOT_ID_COL" tableName="quiz_statistic_counter" unique="true">
+        <createIndex indexName="UC_STATISTIC_COUNTERSPOT_ID_COL" tableName="quiz_statistic_counter" unique="true">
             <column name="spot_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UC_TEAM_ASSIGNMENT_CONFIG_EXERCISE_ID_COL" tableName="team_assignment_config" unique="true">
+        <createIndex indexName="UC_TEAM_ASSIGNMENT_CONFIG_EXERCISE_ID_COL" tableName="team_assignment_config" unique="true">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UK6sioc0zhvp2bxcl4fi5labvpa" tableName="tutor_participation" unique="true">
+        <createIndex indexName="UK6sioc0zhvp2bxcl4fi5labvpa" tableName="tutor_participation" unique="true">
             <column name="tutor_id"/>
             <column name="assessed_exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation" unique="true">
+        <createIndex indexName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation" unique="true">
             <column name="student_id"/>
             <column name="exercise_id"/>
             <column name="initialization_state"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UKNotificationSettingTableUserIdSettingId" tableName="notification_setting" unique="true">
+        <createIndex indexName="UKNotificationSettingTableUserIdSettingId" tableName="notification_setting" unique="true">
             <column name="user_id"/>
             <column name="setting_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="UKScienceSettingTableUserIdSettingId" tableName="science_setting" unique="true">
+        <createIndex indexName="UKScienceSettingTableUserIdSettingId" tableName="science_setting" unique="true">
             <column name="user_id"/>
             <column name="setting_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="build_plan_id" tableName="participation">
+        <createIndex indexName="build_plan_id" tableName="participation">
             <column name="build_plan_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="complaint_response_submitted_time" tableName="complaint_response">
+        <createIndex indexName="complaint_response_submitted_time" tableName="complaint_response">
             <column name="submitted_time"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="complaint_submitted_time" tableName="complaint">
+        <createIndex indexName="complaint_submitted_time" tableName="complaint">
             <column name="submitted_time"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="complaint_type" tableName="complaint">
+        <createIndex indexName="complaint_type" tableName="complaint">
             <column name="complaint_type"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="conduct_agreement_user_idFK" tableName="conduct_agreement">
+        <createIndex indexName="conduct_agreement_user_idFK" tableName="conduct_agreement">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="conversation_id_creation_date" tableName="post">
+        <createIndex indexName="conversation_id_creation_date" tableName="post">
             <column name="conversation_id"/>
             <column name="creation_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="conversation_participant_uq" tableName="conversation_participant" unique="true">
+        <createIndex indexName="conversation_participant_uq" tableName="conversation_participant" unique="true">
             <column name="conversation_id"/>
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="course_end_date" tableName="course">
+        <createIndex indexName="course_end_date" tableName="course">
             <column name="end_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="course_id" tableName="iris_settings" unique="true">
+        <createIndex indexName="course_id" tableName="iris_settings" unique="true">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="course_start_date" tableName="course">
+        <createIndex indexName="course_start_date" tableName="course">
             <column name="start_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="exam_end_date" tableName="exam">
+        <createIndex indexName="exam_end_date" tableName="exam">
             <column name="end_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="exam_exam_student_review_end" tableName="exam">
+        <createIndex indexName="exam_exam_student_review_end" tableName="exam">
             <column name="exam_student_review_end"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="exam_exam_student_review_start" tableName="exam">
+        <createIndex indexName="exam_exam_student_review_start" tableName="exam">
             <column name="exam_student_review_start"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="exam_publish_results_date" tableName="exam">
+        <createIndex indexName="exam_publish_results_date" tableName="exam">
             <column name="publish_results_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="exam_start_date" tableName="exam">
+        <createIndex indexName="exam_start_date" tableName="exam">
             <column name="start_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="exam_visible_date" tableName="exam">
+        <createIndex indexName="exam_visible_date" tableName="exam">
             <column name="visible_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="exercise_assessment_due_date" tableName="exercise">
+        <createIndex indexName="exercise_assessment_due_date" tableName="exercise">
             <column name="assessment_due_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="exercise_discriminator" tableName="exercise">
+        <createIndex indexName="exercise_discriminator" tableName="exercise">
             <column name="discriminator"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="exercise_due_date" tableName="exercise">
+        <createIndex indexName="exercise_due_date" tableName="exercise">
             <column name="due_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="exercise_id" tableName="iris_settings" unique="true">
+        <createIndex indexName="exercise_id" tableName="iris_settings" unique="true">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="exercise_release_date" tableName="exercise">
+        <createIndex indexName="exercise_release_date" tableName="exercise">
             <column name="release_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="exercise_start_date" tableName="exercise">
+        <createIndex indexName="exercise_start_date" tableName="exercise">
             <column name="start_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="exercise_test_case" tableName="programming_exercise_test_case" unique="true">
+        <createIndex indexName="exercise_test_case" tableName="programming_exercise_test_case" unique="true">
             <column name="test_name"/>
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="feedback_id" tableName="long_feedback_text" unique="true">
+        <createIndex indexName="feedback_id" tableName="long_feedback_text" unique="true">
             <column name="feedback_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_authority_name" tableName="jhi_user_authority">
+        <createIndex indexName="fk_authority_name" tableName="jhi_user_authority">
             <column name="authority_name"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_auxiliary_repository_exercise" tableName="programming_exercise_auxiliary_repositories">
+        <createIndex indexName="fk_auxiliary_repository_exercise" tableName="programming_exercise_auxiliary_repositories">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_bonus_bonus_to_grading_scale_id" tableName="bonus">
+        <createIndex indexName="fk_bonus_bonus_to_grading_scale_id" tableName="bonus">
             <column name="bonus_to_grading_scale_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_competency_linked_standardized_competency" tableName="competency">
+        <createIndex indexName="fk_competency_linked_standardized_competency" tableName="competency">
             <column name="linked_standardized_competency_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_complaint_response_reviwer_id" tableName="complaint_response">
+        <createIndex indexName="fk_complaint_response_reviwer_id" tableName="complaint_response">
             <column name="reviewer_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_complaint_student_id" tableName="complaint">
+        <createIndex indexName="fk_complaint_student_id" tableName="complaint">
             <column name="student_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_complaint_team_id" tableName="complaint">
+        <createIndex indexName="fk_complaint_team_id" tableName="complaint">
             <column name="team_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_conversation_creator" tableName="conversation">
+        <createIndex indexName="fk_conversation_creator" tableName="conversation">
             <column name="creator_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_conversation_notification" tableName="notification">
+        <createIndex indexName="fk_conversation_notification" tableName="notification">
             <column name="conversation_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_conversation_participant_user_id" tableName="conversation_participant">
+        <createIndex indexName="fk_conversation_participant_user_id" tableName="conversation_participant">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_course_tutorial_groups_configuration_id" tableName="course">
+        <createIndex indexName="fk_course_tutorial_groups_configuration_id" tableName="course">
             <column name="tutorial_groups_configuration_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_coverage_file_full_report_id" tableName="coverage_file_report">
+        <createIndex indexName="fk_coverage_file_full_report_id" tableName="coverage_file_report">
             <column name="full_report_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_exam_channel" tableName="conversation">
+        <createIndex indexName="fk_exam_channel" tableName="conversation">
             <column name="exam_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_exercise" tableName="conversation">
+        <createIndex indexName="fk_exercise" tableName="conversation">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_exercise_course_id" tableName="exercise">
+        <createIndex indexName="fk_exercise_course_id" tableName="exercise">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_exercise_hint_activation_exercise_hint_id" tableName="exercise_hint_activation">
+        <createIndex indexName="fk_exercise_hint_activation_exercise_hint_id" tableName="exercise_hint_activation">
             <column name="exercise_hint_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_exercise_hint_exercise_id" tableName="exercise_hint">
+        <createIndex indexName="fk_exercise_hint_exercise_id" tableName="exercise_hint">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_exercise_hint_task_id" tableName="exercise_hint">
+        <createIndex indexName="fk_exercise_hint_task_id" tableName="exercise_hint">
             <column name="task_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_exercise_plan_step_id_to_plan_id" tableName="iris_exercise_plan_step">
+        <createIndex indexName="fk_exercise_plan_step_id_to_plan_id" tableName="iris_exercise_plan_step">
             <column name="exercise_plan_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_exercise_team_assignment_config_id" tableName="exercise">
+        <createIndex indexName="fk_exercise_team_assignment_config_id" tableName="exercise">
             <column name="team_assignment_config_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_feedback_grading_instruction_id" tableName="feedback">
+        <createIndex indexName="fk_feedback_grading_instruction_id" tableName="feedback">
             <column name="grading_instruction_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_grading_criterion_exercise_id" tableName="grading_criterion">
+        <createIndex indexName="fk_grading_criterion_exercise_id" tableName="grading_criterion">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_grading_instruction_grading_criterion_id" tableName="grading_instruction">
+        <createIndex indexName="fk_grading_instruction_grading_criterion_id" tableName="grading_instruction">
             <column name="grading_criterion_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_iris_message_content_message_id" tableName="iris_message_content">
+        <createIndex indexName="fk_iris_message_content_message_id" tableName="iris_message_content">
             <column name="message_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_iris_message_session_id" tableName="iris_message">
+        <createIndex indexName="fk_iris_message_session_id" tableName="iris_message">
             <column name="session_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_iris_session_code_hint_id" tableName="iris_session">
+        <createIndex indexName="fk_iris_session_code_hint_id" tableName="iris_session">
             <column name="code_hint_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_iris_session_course_id" tableName="iris_session">
+        <createIndex indexName="fk_iris_session_course_id" tableName="iris_session">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_iris_session_exercise_id" tableName="iris_session">
+        <createIndex indexName="fk_iris_session_exercise_id" tableName="iris_session">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_iris_session_user_id" tableName="iris_session">
+        <createIndex indexName="fk_iris_session_user_id" tableName="iris_session">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_knowledge_area_parent" tableName="knowledge_area">
+        <createIndex indexName="fk_knowledge_area_parent" tableName="knowledge_area">
             <column name="parent_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_lecture" tableName="conversation">
+        <createIndex indexName="fk_lecture" tableName="conversation">
             <column name="lecture_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_lti_resource_launch_exercise_id" tableName="lti_resource_launch">
+        <createIndex indexName="fk_lti_resource_launch_exercise_id" tableName="lti_resource_launch">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_lti_resource_launch_lti_platform" tableName="lti_resource_launch">
+        <createIndex indexName="fk_lti_resource_launch_lti_platform" tableName="lti_resource_launch">
             <column name="lti_platform_configuration_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_lti_resource_launch_user_id" tableName="lti_resource_launch">
+        <createIndex indexName="fk_lti_resource_launch_user_id" tableName="lti_resource_launch">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_message_notification" tableName="notification">
+        <createIndex indexName="fk_message_notification" tableName="notification">
             <column name="message_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_model_cluster_exercise_id" tableName="model_cluster">
+        <createIndex indexName="fk_model_cluster_exercise_id" tableName="model_cluster">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_model_element_cluster_id" tableName="model_element">
+        <createIndex indexName="fk_model_element_cluster_id" tableName="model_element">
             <column name="cluster_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_model_element_submission_id" tableName="model_element">
+        <createIndex indexName="fk_model_element_submission_id" tableName="model_element">
             <column name="submission_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_online_course_config_lti_platform" tableName="online_course_configuration">
+        <createIndex indexName="fk_online_course_config_lti_platform" tableName="online_course_configuration">
             <column name="lti_platform_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_participant_score_exercise_id" tableName="participant_score">
+        <createIndex indexName="fk_participant_score_exercise_id" tableName="participant_score">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_participant_score_last_rated_result_id" tableName="participant_score">
+        <createIndex indexName="fk_participant_score_last_rated_result_id" tableName="participant_score">
             <column name="last_rated_result_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_participant_score_last_result_id" tableName="participant_score">
+        <createIndex indexName="fk_participant_score_last_result_id" tableName="participant_score">
             <column name="last_result_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_participant_score_team_id" tableName="participant_score">
+        <createIndex indexName="fk_participant_score_team_id" tableName="participant_score">
             <column name="team_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_participant_score_user_id" tableName="participant_score">
+        <createIndex indexName="fk_participant_score_user_id" tableName="participant_score">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_participation_exercise_id" tableName="participation">
+        <createIndex indexName="fk_participation_exercise_id" tableName="participation">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_participation_student_id" tableName="participation">
+        <createIndex indexName="fk_participation_student_id" tableName="participation">
             <column name="student_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_participation_team_id" tableName="participation">
+        <createIndex indexName="fk_participation_team_id" tableName="participation">
             <column name="team_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_plagiarism_case_exercise_id" tableName="plagiarism_case">
+        <createIndex indexName="fk_plagiarism_case_exercise_id" tableName="plagiarism_case">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_plagiarism_case_student_id" tableName="plagiarism_case">
+        <createIndex indexName="fk_plagiarism_case_student_id" tableName="plagiarism_case">
             <column name="student_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_plagiarism_case_team_id" tableName="plagiarism_case">
+        <createIndex indexName="fk_plagiarism_case_team_id" tableName="plagiarism_case">
             <column name="team_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_plagiarism_case_verdict_by_id" tableName="plagiarism_case">
+        <createIndex indexName="fk_plagiarism_case_verdict_by_id" tableName="plagiarism_case">
             <column name="verdict_by_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_plagiarism_comparison_matches" tableName="plagiarism_comparison_matches">
+        <createIndex indexName="fk_plagiarism_comparison_matches" tableName="plagiarism_comparison_matches">
             <column name="plagiarism_comparison_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_plagiarism_comparison_submission_a" tableName="plagiarism_comparison">
+        <createIndex indexName="fk_plagiarism_comparison_submission_a" tableName="plagiarism_comparison">
             <column name="submission_a_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_plagiarism_comparison_submission_b" tableName="plagiarism_comparison">
+        <createIndex indexName="fk_plagiarism_comparison_submission_b" tableName="plagiarism_comparison">
             <column name="submission_b_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_plagiarism_result_comparison" tableName="plagiarism_comparison">
+        <createIndex indexName="fk_plagiarism_result_comparison" tableName="plagiarism_comparison">
             <column name="plagiarism_result_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_plagiarism_result_exercise" tableName="plagiarism_result">
+        <createIndex indexName="fk_plagiarism_result_exercise" tableName="plagiarism_result">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_plagiarism_result_similarity_distribution" tableName="plagiarism_result_similarity_distribution">
+        <createIndex indexName="fk_plagiarism_result_similarity_distribution" tableName="plagiarism_result_similarity_distribution">
             <column name="plagiarism_result_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_plagiarism_submission_elements" tableName="plagiarism_submission_element">
+        <createIndex indexName="fk_plagiarism_submission_elements" tableName="plagiarism_submission_element">
             <column name="plagiarism_submission_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_plagiarism_submission_plagiarism_case_id" tableName="plagiarism_submission">
+        <createIndex indexName="fk_plagiarism_submission_plagiarism_case_id" tableName="plagiarism_submission">
             <column name="plagiarism_case_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_plagiarism_submission_plagiarism_comparison_id" tableName="plagiarism_submission">
+        <createIndex indexName="fk_plagiarism_submission_plagiarism_comparison_id" tableName="plagiarism_submission">
             <column name="plagiarism_comparison_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_post_conversation_id" tableName="post">
+        <createIndex indexName="fk_post_conversation_id" tableName="post">
             <column name="conversation_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_post_course_id" tableName="post">
+        <createIndex indexName="fk_post_course_id" tableName="post">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_post_plagiarism_case_id" tableName="post">
+        <createIndex indexName="fk_post_plagiarism_case_id" tableName="post">
             <column name="plagiarism_case_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_post_tag_post_id" tableName="post_tag">
+        <createIndex indexName="fk_post_tag_post_id" tableName="post_tag">
             <column name="post_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_programming_exercise_git_diff_entry_git_diff_report_id" tableName="programming_exercise_git_diff_entry">
+        <createIndex indexName="fk_programming_exercise_git_diff_entry_git_diff_report_id" tableName="programming_exercise_git_diff_entry">
             <column name="git_diff_report_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_programming_exercise_git_diff_report_exercise_id" tableName="programming_exercise_git_diff_report">
+        <createIndex indexName="fk_programming_exercise_git_diff_report_exercise_id" tableName="programming_exercise_git_diff_report">
             <column name="programming_exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_programming_exercise_solution_entry_code_hint_id" tableName="programming_exercise_solution_entry">
+        <createIndex indexName="fk_programming_exercise_solution_entry_code_hint_id" tableName="programming_exercise_solution_entry">
             <column name="code_hint_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_programming_exercise_solution_entry_test_case_id" tableName="programming_exercise_solution_entry">
+        <createIndex indexName="fk_programming_exercise_solution_entry_test_case_id" tableName="programming_exercise_solution_entry">
             <column name="test_case_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_programming_exercise_task_exercise_id" tableName="programming_exercise_task">
+        <createIndex indexName="fk_programming_exercise_task_exercise_id" tableName="programming_exercise_task">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_programming_exercise_task_test_case_task_id" tableName="programming_exercise_task_test_case">
+        <createIndex indexName="fk_programming_exercise_task_test_case_task_id" tableName="programming_exercise_task_test_case">
             <column name="task_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_programming_exercise_task_test_case_test_case_id" tableName="programming_exercise_task_test_case">
+        <createIndex indexName="fk_programming_exercise_task_test_case_test_case_id" tableName="programming_exercise_task_test_case">
             <column name="test_case_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_programming_exercise_test_case_exercise_id" tableName="programming_exercise_test_case">
+        <createIndex indexName="fk_programming_exercise_test_case_exercise_id" tableName="programming_exercise_test_case">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_reaction_answer_post_id" tableName="reaction">
+        <createIndex indexName="fk_reaction_answer_post_id" tableName="reaction">
             <column name="answer_post_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_reaction_post_id" tableName="reaction">
+        <createIndex indexName="fk_reaction_post_id" tableName="reaction">
             <column name="post_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_reaction_user_id" tableName="reaction">
+        <createIndex indexName="fk_reaction_user_id" tableName="reaction">
             <column name="user_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_result_participation_id" tableName="result">
+        <createIndex indexName="fk_result_participation_id" tableName="result">
             <column name="participation_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_result_rating_result_id" tableName="result_rating">
+        <createIndex indexName="fk_result_rating_result_id" tableName="result_rating">
             <column name="result_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_result_submission_id" tableName="result">
+        <createIndex indexName="fk_result_submission_id" tableName="result">
             <column name="submission_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_standardized_competency_first_version" tableName="standardized_competency">
+        <createIndex indexName="fk_standardized_competency_first_version" tableName="standardized_competency">
             <column name="first_version_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_standardized_competency_knowledge_area" tableName="standardized_competency">
+        <createIndex indexName="fk_standardized_competency_knowledge_area" tableName="standardized_competency">
             <column name="knowledge_area_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_standardized_competency_source" tableName="standardized_competency">
+        <createIndex indexName="fk_standardized_competency_source" tableName="standardized_competency">
             <column name="source_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_static_code_analysis_category_exercise_id" tableName="static_code_analysis_category">
+        <createIndex indexName="fk_static_code_analysis_category_exercise_id" tableName="static_code_analysis_category">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_submission_quiz_batch" tableName="submission">
+        <createIndex indexName="fk_submission_quiz_batch" tableName="submission">
             <column name="quiz_batch"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_submission_version_author_id" tableName="submission_version">
+        <createIndex indexName="fk_submission_version_author_id" tableName="submission_version">
             <column name="author_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_submission_version_submission_id" tableName="submission_version">
+        <createIndex indexName="fk_submission_version_submission_id" tableName="submission_version">
             <column name="submission_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_team_owner_id" tableName="team">
+        <createIndex indexName="fk_team_owner_id" tableName="team">
             <column name="owner_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_team_student_student_id" tableName="team_student">
+        <createIndex indexName="fk_team_student_student_id" tableName="team_student">
             <column name="student_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_testwise_coverage_entry_test_case_id" tableName="testwise_coverage_report_entry">
+        <createIndex indexName="fk_testwise_coverage_entry_test_case_id" tableName="testwise_coverage_report_entry">
             <column name="test_case_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_testwise_entry_file_report_id" tableName="testwise_coverage_report_entry">
+        <createIndex indexName="fk_testwise_entry_file_report_id" tableName="testwise_coverage_report_entry">
             <column name="file_report_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_text_block_feedback_id" tableName="text_block">
+        <createIndex indexName="fk_text_block_feedback_id" tableName="text_block">
             <column name="feedback_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_text_block_submission_id" tableName="text_block">
+        <createIndex indexName="fk_text_block_submission_id" tableName="text_block">
             <column name="submission_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_tutor_participation_exercise_id" tableName="tutor_participation">
+        <createIndex indexName="fk_tutor_participation_exercise_id" tableName="tutor_participation">
             <column name="assessed_exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_tutorial_course_id" tableName="tutorial_group">
+        <createIndex indexName="fk_tutorial_course_id" tableName="tutorial_group">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_tutorial_group_free_period_tutorial_groups_configuration_id" tableName="tutorial_group_free_period">
+        <createIndex indexName="fk_tutorial_group_free_period_tutorial_groups_configuration_id" tableName="tutorial_group_free_period">
             <column name="tutorial_groups_configuration_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_tutorial_group_notification_tutorial_group" tableName="notification">
+        <createIndex indexName="fk_tutorial_group_notification_tutorial_group" tableName="notification">
             <column name="tutorial_group_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_tutorial_group_registration_student_id" tableName="tutorial_group_registration">
+        <createIndex indexName="fk_tutorial_group_registration_student_id" tableName="tutorial_group_registration">
             <column name="student_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_tutorial_group_registration_tutorial_group_id" tableName="tutorial_group_registration">
+        <createIndex indexName="fk_tutorial_group_registration_tutorial_group_id" tableName="tutorial_group_registration">
             <column name="tutorial_group_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_tutorial_group_schedule_tutorial_group_id" tableName="tutorial_group_schedule">
+        <createIndex indexName="fk_tutorial_group_schedule_tutorial_group_id" tableName="tutorial_group_schedule">
             <column name="tutorial_group_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_tutorial_group_session_tutorial_group_free_period_id" tableName="tutorial_group_session">
+        <createIndex indexName="fk_tutorial_group_session_tutorial_group_free_period_id" tableName="tutorial_group_session">
             <column name="tutorial_group_free_period_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_tutorial_group_session_tutorial_group_id" tableName="tutorial_group_session">
+        <createIndex indexName="fk_tutorial_group_session_tutorial_group_id" tableName="tutorial_group_session">
             <column name="tutorial_group_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_tutorial_group_session_tutorial_group_schedule_id" tableName="tutorial_group_session">
+        <createIndex indexName="fk_tutorial_group_session_tutorial_group_schedule_id" tableName="tutorial_group_session">
             <column name="tutorial_group_schedule_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="fk_tutorial_group_teaching_assistant_id" tableName="tutorial_group">
+        <createIndex indexName="fk_tutorial_group_teaching_assistant_id" tableName="tutorial_group">
             <column name="teaching_assistant_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_build_job_build_agent_address" tableName="build_job">
+        <createIndex indexName="idx_build_job_build_agent_address" tableName="build_job">
             <column name="build_agent_address"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_build_job_build_completion_date" tableName="build_job">
+        <createIndex indexName="idx_build_job_build_completion_date" tableName="build_job">
             <column name="build_completion_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_build_job_build_start_date" tableName="build_job">
+        <createIndex indexName="idx_build_job_build_start_date" tableName="build_job">
             <column name="build_start_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_build_job_course_id" tableName="build_job">
+        <createIndex indexName="idx_build_job_course_id" tableName="build_job">
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_build_job_exercise_id" tableName="build_job">
+        <createIndex indexName="idx_build_job_exercise_id" tableName="build_job">
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_build_job_participation_id" tableName="build_job">
+        <createIndex indexName="idx_build_job_participation_id" tableName="build_job">
             <column name="participation_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_exam_id" tableName="exam_live_event">
+        <createIndex indexName="idx_exam_id" tableName="exam_live_event">
             <column name="exam_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_head_competency_id" tableName="competency_relation">
+        <createIndex indexName="idx_head_competency_id" tableName="competency_relation">
             <column name="head_competency_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_head_tail_type" tableName="competency_relation" unique="true">
+        <createIndex indexName="idx_head_tail_type" tableName="competency_relation" unique="true">
             <column name="head_competency_id"/>
             <column name="tail_competency_id"/>
             <column defaultValueNumeric="0" name="type"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_persistent_audit_event" tableName="jhi_persistent_audit_event">
+        <createIndex indexName="idx_persistent_audit_event" tableName="jhi_persistent_audit_event">
             <column name="principal"/>
             <column name="event_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_persistent_audit_evt_data" tableName="jhi_persistent_audit_evt_data">
+        <createIndex indexName="idx_persistent_audit_evt_data" tableName="jhi_persistent_audit_evt_data">
             <column name="event_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_reference" tableName="feedback">
+        <createIndex indexName="idx_reference" tableName="feedback">
             <column name="reference"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_ssh_public" tableName="jhi_user">
+        <createIndex indexName="idx_ssh_public" tableName="jhi_user">
             <column name="ssh_public_key_hash"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_student_exam_id" tableName="exam_live_event">
+        <createIndex indexName="idx_student_exam_id" tableName="exam_live_event">
             <column name="student_exam_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="idx_tail_competency_id" tableName="competency_relation">
+        <createIndex indexName="idx_tail_competency_id" tableName="competency_relation">
             <column name="tail_competency_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="iris_session_discriminator" tableName="iris_session">
+        <createIndex indexName="iris_session_discriminator" tableName="iris_session">
             <column name="discriminator"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="jhi_type" tableName="submission">
+        <createIndex indexName="jhi_type" tableName="submission">
             <column name="jhi_type"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="jhi_user_email" tableName="jhi_user">
+        <createIndex indexName="jhi_user_email" tableName="jhi_user">
             <column name="email"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="learning_goal_progress_modified_date" tableName="competency_user">
+        <createIndex indexName="learning_goal_progress_modified_date" tableName="competency_user">
             <column name="last_modified_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="learning_path_user_course_uq" tableName="learning_path" unique="true">
+        <createIndex indexName="learning_path_user_course_uq" tableName="learning_path" unique="true">
             <column name="user_id"/>
             <column name="course_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="lecture_end_date" tableName="lecture">
+        <createIndex indexName="lecture_end_date" tableName="lecture">
             <column name="end_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="lecture_start_date" tableName="lecture">
+        <createIndex indexName="lecture_start_date" tableName="lecture">
             <column name="start_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="lecture_unit_release_date" tableName="lecture_unit">
+        <createIndex indexName="lecture_unit_release_date" tableName="lecture_unit">
             <column name="release_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="login" tableName="jhi_user" unique="true">
+        <createIndex indexName="login" tableName="jhi_user" unique="true">
             <column name="login"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="model_cluster_reference" tableName="model_cluster">
+        <createIndex indexName="model_cluster_reference" tableName="model_cluster">
             <column name="model_element_type"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="model_element_reference" tableName="model_element">
+        <createIndex indexName="model_element_reference" tableName="model_element">
             <column name="model_element_type"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="nVl82Q7a8WevNKlJYqKcqN0LrX0" tableName="student_exam_quiz_question">
+        <createIndex indexName="nVl82Q7a8WevNKlJYqKcqN0LrX0" tableName="student_exam_quiz_question">
             <column name="quiz_question_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="notification_discriminator" tableName="notification">
+        <createIndex indexName="notification_discriminator" tableName="notification">
             <column name="discriminator"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="notification_expire_date" tableName="notification">
+        <createIndex indexName="notification_expire_date" tableName="notification">
             <column name="expire_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="notification_jhi_type" tableName="notification">
+        <createIndex indexName="notification_jhi_type" tableName="notification">
             <column name="jhi_type"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="notification_notification_date" tableName="notification">
+        <createIndex indexName="notification_notification_date" tableName="notification">
             <column name="notification_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="notification_target" tableName="notification">
+        <createIndex indexName="notification_target" tableName="notification">
             <column name="target"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="participant_score_last_modified_date" tableName="participant_score">
+        <createIndex indexName="participant_score_last_modified_date" tableName="participant_score">
             <column name="last_modified_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="participation_discriminator" tableName="participation">
+        <createIndex indexName="participation_discriminator" tableName="participation">
             <column name="discriminator"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="participation_initialization_date" tableName="participation">
+        <createIndex indexName="participation_initialization_date" tableName="participation">
             <column name="initialization_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="participation_presentation_score" tableName="participation">
+        <createIndex indexName="participation_presentation_score" tableName="participation">
             <column name="presentation_score"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="participation_test_run" tableName="participation">
+        <createIndex indexName="participation_test_run" tableName="participation">
             <column name="test_run"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="programming_exercise_details_due_date" tableName="programming_exercise_details">
+        <createIndex indexName="programming_exercise_details_due_date" tableName="programming_exercise_details">
             <column name="build_and_test_student_submissions_after_due_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="programming_exercise_project_key_idx" tableName="programming_exercise_details">
+        <createIndex indexName="programming_exercise_project_key_idx" tableName="programming_exercise_details">
             <column name="project_key"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="quiz_id" tableName="quiz_batch" unique="true">
+        <createIndex indexName="quiz_id" tableName="quiz_batch" unique="true">
             <column name="quiz_id"/>
             <column name="password"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="registration_number" tableName="jhi_user" unique="true">
+        <createIndex indexName="registration_number" tableName="jhi_user" unique="true">
             <column name="registration_number"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="repository_url" tableName="participation">
+        <createIndex indexName="repository_url" tableName="participation">
             <column name="repository_url"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="result_assessment_type" tableName="result">
+        <createIndex indexName="result_assessment_type" tableName="result">
             <column name="assessment_type"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="result_completion_date" tableName="result">
+        <createIndex indexName="result_completion_date" tableName="result">
             <column name="completion_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="result_last_modified_date" tableName="result">
+        <createIndex indexName="result_last_modified_date" tableName="result">
             <column name="last_modified_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="result_rated" tableName="result">
+        <createIndex indexName="result_rated" tableName="result">
             <column name="rated"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="student_exam_started" tableName="student_exam">
+        <createIndex indexName="student_exam_started" tableName="student_exam">
             <column name="started"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="student_exam_started_date" tableName="student_exam">
+        <createIndex indexName="student_exam_started_date" tableName="student_exam">
             <column name="started_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="student_exam_submission_date" tableName="student_exam">
+        <createIndex indexName="student_exam_submission_date" tableName="student_exam">
             <column name="submission_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="student_exam_submitted" tableName="student_exam">
+        <createIndex indexName="student_exam_submitted" tableName="student_exam">
             <column name="submitted"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="student_exam_test_run" tableName="student_exam">
+        <createIndex indexName="student_exam_test_run" tableName="student_exam">
             <column name="test_run"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="submission_date" tableName="submission">
+        <createIndex indexName="submission_date" tableName="submission">
             <column name="submission_date"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="submission_discriminator" tableName="submission">
+        <createIndex indexName="submission_discriminator" tableName="submission">
             <column name="discriminator"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="submission_id" tableName="coverage_report" unique="true">
+        <createIndex indexName="submission_id" tableName="coverage_report" unique="true">
             <column name="submission_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="uc_participant_score" tableName="participant_score" unique="true">
+        <createIndex indexName="uc_participant_score" tableName="participant_score" unique="true">
             <column name="user_id"/>
             <column name="team_id"/>
             <column name="exercise_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="uc_team_exercise_id_and_short_name" tableName="team" unique="true">
+        <createIndex indexName="uc_team_exercise_id_and_short_name" tableName="team" unique="true">
             <column name="exercise_id"/>
             <column name="short_name"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="unique_answer_post_reaction" tableName="reaction" unique="true">
+        <createIndex indexName="unique_answer_post_reaction" tableName="reaction" unique="true">
             <column name="emoji_id"/>
             <column name="user_id"/>
             <column name="answer_post_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="unique_post_reaction" tableName="reaction" unique="true">
+        <createIndex indexName="unique_post_reaction" tableName="reaction" unique="true">
             <column name="emoji_id"/>
             <column name="user_id"/>
             <column name="post_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="uq_bonus_source_grading_scale_bonus_to_grading_scale" tableName="bonus" unique="true">
+        <createIndex indexName="uq_bonus_source_grading_scale_bonus_to_grading_scale" tableName="bonus" unique="true">
             <column name="source_grading_scale_id"/>
             <column name="bonus_to_grading_scale_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="uq_exercise_hint_activation" tableName="exercise_hint_activation" unique="true">
+        <createIndex indexName="uq_exercise_hint_activation" tableName="exercise_hint_activation" unique="true">
             <column name="user_id"/>
             <column name="exercise_hint_id"/>
         </createIndex>
-        <createIndex associatedWith="" indexName="user_groups_user_groups" tableName="user_groups">
+        <createIndex indexName="user_groups_user_groups" tableName="user_groups">
             <column name="user_groups"/>
         </createIndex>
         <addForeignKeyConstraint baseColumnNames="drag_and_drop_question_statistic_id" baseTableName="quiz_statistic_counter" constraintName="FK11jgyics37wyibhhpp866exa8" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_statistic" validate="true"/>
