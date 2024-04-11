@@ -232,19 +232,19 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.result!.feedbacks = [];
         }
 
-        this.isLoadingFeedbackSuggestions = true;
-
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
-        if ((this.result?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
+        if (this.modelingExercise.feedbackSuggestionModule && (this.result?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
+            this.isLoadingFeedbackSuggestions = true;
+
             this.feedbackSuggestions = await this.loadFeedbackSuggestions(this.modelingExercise, this.submission);
 
             if (this.result) {
                 this.result.feedbacks = [...(this.result?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
             }
-        }
 
-        this.isLoadingFeedbackSuggestions = false;
+            this.isLoadingFeedbackSuggestions = false;
+        }
 
         this.handleFeedback(this.result?.feedbacks);
 
