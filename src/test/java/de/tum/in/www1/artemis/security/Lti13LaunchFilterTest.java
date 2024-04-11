@@ -206,7 +206,7 @@ class Lti13LaunchFilterTest {
     }
 
     @Test
-    void emailAddressAlreadyInUseServiceLaunchFailed() throws ServletException, IOException, ServletException {
+    void emailAddressAlreadyInUseServiceLaunchFailed() throws IOException, ServletException {
         StringWriter stringWriter = new StringWriter();
         PrintWriter printWriter = new PrintWriter(stringWriter);
         doReturn(printWriter).when(httpResponse).getWriter();
