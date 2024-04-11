@@ -45,10 +45,12 @@ def liquibaseCommand(command) {
 
         args = [
             "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml",
-            "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?hibernate.physical_naming_strategy=org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy",
+            "--referenceUrl=jdbc:mysql://localhost:3306/Artemis?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
             "--username=root",
-            "--password=",
-            "--url=jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
+            "--password=12345678",
+            "--url=jdbc:mysql://localhost:3306/ArtemisEmpty?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
+            "--referenceUsername=root",
+            "--referencePassword=12345678",
             "--driver=com.mysql.cj.jdbc.Driver",
             command
             ]
