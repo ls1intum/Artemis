@@ -30,11 +30,11 @@ class MigrationPath {
     /** The version from which migration can start, typically the last version before a major update. */
     Semver requiredVersion; // e.g. 5.12.9
 
-    /** The earliest new major version to which the database can be migrated. */
-    Semver earliestNewVersion; // e.g. 6.0.0 --> this is also the target version
+    /** The upgrade version to which the database can be migrated. */
+    Semver upgradeVersion; // e.g. 6.0.0 --> this is also the target version
 
-    /** The latest version before another major update is needed. */
-    Semver latestNewVersion; // e.g. 7.0.0
+    /** The next upgrade version before another major update is needed. */
+    Semver nextUpgradeVersion; // e.g. 7.0.0
 
     /** The error message to be displayed if the migration cannot proceed due to version incompatibility. */
     String errorMessage;
@@ -50,9 +50,9 @@ class MigrationPath {
      *                            after earliestNewVersion.
      */
     public MigrationPath(String requiredVersion) {
-        this.earliestNewVersion = new Semver(requiredVersion).nextMajor();
+        this.upgradeVersion = new Semver(requiredVersion).nextMajor();
         this.requiredVersion = new Semver(requiredVersion);
-        this.latestNewVersion = earliestNewVersion.nextMajor();
+        this.nextUpgradeVersion = upgradeVersion.nextMajor();
         this.errorMessage = "Cannot start Artemis. Please start the release " + requiredVersion + " first, otherwise the migration will fail";
     }
 }
@@ -96,8 +96,8 @@ public class DatabaseMigration {
         this.dataSource = dataSource;
 
         // Initialize migration paths here in the correct order
-        migrationPaths.add(new MigrationPath("5.12.9")); // needed between 6.0.0 and 7.0.0
-        migrationPaths.add(new MigrationPath("6.9.6")); // needed between 7.0.0 and 8.0.0
+        migrationPaths.add(new MigrationPath("5.12.9")); // required for migration to 6.0.0 until 7.0.0
+        migrationPaths.add(new MigrationPath("6.9.6"));  // required for migration to 7.0.0 until 8.0.0
 
         // Add more migrations here as needed
     }
@@ -123,13 +123,13 @@ public class DatabaseMigration {
         var previousVersion = new Semver(previousVersionString);
 
         for (MigrationPath path : migrationPaths) {
-            if (currentVersion.isGreaterThanOrEqualTo(path.earliestNewVersion) && currentVersion.isLowerThan(path.latestNewVersion)) {
+            if (currentVersion.isGreaterThanOrEqualTo(path.upgradeVersion) && currentVersion.isLowerThan(path.nextUpgradeVersion)) {
                 if (previousVersion.isLowerThan(path.requiredVersion)) {
                     log.error(path.errorMessage);
                     throw new RuntimeException(path.errorMessage);
                 }
                 else if (previousVersion.isEqualTo(path.requiredVersion)) {
-                    updateInitialChecksum(path.earliestNewVersion.toString());
+                    updateInitialChecksum(path.upgradeVersion.toString());
                     log.info("Successfully cleaned up initial schema during migration");
                     break; // Exit after handling the required migration step
                 }
