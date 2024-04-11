@@ -201,12 +201,14 @@ public class DatabaseMigration {
      * @throws RuntimeException If updating the checksum fails due to an SQLException, encapsulating the original exception.
      */
     private void updateInitialChecksum(String newVersion) {
+        String description = "Initial schema generation for version " + newVersion;
+
         // SQL statement with a placeholder for the newVersion parameter
         String updateSqlStatement = """
                 UPDATE DATABASECHANGELOG
                 SET MD5SUM = null,
                     DATEEXECUTED = now(),
-                    DESCRIPTION = 'Initial schema generation for version ' || ?,
+                    DESCRIPTION = ?,
                     LIQUIBASE = '4.27.0',
                     FILENAME = 'config/liquibase/changelog/00000000000000_initial_schema.xml'
                 WHERE ID = '00000000000001';
@@ -216,7 +218,7 @@ public class DatabaseMigration {
         try (var connection = dataSource.getConnection(); var preparedStatement = connection.prepareStatement(updateSqlStatement)) {
 
             // Set the newVersion parameter in the SQL statement
-            preparedStatement.setString(1, newVersion);
+            preparedStatement.setString(1, description);
 
             // Execute the update
             preparedStatement.executeUpdate();
