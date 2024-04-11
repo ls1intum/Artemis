@@ -62,7 +62,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     complaint: Complaint;
     ComplaintType = ComplaintType;
     isLoading = true;
-    isLoadingFeedbackSuggestions = false;
     isTestRun = false;
     hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
@@ -103,6 +102,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     get unreferencedFeedbackSuggestions(): Feedback[] {
         return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
+    }
+
+    /**
+     * Retrieve whether feedback suggestions are enabled based on whether a feedback suggestions module is set on the
+     * current modeling exercise.
+     */
+    get isFeedbackSuggestionsEnabled(): boolean {
+        return Boolean(this.modelingExercise?.feedbackSuggestionModule);
     }
 
     ngOnInit() {
@@ -235,15 +242,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
         if (this.modelingExercise.feedbackSuggestionModule && (this.result?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
-            this.isLoadingFeedbackSuggestions = true;
-
             this.feedbackSuggestions = await this.loadFeedbackSuggestions(this.modelingExercise, this.submission);
 
             if (this.result) {
                 this.result.feedbacks = [...(this.result?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
             }
-
-            this.isLoadingFeedbackSuggestions = false;
         }
 
         this.handleFeedback(this.result?.feedbacks);

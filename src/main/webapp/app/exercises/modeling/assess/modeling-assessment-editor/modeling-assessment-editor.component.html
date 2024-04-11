@@ -26,7 +26,7 @@
         @if (hasAutomaticFeedback && isAssessor && !result?.completionDate) {
             <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
         }
-        @if (isLoadingFeedbackSuggestions) {
+        @if (isLoading && isFeedbackSuggestionsEnabled) {
             <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></div>
         }
         <div class="editor-container flex-grow-1">
@@ -95,7 +95,7 @@
     @if (hasAutomaticFeedback && isAssessor && !result?.completionDate) {
         <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
     }
-    @if (isLoadingFeedbackSuggestions) {
+    @if (isLoading && isFeedbackSuggestionsEnabled) {
         <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></div>
     }
     <div class="editor-container flex-grow-1">
