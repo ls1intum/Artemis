@@ -865,6 +865,15 @@ public class GitlabRequestMockProvider {
         }
     }
 
+    public void mockCreateProjectAccessToken(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(projectApi).createProjectAccessToken(any(), anyString(), any(), any());
+        }
+        else {
+            doReturn(new ProjectAccessToken()).when(projectApi).createProjectAccessToken(anyString(), anyString(), anyList(), any(), anyLong());
+        }
+    }
+
     public void mockGetBuildStatus(PipelineStatus pipelineStatus) throws GitLabApiException {
         Pipeline pipeline = new Pipeline();
         pipeline.setId(1L);

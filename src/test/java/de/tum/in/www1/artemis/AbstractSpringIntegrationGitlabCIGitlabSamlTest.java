@@ -314,6 +314,7 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     public void mockAddBuildPlanToGitLabRepositoryConfiguration(boolean shouldFail) throws GitLabApiException {
         gitlabRequestMockProvider.mockGetProject(shouldFail);
         gitlabRequestMockProvider.mockUpdateProject(shouldFail);
+        gitlabRequestMockProvider.mockCreateProjectAccessToken(shouldFail);
     }
 
     @Override
