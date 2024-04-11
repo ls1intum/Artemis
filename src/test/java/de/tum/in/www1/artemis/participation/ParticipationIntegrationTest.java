@@ -1083,7 +1083,6 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsGitla
     private static class StudentParticipationList extends ArrayList<StudentParticipation> {
 
         public StudentParticipationList(StudentParticipation... participations) {
-            super();
             this.addAll(Arrays.asList(participations));
         }
     }
