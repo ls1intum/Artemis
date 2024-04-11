@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.dto.competency;
+package de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

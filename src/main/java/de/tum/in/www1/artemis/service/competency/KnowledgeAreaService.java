@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
-import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -93,7 +93,7 @@ public class KnowledgeAreaService {
      *
      * @param knowledgeArea the knowledge area to verify
      */
-    private void knowledgeAreaIsValidOrElseThrow(KnowledgeAreaDTO knowledgeArea) throws BadRequestException {
+    public static void knowledgeAreaIsValidOrElseThrow(KnowledgeAreaDTO knowledgeArea) throws BadRequestException {
         boolean titleIsInvalid = knowledgeArea.title() == null || knowledgeArea.title().isBlank() || knowledgeArea.title().length() > KnowledgeArea.MAX_TITLE_LENGTH;
         boolean shortTitleIsInvalid = knowledgeArea.shortTitle() == null || knowledgeArea.shortTitle().isBlank()
                 || knowledgeArea.shortTitle().length() > KnowledgeArea.MAX_SHORT_TITLE_LENGTH;
