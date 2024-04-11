@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/core/util/alert.service';
@@ -13,7 +13,7 @@ import { onError } from 'app/shared/util/global.utils';
 })
 export class AdminImportStandardizedCompetenciesComponent {
     //Icons
-    protected readonly faUpload = faUpload;
+    protected readonly faFileImport = faFileImport;
 
     importData?: KnowledgeAreasForImportDTO;
     fileReader = new FileReader();
@@ -41,24 +41,18 @@ export class AdminImportStandardizedCompetenciesComponent {
                 return;
             } else {
                 this.isLoading = true;
-                //TODO: i dont even need this -> directly parse into comps!
                 this.fileReader.readAsText(file);
-                this.fileReader.onload = () => this.doSomething();
+                this.fileReader.onload = () => {
+                    this.importData = JSON.parse(this.fileReader.result as string);
+                    //TODO: some kind of verification? but I would need to do stuff for this...
+                    //TODO: verification: for all competencies, see that the source is actually contained.
+                    this.isLoading = false;
+                };
             }
         }
     }
 
-    doSomething() {
-        try {
-            this.importData = JSON.parse(this.fileReader.result as string) as KnowledgeAreasForImportDTO;
-        } catch (e) {
-            this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.fileStructure');
-        }
-    }
-
-    //TODO: verification: for all competencies, see that the source is actually contained.
-
-    uploadCompetencies() {
+    importCompetencies() {
         if (!this.importData) {
             this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.noCompetencies');
             return;

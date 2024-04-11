@@ -3,7 +3,12 @@
         <div class="d-flex align-items-center">
             <h2 jhiTranslate="artemisApp.standardizedCompetency.manage.title"></h2>
         </div>
-        <div class="ms-auto justify-content-end"></div>
+        <div class="ms-auto justify-content-end">
+            <a class="btn btn-primary" id="generateButton" [routerLink]="['/admin', 'standardized-competencies', 'import']">
+                <fa-icon [icon]="faFileImport" />
+                <span jhiTranslate="artemisApp.standardizedCompetency.manage.importButton"></span>
+            </a>
+        </div>
     </div>
     <div class="card mb-3">
         <div class="card-header">

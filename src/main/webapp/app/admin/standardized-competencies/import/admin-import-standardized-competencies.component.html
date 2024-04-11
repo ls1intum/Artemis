@@ -8,12 +8,7 @@
     <div>
         <input type="file" accept="application/json" (change)="setImportCompetencies($event)" />
         <!-- TODO: some kind of preview -->
-        <jhi-button
-            id="upload-competencies-button"
-            [disabled]="importData === undefined"
-            [icon]="faUpload"
-            [title]="'artemisApp.programmingExercise.importFromFile.uploadForImport'"
-            (onClick)="uploadCompetencies()"
-        />
+        <!-- TODO: some cancel button -->
+        <jhi-button [disabled]="importData === undefined" [icon]="faFileImport" [title]="'entity.action.to-import'" (onClick)="importCompetencies()" />
     </div>
 </div>

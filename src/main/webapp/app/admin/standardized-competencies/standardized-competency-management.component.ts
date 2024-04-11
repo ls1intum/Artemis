@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
-import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
@@ -59,6 +59,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
     protected readonly faMinimize = faDownLeftAndUpRightToCenter;
     protected readonly faMaximize = faUpRightAndDownLeftFromCenter;
     protected readonly faEye = faEye;
+    protected readonly faFileImport = faFileImport;
     //Other constants for template
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;

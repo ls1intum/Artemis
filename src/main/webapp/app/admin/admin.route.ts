@@ -107,6 +107,13 @@ export const adminState: Routes = [
                 data: {
                     pageTitle: 'artemisApp.standardizedCompetency.title',
                 },
+            },
+            {
+                // Create a new path without a component defined to prevent the StandardizedCompetencyManagementComponent from being always rendered
+                path: 'standardized-competencies',
+                data: {
+                    pageTitle: 'artemisApp.standardizedCompetency.title',
+                },
                 children: [
                     {
                         path: 'import',

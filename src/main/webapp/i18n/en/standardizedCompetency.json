@@ -5,6 +5,7 @@
             "manage": {
                 "title": "Standardized Competency Management",
                 "filter": "Filter competencies",
+                "importButton": "Import standardized competencies",
                 "expandButtonTooltip": "Expand all knowledge areas",
                 "collapseButtonTooltip": "Collapse all knowledge areas",
                 "updateTreeError": "Something went wrong while updating the knowledge area tree. Please reload the page.",
@@ -20,6 +21,17 @@
                     "create": "Successfully created standardized competency <strong>{{title}}</strong>",
                     "update": "Successfully updated standardized competency <strong>{{title}}</strong>",
                     "delete": "Successfully deleted standardized competency <strong>{{title}}</strong>"
+                },
+                "import": {
+                    "title": "Import Standardized Competencies",
+                    "error": {
+                        "fileCount": "Please only upload one file",
+                        "fileExtension": "Unsupported file extension. Please upload a .json file",
+                        "fileTooBig": "The file is too big. The maximum file size is 20 MB",
+                        "fileStructure": "The file structure is incorrect",
+                        "noCompetencies": "There are no standardized competencies to import"
+                    },
+                    "success": "Successfully imported {{numCompetencies}} standardized competencies from {{numKnowledgeAreas}} knowledge areas"
                 }
             },
             "model": {
