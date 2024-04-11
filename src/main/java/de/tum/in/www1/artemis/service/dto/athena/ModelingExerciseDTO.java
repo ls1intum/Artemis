@@ -15,6 +15,9 @@ public record ModelingExerciseDTO(long id, String title, double maxPoints, doubl
 
     /**
      * Create a new ModelingExerciseDTO from a ModelingExercise
+     *
+     * @param exercise The exercise for which a ModelingExerciseDTO should be constructed
+     * @return The ModelingExerciseDTO representation of the provided exercise
      */
     public static ModelingExerciseDTO of(@NotNull ModelingExercise exercise) {
         return new ModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),

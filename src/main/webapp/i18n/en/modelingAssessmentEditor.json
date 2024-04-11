@@ -29,6 +29,7 @@
                 "loadFeedbackSuggestionsFailed": "Retrieving automatically generated feedback suggestions failed."
             },
             "automaticAssessmentAvailable": "Congratulations! To save you some time, parts of this model were already assessed automatically. Please review the automatic assessment and assess the rest of the model afterwards. By submitting the assessment you also confirm the automatic assessment. Please be aware that you are responsible for the whole assessment.",
+            "automaticAssessmentLoading": "Loading automatically generated feedback suggestions...",
             "highlightingColors": {
                 "title": "Highlighting Color(s)",
                 "automaticAssessment": "automatic assessment",

@@ -26,6 +26,9 @@
         @if (hasAutomaticFeedback && isAssessor && !result?.completionDate) {
             <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
         }
+        @if (isLoadingFeedbackSuggestions) {
+            <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></div>
+        }
         <div class="editor-container flex-grow-1">
             @if (submission) {
                 <jhi-modeling-assessment
@@ -91,6 +94,9 @@
 <ng-template #assessment>
     @if (hasAutomaticFeedback && isAssessor && !result?.completionDate) {
         <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
+    }
+    @if (isLoadingFeedbackSuggestions) {
+        <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></div>
     }
     <div class="editor-container flex-grow-1">
         @if (submission) {

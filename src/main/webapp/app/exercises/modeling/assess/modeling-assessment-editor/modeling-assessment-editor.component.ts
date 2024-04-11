@@ -62,6 +62,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     complaint: Complaint;
     ComplaintType = ComplaintType;
     isLoading = true;
+    isLoadingFeedbackSuggestions = false;
     isTestRun = false;
     hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
@@ -73,13 +74,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     isApollonModelLoaded = false;
 
     private cancelConfirmationText: string;
-
-    /**
-     * Get all feedback suggestions without a reference. They will be shown in cards below the modeling editor.
-     */
-    get unreferencedFeedbackSuggestions(): Feedback[] {
-        return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
-    }
 
     constructor(
         private alertService: AlertService,
@@ -101,6 +95,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private get feedback(): Feedback[] {
         return [...this.referencedFeedback, ...this.unreferencedFeedback];
+    }
+
+    /**
+     * Retrieve unreferenced entries from the feedback suggestions loaded from Athena.
+     * The suggestions are displayed in cards underneath the modeling editor canvas.
+     */
+    get unreferencedFeedbackSuggestions(): Feedback[] {
+        return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
     }
 
     ngOnInit() {
@@ -230,6 +232,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.result!.feedbacks = [];
         }
 
+        this.isLoadingFeedbackSuggestions = true;
+
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
         if ((this.result?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
@@ -239,6 +243,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.result.feedbacks = [...(this.result?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
             }
         }
+
+        this.isLoadingFeedbackSuggestions = false;
 
         this.handleFeedback(this.result?.feedbacks);
 
@@ -493,8 +499,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     /**
-     *
-     * @param feedback
+     * On change handler for feedback changes coming from the Apollon modeling editor. Whenever an assessment is altered
+     * in the editor, this method is invoked and the assessment component updated to show the new entries.
+     * @param feedback The feedback present in the editor.
      */
     onFeedbackChanged(feedback: Feedback[]) {
         this.updateApollonEditorWithFeedback(feedback);
