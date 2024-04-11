@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.criteria.Fetch;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.validation.constraints.NotNull;
 
@@ -123,7 +122,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Get a programmingExercise with template and solution participation, each with the latest result and feedbacks.
+     * Get a programmingExercise with template participation, each with the latest result and feedbacks.
      * NOTICE: this query is quite expensive because it loads all feedback and test cases, and it includes sub queries to retrieve the latest result
      * IMPORTANT: you should generally avoid using this query except you really need all information!!
      *
@@ -134,20 +133,35 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
                 LEFT JOIN FETCH pe.templateParticipation tp
-                LEFT JOIN FETCH pe.solutionParticipation sp
                 LEFT JOIN FETCH tp.results AS tpr
-                LEFT JOIN FETCH sp.results AS spr
                 LEFT JOIN FETCH tpr.feedbacks tf
-                LEFT JOIN FETCH spr.feedbacks sf
                 LEFT JOIN FETCH tf.testCase
-                LEFT JOIN FETCH sf.testCase
                 LEFT JOIN FETCH tpr.submission
-                LEFT JOIN FETCH spr.submission
             WHERE pe.id = :exerciseId
                 AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
+            """)
+    Optional<ProgrammingExercise> findWithTemplateParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Get a programmingExercise with solution participation, each with the latest result and feedbacks.
+     * NOTICE: this query is quite expensive because it loads all feedback and test cases, and it includes sub queries to retrieve the latest result
+     * IMPORTANT: you should generally avoid using this query except you really need all information!!
+     *
+     * @param exerciseId the id of the exercise that should be fetched.
+     * @return the exercise with the given ID, if found.
+     */
+    @Query("""
+            SELECT DISTINCT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.solutionParticipation sp
+                LEFT JOIN FETCH sp.results AS spr
+                LEFT JOIN FETCH spr.feedbacks sf
+                LEFT JOIN FETCH sf.testCase
+                LEFT JOIN FETCH spr.submission
+            WHERE pe.id = :exerciseId
                 AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
             """)
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") long exerciseId);
+    Optional<ProgrammingExercise> findWithSolutionParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") long exerciseId);
 
     /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
@@ -635,15 +649,15 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     /**
      * Finds a programming exercise by its id including the submissions for its solution and template participation.
      *
-     * @param exerciseId            The id of the programming exercise.
-     * @param withSubmissionResults True, if the results of the template and solution should be included as well.
-     * @param withGradingCriteria   True, if the grading instructions of the exercise should be included as well.
+     * @param exerciseId          The id of the programming exercise.
+     * @param withGradingCriteria True, if the grading instructions of the exercise should be included as well.
      * @return A programming exercise that has the given id.
      * @throws EntityNotFoundException In case no exercise with the given id exists.
      */
     @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationSubmissionsAndAuxiliaryRepositoriesElseThrow(long exerciseId, boolean withSubmissionResults,
-            boolean withGradingCriteria) throws EntityNotFoundException {
+    default ProgrammingExercise findByIdWithAuxiliaryRepositoriesTeamAssignmentConfigAndGradingCriteriaElseThrow(long exerciseId, boolean withGradingCriteria)
+            throws EntityNotFoundException {
+
         final Specification<ProgrammingExercise> specification = (root, query, criteriaBuilder) -> {
             root.fetch(Exercise_.CATEGORIES, JoinType.LEFT);
             root.fetch(Exercise_.TEAM_ASSIGNMENT_CONFIG, JoinType.LEFT);
@@ -651,18 +665,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
             if (withGradingCriteria) {
                 root.fetch(Exercise_.GRADING_CRITERIA, JoinType.LEFT);
-            }
-
-            final Fetch<ProgrammingExercise, TemplateProgrammingExerciseParticipation> joinTemplateParticipation = root.fetch(ProgrammingExercise_.TEMPLATE_PARTICIPATION,
-                    JoinType.LEFT);
-            final Fetch<TemplateProgrammingExerciseParticipation, Submission> joinTemplateSubmissions = joinTemplateParticipation.fetch(Participation_.SUBMISSIONS, JoinType.LEFT);
-            final Fetch<ProgrammingExercise, SolutionProgrammingExerciseParticipation> joinSolutionParticipation = root.fetch(ProgrammingExercise_.SOLUTION_PARTICIPATION,
-                    JoinType.LEFT);
-            final Fetch<TemplateProgrammingExerciseParticipation, Submission> joinSolutionSubmissions = joinSolutionParticipation.fetch(Participation_.SUBMISSIONS, JoinType.LEFT);
-
-            if (withSubmissionResults) {
-                joinTemplateSubmissions.fetch(Submission_.RESULTS, JoinType.LEFT);
-                joinSolutionSubmissions.fetch(Submission_.RESULTS, JoinType.LEFT);
             }
 
             return null;
@@ -712,8 +714,16 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        // TODO: This is a dark hack. Move this into a service where we properly load only the solution participation in the second step
+        Optional<ProgrammingExercise> programmingExerciseWithTemplate = findWithTemplateParticipationLatestResultFeedbackTestCasesById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExerciseWithSolution = findWithSolutionParticipationLatestResultFeedbackTestCasesById(programmingExerciseId);
+
+        var withTemplate = programmingExerciseWithTemplate.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+        var withSolution = programmingExerciseWithSolution.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+
+        withTemplate.setSolutionParticipation(withSolution.getSolutionParticipation());
+
+        return withTemplate;
     }
 
     @NotNull

@@ -42,6 +42,7 @@ const esModules = [
     'franc-min',
     'internmap',
     'lodash-es',
+    'monaco-editor',
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
@@ -101,7 +102,7 @@ module.exports = {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
             statements: 87.2,
-            branches: 73.75,
+            branches: 73.8,
             functions: 81.6,
             lines: 87.3,
         },
@@ -148,5 +149,7 @@ module.exports = {
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
         '@sentry/angular-ivy': '<rootDir>/node_modules/@sentry/angular-ivy/bundles/sentry-angular-ivy.umd.js',
+        '\\.css$': '<rootDir>/stub.js',
+        '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
     },
 };
