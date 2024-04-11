@@ -466,7 +466,7 @@
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
-            "examWithAttendanceCheck": "Klausur mit der Anwesenheitskontrolle",
+            "examWithAttendanceCheck": "Klausur mit Anwesenheitskontrolle",
             "startText": "Information zu Klausurbeginn",
             "endText": "Information zum Klausurende",
             "confirmationStartText": "Bestätigungstext bei Klausurbeginn",
