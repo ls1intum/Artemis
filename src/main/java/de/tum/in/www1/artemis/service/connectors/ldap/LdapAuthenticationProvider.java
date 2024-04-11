@@ -72,14 +72,14 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
             return null;
         }
 
-        log.info("Finished userRepository.findOneWithGroupsAndAuthoritiesByLogin in {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("Finished userRepository.findOneWithGroupsAndAuthoritiesByLogin in {}", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
         // If the following code is executed, the user is either not yet existent or an external user
 
         final LdapUserDto ldapUserDto = ldapUserService.findByUsername(username).orElseThrow(() -> new BadCredentialsException("Wrong credentials"));
 
-        log.info("Finished ldapUserService.findByUsername in {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("Finished ldapUserService.findByUsername in {}", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
         // We create our own authorization and use the credentials of the user.
@@ -91,7 +91,7 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
             throw new BadCredentialsException("Wrong credentials");
         }
 
-        log.info("Finished ldapTemplate.compare password in {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("Finished ldapTemplate.compare password in {}", TimeLogUtil.formatDurationFrom(start));
 
         return optionalUser.orElseGet(() -> {
             User newUser = userCreationService.createUser(ldapUserDto.getUsername(), null, null, ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(),

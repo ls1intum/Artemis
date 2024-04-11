@@ -17,7 +17,6 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -194,10 +193,27 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(exam1.getId());
         // 4 exam users, 3 new and 1 already existing
         assertThat(exam.getExamUsers()).hasSize(4);
-        exam.getExamUsers().forEach(eu -> {
-            assertThat(eu.getStudentImagePath()).isNotNull();
-            assertThat(eu.getStudentImagePath()).isNotNull();
-        });
+        for (ExamUser examUser : exam.getExamUsers()) {
+            assertThat(examUser.getStudentImagePath()).isNotNull();
+            assertThat(request.getFile(examUser.getStudentImagePath(), HttpStatus.OK)).isNotEmpty();
+        }
+
+        // reupload the same file, should not change anything
+
+        // upload exam user images
+        imageUploadResponse = request.performMvcRequest(buildUploadExamUserImages(course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
+        examUsersNotFoundDTO = mapper.readValue(imageUploadResponse.getResponse().getContentAsString(), ExamUsersNotFoundDTO.class);
+
+        assertThat(examUsersNotFoundDTO.numberOfUsersNotFound()).isZero();
+
+        // check if exam users have been updated with the images
+        exam = examRepository.findByIdWithExamUsersElseThrow(exam1.getId());
+        // 4 exam users, 3 new and 1 already existing
+        assertThat(exam.getExamUsers()).hasSize(4);
+        for (ExamUser examUser : exam.getExamUsers()) {
+            assertThat(examUser.getStudentImagePath()).isNotNull();
+            assertThat(request.getFile(examUser.getStudentImagePath(), HttpStatus.OK)).isNotEmpty();
+        }
     }
 
     @Test
@@ -213,12 +229,11 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         assertThat(examUser.getSigningImagePath()).isNotNull();
     }
 
-    // TODO: enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8289)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testVerifyExamUserAttendance() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true);
+        long examId = studentExams.get(0).getExam().getId();
 
         final HttpHeaders headers = new HttpHeaders();
         headers.set("User-Agent", "foo");
@@ -253,9 +268,36 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
                 HttpStatus.OK, ExamUserAttendanceCheckDTO.class);
         // one student (student1) signed, the other 3 did not
         assertThat(examUsersWhoDidNotSign).hasSize(3);
+        List<Long> unsignedExamUserIds = new ArrayList<>();
         for (var examUserAttendanceCheckDTO : examUsersWhoDidNotSign) {
+            unsignedExamUserIds.add(examUserAttendanceCheckDTO.id());
             assertThat(examUserAttendanceCheckDTO.started()).isTrue();
             assertThat(examUserAttendanceCheckDTO.login()).isNotEqualTo(TEST_PREFIX + "student1");
+            assertThat(examUserAttendanceCheckDTO.signingImagePath()).isNull();
+        }
+
+        verifySignedExamUsersHaveSignature(examId, unsignedExamUserIds);
+
+        // update exam user attendance to override signature
+        ExamUserDTO examUserUpdateDTO = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "", "", "", "", "", true, true, true, true, "");
+        var examUserUpdateResponse = request.performMvcRequest(buildUpdateExamUser(examUserUpdateDTO, true, course2.getId(), exam2.getId())).andExpect(status().isOk()).andReturn();
+        ExamUser updatedExamUser = mapper.readValue(examUserUpdateResponse.getResponse().getContentAsString(), ExamUser.class);
+        assertThat(updatedExamUser.getDidCheckRegistrationNumber()).isTrue();
+        assertThat(updatedExamUser.getDidCheckImage()).isTrue();
+        assertThat(updatedExamUser.getDidCheckName()).isTrue();
+        assertThat(updatedExamUser.getDidCheckLogin()).isTrue();
+
+        verifySignedExamUsersHaveSignature(examId, unsignedExamUserIds);
+    }
+
+    private void verifySignedExamUsersHaveSignature(long examId, List<Long> unsignedExamUserIds) throws Exception {
+        Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
+        assertThat(exam.getExamUsers()).hasSize(4);
+        List<ExamUser> signedUsers = exam.getExamUsers().stream().filter(eu -> !unsignedExamUserIds.contains(eu.getId())).toList();
+        assertThat(signedUsers).hasSize(1);
+        for (var user : signedUsers) {
+            assertThat(user.getSigningImagePath()).isNotNull();
+            assertThat(request.getFile(user.getSigningImagePath(), HttpStatus.OK)).isNotEmpty();
         }
     }
 
