@@ -16,7 +16,6 @@ export type ProgrammingLanguageFeature = {
     projectTypes: ProjectType[];
     testwiseCoverageAnalysisSupported: boolean;
     auxiliaryRepositoriesSupported: boolean;
-    publishBuildPlanUrlAllowed: boolean;
 };
 
 @Injectable({ providedIn: 'root' })

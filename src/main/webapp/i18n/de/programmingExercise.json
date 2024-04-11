@@ -103,7 +103,6 @@
             "buildConfiguration": "Build Konfiguration",
             "buildPlanEditor": "Build-Plan-Editor",
             "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
-            "publishBuildPlanUrl": "Build-Plan veröffentlichen",
             "customizeBuildPlan": "Build-Plan anpassen",
             "customizeBuildPlanWithAeolus": "Build-Plan mit Aeolus anpassen",
             "revertToTemplateBuildPlan": "Falls Sie mit Ihrem Build-Plan nicht zufrieden sind, können Sie ihn mit dem Zurücksetzen Knopf auf seine Vorlage zurücksetzen.",

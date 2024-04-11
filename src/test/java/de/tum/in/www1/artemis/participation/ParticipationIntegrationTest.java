@@ -765,25 +765,24 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsGitla
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getDifficulty()).isNull();
             assertThat(exercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-            if (exercise instanceof ProgrammingExercise aProgrammingExercise) {
-                assertThat(aProgrammingExercise.getSolutionParticipation()).isNull();
-                assertThat(aProgrammingExercise.getTemplateParticipation()).isNull();
-                assertThat(aProgrammingExercise.getTestRepositoryUri()).isNull();
-                assertThat(aProgrammingExercise.getShortName()).isNull();
-                assertThat(aProgrammingExercise.isPublishBuildPlanUrl()).isNull();
-                assertThat(aProgrammingExercise.getProgrammingLanguage()).isNull();
-                assertThat(aProgrammingExercise.getPackageName()).isNull();
-                assertThat(aProgrammingExercise.isAllowOnlineEditor()).isNull();
-            }
-            else if (exercise instanceof QuizExercise quizExercise) {
-                assertThat(quizExercise.getQuizQuestions()).isEmpty();
-            }
-            else if (exercise instanceof TextExercise aTextExercise) {
-                assertThat(aTextExercise.getExampleSolution()).isNull();
-            }
-            else if (exercise instanceof ModelingExercise aModelingExercise) {
-                assertThat(aModelingExercise.getExampleSolutionModel()).isNull();
-                assertThat(aModelingExercise.getExampleSolutionExplanation()).isNull();
+            switch (exercise) {
+                case ProgrammingExercise aProgrammingExercise -> {
+                    assertThat(aProgrammingExercise.getSolutionParticipation()).isNull();
+                    assertThat(aProgrammingExercise.getTemplateParticipation()).isNull();
+                    assertThat(aProgrammingExercise.getTestRepositoryUri()).isNull();
+                    assertThat(aProgrammingExercise.getShortName()).isNull();
+                    assertThat(aProgrammingExercise.getProgrammingLanguage()).isNull();
+                    assertThat(aProgrammingExercise.getPackageName()).isNull();
+                    assertThat(aProgrammingExercise.isAllowOnlineEditor()).isNull();
+                }
+                case QuizExercise quizExercise -> assertThat(quizExercise.getQuizQuestions()).isEmpty();
+                case TextExercise aTextExercise -> assertThat(aTextExercise.getExampleSolution()).isNull();
+                case ModelingExercise aModelingExercise -> {
+                    assertThat(aModelingExercise.getExampleSolutionModel()).isNull();
+                    assertThat(aModelingExercise.getExampleSolutionExplanation()).isNull();
+                }
+                default -> {
+                }
             }
         });
     }
