@@ -144,6 +144,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     onExamModeChange() {
         if (this.exam.testExam) {
             // Preserve the rounded value
+            this.exam.examWithAttendanceCheck = false;
             this.roundWorkingTime();
         } else {
             // Otherwise, the working time should depend on the dates as usual
@@ -444,12 +445,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.visibleDate || null) ||
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)
         );
-    }
-
-    onExamModeChange() {
-        if (this.exam.testExam) {
-            this.exam.examWithAttendanceCheck = false;
-        }
     }
 }
 
