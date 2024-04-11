@@ -170,19 +170,24 @@ public class StandardizedCompetencyService {
         for (var knowledgeAreaDTO : topLevelKnowledgeAreas) {
             importSelfAndDescendants(knowledgeAreaDTO, null, sourceMap);
         }
-        // TODO: come up with some kind of return value and add it!
     }
 
     public void verifySelfAndDescendants(KnowledgeAreaDTO knowledgeArea, List<Long> sourceIds) {
         KnowledgeAreaService.knowledgeAreaIsValidOrElseThrow(knowledgeArea);
-        for (var child : knowledgeArea.children()) {
+        List<KnowledgeAreaDTO> children = knowledgeArea.children() != null ? knowledgeArea.children() : Collections.emptyList();
+        List<StandardizedCompetencyDTO> competencies = knowledgeArea.competencies() != null ? knowledgeArea.competencies() : Collections.emptyList();
+
+        for (var child : children) {
             KnowledgeAreaService.knowledgeAreaIsValidOrElseThrow(child);
         }
-        for (var competency : knowledgeArea.competencies()) {
-            standardizedCompetencyIsValidOrElseThrow(competency, true);
+        for (var competency : competencies) {
+            standardizedCompetencyIsValidOrElseThrow(competency, false);
             var sourceId = competency.sourceId();
             if (sourceId != null && !sourceIds.contains(sourceId)) {
                 throw new BadRequestException("The source with id " + sourceId + " used in the competency \"" + competency.title() + "\" does not exist in your import file!");
+            }
+            if (competency.version() == null || competency.version().length() > StandardizedCompetency.MAX_VERSION_LENGTH) {
+                throw new BadRequestException("All standardized competencies must have a version and it may not be longer than 30 characters!");
             }
         }
     }
@@ -194,22 +199,27 @@ public class StandardizedCompetencyService {
         var importedKnowledgeArea = knowledgeAreaRepository.save(knowledgeAreaToImport);
 
         // import all competencies
-        var competenciesToImport = new ArrayList<StandardizedCompetency>();
-        for (var competency : knowledgeArea.competencies()) {
-            var competencyToImport = new StandardizedCompetency(competency.title(), competency.description(), competency.taxonomy(), competency.version());
-            if (competency.sourceId() != null) {
-                var source = sourceMap.get(competency.sourceId());
-                competencyToImport.setSource(source);
+        if (knowledgeArea.competencies() != null) {
+            var competenciesToImport = new ArrayList<StandardizedCompetency>();
+            for (var competency : knowledgeArea.competencies()) {
+                var competencyToImport = new StandardizedCompetency(competency.title(), competency.description(), competency.taxonomy(), competency.version());
+                competencyToImport.setKnowledgeArea(importedKnowledgeArea);
+                if (competency.sourceId() != null) {
+                    var source = sourceMap.get(competency.sourceId());
+                    competencyToImport.setSource(source);
+                }
+                competenciesToImport.add(competencyToImport);
             }
-            competenciesToImport.add(competencyToImport);
+            var importedCompetencies = standardizedCompetencyRepository.saveAll(competenciesToImport);
+            importedCompetencies.forEach(competency -> competency.setFirstVersion(competency));
+            standardizedCompetencyRepository.saveAll(importedCompetencies);
         }
-        var importedCompetencies = standardizedCompetencyRepository.saveAll(competenciesToImport);
-        importedCompetencies.forEach(competency -> competency.setFirstVersion(competency));
-        standardizedCompetencyRepository.saveAll(importedCompetencies);
 
         // import all children
-        for (var child : knowledgeArea.children()) {
-            importSelfAndDescendants(child, importedKnowledgeArea, sourceMap);
+        if (knowledgeArea.children() != null) {
+            for (var child : knowledgeArea.children()) {
+                importSelfAndDescendants(child, importedKnowledgeArea, sourceMap);
+            }
         }
     }
 
@@ -219,16 +229,16 @@ public class StandardizedCompetencyService {
      * @param competency the standardized competency to verify
      */
     private static void standardizedCompetencyIsValidOrElseThrow(StandardizedCompetencyDTO competency) throws BadRequestException {
-        standardizedCompetencyIsValidOrElseThrow(competency, false);
+        standardizedCompetencyIsValidOrElseThrow(competency, true);
     }
 
     /**
      * Verifies that a standardized competency that is valid or throws a BadRequestException
      *
-     * @param competency          the standardized competency to verify
-     * @param ignoreKnowledgeArea if the checks for the knowledgeArea should be ignored
+     * @param competency         the standardized competency to verify
+     * @param checkKnowledgeArea if the knowledgeArea should be checked
      */
-    private static void standardizedCompetencyIsValidOrElseThrow(StandardizedCompetencyDTO competency, boolean ignoreKnowledgeArea) throws BadRequestException {
+    private static void standardizedCompetencyIsValidOrElseThrow(StandardizedCompetencyDTO competency, boolean checkKnowledgeArea) throws BadRequestException {
         boolean titleIsInvalid = competency.title() == null || competency.title().trim().isEmpty() || competency.title().length() > StandardizedCompetency.MAX_TITLE_LENGTH;
         boolean descriptionIsInvalid = competency.description() != null && competency.description().length() > StandardizedCompetency.MAX_DESCRIPTION_LENGTH;
         boolean knowledgeAreaIsInvalid = competency.knowledgeAreaId() == null;
@@ -239,7 +249,7 @@ public class StandardizedCompetencyService {
         if (descriptionIsInvalid) {
             throw new BadRequestException("The description of a standardized competency cannot be longer than " + StandardizedCompetency.MAX_DESCRIPTION_LENGTH + " characters");
         }
-        if (!ignoreKnowledgeArea && knowledgeAreaIsInvalid) {
+        if (checkKnowledgeArea && knowledgeAreaIsInvalid) {
             throw new BadRequestException("A standardized competency must be part of a knowledge area");
         }
     }
