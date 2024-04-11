@@ -39,13 +39,13 @@ public class SingleUserNotificationFactory {
             case EXERCISE_SUBMISSION_ASSESSED -> {
                 title = EXERCISE_SUBMISSION_ASSESSED_TITLE;
                 notificationText = EXERCISE_SUBMISSION_ASSESSED_TEXT;
-                placeholderValues = createPlaceholders_EXERCISE_SUBMISSION_ASSESSED(exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
+                placeholderValues = createPlaceholdersExerciseSubmissionAssessed(exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
                         exercise.getExerciseType().getExerciseTypeAsReadableString(), exercise.getTitle());
             }
             case FILE_SUBMISSION_SUCCESSFUL -> {
                 title = FILE_SUBMISSION_SUCCESSFUL_TITLE;
                 notificationText = FILE_SUBMISSION_SUCCESSFUL_TEXT;
-                placeholderValues = createPlaceholders_FILE_SUBMISSION_SUCCESSFUL(exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle());
+                placeholderValues = createPlaceholdersFileSubmissionSuccessful(exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle());
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
@@ -55,12 +55,12 @@ public class SingleUserNotificationFactory {
     }
 
     @NotificationPlaceholderCreator(values = { EXERCISE_SUBMISSION_ASSESSED })
-    public static String[] createPlaceholders_EXERCISE_SUBMISSION_ASSESSED(String courseTitle, String exerciseType, String exerciseTitle) {
+    public static String[] createPlaceholdersExerciseSubmissionAssessed(String courseTitle, String exerciseType, String exerciseTitle) {
         return new String[] { courseTitle, exerciseType, exerciseTitle };
     }
 
     @NotificationPlaceholderCreator(values = { FILE_SUBMISSION_SUCCESSFUL })
-    public static String[] createPlaceholders_FILE_SUBMISSION_SUCCESSFUL(String courseTitle, String exerciseTitle) {
+    public static String[] createPlaceholdersFileSubmissionSuccessful(String courseTitle, String exerciseTitle) {
         return new String[] { courseTitle, exerciseTitle };
     }
 
@@ -325,7 +325,7 @@ public class SingleUserNotificationFactory {
         SingleUserNotification notification = switch (notificationType) {
             case CONVERSATION_CREATE_ONE_TO_ONE_CHAT -> {
                 // text is null because the notification is not shown
-                yield new SingleUserNotification(user, title, null, false, createPlaceholders_CONVERSATION_CREATE_ONE_TO_ONE_CHAT())
+                yield new SingleUserNotification(user, title, null, false, createPlaceholdersConversationCreateOneToOneChat())
                         .transientAndStringTarget(createConversationCreationTarget(conversation, conversation.getCourse().getId()));
             }
             case CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT -> {
@@ -364,7 +364,7 @@ public class SingleUserNotificationFactory {
     }
 
     @NotificationPlaceholderCreator(values = { CONVERSATION_CREATE_ONE_TO_ONE_CHAT })
-    public static String[] createPlaceholders_CONVERSATION_CREATE_ONE_TO_ONE_CHAT() {
+    public static String[] createPlaceholdersConversationCreateOneToOneChat() {
         return new String[] {};
     }
 

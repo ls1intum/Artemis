@@ -63,18 +63,18 @@ public class ConversationNotificationService {
         // add channel/groupChat/oneToOneChat string to placeholders for notification to distinguish in mobile client
         if (conversation instanceof Channel channel) {
             notificationText = NEW_MESSAGE_CHANNEL_TEXT;
-            placeholders = createPlaceholders_NEW_MESSAGE_CHANNEL_TEXT(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
+            placeholders = createPlaceholdersNewMessageChannelText(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
                     createdMessage.getAuthor().getName(), conversationName, "channel");
             notificationType = getNotificationTypeForChannel(channel);
         }
         else if (conversation instanceof GroupChat) {
             notificationText = NEW_MESSAGE_GROUP_CHAT_TEXT;
-            placeholders = createPlaceholders_NEW_MESSAGE_CHANNEL_TEXT(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
+            placeholders = createPlaceholdersNewMessageChannelText(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
                     createdMessage.getAuthor().getName(), conversationName, "groupChat");
         }
         else {
             notificationText = NEW_MESSAGE_DIRECT_TEXT;
-            placeholders = createPlaceholders_NEW_MESSAGE_CHANNEL_TEXT(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
+            placeholders = createPlaceholdersNewMessageChannelText(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
                     createdMessage.getAuthor().getName(), conversationName, "oneToOneChat");
         }
         ConversationNotification notification = createConversationMessageNotification(course.getId(), createdMessage, notificationType, notificationText, true, placeholders);
@@ -83,7 +83,7 @@ public class ConversationNotificationService {
     }
 
     @NotificationPlaceholderCreator(values = { CONVERSATION_NEW_MESSAGE })
-    public static String[] createPlaceholders_NEW_MESSAGE_CHANNEL_TEXT(String courseTitle, String messageContent, String messageCreationDate, String channelName, String authorName,
+    public static String[] createPlaceholdersNewMessageChannelText(String courseTitle, String messageContent, String messageCreationDate, String channelName, String authorName,
             String conversationType) {
         return new String[] { courseTitle, messageContent, messageCreationDate, channelName, authorName, conversationType };
     }

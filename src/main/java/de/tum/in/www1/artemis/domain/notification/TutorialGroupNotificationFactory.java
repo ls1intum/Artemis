@@ -25,14 +25,14 @@ public class TutorialGroupNotificationFactory {
 
             case TUTORIAL_GROUP_UPDATED -> text = TUTORIAL_GROUP_UPDATED_TEXT;
         }
-        var placeholderValues = createPlaceholders_TUTORIAL_GROUP_DELETED(tutorialGroup.getCourse().getTitle(), tutorialGroup.getTitle());
+        var placeholderValues = createPlaceholdersTutorialGroupDeleted(tutorialGroup.getCourse().getTitle(), tutorialGroup.getTitle());
         var notification = new TutorialGroupNotification(tutorialGroup, title, text, true, placeholderValues, notificationType);
         setNotificationTarget(notification);
         return notification;
     }
 
     @NotificationPlaceholderCreator(values = { TUTORIAL_GROUP_DELETED })
-    public static String[] createPlaceholders_TUTORIAL_GROUP_DELETED(String courseTitle, String tutorialGroupTitle) {
+    public static String[] createPlaceholdersTutorialGroupDeleted(String courseTitle, String tutorialGroupTitle) {
         return new String[] { courseTitle, tutorialGroupTitle };
     }
 
@@ -46,14 +46,14 @@ public class TutorialGroupNotificationFactory {
      */
     public static TutorialGroupNotification createTutorialGroupNotification(TutorialGroup tutorialGroup, NotificationType notificationType, String notificationText) {
         var title = findCorrespondingNotificationTitleOrThrow(notificationType);
-        var notification = new TutorialGroupNotification(tutorialGroup, title, notificationText, false,
-                createPlaceholder_TUTORIAL_GROUP_UPDATED(tutorialGroup.getCourse().getTitle()), notificationType);
+        var notification = new TutorialGroupNotification(tutorialGroup, title, notificationText, false, createPlaceholderTutorialGroupUpdated(tutorialGroup.getCourse().getTitle()),
+                notificationType);
         setNotificationTarget(notification);
         return notification;
     }
 
     @NotificationPlaceholderCreator(values = { TUTORIAL_GROUP_UPDATED })
-    public static String[] createPlaceholder_TUTORIAL_GROUP_UPDATED(String courseTitle) {
+    public static String[] createPlaceholderTutorialGroupUpdated(String courseTitle) {
         return new String[] { courseTitle };
     }
 

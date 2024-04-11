@@ -52,7 +52,7 @@ public class GroupNotificationFactory {
             String courseTitle = attachment.getExercise() != null ? attachment.getExercise().getCourseViaExerciseGroupOrCourseMember().getTitle() : lecture.getCourse().getTitle();
             String entityTitle = attachment.getExercise() != null ? attachment.getExercise().getTitle() : lecture.getTitle();
 
-            placeholderValues = createPlaceholders_ATTACHMENT_CHANGE(courseTitle, attachment.getName(), entityTitle);
+            placeholderValues = createPlaceholdersAttachmentChange(courseTitle, attachment.getName(), entityTitle);
         }
         else {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
@@ -72,7 +72,7 @@ public class GroupNotificationFactory {
     }
 
     @NotificationPlaceholderCreator(values = { ATTACHMENT_CHANGE })
-    public static String[] createPlaceholders_ATTACHMENT_CHANGE(String courseTitle, String attachmentName, String exerciseOrLectureName) {
+    public static String[] createPlaceholdersAttachmentChange(String courseTitle, String attachmentName, String exerciseOrLectureName) {
         return new String[] { courseTitle, attachmentName, exerciseOrLectureName };
     }
 
@@ -213,7 +213,7 @@ public class GroupNotificationFactory {
         GroupNotification notification;
         title = NotificationConstants.NEW_ANNOUNCEMENT_POST_TITLE;
         text = NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT;
-        placeholderValues = createPlaceholders_NEW_ANNOUNCEMENT_POST(course.getTitle(), post.getTitle(), Jsoup.parse(post.getContent()).text(), post.getCreationDate().toString(),
+        placeholderValues = createPlaceholdersNewAnnouncementPost(course.getTitle(), post.getTitle(), Jsoup.parse(post.getContent()).text(), post.getCreationDate().toString(),
                 post.getAuthor().getName());
         notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
         notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
@@ -221,7 +221,7 @@ public class GroupNotificationFactory {
     }
 
     @NotificationPlaceholderCreator(values = { NEW_ANNOUNCEMENT_POST })
-    public static String[] createPlaceholders_NEW_ANNOUNCEMENT_POST(String courseTitle, String postTitle, String postContent, String postCreationDate, String postAuthorName) {
+    public static String[] createPlaceholdersNewAnnouncementPost(String courseTitle, String postTitle, String postContent, String postCreationDate, String postAuthorName) {
         return new String[] { courseTitle, postTitle, postContent, postCreationDate, postAuthorName };
     }
 
@@ -244,23 +244,23 @@ public class GroupNotificationFactory {
             case COURSE_ARCHIVE_STARTED -> {
                 title = NotificationConstants.COURSE_ARCHIVE_STARTED_TITLE;
                 text = NotificationConstants.COURSE_ARCHIVE_STARTED_TEXT;
-                placeholderValues = createPlaceholders_COURSE_ARCHIVE_STARTED(course.getTitle());
+                placeholderValues = createPlaceholdersCourseArchiveStarted(course.getTitle());
             }
             case COURSE_ARCHIVE_FINISHED -> {
                 title = NotificationConstants.COURSE_ARCHIVE_FINISHED_TITLE;
                 if (archiveErrors.isEmpty()) {
                     text = NotificationConstants.COURSE_ARCHIVE_FINISHED_WITHOUT_ERRORS_TEXT;
-                    placeholderValues = createPlaceholders_COURSE_ARCHIVE_FINISHED_FAILED(course.getTitle(), "");
+                    placeholderValues = createPlaceholdersCourseArchiveFinishedOrFailed(course.getTitle(), "");
                 }
                 else {
                     text = NotificationConstants.COURSE_ARCHIVE_FINISHED_WITH_ERRORS_TEXT;
-                    placeholderValues = createPlaceholders_COURSE_ARCHIVE_FINISHED_FAILED(course.getTitle(), String.join(", ", archiveErrors));
+                    placeholderValues = createPlaceholdersCourseArchiveFinishedOrFailed(course.getTitle(), String.join(", ", archiveErrors));
                 }
             }
             case COURSE_ARCHIVE_FAILED -> {
                 title = NotificationConstants.COURSE_ARCHIVE_FAILED_TITLE;
                 text = NotificationConstants.COURSE_ARCHIVE_FAILED_TEXT;
-                placeholderValues = createPlaceholders_COURSE_ARCHIVE_FINISHED_FAILED(course.getTitle(), String.join(", ", archiveErrors));
+                placeholderValues = createPlaceholdersCourseArchiveFinishedOrFailed(course.getTitle(), String.join(", ", archiveErrors));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
@@ -271,12 +271,12 @@ public class GroupNotificationFactory {
     }
 
     @NotificationPlaceholderCreator(values = { COURSE_ARCHIVE_STARTED })
-    public static String[] createPlaceholders_COURSE_ARCHIVE_STARTED(String courseTitle) {
+    public static String[] createPlaceholdersCourseArchiveStarted(String courseTitle) {
         return new String[] { courseTitle };
     }
 
     @NotificationPlaceholderCreator(values = { COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FAILED })
-    public static String[] createPlaceholders_COURSE_ARCHIVE_FINISHED_FAILED(String courseTitle, String archiveErrors) {
+    public static String[] createPlaceholdersCourseArchiveFinishedOrFailed(String courseTitle, String archiveErrors) {
         return new String[] { courseTitle, archiveErrors };
     }
 
@@ -299,23 +299,23 @@ public class GroupNotificationFactory {
             case EXAM_ARCHIVE_STARTED -> {
                 title = NotificationConstants.EXAM_ARCHIVE_STARTED_TITLE;
                 text = NotificationConstants.EXAM_ARCHIVE_STARTED_TEXT;
-                placeholderValues = createPlaceholders_EXAM_ARCHIVE_STARTED(exam.getCourse().getTitle(), exam.getTitle());
+                placeholderValues = createPlaceholdersExamArchiveStarted(exam.getCourse().getTitle(), exam.getTitle());
             }
             case EXAM_ARCHIVE_FINISHED -> {
                 title = NotificationConstants.EXAM_ARCHIVE_FINISHED_TITLE;
                 if (archiveErrors.isEmpty()) {
                     text = NotificationConstants.EXAM_ARCHIVE_FINISHED_WITHOUT_ERRORS_TEXT;
-                    placeholderValues = createPlaceholders_EXAM_ARCHIVE_FINISHED_FAILED(exam.getCourse().getTitle(), exam.getTitle(), "");
+                    placeholderValues = createPlaceholdersExamArchiveFinishedOrFailed(exam.getCourse().getTitle(), exam.getTitle(), "");
                 }
                 else {
                     text = NotificationConstants.EXAM_ARCHIVE_FINISHED_WITH_ERRORS_TEXT;
-                    placeholderValues = createPlaceholders_EXAM_ARCHIVE_FINISHED_FAILED(exam.getCourse().getTitle(), exam.getTitle(), String.join(", ", archiveErrors));
+                    placeholderValues = createPlaceholdersExamArchiveFinishedOrFailed(exam.getCourse().getTitle(), exam.getTitle(), String.join(", ", archiveErrors));
                 }
             }
             case EXAM_ARCHIVE_FAILED -> {
                 title = NotificationConstants.EXAM_ARCHIVE_FAILED_TITLE;
                 text = NotificationConstants.EXAM_ARCHIVE_FAILED_TEXT;
-                placeholderValues = createPlaceholders_EXAM_ARCHIVE_FINISHED_FAILED(exam.getCourse().getTitle(), exam.getTitle(), String.join(", ", archiveErrors));
+                placeholderValues = createPlaceholdersExamArchiveFinishedOrFailed(exam.getCourse().getTitle(), exam.getTitle(), String.join(", ", archiveErrors));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
@@ -326,12 +326,12 @@ public class GroupNotificationFactory {
     }
 
     @NotificationPlaceholderCreator(values = { EXAM_ARCHIVE_STARTED })
-    public static String[] createPlaceholders_EXAM_ARCHIVE_STARTED(String courseTitle, String examTitle) {
+    public static String[] createPlaceholdersExamArchiveStarted(String courseTitle, String examTitle) {
         return new String[] { courseTitle, examTitle };
     }
 
     @NotificationPlaceholderCreator(values = { EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED })
-    public static String[] createPlaceholders_EXAM_ARCHIVE_FINISHED_FAILED(String courseTitle, String examTitle, String archiveErrors) {
+    public static String[] createPlaceholdersExamArchiveFinishedOrFailed(String courseTitle, String examTitle, String archiveErrors) {
         return new String[] { courseTitle, examTitle, archiveErrors };
     }
 }
