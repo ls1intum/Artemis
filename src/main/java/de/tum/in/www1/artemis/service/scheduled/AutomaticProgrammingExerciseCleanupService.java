@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
-// NOTE: A cleanup is not necessary for LocalCI
 @Profile("scheduling")
 public class AutomaticProgrammingExerciseCleanupService {
 
@@ -73,7 +72,7 @@ public class AutomaticProgrammingExerciseCleanupService {
         }
         try {
             if (!profileService.isLocalCiActive()) {
-                // no cleanup is needed for systems using LocalCI
+                // no build plan cleanup is needed for systems using LocalCI
                 cleanupBuildPlansOnContinuousIntegrationServer();
             }
         }
