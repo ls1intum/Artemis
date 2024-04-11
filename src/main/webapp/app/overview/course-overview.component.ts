@@ -77,6 +77,7 @@ interface SidebarItem {
     showInOrionWindow?: boolean;
     guidedTour?: boolean;
     featureToggle?: FeatureToggle;
+    hidden: boolean;
 }
 
 @Component({
@@ -108,6 +109,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isNavbarCollapsed = false;
     isSidebarCollapsed = false;
     profileSubscription?: Subscription;
+
+    dropdownOpen: boolean = false;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -194,6 +197,33 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         await this.initAfterCourseLoad();
         this.sidebarItems = this.getSidebarItems();
         this.courseActionItems = this.getCourseActionItems();
+        this.updateVisibility(window.innerHeight);
+    }
+
+    // Listen window resizement event by height
+    @HostListener('window:resize', ['$event'])
+    onResize() {
+        console.log('Window Inner height: ' + window.innerHeight);
+        this.updateVisibility(window.innerHeight);
+    }
+    // Update sidebar item's hidden property based on the window height
+    updateVisibility(height: number) {
+        const thresholds: number[] = [];
+        let threshold = 500;
+
+        for (let i = 0; i < this.sidebarItems.length; i++) {
+            thresholds.unshift(threshold);
+            threshold -= 50;
+        }
+
+        this.sidebarItems.forEach((item, index) => {
+            item.hidden = height <= thresholds[index];
+        });
+    }
+
+    // Toggle the state of the dropdown
+    toggleDropdown() {
+        this.dropdownOpen = !this.dropdownOpen;
     }
 
     getCourseActionItems(): CourseActionItem[] {
@@ -259,6 +289,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             translation: 'artemisApp.courseOverview.menu.lectures',
             hasInOrionProperty: true,
             showInOrionWindow: false,
+            hidden: false,
         };
         return lecturesItem;
     }
@@ -271,6 +302,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             translation: 'artemisApp.courseOverview.menu.exams',
             hasInOrionProperty: true,
             showInOrionWindow: false,
+            hidden: false,
         };
         return examsItem;
     }
@@ -282,6 +314,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             translation: 'artemisApp.courseOverview.menu.communication',
             hasInOrionProperty: true,
             showInOrionWindow: false,
+            hidden: false,
         };
         return communicationItem;
     }
@@ -293,6 +326,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             translation: 'artemisApp.courseOverview.menu.messages',
             hasInOrionProperty: true,
             showInOrionWindow: false,
+            hidden: false,
         };
         return messagesItem;
     }
@@ -305,6 +339,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             hasInOrionProperty: true,
             showInOrionWindow: false,
             featureToggle: FeatureToggle.TutorialGroups,
+            hidden: false,
         };
         return tutorialGroupsItem;
     }
@@ -316,6 +351,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             translation: 'artemisApp.courseOverview.menu.competencies',
             hasInOrionProperty: true,
             showInOrionWindow: false,
+            hidden: false,
         };
         return competenciesItem;
     }
@@ -328,6 +364,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             hasInOrionProperty: true,
             showInOrionWindow: false,
             featureToggle: FeatureToggle.LearningPaths,
+            hidden: false,
         };
         return learningPathItem;
     }
@@ -338,6 +375,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             icon: faListCheck,
             title: 'Exercises',
             translation: 'artemisApp.courseOverview.menu.exercises',
+            hidden: false,
         };
 
         const statisticsItem: SidebarItem = {
@@ -348,6 +386,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             hasInOrionProperty: true,
             showInOrionWindow: false,
             guidedTour: true,
+            hidden: false,
         };
 
         return [exercisesItem, statisticsItem];

@@ -29,7 +29,7 @@
                         <hr class="mt-0" />
                         <ul class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
                             @for (sidebarItem of sidebarItems; track sidebarItem) {
-                                <li class="nav-item">
+                                <li class="nav-item" [hidden]="sidebarItem.hidden">
                                     @if (sidebarItem.hasInOrionProperty && sidebarItem.showInOrionWindow !== undefined) {
                                         <a
                                             class="nav-link nav-link-sidebar px-3"
