@@ -690,7 +690,7 @@ public class ProgrammingExerciseResource {
     /**
      * Reset a programming exercise by performing a set of operations as specified in the
      * ProgrammingExerciseResetOptionsDTO for an exercise given an exerciseId.
-     *
+     * <p>
      * The available operations include:
      * 1. deleteBuildPlans: Deleting all student build plans (except BASE/SOLUTION).
      * 2. deleteRepositories: Deleting all student repositories (requires: 1. deleteBuildPlans == true).
@@ -781,7 +781,7 @@ public class ProgrammingExerciseResource {
 
     /**
      * GET programming-exercises/:exerciseId/solution-files-content
-     *
+     * <p>
      * Returns the solution repository files with content for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
@@ -804,7 +804,7 @@ public class ProgrammingExerciseResource {
 
     /**
      * GET programming-exercises/:exerciseId/template-files-content
-     *
+     * <p>
      * Returns the template repository files with content for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the template participation id is not known for the client.
@@ -827,7 +827,7 @@ public class ProgrammingExerciseResource {
 
     /**
      * GET programming-exercises/:exerciseId/solution-file-names
-     *
+     * <p>
      * Returns the solution repository file names for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
@@ -850,7 +850,7 @@ public class ProgrammingExerciseResource {
 
     /**
      * GET programming-exercises/:exerciseId/build-log-statistics
-     *
+     * <p>
      * Returns the averaged build log statistics for a given programming exercise.
      *
      * @param exerciseId the exercise for which the build log statistics should be retrieved

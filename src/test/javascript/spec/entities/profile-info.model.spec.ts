@@ -7,8 +7,6 @@ describe('Profile Info', () => {
         it.each([
             ['jenkins', true],
             ['gitlabci', true],
-            ['bamboo', false],
-            ['bitbucket', false],
             ['gitlab', false],
         ])('should have editable build plan editor for profile "%s": %s', (profile, editable) => {
             profileInfo.activeProfiles = ['artemis', 'prod', profile];

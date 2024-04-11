@@ -43,7 +43,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     loading = true;
     mainElementFocused = false;
 
-    // if the server is not connected to an external user management such as JIRA, we accept all valid username patterns
+    // if the server is not connected to an external user management, we accept all valid username patterns
     usernameRegexPattern = /^[a-z0-9_-]{3,50}$/; // default, might be overridden in ngOnInit
     errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden in ngOnInit
     accountName?: string; // additional information in the welcome message
@@ -103,17 +103,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
      */
     private initializeWithProfileInfo(profileInfo: ProfileInfo) {
         this.profileInfo = profileInfo;
-
-        if (profileInfo.activeProfiles.includes('jira')) {
-            this.externalUserManagementUrl = profileInfo.externalUserManagementURL;
-            this.externalUserManagementName = profileInfo.externalUserManagementName;
-            if (profileInfo.allowedLdapUsernamePattern) {
-                this.usernameRegexPattern = new RegExp(profileInfo.allowedLdapUsernamePattern);
-            }
-        } else {
-            // TODO: in the future we might also allow external user management for non jira profiles
-            this.externalUserManagementActive = false;
-        }
+        this.externalUserManagementActive = false;
 
         this.accountName = profileInfo.accountName;
         if (this.accountName === 'TUM') {
@@ -205,7 +195,10 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             return;
         }
 
-        const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, {
+            size: 'lg',
+            backdrop: 'static',
+        });
         modalRef.componentInstance.text = 'login.ide.confirmation';
         modalRef.componentInstance.title = 'login.ide.title';
         modalRef.result.then(
