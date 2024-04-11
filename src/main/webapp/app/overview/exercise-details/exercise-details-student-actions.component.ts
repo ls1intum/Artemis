@@ -1,7 +1,6 @@
 import { Component, ContentChild, HostBinding, Input, OnChanges, OnInit, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { HttpClient } from '@angular/common/http';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -12,7 +11,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
-import { faCodeBranch, faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch, faComment, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -62,13 +61,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     faEye = faEye;
     faPlayCircle = faPlayCircle;
     faRedo = faRedo;
-    faExternalLinkAlt = faExternalLinkAlt;
     faCodeBranch = faCodeBranch;
 
     constructor(
         private alertService: AlertService,
         private courseExerciseService: CourseExerciseService,
-        private httpClient: HttpClient,
         private router: Router,
         private translateService: TranslateService,
         private participationService: ParticipationService,
@@ -284,9 +281,5 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     get assignedTeamId(): number | undefined {
         const participations = this.exercise.studentParticipations;
         return participations?.length ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
-    }
-
-    buildPlanUrl(participation: StudentParticipation) {
-        return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
     }
 }
