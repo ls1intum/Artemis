@@ -205,14 +205,13 @@ describe('ProgrammingExerciseUtils URL utils', () => {
 
 describe('ProgrammingExerciseUtils', () => {
     it('createBuildPlanUrl fills in buildPlanId and projectKey', () => {
-        const template = '/exercise/{exerciseId}/job/{projectKey}/job/{buildPlanId}';
-        const exerciseId = 1;
+        const template = '/job/{projectKey}/job/{buildPlanId}';
         const buildPlanId = 'BPID';
         const projectKey = 'PK';
 
-        const generatedUrl = createBuildPlanUrl(template, projectKey, buildPlanId, exerciseId);
+        const generatedUrl = createBuildPlanUrl(template, projectKey, buildPlanId);
 
-        const expectedUrl = '/exercise/1/job/PK/job/BPID';
+        const expectedUrl = '/job/PK/job/BPID';
         expect(generatedUrl).toBe(expectedUrl);
     });
 

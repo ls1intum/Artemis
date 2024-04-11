@@ -8,9 +8,9 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 
-export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string, exerciseId: number): string | undefined => {
-    if (template && projectKey && buildPlanId && exerciseId) {
-        return template.replace('{buildPlanId}', buildPlanId).replace('{projectKey}', projectKey).replace('{exerciseId}', exerciseId.toString());
+export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | undefined => {
+    if (template && projectKey && buildPlanId) {
+        return template.replace('{buildPlanId}', buildPlanId).replace('{projectKey}', projectKey);
     }
 };
 
