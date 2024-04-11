@@ -3184,5 +3184,9 @@
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="jhi_user_authority" constraintName="fk_user_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="student_exam_id" baseTableName="student_exam_quiz_question" constraintName="h3Vyx1OiRTSjJQqMmDqx7BRZtvn" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="student_exam" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="quiz_question_id" baseTableName="student_exam_quiz_question" constraintName="nVl82Q7a8WevNKlJYqKcqN0LrX0" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_question" validate="true"/>
+        <loadData encoding="UTF-8"
+                  file="config/liquibase/authorities.csv"
+                  separator=";"
+                  tableName="jhi_authority"/>
     </changeSet>
 </databaseChangeLog>
