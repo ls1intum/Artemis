@@ -62,11 +62,8 @@ public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
     @Query("""
             SELECT COUNT(examUser) > 0
             FROM ExamUser examUser
-                LEFT JOIN examUser.exam exam
-                LEFT JOIN exam.studentExams studentExams ON studentExams.user.id = examUser.user.id
-            WHERE exam.id = :examId
+            WHERE examUser.exam.id = :examId
                 AND examUser.user.login = :login
-                AND studentExams.started = TRUE
                 AND examUser.signingImagePath IS NOT NULL
                 AND examUser.signingImagePath != ''
                 AND examUser.didCheckImage = TRUE
