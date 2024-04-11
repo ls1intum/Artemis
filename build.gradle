@@ -454,6 +454,7 @@ dependencies {
             strictly "1.14.13"
         }
     }
+    testImplementation "io.github.classgraph:classgraph:4.8.165"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20240303"
