@@ -40,7 +40,6 @@ In order to use Criteria Builder and benefit from Specifications, we need to adj
     .. code-block:: yaml
 
         jpa:
-            database-platform: org.hibernate.dialect.MySQLDialect
             database: MYSQL
             show-sql: true
 

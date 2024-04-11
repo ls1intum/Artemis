@@ -20,7 +20,6 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
-import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { faCodeBranch, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
@@ -180,7 +179,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             const programmingExercise = this.exercise as ProgrammingExercise;
             if (programmingExercise.projectKey) {
                 this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                    setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, programmingExercise.projectKey);
                     this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                 });
             }

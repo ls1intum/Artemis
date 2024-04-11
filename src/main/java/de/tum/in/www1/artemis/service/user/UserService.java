@@ -392,7 +392,7 @@ public class UserService {
 
     /**
      * Searches the (optional) LDAP service for a user with the given unique user identifier (e.g. login, email, registration number) and supplier function
-     * and returns a new Artemis user. Also creates the user in the external user management (e.g. JIRA), in case this is activated
+     * and returns a new Artemis user. Also creates the user in the external user management, in case this is activated
      * Note: this method should only be used if the user does not yet exist in the database
      *
      * @param userIdentifier       the userIdentifier of the user (e.g. login, email, registration number)
@@ -419,7 +419,7 @@ public class UserService {
                     }
                 }
 
-                // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
+                // Use empty password, so that we don't store the credentials of external users in the Artemis DB
                 User user = userCreationService.createUser(ldapUser.getUsername(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
                         ldapUser.getRegistrationNumber(), null, "en", false);
                 if (useExternalUserManagement) {
@@ -453,9 +453,9 @@ public class UserService {
         optionalCIUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(oldUserLogin, user, newPassword, addedGroups, removedGroups));
 
-        removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. Jira
+        removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group));
         try {
-            addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group)); // e.g. JIRA
+            addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group));
         }
         catch (ArtemisAuthenticationException e) {
             // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
@@ -659,7 +659,7 @@ public class UserService {
     public void addUserToGroup(User user, String group) {
         addUserToGroupInternal(user, group); // internal Artemis database
         try {
-            artemisAuthenticationProvider.addUserToGroup(user, group);  // e.g. JIRA
+            artemisAuthenticationProvider.addUserToGroup(user, group);
         }
         catch (ArtemisAuthenticationException e) {
             // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
@@ -692,7 +692,7 @@ public class UserService {
      */
     public void removeUserFromGroup(User user, String group) {
         removeUserFromGroupInternal(user, group); // internal Artemis database
-        artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
+        artemisAuthenticationProvider.removeUserFromGroup(user, group);
         // e.g. Gitlab
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of()));
         // e.g. Jenkins
