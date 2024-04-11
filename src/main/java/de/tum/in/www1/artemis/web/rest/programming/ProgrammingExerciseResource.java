@@ -63,7 +63,9 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -103,6 +105,7 @@ import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSear
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
@@ -512,10 +515,31 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId,
             @RequestParam(defaultValue = "false") boolean withSubmissionResults, @RequestParam(defaultValue = "false") boolean withGradingCriteria) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationSubmissionsAndAuxiliaryRepositoriesElseThrow(exerciseId,
-                withSubmissionResults, withGradingCriteria);
+
+        // TODO: Merge this with getProgrammingExerciseWithSetupParticipations? This is almost doing the same thing.
+
+        // 1. Load programming exercise with template and solution participation
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesTeamAssignmentConfigAndGradingCriteriaElseThrow(exerciseId,
+                withGradingCriteria);
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+
+        // 2. Load solution
+        Optional<SolutionProgrammingExerciseParticipation> solutionParticipation;
+        Optional<TemplateProgrammingExerciseParticipation> templateParticipation;
+        if (withSubmissionResults) {
+            solutionParticipation = solutionProgrammingExerciseParticipationRepository
+                    .findWithEagerSubmissionsAndSubmissionResultsByProgrammingExerciseId(programmingExercise.getId());
+            templateParticipation = templateProgrammingExerciseParticipationRepository
+                    .findWithEagerSubmissionsAndSubmissionResultsByProgrammingExerciseId(programmingExercise.getId());
+        }
+        else {
+            solutionParticipation = solutionProgrammingExerciseParticipationRepository.findWithEagerSubmissionsByProgrammingExerciseId(programmingExercise.getId());
+            templateParticipation = templateProgrammingExerciseParticipationRepository.findWithEagerSubmissionsByProgrammingExerciseId(programmingExercise.getId());
+        }
+
+        programmingExercise.setSolutionParticipation(solutionParticipation.orElseThrow(() -> new InternalServerErrorException("Solution Participation could not be loaded")));
+        programmingExercise.setTemplateParticipation(templateParticipation.orElseThrow(() -> new InternalServerErrorException("Template Participation could not be loaded")));
 
         programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
 
