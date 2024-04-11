@@ -1071,7 +1071,7 @@ public class CourseService {
      */
     public void checkIfEditorGroupsNeedsToBeCreated(Course course) {
         // Courses that have been created before Artemis version 4.11.9 do not have an editor group.
-        // The editor group would be need to be set manually by instructors for the course and manually added to Jira.
+        // The editor group would be need to be set manually by instructors for the course and manually added to external user management.
         // To increase the usability the group is automatically generated when a user is added.
         if (!StringUtils.hasText(course.getEditorGroupName())) {
             try {
