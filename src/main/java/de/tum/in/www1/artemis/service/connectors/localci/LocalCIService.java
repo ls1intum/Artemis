@@ -203,6 +203,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
+        // TODO: we should check that the build script in the programming exercises exists, otherwise builds will fail
         // For local CI, no build plans exist. This method is always used in a context where build plans should exist and an error is thrown if they don't.
         // It is safe here to always return true.
         return true;
