@@ -222,7 +222,7 @@ dependencies {
     implementation "de.jplag:jplag:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
     implementation "de.jplag:kotlin:${jplag_version}"
-    implementation "de.jplag:cpp:${jplag_version}"
+    implementation "de.jplag:c:${jplag_version}"
     implementation "de.jplag:swift:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
     implementation "de.jplag:python-3:${jplag_version}"
@@ -454,6 +454,7 @@ dependencies {
             strictly "1.14.13"
         }
     }
+    testImplementation "io.github.classgraph:classgraph:4.8.165"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20240303"
