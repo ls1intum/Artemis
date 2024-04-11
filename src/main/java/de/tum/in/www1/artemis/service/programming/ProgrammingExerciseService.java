@@ -234,7 +234,6 @@ public class ProgrammingExerciseService {
      * <li>All repositories (test, exercise, solution)</li>
      * <li>The template and solution participation</li>
      * <li>VCS webhooks</li>
-     * <li>Bamboo build plans</li>
      * </ul>
      * The exercise gets set up in the following order:
      * <ol>
@@ -294,10 +293,9 @@ public class ProgrammingExerciseService {
         // Step 7: Make sure that plagiarism detection config does not use existing id
         Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
-        // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins or Bamboo as
+        // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins as
         // we want to use the default approach of Jenkinsfiles and Build Plans if no customizations are made
-        if (aeolusTemplateService.isPresent() && savedProgrammingExercise.getBuildPlanConfiguration() == null
-                && !(profileService.isJenkinsActive() || profileService.isBambooActive())) {
+        if (aeolusTemplateService.isPresent() && savedProgrammingExercise.getBuildPlanConfiguration() == null && !profileService.isJenkinsActive()) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(savedProgrammingExercise);
             if (windfile != null) {
                 savedProgrammingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
@@ -363,10 +361,6 @@ public class ProgrammingExerciseService {
         // Check if checkout solution repository is enabled
         if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
             throw new BadRequestAlertException("Checkout solution repository is not supported for this programming language", "Exercise", "checkoutSolutionRepositoryNotSupported");
-        }
-        // Check if publish build plan URL is enabled
-        if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && !programmingLanguageFeature.publishBuildPlanUrlAllowed()) {
-            throw new BadRequestAlertException("Publishing the build plan URL is not supported for this language", "Exercise", "publishBuildPlanUrlNotSupported");
         }
 
         // Check if testwise coverage analysis is enabled

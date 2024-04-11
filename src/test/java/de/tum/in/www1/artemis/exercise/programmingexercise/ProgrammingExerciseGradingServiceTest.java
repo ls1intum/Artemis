@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import jakarta.mail.internet.MimeMessage;
 
 import org.assertj.core.data.Offset;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -31,7 +30,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -75,7 +74,7 @@ import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseGradingRes
  * <li>{@link ExamProgrammingExerciseGradingServiceTest} - for exercises in an exam setting.</li>
  * </ul>
  */
-abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "progexgradingservice";
 
@@ -156,7 +155,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         }
         result = new Result();
         result.setParticipation(participation);
-        bambooRequestMockProvider.enableMockingOfRequests();
     }
 
     /**
@@ -238,11 +236,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             super.examRepository.save(exam);
             return programmingExercise;
         }
-    }
-
-    @AfterEach
-    void tearDown() {
-        bambooRequestMockProvider.reset();
     }
 
     private Map<String, ProgrammingExerciseTestCase> getTestCases(ProgrammingExercise programmingExercise) {

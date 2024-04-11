@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.*;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE;
+import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.io.IOException;
@@ -554,20 +555,8 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
-        programmingExerciseIntegrationTestService.createProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
-        programmingExerciseIntegrationTestService.createProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest();
     }
 
     @Test
@@ -692,20 +681,8 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
-        programmingExerciseIntegrationTestService.importProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
-        programmingExerciseIntegrationTestService.importProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest();
     }
 
     @Test
