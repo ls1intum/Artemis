@@ -53,7 +53,8 @@ class MigrationPath {
         this.upgradeVersion = new Semver(requiredVersion).nextMajor();
         this.requiredVersion = new Semver(requiredVersion);
         this.nextUpgradeVersion = upgradeVersion.nextMajor();
-        this.errorMessage = "Cannot start Artemis. Please start the release " + requiredVersion + " first, otherwise the migration will fail";
+        this.errorMessage = "Cannot start Artemis because the migration path was not followed. Please deploy and start the release " + requiredVersion
+                + " first, otherwise the migration will fail";
     }
 }
 
@@ -126,7 +127,7 @@ public class DatabaseMigration {
             if (currentVersion.isGreaterThanOrEqualTo(path.upgradeVersion) && currentVersion.isLowerThan(path.nextUpgradeVersion)) {
                 if (previousVersion.isLowerThan(path.requiredVersion)) {
                     log.error(path.errorMessage);
-                    throw new RuntimeException(path.errorMessage);
+                    System.exit(15);
                 }
                 else if (previousVersion.isEqualTo(path.requiredVersion)) {
                     updateInitialChecksum(path.upgradeVersion.toString());
@@ -172,15 +173,17 @@ public class DatabaseMigration {
             }
             // if no version exists, we fail here
             log.error(error);
-            throw new RuntimeException(error);
+            System.exit(12);
         }
         catch (SQLException e) {
             if (e.getMessage().contains("databasechangelog") && (e.getMessage().contains("does not exist") || (e.getMessage().contains("doesn't exist")))) {
                 return null;
             }
             log.error(error);
-            throw new RuntimeException(error, e);
+            System.exit(13);
         }
+        // this path cannot happen
+        return null;
     }
 
     /**
@@ -229,8 +232,8 @@ public class DatabaseMigration {
             log.info("Set checksum of initial schema to null so that liquibase will recalculate it");
         }
         catch (SQLException e) {
-            log.error("Cannot update checksum for initial schema migration", e);
-            throw new RuntimeException(e);
+            log.error("Cannot update checksum for initial schema migration: {}", e.getMessage());
+            System.exit(11);
         }
     }
 
@@ -252,7 +255,14 @@ public class DatabaseMigration {
      * @throws SQLException If creating the Statement object fails due to database access errors.
      */
     private Statement createStatement() throws SQLException {
-        var connection = dataSource.getConnection();
-        return connection.createStatement();
+        try {
+            var connection = dataSource.getConnection();
+            return connection.createStatement();
+        }
+        catch (Exception e) {
+            log.error("Cannot connect to the database {} (This typically indicates that the database is not running or there are permission issues", e.getMessage());
+            System.exit(10);
+        }
+        return null;
     }
 }
