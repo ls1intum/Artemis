@@ -32,8 +32,9 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
@@ -125,8 +126,9 @@ class Lti13LaunchFilterTest {
         idTokenClaims.put("iss", "https://some.lms.org");
         idTokenClaims.put("sub", "23423435");
         idTokenClaims.put(Claims.LTI_DEPLOYMENT_ID, "some-deployment-id");
-        JsonObject resourceLinkClaim = new JsonObject();
-        resourceLinkClaim.addProperty("id", "some-resource-id");
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode resourceLinkClaim = mapper.createObjectNode();
+        resourceLinkClaim.put("id", "some-resource-id");
         idTokenClaims.put(Claims.RESOURCE_LINK, resourceLinkClaim);
         idTokenClaims.put(Claims.TARGET_LINK_URI, targetLinkUri);
     }
@@ -147,10 +149,10 @@ class Lti13LaunchFilterTest {
     @Test
     void authenticatedLogin() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
-        JsonObject responseJsonBody = getMockJsonObject(false);
+        JsonNode responseJsonBody = getMockJsonObject(false);
         verify(lti13Service).performLaunch(any(), any());
         verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
-        assertThat((responseJsonBody.get("targetLinkUri").getAsString())).as("Response body contains the expected targetLinkUri").contains(this.targetLinkUri);
+        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains(this.targetLinkUri);
         verify(lti13Service).buildLtiResponse(any(), any());
     }
 
@@ -158,7 +160,7 @@ class Lti13LaunchFilterTest {
     void authenticatedLoginForDeepLinking() throws Exception {
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
         doReturn(true).when(authentication).isAuthenticated();
-        JsonObject responseJsonBody = getMockJsonObject(true);
+        JsonNode responseJsonBody = getMockJsonObject(true);
         verify(lti13Service).startDeepLinking(any(), any());
         verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
         assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains("/lti/select-course");
@@ -215,12 +217,12 @@ class Lti13LaunchFilterTest {
         doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
 
-        JsonObject responseJsonBody = getMockJsonObject(false);
+        JsonNode responseJsonBody = getMockJsonObject(false);
 
         verify(httpResponse).setStatus(HttpStatus.UNAUTHORIZED.value());
         assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri")
                 .contains("https://any-artemis-domain.org/course/123/exercise/1234");
-        assertThat(responseJsonBody.get("ltiIdToken")).isNull();
+        assertThat(responseJsonBody.get("ltiIdToken").isNull()).isTrue();
         assertThat((responseJsonBody.get("clientRegistrationId").toString())).as("Response body contains the expected clientRegistrationId").contains("some-registration");
     }
 
@@ -233,16 +235,16 @@ class Lti13LaunchFilterTest {
         doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
         initValidTokenForDeepLinking();
 
-        JsonObject responseJsonBody = getMockJsonObject(true);
+        JsonNode responseJsonBody = getMockJsonObject(true);
 
         verify(httpResponse).setStatus(HttpStatus.UNAUTHORIZED.value());
         assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains("/lti/select-course");
-        assertThat(responseJsonBody.get("ltiIdToken")).isNull();
+        assertThat(responseJsonBody.get("ltiIdToken").isNull()).isTrue();
         assertThat((responseJsonBody.get("clientRegistrationId").toString())).as("Response body contains the expected clientRegistrationId").contains("some-registration");
 
     }
 
-    private JsonObject getMockJsonObject(boolean isDeepLinkingRequest) throws IOException, ServletException {
+    private JsonNode getMockJsonObject(boolean isDeepLinkingRequest) throws IOException, ServletException {
         doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
         doReturn(responseWriter).when(httpResponse).getWriter();
@@ -262,6 +264,6 @@ class Lti13LaunchFilterTest {
 
         String jsonResponseString = argument.getValue();
 
-        return JsonParser.parseString(jsonResponseString).getAsJsonObject();
+        return new ObjectMapper().readTree(jsonResponseString);
     }
 }
