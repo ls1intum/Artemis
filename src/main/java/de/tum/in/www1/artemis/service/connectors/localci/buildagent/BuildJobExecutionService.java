@@ -412,7 +412,7 @@ public class BuildJobExecutionService {
             String error = xmlStreamReader.getAttributeValue(null, "message");
 
             if (error == null && xmlStreamReader.hasNext()) {
-                error = readTestMessageFromLegacyReport(xmlStreamReader);
+                error = readTestMessageFromJUnitReport(xmlStreamReader);
             }
 
             // Add the failed test to the list of failed tests.
@@ -425,9 +425,8 @@ public class BuildJobExecutionService {
         }
     }
 
-    private String readTestMessageFromLegacyReport(XMLStreamReader xmlStreamReader) throws XMLStreamException {
-        // JUnit legacy report format:
-        // The old report format does not use the message attribute, but instead has the error message as a child element
+    private String readTestMessageFromJUnitReport(XMLStreamReader xmlStreamReader) throws XMLStreamException {
+        // Read the error message from the child element if there is no message attribute,
         xmlStreamReader.next();
         if (xmlStreamReader.isCharacters()) {
             StringBuilder stringBuilder = new StringBuilder(xmlStreamReader.getText());

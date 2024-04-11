@@ -277,7 +277,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         if (language == ProgrammingLanguage.HASKELL || language == ProgrammingLanguage.OCAML) {
-            // Instructors typically test against the example solution for Haskell and OCAML exercises, activate this option per default.
+            // Instructors typically test against the example solution for Haskell and OCAML exercises.
+            // If supported, activate this option per default.
             this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed;
         }
         if (!this.checkoutSolutionRepositoryAllowed) {
