@@ -24,14 +24,15 @@
                 },
                 "import": {
                     "title": "Standardisierte Kompetenzen Importieren",
+                    "count": "{{competencies}} standardisierte Kompetenzen und {{knowledgeAreas}} Wissensgebiete aus der Datei gelesen",
                     "error": {
                         "fileCount": "Bitte lade nur eine Datei hoch",
                         "fileExtension": "Falscher Dateityp. Bitte lade eine .json Datei hoch",
                         "fileTooBig": "Die Datei ist zu groß. Bitte lade eine Datei mit maximal 20 MB hoch",
-                        "fileStructure": "Die Datei hat eine inkorrekte Struktur",
-                        "noCompetencies": "Es sind keine standardisierten Kompetenzen zum Import vorhanden"
+                        "fileFormat": "Die Datei ist nicht im gültigen .json-Format",
+                        "fileStructure": "Die Datei hat eine inkorrekte Struktur"
                     },
-                    "success": "Erfolgreich {{numCompetencies}} standardisierte Kompetenzen aus {{numKnowledgeAreas}} Wissensgebieten importiert"
+                    "success": "Erfolgreich alle standardisierte Kompetenzen und Wissensgebiete importiert"
                 }
             },
             "model": {

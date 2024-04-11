@@ -24,14 +24,15 @@
                 },
                 "import": {
                     "title": "Import Standardized Competencies",
+                    "count": "Read {{competencies}} competencies and {{knowledgeAreas}} knowledgeAreas from the file",
                     "error": {
                         "fileCount": "Please only upload one file",
-                        "fileExtension": "Unsupported file extension. Please upload a .json file",
                         "fileTooBig": "The file is too big. The maximum file size is 20 MB",
-                        "fileStructure": "The file structure is incorrect",
-                        "noCompetencies": "There are no standardized competencies to import"
+                        "fileExtension": "Unsupported file extension. Please upload a .json file",
+                        "fileFormat": "The file is not in valid .json format",
+                        "fileStructure": "The file structure is incorrect"
                     },
-                    "success": "Successfully imported {{numCompetencies}} standardized competencies from {{numKnowledgeAreas}} knowledge areas"
+                    "success": "Successfully imported all knowledge areas and standardized competencies"
                 }
             },
             "model": {
