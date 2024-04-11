@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.dto.AeolusGenerationResp
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
 /**
- * Service for publishing custom build plans using Aeolus, currently supports Bamboo
+ * Service for publishing custom build plans using Aeolus
  */
 @Service
 @Profile("aeolus")

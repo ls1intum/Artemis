@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,26 +41,27 @@ public class PublicLtiResource {
      *
      * @param request  HTTP request
      * @param response HTTP response
+     * @return the ResponseEntity with status 200 (OK)
      * @throws IOException If an input or output exception occurs
      */
     @PostMapping("lti13/auth-callback")
     @EnforceNothing
-    public void lti13LaunchRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public ResponseEntity<Void> lti13LaunchRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String state = request.getParameter("state");
         if (state == null) {
             errorOnMissingParameter(response, "state");
-            return;
+            return ResponseEntity.ok().build();
         }
 
         String idToken = request.getParameter("id_token");
         if (idToken == null) {
             errorOnMissingParameter(response, "id_token");
-            return;
+            return ResponseEntity.ok().build();
         }
 
         if (!isValidJwtIgnoreSignature(idToken)) {
             errorOnIllegalParameter(response);
-            return;
+            return ResponseEntity.ok().build();
         }
 
         UriComponentsBuilder uriBuilder = buildRedirect(request);
@@ -69,6 +71,7 @@ public class PublicLtiResource {
         String redirectUrl = uriBuilder.build().toString();
         log.info("redirect to url: {}", redirectUrl);
         response.sendRedirect(redirectUrl); // Redirect using user-provided values is safe because user-provided values are used in the query parameters, not the url itself
+        return ResponseEntity.ok().build();
     }
 
     /**
