@@ -3,11 +3,15 @@ package de.tum.in.www1.artemis.service.connectors.gitlabci;
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
 
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import org.gitlab4j.api.Constants;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.GroupApi;
@@ -45,6 +49,8 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private static final String GITLAB_CI_FILE_EXTENSION = ".yml";
+
+    private static final String GITLAB_TEST_TOKEN_NAME = "Artemis Test Token";
 
     private static final Logger log = LoggerFactory.getLogger(GitLabCIService.class);
 
@@ -148,6 +154,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private void setupGitLabCIConfigurationForGroup(ProgrammingExercise exercise, boolean overwrite) {
         final String projectKey = exercise.getProjectKey();
+
         updateGroupVariable(projectKey, VARIABLE_BUILD_DOCKER_IMAGE_NAME,
                 programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())), overwrite);
         updateGroupVariable(projectKey, VARIABLE_BUILD_LOGS_FILE_NAME, "build.log", overwrite);
@@ -159,30 +166,61 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         updateGroupVariable(projectKey, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch(), overwrite);
         updateGroupVariable(projectKey, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch(), overwrite);
         updateGroupVariable(projectKey, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, uriService.getRepositorySlugFromRepositoryUriString(exercise.getTestRepositoryUri()), overwrite);
-        // TODO: Use a token that is only valid for the test repository for each programming exercise
-        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_TOKEN, gitlabToken, overwrite);
+        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_TOKEN, () -> generateGitLabTestToken(exercise), overwrite);
         updateGroupVariable(projectKey, VARIABLE_TEST_GIT_USER, gitlabUser, overwrite);
         updateGroupVariable(projectKey, VARIABLE_TEST_RESULTS_DIR_NAME, "target/surefire-reports", overwrite);
     }
 
     private void updateGroupVariable(String projectKey, String key, String value, boolean overwrite) {
+        updateGroupVariable(projectKey, key, () -> value, overwrite);
+    }
+
+    private void updateGroupVariable(String projectKey, String key, Supplier<String> value, boolean overwrite) {
         final GroupApi groupApi = gitlab.getGroupApi();
         if (groupApi.getOptionalVariable(projectKey, key).isEmpty()) {
             try {
-                groupApi.createVariable(projectKey, key, value, false, canBeMasked(value));
+                String valueString = value.get();
+                groupApi.createVariable(projectKey, key, valueString, false, canBeMasked(valueString));
             }
             catch (GitLabApiException e) {
                 log.error("Error creating variable '{}' for group {}", key, projectKey, e);
+                throw new GitLabCIException("Error creating variable '" + key + "' for group " + projectKey, e);
             }
         }
         else if (overwrite) {
             try {
-                groupApi.updateVariable(projectKey, key, value, false, canBeMasked(value));
+                String valueString = value.get();
+                groupApi.updateVariable(projectKey, key, valueString, false, canBeMasked(valueString));
             }
             catch (GitLabApiException e) {
                 log.error("Error updating variable '{}' for group {}", key, projectKey, e);
+                throw new GitLabCIException("Error creating variable '" + key + "' for group " + projectKey, e);
             }
         }
+    }
+
+    private String generateGitLabTestToken(ProgrammingExercise programmingExercise) {
+        String testRepositoryPath = uriService.getRepositoryPathFromRepositoryUri(programmingExercise.getVcsTestRepositoryUri());
+        ZonedDateTime courseEndDate = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getEndDate();
+
+        Date expiryDate;
+        if (courseEndDate.isAfter(ZonedDateTime.now())) {
+            expiryDate = Date.from(courseEndDate.toInstant());
+        }
+        else {
+            expiryDate = Date.from(ZonedDateTime.now().plusMonths(6).toInstant());
+        }
+
+        ProjectAccessToken projectAccessToken;
+        try {
+            projectAccessToken = gitlab.getProjectApi().createProjectAccessToken(testRepositoryPath, GITLAB_TEST_TOKEN_NAME,
+                    List.of(Constants.ProjectAccessTokenScope.READ_REPOSITORY), expiryDate, Long.valueOf(AccessLevel.REPORTER.value));
+        }
+        catch (GitLabApiException e) {
+            log.error("Error creating project access token for test repository {}", testRepositoryPath, e);
+            throw new GitLabCIException("Error creating project access token for test repository " + testRepositoryPath, e);
+        }
+        return projectAccessToken.getToken();
     }
 
     private void setRepositoryVariable(String repositoryPath, String key, String value) {
@@ -193,6 +231,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             }
             catch (GitLabApiException e) {
                 log.error("Error creating variable '{}' for repository {}", key, repositoryPath, e);
+                throw new GitLabCIException("Error creating variable '" + key + "' for repository " + repositoryPath, e);
             }
         }
     }
