@@ -80,16 +80,23 @@ test.describe('Quiz Exercise Management', () => {
             await login(admin, '/');
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
-            page.on('download', async (download) => {
-                const fileName = download.suggestedFilename();
-                expect(fileName).toBe(`${quizExercise.title}.json`);
-                const filePath = await download.path();
-                const fileContent = await fs.readFile(filePath, 'utf8');
-                const exportedExercise = JSON.parse(fileContent);
-                const exercise = [multipleChoiceTemplate];
-                expect(exportedExercise).toMatchObject(exercise);
+            const downloadPromise = new Promise<void>((resolve, reject) => {
+                page.on('download', async (download) => {
+                    const fileName = download.suggestedFilename();
+                    expect(fileName).toBe(`${quizExercise.title}.json`);
+                    const filePath = await download.path();
+                    const fileContent = await fs.readFile(filePath, 'utf8');
+                    const exportedExercise = JSON.parse(fileContent);
+                    const exercise = [multipleChoiceTemplate];
+                    expect(exportedExercise).toMatchObject(exercise);
+                    resolve();
+                });
+
+                setTimeout(() => reject('Quiz questions export did not happen within the expected time frame'), 10000);
             });
+
             await courseManagementExercises.exportQuizExercise(quizExercise.id!);
+            await expect(downloadPromise).resolves.toBeUndefined();
         });
     });
 
