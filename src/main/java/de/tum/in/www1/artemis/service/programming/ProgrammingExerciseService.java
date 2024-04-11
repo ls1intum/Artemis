@@ -561,7 +561,8 @@ public class ProgrammingExerciseService {
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
-        if (programmingExerciseBeforeUpdate.isExamExercise()) {
+        if (programmingExerciseBeforeUpdate.isExamExercise()
+                && !Objects.equals(programmingExerciseBeforeUpdate.getProblemStatement(), updatedProgrammingExercise.getProblemStatement())) {
             this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedProgrammingExercise, notificationText);
         }
         else {

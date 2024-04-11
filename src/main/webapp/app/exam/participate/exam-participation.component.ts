@@ -594,6 +594,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .observeNewEventsAsSystem([ExamLiveEventType.PROBLEM_STATEMENT_UPDATE])
             .subscribe((event: ProblemStatementUpdateEvent) => {
                 this.examExerciseUpdateService.updateLiveExamExercise(event.exerciseId, event.problemStatement);
+                this.liveEventsService.acknowledgeEvent(event, false);
             });
     }
 
