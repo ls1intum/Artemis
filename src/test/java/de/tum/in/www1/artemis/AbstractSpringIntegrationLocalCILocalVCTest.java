@@ -7,7 +7,6 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
@@ -115,19 +114,27 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static final String DUMMY_COMMIT_HASH = "1234567890abcdef";
 
-    protected static final Path ALL_FAIL_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "all-fail");
+    private static final Path TEST_RESULTS_PATH = Path.of("src", "test", "resources", "test-data", "test-results");
 
-    protected static final Path PARTLY_SUCCESSFUL_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "partly-successful");
+    private static final Path GRADLE_TEST_RESULTS_PATH = TEST_RESULTS_PATH.resolve("java-gradle");
 
-    protected static final Path ALL_SUCCEED_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "all-succeed");
+    protected static final Path ALL_FAIL_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("all-fail");
 
-    protected static final Path FAULTY_FILES_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "faulty-files");
+    protected static final Path PARTLY_SUCCESSFUL_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("partly-successful");
 
-    protected static final Path SPOTBUGS_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports", "spotbugsXml.xml");
+    protected static final Path ALL_SUCCEED_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("all-succeed");
 
-    protected static final Path CHECKSTYLE_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports", "checkstyle-result.xml");
+    protected static final Path FAULTY_FILES_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("faulty-files");
 
-    protected static final Path PMD_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports", "pmd.xml");
+    protected static final Path OLD_REPORT_FORMAT_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("old-report-format");
+
+    private static final Path SCA_REPORTS_PATH = Path.of("src", "test", "resources", "test-data", "static-code-analysis", "reports");
+
+    protected static final Path SPOTBUGS_RESULTS_PATH = SCA_REPORTS_PATH.resolve("spotbugsXml.xml");
+
+    protected static final Path CHECKSTYLE_RESULTS_PATH = SCA_REPORTS_PATH.resolve("checkstyle-result.xml");
+
+    protected static final Path PMD_RESULTS_PATH = SCA_REPORTS_PATH.resolve("pmd.xml");
 
     @AfterEach
     protected void resetSpyBeans() {
