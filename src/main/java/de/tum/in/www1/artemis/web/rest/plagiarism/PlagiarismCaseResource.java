@@ -12,13 +12,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -137,17 +144,17 @@ public class PlagiarismCaseResource {
      *
      * @param courseId   the id of the course
      * @param exerciseId the id of the exercise
-     * @return the number of plagiarism cases for the given exercise
+     * @return the ResponseEntity with status 200 (OK) and with body the number of plagiarism cases for the given exercise
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/plagiarism-cases-count")
     @EnforceAtLeastInstructor
-    public long getNumberOfPlagiarismCasesForExercise(@PathVariable long courseId, @PathVariable long exerciseId) {
+    public ResponseEntity<Long> getNumberOfPlagiarismCasesForExercise(@PathVariable long courseId, @PathVariable long exerciseId) {
         log.debug("REST request to get number of plagiarism cases for exercise with id: {}", exerciseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, null)) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
-        return plagiarismCaseRepository.countByExerciseId(exerciseId);
+        return ResponseEntity.ok(plagiarismCaseRepository.countByExerciseId(exerciseId));
     }
 
     /**
