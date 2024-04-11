@@ -1,35 +1,17 @@
-<footer class="d-none d-md-flex row" id="footer">
+<footer class="d-flex row" id="footer">
     <div class="text-md-start">
         <a [routerLink]="['/about']" id="about" jhiTranslate="aboutUs" class="footer-text guided-tour-footer-about"></a>
         <a [href]="feedbackUrl" id="feedback" jhiTranslate="feedback" class="footer-text ms-3" target="_blank"></a>
-        <a [href]="releaseUrl" id="release-notes" jhiTranslate="releases" class="footer-text ms-3" target="_blank"></a>
+        <a [href]="releaseUrl" id="releases" jhiTranslate="releases" class="footer-text ms-3" target="_blank"></a>
         <a [routerLink]="['/privacy']" id="privacy" jhiTranslate="artemisApp.legal.privacy" class="footer-text ms-3"></a>
         <a [routerLink]="['/imprint']" id="imprint" jhiTranslate="artemisApp.legal.imprint.title" class="footer-text ms-3"></a>
     </div>
     @if (!isProduction || isTestServer) {
-        <small class="col-sm-12 footer-git-wrapper">
+        <small class="col-sm-12 d-none d-md-inline footer-git-wrapper">
             <div class="footer-git">{{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranch }} •</div>
             <div class="footer-git">{{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId }} •</div>
             <div class="footer-git">{{ 'artemisApp.git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} •</div>
             <div class="footer-git">{{ 'artemisApp.git.username' | artemisTranslate }}: {{ gitCommitUser }}</div>
         </small>
     }
-</footer>
-<footer class="d-flex d-md-none justify-content-between mw-100 fs-small">
-    <div class="col-auto px-0">
-        <a [routerLink]="['/about']" jhiTranslate="aboutUs" class="footer-text"></a>
-    </div>
-    <div class="col-auto px-0">
-        <a [href]="feedbackUrl" jhiTranslate="feedback" class="footer-text" target="_blank"></a>
-    </div>
-    <div class="col-auto px-0">
-        <a [href]="releaseUrl" id="release-notes" jhiTranslate="releases" class="footer-text" target="_blank"></a>
-    </div>
-
-    <div class="col-auto px-0">
-        <a [routerLink]="['/privacy']" jhiTranslate="artemisApp.legal.privacy" class="footer-text"></a>
-    </div>
-    <div class="col-auto px-0">
-        <a [routerLink]="['/imprint']" jhiTranslate="artemisApp.legal.imprint.title" class="footer-text"></a>
-    </div>
 </footer>

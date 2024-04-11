@@ -35,7 +35,7 @@ export class LoginPage {
     }
 
     shouldShowReleaseNotesInFooter() {
-        cy.get('#release-notes').should('be.visible').and('have.attr', 'href');
+        cy.get('#releases').should('be.visible').and('have.attr', 'href');
     }
 
     shouldShowPrivacyStatementInFooter() {
