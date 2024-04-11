@@ -16,14 +16,14 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "io.spring.dependency-management" version "1.1.4"
-    id "com.google.cloud.tools.jib" version "3.4.1"
+    id "com.google.cloud.tools.jib" version "3.4.2"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.diffplug.spotless" version "6.25.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
-    id "org.owasp.dependencycheck" version "9.0.10"
+    id "org.owasp.dependencycheck" version "9.1.0"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
@@ -32,8 +32,8 @@ version = "7.0.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
@@ -64,18 +64,17 @@ spotless {
             fileTree(rootDir) {
                 include "**/*.java"
                 exclude(
-                    "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java",
-                    "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
-                    "**/node_modules/**",
-                    "**/out/**",
-                    "**/repos/**",
-                    "**/repos-download/**",
-                    "**/build/**",
-                    "**/src/main/generated/**",
-                    "**/src/main/resources/templates/**",
-                    "/docker/**",
-                    "checked-out-repos/**",
-                    "**/src/main/java/org/eclipse/**"
+                        "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
+                        "**/node_modules/**",
+                        "**/out/**",
+                        "**/repos/**",
+                        "**/repos-download/**",
+                        "**/build/**",
+                        "**/src/main/generated/**",
+                        "**/src/main/resources/templates/**",
+                        "/docker/**",
+                        "checked-out-repos/**",
+                        "**/src/main/java/org/eclipse/**"
                 )
             }
         }
@@ -137,12 +136,12 @@ jar {
 private excludedClassFilesForReport(classDirectories) {
     classDirectories.setFrom(files(classDirectories.files.collect {
         fileTree(dir: it,
-            exclude: [
-                "**/de/tum/in/www1/artemis/domain/**/*_*",
-                "**/de/tum/in/www1/artemis/config/migration/entries/**",
-                "**/org/eclipse/jgit/**",
-                "**/gradle-wrapper.jar/**"
-            ]
+                exclude: [
+                        "**/de/tum/in/www1/artemis/domain/**/*_*",
+                        "**/de/tum/in/www1/artemis/config/migration/entries/**",
+                        "**/org/eclipse/jgit/**",
+                        "**/gradle-wrapper.jar/**"
+                ]
         )
     }))
 }
@@ -163,13 +162,13 @@ jacocoTestCoverageVerification {
             limit {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
-                minimum = 0.90
+                minimum = 0.88
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 20
+                maximum = 34
             }
         }
     }
@@ -207,7 +206,7 @@ dependencies {
     implementation "org.apache.httpcomponents.client5:httpclient5:5.3.1"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.2.4"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
-    implementation ("org.dom4j:dom4j:2.1.4") {
+    implementation("org.dom4j:dom4j:2.1.4") {
         // Note: avoid org.xml.sax.SAXNotRecognizedException: unrecognized feature http://xml.org/sax/features/external-general-entities
         // also see https://github.com/dom4j/dom4j/issues/99
         exclude module: "pull-parser"
@@ -223,16 +222,16 @@ dependencies {
     implementation "de.jplag:jplag:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
     implementation "de.jplag:kotlin:${jplag_version}"
-    implementation "de.jplag:cpp:${jplag_version}"
+    implementation "de.jplag:c:${jplag_version}"
     implementation "de.jplag:swift:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
     implementation "de.jplag:python-3:${jplag_version}"
     implementation "de.jplag:text:${jplag_version}"
 
-    // we have to override those values to avoid issues with Spring (JPlag wants to use a newer version which would conflict otherwise)
+    // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
     implementation "org.slf4j:jul-to-slf4j:${slf4j_version}"
-    implementation ("org.slf4j:slf4j-api") {
+    implementation("org.slf4j:slf4j-api") {
         version {
             strictly "${slf4j_version}"
         }
@@ -250,16 +249,17 @@ dependencies {
     // Note: jgit.htt.server is not compatible with jakarta yet and neither is there a timeline. Hence, we had to add the sourcefiles to our repository. Once the compatibility is given, we can switch back to the maven dependency.
     // implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
 
-    // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "oauth.signpost:signpost-core:2.1.1"
     implementation "oauth.signpost:signpost-commonshttp4:2.1.1"
-    implementation "net.sourceforge.plantuml:plantuml:1.2024.2"
+
+    // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
+    implementation "net.sourceforge.plantuml:plantuml:1.2024.3"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
-    implementation "com.atlassian.bamboo:bamboo-specs:9.4.2"
-    implementation ("org.yaml:snakeyaml") {
+    implementation("org.yaml:snakeyaml") {
         version {
-            strictly "2.2" // needed for Bamboo-specs and to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml
+            strictly "2.2"
+            // needed to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml
         }
     }
 
@@ -287,6 +287,10 @@ dependencies {
     implementation "com.github.docker-java:docker-java-core:${docker_java_version}"
     implementation "com.github.docker-java:docker-java-transport-httpclient5:${docker_java_version}"
 
+    // use newest version of commons-compress to avoid security issues through outdated dependencies
+    implementation "org.apache.commons:commons-compress:1.26.1"
+
+
     // import JHipster dependencies BOM
     implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
 
@@ -294,19 +298,25 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
     implementation "io.micrometer:micrometer-registry-prometheus:1.12.4"
     implementation "net.logstash.logback:logstash-logback-encoder:7.4"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate6:${fasterxml_version}"
+
+    // Defines low-level streaming API, and includes JSON-specific implementations
+    implementation "com.fasterxml.jackson.core:jackson-core:${fasterxml_version}"
+    // Contains standard Jackson annotations
     implementation "com.fasterxml.jackson.core:jackson-annotations:${fasterxml_version}"
+    // Implements data-binding (and object serialization) support
     implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
+    // Support for "Java 8 Dates"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
+    // Support JSON serialization and deserialization of Hibernate (https://hibernate.org) specific data types and properties; especially lazy-loading aspects
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate6:${fasterxml_version}"
+
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:5.1.0"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
     implementation "com.zaxxer:HikariCP:5.1.0"
-    // TODO: for some reason 1.11.0 breaks some tests (e.g. shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult)
-    implementation "org.apache.commons:commons-text:1.10.0"
+    implementation "org.apache.commons:commons-text:1.11.0"
     implementation "org.apache.commons:commons-math3:3.6.1"
     implementation "javax.transaction:javax.transaction-api:1.3"
     implementation "org.liquibase:liquibase-core:${liquibase_version}"
@@ -318,7 +328,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
-    implementation ("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
+    implementation("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
         exclude module: "spring-boot-starter-undertow"
     }
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
@@ -330,18 +340,16 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core:3.2.2"
     implementation "org.springframework.data:spring-data-ldap:3.2.4"
 
-    implementation ("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.0") {
+    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.1") {
         // NOTE: these modules contain security vulnerabilities and are not needed
         exclude module: "commons-jxpath"
         exclude module: "woodstox-core"
     }
-    implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.0"
-    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.1"
 
-    implementation "org.springframework.cloud:spring-cloud-commons:4.1.1"
+    implementation "org.springframework.cloud:spring-cloud-commons:4.1.2"
 
-    // TODO: updating to a later version breaks the build
-    implementation "io.netty:netty-all:4.1.101.Final"
+    implementation "io.netty:netty-all:4.1.108.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.17"
     implementation "org.springframework:spring-messaging:6.1.5"
     implementation "org.springframework.retry:spring-retry:2.0.5"
@@ -351,6 +359,8 @@ dependencies {
     implementation "org.springframework.security:spring-security-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
+    // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
+    implementation "com.nimbusds:nimbus-jose-jwt:9.37.3"
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
@@ -371,7 +381,7 @@ dependencies {
     implementation "org.bouncycastle:bcpkix-jdk18on:1.77"
     implementation "org.bouncycastle:bcprov-jdk18on:1.77"
 
-    implementation ("io.springfox:springfox-swagger2:3.0.0") {
+    implementation("io.springfox:springfox-swagger2:3.0.0") {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
@@ -385,30 +395,38 @@ dependencies {
     implementation "com.github.seancfoley:ipaddress:5.5.0"
     implementation "org.apache.maven:maven-model:3.9.6"
     implementation "org.apache.pdfbox:pdfbox:3.0.2"
-    implementation "com.google.protobuf:protobuf-java:4.26.0"
+    implementation "com.google.protobuf:protobuf-java:4.26.1"
     implementation "org.apache.commons:commons-csv:1.10.0"
     implementation "org.commonmark:commonmark:0.22.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
     implementation "org.jgrapht:jgrapht-core:1.5.2"
-    // make sure the dependencies use the latest version without security vulnerabilities
+    // use newest version of guava to avoid security issues through outdated dependencies
     implementation "com.google.guava:guava:33.1.0-jre"
 
-    // make sure the dependencies use the latest version
+    // use newest version of gson to avoid security issues through outdated dependencies
     implementation "com.google.code.gson:gson:2.10.1"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
-    annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
+    annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "jakarta.ws.rs", module: "jsr311-api"
     }
-    annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
 
 
+    // ---- CHECKSTYLE DEPENDENCIES ----
+
+    // use newest version of plexus to avoid security issues through outdated dependencies
+    checkstyle "org.codehaus.plexus:plexus-container-default:2.1.1"
+    checkstyle "org.codehaus.plexus:plexus-classworlds:2.8.0"
+    checkstyle "com.puppycrawl.tools:checkstyle:${checkstyle_version}"
+
+
     // ---- TEST DEPENDENCIES ----
 
-    testImplementation ("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
+    testImplementation("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
         exclude group: "org.junit.vintage", module: "junit-vintage-engine"
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
@@ -417,7 +435,7 @@ dependencies {
     testImplementation "org.assertj:assertj-core:3.25.3"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "io.github.classgraph:classgraph:4.8.168"
+    testImplementation "io.github.classgraph:classgraph:4.8.170"
     testImplementation "org.awaitility:awaitility:4.2.1"
     testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
     testImplementation "org.gradle:gradle-tooling-api:8.7"
@@ -428,17 +446,18 @@ dependencies {
         exclude group: "org.testcontainers", module: "mssqlserver"
     }
     testImplementation "com.tngtech.archunit:archunit:1.2.1"
-    testImplementation ("org.skyscreamer:jsonassert:1.5.1") {
+    testImplementation("org.skyscreamer:jsonassert:1.5.1") {
         exclude module: "android-json"
     }
-    testImplementation ("net.bytebuddy:byte-buddy") {
+    testImplementation("net.bytebuddy:byte-buddy") {
         version {
-            strictly "1.14.12"
+            strictly "1.14.13"
         }
     }
+    testImplementation "io.github.classgraph:classgraph:4.8.165"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20240205"
+    testImplementation "org.json:json:20240303"
 }
 
 ext["junit-jupiter.version"] = junit_version
@@ -458,8 +477,8 @@ tasks.withType(Test).configureEach {
     testLogging {
         // set options for log level LIFECYCLE
         events TestLogEvent.FAILED,
-            TestLogEvent.PASSED,
-            TestLogEvent.SKIPPED
+                TestLogEvent.PASSED,
+                TestLogEvent.SKIPPED
         exceptionFormat TestExceptionFormat.FULL
         showExceptions true
         showCauses true

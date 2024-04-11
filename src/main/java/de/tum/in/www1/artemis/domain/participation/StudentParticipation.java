@@ -84,12 +84,12 @@ public class StudentParticipation extends Participation {
         }
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getParticipantIdentifier() {
         return Optional.ofNullable(getParticipant()).map(Participant::getParticipantIdentifier).orElse(null);
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getParticipantName() {
         return Optional.ofNullable(getParticipant()).map(Participant::getName).orElse(null);
     }
@@ -130,10 +130,4 @@ public class StudentParticipation extends Participation {
         return getClass().getSimpleName() + "{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", " + participantString + "}";
     }
 
-    @Override
-    public Participation copyParticipationId() {
-        var participation = new StudentParticipation();
-        participation.setId(getId());
-        return participation;
-    }
 }

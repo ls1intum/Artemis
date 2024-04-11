@@ -2,9 +2,16 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Represents a Docker configuration that can be defined in a {@link Windfile}
+ * TODO: convert to Record
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DockerConfig {
 
     private String image;
@@ -53,6 +60,7 @@ public class DockerConfig {
      *
      * @return the full image name including the tag
      */
+    @JsonIgnore
     public String getFullImageName() {
         if (image == null) {
             return null;
