@@ -7,17 +7,17 @@
                     <div style="position: relative">
                         <jhi-secured-image class="secured-image" [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
 
-                        <button type="button" class="btn icon-button-wrapper delete-button" (click)="deleteCourseIcon()">
+                        <button id="delete-course-icon" type="button" class="btn icon-button-wrapper delete-button" (click)="deleteCourseIcon()">
                             <fa-icon [icon]="faTrash" />
                         </button>
 
-                        <button type="button" class="btn icon-button-wrapper edit-button" (click)="triggerFileInput()">
+                        <button id="edit-course-icon" type="button" class="btn icon-button-wrapper edit-button" (click)="triggerFileInput()">
                             <fa-icon [icon]="faPen" />
                         </button>
                     </div>
                 }
                 @if (!croppedImage) {
-                    <div class="no-image" (click)="triggerFileInput()">
+                    <div id="no-image-placeholder" class="no-image" (click)="triggerFileInput()">
                         <div class="plus-sign">+</div>
                         <div class="text">{{ 'artemisApp.course.imageCropper.uploadTitle' | artemisTranslate }}</div>
                     </div>
