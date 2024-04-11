@@ -23,6 +23,7 @@ import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-serv
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule } from '@angular/forms';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { getElement } from '../../../helpers/utils/general.utils';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -94,7 +95,6 @@ examples.forEach((activeConversation) => {
             jest.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(new BehaviorSubject(activeConversation).asObservable());
             setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
             acceptCodeOfConductSpy = jest.spyOn(metisConversationService, 'acceptCodeOfConduct');
-
             jest.spyOn(metisService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
         }));
 
@@ -143,6 +143,12 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             component.acceptCodeOfConduct();
             expect(acceptCodeOfConductSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should initialize the course-wide search text correctly', () => {
+            fixture.detectChanges();
+            const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
+            expect(searchInput.textContent).toBe('');
         });
     });
 });
