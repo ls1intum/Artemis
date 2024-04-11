@@ -319,7 +319,7 @@
             "handInEarlyNoticeFirstSentence": "You are about to hand in your submission before the end of the exam.",
             "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
             "attendanceNotVerifiedWarningFirstSentence": "Your attendance has not been checked yet.",
-            "attendanceNotVerifiedWarningSecondSentence": "Please contact an instructor after the examination to have your attendance verified.",
+            "attendanceNotVerifiedWarningSecondSentence": "Please wait for your attendance to be checked or contact your instructors if you believe this is a mistake.",
             "namePlaceholder": "Enter your full name here",
             "submissionSuccessful": {
                 "title": "Your exam has been submitted successfully!",
