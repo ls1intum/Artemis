@@ -30,6 +30,7 @@ import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/athena.service';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -73,6 +74,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     isApollonModelLoaded = false;
 
     private cancelConfirmationText: string;
+
+    protected readonly faCircleNotch = faCircleNotch;
 
     constructor(
         private alertService: AlertService,

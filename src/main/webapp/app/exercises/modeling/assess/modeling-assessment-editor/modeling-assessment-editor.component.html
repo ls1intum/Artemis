@@ -27,7 +27,10 @@
             <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
         }
         @if (isLoading && isFeedbackSuggestionsEnabled) {
-            <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></div>
+            <div class="feedback-suggestions-loading-indicator">
+                <fa-icon [icon]="faCircleNotch" size="lg" [spin]="true" class="me-2" />
+                <span id="test-building" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></span>
+            </div>
         }
         <div class="editor-container flex-grow-1">
             @if (submission) {
@@ -96,7 +99,10 @@
         <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
     }
     @if (isLoading && isFeedbackSuggestionsEnabled) {
-        <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></div>
+        <div class="feedback-suggestions-loading-indicator">
+            <fa-icon [icon]="faCircleNotch" size="lg" [spin]="true" class="me-2" />
+            <span id="test-building" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></span>
+        </div>
     }
     <div class="editor-container flex-grow-1">
         @if (submission) {
