@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.service.plagiarism.PlagiarismService.filter
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -27,10 +28,15 @@ import org.springframework.stereotype.Service;
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
 import de.jplag.Language;
+import de.jplag.c.CLanguage;
 import de.jplag.clustering.ClusteringOptions;
 import de.jplag.exceptions.ExitException;
+import de.jplag.java.JavaLanguage;
+import de.jplag.kotlin.KotlinLanguage;
 import de.jplag.options.JPlagOptions;
+import de.jplag.python3.PythonLanguage;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
+import de.jplag.swift.SwiftLanguage;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
@@ -206,10 +212,9 @@ public class ProgrammingPlagiarismDetectionService {
         String topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
         plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of("Running JPlag..."));
 
-        JPlag jplag = new JPlag(options);
         JPlagResult result;
         try {
-            result = jplag.run();
+            result = JPlag.run(options);
         }
         catch (Exception e) {
             // Handling small or invalid base codes
@@ -217,8 +222,7 @@ public class ProgrammingPlagiarismDetectionService {
             log.warn("Retrying JPlag Plagiarism Check without BaseCode");
             try {
                 options = options.withBaseCodeSubmissionDirectory(null);
-                jplag = new JPlag(options);
-                result = jplag.run();
+                result = JPlag.run(options);
             }
             catch (Exception ex) {
                 log.info("FAILED: Retrying JPlag Plagiarism Check without BaseCode");
@@ -242,25 +246,24 @@ public class ProgrammingPlagiarismDetectionService {
      */
     public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) {
         final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 5);
-        final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + " JPlag Report");
-        final var reportFolderFile = reportFolder.toFile();
+        final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + "-JPlag-Report.zip");
 
-        // Create directories.
-        if (!reportFolderFile.mkdirs()) {
-            log.error("Cannot generate JPlag report because directories couldn't be created: {}", reportFolder);
-            // this error is unlikely to happen
-            return null;
+        try {
+            // Create directories.
+            Files.createDirectories(targetPath);
+
+            // Write JPlag report result to the file.
+            log.info("Write JPlag report into folder {} and zip it", reportFolder);
+
+            ReportObjectFactory reportObjectFactory = new ReportObjectFactory(reportFolder.toFile());
+            reportObjectFactory.createAndSaveReport(jPlagResult);
+            // JPlag automatically zips the report
         }
-
-        // Write JPlag report result to the file.
-        log.info("Write JPlag report to file system and zip it");
-        ReportObjectFactory reportObjectFactory = new ReportObjectFactory();
-        reportObjectFactory.createAndSaveReport(jPlagResult, reportFolder.toString());
-        // JPlag automatically zips the report
-
-        var zipFile = new File(reportFolder + ".zip");
-        fileService.schedulePathForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
-        return zipFile;
+        catch (IOException e) {
+            log.error("Failed to write JPlag report to file: {}", reportFolder, e);
+        }
+        fileService.schedulePathForDeletion(reportFolder.toAbsolutePath(), 1);
+        return reportFolder.toFile();
     }
 
     private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final Path targetPath) {
@@ -305,11 +308,11 @@ public class ProgrammingPlagiarismDetectionService {
 
     private Language getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
         return switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA -> new de.jplag.java.Language();
-            case C -> new de.jplag.cpp.Language();
-            case PYTHON -> new de.jplag.python3.Language();
-            case SWIFT -> new de.jplag.swift.Language();
-            case KOTLIN -> new de.jplag.kotlin.Language();
+            case JAVA -> new JavaLanguage();
+            case C -> new CLanguage();
+            case PYTHON -> new PythonLanguage();
+            case SWIFT -> new SwiftLanguage();
+            case KOTLIN -> new KotlinLanguage();
             default -> throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
                     "ProgrammingExercise", "notSupported");
         };
