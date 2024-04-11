@@ -3577,6 +3577,11 @@
         <createIndex indexName="nVl82Q7a8WevNKlJYqKcqN0LrX0" tableName="student_exam_quiz_question">
             <column name="quiz_question_id"/>
         </createIndex>
+
+        <loadData encoding="UTF-8"
+                  file="config/liquibase/authorities.csv"
+                  separator=";"
+                  tableName="jhi_authority"/>
     </changeSet>
 
 </databaseChangeLog>
