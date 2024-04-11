@@ -38,6 +38,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
      * with the view showing the difference between the new and old problem statement and vice versa.
      */
     toggleHighlightedProblemStatement(event: MouseEvent): void {
+        // prevents the jhi-resizeable-container from collapsing the right panel on a button click
         event.stopPropagation();
         if (this.showHighlightedDifferences) {
             this.exercise.problemStatement = this.updatedProblemStatement;
