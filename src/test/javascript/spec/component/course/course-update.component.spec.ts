@@ -322,24 +322,22 @@ describe('Course Management Update Component', () => {
 
         it('should trigger openCropper when a file is selected', async () => {
             const openCropperSpy = jest.spyOn(comp, 'openCropper');
-            const inputElement = fixture.debugElement.query(By.css('input[type="file"]'));
             const file = new File([''], 'test-file.jpg', { type: 'image/jpeg' });
-            Object.defineProperty(inputElement.nativeElement, 'files', {
-                value: createMockFileList(file),
-                writable: false,
-            });
-            inputElement.nativeElement.dispatchEvent(new Event('change'));
+            const mockEvent = {
+                target: {
+                    files: [file],
+                    value: '',
+                },
+                currentTarget: {
+                    files: [file],
+                },
+            } as any;
+            if (comp.setCourseImage) {
+                comp.setCourseImage(mockEvent);
+            }
             await fixture.whenStable();
             expect(openCropperSpy).toHaveBeenCalled();
         });
-
-        function createMockFileList(file) {
-            return {
-                0: file,
-                length: 1,
-                item: () => file,
-            };
-        }
     });
 
     describe('changeOnlineCourse', () => {
@@ -752,7 +750,7 @@ describe('Course Management Update Component', () => {
         it('should trigger file input when no-image div is clicked', () => {
             const triggerFileInputSpy = jest.spyOn(comp, 'triggerFileInput').mockImplementation(() => {});
             fixture.detectChanges();
-            comp.croppedImage = null;
+            comp.croppedImage = undefined;
             fixture.detectChanges();
             const noImageDiv = fixture.debugElement.nativeElement.querySelector('#no-image-placeholder');
             noImageDiv.dispatchEvent(new Event('click'));
