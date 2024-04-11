@@ -316,11 +316,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.programmingExercise.allowOnlineEditor.title',
                     data: { boolean: exercise.allowOnlineEditor },
                 },
-                {
-                    type: DetailType.Boolean,
-                    title: 'artemisApp.programmingExercise.publishBuildPlanUrl',
-                    data: { boolean: exercise.publishBuildPlanUrl },
-                },
             ],
         };
     }

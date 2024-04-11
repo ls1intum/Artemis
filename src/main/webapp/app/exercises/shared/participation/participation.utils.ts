@@ -1,6 +1,3 @@
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { Participation, getExercise } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
@@ -10,21 +7,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Result } from 'app/entities/result.model';
 import { orderBy as _orderBy } from 'lodash-es';
 
-export const setBuildPlanUrlForProgrammingParticipations = (
-    profileInfo: ProfileInfo,
-    participations: ProgrammingExerciseStudentParticipation[],
-    exerciseId: number,
-    projectKey?: string,
-) => {
-    if (!projectKey) {
-        return;
-    }
-    participations
-        .filter((participation) => participation.buildPlanId)
-        .forEach((participation) => {
-            participation.buildPlanUrl = createBuildPlanUrl(profileInfo.buildPlanURLTemplate, projectKey, participation.buildPlanId!, exerciseId);
-        });
-};
 /**
  * Check if the participation has changed.
  * This includes the first change (undefined -> participation)!
