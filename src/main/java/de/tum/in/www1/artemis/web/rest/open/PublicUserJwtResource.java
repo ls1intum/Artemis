@@ -17,12 +17,17 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.UserNotActivatedException;
@@ -30,7 +35,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 /**
@@ -84,9 +88,9 @@ public class PublicUserJwtResource {
 
             return ResponseEntity.ok().build();
         }
-        catch (CaptchaRequiredException ex) {
-            log.warn("CAPTCHA required in JIRA during login for user {}", loginVM.getUsername());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", ex.getMessage()).build();
+        catch (BadCredentialsException ex) {
+            log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 
@@ -134,13 +138,15 @@ public class PublicUserJwtResource {
      *
      * @param request  HTTP request
      * @param response HTTP response
+     * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("logout")
     @EnforceNothing
-    public void logout(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         request.logout();
         // Logout needs to build the same cookie (secure, httpOnly and sameSite='Lax') or browsers will ignore the header and not unset the cookie
         ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        return ResponseEntity.ok().build();
     }
 }

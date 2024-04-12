@@ -7,6 +7,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,7 +16,9 @@ import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.SystemNotificationService;
 
-/** REST controller for public system notifications. */
+/**
+ * REST controller for public system notifications.
+ */
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("public/")
@@ -37,8 +40,8 @@ public class PublicSystemNotificationResource {
      */
     @GetMapping("system-notifications/active")
     @EnforceNothing
-    public List<SystemNotification> getActiveAndFutureSystemNotifications() {
+    public ResponseEntity<List<SystemNotification>> getActiveAndFutureSystemNotifications() {
         log.debug("REST request to get relevant system notifications");
-        return systemNotificationService.findAllActiveAndFutureSystemNotifications();
+        return ResponseEntity.ok(systemNotificationService.findAllActiveAndFutureSystemNotifications());
     }
 }

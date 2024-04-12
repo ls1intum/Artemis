@@ -453,11 +453,11 @@ public class CourseResource {
      * GET /courses : get all courses for administration purposes.
      *
      * @param onlyActive if true, only active courses will be considered in the result
-     * @return the list of courses (the user has access to)
+     * @return the ResponseEntity with status 200 (OK) and with body the list of courses (the user has access to)
      */
     @GetMapping("courses")
     @EnforceAtLeastTutor
-    public List<Course> getCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
+    public ResponseEntity<List<Course>> getCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithGroupsAndAuthorities();
         // TODO: we should avoid findAll() and instead try to filter this directly in the database, in case of admins, we should load batches of courses, e.g. per semester
@@ -468,7 +468,7 @@ public class CourseResource {
             // only include courses that have NOT been finished
             userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
         }
-        return userCourses.toList();
+        return ResponseEntity.ok(userCourses.toList());
     }
 
     /**
@@ -490,18 +490,18 @@ public class CourseResource {
     /**
      * GET /courses/courses-with-quiz : get all courses with quiz exercises for administration purposes.
      *
-     * @return the list of courses
+     * @return the ResponseEntity with status 200 (OK) and with body the list of courses
      */
     @GetMapping("courses/courses-with-quiz")
     @EnforceAtLeastEditor
-    public List<Course> getCoursesWithQuizExercises() {
+    public ResponseEntity<List<Course>> getCoursesWithQuizExercises() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
-            return courseRepository.findAllWithQuizExercisesWithEagerExercises();
+            return ResponseEntity.ok(courseRepository.findAllWithQuizExercisesWithEagerExercises());
         }
         else {
             var userGroups = new ArrayList<>(user.getGroups());
-            return courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(userGroups);
+            return ResponseEntity.ok(courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(userGroups));
         }
     }
 
@@ -509,32 +509,33 @@ public class CourseResource {
      * GET /courses/with-user-stats : get all courses for administration purposes with user stats.
      *
      * @param onlyActive if true, only active courses will be considered in the result
-     * @return the list of courses (the user has access to)
+     * @return the ResponseEntity with status 200 (OK) and with body the list of courses (the user has access to)
      */
     @GetMapping("courses/with-user-stats")
     @EnforceAtLeastTutor
-    public List<Course> getCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
+    public ResponseEntity<List<Course>> getCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("get courses with user stats, only active: {}", onlyActive);
-        List<Course> courses = getCourses(onlyActive);
+        // TODO: we should avoid using an endpoint in such cases and instead call a service method
+        List<Course> courses = getCourses(onlyActive).getBody();
         for (Course course : courses) {
             course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
             course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
             course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
             course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         }
-        return courses;
+        return ResponseEntity.ok(courses);
     }
 
     /**
      * GET /courses/course-overview : get all courses for the management overview
      *
      * @param onlyActive if true, only active courses will be considered in the result
-     * @return a list of courses (the user has access to)
+     * @return the ResponseEntity with status 200 (OK) and with body a list of courses (the user has access to)
      */
     @GetMapping("courses/course-management-overview")
     @EnforceAtLeastTutor
-    public List<Course> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        return courseService.getAllCoursesForManagementOverview(onlyActive);
+    public ResponseEntity<List<Course>> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        return ResponseEntity.ok(courseService.getAllCoursesForManagementOverview(onlyActive));
     }
 
     /**
@@ -559,14 +560,15 @@ public class CourseResource {
      * GET /courses/for-enrollment : get all courses that the current user can enroll in.
      * Decided by the start and end date and if the enrollmentEnabled flag is set correctly
      *
-     * @return the list of courses which are active
+     * @return the ResponseEntity with status 200 (OK) and with body the list of courses which are active
      */
     @GetMapping("courses/for-enrollment")
     @EnforceAtLeastStudent
-    public List<Course> getCoursesForEnrollment() {
+    public ResponseEntity<List<Course>> getCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-        return courseService.findAllEnrollableForUser(user).stream().filter(course -> authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)).toList();
+        final var courses = courseService.findAllEnrollableForUser(user).stream().filter(course -> authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)).toList();
+        return ResponseEntity.ok(courses);
     }
 
     /**
@@ -616,13 +618,14 @@ public class CourseResource {
     /**
      * GET /courses/for-dashboard
      *
-     * @return a DTO containing a list of courses (the user has access to) including all exercises with participation, submission and result, etc. for the user. In addition, the
+     * @return the ResponseEntity with status 200 (OK) and with body a DTO containing a list of courses (the user has access to) including all exercises with participation,
+     *         submission and result, etc. for the user. In addition, the
      *         DTO contains the total scores for the course, the scores per exercise
      *         type for each exercise, and the participation result for each participation.
      */
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
-    public CoursesForDashboardDTO getCoursesForDashboard() {
+    public ResponseEntity<CoursesForDashboardDTO> getCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
@@ -650,7 +653,8 @@ public class CourseResource {
             coursesForDashboard.add(courseForDashboardDTO);
         }
         logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
-        return new CoursesForDashboardDTO(coursesForDashboard, activeExams);
+        final var dto = new CoursesForDashboardDTO(coursesForDashboard, activeExams);
+        return ResponseEntity.ok(dto);
     }
 
     private void logDuration(Collection<Course> courses, User user, long timeNanoStart, String path) {
@@ -667,14 +671,14 @@ public class CourseResource {
     /**
      * GET /courses/for-notifications
      *
-     * @return the set of courses (the user has access to)
+     * @return the ResponseEntity with status 200 (OK) and with body the set of courses (the user has access to)
      */
     @GetMapping("courses/for-notifications")
     @EnforceAtLeastStudent
-    public Set<Course> getCoursesForNotifications() {
+    public ResponseEntity<Set<Course>> getCoursesForNotifications() {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        return courseService.findAllActiveForUser(user);
+        return ResponseEntity.ok(courseService.findAllActiveForUser(user));
     }
 
     /**

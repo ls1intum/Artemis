@@ -11,7 +11,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
@@ -108,7 +114,7 @@ public class ApollonDiagramResource {
      * GET /apollon-diagrams/:diagramId/title : Returns the title of the diagram with the given id
      *
      * @param diagramId the id of the diagram
-     * @return the title of the diagram wrapped in an ResponseEntity or 404 Not Found if no diagram with that id exists
+     * @return the ResponseEntity with status 200 (OK) and with body the title of the diagram or 404 Not Found if no diagram with that id exists
      */
     @GetMapping(value = "/apollon-diagrams/{diagramId}/title")
     @EnforceAtLeastStudent
@@ -125,13 +131,13 @@ public class ApollonDiagramResource {
      */
     @GetMapping("course/{courseId}/apollon-diagrams")
     @EnforceAtLeastTutor
-    public List<ApollonDiagram> getDiagramsByCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<ApollonDiagram>> getDiagramsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagrams matching current course");
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
-        return apollonDiagramRepository.findDiagramsByCourseId(courseId);
+        return ResponseEntity.ok(apollonDiagramRepository.findDiagramsByCourseId(courseId));
     }
 
     /**

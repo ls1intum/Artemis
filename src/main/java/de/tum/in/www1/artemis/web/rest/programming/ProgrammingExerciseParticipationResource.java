@@ -12,7 +12,11 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -263,14 +267,14 @@ public class ProgrammingExerciseParticipationResource {
      * If the user is a student, we check if the user is the owner of the participation.
      *
      * @param participationId the id of the participation for which to retrieve the commit history
-     * @return A list of commitInfo DTOs with the commits information of the participation
+     * @return the ResponseEntity with status 200 (OK) and with body a list of commitInfo DTOs with the commits information of the participation
      */
     @GetMapping("programming-exercise-participations/{participationId}/commit-history")
     @EnforceAtLeastStudent
-    public List<CommitInfoDTO> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
+    public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        return programmingExerciseParticipationService.getCommitInfos(participation);
+        return ResponseEntity.ok(programmingExerciseParticipationService.getCommitInfos(participation));
     }
 
     /**
@@ -280,11 +284,11 @@ public class ProgrammingExerciseParticipationResource {
      *
      * @param exerciseID     the id of the exercise for which to retrieve the commit history
      * @param repositoryType the type of the repository for which to retrieve the commit history
-     * @return A list of commitInfo DTOs with the commits information of the repository
+     * @return the ResponseEntity with status 200 (OK) and with body a list of commitInfo DTOs with the commits information of the repository
      */
     @GetMapping("programming-exercise/{exerciseID}/commit-history/{repositoryType}")
     @EnforceAtLeastTutor
-    public List<CommitInfoDTO> getCommitHistoryForTemplateSolutionOrTestRepo(@PathVariable long exerciseID, @PathVariable RepositoryType repositoryType) {
+    public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionOrTestRepo(@PathVariable long exerciseID, @PathVariable RepositoryType repositoryType) {
         boolean isTemplateRepository = repositoryType.equals(RepositoryType.TEMPLATE);
         boolean isSolutionRepository = repositoryType.equals(RepositoryType.SOLUTION);
         boolean isTestRepository = repositoryType.equals(RepositoryType.TESTS);
@@ -301,10 +305,10 @@ public class ProgrammingExerciseParticipationResource {
         }
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         if (isTestRepository) {
-            return programmingExerciseParticipationService.getCommitInfosTestRepo(participation);
+            return ResponseEntity.ok(programmingExerciseParticipationService.getCommitInfosTestRepo(participation));
         }
         else {
-            return programmingExerciseParticipationService.getCommitInfos(participation);
+            return ResponseEntity.ok(programmingExerciseParticipationService.getCommitInfos(participation));
         }
     }
 

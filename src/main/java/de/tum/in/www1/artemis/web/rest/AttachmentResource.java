@@ -15,7 +15,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.Attachment;
@@ -154,9 +161,9 @@ public class AttachmentResource {
      */
     @GetMapping("lectures/{lectureId}/attachments")
     @EnforceAtLeastTutor
-    public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
+    public ResponseEntity<List<Attachment>> getAttachmentsForLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
-        return attachmentRepository.findAllByLectureId(lectureId);
+        return ResponseEntity.ok(attachmentRepository.findAllByLectureId(lectureId));
     }
 
     /**

@@ -17,7 +17,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.google.common.net.InternetDomainName;
 
@@ -137,14 +143,14 @@ public class OnlineUnitResource {
     }
 
     /**
-     * Fetch the website's metadata from the specified link to an online resource
+     * GET /lectures/online-units/fetch-online-resource : Fetch the website's metadata from the specified link to an online resource.
      *
      * @param link The link (as request parameter) to the website to fetch the metadata from
-     * @return A DTO with link, meta title, and meta description
+     * @return the ResponseEntity with status 200 (OK) and with body a DTO with link, meta title, and meta description
      */
     @GetMapping("lectures/online-units/fetch-online-resource")
     @EnforceAtLeastEditor
-    public OnlineResourceDTO getOnlineResource(@RequestParam("link") String link) {
+    public ResponseEntity<OnlineResourceDTO> getOnlineResource(@RequestParam("link") String link) {
         try {
             // Ensure that the link is a correctly formed URL
             URL url = new URL(link);
@@ -164,7 +170,7 @@ public class OnlineUnitResource {
             String title = getMetaTagContent(document, "title");
             String description = getMetaTagContent(document, "description");
 
-            return new OnlineResourceDTO(url.toString(), title, description);
+            return ResponseEntity.ok(new OnlineResourceDTO(url.toString(), title, description));
         }
         catch (MalformedURLException e) {
             throw new BadRequestException("The specified link is not a valid URL");
