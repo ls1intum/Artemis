@@ -294,14 +294,12 @@ public class ParticipantScoreScheduleService {
                     teamScore.setExercise(exercise);
                     return teamScore;
                 }
-                else if (participant instanceof User user) {
+                else {
+                    User user = (User) participant;
                     var studentScore = new StudentScore();
                     studentScore.setUser(user);
                     studentScore.setExercise(exercise);
                     return studentScore;
-                }
-                else {
-                    return null;
                 }
             });
 

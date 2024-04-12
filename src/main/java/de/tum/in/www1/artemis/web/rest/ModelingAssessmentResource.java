@@ -70,7 +70,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ModelingExerciseRepository modelingExerciseRepository,
             AssessmentService assessmentService, ModelingSubmissionRepository modelingSubmissionRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService, SubmissionRepository submissionRepository) {
-        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, exampleSubmissionRepository, submissionRepository);
+        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.authCheckService = authCheckService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;

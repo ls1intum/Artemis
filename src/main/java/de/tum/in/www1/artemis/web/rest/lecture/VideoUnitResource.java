@@ -2,10 +2,8 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -125,7 +123,7 @@ public class VideoUnitResource {
         videoUnit.setLecture(lecture);
         lecture.addLectureUnit(videoUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
-        VideoUnit persistedVideoUnit = (VideoUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
+        VideoUnit persistedVideoUnit = (VideoUnit) updatedLecture.getLectureUnits().getLast();
 
         competencyProgressService.updateProgressByLearningObjectAsync(persistedVideoUnit);
 
@@ -166,9 +164,9 @@ public class VideoUnitResource {
      */
     private void validateVideoUrl(VideoUnit videoUnit) {
         try {
-            new URL(videoUnit.getSource());
+            new URI(videoUnit.getSource());
         }
-        catch (MalformedURLException exception) {
+        catch (URISyntaxException exception) {
             throw new BadRequestException();
         }
     }

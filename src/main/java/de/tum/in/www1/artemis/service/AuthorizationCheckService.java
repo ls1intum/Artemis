@@ -51,7 +51,7 @@ public class AuthorizationCheckService {
 
     private final ExamDateService examDateService;
 
-    // TODO: we should move this into some kind of EnrollmentService
+    // TODO: we should move this into some kind of EnrollmentService todo
     @Deprecated(forRemoval = true) // will be removed in 7.0.0
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseRegistrationUsernamePattern;
@@ -163,7 +163,7 @@ public class AuthorizationCheckService {
      * Given any type of exercise, the method returns if the current user is at least TA for the course the exercise belongs to. If exercise is not present, it will return false,
      * because the optional will be empty, and therefore `isPresent()` will return false This is due how `filter` works: If a value is present, apply the provided mapping function
      * to it, and if the result is non-null, return an Optional describing the result. Otherwise, return an empty Optional.
-     * https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html#filter(java.util.function.Predicate)
+     * <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html#filter(java.util.function.Predicate)">...</a>
      *
      * @param exercise the exercise that needs to be checked
      * @param <T>      The type of the concrete exercise, because Exercise is an abstract class
@@ -303,7 +303,7 @@ public class AuthorizationCheckService {
      * An enum that represents the different reasons why a user is not allowed to self enroll in a course,
      * or ALLOWED if the user is allowed to self enroll in the course.
      */
-    private enum EnrollmentAuthorization {
+    public enum EnrollmentAuthorization {
         ALLOWED, USERNAME_PATTERN, ENROLLMENT_STATUS, ENROLLMENT_PERIOD, ONLINE, ORGANIZATIONS
     }
 
@@ -375,7 +375,7 @@ public class AuthorizationCheckService {
      * An enum that represents the different reasons why a user is not allowed to unenroll from a course,
      * or ALLOWED if the user is allowed to unenroll from the course.
      */
-    private enum UnenrollmentAuthorization {
+    public enum UnenrollmentAuthorization {
         ALLOWED, UNENROLLMENT_STATUS, UNENROLLMENT_PERIOD, ONLINE
     }
 

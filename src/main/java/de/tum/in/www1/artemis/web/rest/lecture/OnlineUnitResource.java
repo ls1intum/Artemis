@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -155,7 +154,7 @@ public class OnlineUnitResource {
     public ResponseEntity<OnlineResourceDTO> getOnlineResource(@RequestParam("link") String link) {
         try {
             // Ensure that the link is a correctly formed URL
-            URL url = new URL(link);
+            URL url = new URI(link).toURL();
 
             if (!"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())) {
                 throw new BadRequestException("The specified link uses an unsupported protocol");
@@ -174,7 +173,7 @@ public class OnlineUnitResource {
 
             return ResponseEntity.ok(new OnlineResourceDTO(url.toString(), title, description));
         }
-        catch (MalformedURLException e) {
+        catch (URISyntaxException e) {
             throw new BadRequestException("The specified link is not a valid URL");
         }
         catch (IOException e) {
@@ -209,9 +208,9 @@ public class OnlineUnitResource {
      */
     private void validateUrl(OnlineUnit onlineUnit) {
         try {
-            new URL(onlineUnit.getSource());
+            new URI(onlineUnit.getSource());
         }
-        catch (MalformedURLException exception) {
+        catch (URISyntaxException exception) {
             throw new BadRequestException();
         }
     }

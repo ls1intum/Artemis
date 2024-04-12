@@ -110,7 +110,7 @@ public class TextAssessmentResource extends AssessmentResource {
             GradingCriterionRepository gradingCriterionRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository, ResultService resultService,
             Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService) {
-        super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, exampleSubmissionRepository, submissionRepository);
+        super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
 
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;

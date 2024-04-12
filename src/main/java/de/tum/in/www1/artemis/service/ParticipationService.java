@@ -275,7 +275,7 @@ public class ParticipationService {
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
             boolean useGradedParticipation) {
-        if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
+        if (!(exercise instanceof ProgrammingExercise)) {
             throw new IllegalStateException("Only programming exercises support the practice mode at the moment");
         }
 
@@ -708,7 +708,7 @@ public class ParticipationService {
 
     /**
      * Updates the individual due date for each given participation.
-     *
+     * <p>
      * Only sets individual due dates if the exercise has a due date and the
      * individual due date is after this regular due date.
      *

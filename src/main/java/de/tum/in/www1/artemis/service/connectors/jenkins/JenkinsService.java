@@ -75,7 +75,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService,
             JenkinsInternalUrlService jenkinsInternalUrlService, TestwiseCoverageService testwiseCoverageService, Optional<AeolusTemplateService> aeolusTemplateService,
             ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+        super();
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;

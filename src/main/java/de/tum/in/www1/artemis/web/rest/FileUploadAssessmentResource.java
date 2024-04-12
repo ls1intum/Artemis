@@ -60,7 +60,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRepository userRepository,
             FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, ExerciseRepository exerciseRepository,
             ResultRepository resultRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
-        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, exampleSubmissionRepository, submissionRepository);
+        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
     }

@@ -28,8 +28,7 @@ public class LocalCIResultService extends AbstractContinuousIntegrationResultSer
     public LocalCIResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseTestCaseRepository testCaseRepository) {
-        super(programmingSubmissionRepository, feedbackRepository, testCaseRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService,
-                feedbackCreationService);
+        super(testCaseRepository, buildLogStatisticsEntryRepository, testwiseCoverageService, feedbackCreationService);
     }
 
     @Override

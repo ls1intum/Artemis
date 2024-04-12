@@ -153,7 +153,6 @@ public class IrisUtilTestService {
         // solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
         // var solutionSubmission = new ProgrammingSubmission();
         // solutionSubmission.setParticipation(solutionParticipation);
-        // programmingSubmissionRepository.save(solutionSubmission);
 
         return savedExercise;
     }
