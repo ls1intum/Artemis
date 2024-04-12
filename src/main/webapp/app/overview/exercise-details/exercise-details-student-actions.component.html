@@ -67,7 +67,7 @@
         <!-- QUIZ EXERCISE ACTIONS END -->
         <!-- PROGRAMMING EXERCISE ACTIONS START -->
         @case (ExerciseType.PROGRAMMING) {
-            <div class="btn-group gap-1">
+            <div class="d-flex flex-wrap mb-1 gap-1">
                 @if (isTeamAvailable) {
                     <button
                         class="view-team"
@@ -79,8 +79,8 @@
                         [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
                     ></button>
                 }
-                <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
-                    @if (isStartExerciseAvailable()) {
+                @if (isStartExerciseAvailable()) {
+                    <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
                         <button
                             [id]="'start-exercise-' + exercise.id"
                             class="start-exercise"
@@ -94,8 +94,8 @@
                             [overwriteDisabled]="isBeforeStartDateAndStudent"
                             (click)="startExercise()"
                         ></button>
-                    }
-                </span>
+                    </span>
+                }
                 @if (isStartPracticeAvailable()) {
                     <jhi-start-practice-mode-button
                         [id]="'start-practice-' + exercise.id"
@@ -187,21 +187,6 @@
                         [hideLabelMobile]="false"
                         (click)="resumeProgrammingExercise(true)"
                     ></button>
-                }
-                @if (
-                    programmingExercise?.publishBuildPlanUrl && gradedParticipation && gradedParticipation.initializationState !== InitializationState.INACTIVE && !localVCEnabled
-                ) {
-                    <a
-                        class="btn btn-primary"
-                        [class.btn-sm]="smallButtons"
-                        style="margin-left: 8px"
-                        target="_blank"
-                        rel="noreferrer"
-                        href="{{ buildPlanUrl(gradedParticipation!) }}"
-                    >
-                        <fa-icon [icon]="faExternalLinkAlt" [fixedWidth]="true" />
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.goToBuildPlan"></span>
-                    </a>
                 }
             </div>
         }
