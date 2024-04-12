@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LearningPathContainerComponent } from 'app/course/learning-paths/participate/learning-path-container.component';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
@@ -87,8 +87,6 @@ describe('LearningPathContainerComponent', () => {
                 getNextRecommendationStub = jest.spyOn(historyService, 'getNextRecommendation');
                 hasPrevRecommendationStub = jest.spyOn(historyService, 'hasPrevRecommendation');
                 getPrevRecommendationStub = jest.spyOn(historyService, 'getPrevRecommendation');
-
-                fixture.detectChanges();
             });
     });
 
@@ -97,12 +95,25 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should initialize', () => {
+        fixture.detectChanges();
         expect(comp.courseId).toBe(1);
         expect(getLearningPathIdStub).toHaveBeenCalled();
         expect(getLearningPathIdStub).toHaveBeenCalledWith(1);
     });
 
+    it('should generate learning path if not found', () => {
+        const generateLearningPathStub = jest.spyOn(learningPathService, 'generateLearningPath').mockReturnValue(of(new HttpResponse({ body: learningPathId })));
+        getLearningPathIdStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        fixture.detectChanges();
+        expect(comp.courseId).toBe(1);
+        expect(getLearningPathIdStub).toHaveBeenCalled();
+        expect(getLearningPathIdStub).toHaveBeenCalledWith(1);
+        expect(generateLearningPathStub).toHaveBeenCalled();
+        expect(generateLearningPathStub).toHaveBeenCalledWith(1);
+    });
+
     it('should not load previous task if no task selected', () => {
+        fixture.detectChanges();
         comp.onPrevTask();
         expect(getPrevRecommendationStub).not.toHaveBeenCalled();
         expect(findWithDetailsStub).not.toHaveBeenCalled();
@@ -115,6 +126,7 @@ describe('LearningPathContainerComponent', () => {
         [new ExerciseEntry(exerciseId), false],
         [new ExerciseEntry(exerciseId), true],
     ])('should load entry', (entry: StorageEntry, next: boolean) => {
+        fixture.detectChanges();
         if (next) {
             hasNextRecommendationStub.mockReturnValue(true);
             getNextRecommendationStub.mockReturnValue(entry);
@@ -139,6 +151,7 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should set properties of lecture unit view on activate', () => {
+        fixture.detectChanges();
         comp.learningObjectId = lectureUnit.id!;
         comp.lectureUnit = lectureUnit;
         comp.lectureId = lecture.id;
@@ -151,10 +164,15 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should set properties of exercise view on activate', () => {
+        fixture.detectChanges();
         comp.exercise = exercise;
         comp.learningObjectId = exercise.id!;
         fixture.detectChanges();
-        const instance = { learningPathMode: false, courseId: undefined, exerciseId: undefined } as unknown as CourseExerciseDetailsComponent;
+        const instance = {
+            learningPathMode: false,
+            courseId: undefined,
+            exerciseId: undefined,
+        } as unknown as CourseExerciseDetailsComponent;
         comp.setupExerciseView(instance);
         expect(instance.learningPathMode).toBeTruthy();
         expect(instance.courseId).toBe(1);
@@ -162,7 +180,13 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should handle lecture unit node click', () => {
-        const node = { id: 'some-id', type: NodeType.LECTURE_UNIT, linkedResource: 2, linkedResourceParent: 3 } as NgxLearningPathNode;
+        fixture.detectChanges();
+        const node = {
+            id: 'some-id',
+            type: NodeType.LECTURE_UNIT,
+            linkedResource: 2,
+            linkedResourceParent: 3,
+        } as NgxLearningPathNode;
         comp.onNodeClicked(node);
         expect(comp.learningObjectId).toBe(node.linkedResource);
         expect(comp.lectureId).toBe(node.linkedResourceParent);
@@ -170,6 +194,7 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should handle exercise node click', () => {
+        fixture.detectChanges();
         const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
         expect(comp.learningObjectId).toBe(node.linkedResource);
