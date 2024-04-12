@@ -316,7 +316,7 @@ public class BuildLogEntryService {
      * @param buildJobId the id of the build job for which to retrieve the build logs
      * @return the build logs as a string or null if the file could not be found (e.g. if the build logs have been deleted)
      */
-    public FileSystemResource retrieveBuildLogsFromFileForResult(String buildJobId) {
+    public FileSystemResource retrieveBuildLogsFromFileForBuildJob(String buildJobId) {
         Path logPath = buildLogsPath.resolve(buildJobId + ".log");
 
         FileSystemResource fileSystemResource = new FileSystemResource(logPath);

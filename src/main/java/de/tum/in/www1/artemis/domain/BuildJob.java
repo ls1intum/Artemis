@@ -15,6 +15,9 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class BuildJob extends DomainObject {
 
+    @Column(name = "build_job_id")
+    private String buildJobId;
+
     @Column(name = "name")
     private String name;
 
@@ -26,6 +29,9 @@ public class BuildJob extends DomainObject {
 
     @Column(name = "participation_id")
     private Long participationId;
+
+    @Column(name = "result_id")
+    private Long resultId;
 
     @Column(name = "build_agent_address")
     private String buildAgentAddress;
@@ -66,11 +72,13 @@ public class BuildJob extends DomainObject {
     public BuildJob() {
     }
 
-    public BuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus result) {
+    public BuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus result, Long resultId) {
+        this.buildJobId = queueItem.id();
         this.name = queueItem.name();
         this.exerciseId = queueItem.exerciseId();
         this.courseId = queueItem.courseId();
         this.participationId = queueItem.participationId();
+        this.resultId = resultId;
         this.buildAgentAddress = queueItem.buildAgentAddress();
         this.buildStartDate = queueItem.jobTimingInfo().buildStartDate();
         this.buildCompletionDate = queueItem.jobTimingInfo().buildCompletionDate();
@@ -82,6 +90,14 @@ public class BuildJob extends DomainObject {
         this.triggeredByPushTo = queueItem.repositoryInfo().triggeredByPushTo();
         this.buildStatus = result;
         this.dockerImage = queueItem.buildConfig().dockerImage();
+    }
+
+    public String getBuildJobId() {
+        return buildJobId;
+    }
+
+    public void setBuildJobId(String buildJobId) {
+        this.buildJobId = buildJobId;
     }
 
     public String getName() {
@@ -114,6 +130,14 @@ public class BuildJob extends DomainObject {
 
     public void setParticipationId(Long participationId) {
         this.participationId = participationId;
+    }
+
+    public Long getResultId() {
+        return resultId;
+    }
+
+    public void setResultId(Long resultId) {
+        this.resultId = resultId;
     }
 
     public String getBuildAgentAddress() {

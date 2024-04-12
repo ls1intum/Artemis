@@ -121,33 +121,40 @@ public class LocalCIResultProcessingService {
         List<BuildLogEntry> buildLogs = resultQueueItem.buildLogs();
         Throwable ex = resultQueueItem.exception();
 
+        BuildJob savedBuildJob;
+
         SecurityUtils.setAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findById(buildJob.participationId());
 
         if (buildResult != null) {
-            if (participationOptional.isPresent()) {
-                ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+            Result result = null;
+            try {
+                if (participationOptional.isPresent()) {
+                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
 
-                // In case the participation does not contain the exercise, we have to load it from the database
-                if (participation.getProgrammingExercise() == null) {
-                    participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
-                }
-                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
+                    // In case the participation does not contain the exercise, we have to load it from the database
+                    if (participation.getProgrammingExercise() == null) {
+                        participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
+                    }
+                    result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
 
-                if (result != null) {
-                    programmingMessagingService.notifyUserAboutNewResult(result, participation);
-                    addResultToBuildAgentsRecentBuildJobs(buildJob, result);
+                    if (result != null) {
+                        programmingMessagingService.notifyUserAboutNewResult(result, participation);
+                        addResultToBuildAgentsRecentBuildJobs(buildJob, result);
+                    }
+                    else {
+                        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
+                                new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
+                    }
                 }
                 else {
-                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                            new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
+                    log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
                 }
             }
-            else {
-                log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
+            finally {
+                // save build job to database
+                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result != null ? result.getId() : null);
             }
-            // save build job to database
-            saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL);
         }
         else {
             if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
@@ -158,7 +165,7 @@ public class LocalCIResultProcessingService {
                             new BuildTriggerWebsocketError("Build job was cancelled", participation.getId()));
                 }
 
-                saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED);
+                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, null);
             }
             else {
                 log.error("Error while processing build job: {}", buildJob, ex);
@@ -172,12 +179,17 @@ public class LocalCIResultProcessingService {
                     log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", buildJob.participationId());
                 }
 
-                saveFinishedBuildJob(buildJob, BuildStatus.FAILED);
+                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, null);
             }
         }
 
         if (!buildLogs.isEmpty()) {
-            buildLogEntryService.saveBuildLogsToFile(buildLogs, buildJob.id());
+            if (savedBuildJob != null) {
+                buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getId().toString());
+            }
+            else {
+                log.warn("Couldn't save build logs as build job {} was not saved", buildJob.id());
+            }
         }
 
         // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository
@@ -229,13 +241,14 @@ public class LocalCIResultProcessingService {
      * @param queueItem the build job object from the queue
      * @param result    the result of the build job (SUCCESSFUL, FAILED, CANCELLED)
      */
-    public void saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus result) {
+    public BuildJob saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus result, Long resultId) {
         try {
-            BuildJob buildJob = new BuildJob(queueItem, result);
-            buildJobRepository.save(buildJob);
+            BuildJob buildJob = new BuildJob(queueItem, result, resultId);
+            return buildJobRepository.save(buildJob);
         }
         catch (Exception e) {
             log.error("Could not save build job to database", e);
+            return null;
         }
     }
 

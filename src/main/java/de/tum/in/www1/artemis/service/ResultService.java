@@ -417,12 +417,14 @@ public class ResultService {
         // TODO: Adapt
         Map<Long, Boolean> logsAvailability = new HashMap<>();
         for (Result result : results) {
-            if (buildLogEntryService.buildJobHasLogFile(result.getId().toString())) {
-                logsAvailability.put(result.getId(), true);
-            }
-            else {
-                logsAvailability.put(result.getId(), false);
-            }
+            /*
+             * if (buildLogEntryService.buildJobHasLogFile(result.getId().toString())) {
+             * logsAvailability.put(result.getId(), true);
+             * }
+             * else {
+             * logsAvailability.put(result.getId(), false);
+             * }
+             */
         }
         return logsAvailability;
     }

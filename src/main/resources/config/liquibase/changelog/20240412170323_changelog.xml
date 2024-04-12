@@ -5,21 +5,16 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!-- Change Set for creating the build_log_result_mapping table -->
-    <changeSet id="20240327174347" author="laurenzfb">
-        <createTable tableName="build_log_result_mapping">
-            <column name="id" type="bigint" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
+    <changeSet id="20240412170323" author="laurenzfb">
+        <addColumn tableName="build_job">
             <column name="build_job_id" type="varchar(255)"/>
             <column name="result_id" type="bigint"/>
-        </createTable>
-
-        <createIndex indexName="idx_build_job_id" tableName="build_log_result_mapping">
-            <column name="build_job_id"/>
+        </addColumn>
+        <createIndex tableName="build_job" indexName="idx_build_job_build_job_id" unique="true">
+            <column name="build_job_id"></column>
         </createIndex>
-        <createIndex indexName="idx_result_id" tableName="build_log_result_mapping">
-            <column name="result_id"/>
+        <createIndex tableName="build_job" indexName="idx_build_job_result_id" unique="false">
+            <column name="result_id"></column>
         </createIndex>
     </changeSet>
-
 </databaseChangeLog>
