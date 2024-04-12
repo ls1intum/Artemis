@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT;
 import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +16,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -62,8 +60,6 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
@@ -105,7 +101,6 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
@@ -994,73 +989,26 @@ public class CourseService {
     }
 
     /**
-     * checks if the given group exists in the authentication provider, only on production systems
-     *
-     * @param group the group that should be available
-     */
-    public void checkIfGroupsExists(String group) {
-        if (!Arrays.asList(env.getActiveProfiles()).contains(SPRING_PROFILE_PRODUCTION)) {
-            return;
-        }
-        // only execute this check in the production environment because normal developers (while testing) might not have the right to call this method on the authentication server
-        if (!artemisAuthenticationProvider.isGroupAvailable(group)) {
-            throw new ArtemisAuthenticationException("Cannot save! The group " + group + " does not exist. Please double check the group name!");
-        }
-    }
-
-    /**
      * If the corresponding group (student, tutor, editor, instructor) is not defined, this method will create the default group.
      * If the group is defined, it will check that the group exists
      *
      * @param course the course (typically created on the client and not yet existing) for which the groups should be validated
      */
     public void createOrValidateGroups(Course course) {
-        try {
-            // We use default names if a group was not specified by the ADMIN.
-            // NOTE: instructors cannot change the group of a course, because this would be a security issue!
-            // only create default group names, if the ADMIN has used a custom group names, we assume that it already exists.
-
-            if (!StringUtils.hasText(course.getStudentGroupName())) {
-                course.setStudentGroupName(course.getDefaultStudentGroupName());
-                artemisAuthenticationProvider.createGroup(course.getStudentGroupName());
-            }
-            else {
-                checkIfGroupsExists(course.getStudentGroupName());
-            }
-
-            if (!StringUtils.hasText(course.getTeachingAssistantGroupName())) {
-                course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
-                artemisAuthenticationProvider.createGroup(course.getTeachingAssistantGroupName());
-            }
-            else {
-                checkIfGroupsExists(course.getTeachingAssistantGroupName());
-            }
-
-            if (!StringUtils.hasText(course.getEditorGroupName())) {
-                course.setEditorGroupName(course.getDefaultEditorGroupName());
-                artemisAuthenticationProvider.createGroup(course.getEditorGroupName());
-            }
-            else {
-                checkIfGroupsExists(course.getEditorGroupName());
-            }
-
-            if (!StringUtils.hasText(course.getInstructorGroupName())) {
-                course.setInstructorGroupName(course.getDefaultInstructorGroupName());
-                artemisAuthenticationProvider.createGroup(course.getInstructorGroupName());
-            }
-            else {
-                checkIfGroupsExists(course.getInstructorGroupName());
-            }
+        if (!StringUtils.hasText(course.getStudentGroupName())) {
+            course.setStudentGroupName(course.getDefaultStudentGroupName());
         }
-        catch (GroupAlreadyExistsException ex) {
-            throw new BadRequestAlertException(
-                    ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
-                            + "Please choose a different short name!",
-                    Course.ENTITY_NAME, "shortNameWasAlreadyUsed", true);
+
+        if (!StringUtils.hasText(course.getTeachingAssistantGroupName())) {
+            course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
         }
-        catch (ArtemisAuthenticationException ex) {
-            // a specified group does not exist, notify the client
-            throw new BadRequestAlertException(ex.getMessage(), Course.ENTITY_NAME, "groupNotFound", true);
+
+        if (!StringUtils.hasText(course.getEditorGroupName())) {
+            course.setEditorGroupName(course.getDefaultEditorGroupName());
+        }
+
+        if (!StringUtils.hasText(course.getInstructorGroupName())) {
+            course.setInstructorGroupName(course.getDefaultInstructorGroupName());
         }
     }
 
@@ -1074,22 +1022,7 @@ public class CourseService {
         // The editor group would be need to be set manually by instructors for the course and manually added to external user management.
         // To increase the usability the group is automatically generated when a user is added.
         if (!StringUtils.hasText(course.getEditorGroupName())) {
-            try {
-                course.setEditorGroupName(course.getDefaultEditorGroupName());
-                if (!artemisAuthenticationProvider.isGroupAvailable(course.getDefaultEditorGroupName())) {
-                    artemisAuthenticationProvider.createGroup(course.getDefaultEditorGroupName());
-                }
-            }
-            catch (GroupAlreadyExistsException ex) {
-                throw new BadRequestAlertException(
-                        ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
-                                + "Please choose a different short name!",
-                        Course.ENTITY_NAME, "shortNameWasAlreadyUsed", true);
-            }
-            catch (ArtemisAuthenticationException ex) {
-                // a specified group does not exist, notify the client
-                throw new BadRequestAlertException(ex.getMessage(), Course.ENTITY_NAME, "groupNotFound", true);
-            }
+            course.setEditorGroupName(course.getDefaultEditorGroupName());
             courseRepository.save(course);
         }
     }
