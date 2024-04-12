@@ -26,7 +26,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
     // Expect optional leading slash, "api/", optional numerical version with a "v" prefix and some path afterwards
     private static final Pattern PATH_PATTERN = Pattern.compile("^/?api(?:/v(\\d+))?/.+$");
 
-    private final Logger log = LoggerFactory.getLogger(VersionRangesRequestCondition.class);
+    private static final Logger log = LoggerFactory.getLogger(VersionRangesRequestCondition.class);
 
     private final Set<VersionRange> ranges;
 
@@ -168,7 +168,8 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
         var simplifyRanges = simplifyRanges(newRanges);
 
         // Build new condition and return it
-        List<VersionRange> annotationList = simplifyRanges.stream().map(range -> getInstanceOfVersionRange(range.value()[0], range.value()[1])).collect(Collectors.toList());
+        List<VersionRange> annotationList = simplifyRanges.stream().map(range -> getInstanceOfVersionRange(range.value()[0], range.value()[1]))
+                .collect(Collectors.toCollection(ArrayList::new));
         if (limitStart != null) {
             annotationList.add(getInstanceOfVersionRange(limitStart));
         }
@@ -291,7 +292,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
         if (matcher.groupCount() == 1) {
             if (matcher.group(1) == null) {
                 // No version found, assume the latest version
-                int latestVersion = apiVersions.get(apiVersions.size() - 1);
+                int latestVersion = apiVersions.getLast();
                 return checkVersion(range, latestVersion);
             }
             else {

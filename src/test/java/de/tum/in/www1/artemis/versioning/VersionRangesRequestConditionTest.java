@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 class VersionRangesRequestConditionTest {
 
-    private final List<Integer> testApiVersions = List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);;
+    private final List<Integer> testApiVersions = List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
 
     private static final DummyRequest DUMMY_REQUEST = new DummyRequest();
 

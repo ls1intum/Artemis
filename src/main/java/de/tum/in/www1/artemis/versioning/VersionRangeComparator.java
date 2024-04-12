@@ -27,16 +27,16 @@ public class VersionRangeComparator {
             return compareTwoRanges(versions1, versions2);
         }
         else if (versions1.size() == 1 && versions2.size() == 2) {
-            return compareLimitAndRange(versions1.get(0), versions2);
+            return compareLimitAndRange(versions1.getFirst(), versions2);
         }
         else if (versions1.size() == 2 && versions2.size() == 1) {
-            return compareLimitAndRange(versions2.get(0), versions1).invert();
+            return compareLimitAndRange(versions2.getFirst(), versions1).invert();
         }
         throw new ApiVersionRangeNotValidException();
     }
 
     private static VersionRangeComparisonType compareTwoLimits(List<Integer> limit1, List<Integer> limit2) {
-        var result = Integer.compare(limit1.get(0), limit2.get(0));
+        var result = Integer.compare(limit1.getFirst(), limit2.getFirst());
         // This could be simplified but for better readability (Constants) it is not
         if (result < 0) {
             // First limit starts after second one. Since both are infinite second one includes first one
@@ -95,7 +95,7 @@ public class VersionRangeComparator {
             if (endResult > -1) {
                 return A_INCLUDES_B;
             }
-            if (range1.get(1) + 1 < range2.get(0)) {
+            if (range1.get(1) + 1 < range2.getFirst()) {
                 return FIRST_A_NO_INTERSECT;
             }
             else {
@@ -106,7 +106,7 @@ public class VersionRangeComparator {
             if (endResult < 1) {
                 return B_INCLUDES_A;
             }
-            if (range2.get(1) + 1 < range1.get(0)) {
+            if (range2.get(1) + 1 < range1.getFirst()) {
                 return FIRST_B_NO_INTERSECT;
             }
             else {

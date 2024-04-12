@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.versioning;
 
 import static de.tum.in.www1.artemis.versioning.VersionRangeFactory.getInstanceOfVersionRange;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 
@@ -40,8 +40,8 @@ class VersionRangeFactoryTest {
 
     @Test
     void testCombine_separateRanges() {
-        assertThrows(ApiVersionRangeNotValidException.class, () -> VersionRangeFactory.combine(range7_9, range3_5));
-        assertThrows(ApiVersionRangeNotValidException.class, () -> VersionRangeFactory.combine(range3_5, range7_9));
+        assertThatThrownBy(() -> VersionRangeFactory.combine(range7_9, range3_5)).isInstanceOf(ApiVersionRangeNotValidException.class);
+        assertThatThrownBy(() -> VersionRangeFactory.combine(range3_5, range7_9)).isInstanceOf(ApiVersionRangeNotValidException.class);
     }
 
     @Test
@@ -132,15 +132,14 @@ class VersionRangeFactoryTest {
 
     @Test
     void testCombine_limitAfterRange() {
-        assertThrows(ApiVersionRangeNotValidException.class, () -> VersionRangeFactory.combine(limit7, range3_5));
-        assertThrows(ApiVersionRangeNotValidException.class, () -> VersionRangeFactory.combine(range3_5, limit7));
+        assertThatThrownBy(() -> VersionRangeFactory.combine(limit7, range3_5)).isInstanceOf(ApiVersionRangeNotValidException.class);
+        assertThatThrownBy(() -> VersionRangeFactory.combine(range3_5, limit7)).isInstanceOf(ApiVersionRangeNotValidException.class);
     }
 
     @Test
     void testCombine_sameLimits() {
         var actual = VersionRangeFactory.combine(limit1, limit1);
         assertThat(actual.value()).isEqualTo(limit1.value());
-
     }
 
     @Test

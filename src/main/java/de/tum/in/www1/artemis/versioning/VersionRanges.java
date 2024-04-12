@@ -15,7 +15,7 @@ public @interface VersionRanges {
     /**
      * Specifies a set of different version ranges
      *
-     * @return set of ranges
+     * @return array of ranges
      */
     VersionRange[] value() default {};
 }

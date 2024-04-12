@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.versioning;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,7 +35,7 @@ public class VersionRequestMappingHandlerMapping extends RequestMappingHandlerMa
      */
     public VersionRequestMappingHandlerMapping(List<Integer> apiVersions, String pathPrefixSegment, String versionPrefix) {
         this.apiVersions = apiVersions;
-        this.latestVersion = this.apiVersions.get(this.apiVersions.size() - 1);
+        this.latestVersion = this.apiVersions.getLast();
         this.pathPrefixSegment = pathPrefixSegment;
         this.versionPrefix = versionPrefix;
     }
@@ -84,7 +85,8 @@ public class VersionRequestMappingHandlerMapping extends RequestMappingHandlerMa
      * @return The request mapping info
      */
     private RequestMappingInfo createApiVersionInfo(VersionRangesRequestCondition customCondition) {
-        List<String> patterns = customCondition.getApplicableVersions().stream().map(e -> "/" + pathPrefixSegment + "/" + versionPrefix + e).collect(Collectors.toList());
+        List<String> patterns = customCondition.getApplicableVersions().stream().map(e -> "/" + pathPrefixSegment + "/" + versionPrefix + e)
+                .collect(Collectors.toCollection(ArrayList::new));
 
         // Add an endpoint without version as a fallback to the latest version
         if (customCondition.getApplicableVersions().contains(latestVersion)) {

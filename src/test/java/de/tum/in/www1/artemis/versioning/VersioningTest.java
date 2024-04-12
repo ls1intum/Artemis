@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.versioning;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -47,7 +47,7 @@ class VersioningTest extends AbstractSpringIntegrationIndependentTest {
                 return "";
             }
             return name.replaceFirst("v[1-9][0-9]*/", "");
-        }, Collectors.mapping(entry -> entry.getValue().getMethod(), Collectors.toList())));
+        }, Collectors.mapping(entry -> entry.getValue().getMethod(), Collectors.toCollection(ArrayList::new))));
 
         // Check collisions for each endpoint
         for (var endpoint : methodsGroupedByPathIgnoreVersion.entrySet()) {
@@ -71,7 +71,7 @@ class VersioningTest extends AbstractSpringIntegrationIndependentTest {
         var httpMethodsWithNoMappingAnnotations = httpMethodsByMappingAnnotations.entrySet().stream().filter(entry -> entry.getValue().isEmpty()).map(Map.Entry::getKey).toList();
         var httpMethodSplit = httpMethodsByMappingAnnotations.entrySet().stream()
                 .filter(entry -> !httpMethodsWithMultipleMappingAnnotations.containsKey(entry.getKey()) && !httpMethodsWithNoMappingAnnotations.contains(entry.getKey()))
-                .collect(Collectors.groupingBy(entry -> entry.getValue().get(0), Collectors.mapping(Map.Entry::getKey, Collectors.toList())));
+                .collect(Collectors.groupingBy(entry -> entry.getValue().getFirst(), Collectors.mapping(Map.Entry::getKey, Collectors.toCollection(ArrayList::new))));
 
         // Make sure that the exceptions were manually specified
         httpMethodsWithMultipleMappingAnnotations.forEach((method, list) -> checkGlobalMappingForMethod(method));

@@ -59,11 +59,11 @@ public class VersionRangeFactory {
         }
         else if ((versions1.size() == 2 && versions2.size() == 1) || (versions1.size() == 1 && versions2.size() == 2)) {
             // One is finite and one is infinite.
-            int limit = versions1.size() == 1 ? versions1.get(0) : versions2.get(0);
+            int limit = versions1.size() == 1 ? versions1.getFirst() : versions2.getFirst();
             List<Integer> range = versions1.size() == 2 ? versions1 : versions2;
 
             if (range.get(1) + 1 < limit) {
-                // there is a range and then there is a start limit afterwards => not a valid combination
+                // there is a range and then there is a start limit afterward => not a valid combination
                 throw new ApiVersionRangeNotValidException();
             }
             else if (limit <= range.get(0)) {
@@ -72,16 +72,16 @@ public class VersionRangeFactory {
             }
             else {
                 // start limit is within the range => create a start limit from the beginning of range
-                return getInstanceOfVersionRange(range.get(0));
+                return getInstanceOfVersionRange(range.getFirst());
             }
         }
         else if (versions1.size() == 1 && versions2.size() == 1) {
             // Both are infinite. Redefine start limit
-            if (versions1.get(0) < versions2.get(0)) {
-                return getInstanceOfVersionRange(versions1.get(0));
+            if (versions1.getFirst() < versions2.getFirst()) {
+                return getInstanceOfVersionRange(versions1.getFirst());
             }
             else {
-                return getInstanceOfVersionRange(versions2.get(0));
+                return getInstanceOfVersionRange(versions2.getFirst());
             }
         }
 
