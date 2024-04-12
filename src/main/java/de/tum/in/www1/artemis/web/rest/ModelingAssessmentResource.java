@@ -117,6 +117,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             @ApiResponse(responseCode = "200", description = PUT_SUBMIT_ASSESSMENT_200_REASON, content = {
                     @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = Result.class)) }),
             @ApiResponse(responseCode = "403", description = ErrorConstants.REQ_403_REASON), @ApiResponse(responseCode = "404", description = ErrorConstants.REQ_404_REASON) })
+    @PutMapping("modeling-submissions/{submissionId}/result/{resultId}/assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {

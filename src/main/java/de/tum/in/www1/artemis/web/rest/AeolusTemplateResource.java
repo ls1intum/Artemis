@@ -56,7 +56,7 @@ public class AeolusTemplateResource {
      * @param testCoverage   Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "aeolus/templates/{language}/{projectType}", "/templates/{language}" })
+    @GetMapping({ "aeolus/templates/{language}/{projectType}", "aeolus/templates/{language}" })
     @EnforceAtLeastEditor
     public ResponseEntity<String> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
@@ -83,7 +83,7 @@ public class AeolusTemplateResource {
      * @param testCoverage   Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "aeolus/templateScripts/{language}/{projectType}", "/templateScripts/{language}" })
+    @GetMapping({ "aeolus/templateScripts/{language}/{projectType}", "aeolus/templateScripts/{language}" })
     @EnforceAtLeastEditor
     public ResponseEntity<String> getAeolusTemplateScript(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
