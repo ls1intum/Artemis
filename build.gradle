@@ -454,6 +454,7 @@ dependencies {
             strictly "1.14.13"
         }
     }
+    testImplementation "io.github.classgraph:classgraph:4.8.165"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20240303"
@@ -555,7 +556,6 @@ tasks.named("dependencyUpdates").configure {
 // 7) Check JavaDoc:                                ./gradlew checkstyleMain -x webapp
 // 8) Detects uses of legacy code:                  ./gradlew modernizer -x webapp
 // 9) Check for vulnerabilities in dependencies     ./gradlew dependencyCheckAnalyze -x webapp
-// 10) Generate Liquibase diff:                     ./gradlew liquibaseDiffChangelog
-// 11) Clear Liquibase checksums:                   ./gradlew liquibaseClearChecksums
-// 12) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
-// 13) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
+// 10) Clear Liquibase checksums:                   ./gradlew liquibaseClearChecksums
+// 11) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
+// 12) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)

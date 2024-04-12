@@ -71,8 +71,8 @@ export class LoginPage {
      * Asserts that the "Release Notes" link in the footer is visible and has a non-empty href attribute.
      */
     async shouldShowReleaseNotesInFooter() {
-        expect(await this.page.isVisible('#release-notes')).toBe(true);
-        expect(await this.page.getAttribute('#release-notes', 'href')).toBeTruthy();
+        expect(await this.page.isVisible('#releases')).toBe(true);
+        expect(await this.page.getAttribute('#releases', 'href')).toBeTruthy();
     }
 
     /**
