@@ -23,11 +23,13 @@ public class AuthorizationTestService {
     private static final Set<Class<? extends Annotation>> AUTHORIZATION_ANNOTATIONS = Set.of(EnforceAdmin.class, EnforceAtLeastInstructor.class, EnforceAtLeastEditor.class,
             EnforceAtLeastTutor.class, EnforceAtLeastStudent.class, EnforceNothing.class, PreAuthorize.class);
 
-    private static final String REST_BASE_PATH = "/api";
+    private static final String REST_BASE_PATH_REGEX = "^/api(/v\\d+)?";
 
-    private static final String REST_ADMIN_PATH = REST_BASE_PATH + "/admin";
+    private static final String REST_ADMIN_PATH_REGEX = REST_BASE_PATH_REGEX + "/admin";
 
-    private static final String REST_PUBLIC_PATH = REST_BASE_PATH + "/public";
+    private static final String REST_PUBLIC_PATH_REGEX = REST_BASE_PATH_REGEX + "/public";
+
+    private static final String REST_PATH_TAIL_REGEX = "/.*";
 
     /**
      * Tests all endpoints and prints the reports
@@ -102,25 +104,25 @@ public class AuthorizationTestService {
         switch (annotationType) {
             case "EnforceAdmin" -> {
                 for (String pattern : patterns) {
-                    if (!pattern.startsWith(REST_ADMIN_PATH)) {
-                        addElement(methodReports, javaMethod,
-                                "Expect path of method " + javaMethod.getName() + " annotated with @EnforceAdmin to start with " + REST_ADMIN_PATH + " but is " + pattern + ".");
+                    if (!pattern.matches(REST_ADMIN_PATH_REGEX + REST_PATH_TAIL_REGEX)) {
+                        addElement(methodReports, javaMethod, "Expect path of method " + javaMethod.getName() + " annotated with @EnforceAdmin to match regex "
+                                + REST_ADMIN_PATH_REGEX + REST_PATH_TAIL_REGEX + " but is " + pattern + ".");
                     }
                 }
             }
             case "EnforceAtLeastInstructor", "EnforceAtLeastEditor", "EnforceAtLeastTutor", "EnforceAtLeastStudent" -> {
                 for (String pattern : patterns) {
-                    if (!pattern.startsWith(REST_BASE_PATH)) {
-                        addElement(methodReports, javaMethod, "Expect path of method " + javaMethod.getName() + " annotated with @" + annotationType + " to start with "
-                                + REST_BASE_PATH + " but is " + pattern + ".");
+                    if (!pattern.matches(REST_BASE_PATH_REGEX + REST_PATH_TAIL_REGEX)) {
+                        addElement(methodReports, javaMethod, "Expect path of method " + javaMethod.getName() + " annotated with @" + annotationType + " to match regex "
+                                + REST_BASE_PATH_REGEX + REST_PATH_TAIL_REGEX + " but is " + pattern + ".");
                     }
                 }
             }
             case "EnforceNothing" -> {
                 for (String pattern : patterns) {
-                    if (!pattern.startsWith(REST_PUBLIC_PATH)) {
-                        addElement(methodReports, javaMethod,
-                                "Expect path of method " + javaMethod.getName() + " annotated with @EnforceNothing to start with " + REST_PUBLIC_PATH + " but is " + pattern + ".");
+                    if (!pattern.matches(REST_PUBLIC_PATH_REGEX + REST_PATH_TAIL_REGEX)) {
+                        addElement(methodReports, javaMethod, "Expect path of method " + javaMethod.getName() + " annotated with @EnforceNothing to match regex "
+                                + REST_PUBLIC_PATH_REGEX + REST_PATH_TAIL_REGEX + " but is " + pattern + ".");
                     }
                 }
             }
@@ -137,7 +139,7 @@ public class AuthorizationTestService {
     private Annotation getSingleAuthAnnotation(Method method) {
         List<Annotation> annotations = getAuthAnnotations(method);
         if (annotations.size() == 1) {
-            return annotations.get(0);
+            return annotations.getFirst();
         }
         return null;
     }
