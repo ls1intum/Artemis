@@ -5,7 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -37,7 +37,7 @@ public interface LtiPlatformConfigurationRepository extends JpaRepository<LtiPla
      * @return LtiPlatformConfiguration if found.
      * @throws EntityNotFoundException if not found.
      */
-    @NotNull
+    @Nonnull
     default LtiPlatformConfiguration findByIdElseThrow(Long platformId) throws EntityNotFoundException {
         return findById(platformId).orElseThrow(() -> new EntityNotFoundException("LtiPlatformConfiguration", platformId));
     }
@@ -49,7 +49,7 @@ public interface LtiPlatformConfigurationRepository extends JpaRepository<LtiPla
      * @return {@link LtiPlatformConfiguration} with eager-loaded courses, or {@code null} if not found.
      * @throws EntityNotFoundException if no entity with the given ID is found.
      */
-    @NotNull
+    @Nonnull
     default LtiPlatformConfiguration findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(long id) throws EntityNotFoundException {
         return Optional.ofNullable(findWithEagerOnlineCourseConfigurationsById(id)).orElseThrow(() -> new EntityNotFoundException("LtiPlatformConfiguration", id));
     }

@@ -7,8 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -136,7 +136,7 @@ public class Lti13Service {
      * @param onlineCourseConfiguration the configuration for the online course
      * @return the username for the LTI user
      */
-    @NotNull
+    @Nonnull
     public String createUsernameFromLaunchRequest(OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username;
 

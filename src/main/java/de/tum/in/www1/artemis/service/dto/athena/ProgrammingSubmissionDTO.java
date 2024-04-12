@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.dto.athena;
 
 import static de.tum.in.www1.artemis.config.Constants.ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 
@@ -18,7 +18,7 @@ public record ProgrammingSubmissionDTO(long id, long exerciseId, String reposito
      * @param submission The submission to create the DTO from
      * @return The created DTO
      */
-    public static ProgrammingSubmissionDTO of(long exerciseId, @NotNull ProgrammingSubmission submission, String artemisServerUrl) {
+    public static ProgrammingSubmissionDTO of(long exerciseId, @Nonnull ProgrammingSubmission submission, String artemisServerUrl) {
         return new ProgrammingSubmissionDTO(submission.getId(), exerciseId,
                 artemisServerUrl + ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH + exerciseId + "/submissions/" + submission.getId() + "/repository");
     }

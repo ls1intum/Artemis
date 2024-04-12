@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -281,7 +281,7 @@ public class LectureUnitProcessingService {
      * @param outlineMap   Outline map with unit information
      * @param index        index that shows current page
      */
-    private void updatePreviousUnitEndPage(int outlineCount, @NotNull Map<Integer, LectureUnitSplit> outlineMap, int index) {
+    private void updatePreviousUnitEndPage(int outlineCount, @Nonnull Map<Integer, LectureUnitSplit> outlineMap, int index) {
         if (outlineCount > 1) {
             int previousOutlineCount = outlineCount - 1;
             int previousStart = outlineMap.get(previousOutlineCount).startPage;

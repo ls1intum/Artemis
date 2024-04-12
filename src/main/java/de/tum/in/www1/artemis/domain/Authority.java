@@ -4,8 +4,8 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
+import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
@@ -37,7 +37,7 @@ public class Authority implements Serializable {
 
     public static final Authority USER_AUTHORITY = new Authority(Role.STUDENT.getAuthority());
 
-    @NotNull
+    @Nonnull
     @Size(max = 50)
     @Id
     @Column(length = 50)

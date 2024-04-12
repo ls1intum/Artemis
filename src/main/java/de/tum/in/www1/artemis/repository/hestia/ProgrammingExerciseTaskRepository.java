@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.repository.hestia;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -26,7 +26,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
      * @return The task with the given ID if found
      * @throws EntityNotFoundException If no task with the given ID was found
      */
-    @NotNull
+    @Nonnull
     default ProgrammingExerciseTask findByIdWithTestCaseAndSolutionEntriesElseThrow(long entryId) throws EntityNotFoundException {
         return findByIdWithTestCaseAndSolutionEntries(entryId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", entryId));
     }
@@ -53,7 +53,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
      * @return All tasks with solution entries and associated test cases
      * @throws EntityNotFoundException If the exercise with exerciseId does not exist
      */
-    @NotNull
+    @Nonnull
     default Set<ProgrammingExerciseTask> findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(long exerciseId) throws EntityNotFoundException {
         return findByExerciseIdWithTestCaseAndSolutionEntries(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", exerciseId));
     }

@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -743,7 +743,7 @@ public class ExerciseService {
      * @param minScore the minimum score that should be achieved
      * @return true if the user achieved the minimum score, false otherwise
      */
-    public boolean hasScoredAtLeast(@NotNull Exercise exercise, @NotNull User user, double minScore) {
+    public boolean hasScoredAtLeast(@Nonnull Exercise exercise, @Nonnull User user, double minScore) {
         final var score = participantScoreService.getStudentAndTeamParticipationScoresAsDoubleStream(user, Set.of(exercise)).max();
         if (score.isEmpty()) {
             return false;
@@ -757,7 +757,7 @@ public class ExerciseService {
      * @param exercises  set of exercises
      * @param competency competency to remove
      */
-    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull Competency competency) {
+    public void removeCompetency(@Nonnull Set<Exercise> exercises, @Nonnull Competency competency) {
         exercises.forEach(exercise -> exercise.getCompetencies().remove(competency));
         exerciseRepository.saveAll(exercises);
     }

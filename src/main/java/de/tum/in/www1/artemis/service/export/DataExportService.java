@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -140,7 +140,7 @@ public class DataExportService {
      * @param dataExport the data export for which the next request date should be calculated
      * @return the next date when the user can request a data export
      */
-    @NotNull
+    @Nonnull
     private ZonedDateTime retrieveNextRequestDate(DataExport dataExport) {
         return dataExport.getCreatedDate().atZone(ZoneId.systemDefault()).plusDays(DAYS_BETWEEN_DATA_EXPORTS);
     }

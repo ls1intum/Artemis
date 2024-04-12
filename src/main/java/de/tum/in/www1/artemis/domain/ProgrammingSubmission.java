@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -58,7 +58,7 @@ public class ProgrammingSubmission extends Submission {
      * @param commitHash     the hash of the corresponding commit in the git repository in the version control system
      * @return the newly created programming submission
      */
-    @NotNull
+    @Nonnull
     public static ProgrammingSubmission createFallbackSubmission(ProgrammingExerciseParticipation participation, ZonedDateTime submissionDate, String commitHash) {
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission.setParticipation((Participation) participation);

@@ -4,8 +4,8 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.*;
 
+import jakarta.annotation.Nonnull;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,7 +115,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         return handleModelingSubmission(exerciseId, modelingSubmission);
     }
 
-    @NotNull
+    @Nonnull
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, ModelingSubmission modelingSubmission) {
         long start = System.currentTimeMillis();
         final var user = userRepository.getUserWithGroupsAndAuthorities();

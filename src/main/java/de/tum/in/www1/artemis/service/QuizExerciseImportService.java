@@ -6,7 +6,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +49,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
      * @return The newly created exercise
      */
-    @NotNull
+    @Nonnull
     public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
@@ -69,7 +69,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * @param importedExercise The exercise from which to copy the basis
      * @return the cloned QuizExercise basis
      */
-    @NotNull
+    @Nonnull
     private QuizExercise copyQuizExerciseBasis(QuizExercise importedExercise) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         QuizExercise newExercise = new QuizExercise();

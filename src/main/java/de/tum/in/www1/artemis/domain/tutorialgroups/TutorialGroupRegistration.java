@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
+import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -21,13 +21,13 @@ public class TutorialGroupRegistration extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "student_id")
-    @NotNull
+    @Nonnull
     @JsonIgnoreProperties("tutorialGroupRegistrations")
     private User student;
 
     @ManyToOne
     @JoinColumn(name = "tutorial_group_id")
-    @NotNull
+    @Nonnull
     @JsonIgnoreProperties("registrations")
     private TutorialGroup tutorialGroup;
 

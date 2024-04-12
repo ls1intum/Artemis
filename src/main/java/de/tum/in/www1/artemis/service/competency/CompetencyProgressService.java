@@ -6,7 +6,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +74,7 @@ public class CompetencyProgressService {
      * @param participant    The participant (user or team) for which to update the progress
      */
     @Async
-    public void updateProgressByLearningObjectAsync(LearningObject learningObject, @NotNull Participant participant) {
+    public void updateProgressByLearningObjectAsync(LearningObject learningObject, @Nonnull Participant participant) {
         SecurityUtils.setAuthorizationObject(); // required for async
         updateProgressByLearningObject(learningObject, participant.getParticipants());
     }
@@ -118,7 +118,7 @@ public class CompetencyProgressService {
      * @param learningObject The learning object for which to fetch the competencies
      * @param users          A list of users for which to update the progress
      */
-    public void updateProgressByLearningObject(LearningObject learningObject, @NotNull Set<User> users) {
+    public void updateProgressByLearningObject(LearningObject learningObject, @Nonnull Set<User> users) {
         log.debug("Updating competency progress for {} users.", users.size());
         try {
             Set<Competency> competencies;
@@ -215,7 +215,7 @@ public class CompetencyProgressService {
      * @param user            The user for which the progress should be calculated
      * @return The percentage of completed learning objects by the user
      */
-    private double calculateProgress(@NotNull Set<LearningObject> learningObjects, @NotNull User user) {
+    private double calculateProgress(@Nonnull Set<LearningObject> learningObjects, @Nonnull User user) {
         return learningObjects.stream().map(learningObject -> learningObjectService.isCompletedByUser(learningObject, user)).mapToInt(completed -> completed ? 100 : 0).average()
                 .orElse(0.);
     }
@@ -227,7 +227,7 @@ public class CompetencyProgressService {
      * @param user      The user for which the confidence score should be calculated
      * @return The average score of the user in all exercises linked to the competency
      */
-    private double calculateConfidence(@NotNull Set<Exercise> exercises, @NotNull User user) {
+    private double calculateConfidence(@Nonnull Set<Exercise> exercises, @Nonnull User user) {
         return participantScoreService.getStudentAndTeamParticipationScoresAsDoubleStream(user, exercises).summaryStatistics().getAverage();
     }
 
@@ -237,7 +237,7 @@ public class CompetencyProgressService {
      * @param competencyProgress The user's progress
      * @return The mastery level
      */
-    public static double getMastery(@NotNull CompetencyProgress competencyProgress) {
+    public static double getMastery(@Nonnull CompetencyProgress competencyProgress) {
         // mastery as a weighted function of progress and confidence (consistent with client)
         final double weight = 2.0 / 3.0;
         return (1 - weight) * competencyProgress.getProgress() + weight * competencyProgress.getConfidence();
@@ -249,7 +249,7 @@ public class CompetencyProgressService {
      * @param competencyProgress The user's progress
      * @return The mastery level in percent
      */
-    public static double getMasteryProgress(@NotNull CompetencyProgress competencyProgress) {
+    public static double getMasteryProgress(@Nonnull CompetencyProgress competencyProgress) {
         final double mastery = getMastery(competencyProgress);
         return mastery / competencyProgress.getCompetency().getMasteryThreshold();
     }
@@ -260,7 +260,7 @@ public class CompetencyProgressService {
      * @param competencyProgress The user's progress
      * @return True if the user mastered the competency, false otherwise
      */
-    public static boolean isMastered(@NotNull CompetencyProgress competencyProgress) {
+    public static boolean isMastered(@Nonnull CompetencyProgress competencyProgress) {
         final double mastery = getMastery(competencyProgress);
         return mastery >= competencyProgress.getCompetency().getMasteryThreshold();
     }
@@ -271,7 +271,7 @@ public class CompetencyProgressService {
      * @param competency the competency to check
      * @return true if the competency can be mastered without completing any exercises, false otherwise
      */
-    public static boolean canBeMasteredWithoutExercises(@NotNull Competency competency) {
+    public static boolean canBeMasteredWithoutExercises(@Nonnull Competency competency) {
         final var lectureUnits = competency.getLectureUnits().size();
         final var numberOfLearningObjects = lectureUnits + competency.getExercises().size();
         final var achievableMasteryScore = ((double) lectureUnits) / (3 * numberOfLearningObjects) * 100;
@@ -294,7 +294,7 @@ public class CompetencyProgressService {
      * @param course     The course for which to get the progress
      * @return The progress for the course
      */
-    public CourseCompetencyProgressDTO getCompetencyCourseProgress(@NotNull Competency competency, @NotNull Course course) {
+    public CourseCompetencyProgressDTO getCompetencyCourseProgress(@Nonnull Competency competency, @Nonnull Course course) {
         var numberOfStudents = competencyProgressRepository.countByCompetency(competency.getId());
         var numberOfMasteredStudents = competencyProgressRepository.countByCompetencyAndProgressAndConfidenceGreaterThanEqual(competency.getId(), 100.0,
                 (double) competency.getMasteryThreshold());

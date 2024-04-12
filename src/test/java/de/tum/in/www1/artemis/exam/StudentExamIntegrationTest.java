@@ -33,7 +33,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.gitlab4j.api.GitLabApiException;
@@ -1867,7 +1867,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         deleteExamWithInstructor(exam1);
     }
 
-    @NotNull
+    @Nonnull
     private StudentExam createStudentExamWithResultsAndAssessments(boolean setFields, int numberOfStudents) throws Exception {
         StudentExam studentExam = prepareStudentExamsForConduction(false, setFields, numberOfStudents).get(0);
         var exam = examRepository.findById(studentExam.getExam().getId()).orElseThrow();
@@ -2192,7 +2192,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().mostSeverePlagiarismVerdict()).isNull();
     }
 
-    @NotNull
+    @Nonnull
     private Exam configureFinalExamWithBonusExam(StudentExam finalStudentExam, StudentExam bonusStudentExam, BonusStrategy bonusStrategy) {
         var finalExam = examRepository.findById(finalStudentExam.getExam().getId()).orElseThrow();
         var bonusExam = examRepository.findById(bonusStudentExam.getExam().getId()).orElseThrow();

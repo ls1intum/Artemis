@@ -3,10 +3,10 @@ package de.tum.in.www1.artemis.domain.metis.conversation;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -53,7 +53,7 @@ public class Channel extends Conversation {
      * A channel is either public or private. Users need an invitation to join a private channel. Every user can join a public channel.
      */
     @Column(name = "is_public")
-    @NotNull
+    @Nonnull
     private Boolean isPublic;
 
     /**
@@ -61,7 +61,7 @@ public class Channel extends Conversation {
      * Answer posts are still possible so that students can ask questions concerning the announcement.
      */
     @Column(name = "is_announcement")
-    @NotNull
+    @Nonnull
     private Boolean isAnnouncementChannel;
 
     /**
@@ -70,7 +70,7 @@ public class Channel extends Conversation {
      * The channel can be unarchived at any time.
      */
     @Column(name = "is_archived")
-    @NotNull
+    @Nonnull
     private Boolean isArchived;
 
     /**
@@ -78,7 +78,7 @@ public class Channel extends Conversation {
      * A conversation_participant entry will be created on the fly for these channels as soon as an entry is needed.
      */
     @Column(name = "is_course_wide")
-    @NotNull
+    @Nonnull
     private boolean isCourseWide = false;
 
     @OneToOne

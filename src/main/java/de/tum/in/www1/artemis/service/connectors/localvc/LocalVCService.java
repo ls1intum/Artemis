@@ -10,8 +10,8 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Set;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -290,7 +290,7 @@ public class LocalVCService extends AbstractVersionControlService {
     }
 
     @Override
-    @NotNull
+    @Nonnull
     public Commit getLastCommitDetails(Object requestBody) {
         // The local VCS will create a Commit object straight away and hand that to the processNewProgrammingSubmission method in
         // ProgrammingSubmissionService.

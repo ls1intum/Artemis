@@ -7,8 +7,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 import javax.annotation.CheckReturnValue;
 
@@ -80,7 +80,7 @@ public class AuthorizationCheckService {
      * @return true if the currently logged-in user is at least an editor (also if the user is instructor or admin), false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastEditorForExercise(@NotNull Exercise exercise) {
+    public boolean isAtLeastEditorForExercise(@Nonnull Exercise exercise) {
         return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
     }
 
@@ -93,7 +93,7 @@ public class AuthorizationCheckService {
      * @return true if the currently logged-in user is at least an editor, false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastEditorForExercise(@NotNull Exercise exercise, @Nullable User user) {
+    public boolean isAtLeastEditorForExercise(@Nonnull Exercise exercise, @Nullable User user) {
         return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
@@ -104,7 +104,7 @@ public class AuthorizationCheckService {
      * @param course the course that needs to be checked
      * @param user   the user whose permissions should be checked
      */
-    private void checkIsAtLeastEditorInCourseElseThrow(@NotNull Course course, @Nullable User user) {
+    private void checkIsAtLeastEditorInCourseElseThrow(@Nonnull Course course, @Nullable User user) {
         if (!isAtLeastEditorInCourse(course, user)) {
             throw new AccessForbiddenException("Course", course.getId());
         }
@@ -118,7 +118,7 @@ public class AuthorizationCheckService {
      * @return true if the passed user is at least an editor in the course, false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastEditorInCourse(@NotNull Course course, @Nullable User user) {
+    public boolean isAtLeastEditorInCourse(@Nonnull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
     }
@@ -182,7 +182,7 @@ public class AuthorizationCheckService {
      * @return true if the currently logged-in user is at least a teaching assistant (also if the user is instructor or admin), false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastTeachingAssistantForExercise(@NotNull Exercise exercise) {
+    public boolean isAtLeastTeachingAssistantForExercise(@Nonnull Exercise exercise) {
         return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
     }
 
@@ -195,7 +195,7 @@ public class AuthorizationCheckService {
      * @return true if the passed user is at least a teaching assistant (also if the user is instructor or admin), false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastTeachingAssistantForExercise(@NotNull Exercise exercise, @Nullable User user) {
+    public boolean isAtLeastTeachingAssistantForExercise(@Nonnull Exercise exercise, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
@@ -207,7 +207,7 @@ public class AuthorizationCheckService {
      * @return true if the currently logged-in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastStudentForExercise(@NotNull Exercise exercise) {
+    public boolean isAtLeastStudentForExercise(@Nonnull Exercise exercise) {
         return isAtLeastStudentForExercise(exercise, null);
     }
 
@@ -219,7 +219,7 @@ public class AuthorizationCheckService {
      * @return true if the currently logged-in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastStudentForExercise(@NotNull Exercise exercise, @Nullable User user) {
+    public boolean isAtLeastStudentForExercise(@Nonnull Exercise exercise, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return isStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
     }
@@ -231,7 +231,7 @@ public class AuthorizationCheckService {
      * @param course the course that needs to be checked
      * @param user   the user whose permissions should be checked
      */
-    private void checkIsAtLeastTeachingAssistantInCourseElseThrow(@NotNull Course course, @Nullable User user) {
+    private void checkIsAtLeastTeachingAssistantInCourseElseThrow(@Nonnull Course course, @Nullable User user) {
         if (!isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("Course", course.getId());
         }
@@ -245,7 +245,7 @@ public class AuthorizationCheckService {
      * @return true if the passed user is at least a teaching assistant in the course (also if the user is instructor or admin), false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastTeachingAssistantInCourse(@NotNull Course course, @Nullable User user) {
+    public boolean isAtLeastTeachingAssistantInCourse(@Nonnull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
     }
@@ -293,7 +293,7 @@ public class AuthorizationCheckService {
      * @param course the course that needs to be checked
      * @param user   the user whose permissions should be checked
      */
-    private void checkIsAtLeastStudentInCourseElseThrow(@NotNull Course course, @Nullable User user) {
+    private void checkIsAtLeastStudentInCourseElseThrow(@Nonnull Course course, @Nullable User user) {
         if (!isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Course", course.getId());
         }
@@ -428,7 +428,7 @@ public class AuthorizationCheckService {
      * @return true if the passed user is at least a student in the course (also if the user is teaching assistant, instructor or admin), false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastStudentInCourse(@NotNull Course course, @Nullable User user) {
+    public boolean isAtLeastStudentInCourse(@Nonnull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return isStudentInCourse(course, user) || isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user)
                 || isAdmin(user);
@@ -479,7 +479,7 @@ public class AuthorizationCheckService {
      * @return true if the currently logged-in user is at least an instructor (or admin), false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastInstructorForExercise(@NotNull Exercise exercise, @Nullable User user) {
+    public boolean isAtLeastInstructorForExercise(@Nonnull Exercise exercise, @Nullable User user) {
         return isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
@@ -490,7 +490,7 @@ public class AuthorizationCheckService {
      * @return true if the currently logged-in user is at least an instructor (or admin), false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastInstructorForExercise(@NotNull Exercise exercise) {
+    public boolean isAtLeastInstructorForExercise(@Nonnull Exercise exercise) {
         return isAtLeastInstructorForExercise(exercise, null);
     }
 
@@ -502,7 +502,7 @@ public class AuthorizationCheckService {
      * @param lecture belongs to a course that will be checked for permission rights
      * @param user    the user whose permissions should be checked
      */
-    public void checkHasAtLeastRoleForLectureElseThrow(@NotNull Role role, @NotNull Lecture lecture, @Nullable User user) {
+    public void checkHasAtLeastRoleForLectureElseThrow(@Nonnull Role role, @Nonnull Lecture lecture, @Nullable User user) {
         checkHasAtLeastRoleInCourseElseThrow(role, lecture.getCourse(), user);
     }
 
@@ -514,7 +514,7 @@ public class AuthorizationCheckService {
      * @param exercise belongs to a course that will be checked for permission rights
      * @param user     the user whose permissions should be checked
      */
-    public void checkHasAtLeastRoleForExerciseElseThrow(@NotNull Role role, @NotNull Exercise exercise, @Nullable User user) {
+    public void checkHasAtLeastRoleForExerciseElseThrow(@Nonnull Role role, @Nonnull Exercise exercise, @Nullable User user) {
         checkHasAtLeastRoleInCourseElseThrow(role, exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
@@ -526,7 +526,7 @@ public class AuthorizationCheckService {
      * @param course the course that needs to be checked
      * @param user   the user whose permissions should be checked
      */
-    public void checkHasAtLeastRoleInCourseElseThrow(@NotNull Role role, @NotNull Course course, @Nullable User user) {
+    public void checkHasAtLeastRoleInCourseElseThrow(@Nonnull Role role, @Nonnull Course course, @Nullable User user) {
         // Note: the consumer is necessary to get an exhaustive check for the switch expression here, also see https://stackoverflow.com/questions/66204407
         Consumer<User> consumer = switch (role) {
             case ADMIN -> this::checkIsAdminElseThrow;
@@ -547,7 +547,7 @@ public class AuthorizationCheckService {
      * @param course the course that needs to be checked
      * @param user   the user whose permissions should be checked
      */
-    private void checkIsAtLeastInstructorInCourseElseThrow(@NotNull Course course, @Nullable User user) {
+    private void checkIsAtLeastInstructorInCourseElseThrow(@Nonnull Course course, @Nullable User user) {
         if (!isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("Course", course.getId());
         }
@@ -561,7 +561,7 @@ public class AuthorizationCheckService {
      * @return true if the passed user is at least instructor in the course (also if the user is admin), false otherwise
      */
     @CheckReturnValue
-    public boolean isAtLeastInstructorInCourse(@NotNull Course course, @Nullable User user) {
+    public boolean isAtLeastInstructorInCourse(@Nonnull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin(user);
     }
@@ -610,7 +610,7 @@ public class AuthorizationCheckService {
      * @return true, if user is instructor of this course, otherwise false
      */
     @CheckReturnValue
-    public boolean isInstructorInCourse(@NotNull Course course, @Nullable User user) {
+    public boolean isInstructorInCourse(@Nonnull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getInstructorGroupName());
     }
@@ -623,7 +623,7 @@ public class AuthorizationCheckService {
      * @return true, if user is an editor of this course, otherwise false
      */
     @CheckReturnValue
-    public boolean isEditorInCourse(@NotNull Course course, @Nullable User user) {
+    public boolean isEditorInCourse(@Nonnull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getEditorGroupName());
     }
@@ -636,7 +636,7 @@ public class AuthorizationCheckService {
      * @return true, if user is teaching assistant of this course, otherwise false
      */
     @CheckReturnValue
-    public boolean isTeachingAssistantInCourse(@NotNull Course course, @Nullable User user) {
+    public boolean isTeachingAssistantInCourse(@Nonnull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getTeachingAssistantGroupName());
     }
@@ -649,7 +649,7 @@ public class AuthorizationCheckService {
      * @return true, if user is only student of this course, otherwise false
      */
     @CheckReturnValue
-    public boolean isOnlyStudentInCourse(@NotNull Course course, @Nullable User user) {
+    public boolean isOnlyStudentInCourse(@Nonnull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getStudentGroupName()) && !isAtLeastTeachingAssistantInCourse(course, user);
     }
@@ -662,7 +662,7 @@ public class AuthorizationCheckService {
      * @return true, if user is student of this course, otherwise false
      */
     @CheckReturnValue
-    public boolean isStudentInCourse(@NotNull Course course, @Nullable User user) {
+    public boolean isStudentInCourse(@Nonnull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getStudentGroupName());
     }
@@ -674,7 +674,7 @@ public class AuthorizationCheckService {
      * @return true, if user is student is owner of this participation, otherwise false
      */
     @CheckReturnValue
-    public boolean isOwnerOfParticipation(@NotNull StudentParticipation participation) {
+    public boolean isOwnerOfParticipation(@Nonnull StudentParticipation participation) {
         if (participation.getParticipant() == null) {
             return false;
         }
@@ -689,7 +689,7 @@ public class AuthorizationCheckService {
      * @param participation the participation that needs to be checked
      * @throws AccessForbiddenException if active user isn't owner of participation
      */
-    public void isOwnerOfParticipationElseThrow(@NotNull StudentParticipation participation) throws AccessForbiddenException {
+    public void isOwnerOfParticipationElseThrow(@Nonnull StudentParticipation participation) throws AccessForbiddenException {
         if (!isOwnerOfParticipation(participation)) {
             throw new AccessForbiddenException("participation", participation.getId());
         }
@@ -703,7 +703,7 @@ public class AuthorizationCheckService {
      * @return true, if user is student is owner of this participation, otherwise false
      */
     @CheckReturnValue
-    public boolean isOwnerOfParticipation(@NotNull StudentParticipation participation, @Nullable User user) {
+    public boolean isOwnerOfParticipation(@Nonnull StudentParticipation participation, @Nullable User user) {
         user = loadUserIfNeeded(user);
         if (participation.getParticipant() == null) {
             return false;
@@ -724,7 +724,7 @@ public class AuthorizationCheckService {
      * @return true if user is owner of this team, otherwise false
      */
     @CheckReturnValue
-    public boolean isOwnerOfTeam(@NotNull Team team, @NotNull User user) {
+    public boolean isOwnerOfTeam(@Nonnull Team team, @Nonnull User user) {
         return user.equals(team.getOwner());
     }
 
@@ -737,7 +737,7 @@ public class AuthorizationCheckService {
      * @return true, if user is student is owner of this team, otherwise false
      */
     @CheckReturnValue
-    public boolean isStudentInTeam(@NotNull Course course, String teamShortName, @NotNull User user) {
+    public boolean isStudentInTeam(@Nonnull Course course, String teamShortName, @Nonnull User user) {
         return userRepository.findAllInTeam(course.getId(), teamShortName).contains(user);
     }
 
@@ -749,7 +749,7 @@ public class AuthorizationCheckService {
      * @return true, if user is allowed to see this exercise, otherwise false
      */
     @CheckReturnValue
-    public boolean isAllowedToSeeExercise(@NotNull Exercise exercise, @Nullable User user) {
+    public boolean isAllowedToSeeExercise(@Nonnull Exercise exercise, @Nullable User user) {
         user = loadUserIfNeeded(user);
         if (isAdmin(user)) {
             return true;
@@ -764,7 +764,7 @@ public class AuthorizationCheckService {
      * @param lecture the lecture that needs to be checked
      * @param user    the user whose permissions should be checked
      */
-    public void checkIsAllowedToSeeLectureElseThrow(@NotNull Lecture lecture, @Nullable User user) {
+    public void checkIsAllowedToSeeLectureElseThrow(@Nonnull Lecture lecture, @Nullable User user) {
         user = loadUserIfNeeded(user);
         if (isAdmin(user)) {
             return;
@@ -785,7 +785,7 @@ public class AuthorizationCheckService {
      * @return true if the user is allowed, false otherwise
      */
     @CheckReturnValue
-    public boolean isAllowedToSeeLectureUnit(@NotNull LectureUnit lectureUnit, @Nullable User user) {
+    public boolean isAllowedToSeeLectureUnit(@Nonnull LectureUnit lectureUnit, @Nullable User user) {
         user = loadUserIfNeeded(user);
         if (isAdmin(user)) {
             return true;
@@ -828,7 +828,7 @@ public class AuthorizationCheckService {
      * @return true, if user is admin, otherwise false
      */
     @CheckReturnValue
-    public boolean isAdmin(@NotNull String login) {
+    public boolean isAdmin(@Nonnull String login) {
         return userRepository.isAdmin(login);
     }
 

@@ -17,8 +17,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
@@ -156,7 +156,7 @@ public class ProgrammingExerciseGradingService {
      * @return result after compilation (can only be null in case an error occurs)
      */
     @Nullable
-    public Result processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull Object requestBody) {
+    public Result processNewProgrammingExerciseResult(@Nonnull ProgrammingExerciseParticipation participation, @Nonnull Object requestBody) {
         log.debug("Received new build result (NEW) for participation {}", participation.getId());
 
         try {
@@ -258,7 +258,7 @@ public class ProgrammingExerciseGradingService {
         }).max(Comparator.naturalOrder());
     }
 
-    @NotNull
+    @Nonnull
     protected ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, AbstractBuildResultNotificationDTO buildResult) {
         final var commitHash = buildResult.getCommitHash(SubmissionType.MANUAL);
         if (ObjectUtils.isEmpty(commitHash)) {
@@ -626,7 +626,7 @@ public class ProgrammingExerciseGradingService {
      * @param applySubmissionPolicy true, if submission policies should be taken into account when updating the score.
      * @return The updated result
      */
-    private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> relevantTestCases, @NotNull Result result,
+    private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> relevantTestCases, @Nonnull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
         List<Feedback> automaticFeedbacks = result.getFeedbacks().stream().filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType())).toList();
         List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();

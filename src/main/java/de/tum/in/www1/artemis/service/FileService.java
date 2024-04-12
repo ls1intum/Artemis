@@ -17,8 +17,8 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItem;
@@ -161,7 +161,7 @@ public class FileService implements DisposableBean {
      * @param markdown     boolean which is set to true, when we are uploading a file within the markdown editor
      * @return The API path of the file
      */
-    @NotNull
+    @Nonnull
     public URI handleSaveFile(MultipartFile file, boolean keepFilename, boolean markdown) {
         // check for file type
         String filename = checkAndSanitizeFilename(file.getOriginalFilename());
@@ -188,7 +188,7 @@ public class FileService implements DisposableBean {
      * @param keepFilename whether to keep the original filename or not
      * @return the path where the file was saved
      */
-    @NotNull
+    @Nonnull
     public Path saveFile(MultipartFile file, Path basePath, boolean keepFilename) {
         String sanitizedFilename = checkAndSanitizeFilename(file.getOriginalFilename());
         validateExtension(sanitizedFilename, false);
@@ -204,7 +204,7 @@ public class FileService implements DisposableBean {
      * @param fullSanitizedPath the full path to save the file to
      * @return the path where the file was saved
      */
-    @NotNull
+    @Nonnull
     public Path saveFile(MultipartFile file, Path fullSanitizedPath) {
         copyFile(file, fullSanitizedPath);
         return fullSanitizedPath;
@@ -227,7 +227,7 @@ public class FileService implements DisposableBean {
      * @return the sanitized filename
      * @throws IllegalArgumentException if the filename is null
      */
-    @NotNull
+    @Nonnull
     public String checkAndSanitizeFilename(@Nullable String filename) {
         if (filename == null) {
             throw new IllegalArgumentException("Filename cannot be null");
@@ -298,7 +298,7 @@ public class FileService implements DisposableBean {
      * @param subPath sub-path URI to search for
      * @throws IllegalArgumentException if the provided path does not start with the provided sub-path or the provided legacy-sub-path
      */
-    public static void sanitizeByCheckingIfPathStartsWithSubPathElseThrow(@NotNull URI path, @NotNull URI subPath) {
+    public static void sanitizeByCheckingIfPathStartsWithSubPathElseThrow(@Nonnull URI path, @Nonnull URI subPath) {
         // Removes redundant elements (e.g. ../ or ./) from the path and sub-path
         URI normalisedPath = path.normalize();
         URI normalisedSubPath = subPath.normalize();

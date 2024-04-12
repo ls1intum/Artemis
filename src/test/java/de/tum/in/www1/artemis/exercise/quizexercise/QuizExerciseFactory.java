@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.util.ResourceUtils;
@@ -38,7 +38,7 @@ public class QuizExerciseFactory {
      * @param quizMode    The quiz mode used. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
      * @return The created quiz.
      */
-    @NotNull
+    @Nonnull
     public static QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = generateQuizExercise(releaseDate, dueDate, quizMode, course);
         addQuestionsToQuizExercise(quizExercise);
@@ -53,7 +53,7 @@ public class QuizExerciseFactory {
      * @param exerciseGroup Exercise group of an exam to which the quiz should be added.
      * @return The created quiz.
      */
-    @NotNull
+    @Nonnull
     public static QuizExercise createQuizForExam(ExerciseGroup exerciseGroup) {
         QuizExercise quizExercise = generateQuizExerciseForExam(exerciseGroup);
         addQuestionsToQuizExercise(quizExercise);
@@ -82,7 +82,7 @@ public class QuizExerciseFactory {
      *
      * @return The created short answer question.
      */
-    @NotNull
+    @Nonnull
     public static ShortAnswerQuestion createShortAnswerQuestion() {
         ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
         sa.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
@@ -128,7 +128,7 @@ public class QuizExerciseFactory {
      *
      * @return The created drag and drop question.
      */
-    @NotNull
+    @Nonnull
     public static DragAndDropQuestion createDragAndDropQuestion() {
         DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(3).text("Q2");
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
@@ -200,7 +200,7 @@ public class QuizExerciseFactory {
      *
      * @return The created multiple choice question.
      */
-    @NotNull
+    @Nonnull
     public static MultipleChoiceQuestion createMultipleChoiceQuestion() {
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
@@ -495,7 +495,7 @@ public class QuizExerciseFactory {
      *
      * @return The created multiple choice question.
      */
-    @NotNull
+    @Nonnull
     public static MultipleChoiceQuestion createMultipleChoiceQuestionWithAllTypesOfAnswerOptions() {
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
@@ -513,7 +513,7 @@ public class QuizExerciseFactory {
      *
      * @return The created single choice question.
      */
-    @NotNull
+    @Nonnull
     public static MultipleChoiceQuestion createSingleChoiceQuestion() {
         var singleChoiceQuestion = createMultipleChoiceQuestion();
         singleChoiceQuestion.setSingleChoice(true);
@@ -656,7 +656,7 @@ public class QuizExerciseFactory {
      * @param title         The title which is used to set the quiz title together with a 3 character random UUID suffix.
      * @return The created exam quiz exercise.
      */
-    @NotNull
+    @Nonnull
     public static QuizExercise createQuizWithAllQuestionTypesForExam(ExerciseGroup exerciseGroup, String title) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup, title);
         addAllQuestionTypesToQuizExercise(quizExercise);
@@ -701,7 +701,7 @@ public class QuizExerciseFactory {
      * @param name The name of the quiz group.
      * @return The created quiz group.
      */
-    @NotNull
+    @Nonnull
     public static QuizGroup createQuizGroup(String name) {
         QuizGroup quizGroup = new QuizGroup();
         quizGroup.setName(name);
@@ -715,7 +715,7 @@ public class QuizExerciseFactory {
      * @param quizGroup The group of the quiz question.
      * @return The created multiple choice question.
      */
-    @NotNull
+    @Nonnull
     public static MultipleChoiceQuestion createMultipleChoiceQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
         MultipleChoiceQuestion quizQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
         setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
@@ -729,7 +729,7 @@ public class QuizExerciseFactory {
      * @param quizGroup The group of the quiz question.
      * @return The created drag and drop question.
      */
-    @NotNull
+    @Nonnull
     public static DragAndDropQuestion createDragAndDropQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
         DragAndDropQuestion quizQuestion = QuizExerciseFactory.createDragAndDropQuestion();
         setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
@@ -743,7 +743,7 @@ public class QuizExerciseFactory {
      * @param quizGroup The group of the quiz question.
      * @return The created short answer question.
      */
-    @NotNull
+    @Nonnull
     public static ShortAnswerQuestion createShortAnswerQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
         ShortAnswerQuestion quizQuestion = QuizExerciseFactory.createShortAnswerQuestion();
         setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);

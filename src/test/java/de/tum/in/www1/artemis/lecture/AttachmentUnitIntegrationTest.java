@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -95,11 +95,11 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/42", HttpStatus.FORBIDDEN, AttachmentUnit.class);
     }
 
-    private MockHttpServletRequestBuilder buildUpdateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment) throws Exception {
+    private MockHttpServletRequestBuilder buildUpdateAttachmentUnit(@Nonnull AttachmentUnit attachmentUnit, @Nonnull Attachment attachment) throws Exception {
         return buildUpdateAttachmentUnit(attachmentUnit, attachment, null, true);
     }
 
-    private MockHttpServletRequestBuilder buildUpdateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment, String fileContent, boolean contentType)
+    private MockHttpServletRequestBuilder buildUpdateAttachmentUnit(@Nonnull AttachmentUnit attachmentUnit, @Nonnull Attachment attachment, String fileContent, boolean contentType)
             throws Exception {
         MockMultipartHttpServletRequestBuilder builder = buildUpdateAttachmentUnit(attachmentUnit, attachment, fileContent);
         if (contentType) {
@@ -108,7 +108,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         return builder;
     }
 
-    private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment, String fileContent)
+    private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentUnit(@Nonnull AttachmentUnit attachmentUnit, @Nonnull Attachment attachment, String fileContent)
             throws Exception {
         var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentUnit).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
@@ -122,7 +122,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         return builder.file(attachmentUnitPart).file(attachmentPart);
     }
 
-    private MockHttpServletRequestBuilder buildCreateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment) throws Exception {
+    private MockHttpServletRequestBuilder buildCreateAttachmentUnit(@Nonnull AttachmentUnit attachmentUnit, @Nonnull Attachment attachment) throws Exception {
         var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentUnit).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
         var filePart = createAttachmentUnitPdf();

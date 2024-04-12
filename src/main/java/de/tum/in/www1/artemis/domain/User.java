@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -45,7 +45,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class User extends AbstractAuditingEntity implements Participant {
 
-    @NotNull
+    @Nonnull
     @Pattern(regexp = Constants.LOGIN_REGEX)
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     @Column(length = USERNAME_MAX_LENGTH, unique = true, nullable = false)
@@ -78,11 +78,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(length = 100)
     private String email;
 
-    @NotNull
+    @Nonnull
     @Column(nullable = false)
     private boolean activated = false;
 
-    @NotNull
+    @Nonnull
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false; // default value
 

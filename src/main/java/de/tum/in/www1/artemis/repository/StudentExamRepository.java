@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -314,7 +314,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             """)
     void startStudentExam(@Param("studentExamId") Long studentExamId, @Param("startedDate") ZonedDateTime startedDate);
 
-    @NotNull
+    @Nonnull
     default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {
         return findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student Exam", studentExamId));
     }
@@ -340,7 +340,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      * @param studentExamId the id of the student exam
      * @return the student exam with exercises
      */
-    @NotNull
+    @Nonnull
     default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
         return findWithExercisesById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
@@ -351,7 +351,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      * @param studentExamId the id of the student exam
      * @return the student exam with exercises
      */
-    @NotNull
+    @Nonnull
     default StudentExam findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(Long studentExamId) {
         return findWithExercisesSubmissionPolicyAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
@@ -363,7 +363,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      * @return the maximum of all student exam working times for the given exam
      * @throws EntityNotFoundException if no student exams could be found
      */
-    @NotNull
+    @Nonnull
     default Integer findMaxWorkingTimeByExamIdElseThrow(Long examId) {
         return findMaxWorkingTimeByExamId(examId).orElseThrow(() -> new EntityNotFoundException("No student exams found for exam id " + examId));
     }

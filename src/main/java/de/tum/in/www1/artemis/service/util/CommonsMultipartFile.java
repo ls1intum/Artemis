@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
@@ -40,7 +40,7 @@ public class CommonsMultipartFile implements MultipartFile, Serializable {
     }
 
     @Override
-    public @NotNull String getName() {
+    public @Nonnull String getName() {
         return this.fileItem.getFieldName();
     }
 

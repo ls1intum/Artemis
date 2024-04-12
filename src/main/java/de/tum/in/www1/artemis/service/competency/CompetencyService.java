@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +76,7 @@ public class CompetencyService {
      * @param course The course for which the prerequisites should be retrieved.
      * @return A list of prerequisites.
      */
-    public Set<Competency> findAllPrerequisitesForCourse(@NotNull Course course) {
+    public Set<Competency> findAllPrerequisitesForCourse(@Nonnull Course course) {
         Set<Competency> prerequisites = competencyRepository.findPrerequisitesByCourseId(course.getId());
         // Remove all lecture units
         for (Competency prerequisite : prerequisites) {

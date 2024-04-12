@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -339,7 +339,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
                 .hasSizeLessThanOrEqualTo(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
     }
 
-    @NotNull
+    @Nonnull
     private static StaticCodeAnalysisReportDTO createStaticCodeAnalysisReportDTO() {
         final String longText = "0".repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH * 2);
 

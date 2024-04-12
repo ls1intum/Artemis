@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -117,7 +117,7 @@ public class ExamDateService {
      * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
-    @NotNull
+    @Nonnull
     public ZonedDateTime getLatestIndividualExamEndDate(Long examId) {
         final var exam = examRepository.findByIdElseThrow(examId);
         return getLatestIndividualExamEndDate(exam);
@@ -131,7 +131,7 @@ public class ExamDateService {
      * @param exam the exam
      * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
      */
-    @NotNull
+    @Nonnull
     public ZonedDateTime getLatestIndividualExamEndDate(Exam exam) {
         var maxWorkingTime = studentExamRepository.findMaxWorkingTimeByExamId(exam.getId());
         return maxWorkingTime.map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).orElse(exam.getEndDate());

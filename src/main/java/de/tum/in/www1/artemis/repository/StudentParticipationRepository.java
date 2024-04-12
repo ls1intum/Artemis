@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -836,27 +836,27 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") long exerciseId,
             @Param("assessor") User assessor);
 
-    @NotNull
+    @Nonnull
     default StudentParticipation findByIdElseThrow(long studentParticipationId) {
         return findById(studentParticipationId).orElseThrow(() -> new EntityNotFoundException("Student Participation", studentParticipationId));
     }
 
-    @NotNull
+    @Nonnull
     default StudentParticipation findByIdWithResultsElseThrow(long participationId) {
         return findWithEagerResultsById(participationId).orElseThrow(() -> new EntityNotFoundException("StudentParticipation", participationId));
     }
 
-    @NotNull
+    @Nonnull
     default StudentParticipation findByIdWithLegalSubmissionsResultsFeedbackElseThrow(long participationId) {
         return findWithEagerLegalSubmissionsResultsFeedbacksById(participationId).orElseThrow(() -> new EntityNotFoundException("StudentParticipation", participationId));
     }
 
-    @NotNull
+    @Nonnull
     default StudentParticipation findByIdWithLegalSubmissionsElseThrow(long participationId) {
         return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
-    @NotNull
+    @Nonnull
     default StudentParticipation findByIdWithEagerTeamStudentsElseThrow(long participationId) {
         return findByIdWithEagerTeamStudents(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }

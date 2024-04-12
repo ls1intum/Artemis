@@ -124,17 +124,17 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void testNullnessAnnotations() {
-        var notNullPredicate = and(not(resideInPackageAnnotation("jakarta.validation.constraints")), simpleNameAnnotation("NotNull"));
+    void testNullabilityAnnotations() {
+        var notNullPredicate = simpleNameAnnotation("NotNull");
         var nonNullPredicate = simpleNameAnnotation("NonNull");
-        var nonnullPredicate = simpleNameAnnotation("Nonnull");
+        var nonnullPredicate = and(not(resideInPackageAnnotation("jakarta.annotation")), simpleNameAnnotation("Nonnull"));
         var nullablePredicate = and(not(resideInPackageAnnotation("jakarta.annotation")), simpleNameAnnotation("Nullable"));
 
         Set<DescribedPredicate<? super JavaAnnotation<?>>> allPredicates = Set.of(notNullPredicate, nonNullPredicate, nonnullPredicate, nullablePredicate);
 
         for (var predicate : allPredicates) {
-            ArchRule units = noCodeUnits().should().beAnnotatedWith(predicate);
-            ArchRule parameters = methods().should(notHaveAnyParameterAnnotatedWith(predicate));
+            ArchRule units = noCodeUnits().should().beAnnotatedWith(predicate).because("you should use `jakarta.annotation` annotations instead.");
+            ArchRule parameters = methods().should(notHaveAnyParameterAnnotatedWith(predicate)).because("you should use `jakarta.annotation` annotations instead.");
 
             units.check(allClasses);
             parameters.check(allClasses);

@@ -6,7 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +68,7 @@ public class ExamQuizService {
      *
      * @param quizExerciseId the id of the QuizExercise that should be evaluated
      */
-    public void evaluateQuizAndUpdateStatistics(@NotNull Long quizExerciseId) {
+    public void evaluateQuizAndUpdateStatistics(@Nonnull Long quizExerciseId) {
         long start = System.nanoTime();
         log.info("Starting quiz evaluation for quiz {}", quizExerciseId);
         // We have to load the questions and statistics so that we can evaluate and update and we also need the participations and submissions that exist for this exercise so that
@@ -161,7 +161,7 @@ public class ExamQuizService {
      * @param quizExercise the id of the QuizExercise that should be evaluated
      * @return the newly generated results
      */
-    private Set<Result> evaluateSubmissions(@NotNull QuizExercise quizExercise) {
+    private Set<Result> evaluateSubmissions(@Nonnull QuizExercise quizExercise) {
         Set<Result> createdResults = new HashSet<>();
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(studentParticipations);

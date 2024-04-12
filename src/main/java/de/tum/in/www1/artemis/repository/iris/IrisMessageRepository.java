@@ -5,7 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -41,11 +41,11 @@ public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> 
             """)
     int countLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
-    @NotNull
+    @Nonnull
     default IrisMessage findByIdElseThrow(long messageId) throws EntityNotFoundException {
         return findById(messageId).orElseThrow(() -> new EntityNotFoundException("Iris Message", messageId));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "content" })
-    IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender);
+    IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @Nonnull IrisMessageSender sender);
 }

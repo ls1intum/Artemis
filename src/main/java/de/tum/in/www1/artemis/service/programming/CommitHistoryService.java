@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffFormatter;
@@ -73,7 +73,7 @@ public class CommitHistoryService {
      * @return The report with the changes between the two commits
      * @throws IOException If an error occurs while accessing the file system
      */
-    @NotNull
+    @Nonnull
     private ProgrammingExerciseGitDiffReport createReport(Repository repository, RevCommit commitOld, RevCommit commitNew) throws IOException {
         StringBuilder diffs = new StringBuilder();
         ByteArrayOutputStream out = new ByteArrayOutputStream();

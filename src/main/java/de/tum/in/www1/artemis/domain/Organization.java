@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.domain;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
@@ -19,12 +19,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Organization extends DomainObject {
 
-    @NotNull
+    @Nonnull
     @Size(max = 100)
     @Column(name = "name", length = 100)
     private String name;
 
-    @NotNull
+    @Nonnull
     @Size(max = 50)
     @Column(name = "shortName", length = 50)
     private String shortName;
@@ -38,7 +38,7 @@ public class Organization extends DomainObject {
     @Column(name = "logoUrl")
     private String logoUrl;
 
-    @NotNull
+    @Nonnull
     @Column(name = "emailPattern")
     private String emailPattern;
 

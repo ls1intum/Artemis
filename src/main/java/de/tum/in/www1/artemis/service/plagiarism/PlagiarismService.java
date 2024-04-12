@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -184,7 +184,7 @@ public class PlagiarismService {
      * @param minimumScore the minimum score
      * @return a predicate that can be used in streams for filtering
      */
-    @NotNull
+    @Nonnull
     public static Predicate<ProgrammingExerciseParticipation> filterParticipationMinimumScore(int minimumScore) {
         return participation -> {
             Submission submission = participation.findLatestSubmission().orElse(null);
@@ -213,7 +213,7 @@ public class PlagiarismService {
      *
      * @return a predicate that can be used in streams for filtering
      */
-    @NotNull
+    @Nonnull
     public Predicate<StudentParticipation> filterForStudents() {
         return participation -> {
             // this filter excludes individual participations that are not from students

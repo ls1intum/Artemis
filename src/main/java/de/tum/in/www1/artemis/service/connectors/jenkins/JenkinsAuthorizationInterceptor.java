@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 import java.io.IOException;
 import java.net.URL;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,9 +43,9 @@ public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterce
         this.restTemplate = restTemplate;
     }
 
-    @NotNull
+    @Nonnull
     @Override
-    public ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, @NotNull ClientHttpRequestExecution execution) throws IOException {
+    public ClientHttpResponse intercept(HttpRequest request, @Nonnull byte[] body, @Nonnull ClientHttpRequestExecution execution) throws IOException {
         request.getHeaders().setBasicAuth(username, password);
         if (useCrumb) {
             setCrumb(request.getHeaders());

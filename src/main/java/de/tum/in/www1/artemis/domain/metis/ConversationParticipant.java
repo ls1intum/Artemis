@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.domain.metis;
 
 import java.time.ZonedDateTime;
 
+import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,7 +24,7 @@ public class ConversationParticipant extends DomainObject {
 
     @ManyToOne
     @JsonIncludeProperties({ "id", "firstName", "lastName" })
-    @NotNull
+    @Nonnull
     private User user;
 
     /**

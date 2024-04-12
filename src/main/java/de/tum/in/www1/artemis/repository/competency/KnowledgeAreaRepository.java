@@ -6,7 +6,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -29,12 +29,12 @@ public interface KnowledgeAreaRepository extends JpaRepository<KnowledgeArea, Lo
     @EntityGraph(type = LOAD, attributePaths = "competencies")
     List<KnowledgeArea> findAllWithCompetenciesByOrderByTitleAsc();
 
-    @NotNull
+    @Nonnull
     default KnowledgeArea findWithChildrenAndCompetenciesByIdElseThrow(long knowledgeAreaId) throws EntityNotFoundException {
         return findWithChildrenAndCompetenciesById(knowledgeAreaId).orElseThrow(() -> new EntityNotFoundException("KnowledgeArea", knowledgeAreaId));
     }
 
-    @NotNull
+    @Nonnull
     default KnowledgeArea findByIdElseThrow(long knowledgeAreaId) throws EntityNotFoundException {
         return findById(knowledgeAreaId).orElseThrow(() -> new EntityNotFoundException("KnowledgeArea", knowledgeAreaId));
     }

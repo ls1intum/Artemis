@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.dto.athena;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import de.tum.in.www1.artemis.domain.TextSubmission;
 
@@ -16,7 +16,7 @@ public record TextSubmissionDTO(long id, long exerciseId, String text, String la
      * @param submission The submission to create the DTO from
      * @return The created DTO
      */
-    public static TextSubmissionDTO of(long exerciseId, @NotNull TextSubmission submission) {
+    public static TextSubmissionDTO of(long exerciseId, @Nonnull TextSubmission submission) {
         String language = null;
         if (submission.getLanguage() != null) {
             language = submission.getLanguage().toString();

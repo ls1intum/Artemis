@@ -7,7 +7,7 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -589,7 +589,7 @@ public class CompetencyResource {
      * @param course     The course for which to check the authorization role for
      * @param competency The competency to be accessed by the user
      */
-    private void checkAuthorizationForCompetency(Role role, @NotNull Course course, @NotNull Competency competency) {
+    private void checkAuthorizationForCompetency(Role role, @Nonnull Course course, @Nonnull Competency competency) {
         if (competency.getCourse() == null) {
             throw new BadRequestAlertException("A competency must belong to a course", ENTITY_NAME, "competencyNoCourse");
         }

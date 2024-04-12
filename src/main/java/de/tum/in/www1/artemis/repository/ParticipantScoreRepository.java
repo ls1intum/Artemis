@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -45,7 +45,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             """)
     List<ParticipantScore> findAllOutdated();
 
-    @NotNull
+    @Nonnull
     @Override
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     List<ParticipantScore> findAll();

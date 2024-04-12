@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.io.IOException;
 import java.util.*;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +92,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         return handleFileUploadSubmission(exerciseId, fileUploadSubmission, file);
     }
 
-    @NotNull
+    @Nonnull
     private ResponseEntity<FileUploadSubmission> handleFileUploadSubmission(long exerciseId, FileUploadSubmission fileUploadSubmission, MultipartFile file) {
         long start = System.currentTimeMillis();
         checkFileLength(file);

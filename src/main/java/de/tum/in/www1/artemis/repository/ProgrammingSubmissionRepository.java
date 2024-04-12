@@ -6,7 +6,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +32,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
      * @param submissionId the submissionId
      * @return programming submission
      */
-    @NotNull
+    @Nonnull
     default ProgrammingSubmission findByIdElseThrow(long submissionId) {
         return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("ProgrammingSubmission", submissionId));
     }
@@ -118,12 +118,12 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the programming submission with the given id
      */
-    @NotNull
+    @Nonnull
     default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorTestCases(long submissionId) {
         return findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Programming Submission", submissionId));
     }
 
-    @NotNull
+    @Nonnull
     default ProgrammingSubmission findByResultIdElseThrow(long resultId) {
         return findByResultId(resultId).orElseThrow(() -> new EntityNotFoundException("Programming Submission for Result", resultId));
     }

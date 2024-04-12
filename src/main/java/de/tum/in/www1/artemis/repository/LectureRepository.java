@@ -6,7 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -137,27 +137,27 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     @Cacheable(cacheNames = "lectureTitle", key = "#lectureId", unless = "#result == null")
     String getLectureTitle(@Param("lectureId") Long lectureId);
 
-    @NotNull
+    @Nonnull
     default Lecture findByIdElseThrow(long lectureId) {
         return findById(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 
-    @NotNull
+    @Nonnull
     default Lecture findByIdWithLectureUnitsAndCompetenciesElseThrow(Long lectureId) {
         return findByIdWithLectureUnitsAndCompetencies(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 
-    @NotNull
+    @Nonnull
     default Lecture findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(Long lectureId) {
         return findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletions(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 
-    @NotNull
+    @Nonnull
     default Lecture findByIdWithLectureUnitsAndAttachmentsElseThrow(Long lectureId) {
         return findByIdWithLectureUnitsAndAttachments(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 
-    @NotNull
+    @Nonnull
     default Lecture findByIdWithLectureUnitsAndSlidesAndAttachmentsElseThrow(long lectureId) {
         return findByIdWithLectureUnitsAndSlidesAndAttachments(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }

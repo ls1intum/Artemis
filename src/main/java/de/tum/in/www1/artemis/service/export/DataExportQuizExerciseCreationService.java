@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
@@ -139,7 +139,7 @@ public class DataExportQuizExerciseCreationService {
      * @param exportErrors          a list of errors that occurred during the export
      * @param archivalReportEntries a list of report entries to report failed/successful exports
      */
-    public void exportStudentSubmissionsForArchival(QuizExercise quizExercise, Path exerciseDir, @NotNull List<String> exportErrors,
+    public void exportStudentSubmissionsForArchival(QuizExercise quizExercise, Path exerciseDir, @Nonnull List<String> exportErrors,
             List<ArchivalReportEntry> archivalReportEntries) {
         var participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissions(quizExercise.getId());
         int participationsWithoutSubmission = 0;

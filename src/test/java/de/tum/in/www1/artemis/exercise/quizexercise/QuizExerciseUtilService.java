@@ -8,7 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -225,7 +225,7 @@ public class QuizExerciseUtilService {
      * @param endDate   The end date of the exam, also used to set the end date of the course the exam is in.
      * @return The created exam quiz exercise.
      */
-    @NotNull
+    @Nonnull
     public QuizExercise createAndSaveExamQuiz(ZonedDateTime startDate, ZonedDateTime endDate) {
         Course course = courseUtilService.createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
 

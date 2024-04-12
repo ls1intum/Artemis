@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.dto.athena;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 
@@ -18,7 +18,7 @@ public record ProgrammingFeedbackDTO(long id, long exerciseId, long submissionId
      * @param feedback     the feedback object
      * @return the TextFeedbackDTO
      */
-    public static ProgrammingFeedbackDTO of(long exerciseId, long submissionId, @NotNull Feedback feedback) {
+    public static ProgrammingFeedbackDTO of(long exerciseId, long submissionId, @Nonnull Feedback feedback) {
         // Referenced feedback has a reference looking like this: "file:src/main/java/SomeFile.java_line:42"
         String filePath = null;
         Integer lineStart = null;

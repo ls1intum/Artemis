@@ -6,7 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -261,7 +261,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     }
 
-    @NotNull
+    @Nonnull
     private GradingScale createBonusToGradingScale(Exam bonusToExam) {
         GradingScale bonusToGradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 40, 20, 15, 15, 10, 100 },
                 Optional.of(new String[] { "5.0", "4.0", "3.0", "2.0", "1.0", "1.0" }), true, 1);
@@ -271,7 +271,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         return bonusToGradingScale;
     }
 
-    @NotNull
+    @Nonnull
     private GradingScale createSourceGradingScaleWithGradeStepsForGradesBonusStrategy(Course sourceCourse) {
         GradingScale sourceGradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 30, 40, 70 }, Optional.of(new String[] { "0", "0.1", "0.2" }),
                 true, 1);
@@ -397,7 +397,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     }
 
-    @NotNull
+    @Nonnull
     private BonusExampleDTO calculateFinalGradeAtServer(BonusStrategy bonusStrategy, double weight, double bonusToPoints, double sourcePoints, String expectedExamGrade,
             double expectedBonusGrade, Double expectedFinalPoints, String expectedFinalGrade, boolean expectedExceedsMax, long sourceGradingScaleId) throws Exception {
         BonusExampleDTO bonusExample = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign="
@@ -411,7 +411,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         return bonusExample;
     }
 
-    @NotNull
+    @Nonnull
     private GradingScale createSourceGradingScaleWithGradeStepsForPointsBonusStrategy(Course sourceCourse) {
         GradingScale sourceGradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 30, 40, 70 }, Optional.of(new String[] { "0", "10", "20" }),
                 true, 1);

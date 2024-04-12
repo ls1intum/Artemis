@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -25,7 +26,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -156,7 +156,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     /**
      * @return an unmodifiable list or all non-automatic results
      */
-    @NotNull
+    @Nonnull
     private List<Result> filterNonAutomaticResults() {
         return results.stream().filter(result -> result == null || !result.isAutomatic()).toList();
     }

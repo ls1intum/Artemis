@@ -8,7 +8,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -391,7 +391,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Cacheable(cacheNames = "examTitle", key = "#examId", unless = "#result == null")
     String getExamTitle(@Param("examId") long examId);
 
-    @NotNull
+    @Nonnull
     default Exam findByIdElseThrow(long examId) throws EntityNotFoundException {
         return findById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
@@ -402,7 +402,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @param examId the id of the entity
      * @return the exam with exercise groups
      */
-    @NotNull
+    @Nonnull
     default Exam findByIdWithExerciseGroupsElseThrow(long examId) {
         return findWithExerciseGroupsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
@@ -428,7 +428,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @param examId the id of the entity
      * @return the exam with registered users
      */
-    @NotNull
+    @Nonnull
     default Exam findByIdWithExamUsersElseThrow(long examId) {
         return findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
@@ -439,7 +439,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @param examId the id of the entity
      * @return the exam with registered users and exercise groups
      */
-    @NotNull
+    @Nonnull
     default Exam findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(long examId) {
         return findWithExamUsersAndExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
@@ -458,7 +458,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
         return findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
-    @NotNull
+    @Nonnull
     default Exam findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(long examId) {
         return findWithExerciseGroupsAndExercisesAndDetailsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }

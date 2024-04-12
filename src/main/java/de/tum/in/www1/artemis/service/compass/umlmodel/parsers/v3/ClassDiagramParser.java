@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 import java.io.IOException;
 import java.util.*;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.apache.commons.lang3.EnumUtils;
 
@@ -166,7 +166,7 @@ public class ClassDiagramParser {
      * @param jsonElementMap map of element ids and elements in the model
      * @return the list of UMLAttribute java objects
      */
-    @NotNull
+    @Nonnull
     protected static List<UMLAttribute> parseUmlAttributes(JsonObject classJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLAttribute> umlAttributesList = new ArrayList<>();
         for (JsonElement attributeId : classJson.getAsJsonArray(ELEMENT_ATTRIBUTES)) {
@@ -183,7 +183,7 @@ public class ClassDiagramParser {
      * @param jsonElementMap map of element ids and elements in the model
      * @return the list of UMLMethod Java objects
      */
-    @NotNull
+    @Nonnull
     protected static List<UMLMethod> parseUmlMethods(JsonObject objectJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLMethod> umlMethodList = new ArrayList<>();
         for (JsonElement methodId : objectJson.getAsJsonArray(ELEMENT_METHODS)) {

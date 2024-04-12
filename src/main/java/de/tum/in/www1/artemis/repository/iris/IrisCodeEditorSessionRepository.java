@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.repository.iris;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -41,7 +41,7 @@ public interface IrisCodeEditorSessionRepository extends JpaRepository<IrisCodeE
      * @return A list of chat sessions.
      * @throws EntityNotFoundException if no sessions are found.
      */
-    @NotNull
+    @Nonnull
     default List<IrisCodeEditorSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
         var result = findByExerciseIdAndUserId(exerciseId, userId);
         if (result.isEmpty()) {
@@ -57,7 +57,7 @@ public interface IrisCodeEditorSessionRepository extends JpaRepository<IrisCodeE
      * @return The found chat session.
      * @throws EntityNotFoundException if no session is found.
      */
-    @NotNull
+    @Nonnull
     default IrisCodeEditorSession findByIdElseThrow(long sessionId) throws EntityNotFoundException {
         return findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris Code Editor Session", sessionId));
     }

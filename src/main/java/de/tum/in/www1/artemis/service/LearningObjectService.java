@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -41,7 +41,7 @@ public class LearningObjectService {
      * @param user           the user for which to check the completion status
      * @return true if the user completed the lecture unit or has at least one result for the exercise, false otherwise
      */
-    public boolean isCompletedByUser(@NotNull LearningObject learningObject, @NotNull User user) {
+    public boolean isCompletedByUser(@Nonnull LearningObject learningObject, @Nonnull User user) {
         if (learningObject instanceof LectureUnit lectureUnit) {
             return lectureUnit.getCompletedUsers().stream().map(LectureUnitCompletion::getUser).anyMatch(user1 -> user1.getId().equals(user.getId()));
         }

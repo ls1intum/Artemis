@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -63,7 +63,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             """)
     Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") long participationId);
 
-    @NotNull
+    @Nonnull
     default Participation findByIdWithLegalSubmissionsElseThrow(long participationId) {
         return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
@@ -78,12 +78,12 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             """)
     Optional<Participation> findWithEagerSubmissionsByIdWithTeamStudents(@Param("participationId") Long participationId);
 
-    @NotNull
+    @Nonnull
     default Participation findWithEagerSubmissionsByIdWithTeamStudentsElseThrow(long participationId) {
         return findWithEagerSubmissionsByIdWithTeamStudents(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
-    @NotNull
+    @Nonnull
     default Participation findByIdElseThrow(long participationId) {
         return findById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }

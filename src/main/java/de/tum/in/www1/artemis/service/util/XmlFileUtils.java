@@ -6,8 +6,8 @@ import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.Map;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -79,7 +79,7 @@ public class XmlFileUtils {
      * @return a document builder factor with secure settings for parsing xml files
      * @throws ParserConfigurationException config exception
      */
-    @NotNull
+    @Nonnull
     public static DocumentBuilderFactory getDocumentBuilderFactory() throws ParserConfigurationException {
         final var domFactory = DocumentBuilderFactory.newInstance();
         domFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);

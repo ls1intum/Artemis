@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.domain.tutorialgroups;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -29,28 +29,28 @@ public class TutorialGroupsConfiguration extends DomainObject {
      * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "tutorial_period_start_inclusive")
-    @NotNull
+    @Nonnull
     private String tutorialPeriodStartInclusive;
 
     /**
      * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "tutorial_period_end_inclusive")
-    @NotNull
+    @Nonnull
     private String tutorialPeriodEndInclusive;
 
     /**
      * If true, tutorial groups channel will be created for each tutorial group. If false, they will not be created.
      */
     @Column(name = "use_tutorial_group_channels")
-    @NotNull
+    @Nonnull
     private Boolean useTutorialGroupChannels;
 
     /**
      * If true, the created tutorial group channels will be public. If false, they will be private.
      */
     @Column(name = "use_public_tutorial_group_channels")
-    @NotNull
+    @Nonnull
     private Boolean usePublicTutorialGroupChannels;
 
     @OneToMany(mappedBy = "tutorialGroupsConfiguration", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)

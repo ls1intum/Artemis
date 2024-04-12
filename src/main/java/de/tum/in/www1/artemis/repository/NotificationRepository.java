@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -57,7 +57,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             """)
     // For some reason IntelliJ doesn't parse this JPQL, shows an error and the syntax highlighting is broken in the WHERE clause. However, it compiles and works fine.
     Page<Notification> findAllNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentGroups, @Param("login") String login,
-            @NotNull @Param("hideUntil") ZonedDateTime hideUntil, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
+            @Nonnull @Param("hideUntil") ZonedDateTime hideUntil, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
             @Param("titlesToNotLoadNotification") Set<String> titlesToNotLoadNotification, Pageable pageable);
 
     @Query("""
@@ -101,6 +101,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             """)
     // For some reason IntelliJ doesn't parse this JPQL, shows an error and the syntax highlighting is broken in the WHERE clause. However, it compiles and works fine.
     Page<Notification> findAllNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentGroups, @Param("login") String login,
-            @NotNull @Param("hideUntil") ZonedDateTime hideUntil, @Param("deactivatedTitles") Set<String> deactivatedTitles, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
+            @Nonnull @Param("hideUntil") ZonedDateTime hideUntil, @Param("deactivatedTitles") Set<String> deactivatedTitles, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
             @Param("titlesToNotLoadNotification") Set<String> titlesToNotLoadNotification, Pageable pageable);
 }

@@ -4,8 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.PostConstruct;
-import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +88,7 @@ public class AthenaScheduleService {
         log.debug("Scheduled Athena for Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getDueDate());
     }
 
-    @NotNull
+    @Nonnull
     private Runnable athenaRunnableForExercise(Exercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();

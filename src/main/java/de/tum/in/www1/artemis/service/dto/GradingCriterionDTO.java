@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.dto;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -18,7 +18,7 @@ public record GradingCriterionDTO(long id, String title, Set<GradingInstructionD
      * @param gradingCriterion GradingCriterion to convert
      * @return GradingCriterionDTO
      */
-    public static GradingCriterionDTO of(@NotNull GradingCriterion gradingCriterion) {
+    public static GradingCriterionDTO of(@Nonnull GradingCriterion gradingCriterion) {
         return new GradingCriterionDTO(gradingCriterion.getId(), gradingCriterion.getTitle(),
                 gradingCriterion.getStructuredGradingInstructions().stream().map(GradingInstructionDTO::of).collect(Collectors.toSet()));
     }

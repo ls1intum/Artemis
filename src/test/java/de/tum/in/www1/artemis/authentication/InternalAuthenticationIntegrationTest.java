@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -151,7 +151,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         assertThat(updatedGroups).as("User is registered for course").contains(course1.getStudentGroupName());
     }
 
-    @NotNull
+    @Nonnull
     private User createUserWithRestApi(Set<Authority> authorities) throws Exception {
         userRepository.findOneByLogin("user1").ifPresent(userRepository::delete);
         gitlabRequestMockProvider.enableMockingOfRequests();

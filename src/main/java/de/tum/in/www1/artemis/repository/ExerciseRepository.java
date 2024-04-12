@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -481,12 +481,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             """)
     Long getTeamParticipationCountById(@Param("exerciseId") Long exerciseId);
 
-    @NotNull
+    @Nonnull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
-    @NotNull
+    @Nonnull
     default Exercise findWithCompetenciesByIdElseThrow(long exerciseId) throws EntityNotFoundException {
         return findWithCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
@@ -497,7 +497,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
-    @NotNull
+    @Nonnull
     default Exercise findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(Long exerciseId) {
         return findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
@@ -529,7 +529,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @param exerciseId the exerciseId of the exercise entity
      * @return the exercise entity
      */
-    @NotNull
+    @Nonnull
     default Exercise findByIdWithStudentParticipationsElseThrow(Long exerciseId) {
         return findByIdWithEagerParticipations(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }

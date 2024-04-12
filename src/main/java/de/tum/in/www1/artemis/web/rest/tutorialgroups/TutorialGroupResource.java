@@ -8,9 +8,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.BadRequestException;
 
@@ -282,7 +282,7 @@ public class TutorialGroupResource {
      * @param notificationText               the optional notification text
      * @param updateTutorialGroupChannelName whether the tutorial group channel name should be updated with the new tutorial group title or not
      */
-    public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
+    public record TutorialGroupUpdateDTO(@Valid @Nonnull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
             @Nullable Boolean updateTutorialGroupChannelName) {
     }
 

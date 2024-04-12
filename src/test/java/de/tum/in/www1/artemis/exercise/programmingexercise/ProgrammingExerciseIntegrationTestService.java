@@ -57,7 +57,7 @@ import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
@@ -1505,7 +1505,7 @@ class ProgrammingExerciseIntegrationTestService {
         request.post(getDefaultAPIEndpointForExportRepos(), getOptions(), HttpStatus.FORBIDDEN);
     }
 
-    @NotNull
+    @Nonnull
     private String getDefaultAPIEndpointForExportRepos() {
         return ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPANTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participantIdentifiers}", "1,2,3");
     }

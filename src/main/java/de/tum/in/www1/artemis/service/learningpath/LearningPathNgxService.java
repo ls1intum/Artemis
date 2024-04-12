@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.jgrapht.alg.util.UnionFind;
 import org.springframework.context.annotation.Profile;
@@ -47,7 +47,7 @@ public class LearningPathNgxService {
      * @return Ngx graph representation of the learning path
      * @see NgxLearningPathDTO
      */
-    public NgxLearningPathDTO generateNgxGraphRepresentation(@NotNull LearningPath learningPath) {
+    public NgxLearningPathDTO generateNgxGraphRepresentation(@Nonnull LearningPath learningPath) {
         Set<NgxLearningPathDTO.Node> nodes = new HashSet<>();
         Set<NgxLearningPathDTO.Edge> edges = new HashSet<>();
         learningPath.getCompetencies().forEach(competency -> generateNgxGraphRepresentationForCompetency(learningPath, competency, nodes, edges));
@@ -212,7 +212,7 @@ public class LearningPathNgxService {
      * @return Ngx path representation of the learning path
      * @see NgxLearningPathDTO
      */
-    public NgxLearningPathDTO generateNgxPathRepresentation(@NotNull LearningPath learningPath) {
+    public NgxLearningPathDTO generateNgxPathRepresentation(@Nonnull LearningPath learningPath) {
         Set<NgxLearningPathDTO.Node> nodes = new HashSet<>();
         Set<NgxLearningPathDTO.Edge> edges = new HashSet<>();
 

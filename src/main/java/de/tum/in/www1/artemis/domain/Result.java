@@ -10,8 +10,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -215,7 +215,7 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.rated = rated;
     }
 
-    private void setRatedIfNotAfterDueDate(@NotNull Participation participation, @NotNull ZonedDateTime submissionDate) {
+    private void setRatedIfNotAfterDueDate(@Nonnull Participation participation, @Nonnull ZonedDateTime submissionDate) {
         var optionalDueDate = ExerciseDateService.getDueDate(participation);
         if (optionalDueDate.isEmpty()) {
             this.rated = true;

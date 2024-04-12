@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.repository.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface StandardizedCompetencyRepository extends JpaRepository<StandardizedCompetency, Long> {
 
-    @NotNull
+    @Nonnull
     default StandardizedCompetency findByIdElseThrow(long competencyId) throws EntityNotFoundException {
         return findById(competencyId).orElseThrow(() -> new EntityNotFoundException("StandardizedCompetency", competencyId));
     }

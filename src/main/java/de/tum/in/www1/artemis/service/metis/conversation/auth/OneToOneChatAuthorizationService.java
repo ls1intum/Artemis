@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.metis.conversation.auth;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings.MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,7 @@ public class OneToOneChatAuthorizationService extends ConversationAuthorizationS
      * @param course the course the one to one chat should be created in
      * @param user   the user that wants to create the one to one chat
      */
-    public void isAllowedToCreateOneToOneChat(@NotNull Course course, @NotNull User user) {
+    public void isAllowedToCreateOneToOneChat(@Nonnull Course course, @Nonnull User user) {
         var userToCheck = getUserIfNecessary(user);
         var createdOneToOneChats = oneToOneChatRepository.countByCreatorIdAndCourseId(userToCheck.getId(), course.getId());
         if (createdOneToOneChats >= MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE) {

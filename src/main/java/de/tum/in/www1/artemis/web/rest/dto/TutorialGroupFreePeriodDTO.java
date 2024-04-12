@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.time.LocalDateTime;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -14,5 +14,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param reason
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupFreePeriodDTO(@NotNull LocalDateTime startDate, @NotNull LocalDateTime endDate, String reason) {
+public record TutorialGroupFreePeriodDTO(@Nonnull LocalDateTime startDate, @Nonnull LocalDateTime endDate, String reason) {
 }

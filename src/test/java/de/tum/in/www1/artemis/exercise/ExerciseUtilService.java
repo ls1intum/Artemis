@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -335,7 +335,7 @@ public class ExerciseUtilService {
      * @param title     The title of the exercise to look for.
      * @return The found file upload exercise.
      */
-    @NotNull
+    @Nonnull
     public FileUploadExercise findFileUploadExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
         if (exercise.isEmpty()) {
@@ -358,7 +358,7 @@ public class ExerciseUtilService {
      * @param title     The title of the exercise to look for.
      * @return The found modeling exercise.
      */
-    @NotNull
+    @Nonnull
     public ModelingExercise findModelingExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
         if (exercise.isEmpty()) {
@@ -381,7 +381,7 @@ public class ExerciseUtilService {
      * @param title     The title of the exercise to look for.
      * @return The found text exercise.
      */
-    @NotNull
+    @Nonnull
     public TextExercise findTextExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
         if (exercise.isEmpty()) {
@@ -404,7 +404,7 @@ public class ExerciseUtilService {
      * @param title     The title of the exercise to look for.
      * @return The found programming exercise.
      */
-    @NotNull
+    @Nonnull
     public ProgrammingExercise findProgrammingExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
         if (exercise.isEmpty()) {

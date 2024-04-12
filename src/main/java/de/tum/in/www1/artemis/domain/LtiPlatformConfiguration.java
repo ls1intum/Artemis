@@ -3,9 +3,9 @@ package de.tum.in.www1.artemis.domain;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
@@ -27,11 +27,11 @@ public class LtiPlatformConfiguration extends DomainObject {
     /** Entity name for LTI platform configuration. */
     public static final String ENTITY_NAME = "ltiPlatformConfiguration";
 
-    @NotNull
+    @Nonnull
     @Column(name = "registration_id", nullable = false)
     private String registrationId;
 
-    @NotNull
+    @Nonnull
     @Column(name = "client_id", nullable = false)
     private String clientId;
 
@@ -43,15 +43,15 @@ public class LtiPlatformConfiguration extends DomainObject {
     @Column(name = "custom_name")
     private String customName;
 
-    @NotNull
+    @Nonnull
     @Column(name = "authorization_uri", nullable = false)
     private String authorizationUri;
 
-    @NotNull
+    @Nonnull
     @Column(name = "jwk_set_uri", nullable = false)
     private String jwkSetUri;
 
-    @NotNull
+    @Nonnull
     @Column(name = "token_uri", nullable = false)
     private String tokenUri;
 

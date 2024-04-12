@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -34,7 +34,7 @@ public class PersistentAuditEvent implements Serializable {
     @Column(name = "event_id")
     private Long id;
 
-    @NotNull
+    @Nonnull
     @Column(nullable = false)
     private String principal;
 

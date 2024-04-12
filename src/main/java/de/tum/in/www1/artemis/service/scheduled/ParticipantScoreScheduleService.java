@@ -8,9 +8,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -189,7 +189,7 @@ public class ParticipantScoreScheduleService {
      * @param participantId       the id of the participant (user or team, determined by the exercise)
      * @param resultIdToBeDeleted the id of the result that is about to be deleted (or null, if result is created/updated)
      */
-    public void scheduleTask(@NotNull Long exerciseId, @NotNull Long participantId, Long resultIdToBeDeleted) {
+    public void scheduleTask(@Nonnull Long exerciseId, @Nonnull Long participantId, Long resultIdToBeDeleted) {
         if (!isRunning.get()) {
             log.debug("Cannot schedule task, because the service is not running");
             return;

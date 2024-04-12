@@ -8,7 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -150,7 +150,7 @@ public class ProgrammingExerciseParticipationService {
      * @return the participation for the given exercise and user.
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
-    @NotNull
+    @Nonnull
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(ProgrammingExercise exercise, String username,
             boolean isTestRun, boolean withSubmissions) {
 
@@ -178,7 +178,7 @@ public class ProgrammingExerciseParticipationService {
      * @return the participation for the given exercise and user.
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
-    @NotNull
+    @Nonnull
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
         Optional<ProgrammingExerciseStudentParticipation> participation;
         if (exercise.isTeamMode()) {

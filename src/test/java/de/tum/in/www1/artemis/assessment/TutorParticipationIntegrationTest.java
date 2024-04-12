@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -193,7 +193,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
-    @NotNull
+    @Nonnull
     private ExampleSubmission prepareTextExampleSubmission(boolean usedForTutorial) throws Exception {
         var exampleSubmissionText = "This is first sentence:This is second sentence.";
         ExampleSubmission exampleSubmission = participationUtilService.generateExampleSubmission(exampleSubmissionText, textExercise, false, usedForTutorial);
@@ -232,7 +232,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         return exampleSubmission;
     }
 
-    @NotNull
+    @Nonnull
     private ExampleSubmission prepareModelingExampleSubmission(boolean usedForTutorial) throws Exception {
         String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         ExampleSubmission exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);

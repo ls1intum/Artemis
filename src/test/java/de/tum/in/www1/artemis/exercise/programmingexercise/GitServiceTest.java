@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -164,7 +164,7 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
     }
 
-    @NotNull
+    @Nonnull
     private String getCommitHash(String msg) {
         AtomicReference<String> commitHash = new AtomicReference<>();
         gitUtilService.getLog(GitUtilService.REPOS.LOCAL).forEach(revCommit -> {

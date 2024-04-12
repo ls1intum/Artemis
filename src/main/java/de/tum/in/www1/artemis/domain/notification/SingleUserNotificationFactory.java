@@ -7,7 +7,7 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFacto
 
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -30,7 +30,7 @@ public class SingleUserNotificationFactory {
      * @param recipient        who should be notified
      * @return an instance of SingleUserNotification
      */
-    public static @NotNull SingleUserNotification createNotification(Exercise exercise, NotificationType notificationType, User recipient) {
+    public static @Nonnull SingleUserNotification createNotification(Exercise exercise, NotificationType notificationType, User recipient) {
         String title;
         String notificationText;
         String[] placeholderValues;

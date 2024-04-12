@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.config.auth;
 
 import java.io.IOException;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -20,7 +20,7 @@ public class IrisAuthorizationInterceptor implements ClientHttpRequestIntercepto
     @Value("${artemis.iris.secret-token}")
     private String secret;
 
-    @NotNull
+    @Nonnull
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
         request.getHeaders().set(HttpHeaders.AUTHORIZATION, secret);

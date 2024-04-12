@@ -4,8 +4,8 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -59,7 +59,7 @@ public class Team extends AbstractAuditingEntity implements Participant {
      *
      * @param team Team which to copy
      */
-    public Team(@NotNull Team team) {
+    public Team(@Nonnull Team team) {
         this.name = team.name;
         this.shortName = team.shortName;
         this.image = team.image;

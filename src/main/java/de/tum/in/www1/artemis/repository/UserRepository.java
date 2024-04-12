@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -599,7 +599,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     /**
      * @return existing user object by current user login
      */
-    @NotNull
+    @Nonnull
     default User getUser() {
         String currentUserLogin = getCurrentUserLogin();
         Optional<User> user = findOneByLogin(currentUserLogin);
@@ -612,7 +612,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param login the login of the user to search
      * @return the user entity if it exists
      */
-    @NotNull
+    @Nonnull
     default User getUserByLoginElseThrow(String login) {
         return findOneByLogin(login).orElseThrow(() -> new EntityNotFoundException("User: " + login));
     }
@@ -622,7 +622,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      *
      * @return currently logged-in user
      */
-    @NotNull
+    @Nonnull
     default User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = getCurrentUserLogin();
         Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin);
@@ -634,7 +634,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      *
      * @return currently logged-in user
      */
-    @NotNull
+    @Nonnull
     default User getUserWithGroupsAndAuthoritiesAndOrganizations() {
         String currentUserLogin = getCurrentUserLogin();
         Optional<User> user = findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin);
@@ -647,14 +647,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      *
      * @return currently logged-in user
      */
-    @NotNull
+    @Nonnull
     default User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
         String currentUserLogin = getCurrentUserLogin();
         Optional<User> user = findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin);
         return unwrapOptionalUser(user, currentUserLogin);
     }
 
-    @NotNull
+    @Nonnull
     private User unwrapOptionalUser(Optional<User> optionalUser, String currentUserLogin) {
         return optionalUser.orElseThrow(() -> new EntityNotFoundException("No user found with login: " + currentUserLogin));
     }
@@ -673,8 +673,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param username the username of the user who should be retrieved from the database
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
-    @NotNull
-    default User getUserWithGroupsAndAuthorities(@NotNull String username) {
+    @Nonnull
+    default User getUserWithGroupsAndAuthorities(@Nonnull String username) {
         Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(username);
         return unwrapOptionalUser(user, username);
     }
@@ -685,7 +685,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param username the username of the user who should be retrieved from the database
      * @return the user that belongs to the given principal with eagerly loaded authorities
      */
-    default User getUserWithAuthorities(@NotNull String username) {
+    default User getUserWithAuthorities(@Nonnull String username) {
         Optional<User> user = findOneWithAuthoritiesByLogin(username);
         return unwrapOptionalUser(user, username);
     }
@@ -729,7 +729,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         return findOneWithGroupsAndAuthoritiesByEmail(email);
     }
 
-    @NotNull
+    @Nonnull
     default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
         return findOneWithGroupsAndAuthoritiesById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
@@ -740,7 +740,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param userId the id of the user to find
      * @return the user with groups, authorities and organizations if it exists, else throw exception
      */
-    @NotNull
+    @Nonnull
     default User findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(long userId) {
         return findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
@@ -751,7 +751,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param userId the id of the user to find
      * @return the user with learning paths if it exists, else throw exception
      */
-    @NotNull
+    @Nonnull
     default User findWithLearningPathsByIdElseThrow(long userId) {
         return findWithLearningPathsById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }

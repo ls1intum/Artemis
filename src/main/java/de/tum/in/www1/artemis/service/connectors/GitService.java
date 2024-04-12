@@ -32,9 +32,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
-import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
@@ -649,7 +649,7 @@ public class GitService {
      * @param remoteRepositoryUri the remote repository uri for the git repository, will be added to the Repository object for later use, can be null
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@Nonnull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri) {
         return getExistingCheckedOutRepositoryByLocalPath(localPath, remoteRepositoryUri, defaultBranch);
     }
 
@@ -662,7 +662,7 @@ public class GitService {
      * @param defaultBranch       the name of the branch that should be used as default branch
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri, String defaultBranch) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@Nonnull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri, String defaultBranch) {
         try {
             // Check if there is a folder with the provided path of the git repository.
             if (!Files.exists(localPath)) {
@@ -709,7 +709,7 @@ public class GitService {
      * @return The created Repository.
      * @throws IOException if the configuration file cannot be accessed.
      */
-    @NotNull
+    @Nonnull
     private static Repository createRepository(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, FileRepositoryBuilder builder) throws IOException {
         // Create the JGit repository object
         Repository repository = new Repository(builder, localPath, remoteRepositoryUri);
@@ -1210,7 +1210,7 @@ public class GitService {
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
-    @NotNull
+    @Nonnull
     public Collection<File> listFiles(Repository repo) {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {

@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 
 import java.io.IOException;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpRequest;
@@ -17,9 +17,9 @@ public abstract class AbstractGitLabAuthorizationInterceptor implements ClientHt
     @Value("${artemis.version-control.token}")
     private String gitlabPrivateToken;
 
-    @NotNull
+    @Nonnull
     @Override
-    public ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, @NotNull ClientHttpRequestExecution execution) throws IOException {
+    public ClientHttpResponse intercept(HttpRequest request, @Nonnull byte[] body, @Nonnull ClientHttpRequestExecution execution) throws IOException {
         request.getHeaders().add(GITLAB_AUTHORIZATION_HEADER_NAME, gitlabPrivateToken);
         return execution.execute(request, body);
     }

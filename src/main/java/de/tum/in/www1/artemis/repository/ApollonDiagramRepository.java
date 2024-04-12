@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -39,7 +39,7 @@ public interface ApollonDiagramRepository extends JpaRepository<ApollonDiagram, 
     @Cacheable(cacheNames = "diagramTitle", key = "#diagramId", unless = "#result == null")
     String getDiagramTitle(@Param("diagramId") Long diagramId);
 
-    @NotNull
+    @Nonnull
     default ApollonDiagram findByIdElseThrow(Long apollonDiagramId) throws EntityNotFoundException {
         return findById(apollonDiagramId).orElseThrow(() -> new EntityNotFoundException("ApollonDiagram", apollonDiagramId));
     }

@@ -6,8 +6,8 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
 
+import jakarta.annotation.Nonnull;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -29,8 +29,8 @@ public final class AnnotationUtils {
      * @param <T>       the type of the annotation
      * @return the annotation if it is present, empty otherwise
      */
-    @NotNull
-    public static <T extends Annotation> Optional<T> getAnnotation(@NotNull Class<T> clazz, @NotNull ProceedingJoinPoint joinPoint) {
+    @Nonnull
+    public static <T extends Annotation> Optional<T> getAnnotation(@Nonnull Class<T> clazz, @Nonnull ProceedingJoinPoint joinPoint) {
         final var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         T annotation = method.getAnnotation(clazz);
         if (annotation != null) {
@@ -65,8 +65,8 @@ public final class AnnotationUtils {
      * @param <V>        the type of the value
      * @return the value if it is present, otherwise an exception is thrown
      */
-    @NotNull
-    public static <T extends Annotation, V> Optional<V> getValue(@NotNull T annotation, @NotBlank String valueName, @NotNull Class<V> valueType) {
+    @Nonnull
+    public static <T extends Annotation, V> Optional<V> getValue(@Nonnull T annotation, @NotBlank String valueName, @Nonnull Class<V> valueType) {
         try {
             Method method = annotation.annotationType().getMethod(valueName);
             Object value = method.invoke(annotation);
@@ -87,8 +87,8 @@ public final class AnnotationUtils {
      * @param fieldName the fieldName
      * @return the id if it is present, empty otherwise
      */
-    @NotNull
-    public static Optional<Long> getIdFromSignature(@NotNull ProceedingJoinPoint joinPoint, @NotBlank String fieldName) {
+    @Nonnull
+    public static Optional<Long> getIdFromSignature(@Nonnull ProceedingJoinPoint joinPoint, @NotBlank String fieldName) {
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         final int indexOfId = Arrays.asList(signature.getParameterNames()).indexOf(fieldName);
         Object[] args = joinPoint.getArgs();

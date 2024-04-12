@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.iris.message;
 
+import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -23,12 +23,12 @@ public class IrisExercisePlanStep extends DomainObject {
     @JoinColumn(name = "exercise_plan_id")
     private IrisExercisePlan plan;
 
-    @NotNull
+    @Nonnull
     @Enumerated(EnumType.STRING)
     @Column(name = "exercise_component")
     private ExerciseComponent component;
 
-    @NotNull
+    @Nonnull
     @Column(name = "instructions")
     private String instructions;
 

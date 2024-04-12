@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -301,7 +301,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         }
     }
 
-    private MockHttpServletRequestBuilder buildUpdateExamUser(@NotNull ExamUserDTO examUserDTO, boolean hasSigned, long courseId, long examId) throws Exception {
+    private MockHttpServletRequestBuilder buildUpdateExamUser(@Nonnull ExamUserDTO examUserDTO, boolean hasSigned, long courseId, long examId) throws Exception {
         var examUserPart = new MockMultipartFile("examUserDTO", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(examUserDTO).getBytes());
         if (hasSigned) {
             var signingImage = loadFile("classpath:test-data/exam-users", "examUserSigningImage.png");

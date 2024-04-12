@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import javax.imageio.ImageIO;
 
@@ -3264,11 +3264,11 @@ public class CourseTestService {
         assertThat(dto.registrationId()).isEqualTo(clientId);
     }
 
-    public MockHttpServletRequestBuilder buildCreateCourse(@NotNull Course course) throws JsonProcessingException {
+    public MockHttpServletRequestBuilder buildCreateCourse(@Nonnull Course course) throws JsonProcessingException {
         return buildCreateCourse(course, null);
     }
 
-    public MockHttpServletRequestBuilder buildCreateCourse(@NotNull Course course, String fileContent) throws JsonProcessingException {
+    public MockHttpServletRequestBuilder buildCreateCourse(@Nonnull Course course, String fileContent) throws JsonProcessingException {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/admin/courses").file(coursePart);
         if (fileContent != null) {
@@ -3278,11 +3278,11 @@ public class CourseTestService {
         return builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
     }
 
-    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NotNull Course course) throws JsonProcessingException {
+    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @Nonnull Course course) throws JsonProcessingException {
         return buildUpdateCourse(id, course, null);
     }
 
-    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NotNull Course course, String fileContent) throws JsonProcessingException {
+    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @Nonnull Course course, String fileContent) throws JsonProcessingException {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/courses/" + id).file(coursePart);
         if (fileContent != null) {

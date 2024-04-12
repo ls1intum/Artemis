@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 import java.io.IOException;
 import java.util.*;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -46,7 +46,7 @@ public class ObjectDiagramParser {
      * @param modelElements a JSON object containing all the model elements of the corresponding UML object diagram as JSON objects
      * @return the UMLObject map parsed from the JSON array
      */
-    @NotNull
+    @Nonnull
     public static Map<String, UMLObject> parseUMLObjects(JsonObject modelElements) {
         Map<String, UMLObject> umlObjectMap = new HashMap<>();
         // loop over all JSON elements and create the UML objects
@@ -107,7 +107,7 @@ public class ObjectDiagramParser {
      * @param jsonElementMap a map containing all the model elements and their ids of the corresponding UML object diagram as JSON objects
      * @return the list of UMLObjectAttribute parsed from the JSON object map
      */
-    @NotNull
+    @Nonnull
     protected static List<UMLObjectAttribute> parseUmlAttributes(JsonObject objectJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLObjectAttribute> umlAttributesList = new ArrayList<>();
         for (JsonElement attributeId : objectJson.getAsJsonArray(ELEMENT_ATTRIBUTES)) {
@@ -124,7 +124,7 @@ public class ObjectDiagramParser {
      * @param jsonElementMap a map containing all the model elements and their ids of the corresponding UML object diagram as JSON objects
      * @return the list of UMLObjectMethod parsed from the JSON object map
      */
-    @NotNull
+    @Nonnull
     protected static List<UMLObjectMethod> parseUmlMethods(JsonObject objectJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLObjectMethod> umlMethodList = new ArrayList<>();
         for (JsonElement methodId : objectJson.getAsJsonArray(ELEMENT_METHODS)) {

@@ -5,7 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -67,7 +67,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the file upload submission with the given id
      */
-    @NotNull
+    @Nonnull
     default FileUploadSubmission findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(long submissionId) {
         return findByIdWithEagerResultAndAssessorAndFeedback(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
     }
@@ -79,7 +79,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the file upload submission with the given id
      */
-    @NotNull
+    @Nonnull
     default FileUploadSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(long submissionId) {
         return findWithResultsFeedbacksAssessorAndParticipationResultsById(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
     }
@@ -90,7 +90,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the file upload submission with the given id
      */
-    @NotNull
+    @Nonnull
     default FileUploadSubmission findByIdElseThrow(long submissionId) {
         return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
     }
@@ -103,7 +103,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @param exerciseId   the id of the exercise that should be loaded from the database
      * @return the file upload submission with the given id
      */
-    @NotNull
+    @Nonnull
     default FileUploadSubmission findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(long submissionId, long exerciseId) {
         return findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseId(submissionId, exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));

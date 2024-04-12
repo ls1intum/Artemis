@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -2030,7 +2030,7 @@ public class ProgrammingExerciseTestService {
         return participation;
     }
 
-    @NotNull
+    @Nonnull
     private Team setupTeam(User user) {
         // create a team for the user (necessary condition before starting an exercise)
         Set<User> students = Set.of(user);
@@ -2163,7 +2163,7 @@ public class ProgrammingExerciseTestService {
         assertThat(teamLocalPath).doesNotExist();
     }
 
-    @NotNull
+    @Nonnull
     private Team setupTeamForBadRequestForStartExercise() throws Exception {
         setupTeamExercise();
 

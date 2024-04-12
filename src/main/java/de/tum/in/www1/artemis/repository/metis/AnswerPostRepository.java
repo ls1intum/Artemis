@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,19 +22,19 @@ public interface AnswerPostRepository extends JpaRepository<AnswerPost, Long> {
 
     List<AnswerPost> findAnswerPostsByAuthorId(long authorId);
 
-    @NotNull
+    @Nonnull
     default AnswerPost findAnswerPostByIdElseThrow(Long answerPostId) {
         return findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() == null)
                 .orElseThrow(() -> new EntityNotFoundException("Answer Post", answerPostId));
     }
 
-    @NotNull
+    @Nonnull
     default AnswerPost findAnswerMessageByIdElseThrow(Long answerPostId) {
         return findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() != null)
                 .orElseThrow(() -> new EntityNotFoundException("Answer Post", answerPostId));
     }
 
-    @NotNull
+    @Nonnull
     default AnswerPost findAnswerPostOrAnswerMessageByIdElseThrow(Long answerPostId) {
         return findById(answerPostId).orElseThrow(() -> new EntityNotFoundException("Answer Post", answerPostId));
     }

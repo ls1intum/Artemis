@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.web.rest.dto.lectureunit;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 
-public record LectureUnitForLearningPathNodeDetailsDTO(long id, @NotNull String name, @NotNull String type) {
+public record LectureUnitForLearningPathNodeDetailsDTO(long id, @Nonnull String name, @Nonnull String type) {
 
-    public static LectureUnitForLearningPathNodeDetailsDTO of(@NotNull LectureUnit lectureUnit) {
+    public static LectureUnitForLearningPathNodeDetailsDTO of(@Nonnull LectureUnit lectureUnit) {
         return new LectureUnitForLearningPathNodeDetailsDTO(lectureUnit.getId(), lectureUnit.getName(), lectureUnit.getType());
     }
 }

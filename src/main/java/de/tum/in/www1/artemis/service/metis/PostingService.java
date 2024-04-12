@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
@@ -222,7 +222,7 @@ public abstract class PostingService {
      * @param postingContent content of the posting
      * @return set of mentioned users
      */
-    protected Set<User> parseUserMentions(@NotNull Course course, String postingContent) {
+    protected Set<User> parseUserMentions(@Nonnull Course course, String postingContent) {
         // Define a regular expression to match text enclosed in [user]...[/user] tags, along with login inside parentheses () within those tags.
         // It makes use of the possessive quantifier "*+" to avoid backtracking and increase performance.
         // Explanation:

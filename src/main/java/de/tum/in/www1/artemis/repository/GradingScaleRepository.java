@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
@@ -81,7 +81,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param courseId the course to which the grading scale belongs
      * @return the found grading scale
      */
-    @NotNull
+    @Nonnull
     default GradingScale findByCourseIdOrElseThrow(long courseId) {
         try {
             return findByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Grading scale with course ID " + courseId + " doesn't exist"));
@@ -108,7 +108,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param examId the exam to which the grading scale belongs
      * @return the found grading scale
      */
-    @NotNull
+    @Nonnull
     default GradingScale findByExamIdOrElseThrow(long examId) {
         try {
             return findByExamId(examId).orElseThrow(() -> new EntityNotFoundException("Grading scale with exam ID " + examId + " doesn't exist"));

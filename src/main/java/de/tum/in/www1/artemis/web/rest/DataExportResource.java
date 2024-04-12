@@ -8,7 +8,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -126,7 +126,7 @@ public class DataExportResource {
      * @param dataExport the data export that needs to be checked
      * @throws AccessForbiddenException if logged-in user isn't the owner of the data export
      */
-    private void currentlyLoggedInUserIsOwnerOfDataExportElseThrow(@NotNull DataExport dataExport) {
+    private void currentlyLoggedInUserIsOwnerOfDataExportElseThrow(@Nonnull DataExport dataExport) {
         if (!currentlyLoggedInUserIsOwnerOfDataExport(dataExport)) {
             throw new AccessForbiddenException("data export", dataExport.getId());
         }

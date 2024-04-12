@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -45,7 +45,7 @@ public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, 
      * @return the list of all attachment units with the given lecture id and attachment type
      * @throws EntityNotFoundException if no results are found
      */
-    @NotNull
+    @Nonnull
     default List<AttachmentUnit> findAllByLectureIdAndAttachmentTypeElseThrow(Long lectureId, AttachmentType attachmentType) throws EntityNotFoundException {
         List<AttachmentUnit> attachmentUnits = findAllByLectureIdAndAttachmentType(lectureId, attachmentType);
         if (attachmentUnits.isEmpty()) {
@@ -62,7 +62,7 @@ public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, 
             """)
     AttachmentUnit findOneWithSlides(@Param("attachmentUnitId") long attachmentUnitId);
 
-    @NotNull
+    @Nonnull
     default AttachmentUnit findByIdElseThrow(Long attachmentUnitId) throws EntityNotFoundException {
         return findById(attachmentUnitId).orElseThrow(() -> new EntityNotFoundException("AttachmentUnit", attachmentUnitId));
     }

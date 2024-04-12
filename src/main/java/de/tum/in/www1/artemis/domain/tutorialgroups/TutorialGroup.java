@@ -2,9 +2,9 @@ package de.tum.in.www1.artemis.domain.tutorialgroups;
 
 import java.util.*;
 
+import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
@@ -31,7 +31,7 @@ public class TutorialGroup extends DomainObject {
 
     @Column(name = "title")
     @Size(min = 1, max = 19)
-    @NotNull
+    @Nonnull
     private String title;
 
     @Column(name = "additional_information")
@@ -42,7 +42,7 @@ public class TutorialGroup extends DomainObject {
     private Integer capacity;
 
     @Column(name = "is_online")
-    @NotNull
+    @Nonnull
     private Boolean isOnline = false;
 
     @Column(name = "campus")

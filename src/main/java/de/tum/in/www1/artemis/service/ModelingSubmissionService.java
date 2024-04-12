@@ -6,7 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -233,7 +233,7 @@ public class ModelingSubmissionService extends SubmissionService {
      *
      * @param submission Result for the Submission acting as a reference for the modeling submission to be searched.
      */
-    public void setNumberOfAffectedSubmissionsPerElement(@NotNull ModelingSubmission submission) {
+    public void setNumberOfAffectedSubmissionsPerElement(@Nonnull ModelingSubmission submission) {
         List<ModelElementRepository.ModelElementCount> elementCounts = modelElementRepository.countOtherElementsInSameClusterForSubmissionId(submission.getId());
         submission.setSimilarElements(elementCounts.stream().map(modelElementCount -> {
             SimilarElementCount similarElementCount = new SimilarElementCount();

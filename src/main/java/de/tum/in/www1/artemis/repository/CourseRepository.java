@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -346,7 +346,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     Page<Course> findByTitleInCoursesWhereInstructorOrEditor(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups, Pageable pageable);
 
-    @NotNull
+    @Nonnull
     default Course findByIdElseThrow(long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
@@ -368,12 +368,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         return Optional.ofNullable(findWithEagerTutorialGroupConfigurationsById(courseId)).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
-    @NotNull
+    @Nonnull
     default Course findWithEagerOrganizationsElseThrow(long courseId) throws EntityNotFoundException {
         return findWithEagerOrganizations(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
-    @NotNull
+    @Nonnull
     default Course findWithEagerOrganizationsAndCompetenciesAndLearningPathsElseThrow(long courseId) throws EntityNotFoundException {
         return findWithEagerOrganizationsAndCompetenciesAndLearningPaths(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
@@ -438,42 +438,42 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         }
     }
 
-    @NotNull
+    @Nonnull
     default Course findByIdWithExercisesAndLecturesElseThrow(long courseId) {
         return findWithEagerExercisesAndLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
-    @NotNull
+    @Nonnull
     default Course findByIdWithLecturesElseThrow(long courseId) {
         return findWithEagerLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
-    @NotNull
+    @Nonnull
     default Course findByIdWithLecturesAndLectureUnitsElseThrow(long courseId) {
         return findWithEagerLecturesAndLectureUnitsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
-    @NotNull
+    @Nonnull
     default Course findByIdForUpdateElseThrow(long courseId) {
         return findForUpdateById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
-    @NotNull
+    @Nonnull
     default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(long courseId) {
         return findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
-    @NotNull
+    @Nonnull
     default Course findWithEagerCompetenciesByIdElseThrow(long courseId) {
         return findWithEagerCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
-    @NotNull
+    @Nonnull
     default Course findWithEagerLearningPathsByIdElseThrow(long courseId) {
         return findWithEagerLearningPathsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
-    @NotNull
+    @Nonnull
     default Course findWithEagerLearningPathsAndCompetenciesByIdElseThrow(long courseId) {
         return findWithEagerLearningPathsAndCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }

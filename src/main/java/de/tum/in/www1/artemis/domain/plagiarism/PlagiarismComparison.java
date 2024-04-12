@@ -4,8 +4,8 @@ import java.io.File;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -158,7 +158,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     }
 
     @Override
-    public int compareTo(@NotNull PlagiarismComparison<E> otherComparison) {
+    public int compareTo(@Nonnull PlagiarismComparison<E> otherComparison) {
         return Double.compare(similarity, otherComparison.similarity);
     }
 

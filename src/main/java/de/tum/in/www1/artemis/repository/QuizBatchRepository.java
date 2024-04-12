@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -49,7 +49,7 @@ public interface QuizBatchRepository extends JpaRepository<QuizBatch, Long> {
             """)
     Set<QuizBatch> findAllByQuizExerciseAndStudentLogin(@Param("quizExercise") QuizExercise quizExercise, @Param("studentLogin") String studentLogin);
 
-    @NotNull
+    @Nonnull
     default QuizBatch findByIdElseThrow(Long quizBatchId) throws EntityNotFoundException {
         return findById(quizBatchId).orElseThrow(() -> new EntityNotFoundException("Quiz Batch", quizBatchId));
     }

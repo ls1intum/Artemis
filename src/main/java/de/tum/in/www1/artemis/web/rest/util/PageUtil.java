@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest.util;
 
 import java.util.Map;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -82,7 +82,7 @@ public class PageUtil {
         }
     }
 
-    @NotNull
+    @Nonnull
     public static PageRequest createDefaultPageRequest(PageableSearchDTO<String> search, ColumnMapping columnMapping) {
         var sortOptions = Sort.by(columnMapping.getMappedColumnName(search.getSortedColumn()));
         sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();

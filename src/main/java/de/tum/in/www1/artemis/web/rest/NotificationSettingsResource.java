@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,7 +83,7 @@ public class NotificationSettingsResource {
      */
     @PutMapping("notification-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<NotificationSetting[]> saveNotificationSettingsForCurrentUser(@NotNull @RequestBody NotificationSetting[] notificationSettings) {
+    public ResponseEntity<NotificationSetting[]> saveNotificationSettingsForCurrentUser(@Nonnull @RequestBody NotificationSetting[] notificationSettings) {
         if (notificationSettings.length == 0) {
             throw new BadRequestAlertException("Cannot save non-existing Notification Settings", "NotificationSettings", "notificationSettingsEmpty");
         }

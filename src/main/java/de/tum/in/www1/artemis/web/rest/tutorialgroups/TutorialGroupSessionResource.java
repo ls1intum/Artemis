@@ -12,10 +12,10 @@ import java.time.ZoneId;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nonnull;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.BadRequestException;
 
@@ -336,7 +336,7 @@ public class TutorialGroupSessionResource {
     /**
      * DTO used because we want to interpret the dates in the time zone of the tutorial groups configuration
      */
-    public record TutorialGroupSessionDTO(@NotNull LocalDate date, @NotNull LocalTime startTime, @NotNull LocalTime endTime, @Size(min = 1, max = 2000) String location) {
+    public record TutorialGroupSessionDTO(@Nonnull LocalDate date, @Nonnull LocalTime startTime, @Nonnull LocalTime endTime, @Size(min = 1, max = 2000) String location) {
 
         public void validityCheck() {
             if (startTime.isAfter(endTime)) {

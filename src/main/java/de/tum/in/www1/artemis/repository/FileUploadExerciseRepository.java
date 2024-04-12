@@ -6,7 +6,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -42,7 +42,7 @@ public interface FileUploadExerciseRepository extends JpaRepository<FileUploadEx
      * @param exerciseId the id of the entity
      * @return the entity
      */
-    @NotNull
+    @Nonnull
     default FileUploadExercise findByIdElseThrow(Long exerciseId) {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("File Upload Exercise", exerciseId));
     }

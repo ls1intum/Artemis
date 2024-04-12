@@ -10,9 +10,9 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.hibernate.exception.ConstraintViolationException;
@@ -227,7 +227,7 @@ public class QuizScheduleService {
      *
      * @param quizExercise should include questions and statistics without Hibernate proxies!
      */
-    public void updateQuizExercise(@NotNull QuizExercise quizExercise) {
+    public void updateQuizExercise(@Nonnull QuizExercise quizExercise) {
         log.info("updateQuizExercise invoked for {}", quizExercise.getId());
         quizCache.updateQuizExercise(quizExercise);
     }
@@ -611,7 +611,7 @@ public class QuizScheduleService {
      * @param batchCache        a Map of all the batches for the given quizExercise
      * @return                  the number of processed submissions (submit or timeout)
      */
-    private int saveQuizSubmissionWithParticipationAndResultToDatabase(@NotNull QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap, Map<String, Long> userBatchMap, Map<Long, QuizBatch> batchCache) {
+    private int saveQuizSubmissionWithParticipationAndResultToDatabase(@Nonnull QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap, Map<String, Long> userBatchMap, Map<Long, QuizBatch> batchCache) {
 
         int count = 0;
 

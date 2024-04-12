@@ -7,8 +7,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -63,12 +63,12 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
     Optional<QuizExercise> findWithEagerBatchesById(Long quizExerciseId);
 
-    @NotNull
+    @Nonnull
     default QuizExercise findByIdElseThrow(Long quizExerciseId) throws EntityNotFoundException {
         return findById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
 
-    @NotNull
+    @Nonnull
     default QuizExercise findWithEagerQuestionsByIdOrElseThrow(Long quizExerciseId) {
         return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("QuizExercise", quizExerciseId));
     }
@@ -90,7 +90,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
      * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @NotNull
+    @Nonnull
     default QuizExercise findByIdWithQuestionsElseThrow(Long quizExerciseId) {
         return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
@@ -101,7 +101,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
      * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @NotNull
+    @Nonnull
     default QuizExercise findByIdWithBatchesElseThrow(Long quizExerciseId) {
         return findWithEagerBatchesById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
@@ -117,12 +117,12 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
         return findWithEagerQuestionsAndStatisticsById(quizExerciseId).orElse(null);
     }
 
-    @NotNull
+    @Nonnull
     default QuizExercise findByIdWithQuestionsAndStatisticsElseThrow(Long quizExerciseId) {
         return findWithEagerQuestionsAndStatisticsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
 
-    @NotNull
+    @Nonnull
     default QuizExercise findByIdWithQuestionsAndStatisticsAndCompetenciesElseThrow(Long quizExerciseId) {
         return findWithEagerQuestionsAndStatisticsAndCompetenciesById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }

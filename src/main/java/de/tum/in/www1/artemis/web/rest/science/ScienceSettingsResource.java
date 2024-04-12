@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +74,7 @@ public class ScienceSettingsResource {
      */
     @PutMapping("science-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<ScienceSetting[]> saveScienceSettingsForCurrentUser(@NotNull @RequestBody ScienceSetting[] scienceSettings) {
+    public ResponseEntity<ScienceSetting[]> saveScienceSettingsForCurrentUser(@Nonnull @RequestBody ScienceSetting[] scienceSettings) {
         if (scienceSettings.length == 0) {
             throw new BadRequestAlertException("Cannot save non-existing Science Settings", "ScienceSettings", "scienceSettingsEmpty");
         }

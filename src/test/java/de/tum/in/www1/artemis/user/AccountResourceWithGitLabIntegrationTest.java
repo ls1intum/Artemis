@@ -5,7 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.gitlab4j.api.UserApi;
 import org.junit.jupiter.api.AfterEach;
@@ -283,7 +283,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
     }
 
-    @NotNull
+    @Nonnull
     private static User createUser(String newLogin, String email) {
         User newUser = UserFactory.generateActivatedUser(newLogin);
         newUser.setActivated(false);

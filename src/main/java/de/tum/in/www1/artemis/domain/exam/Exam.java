@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -169,30 +169,30 @@ public class Exam extends DomainObject {
         this.testExam = testExam;
     }
 
-    @NotNull
+    @Nonnull
     public ZonedDateTime getVisibleDate() {
         return visibleDate;
     }
 
-    public void setVisibleDate(@NotNull ZonedDateTime visibleDate) {
+    public void setVisibleDate(@Nonnull ZonedDateTime visibleDate) {
         this.visibleDate = visibleDate;
     }
 
-    @NotNull
+    @Nonnull
     public ZonedDateTime getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(@NotNull ZonedDateTime startDate) {
+    public void setStartDate(@Nonnull ZonedDateTime startDate) {
         this.startDate = startDate;
     }
 
-    @NotNull
+    @Nonnull
     public ZonedDateTime getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(@NotNull ZonedDateTime endDate) {
+    public void setEndDate(@Nonnull ZonedDateTime endDate) {
         this.endDate = endDate;
     }
 

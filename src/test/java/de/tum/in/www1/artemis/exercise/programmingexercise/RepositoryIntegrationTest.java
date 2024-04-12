@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -393,7 +393,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         GitService.commit(studentRepository.localGit).setMessage("my commit 2").call();
     }
 
-    @NotNull
+    @Nonnull
     private String getCommitHash(Git repo) throws GitAPIException {
         AtomicReference<String> commitHash = new AtomicReference<>();
         repo.log().call().forEach(revCommit -> {

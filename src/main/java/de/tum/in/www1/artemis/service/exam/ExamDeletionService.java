@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +99,7 @@ public class ExamDeletionService {
      *
      * @param examId the ID of the exam to be deleted
      */
-    public void delete(@NotNull long examId) {
+    public void delete(@Nonnull long examId) {
         User user = userRepository.getUser();
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         log.info("User {} has requested to delete the exam {}", user.getLogin(), exam.getTitle());
@@ -151,7 +151,7 @@ public class ExamDeletionService {
      *
      * @param examId the ID of the exam to be reset
      */
-    public void reset(@NotNull Long examId) {
+    public void reset(@Nonnull Long examId) {
         User user = userRepository.getUser();
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         log.info("User {} has requested to reset the exam {}", user.getLogin(), exam.getTitle());
@@ -178,7 +178,7 @@ public class ExamDeletionService {
      *
      * @param examId the ID of the exam where the student exams and participations should be deleted
      */
-    public void deleteStudentExamsAndExistingParticipationsForExam(@NotNull Long examId) {
+    public void deleteStudentExamsAndExistingParticipationsForExam(@Nonnull Long examId) {
         User user = userRepository.getUser();
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         log.info("User {} has requested to delete existing student exams and participations for exam {}", user.getLogin(), exam.getTitle());

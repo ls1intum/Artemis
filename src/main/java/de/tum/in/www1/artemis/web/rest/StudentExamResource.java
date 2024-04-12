@@ -12,8 +12,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -443,7 +443,7 @@ public class StudentExamResource {
         return ResponseEntity.ok(testRun);
     }
 
-    @NotNull
+    @Nonnull
     private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId, boolean isTestRun) {
         StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId, isTestRun)
                 .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + user.getId()));

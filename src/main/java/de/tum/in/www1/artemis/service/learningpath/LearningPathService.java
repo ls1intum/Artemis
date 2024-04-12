@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,7 +97,7 @@ public class LearningPathService {
      *
      * @param course course the learning paths are created for
      */
-    public void enableLearningPathsForCourse(@NotNull Course course) {
+    public void enableLearningPathsForCourse(@Nonnull Course course) {
         course.setLearningPathsEnabled(true);
         generateLearningPaths(course);
         courseRepository.save(course);
@@ -109,7 +109,7 @@ public class LearningPathService {
      *
      * @param course course the learning paths are created for
      */
-    public void generateLearningPaths(@NotNull Course course) {
+    public void generateLearningPaths(@Nonnull Course course) {
         var students = userRepository.getStudents(course);
         students.forEach(student -> generateLearningPathForUser(course, student));
         log.debug("Successfully created learning paths for all {} students in course (id={})", students.size(), course.getId());
@@ -122,7 +122,7 @@ public class LearningPathService {
      * @param user   student for which the learning path is generated
      * @return the learning path of the user
      */
-    public LearningPath generateLearningPathForUser(@NotNull Course course, @NotNull User user) {
+    public LearningPath generateLearningPathForUser(@Nonnull Course course, @Nonnull User user) {
         var existingLearningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), user.getId());
         // the learning path has not to be generated if it already exits
         if (existingLearningPath.isPresent()) {
@@ -145,7 +145,7 @@ public class LearningPathService {
      * @param courseId the id of the course the learning paths are linked to
      * @return A wrapper object containing a list of all found learning paths and the total number of pages
      */
-    public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull SearchTermPageableSearchDTO<String> search, long courseId) {
+    public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@Nonnull SearchTermPageableSearchDTO<String> search, long courseId) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LEARNING_PATH);
         final var searchTerm = search.getSearchTerm();
         final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, courseId, pageable);
@@ -159,7 +159,7 @@ public class LearningPathService {
      * @param competency Competency that should be added to each learning path
      * @param courseId   course id that the learning paths belong to
      */
-    public void linkCompetencyToLearningPathsOfCourse(@NotNull Competency competency, long courseId) {
+    public void linkCompetencyToLearningPathsOfCourse(@Nonnull Competency competency, long courseId) {
         var course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(courseId);
         var learningPaths = course.getLearningPaths();
         learningPaths.forEach(learningPath -> learningPath.addCompetency(competency));
@@ -173,7 +173,7 @@ public class LearningPathService {
      * @param competencies The list of competencies that should be added
      * @param courseId     course id that the learning paths belong to
      */
-    public void linkCompetenciesToLearningPathsOfCourse(@NotNull List<Competency> competencies, long courseId) {
+    public void linkCompetenciesToLearningPathsOfCourse(@Nonnull List<Competency> competencies, long courseId) {
         if (competencies.isEmpty()) {
             return;
         }
@@ -190,7 +190,7 @@ public class LearningPathService {
      * @param competency Competency that should be removed from each learning path
      * @param courseId   course id that the learning paths belong to
      */
-    public void removeLinkedCompetencyFromLearningPathsOfCourse(@NotNull Competency competency, long courseId) {
+    public void removeLinkedCompetencyFromLearningPathsOfCourse(@Nonnull Competency competency, long courseId) {
         var course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(courseId);
         var learningPaths = course.getLearningPaths();
         learningPaths.forEach(learningPath -> learningPath.removeCompetency(competency));
@@ -214,7 +214,7 @@ public class LearningPathService {
      *
      * @param learningPath learning path that is updated
      */
-    private void updateLearningPathProgress(@NotNull LearningPath learningPath) {
+    private void updateLearningPathProgress(@Nonnull LearningPath learningPath) {
         final var userId = learningPath.getUser().getId();
         final var competencyIds = learningPath.getCompetencies().stream().map(Competency::getId).collect(Collectors.toSet());
         final var competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId);
@@ -237,7 +237,7 @@ public class LearningPathService {
      * @param course the course for which the health status should be generated
      * @return dto containing the health status and additional information (missing learning paths) if needed
      */
-    public LearningPathHealthDTO getHealthStatusForCourse(@NotNull Course course) {
+    public LearningPathHealthDTO getHealthStatusForCourse(@Nonnull Course course) {
         if (!course.getLearningPathsEnabled()) {
             return new LearningPathHealthDTO(Set.of(LearningPathHealthDTO.HealthStatus.DISABLED));
         }
@@ -255,7 +255,7 @@ public class LearningPathService {
         return new LearningPathHealthDTO(status, numberOfMissingLearningPaths);
     }
 
-    private Long checkMissingLearningPaths(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
+    private Long checkMissingLearningPaths(@Nonnull Course course, @Nonnull Set<LearningPathHealthDTO.HealthStatus> status) {
         long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
         long numberOfLearningPaths = learningPathRepository.countLearningPathsOfEnrolledStudentsInCourse(course.getId());
         Long numberOfMissingLearningPaths = numberOfStudents - numberOfLearningPaths;
@@ -270,13 +270,13 @@ public class LearningPathService {
         return numberOfMissingLearningPaths;
     }
 
-    private void checkNoCompetencies(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
+    private void checkNoCompetencies(@Nonnull Course course, @Nonnull Set<LearningPathHealthDTO.HealthStatus> status) {
         if (competencyRepository.countByCourse(course) == 0) {
             status.add(LearningPathHealthDTO.HealthStatus.NO_COMPETENCIES);
         }
     }
 
-    private void checkNoRelations(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
+    private void checkNoRelations(@Nonnull Course course, @Nonnull Set<LearningPathHealthDTO.HealthStatus> status) {
         if (competencyRelationRepository.countByCourseId(course.getId()) == 0) {
             status.add(LearningPathHealthDTO.HealthStatus.NO_RELATIONS);
         }
@@ -289,7 +289,7 @@ public class LearningPathService {
      * @return Ngx graph representation of the learning path
      * @see NgxLearningPathDTO
      */
-    public NgxLearningPathDTO generateNgxGraphRepresentation(@NotNull LearningPath learningPath) {
+    public NgxLearningPathDTO generateNgxGraphRepresentation(@Nonnull LearningPath learningPath) {
         return this.learningPathNgxService.generateNgxGraphRepresentation(learningPath);
     }
 
@@ -300,7 +300,7 @@ public class LearningPathService {
      * @return Ngx path representation of the learning path
      * @see NgxLearningPathDTO
      */
-    public NgxLearningPathDTO generateNgxPathRepresentation(@NotNull LearningPath learningPath) {
+    public NgxLearningPathDTO generateNgxPathRepresentation(@Nonnull LearningPath learningPath) {
         return this.learningPathNgxService.generateNgxPathRepresentation(learningPath);
     }
 
