@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
-import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
@@ -41,7 +41,9 @@ export class CodeEditorMonacoComponent implements OnChanges {
     @Input()
     feedbacks: Feedback[] = [];
     @Input()
-    isTutorAssessment: boolean = false;
+    isTutorAssessment = false;
+    @Input()
+    disableActions = false;
     @Input()
     selectedFile?: string;
     @Input()
@@ -54,8 +56,11 @@ export class CodeEditorMonacoComponent implements OnChanges {
     annotationsArray: Array<Annotation> = [];
 
     @Output()
+    onError: EventEmitter<string> = new EventEmitter();
+    @Output()
     onFileContentChange: EventEmitter<{ file: string; fileContent: string }> = new EventEmitter<{ file: string; fileContent: string }>();
 
+    editorLocked = false;
     isLoading = false;
 
     fileSession: FileSession = {};
@@ -83,6 +88,9 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.setBuildAnnotations(this.annotationsArray);
             this.renderFeedbackWidgets();
         }
+
+        this.editorLocked =
+            this.disableActions || this.isTutorAssessment || this.commitState === CommitState.CONFLICT || !this.selectedFile || !!this.fileSession[this.selectedFile]?.loadingError;
     }
 
     async selectFileInEditor(fileName: string | undefined): Promise<void> {
@@ -90,10 +98,21 @@ export class CodeEditorMonacoComponent implements OnChanges {
             // There is nothing to be done, as the editor will be hidden when there is no file.
             return;
         }
-        if (!this.fileSession[fileName]) {
+        if (!this.fileSession[fileName] || this.fileSession[fileName].loadingError) {
             this.isLoading = true;
-            const fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName)).then((fileObj) => fileObj.fileContent);
-            this.fileSession[fileName] = { code: fileContent, loadingError: false, cursor: { column: 0, row: 0 } };
+            let fileContent = '';
+            let loadingError = false;
+            try {
+                fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName)).then((fileObj) => fileObj.fileContent);
+            } catch (error) {
+                loadingError = true;
+                if (error.message === ConnectionError.message) {
+                    this.onError.emit('loadingFailed' + error.message);
+                } else {
+                    this.onError.emit('loadingFailed');
+                }
+            }
+            this.fileSession[fileName] = { code: fileContent, loadingError, cursor: { column: 0, row: 0 } };
             this.isLoading = false;
         }
 

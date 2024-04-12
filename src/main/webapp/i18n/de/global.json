@@ -111,7 +111,8 @@
                 "database": "Datenbank",
                 "iris": "Iris Einstellungen",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
-                "lti": "LTI Konfiguration"
+                "lti": "LTI Konfiguration",
+                "standardizedCompetencies": "Standardisierte Kompetenzen"
             },
             "language": "Sprache",
             "settings": "Einstellungen",
@@ -313,7 +314,10 @@
             "patternLogin": "Dieses Feld darf nur Buchstaben, Ziffern und E-Mail-Adressen enthalten.",
             "invalidPattern": "Dieses Feld beinhaltet ein ungültiges E-Mail Muster."
         },
-        "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone."
+        "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone.",
+        "dateMissingOrNotValid": "'{{labelName}}' fehlt/ungültig",
+        "startDateError": "'Bearbeitungszeit ab' sollte zwischen 'Sichtbar ab' und 'Bearbeitungszeit bis' liegen",
+        "endDateError": "'Bearbeitungszeit bis' sollte nach 'Bearbeitungszeit ab' liegen"
     },
     "aboutUs": "Über",
     "contact": "Kontaktiere uns",
