@@ -2,11 +2,12 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { BuildAgent } from 'app/entities/build-agent.model';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
-import { faCircleCheck, faExclamationCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { TriggeredByPushTo } from 'app/entities/repository-info.model';
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 
 @Component({
     selector: 'jhi-build-agent-details',
@@ -26,11 +27,13 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     faCircleCheck = faCircleCheck;
     faExclamationCircle = faExclamationCircle;
     faExclamationTriangle = faExclamationTriangle;
+    faTimes = faTimes;
 
     constructor(
         private websocketService: JhiWebsocketService,
         private buildAgentsService: BuildAgentsService,
         private route: ActivatedRoute,
+        private buildQueueService: BuildQueueService,
     ) {}
 
     ngOnInit() {
@@ -85,6 +88,16 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                     buildJob.jobTimingInfo.buildDuration = end.diff(start, 'milliseconds') / 1000;
                 }
             }
+        }
+    }
+
+    cancelBuildJob(buildJobId: string) {
+        this.buildQueueService.cancelBuildJob(buildJobId).subscribe();
+    }
+
+    cancelAllBuildJobs() {
+        if (this.buildAgent.name) {
+            this.buildQueueService.cancelAllRunningBuildJobsForAgent(this.buildAgent.name).subscribe();
         }
     }
 
