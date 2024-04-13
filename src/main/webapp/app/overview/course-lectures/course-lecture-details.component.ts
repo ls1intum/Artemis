@@ -111,7 +111,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
                             // We need to manually update the lecture property of the student questions component
                             this.discussionComponent.lecture = this.lecture;
                         }
-                        this.endsSameDay = !!this.lecture?.startDate && !!this.lecture.endDate && this.lecture.startDate.diff(this.lecture.endDate, 'days') === 0;
+                        this.endsSameDay = !!this.lecture?.startDate && !!this.lecture.endDate && dayjs(this.lecture.startDate).isSame(this.lecture.endDate, 'day');
                     },
                     error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
                 });
