@@ -49,7 +49,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
     @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor?: CodeEditorAceComponent;
-    @ViewChild('codeEditorMonaco', { static: false }) monacoEditor?: CodeEditorMonacoComponent;
+    @ViewChild(CodeEditorMonacoComponent, { static: false }) monacoEditor?: CodeEditorMonacoComponent;
     @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
 
     @Input()
@@ -270,6 +270,14 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      */
     canDeactivate() {
         return _isEmpty(this.unsavedFiles);
+    }
+
+    getText(): string {
+        return this.monacoEditor?.getText() ?? '';
+    }
+
+    getNumberOfLines(): number {
+        return this.monacoEditor?.getNumberOfLines() ?? 0;
     }
 
     // displays the alert for confirming refreshing or closing the page if there are unsaved changes

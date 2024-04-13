@@ -294,6 +294,41 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         );
     }
 
+    onFileLoadMonaco(selectedFile: string) {
+        if (selectedFile && this.codeEditorContainer?.selectedFile && this.codeEditorContainer.monacoEditor) {
+            if (!this.templateFileSession[selectedFile]) {
+                const lastLine = this.codeEditorContainer.getNumberOfLines();
+                this.highlightLines(0, lastLine);
+            } else {
+                // Calculation of the diff, see: https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
+                const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], this.codeEditorContainer.getText());
+                const lineText1 = diffArray.chars1;
+                const lineText2 = diffArray.chars2;
+                const lineArray = diffArray.lineArray;
+                const diffs = this.diffMatchPatch.diff_main(lineText1, lineText2, false);
+                this.diffMatchPatch.diff_charsToLines(diffs, lineArray);
+
+                // Setup counter to know on which range to highlight in the code editor
+                let counter = 0;
+                diffs.forEach((diffElement) => {
+                    // No changes
+                    if (diffElement[0] === 0) {
+                        const lines = diffElement[1].split(/\r?\n/);
+                        counter += lines.length - 1;
+                    }
+                    // Newly added
+                    if (diffElement[0] === 1) {
+                        const lines = diffElement[1].split(/\r?\n/).filter(Boolean);
+                        const firstLineToHighlight = counter;
+                        const lastLineToHighlight = counter + lines.length - 1;
+                        this.highlightLines(firstLineToHighlight, lastLineToHighlight);
+                        counter += lines.length;
+                    }
+                });
+            }
+        }
+    }
+
     /**
      * Triggers when a new file was selected in the code editor. Compares the content of the file with the template (if available), calculates the diff
      * and highlights the changed/added lines or all lines if the file is not in the template.
@@ -339,6 +374,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private highlightLines(firstLine: number, lastLine: number) {
         if (this.codeEditorContainer?.aceEditor) {
             this.codeEditorContainer.aceEditor.highlightLines(firstLine, lastLine, 'diff-newLine', 'gutter-diff-newLine');
+        }
+        if (this.codeEditorContainer?.monacoEditor) {
+            this.codeEditorContainer.monacoEditor.highlightLines(firstLine, lastLine);
         }
     }
 
