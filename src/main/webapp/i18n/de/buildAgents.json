@@ -2,6 +2,8 @@
     "artemisApp": {
         "buildAgents": {
             "title": "Build Agenten",
+            "summary": "Build Agenten Zusammenfassung",
+            "details": "Build Agenten Details",
             "name": "Name",
             "maxNumberOfConcurrentBuildJobs": "Maximale Anzahl an parallelen Build Jobs",
             "numberOfCurrentBuildJobs": "Anzahl aktueller Build Jobs",

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { BuildAgentsComponent } from 'app/localci/build-agents/build-agents.component';
+import { BuildAgentSummaryComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-summary.component';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { of } from 'rxjs';
@@ -16,8 +16,8 @@ import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/build-config.model';
 
 describe('BuildAgentsComponent', () => {
-    let component: BuildAgentsComponent;
-    let fixture: ComponentFixture<BuildAgentsComponent>;
+    let component: BuildAgentSummaryComponent;
+    let fixture: ComponentFixture<BuildAgentSummaryComponent>;
 
     const mockWebsocketService = {
         subscribe: jest.fn(),
@@ -206,7 +206,7 @@ describe('BuildAgentsComponent', () => {
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxDatatableModule],
-            declarations: [BuildAgentsComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DataTableComponent)],
+            declarations: [BuildAgentSummaryComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DataTableComponent)],
             providers: [
                 { provide: JhiWebsocketService, useValue: mockWebsocketService },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
@@ -214,7 +214,7 @@ describe('BuildAgentsComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(BuildAgentsComponent);
+        fixture = TestBed.createComponent(BuildAgentSummaryComponent);
         component = fixture.componentInstance;
     }));
 

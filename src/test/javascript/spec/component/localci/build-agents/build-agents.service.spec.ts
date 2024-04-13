@@ -91,7 +91,7 @@ describe('BuildAgentsService', () => {
     it('should return build agents', () => {
         const expectedResponse = [element]; // Expecting an array
 
-        service.getBuildAgents().subscribe((data) => {
+        service.getBuildAgentSummary().subscribe((data) => {
             expect(data).toEqual(expectedResponse); // Check if the response matches expected
         });
 
