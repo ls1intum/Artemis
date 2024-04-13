@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { FormGroup } from '@angular/forms';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -7,8 +8,8 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course } from 'app/entities/course.model';
-import { PageType } from 'app/shared/metis/metis.util';
-import { faFilter, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
@@ -40,6 +41,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faFilter = faFilter;
     faSearch = faSearch;
+    faLongArrowAltUp = faLongArrowAltUp;
+    faLongArrowAltDown = faLongArrowAltDown;
+
+    formGroup: FormGroup;
+    readonly SortBy = PostSortCriterion;
+    currentSortDirection?: SortDirection;
 
     // MetisConversationService is created in course overview, so we can use it here
     constructor(
@@ -154,4 +161,24 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         const index = this.conversationsOfUser.findIndex((channel) => getAsChannelDTO(channel)?.name == 'all-messages');
         this.metisConversationService.setActiveConversation(this.conversationsOfUser[index]);
     }
+
+    /**
+     * required for distinguishing different select options for the context selector,
+     * Angular needs to be able to identify the currently selected option
+     */
+    compareContextFilterOptionFn(option1: any, option2: any) {
+        return option1.conversationId === option2.conversationId;
+    }
+
+    comparePostSortOptionFn(option1: PostSortCriterion | SortDirection, option2: PostSortCriterion | SortDirection) {
+        return option1 === option2;
+    }
+
+    onChangeSortDir(): void {
+        // flip sort direction
+        this.currentSortDirection = this.currentSortDirection === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
+        this.onSelectContext();
+    }
+
+    protected readonly SortDirection = SortDirection;
 }

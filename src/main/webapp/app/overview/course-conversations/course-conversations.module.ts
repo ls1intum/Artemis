@@ -32,6 +32,7 @@ import { GroupChatCreateDialogComponent } from './dialogs/group-chat-create-dial
 import { GroupChatIconComponent } from './other/group-chat-icon/group-chat-icon.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { CourseConversationsCodeOfConductComponent } from 'app/overview/course-conversations/code-of-conduct/course-conversations-code-of-conduct.component';
+import { MatSelectModule } from '@angular/material/select';
 
 const routes: Routes = [
     {
@@ -54,6 +55,7 @@ const routes: Routes = [
         ArtemisDataTableModule,
         InfiniteScrollModule,
         CourseUsersSelectorModule,
+        MatSelectModule,
     ],
     declarations: [
         CourseConversationsComponent,
