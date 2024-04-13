@@ -64,7 +64,6 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly getIcon = getIcon;
-    readonly trackBy = (_: number, node: KnowledgeAreaDTO) => node.id;
 
     constructor(
         private adminStandardizedCompetencyService: AdminStandardizedCompetencyService,

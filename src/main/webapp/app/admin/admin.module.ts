@@ -44,6 +44,7 @@ import { UserImportModule } from 'app/shared/user-import/user-import.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { KnowledgeAreaDetailComponent } from 'app/admin/standardized-competencies/knowledge-area-detail.component';
 import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
+import { KnowledgeAreaTreeComponent } from 'app/admin/standardized-competencies/knowledge-area-tree/knowledge-area-tree.component';
 
 const ENTITY_STATES = [...adminState];
 
@@ -95,6 +96,7 @@ const ENTITY_STATES = [...adminState];
         KnowledgeAreaDetailComponent,
         StandardizedCompetencyManagementComponent,
         AdminImportStandardizedCompetenciesComponent,
+        KnowledgeAreaTreeComponent,
     ],
 })
 export class ArtemisAdminModule {}

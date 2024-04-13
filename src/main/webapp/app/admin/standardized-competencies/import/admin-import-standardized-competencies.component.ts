@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { KnowledgeAreaDTO, KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeAreaDTO, KnowledgeAreaForTree, KnowledgeAreasForImportDTO, convertToKnowledgeAreaForTree } from 'app/entities/competency/standardized-competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/core/util/alert.service';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
@@ -8,6 +8,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MatTreeNestedDataSource } from '@angular/material/tree';
+import { NestedTreeControl } from '@angular/cdk/tree';
+import { getIcon } from 'app/entities/competency.model';
 
 interface importCount {
     knowledgeAreas: number;
@@ -24,6 +27,8 @@ export class AdminImportStandardizedCompetenciesComponent {
     importData?: KnowledgeAreasForImportDTO;
     count?: importCount;
     private fileReader: FileReader;
+    protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
+    protected treeControl = new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children);
 
     isCollapsed = false;
     toggleCollapse() {
@@ -79,6 +84,7 @@ export class AdminImportStandardizedCompetenciesComponent {
      * @param event the event triggered by changing the file
      */
     onFileChange(event: Event) {
+        this.dataSource.data = [];
         const input = event.target as HTMLInputElement;
         if (input.files?.length) {
             const fileList: FileList = input.files;
@@ -136,6 +142,8 @@ export class AdminImportStandardizedCompetenciesComponent {
             if (this.importData) {
                 this.count = this.countKnowledgeAreasAndCompetencies({ children: this.importData.knowledgeAreas });
                 this.count.knowledgeAreas -= 1;
+                console.log(this.importData.knowledgeAreas);
+                this.dataSource.data = this.importData.knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
             }
         } catch (e) {
             this.importData = undefined;
@@ -177,4 +185,5 @@ export class AdminImportStandardizedCompetenciesComponent {
     }
 
     protected readonly JSON = JSON;
+    protected readonly getIcon = getIcon;
 }

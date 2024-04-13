@@ -61,7 +61,7 @@
             }
         },
         "knowledgeArea": {
-            "empty": "Dieses Wissensgebiet hat noch keinen Inhalt",
+            "empty": "Dieses Wissensgebiet hat keinen Inhalt",
             "model": {
                 "title": "Titel",
                 "description": "Beschreibung",

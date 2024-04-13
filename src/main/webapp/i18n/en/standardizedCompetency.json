@@ -61,7 +61,7 @@
             }
         },
         "knowledgeArea": {
-            "empty": "This knowledge area has no content yet",
+            "empty": "This knowledge area has no content",
             "model": {
                 "title": "Title",
                 "shortTitle": "Short title",
