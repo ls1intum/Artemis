@@ -1,24 +1,35 @@
 <div class="container">
     <h2 jhiTranslate="artemisApp.standardizedCompetency.manage.import.title"></h2>
+    <div class="card mt-3">
+        <div class="card-header d-flex align-items-center mw-100 clickable" (click)="toggleCollapse()">
+            <div class="icon-container me-3">
+                <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed" />
+            </div>
+            <h6 class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.title"></h6>
+        </div>
+        <div class="card-body" [ngbCollapse]="isCollapsed">
+            <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text1"></p>
+            <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text2"></p>
+            <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text3"></p>
+            <div [innerHTML]="importExample | htmlForMarkdown"></div>
+        </div>
+    </div>
     <div class="mt-3">
         <input type="file" accept="application/json" (change)="onFileChange($event)" />
+        @if (count) {
+            <div class="mt-1">
+                <span
+                    jhiTranslate="artemisApp.standardizedCompetency.manage.import.count"
+                    [translateValues]="{ competencies: count.competencies, knowledgeAreas: count.knowledgeAreas }"
+                ></span>
+            </div>
+        }
     </div>
-    @if (count) {
-        <div class="mt-1">
-            <span
-                jhiTranslate="artemisApp.standardizedCompetency.manage.import.count"
-                [translateValues]="{ competencies: count.competencies, knowledgeAreas: count.knowledgeAreas }"
-            ></span>
-        </div>
-    }
+    <div>
+        <!-- TODO: tree structure -->
+    </div>
     <div class="mt-3">
         <jhi-button [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
-        <jhi-button
-            [disabled]="!this.importData?.knowledgeAreas?.length"
-            [isLoading]="isLoading"
-            [icon]="faFileImport"
-            [title]="'entity.action.to-import'"
-            (onClick)="importCompetencies()"
-        />
+        <jhi-button [disabled]="!this.importData" [isLoading]="isLoading" [icon]="faFileImport" [title]="'entity.action.to-import'" (onClick)="importCompetencies()" />
     </div>
 </div>

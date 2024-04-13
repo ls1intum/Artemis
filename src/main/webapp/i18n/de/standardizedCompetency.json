@@ -25,12 +25,18 @@
                 "import": {
                     "title": "Standardisierte Kompetenzen Importieren",
                     "count": "{{competencies}} standardisierte Kompetenzen und {{knowledgeAreas}} Wissensgebiete aus der Datei gelesen",
+                    "format": {
+                        "title": "Benötigtes Dateiformat",
+                        "text1": "Standardisierte Kompetenzen können aus einer .json-Datei in Artemis hinein importiert werden. Nachdem du eine Datei ausgewählt hast, kannst du noch überprüfen, ob die Wissensgebiete und Kompetenzen korrekt ausgelesen wurden.",
+                        "text2": "Die .json-Datei muss ein Objekt mit den Schlüsseln <code>knowledgeAreas</code> und <code>sources</code> enthalten. Ersteres enthält alle zu importierenden Wissensgebiete und standardisierten Kompetenzen, letzteres alle Quellen der importierten Kompetenzen.",
+                        "text3": "Beispiel für eine gültige Importdatei ( bis auf die Kommentare):"
+                    },
                     "error": {
                         "fileCount": "Bitte lade nur eine Datei hoch",
-                        "fileExtension": "Falscher Dateityp. Bitte lade eine .json Datei hoch",
                         "fileTooBig": "Die Datei ist zu groß. Bitte lade eine Datei mit maximal 20 MB hoch",
-                        "fileFormat": "Die Datei ist nicht im gültigen .json-Format",
-                        "fileStructure": "Die Datei hat eine inkorrekte Struktur"
+                        "fileExtension": "Falscher Dateityp. Bitte lade eine .json Datei hoch",
+                        "fileSyntax": "Die Datei kann nicht verarbeitet werden. Bitte lade eine Datei mit gültiger .json-Syntax hoch",
+                        "fileStructure": "Die Datei kann nicht verarbeitet werden. Bitte überprüfe, ob die erforderliche Dateistruktur eingehalten wird"
                     },
                     "success": "Erfolgreich alle standardisierte Kompetenzen und Wissensgebiete importiert"
                 }

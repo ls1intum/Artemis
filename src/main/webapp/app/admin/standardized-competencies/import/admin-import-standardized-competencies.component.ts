@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { faBan, faFileImport } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeAreaDTO, KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/core/util/alert.service';
@@ -17,18 +17,52 @@ interface importCount {
 @Component({
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
+    styleUrls: ['admin-import-standardized-competencies.component.scss'],
 })
 export class AdminImportStandardizedCompetenciesComponent {
     isLoading = false;
-    fileReader: FileReader;
     importData?: KnowledgeAreasForImportDTO;
     count?: importCount;
+    private fileReader: FileReader;
+
+    isCollapsed = false;
+    toggleCollapse() {
+        this.isCollapsed = !this.isCollapsed;
+    }
 
     //Icons
     protected readonly faFileImport = faFileImport;
     protected readonly faBan = faBan;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faChevronRight = faChevronRight;
     //Other constants
     protected readonly ButtonType = ButtonType;
+    protected readonly importExample = `\`\`\`
+{
+    "knowledgeAreas": [{
+        "title": "Artifical Intelligence",
+        "shortTitle": "AI",
+        "description": "AI is a field in computer science...", //(optional)
+        "competencies": [{
+            "title": "Machine Learning",
+            "description": "1. Explain examples of machine learning tasks \\n2. ....", //(optional)
+            //(optional) one of REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE
+            "taxonomy": "UNDERSTAND",
+            //(optional) must match a source below if it exists
+            "sourceId": 1,
+        }],
+        "children": [{
+            //nested knowledge areas...
+        }],
+    }],
+    "sources": [{
+        "id": 1,
+        "title": "Book about machine learning",
+        "author": "Doe, Mustermann, et al.",
+        "uri": "http://localhost" //(optional)
+    }]
+}
+\`\`\``;
 
     public constructor(
         private alertService: AlertService,
@@ -39,6 +73,11 @@ export class AdminImportStandardizedCompetenciesComponent {
         this.fileReader = this.generateFileReader();
     }
 
+    /**
+     * Verifies the file (only .json, smaller than 20 MB) and then tries to read the importData from it
+     *
+     * @param event the event triggered by changing the file
+     */
     onFileChange(event: Event) {
         const input = event.target as HTMLInputElement;
         if (input.files?.length) {
@@ -55,28 +94,9 @@ export class AdminImportStandardizedCompetenciesComponent {
                 this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.fileTooBig');
                 return;
             } else {
-                this.isLoading = true;
                 this.fileReader.readAsText(file);
-                this.fileReader.onload = () => this.setImportCompetencies();
+                this.fileReader.onload = () => this.setImportDataAndCount();
             }
-        }
-    }
-
-    //TODO: comments, TODO: remove file if none selected anymore?
-
-    setImportCompetencies() {
-        try {
-            this.importData = JSON.parse(this.fileReader.result as string);
-            if (!this.importData) {
-                this.count = { knowledgeAreas: 0, competencies: 0 };
-            } else {
-                this.count = this.countKnowledgeAreasAndCompetencies({ children: this.importData.knowledgeAreas });
-                this.count.knowledgeAreas -= 1;
-            }
-        } catch (e) {
-            this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.fileFormat');
-        } finally {
-            this.isLoading = false;
         }
     }
 
@@ -88,7 +108,10 @@ export class AdminImportStandardizedCompetenciesComponent {
                 this.alertService.success('artemisApp.standardizedCompetency.manage.import.success');
                 this.router.navigate(['../'], { relativeTo: this.activatedRoute });
             },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            error: (error: HttpErrorResponse) => {
+                onError(this.alertService, error);
+                this.isLoading = false;
+            },
         });
     }
 
@@ -97,11 +120,27 @@ export class AdminImportStandardizedCompetenciesComponent {
     }
 
     /**
-     * Move file reader creation to separate function to be able to mock
-     * https://fromanegg.com/post/2015/04/22/easy-testing-of-code-involving-native-methods-in-javascript/
+     * Sets the importData and counts the knowledgeAreas and standardizedCompetencies contained
+     * @private
      */
-    private generateFileReader() {
-        return new FileReader();
+    private setImportDataAndCount() {
+        this.importData = undefined;
+        this.count = { knowledgeAreas: 0, competencies: 0 };
+
+        try {
+            this.importData = JSON.parse(this.fileReader.result as string);
+        } catch (e) {
+            this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.fileSyntax');
+        }
+        try {
+            if (this.importData) {
+                this.count = this.countKnowledgeAreasAndCompetencies({ children: this.importData.knowledgeAreas });
+                this.count.knowledgeAreas -= 1;
+            }
+        } catch (e) {
+            this.importData = undefined;
+            this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.fileStructure');
+        }
     }
 
     /**
@@ -128,4 +167,14 @@ export class AdminImportStandardizedCompetenciesComponent {
             competencies: descendantSum.competencies + competencies,
         };
     }
+
+    /**
+     * Move file reader creation to separate function to be able to mock
+     * https://fromanegg.com/post/2015/04/22/easy-testing-of-code-involving-native-methods-in-javascript/
+     */
+    private generateFileReader() {
+        return new FileReader();
+    }
+
+    protected readonly JSON = JSON;
 }

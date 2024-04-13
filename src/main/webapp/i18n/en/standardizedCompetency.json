@@ -24,13 +24,19 @@
                 },
                 "import": {
                     "title": "Import Standardized Competencies",
-                    "count": "Read {{competencies}} competencies and {{knowledgeAreas}} knowledgeAreas from the file",
+                    "format": {
+                        "title": "Required File Format",
+                        "text1": "Standardized competencies can be imported from a .json file into Artemis. After selecting a file, you can then verify that the knowledge areas and competencies were read correctly.",
+                        "text2": "The .json file must contain an object with the keys <code>knowledgeAreas</code> and <code>sources</code>. The former contains all knowledge areas and standardized competencies to import and the latter contains all source details of the competencies imported.",
+                        "text3": "Example of a valid import file (except for the comments):"
+                    },
+                    "count": "Read {{competencies}} competencies and {{knowledgeAreas}} knowledge areas from the file",
                     "error": {
                         "fileCount": "Please only upload one file",
                         "fileTooBig": "The file is too big. The maximum file size is 20 MB",
                         "fileExtension": "Unsupported file extension. Please upload a .json file",
-                        "fileFormat": "The file is not in valid .json format",
-                        "fileStructure": "The file structure is incorrect"
+                        "fileSyntax": "Unable to parse file. Please upload a file with valid .json syntax",
+                        "fileStructure": "Unable to parse file. Please verify it follows the required file structure"
                     },
                     "success": "Successfully imported all knowledge areas and standardized competencies"
                 }
