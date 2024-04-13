@@ -126,6 +126,11 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
             this.onFileLoad.emit(this.selectedFile);
         }
 
+        if (changes.feedbacks) {
+            this.newFeedbackLines = [];
+            this.renderFeedbackWidgets();
+        }
+
         this.editorLocked =
             this.disableActions || this.isTutorAssessment || this.commitState === CommitState.CONFLICT || !this.selectedFile || !!this.fileSession[this.selectedFile]?.loadingError;
 
