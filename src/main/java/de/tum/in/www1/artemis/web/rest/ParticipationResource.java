@@ -368,7 +368,7 @@ public class ParticipationResource {
             throw new BadRequestAlertException("Not intended for the use in exams", "participation", "preconditions not met");
         }
 
-        if (now().isAfter(programmingExercise.getDueDate())) {
+        if (programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate())) {
             throw new BadRequestAlertException("The due date is over", "participation", "preconditions not met");
         }
 
