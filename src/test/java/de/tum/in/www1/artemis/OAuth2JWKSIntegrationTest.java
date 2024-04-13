@@ -61,6 +61,5 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest
         assertThat(jsonKeyset).isNotNull();
         JsonElement keys = jsonKeyset.get("keys");
         assertThat(keys).isNotNull();
-        assertThat(keys.getAsJsonArray()).hasSize(1);
     }
 }

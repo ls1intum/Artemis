@@ -1035,7 +1035,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
         expect(comp.programmingExercise.allowOfflineIde).toBeTrue();
         expect(comp.programmingExercise.allowOnlineEditor).toBeTrue();
-        expect(comp.programmingExercise.publishBuildPlanUrl).toBeFalse();
         expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
         expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
         // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
@@ -1062,7 +1061,6 @@ const getProgrammingExerciseForImport = () => {
     programmingExercise.zipFileForImport = new File([''], 'test.zip');
     programmingExercise.allowOfflineIde = true;
     programmingExercise.allowOnlineEditor = true;
-    programmingExercise.publishBuildPlanUrl = true;
     programmingExercise.allowComplaintsForAutomaticAssessments = true;
     programmingExercise.allowFeedbackRequests = true;
     programmingExercise.publishBuildPlanUrl = false;
@@ -1088,7 +1086,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 projectTypes: [ProjectType.PLAIN, ProjectType.XCODE],
                 testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.JAVA:
             return {
@@ -1101,7 +1098,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
                 testwiseCoverageAnalysisSupported: true,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.HASKELL:
             return {
@@ -1114,7 +1110,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 projectTypes: [],
                 testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.C:
             return {
@@ -1127,7 +1122,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 projectTypes: [ProjectType.FACT, ProjectType.GCC],
                 testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             } as ProgrammingLanguageFeature;
         default:
             throw new Error();

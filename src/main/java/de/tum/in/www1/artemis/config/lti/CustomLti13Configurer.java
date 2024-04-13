@@ -44,7 +44,13 @@ public class CustomLti13Configurer extends Lti13Configurer {
     public static final String LTI13_LOGIN_REDIRECT_PROXY_PATH = LTI13_BASE_PATH + "/auth-callback";
 
     /** Path for LTI 1.3 deep linking. */
-    public static final String LTI13_DEEPLINKING_PATH = "/lti/deep-linking/";
+    public static final String LTI13_DEEPLINK_REDIRECT_PATH = LTI13_BASE_PATH + "/deep-link";
+
+    /** Path for LTI 1.3 deep linking redirect. */
+    public static final String LTI13_DEEPLINK_SELECT_COURSE_PATH = "/lti/select-course";
+
+    /** Value for LTI 1.3 deep linking request message. */
+    public static final String LTI13_DEEPLINK_MESSAGE_REQUEST = "LtiDeepLinkingRequest";
 
     public CustomLti13Configurer() {
         super.ltiPath(LTI13_BASE_PATH);

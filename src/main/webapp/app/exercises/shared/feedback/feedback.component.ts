@@ -147,7 +147,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
         this.isOnlyCompilationTested = isOnlyCompilationTested(this.result, evaluateTemplateStatus(this.exercise, this.result.participation, this.result, false));
 
-        // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
+        // Get active profiles, to distinguish between VC systems for the commit link of the result
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
             this.commitUrl = this.getCommitUrl(this.result, this.exercise as ProgrammingExercise, this.commitHashURLTemplate);

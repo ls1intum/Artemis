@@ -2,6 +2,23 @@
     <div class="card-title ms-2">
         <h2 class="mb-3 mt-3 font-weight-bold">{{ 'artemisApp.aboutUsOverview.title' | artemisTranslate }}</h2>
     </div>
+    <div>
+        <h3 class="mb-3 ms-2 font-weight-bold">{{ 'artemisApp.aboutUsOverview.getInTouch' | artemisTranslate }}</h3>
+        <ul>
+            <li>
+                <a [href]="bugReportUrl" rel="noreferrer noopener" class="footer-text ms-3" target="_blank">{{ 'bug' | artemisTranslate }}</a>
+            </li>
+            <li>
+                <a [href]="featureRequestUrl" class="footer-text ms-3" target="_blank"> {{ 'feature' | artemisTranslate }}</a>
+            </li>
+            <li>
+                <a [href]="email" class="footer-text ms-3" target="_top"> {{ 'contact' | artemisTranslate }}</a>
+            </li>
+            <li>
+                <a [href]="releaseNotesUrl" class="footer-text ms-3" target="_blank">{{ 'releaseNotes' | artemisTranslate }}</a>
+            </li>
+        </ul>
+    </div>
     <div class="mb-5 ms-2">
         <h3 class="mb-3 font-weight-bold">{{ 'artemisApp.aboutUsOverview.feature' | artemisTranslate }}</h3>
         <ol>
@@ -33,23 +50,6 @@
             }
         </div>
     }
-    <div>
-        <h3 class="mb-3 ms-2 font-weight-bold">{{ 'artemisApp.aboutUsOverview.getInTouch' | artemisTranslate }}</h3>
-        <ul>
-            <li>
-                <a [href]="bugReportUrl" rel="noreferrer noopener" class="footer-text ms-3" target="_blank">{{ 'bug' | artemisTranslate }}</a>
-            </li>
-            <li>
-                <a [href]="featureRequestUrl" class="footer-text ms-3" target="_blank"> {{ 'feature' | artemisTranslate }}</a>
-            </li>
-            <li>
-                <a [href]="email" class="footer-text ms-3" target="_top"> {{ 'contact' | artemisTranslate }}</a>
-            </li>
-            <li>
-                <a [href]="releaseNotesUrl" class="footer-text ms-3" target="_blank">{{ 'releaseNotes' | artemisTranslate }}</a>
-            </li>
-        </ul>
-    </div>
     @if (data && data.contributors) {
         <div class="mt-5 ms-2 me-2">
             <h3 class="font-weight-bold">{{ 'artemisApp.aboutUsOverview.contributors' | artemisTranslate }}</h3>

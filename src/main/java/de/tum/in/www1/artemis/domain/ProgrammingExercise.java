@@ -39,6 +39,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.JsonSyntaxException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
@@ -69,6 +70,8 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
 
+    // TODO: delete publish_build_plan_url from exercise using liquibase
+
     // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
     public String getType() {
         return "programming";
@@ -83,9 +86,6 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     @OrderColumn(name = "programming_exercise_auxiliary_repositories_order")
     private List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
-
-    @Column(name = "publish_build_plan_url")
-    private Boolean publishBuildPlanUrl;
 
     @Column(name = "allow_online_editor", table = "programming_exercise_details")
     private Boolean allowOnlineEditor;
@@ -180,7 +180,7 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
-     * This is currently only supported for HASKELL and OCAML on BAMBOO, thus the default value is false.
+     * This is currently only supported for HASKELL and OCAML, thus the default value is false.
      */
     @Column(name = "checkout_solution_repository", table = "programming_exercise_details", columnDefinition = "boolean default false")
     private boolean checkoutSolutionRepository;
@@ -281,14 +281,6 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
-    public Boolean isPublishBuildPlanUrl() {
-        return publishBuildPlanUrl;
-    }
-
-    public void setPublishBuildPlanUrl(Boolean publishBuildPlanUrl) {
-        this.publishBuildPlanUrl = publishBuildPlanUrl;
-    }
-
     public Boolean isAllowOnlineEditor() {
         return allowOnlineEditor;
     }
@@ -383,7 +375,7 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Generates a unique project key based on the course short name and the exercise short name. This should only be used
      * for instantiating a new exercise
-     *
+     * <p>
      * The key concatenates the course short name and the exercise short name (in upper case letters), e.g.: <br>
      * Course: <code>crs</code> <br>
      * Exercise: <code>exc</code> <br>
@@ -766,9 +758,9 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public String toString() {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUri='" + getTemplateRepositoryUri() + "'" + ", solutionRepositoryUri='" + getSolutionRepositoryUri()
-                + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
-                + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
-                + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
+                + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", allowOnlineEditor='"
+                + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='"
+                + testCasesChanged + "'" + "}";
     }
 
     public boolean getCheckoutSolutionRepository() {
@@ -927,7 +919,7 @@ public class ProgrammingExercise extends Exercise {
         try {
             return Windfile.deserialize(buildPlanConfiguration);
         }
-        catch (JsonSyntaxException e) {
+        catch (JsonProcessingException e) {
             log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
         }
         return null;

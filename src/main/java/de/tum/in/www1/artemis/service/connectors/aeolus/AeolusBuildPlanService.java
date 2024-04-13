@@ -26,6 +26,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
@@ -37,7 +39,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.dto.AeolusGenerationResp
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
 /**
- * Service for publishing custom build plans using Aeolus, currently supports Bamboo
+ * Service for publishing custom build plans using Aeolus
  */
 @Service
 @Profile("aeolus")
@@ -66,6 +68,8 @@ public class AeolusBuildPlanService {
 
     @Value("${artemis.continuous-integration.url:#{null}}")
     private String ciUrl;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Constructor for the AeolusBuildPlanService
@@ -123,9 +127,9 @@ public class AeolusBuildPlanService {
      * @param target   the target to publish to jenkins
      * @return the key of the published build plan
      */
-    public String publishBuildPlan(Windfile windfile, AeolusTarget target) {
+    public String publishBuildPlan(Windfile windfile, AeolusTarget target) throws JsonProcessingException {
         String url = getCiUrl();
-        String buildPlan = new Gson().toJson(windfile);
+        String buildPlan = objectMapper.writeValueAsString(windfile);
         if (url == null) {
             log.error("Could not publish build plan {} to Aeolus target {}, no CI URL configured", buildPlan, target);
             return null;
@@ -146,7 +150,7 @@ public class AeolusBuildPlanService {
             ResponseEntity<AeolusGenerationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, AeolusGenerationResponseDTO.class);
 
             if (response.getBody() != null) {
-                return response.getBody().getKey();
+                return response.getBody().key();
             }
         }
         catch (RestClientException e) {
@@ -171,7 +175,7 @@ public class AeolusBuildPlanService {
         try {
             ResponseEntity<AeolusGenerationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, AeolusGenerationResponseDTO.class);
             if (response.getBody() != null) {
-                return response.getBody().getResult();
+                return response.getBody().result();
             }
         }
         catch (RestClientException e) {

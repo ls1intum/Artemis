@@ -175,8 +175,8 @@ public interface ContinuousIntegrationService {
     void givePlanPermissions(ProgrammingExercise programmingExercise, String planName);
 
     /**
-     * Some CI systems give projects default permissions (e.g. read in Bamboo for logged in and anonymous users)
-     * This method removes all of these unnecessary and potentially insecure permissions
+     * Some CI systems give projects default permissions.
+     * This method removes all of these unnecessary and potentially insecure permissions.
      *
      * @param projectKey The key of the build project which should get "cleaned"
      */

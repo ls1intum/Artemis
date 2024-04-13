@@ -638,26 +638,27 @@ public class ParticipationResource {
             exercise.setGradingInstructions(null);
             exercise.setDifficulty(null);
             exercise.setMode(null);
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
-                programmingExercise.setSolutionParticipation(null);
-                programmingExercise.setTemplateParticipation(null);
-                programmingExercise.setTestRepositoryUri(null);
-                programmingExercise.setShortName(null);
-                programmingExercise.setPublishBuildPlanUrl(null);
-                programmingExercise.setProgrammingLanguage(null);
-                programmingExercise.setPackageName(null);
-                programmingExercise.setAllowOnlineEditor(null);
-            }
-            else if (exercise instanceof QuizExercise quizExercise) {
-                quizExercise.setQuizQuestions(null);
-                quizExercise.setQuizPointStatistic(null);
-            }
-            else if (exercise instanceof TextExercise textExercise) {
-                textExercise.setExampleSolution(null);
-            }
-            else if (exercise instanceof ModelingExercise modelingExercise) {
-                modelingExercise.setExampleSolutionModel(null);
-                modelingExercise.setExampleSolutionExplanation(null);
+            switch (exercise) {
+                case ProgrammingExercise programmingExercise -> {
+                    programmingExercise.setSolutionParticipation(null);
+                    programmingExercise.setTemplateParticipation(null);
+                    programmingExercise.setTestRepositoryUri(null);
+                    programmingExercise.setShortName(null);
+                    programmingExercise.setProgrammingLanguage(null);
+                    programmingExercise.setPackageName(null);
+                    programmingExercise.setAllowOnlineEditor(null);
+                }
+                case QuizExercise quizExercise -> {
+                    quizExercise.setQuizQuestions(null);
+                    quizExercise.setQuizPointStatistic(null);
+                }
+                case TextExercise textExercise -> textExercise.setExampleSolution(null);
+                case ModelingExercise modelingExercise -> {
+                    modelingExercise.setExampleSolutionModel(null);
+                    modelingExercise.setExampleSolutionExplanation(null);
+                }
+                default -> {
+                }
             }
             resultCount += participation.getResults().size();
         }

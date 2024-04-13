@@ -7,12 +7,11 @@ export class CourseOverviewPage {
     readonly participationRequestId = 'participateInExerciseQuery';
 
     search(term: string): void {
-        cy.get('#exercise-search-input').type(term);
-        cy.get('#exercise-search-button').click();
+        cy.get('input[formcontrolname="searchFilter"]').type(term);
     }
 
-    startExercise(exerciseId: number) {
-        cy.reloadUntilFound('#start-exercise-' + exerciseId);
+    startExercise(exerciseId: number, refreshInterval?: number) {
+        cy.reloadUntilFound('#start-exercise-' + exerciseId, refreshInterval);
         cy.get('#start-exercise-' + exerciseId).click();
     }
 
@@ -21,8 +20,16 @@ export class CourseOverviewPage {
         cy.get('#open-exercise-' + exerciseId).click();
     }
 
-    getExercise(exerciseID: number) {
-        return cy.get(`#exercise-card-${exerciseID}`);
+    getExercise(exerciseTitle: string) {
+        return cy.contains('#test-sidebar-card', exerciseTitle);
+    }
+
+    openExerciseOverview(exerciseTitle: string) {
+        this.getExercise(exerciseTitle).click();
+    }
+
+    getExercises() {
+        return cy.get('#test-sidebar-card');
     }
 
     openRunningProgrammingExercise(exerciseID: number) {

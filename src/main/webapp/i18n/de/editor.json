@@ -127,7 +127,8 @@
             },
             "orion": {
                 "testLocally": "Lokal Testen"
-            }
+            },
+            "switchEditors": "Code-Editor wechseln"
         }
     }
 }

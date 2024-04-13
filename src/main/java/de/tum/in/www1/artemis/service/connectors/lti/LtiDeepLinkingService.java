@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.lti;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -9,9 +12,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
@@ -61,7 +61,7 @@ public class LtiDeepLinkingService {
         // Initialize DeepLinkingResponse
         Lti13DeepLinkingResponse lti13DeepLinkingResponse = new Lti13DeepLinkingResponse(ltiIdToken, clientRegistrationId);
         // Fill selected exercise link into content items
-        String contentItems = this.populateContentItems(String.valueOf(courseId), exerciseIds);
+        ArrayList<Map<String, Object>> contentItems = this.populateContentItems(String.valueOf(courseId), exerciseIds);
         lti13DeepLinkingResponse.setContentItems(contentItems);
 
         // Prepare return url with jwt and id parameters
@@ -96,26 +96,28 @@ public class LtiDeepLinkingService {
      * @param courseId    The course ID.
      * @param exerciseIds The set of exercise IDs.
      */
-    private String populateContentItems(String courseId, Set<Long> exerciseIds) {
-        JsonArray contentItems = new JsonArray();
+    private ArrayList<Map<String, Object>> populateContentItems(String courseId, Set<Long> exerciseIds) {
+        ArrayList<Map<String, Object>> contentItems = new ArrayList<>();
         for (Long exerciseId : exerciseIds) {
-            JsonObject item = setContentItem(courseId, String.valueOf(exerciseId));
+            Map<String, Object> item = setContentItem(courseId, String.valueOf(exerciseId));
             contentItems.add(item);
         }
-        return contentItems.toString();
+
+        return contentItems;
     }
 
-    private JsonObject setContentItem(String courseId, String exerciseId) {
+    private Map<String, Object> setContentItem(String courseId, String exerciseId) {
         Optional<Exercise> exerciseOpt = exerciseRepository.findById(Long.valueOf(exerciseId));
         String launchUrl = String.format(artemisServerUrl + "/courses/%s/exercises/%s", courseId, exerciseId);
         return exerciseOpt.map(exercise -> createContentItem(exerciseOpt.get(), launchUrl)).orElse(null);
     }
 
-    private JsonObject createContentItem(Exercise exercise, String url) {
-        JsonObject item = new JsonObject();
-        item.addProperty("type", exercise.getType());
-        item.addProperty("title", exercise.getTitle());
-        item.addProperty("url", url);
+    private Map<String, Object> createContentItem(Exercise exercise, String url) {
+
+        Map<String, Object> item = new HashMap<>();
+        item.put("type", "ltiResourceLink");
+        item.put("title", exercise.getTitle());
+        item.put("url", url);
 
         addLineItemIfIncluded(exercise, item);
         return item;
@@ -139,11 +141,11 @@ public class LtiDeepLinkingService {
         return string == null || string.isEmpty();
     }
 
-    private void addLineItemIfIncluded(Exercise exercise, JsonObject item) {
+    private void addLineItemIfIncluded(Exercise exercise, Map<String, Object> item) {
         if (exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED) {
-            JsonObject lineItem = new JsonObject();
-            lineItem.addProperty("scoreMaximum", DEFAULT_SCORE_MAXIMUM);
-            item.addProperty("lineItem", lineItem.toString());
+            Map<String, Object> lineItem = new HashMap<>();
+            lineItem.put("scoreMaximum", DEFAULT_SCORE_MAXIMUM);
+            item.put("lineItem", lineItem);
         }
     }
 }

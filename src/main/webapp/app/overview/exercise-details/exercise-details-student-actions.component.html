@@ -198,21 +198,6 @@
                         (click)="resumeProgrammingExercise(true)"
                     ></button>
                 }
-                @if (
-                    programmingExercise?.publishBuildPlanUrl && gradedParticipation && gradedParticipation.initializationState !== InitializationState.INACTIVE && !localVCEnabled
-                ) {
-                    <a
-                        class="btn btn-primary"
-                        [class.btn-sm]="smallButtons"
-                        style="margin-left: 8px"
-                        target="_blank"
-                        rel="noreferrer"
-                        href="{{ buildPlanUrl(gradedParticipation!) }}"
-                    >
-                        <fa-icon [icon]="faExternalLinkAlt" [fixedWidth]="true" />
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.goToBuildPlan"></span>
-                    </a>
-                }
             </div>
         }
         <!-- PROGRAMMING EXERCISE ACTIONS END -->

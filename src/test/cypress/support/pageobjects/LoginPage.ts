@@ -31,11 +31,11 @@ export class LoginPage {
     }
 
     shouldShowRequestChangeInFooter() {
-        cy.get('#request-change').should('be.visible').and('have.attr', 'href');
+        cy.get('#feedback').should('be.visible').and('have.attr', 'href');
     }
 
     shouldShowReleaseNotesInFooter() {
-        cy.get('#release-notes').should('be.visible').and('have.attr', 'href');
+        cy.get('#releases').should('be.visible').and('have.attr', 'href');
     }
 
     shouldShowPrivacyStatementInFooter() {

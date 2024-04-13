@@ -1,7 +1,6 @@
 import { Component, ContentChild, HostBinding, Input, OnChanges, OnInit, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { HttpClient } from '@angular/common/http';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -12,7 +11,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
-import { faCodeBranch, faExternalLinkAlt, faEye, faFolderOpen, faPenSquare, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch, faExternalLinkAlt, faEye, faFolderOpen, faPenSquare, faPlayCircle, faRedo, faUsers, faComment } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -64,7 +63,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     faEye = faEye;
     faPlayCircle = faPlayCircle;
     faRedo = faRedo;
-    faExternalLinkAlt = faExternalLinkAlt;
     faCodeBranch = faCodeBranch;
     faPenSquare = faPenSquare;
 
@@ -73,7 +71,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     constructor(
         private alertService: AlertService,
         private courseExerciseService: CourseExerciseService,
-        private httpClient: HttpClient,
         private router: Router,
         private translateService: TranslateService,
         private participationService: ParticipationService,
