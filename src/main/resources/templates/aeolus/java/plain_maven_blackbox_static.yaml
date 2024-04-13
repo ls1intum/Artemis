@@ -18,7 +18,10 @@ actions:
       else
         exit 1
       fi
-      sed -i "s#CLASSPATH#../target/classes#" testsuite/config/default.exp
+
+      JAVA_FLAGS="-Djdk.console=java.base"
+
+      sed -i "s#JAVA_FLAGS#${JAVA_FLAGS}#;s#CLASSPATH#../target/classes#" testsuite/config/default.exp
       sed -i "s#MAIN_CLASS#${MAIN_CLASS}#" testsuite/config/default.exp
       export testfiles_base_path="./testsuite/testfiles"
       export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
