@@ -113,6 +113,7 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
         if ((changes.selectedFile && this.selectedFile) || editorWasRefreshed) {
             await this.selectFileInEditor(this.selectedFile);
             this.setBuildAnnotations(this.annotationsArray);
+            this.newFeedbackLines = [];
             this.renderFeedbackWidgets();
         }
 
@@ -168,8 +169,11 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
     }
 
     addNewFeedback(lineNumber: number): void {
-        this.newFeedbackLines.push(lineNumber);
-        this.renderFeedbackWidgets();
+        // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
+        if (!this.getInlineFeedbackNode(lineNumber)) {
+            this.newFeedbackLines.push(lineNumber);
+            this.renderFeedbackWidgets();
+        }
     }
 
     protected renderFeedbackWidgets() {
