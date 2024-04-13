@@ -37,6 +37,16 @@
                     (onCancelFeedback)="cancelFeedback($event)"
                 />
             }
+            <!-- feedback suggestions -->
+            @for (suggestion of filterFeedbackForSelectedFile(feedbackSuggestions); track suggestion) {
+                <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
+                    [codeLine]="Feedback.getReferenceLine(suggestion)!"
+                    [feedback]="suggestion"
+                    [course]="course"
+                    (onAcceptSuggestion)="acceptSuggestion($event)"
+                    (onDiscardSuggestion)="discardSuggestion($event)"
+                />
+            }
         }
         <jhi-monaco-editor
             (textChanged)="onFileTextChanged($event)"

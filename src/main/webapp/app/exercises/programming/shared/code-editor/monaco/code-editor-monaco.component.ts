@@ -20,7 +20,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { firstValueFrom } from 'rxjs';
 import { Annotation, FileSession } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { Feedback } from 'app/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import {
@@ -34,6 +34,7 @@ import {
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { fromPairs, pickBy } from 'lodash-es';
 import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 
 @Component({
     selector: 'jhi-code-editor-monaco',
@@ -49,6 +50,8 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
     addFeedbackButton: ElementRef<HTMLDivElement>;
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
     inlineFeedbackComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackComponent>;
+    @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent)
+    inlineFeedbackSuggestionComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent>;
     @Input()
     commitState: CommitState;
     @Input()
@@ -234,12 +237,25 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
         this.renderFeedbackWidgets();
     }
 
+    acceptSuggestion(feedback: Feedback): void {
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback);
+        feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
+        this.updateFeedback(feedback);
+        this.onAcceptSuggestion.emit(feedback);
+    }
+
+    discardSuggestion(feedback: Feedback): void {
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback);
+        this.renderFeedbackWidgets();
+        this.onDiscardSuggestion.emit(feedback);
+    }
+
     protected renderFeedbackWidgets() {
         // Since the feedback widgets rely on the DOM nodes of each feedback item, Angular needs to re-render each node.
         this.changeDetectorRef.detectChanges();
         setTimeout(() => {
             this.editor.disposeWidgets();
-            for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbacks])) {
+            for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbacks, ...this.feedbackSuggestions])) {
                 this.addLineWidgetWithFeedback(feedback);
             }
 
@@ -253,7 +269,7 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
     }
 
     getInlineFeedbackNode(line: number) {
-        return [...this.inlineFeedbackComponents].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
+        return [...this.inlineFeedbackComponents, ...this.inlineFeedbackSuggestionComponents].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
     }
 
     private addLineWidgetWithFeedback(feedback: Feedback): void {
