@@ -19,7 +19,7 @@
                             @if (lecture?.startDate && lecture?.endDate) {
                                 <span class="me-2">
                                     {{ 'artemisApp.courseOverview.lectureDetails.date' | artemisTranslate }} {{ lecture!.startDate | artemisDate }} -
-                                    {{ lecture!.endDate | artemisDate }}
+                                    {{ lecture!.endDate | artemisDate: (endsSameDay ? 'time' : 'long') }}
                                 </span>
                             }
                         </h4>
