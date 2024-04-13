@@ -80,7 +80,6 @@ public class AdminBuildJobQueueResource {
     @EnforceAdmin
     public ResponseEntity<LocalCIBuildAgentInformation> getBuildAgentDetails(@RequestParam String agentName) {
         log.debug("REST request to get information on build agent {}", agentName);
-        System.err.println("REST request to get information on build agent " + agentName);
         LocalCIBuildAgentInformation buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream().filter(agent -> agent.name().equals(agentName)).findFirst()
                 .orElse(null);
         return ResponseEntity.ok(buildAgentDetails);
