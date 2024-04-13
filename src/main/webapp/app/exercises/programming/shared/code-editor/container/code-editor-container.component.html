@@ -74,6 +74,9 @@
                 [buildAnnotations]="annotations"
                 [sessionId]="participation?.id ?? 'test'"
                 (onFileContentChange)="onFileContentChange($event)"
+                (onUpdateFeedback)="onUpdateFeedback.emit($event)"
+                (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"
+                (onDiscardSuggestion)="onDiscardSuggestion.emit($event)"
                 (onError)="onError($event)"
             />
         }

@@ -17,6 +17,9 @@
                     [readOnly]="true"
                     [highlightDifferences]="highlightDifferences"
                     [course]="course"
+                    (onUpdateFeedback)="updateFeedback($event)"
+                    (onDeleteFeedback)="deleteFeedback($event)"
+                    (onCancelFeedback)="cancelFeedback($event)"
                 />
                 <!-- new, unsaved feedback -->
                 @for (line of newFeedbackLines; track line) {
@@ -28,6 +31,9 @@
                         [highlightDifferences]="highlightDifferences"
                         [readOnly]="readOnlyManualFeedback"
                         [course]="course"
+                        (onUpdateFeedback)="updateFeedback($event)"
+                        (onDeleteFeedback)="deleteFeedback($event)"
+                        (onCancelFeedback)="cancelFeedback($event)"
                     />
                 }
             }

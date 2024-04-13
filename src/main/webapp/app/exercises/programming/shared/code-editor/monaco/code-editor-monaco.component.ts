@@ -82,6 +82,14 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
     onError: EventEmitter<string> = new EventEmitter();
     @Output()
     onFileContentChange: EventEmitter<{ file: string; fileContent: string }> = new EventEmitter<{ file: string; fileContent: string }>();
+    @Output()
+    onUpdateFeedback = new EventEmitter<Feedback[]>();
+    @Output()
+    onFileLoad = new EventEmitter<string>();
+    @Output()
+    onAcceptSuggestion = new EventEmitter<Feedback>();
+    @Output()
+    onDiscardSuggestion = new EventEmitter<Feedback>();
 
     editorLocked = false;
     isLoading = false;
@@ -170,10 +178,40 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
 
     addNewFeedback(lineNumber: number): void {
         // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
-        if (!this.getInlineFeedbackNode(lineNumber)) {
-            this.newFeedbackLines.push(lineNumber);
+        const lineNumberZeroBased = lineNumber - 1;
+        if (!this.getInlineFeedbackNode(lineNumberZeroBased)) {
+            this.newFeedbackLines.push(lineNumberZeroBased);
             this.renderFeedbackWidgets();
         }
+    }
+
+    updateFeedback(feedback: Feedback) {
+        const line = Feedback.getReferenceLine(feedback);
+        const existingFeedbackIndex = this.feedbacks.findIndex((f) => f.reference === feedback.reference);
+        if (existingFeedbackIndex !== -1) {
+            // Existing feedback
+            this.feedbacks[existingFeedbackIndex] = feedback;
+        } else {
+            // New feedback -> save
+            this.feedbacks.push(feedback);
+            this.newFeedbackLines = this.newFeedbackLines.filter((l) => l !== line);
+        }
+        this.renderFeedbackWidgets();
+        this.onUpdateFeedback.emit(this.feedbacks);
+    }
+
+    cancelFeedback(line: number) {
+        // We only have to remove new feedback.
+        if (this.newFeedbackLines.includes(line)) {
+            this.newFeedbackLines = this.newFeedbackLines.filter((l) => l !== line);
+            this.renderFeedbackWidgets();
+        }
+    }
+
+    deleteFeedback(feedback: Feedback) {
+        this.feedbacks = this.feedbacks.filter((f) => !Feedback.areIdentical(f, feedback));
+        this.onUpdateFeedback.emit(this.feedbacks);
+        this.renderFeedbackWidgets();
     }
 
     protected renderFeedbackWidgets() {
