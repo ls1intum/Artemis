@@ -123,6 +123,7 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines = [];
             this.renderFeedbackWidgets();
+            this.onFileLoad.emit(this.selectedFile);
         }
 
         this.editorLocked =
