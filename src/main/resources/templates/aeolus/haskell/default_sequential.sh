@@ -7,7 +7,6 @@ run_structural_tests () {
   # -s enables the safe testing mode
   chmod +x run.sh
   ./run.sh -s
-
 }
 
 run_behavior_tests () {
@@ -16,7 +15,6 @@ run_behavior_tests () {
   # -s enables the safe testing mode
   chmod +x run.sh
   ./run.sh -s
-
 }
 
 main () {
