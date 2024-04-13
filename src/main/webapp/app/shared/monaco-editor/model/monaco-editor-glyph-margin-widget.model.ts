@@ -7,7 +7,7 @@ import * as monaco from 'monaco-editor';
  */
 export class MonacoEditorGlyphMarginWidget extends MonacoCodeEditorElement implements monaco.editor.IGlyphMarginWidget {
     private readonly domNode: HTMLElement;
-    private readonly lineNumber: number;
+    private lineNumber: number;
 
     constructor(editor: monaco.editor.ICodeEditor, id: string, domNode: HTMLElement, lineNumber: number) {
         super(editor, id);
@@ -29,6 +29,10 @@ export class MonacoEditorGlyphMarginWidget extends MonacoCodeEditorElement imple
 
     getLineNumber(): number {
         return this.lineNumber;
+    }
+
+    setLineNumber(lineNumber: number): void {
+        this.lineNumber = lineNumber;
     }
 
     addToEditor(): void {
