@@ -35,6 +35,7 @@ import {
     faComment,
     faComments,
     faDoorOpen,
+    faEllipsis,
     faEye,
     faFilePdf,
     faFlag,
@@ -110,7 +111,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isSidebarCollapsed = false;
     profileSubscription?: Subscription;
 
+    // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
+    anyItemHidden: boolean = false;
+    hiddenItems: SidebarItem[];
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -155,6 +159,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faListCheck = faListCheck;
     faDoorOpen = faDoorOpen;
     facSidebar = facSidebar;
+    faEllipsis = faEllipsis;
 
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
@@ -204,26 +209,44 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     @HostListener('window:resize', ['$event'])
     onResize() {
         console.log('Window Inner height: ' + window.innerHeight);
+        this.dropdownOpen = false;
         this.updateVisibility(window.innerHeight);
     }
-    // Update sidebar item's hidden property based on the window height
+    // Update sidebar item's hidden property based on the window height to display three-dots
     updateVisibility(height: number) {
         const thresholds: number[] = [];
-        let threshold = 500;
+        let threshold = this.calculateThreshHold();
+        this.anyItemHidden = false;
+        this.hiddenItems = [];
 
-        for (let i = 0; i < this.sidebarItems.length; i++) {
+        for (let i = 0; i < this.sidebarItems.length - 1; i++) {
             thresholds.unshift(threshold);
-            threshold -= 50;
+            threshold -= 35;
         }
+        thresholds.unshift(0);
 
         this.sidebarItems.forEach((item, index) => {
             item.hidden = height <= thresholds[index];
+            if (item.hidden) {
+                this.anyItemHidden = true;
+                this.hiddenItems.push(item);
+            }
         });
+        console.log('Hidden items: ' + this.hiddenItems.map((item) => item.title));
     }
 
-    // Toggle the state of the dropdown
     toggleDropdown() {
         this.dropdownOpen = !this.dropdownOpen;
+    }
+
+    // Calculating threshold levels based on the number of entries in the sidebar
+    calculateThreshHold() {
+        const maxThreshold: number = 650;
+        const numberOfSidebarItems: number = this.sidebarItems.length;
+        if (numberOfSidebarItems === 9) {
+            return maxThreshold;
+        }
+        return maxThreshold - (9 - numberOfSidebarItems) * 35;
     }
 
     getCourseActionItems(): CourseActionItem[] {

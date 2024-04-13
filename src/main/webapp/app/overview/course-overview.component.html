@@ -67,6 +67,53 @@
                                     }
                                 </li>
                             }
+                            <!-- Dropdown menu -->
+                            <div class="dropdown">
+                                <div [hidden]="!anyItemHidden" class="three-dots" (click)="toggleDropdown()">
+                                    <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
+                                </div>
+                                <div class="dropdown-content" [hidden]="!dropdownOpen">
+                                    @for (hiddenItem of hiddenItems; track hiddenItem) {
+                                        <li class="dropdown-li">
+                                            @if (hiddenItem.hasInOrionProperty && hiddenItem.showInOrionWindow !== undefined) {
+                                                <a
+                                                    class="nav-link nav-link-sidebar px-3"
+                                                    [id]="hiddenItem.testId ?? ''"
+                                                    [ngClass]="{
+                                                        'guided-tour': hiddenItem.guidedTour,
+                                                        newMessage: !messagesRouteLoaded && hasUnreadMessages && hiddenItem.title === 'Messages',
+                                                        collapsed: isNavbarCollapsed
+                                                    }"
+                                                    jhiOrionFilter
+                                                    [showInOrionWindow]="hiddenItem.showInOrionWindow"
+                                                    [routerLink]="hiddenItem.routerLink"
+                                                    routerLinkActive="active"
+                                                    [jhiFeatureToggleHide]="hiddenItem.featureToggle"
+                                                    [title]="hiddenItem.title"
+                                                >
+                                                    <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: hiddenItem }" />
+                                                </a>
+                                            } @else {
+                                                <a
+                                                    class="nav-link nav-link-sidebar px-3"
+                                                    [id]="hiddenItem.testId ?? ''"
+                                                    [ngClass]="{
+                                                        'guided-tour': hiddenItem.guidedTour,
+                                                        newMessage: !messagesRouteLoaded && hasUnreadMessages && hiddenItem.title === 'Messages',
+                                                        collapsed: isNavbarCollapsed
+                                                    }"
+                                                    [routerLink]="hiddenItem.routerLink"
+                                                    routerLinkActive="active"
+                                                    [jhiFeatureToggleHide]="hiddenItem.featureToggle"
+                                                    [title]="hiddenItem.title"
+                                                >
+                                                    <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: hiddenItem }" />
+                                                </a>
+                                            }
+                                        </li>
+                                    }
+                                </div>
+                            </div>
                         </ul>
                     </div>
                     <!-- Course Action Items  -->
