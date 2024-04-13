@@ -376,7 +376,7 @@ public class ParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         checkAccessPermissionOwner(participation, user);
-        programmingExercise.validateFeedbackSettings();
+        programmingExercise.validateSettingsForFeedbackRequest();
 
         var studentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
         var result = studentParticipation.findLatestLegalResult();

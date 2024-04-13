@@ -1063,7 +1063,6 @@ const getProgrammingExerciseForImport = () => {
     programmingExercise.allowOnlineEditor = true;
     programmingExercise.allowComplaintsForAutomaticAssessments = true;
     programmingExercise.allowFeedbackRequests = true;
-    programmingExercise.publishBuildPlanUrl = false;
 
     history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
 

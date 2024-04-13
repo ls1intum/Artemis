@@ -16,7 +16,19 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
@@ -570,12 +582,12 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Checks whether the result is an automatic AI result: AUTOMATIC_ATHENA
+     * Checks whether the result is an automatic Athena result: AUTOMATIC_ATHENA
      *
-     * @return true if the result is an automatic AI result
+     * @return true if the result is an automatic AI Athena result
      */
     @JsonIgnore
-    public boolean isAi() {
+    public boolean isAthenaAutomatic() {
         return AssessmentType.AUTOMATIC_ATHENA == assessmentType;
     }
 

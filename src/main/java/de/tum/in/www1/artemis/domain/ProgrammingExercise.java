@@ -38,7 +38,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.gson.JsonSyntaxException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -752,7 +751,8 @@ public class ProgrammingExercise extends Exercise {
      * @return true if the result is manual and the assessment is over, or it is an automatic result, false otherwise
      */
     private boolean checkForAssessedResult(Result result) {
-        return result.getCompletionDate() != null && ((result.isManual() && ExerciseDateService.isAfterAssessmentDueDate(this)) || result.isAutomatic() || result.isAi());
+        return result.getCompletionDate() != null
+                && ((result.isManual() && ExerciseDateService.isAfterAssessmentDueDate(this)) || result.isAutomatic() || result.isAthenaAutomatic());
     }
 
     @Override
@@ -839,7 +839,7 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Validates settings for exercises, where allowFeedbackRequests is set
      */
-    public void validateFeedbackSettings() {
+    public void validateSettingsForFeedbackRequest() {
         if (!this.getAllowFeedbackRequests()) {
             return;
         }
