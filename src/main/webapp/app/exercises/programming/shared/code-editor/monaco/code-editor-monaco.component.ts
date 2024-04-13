@@ -1,4 +1,18 @@
-import { Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnChanges,
+    Output,
+    QueryList,
+    SimpleChanges,
+    ViewChild,
+    ViewChildren,
+    ViewEncapsulation,
+} from '@angular/core';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -19,6 +33,7 @@ import {
     RenameFileChange,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { fromPairs, pickBy } from 'lodash-es';
+import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-monaco',
@@ -27,9 +42,11 @@ import { fromPairs, pickBy } from 'lodash-es';
     encapsulation: ViewEncapsulation.None,
     providers: [RepositoryFileService],
 })
-export class CodeEditorMonacoComponent implements OnChanges {
+export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
     @ViewChild('editor', { static: true })
     editor: MonacoEditorComponent;
+    @ViewChild('addFeedbackButton', { static: true })
+    addFeedbackButton: ElementRef<HTMLDivElement>;
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
     inlineFeedbackComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackComponent>;
     @Input()
@@ -40,6 +57,12 @@ export class CodeEditorMonacoComponent implements OnChanges {
     course?: Course;
     @Input()
     feedbacks: Feedback[] = [];
+    @Input()
+    feedbackSuggestions: Feedback[] = [];
+    @Input()
+    readOnlyManualFeedback: boolean;
+    @Input()
+    highlightDifferences: boolean;
     @Input()
     isTutorAssessment = false;
     @Input()
@@ -64,6 +87,9 @@ export class CodeEditorMonacoComponent implements OnChanges {
     isLoading = false;
 
     fileSession: FileSession = {};
+    newFeedbackLines: number[] = [];
+
+    faPlusSquare = faPlusSquare;
 
     // Expose to template
     protected readonly Feedback = Feedback;
@@ -73,6 +99,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         private repositoryFileService: CodeEditorRepositoryFileService,
         private fileService: CodeEditorFileService,
         protected localStorageService: LocalStorageService,
+        private changeDetectorRef: ChangeDetectorRef,
     ) {}
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
@@ -91,6 +118,12 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
         this.editorLocked =
             this.disableActions || this.isTutorAssessment || this.commitState === CommitState.CONFLICT || !this.selectedFile || !!this.fileSession[this.selectedFile]?.loadingError;
+    }
+
+    ngAfterViewInit(): void {
+        if (this.isTutorAssessment) {
+            this.setupAddFeedbackButton();
+        }
     }
 
     async selectFileInEditor(fileName: string | undefined): Promise<void> {
@@ -130,10 +163,31 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
     }
 
+    setupAddFeedbackButton(): void {
+        this.editor.setGlyphMarginHoverButton(this.addFeedbackButton.nativeElement, (lineNumber) => this.addNewFeedback(lineNumber));
+    }
+
+    addNewFeedback(lineNumber: number): void {
+        this.newFeedbackLines.push(lineNumber);
+        this.renderFeedbackWidgets();
+    }
+
     protected renderFeedbackWidgets() {
-        for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbacks])) {
-            this.addLineWidgetWithFeedback(feedback);
-        }
+        // Since the feedback widgets rely on the DOM nodes of each feedback item, Angular needs to re-render each node.
+        this.changeDetectorRef.detectChanges();
+        setTimeout(() => {
+            this.editor.disposeWidgets();
+            for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbacks])) {
+                this.addLineWidgetWithFeedback(feedback);
+            }
+
+            for (const line of this.newFeedbackLines) {
+                // TODO adjust addLineWidget function
+                const feedbackNode = this.getInlineFeedbackNode(line);
+                // The lines are 0-based for Ace, but 1-based for Monaco -> increase by 1 to ensure it works in both editors.
+                this.editor.addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
+            }
+        }, 1);
     }
 
     getInlineFeedbackNode(line: number) {

@@ -5,6 +5,7 @@ import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
 import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
+import { MonacoEditorGlyphMarginHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-hover-button.model';
 
 type EditorPosition = { row: number; column: number };
 @Component({
@@ -20,6 +21,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     models: monaco.editor.IModel[] = [];
     lineWidgets: MonacoEditorLineWidget[] = [];
     editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
+    glyphMarginHoverButton?: MonacoEditorGlyphMarginHoverButton;
 
     constructor(
         private themeService: ThemeService,
@@ -34,6 +36,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             glyphMargin: true,
             minimap: { enabled: false },
             readOnly: this._readOnly,
+            lineNumbersMinChars: 4,
         });
         renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
     }
@@ -217,5 +220,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         const lineWidget = new MonacoEditorLineWidget(this._editor, id, domNode, lineNumber);
         lineWidget.addToEditor();
         this.lineWidgets.push(lineWidget);
+    }
+
+    setGlyphMarginHoverButton(domNode: HTMLElement, clickCallback: (lineNumber: number) => void): void {
+        this.glyphMarginHoverButton?.dispose();
+        this.glyphMarginHoverButton = new MonacoEditorGlyphMarginHoverButton(this._editor, 'glyph-margin-hover-button-' + this._editor.getId(), domNode, clickCallback);
     }
 }
