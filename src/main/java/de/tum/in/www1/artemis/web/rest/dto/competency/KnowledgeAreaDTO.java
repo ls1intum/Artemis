@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.hibernate.Hibernate;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
@@ -12,6 +13,7 @@ import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
  * DTO containing {@link KnowledgeArea} data. It only contains the id of its parent.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record KnowledgeAreaDTO(Long id, String title, String shortTitle, String description, Long parentId, List<KnowledgeAreaDTO> children,
         List<StandardizedCompetencyDTO> competencies) {
 

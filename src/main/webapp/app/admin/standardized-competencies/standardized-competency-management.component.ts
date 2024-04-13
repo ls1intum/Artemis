@@ -368,7 +368,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
             this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');
             return;
         }
-        //set children and competencies to previous values as they don't get updated and we do not get all descendants from the server
+        //set children and competencies to previous values as we do not get all descendants from the server
         const knowledgeAreaForTree: KnowledgeAreaForTree = {
             ...knowledgeArea,
             level: parent ? parent.level + 1 : 0,
@@ -376,6 +376,8 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
             children: previousKnowledgeArea.children,
             competencies: previousKnowledgeArea.competencies,
         };
+        //update level of descendants
+        this.updateLevelOfSelfAndDescendants(knowledgeAreaForTree, knowledgeAreaForTree.level);
 
         if (previousParent) {
             previousParent.children = previousParent.children?.filter((ka) => ka.id !== knowledgeArea.id);
@@ -556,6 +558,18 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
             return childrenIds.concat(knowledgeArea.id);
         }
         return childrenIds;
+    }
+
+    /**
+     * Updates the level of the given knowledge area to the new level. Also updates and all its descendants to match the new level.
+     *
+     * @param knowledgeArea the knowledge area to update
+     * @param newLevel the new level to set
+     * @private
+     */
+    private updateLevelOfSelfAndDescendants(knowledgeArea: KnowledgeAreaForTree, newLevel: number) {
+        knowledgeArea.level = newLevel;
+        knowledgeArea.children?.forEach((child) => this.updateLevelOfSelfAndDescendants(child, newLevel + 1));
     }
 
     /**
