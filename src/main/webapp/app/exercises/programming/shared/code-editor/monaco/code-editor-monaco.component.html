@@ -14,7 +14,7 @@
                     [selectedFile]="selectedFile"
                     [codeLine]="Feedback.getReferenceLine(feedback)!"
                     [feedback]="feedback"
-                    [readOnly]="true"
+                    [readOnly]="readOnlyManualFeedback"
                     [highlightDifferences]="highlightDifferences"
                     [course]="course"
                     (onUpdateFeedback)="updateFeedback($event)"
