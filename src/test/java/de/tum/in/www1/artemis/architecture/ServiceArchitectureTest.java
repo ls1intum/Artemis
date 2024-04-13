@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tngtech.archunit.lang.ArchRule;
 
 import de.tum.in.www1.artemis.config.migration.MigrationService;
-import de.tum.in.www1.artemis.config.migration.entries.GitLabJenkinsMigrationService;
 import de.tum.in.www1.artemis.management.SecurityMetersService;
 import de.tum.in.www1.artemis.security.DomainUserDetailsService;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
@@ -33,8 +32,8 @@ class ServiceArchitectureTest extends AbstractArchitectureTest {
     @Test
     void shouldBeInServicePackage() {
         ArchRule rule = classes().that().areAnnotatedWith(Service.class).should().resideInAPackage("..service..").because("services should be in the package 'service'.");
-        final var exceptions = new Class[] { MigrationService.class, GitLabJenkinsMigrationService.class, SecurityMetersService.class, DomainUserDetailsService.class,
-                OAuth2JWKSService.class, JWTCookieService.class, GitDiffReportParserService.class, ResultWebsocketService.class, LocalCIWebsocketMessagingService.class };
+        final var exceptions = new Class[] { MigrationService.class, SecurityMetersService.class, DomainUserDetailsService.class, OAuth2JWKSService.class, JWTCookieService.class,
+                GitDiffReportParserService.class, ResultWebsocketService.class, LocalCIWebsocketMessagingService.class };
         final var classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }
