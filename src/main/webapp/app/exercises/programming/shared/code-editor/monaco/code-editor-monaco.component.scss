@@ -2,3 +2,12 @@
 .card-body-monaco {
     padding: unset;
 }
+
+.monaco-line-highlight {
+    /* TODO: define colors in theme */
+    background: var(--code-editor-diff-newline-background);
+}
+
+.monaco-margin-highlight {
+    background: var(--code-editor-gutter-newline-background);
+}

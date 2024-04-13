@@ -128,6 +128,8 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
 
         this.editorLocked =
             this.disableActions || this.isTutorAssessment || this.commitState === CommitState.CONFLICT || !this.selectedFile || !!this.fileSession[this.selectedFile]?.loadingError;
+
+        this.editor.layout();
     }
 
     ngAfterViewInit(): void {
@@ -171,6 +173,18 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
                 this.onFileContentChange.emit({ file: this.selectedFile, fileContent: text });
             }
         }
+    }
+
+    getText(): string {
+        return this.editor.getText();
+    }
+
+    getNumberOfLines(): number {
+        return this.editor.getNumberOfLines();
+    }
+
+    highlightLines(startLine: number, endLine: number) {
+        this.editor.highlightLines(startLine, endLine, 'monaco-line-highlight', 'monaco-margin-highlight');
     }
 
     setupAddFeedbackButton(): void {
