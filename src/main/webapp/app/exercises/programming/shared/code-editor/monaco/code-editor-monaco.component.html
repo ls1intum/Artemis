@@ -21,21 +21,21 @@
                     (onDeleteFeedback)="deleteFeedback($event)"
                     (onCancelFeedback)="cancelFeedback($event)"
                 />
-                <!-- new, unsaved feedback -->
-                @for (line of newFeedbackLines; track line) {
-                    <jhi-code-editor-tutor-assessment-inline-feedback
-                        class="monaco-hidden-element"
-                        [selectedFile]="selectedFile"
-                        [codeLine]="line"
-                        [feedback]="undefined"
-                        [highlightDifferences]="highlightDifferences"
-                        [readOnly]="readOnlyManualFeedback"
-                        [course]="course"
-                        (onUpdateFeedback)="updateFeedback($event)"
-                        (onDeleteFeedback)="deleteFeedback($event)"
-                        (onCancelFeedback)="cancelFeedback($event)"
-                    />
-                }
+            }
+            <!-- new, unsaved feedback -->
+            @for (line of newFeedbackLines; track line) {
+                <jhi-code-editor-tutor-assessment-inline-feedback
+                    class="monaco-hidden-element"
+                    [selectedFile]="selectedFile"
+                    [codeLine]="line"
+                    [feedback]="undefined"
+                    [highlightDifferences]="highlightDifferences"
+                    [readOnly]="readOnlyManualFeedback"
+                    [course]="course"
+                    (onUpdateFeedback)="updateFeedback($event)"
+                    (onDeleteFeedback)="deleteFeedback($event)"
+                    (onCancelFeedback)="cancelFeedback($event)"
+                />
             }
         }
         <jhi-monaco-editor
