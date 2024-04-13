@@ -6,6 +6,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
 import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoEditorGlyphMarginHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-hover-button.model';
+import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 
 type EditorPosition = { row: number; column: number };
 @Component({
@@ -187,6 +188,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
     }
 
+    layout(): void {
+        this._editor.layout();
+    }
+
     /**
      * Sets the build annotations to display in the editor. They are fixed to their respective lines and will be marked
      * as outdated.
@@ -225,5 +230,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     setGlyphMarginHoverButton(domNode: HTMLElement, clickCallback: (lineNumber: number) => void): void {
         this.glyphMarginHoverButton?.dispose();
         this.glyphMarginHoverButton = new MonacoEditorGlyphMarginHoverButton(this._editor, 'glyph-margin-hover-button-' + this._editor.getId(), domNode, clickCallback);
+    }
+
+    highlightLines(startLine: number, endLine: number, className?: string, marginClassName?: string) {
+        const highlight = new MonacoEditorLineHighlight(this._editor, 'line-highlight', startLine, endLine, className, marginClassName);
+        highlight.addToEditor();
     }
 }
