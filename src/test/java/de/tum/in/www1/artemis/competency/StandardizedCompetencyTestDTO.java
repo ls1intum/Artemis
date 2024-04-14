@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
-import de.tum.in.www1.artemis.web.rest.dto.competency.StandardizedCompetencyDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyDTO;
 
 /**
  * Test DTO for {@link StandardizedCompetencyDTO} where we can deserialize the id

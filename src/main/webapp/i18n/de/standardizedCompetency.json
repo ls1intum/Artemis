@@ -25,6 +25,10 @@
                 "import": {
                     "title": "Standardisierte Kompetenzen Importieren",
                     "count": "{{competencies}} standardisierte Kompetenzen und {{knowledgeAreas}} Wissensgebiete aus der Datei gelesen",
+                    "preview": {
+                        "title": "Vorschau des Imports",
+                        "empty": "Keine Objekte für die Vorschau vorhanden. Bitte wähle eine Datei mit gültigen Objekten aus."
+                    },
                     "format": {
                         "title": "Benötigtes Dateiformat",
                         "text1": "Standardisierte Kompetenzen können aus einer .json-Datei in Artemis hinein importiert werden. Nachdem du eine Datei ausgewählt hast, kannst du noch überprüfen, ob die Wissensgebiete und Kompetenzen korrekt ausgelesen wurden.",

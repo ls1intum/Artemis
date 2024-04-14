@@ -24,6 +24,10 @@
                 },
                 "import": {
                     "title": "Import Standardized Competencies",
+                    "preview": {
+                        "title": "Import Preview",
+                        "empty": "No objects available for the preview. Please select a file with valid objects."
+                    },
                     "format": {
                         "title": "Required File Format",
                         "text1": "Standardized competencies can be imported from a .json file into Artemis. After selecting a file, you can then verify that the knowledge areas and competencies were read correctly.",

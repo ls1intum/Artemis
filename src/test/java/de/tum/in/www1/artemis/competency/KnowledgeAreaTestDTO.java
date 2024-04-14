@@ -5,7 +5,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaDTO;
 
 /**
  * Test DTO for {@link KnowledgeAreaDTO} where we can deserialize the ids
