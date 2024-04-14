@@ -35,6 +35,7 @@ import {
 import { fromPairs, pickBy } from 'lodash-es';
 import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
+import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 
 @Component({
     selector: 'jhi-code-editor-monaco',
@@ -366,5 +367,9 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
             buildAnnotations.filter((buildAnnotation) => buildAnnotation.fileName === this.selectedFile),
             this.commitState === CommitState.UNCOMMITTED_CHANGES,
         );
+    }
+
+    getLineHighlights(): MonacoEditorLineHighlight[] {
+        return this.editor.getLineHighlights();
     }
 }
