@@ -25,7 +25,7 @@
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
-                            <a [href]="routerLink + '/' + value"> {{ value }} </a>
+                            <a [href]="routerLink + '/' + encodeURIComponent(value)"> {{ value }} </a>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="status" [minWidth]="150">

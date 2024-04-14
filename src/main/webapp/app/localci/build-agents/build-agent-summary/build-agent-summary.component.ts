@@ -13,6 +13,8 @@ import { Router } from '@angular/router';
     styleUrl: './build-agent-summary.component.scss',
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
+    protected readonly encodeURIComponent = encodeURIComponent;
+
     buildAgents: BuildAgent[] = [];
     buildCapacity = 0;
     currentBuilds = 0;
