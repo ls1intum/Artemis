@@ -206,6 +206,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.layout();
     }
 
+    layoutWithFixedSize(width: number, height: number): void {
+        this._editor.layout({ width, height });
+    }
+
     setFoldingEnabled(enabled: boolean) {
         this._editor.updateOptions({
             folding: enabled,
