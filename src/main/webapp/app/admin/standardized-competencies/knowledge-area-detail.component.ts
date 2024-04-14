@@ -10,7 +10,7 @@ import { Observable } from 'rxjs';
     templateUrl: './knowledge-area-detail.component.html',
 })
 export class KnowledgeAreaDetailComponent {
-    //values for the knowledge area select
+    // values for the knowledge area select
     @Input() knowledgeAreas: KnowledgeArea[] = [];
     @Input({ required: true }) set knowledgeArea(knowledgeArea: KnowledgeAreaDTO) {
         this._knowledgeArea = knowledgeArea;
@@ -61,13 +61,13 @@ export class KnowledgeAreaDetailComponent {
         parentId: FormControl<number | undefined>;
     }>;
 
-    //icons
+    // icons
     readonly faPencil = faPencil;
     readonly faTrash = faTrash;
     readonly faBan = faBan;
     readonly faSave = faSave;
     readonly faPlus = faPlus;
-    //other constants
+    // other constants
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
     protected readonly validators = KnowledgeAreaValidators;
@@ -105,7 +105,7 @@ export class KnowledgeAreaDetailComponent {
         this.form.reset();
         this.isEditing = false;
 
-        //canceling when creating a new knowledge area closes it
+        // canceling when creating a new knowledge area closes it
         if (this.knowledgeArea.id === undefined) {
             this.onClose.emit();
         }
@@ -125,7 +125,7 @@ export class KnowledgeAreaDetailComponent {
      * (I.e. the new parent of a knowledge area must not be itself or one of its current descendants)
      */
     private createNoCircularDependencyValidator() {
-        //if the knowledgeArea is new, no validator is needed.
+        // if the knowledgeArea is new, no validator is needed.
         if (this.knowledgeArea.id === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             return (parentIdControl: FormControl<number | undefined>) => null;

@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
@@ -11,7 +15,9 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record StandardizedCompetencyDTO(Long id, String title, String description, CompetencyTaxonomy taxonomy, String version, Long knowledgeAreaId, Long sourceId) {
+public record StandardizedCompetencyDTO(@JsonProperty(access = JsonProperty.Access.READ_ONLY) Long id,
+        @NotNull @Size(min = 1, max = StandardizedCompetency.MAX_TITLE_LENGTH) String title, @Size(max = StandardizedCompetency.MAX_DESCRIPTION_LENGTH) String description,
+        CompetencyTaxonomy taxonomy, String version, @NotNull Long knowledgeAreaId, Long sourceId) {
 
     /**
      * Creates a StandardizedCompetencyDTO from the given StandardizedCompetency
