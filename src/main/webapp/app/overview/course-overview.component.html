@@ -67,10 +67,10 @@
                                     }
                                 </li>
                             }
+                            <div [hidden]="!anyItemHidden" class="three-dots nav-link nav-link-sidebar px-3" (click)="toggleDropdown()">
+                                <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
+                            </div>
                         </ul>
-                        <div [hidden]="!anyItemHidden" class="three-dots" (click)="toggleDropdown()">
-                            <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
-                        </div>
                     </div>
                     <!-- Course Action Items  -->
                     <div>
