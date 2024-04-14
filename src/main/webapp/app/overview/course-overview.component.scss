@@ -49,7 +49,7 @@ $footer-height-prod: 142px;
         display: block;
         height: calc(100vh - $footer-height-prod);
         width: calc(100vw - $menu-width-open);
-        overflow: auto;
+        overflow: hidden;
         margin-left: $menu-width-open !important;
         transition:
             width 0.2s ease-in-out,
