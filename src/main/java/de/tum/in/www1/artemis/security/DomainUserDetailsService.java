@@ -32,7 +32,7 @@ public class DomainUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(final String login) {
-        log.info("Authenticating {}", login);
+        log.debug("Authenticating {}", login);
         String lowercaseLogin = login.toLowerCase(Locale.ENGLISH);
         User user = userRepository.findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(lowercaseLogin, true)
                 .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLogin + " was not found in the database"));

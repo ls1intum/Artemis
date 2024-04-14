@@ -4,8 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -25,15 +23,12 @@ import de.tum.in.www1.artemis.service.user.UserCreationService;
 @ConditionalOnProperty(value = "artemis.user-management.use-external", havingValue = "false")
 public class ArtemisInternalAuthenticationProvider extends ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
 
-    private static final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
-
     public ArtemisInternalAuthenticationProvider(UserRepository userRepository, PasswordService passwordService, UserCreationService userCreationService) {
         super(userRepository, passwordService, userCreationService);
     }
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        log.info("Authenticating {}", authentication.getName());
         final var user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(authentication.getName());
         if (user.isEmpty()) {
             throw new AuthenticationServiceException(String.format("User %s does not exist in the Artemis database!", authentication.getName()));
@@ -44,7 +39,6 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         if (!passwordService.checkPasswordMatch(authentication.getCredentials().toString(), user.get().getPassword())) {
             throw new AuthenticationServiceException("Invalid password for user " + user.get().getLogin());
         }
-        log.info("Authentication successful for {}", authentication.getName());
         return new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), user.get().getGrantedAuthorities());
     }
 

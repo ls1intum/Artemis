@@ -53,13 +53,10 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        log.info("LDAP-Authenticating {}", authentication.getName());
         User user = getOrCreateUser(authentication);
         if (user != null) {
-            log.info("LDAP-Authentication successful for {}", authentication.getName());
             return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
         }
-        log.info("LDAP-Authentication failed for {}", authentication.getName());
         return null;
     }
 
