@@ -280,6 +280,12 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         return this.monacoEditor?.getNumberOfLines() ?? 0;
     }
 
+    highlightLines(startLine: number, endLine: number): void {
+        this.monacoEditor?.highlightLines(startLine, endLine);
+        // Will be removed once ace is gone from every instance of this component
+        this.aceEditor?.highlightLines(startLine, endLine, 'diff-newLine', 'gutter-diff-newLine');
+    }
+
     // displays the alert for confirming refreshing or closing the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification(event: any) {

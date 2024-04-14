@@ -372,12 +372,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private highlightLines(firstLine: number, lastLine: number) {
-        if (this.codeEditorContainer?.aceEditor) {
-            this.codeEditorContainer.aceEditor.highlightLines(firstLine, lastLine, 'diff-newLine', 'gutter-diff-newLine');
-        }
-        if (this.codeEditorContainer?.monacoEditor) {
-            this.codeEditorContainer.monacoEditor.highlightLines(firstLine, lastLine);
-        }
+        this.codeEditorContainer.highlightLines(firstLine, lastLine);
     }
 
     /**
