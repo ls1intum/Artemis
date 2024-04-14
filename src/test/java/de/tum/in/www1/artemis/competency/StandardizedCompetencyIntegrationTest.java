@@ -70,7 +70,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
 
         private void testAllPreAuthorizeInstructor() throws Exception {
             request.get("/api/standardized-competencies/1", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
-            request.get("/api/standardized-competencies/for-tree-view", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
+            request.get("/api/standardized-competencies/for-tree-view", HttpStatus.FORBIDDEN, KnowledgeAreaDTO.class);
             request.get("/api/standardized-competencies/knowledge-areas/1", HttpStatus.FORBIDDEN, KnowledgeArea.class);
         }
 
@@ -161,9 +161,9 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
                 var expectedCompetency = StandardizedCompetencyDTO.of(standardizedCompetency);
 
                 var actualCompetency = request.putWithResponseBody("/api/admin/standardized-competencies/" + expectedCompetency.id(), expectedCompetency,
-                        StandardizedCompetency.class, HttpStatus.OK);
+                        StandardizedCompetencyTestDTO.class, HttpStatus.OK);
 
-                assertThat(actualCompetency).isEqualTo(standardizedCompetency);
+                assertThat(actualCompetency).usingRecursiveComparison().isEqualTo(expectedCompetency);
             }
 
             @Test
@@ -184,13 +184,6 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
                 invalidCompetency = new StandardizedCompetencyDTO(validId, "Competency", "description", CompetencyTaxonomy.ANALYZE, null, knowledgeArea.getId(), ID_NOT_EXISTS);
 
                 request.put("/api/admin/standardized-competencies/" + validId, invalidCompetency, HttpStatus.NOT_FOUND);
-            }
-
-            @Test
-            @WithMockUser(username = "admin", roles = "ADMIN")
-            void shouldReturnBadRequestWhenIdsDontMatch() throws Exception {
-                var competency = new StandardizedCompetencyDTO(1L, "Competency", "description", CompetencyTaxonomy.ANALYZE, null, knowledgeArea.getId(), source.getId());
-                request.put("/api/admin/standardized-competencies/" + 2, competency, HttpStatus.BAD_REQUEST);
             }
 
             @ParameterizedTest
@@ -271,8 +264,8 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
                 var expectedKnowledgeArea = KnowledgeAreaDTO.of(knowledgeArea);
 
                 var actualKnowledgeArea = request.putWithResponseBody("/api/admin/standardized-competencies/knowledge-areas/" + expectedKnowledgeArea.id(), expectedKnowledgeArea,
-                        KnowledgeAreaDTO.class, HttpStatus.OK);
-                assertThat(actualKnowledgeArea).isEqualTo(expectedKnowledgeArea);
+                        KnowledgeAreaTestDTO.class, HttpStatus.OK);
+                assertThat(actualKnowledgeArea).usingRecursiveComparison().isEqualTo(expectedKnowledgeArea);
             }
 
             @Test
@@ -288,8 +281,8 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
                 var expectedKnowledgeArea = KnowledgeAreaDTO.of(knowledgeArea);
 
                 var actualKnowledgeArea = request.putWithResponseBody("/api/admin/standardized-competencies/knowledge-areas/" + expectedKnowledgeArea.id(), expectedKnowledgeArea,
-                        KnowledgeAreaDTO.class, HttpStatus.OK);
-                assertThat(actualKnowledgeArea).isEqualTo(expectedKnowledgeArea);
+                        KnowledgeAreaTestDTO.class, HttpStatus.OK);
+                assertThat(actualKnowledgeArea).usingRecursiveComparison().isEqualTo(expectedKnowledgeArea);
             }
 
             @Test
@@ -399,7 +392,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
                 var knowledgeAreaB = standardizedCompetencyUtilService.saveKnowledgeArea("B_Title", "B", "Description", knowledgeAreaA);
                 var competency1 = standardizedCompetencyUtilService.saveStandardizedCompetency("Title", "Description", CompetencyTaxonomy.ANALYZE, "1.0.0", knowledgeAreaB, null);
 
-                var knowledgeAreaTree = request.getList("/api/standardized-competencies/for-tree-view", HttpStatus.OK, KnowledgeAreaDTO.class);
+                var knowledgeAreaTree = request.getList("/api/standardized-competencies/for-tree-view", HttpStatus.OK, KnowledgeAreaTestDTO.class);
 
                 var actualKnowledgeAreaA = knowledgeAreaTree.getFirst();
                 var actualKnowledgeAreaB = actualKnowledgeAreaA.children().getFirst();

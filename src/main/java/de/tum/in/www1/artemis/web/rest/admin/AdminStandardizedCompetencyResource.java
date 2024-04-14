@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -54,7 +56,7 @@ public class AdminStandardizedCompetencyResource {
      */
     @PostMapping("standardized-competencies")
     @EnforceAdmin
-    public ResponseEntity<StandardizedCompetencyDTO> createStandardizedCompetency(@RequestBody StandardizedCompetencyDTO competency) throws URISyntaxException {
+    public ResponseEntity<StandardizedCompetencyDTO> createStandardizedCompetency(@RequestBody @Valid StandardizedCompetencyDTO competency) throws URISyntaxException {
         log.debug("REST request to create standardized competency : {}", competency);
 
         var persistedCompetency = standardizedCompetencyService.createStandardizedCompetency(competency);
@@ -71,7 +73,7 @@ public class AdminStandardizedCompetencyResource {
      */
     @PutMapping("standardized-competencies/{competencyId}")
     @EnforceAdmin
-    public ResponseEntity<StandardizedCompetencyDTO> updateStandardizedCompetency(@PathVariable long competencyId, @RequestBody StandardizedCompetencyDTO competency) {
+    public ResponseEntity<StandardizedCompetencyDTO> updateStandardizedCompetency(@PathVariable long competencyId, @RequestBody @Valid StandardizedCompetencyDTO competency) {
         log.debug("REST request to update standardized competency : {}", competency);
 
         var persistedCompetency = standardizedCompetencyService.updateStandardizedCompetency(competency, competencyId);
@@ -104,7 +106,7 @@ public class AdminStandardizedCompetencyResource {
      */
     @PostMapping("standardized-competencies/knowledge-areas")
     @EnforceAdmin
-    public ResponseEntity<KnowledgeAreaDTO> createKnowledgeArea(@RequestBody KnowledgeAreaDTO knowledgeArea) throws URISyntaxException {
+    public ResponseEntity<KnowledgeAreaDTO> createKnowledgeArea(@RequestBody @Valid KnowledgeAreaDTO knowledgeArea) throws URISyntaxException {
         log.debug("REST request to create knowledge area : {}", knowledgeArea);
 
         var persistedKnowledgeArea = knowledgeAreaService.createKnowledgeArea(knowledgeArea);
@@ -121,7 +123,7 @@ public class AdminStandardizedCompetencyResource {
      */
     @PutMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
     @EnforceAdmin
-    public ResponseEntity<KnowledgeAreaDTO> updateKnowledgeArea(@PathVariable long knowledgeAreaId, @RequestBody KnowledgeAreaDTO knowledgeArea) {
+    public ResponseEntity<KnowledgeAreaDTO> updateKnowledgeArea(@PathVariable long knowledgeAreaId, @RequestBody @Valid KnowledgeAreaDTO knowledgeArea) {
         log.debug("REST request to update knowledge area : {}", knowledgeArea);
 
         var persistedKnowledgeArea = knowledgeAreaService.updateKnowledgeArea(knowledgeArea, knowledgeAreaId);

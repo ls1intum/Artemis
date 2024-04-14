@@ -94,7 +94,7 @@ public class StandardizedCompetencyService {
             existingCompetency.setSource(source);
         }
 
-        if (existingCompetency.getKnowledgeArea().getId() != competency.knowledgeAreaId()) {
+        if (!competency.knowledgeAreaId().equals(existingCompetency.getKnowledgeArea().getId())) {
             var knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(competency.knowledgeAreaId());
             existingCompetency.setKnowledgeArea(knowledgeArea);
         }

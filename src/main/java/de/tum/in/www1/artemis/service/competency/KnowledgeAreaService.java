@@ -66,7 +66,7 @@ public class KnowledgeAreaService {
         }
         else if (existingKnowledgeArea.getParent() == null || !knowledgeArea.parentId().equals(existingKnowledgeArea.getParent().getId())) {
             var newParent = knowledgeAreaRepository.findByIdElseThrow(knowledgeArea.parentId());
-            if (knowledgeAreaRepository.isDescendantOf(newParent.getId(), knowledgeArea.id())) {
+            if (knowledgeAreaRepository.isDescendantOf(newParent.getId(), knowledgeAreaId)) {
                 throw new BadRequestException("A knowledge area cannot have itself or one of its descendants as parent");
             }
             existingKnowledgeArea.setParent(newParent);

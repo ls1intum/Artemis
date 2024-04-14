@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record StandardizedCompetencyDTO(@JsonProperty(access = JsonProperty.Access.READ_ONLY) Long id,
         @NotNull @Size(min = 1, max = StandardizedCompetency.MAX_TITLE_LENGTH) String title, @Size(max = StandardizedCompetency.MAX_DESCRIPTION_LENGTH) String description,
-        CompetencyTaxonomy taxonomy, String version, @NotNull long knowledgeAreaId, Long sourceId) {
+        CompetencyTaxonomy taxonomy, String version, @NotNull Long knowledgeAreaId, Long sourceId) {
 
     /**
      * Creates a StandardizedCompetencyDTO from the given StandardizedCompetency
@@ -27,8 +27,9 @@ public record StandardizedCompetencyDTO(@JsonProperty(access = JsonProperty.Acce
      */
     public static StandardizedCompetencyDTO of(StandardizedCompetency competency) {
         Long sourceId = competency.getSource() == null ? null : competency.getSource().getId();
+        Long knowledgeAreaId = competency.getKnowledgeArea() == null ? null : competency.getKnowledgeArea().getId();
 
         return new StandardizedCompetencyDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getVersion(),
-                competency.getKnowledgeArea().getId(), sourceId);
+                knowledgeAreaId, sourceId);
     }
 }

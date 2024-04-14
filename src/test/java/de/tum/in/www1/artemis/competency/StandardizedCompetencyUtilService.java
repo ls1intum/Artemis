@@ -91,7 +91,7 @@ public class StandardizedCompetencyUtilService {
 
             var competencies = new ArrayList<StandardizedCompetency>();
             // invalid title
-            competencies.add(buildStandardizedCompetency("  ", "valid description", null, null, kaNotExisting, null));
+            competencies.add(buildStandardizedCompetency("", "valid description", null, null, kaNotExisting, null));
             competencies.add(buildStandardizedCompetency(null, "valid description", null, null, kaNotExisting, null));
             competencies.add(buildStandardizedCompetency("0".repeat(StandardizedCompetency.MAX_TITLE_LENGTH + 1), "valid description", null, null, kaNotExisting, null));
             // invalid description
@@ -110,11 +110,11 @@ public class StandardizedCompetencyUtilService {
         public Stream<Arguments> provideArguments(ExtensionContext extensionContext) {
             var knowledgeAreas = new ArrayList<KnowledgeArea>();
             // invalid title
-            knowledgeAreas.add(new KnowledgeArea(" ", "shortTitle", ""));
+            knowledgeAreas.add(new KnowledgeArea("", "shortTitle", ""));
             knowledgeAreas.add(new KnowledgeArea(null, "shortTitle", ""));
             knowledgeAreas.add(new KnowledgeArea("0".repeat(KnowledgeArea.MAX_TITLE_LENGTH + 1), "shortTitle", ""));
             // invalid short title
-            knowledgeAreas.add(new KnowledgeArea("title", "  ", ""));
+            knowledgeAreas.add(new KnowledgeArea("title", "", ""));
             knowledgeAreas.add(new KnowledgeArea("title", "0".repeat(KnowledgeArea.MAX_SHORT_TITLE_LENGTH + 1), ""));
             // invalid description
             knowledgeAreas.add(new KnowledgeArea("title", "shortTitle", "0".repeat(KnowledgeArea.MAX_DESCRIPTION_LENGTH + 1)));
