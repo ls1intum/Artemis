@@ -2,6 +2,7 @@ import {
     AfterViewInit,
     ChangeDetectorRef,
     Component,
+    ElementRef,
     EmbeddedViewRef,
     HostListener,
     OnDestroy,
@@ -116,6 +117,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     anyItemHidden: boolean = false;
     hiddenItems: SidebarItem[];
     dropdownOffset: number;
+    // To track click event outside of the dropdown menu
+    @ViewChild('dropdownContent') dropdownContent: ElementRef;
+    dropdownClickNumber: number = 0;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -207,13 +211,27 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     // Listen window resizement event by height
-    @HostListener('window:resize', ['$event'])
+    @HostListener('window: resize', ['$event'])
     onResize() {
-        console.log('Window Inner height: ' + window.innerHeight);
+        //console.log('Window Inner height: ' + window.innerHeight);
         this.dropdownOpen = false;
         this.updateVisibility(window.innerHeight);
         this.updateMenuOffset();
     }
+
+    // Listen click event on anywhere outside of the dropdown menu
+    @HostListener('document: click', ['$event'])
+    onClickOutsideDropdownMenu(event: MouseEvent) {
+        if (this.dropdownOpen && !this.dropdownContent.nativeElement.contains(event.target as Node)) {
+            this.dropdownClickNumber += 1;
+            console.log('dropdownClickNumber: ' + this.dropdownClickNumber);
+            if (this.dropdownClickNumber === 2) {
+                this.dropdownOpen = false;
+                this.dropdownClickNumber = 0;
+            }
+        }
+    }
+
     // Update sidebar item's hidden property based on the window height to display three-dots
     updateVisibility(height: number) {
         const thresholds: number[] = [];
@@ -261,10 +279,13 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     toggleDropdown() {
         this.dropdownOpen = !this.dropdownOpen;
+        // Refresh click numbers after toggle
+        if (!this.dropdownOpen) {
+            this.dropdownClickNumber = 0;
+        }
     }
 
     dropdownOffsetToString() {
-        console.log(`${this.dropdownOffset}px`);
         return `${this.dropdownOffset}px`;
     }
 
