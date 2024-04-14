@@ -39,7 +39,7 @@ export class MonacoEditorGlyphMarginHoverButton extends MonacoCodeEditorElement 
         });
     }
 
-    private moveAndUpdate(lineNumber?: number) {
+    moveAndUpdate(lineNumber?: number) {
         if (!!lineNumber && lineNumber !== this.getCurrentLineNumber()) {
             this.glyphMarginWidget.setLineNumber(lineNumber);
             this.updateInEditor();

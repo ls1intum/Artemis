@@ -168,6 +168,20 @@ describe('MonacoEditorComponent', () => {
         expect(documentHighlightedMargins).toHaveLength(3);
     });
 
+    it('should pass the current line number to the glyph margin hover button when clicked', () => {
+        const marginElement = document.createElement('div');
+        const clickCallbackStub = jest.fn();
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        comp.setGlyphMarginHoverButton(marginElement, clickCallbackStub);
+        comp.glyphMarginHoverButton?.moveAndUpdate(1);
+        marginElement.click();
+        comp.glyphMarginHoverButton?.moveAndUpdate(3);
+        marginElement.click();
+        expect(clickCallbackStub).toHaveBeenNthCalledWith(1, 1);
+        expect(clickCallbackStub).toHaveBeenNthCalledWith(2, 3);
+    });
+
     it('should not allow editing in readonly mode', () => {
         comp.readOnly = true;
         fixture.detectChanges();
