@@ -533,3 +533,63 @@ different ports and a unique instance ID for each instance.
 #. Start the remaining instances.
 
 You should now be able to see all instances in the registry interface at ``http://localhost:8761``.
+
+Running multiple instances locally with Docker
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can also run multiple instances of Artemis locally using Docker. This will run the Artemis instances in prod
+environment
+
+Linux setup
+"""""""""""
+
+#. When running the Artemis container on a Unix system, you will have to give the user running in the container
+   permission to access the Docker socket by adding them to the docker group. You can find the group ID of the docker
+   group by running ``getent group docker | cut -d: -f3``. Afterwards, create a new file ``docker/.env`` with the
+   following content:
+
+    .. code:: bash
+
+        DOCKER_GROUP_ID=<REPLACE_WITH_DOCKER_GROUP_ID_OF_YOUR_SYSTEM>
+
+#. The docker compose setup which we will use will mount some local directories
+   (namely the ones under docker/.docker-data) into the containers. To ensure that the user running in the container has
+   the necessary permissions to these directories, you will have to change the owner of these directories to the
+   user running in the container (User with ID 1337). You can do this by running the following command:
+
+    .. code:: bash
+
+        sudo chown -R 1337:1337 docker/.docker-data
+
+    .. note::
+
+        - If you don't want to change the owner of the directories, you can create other directories with the necessary
+          permissions and adjust the paths in the docker-compose file accordingly.
+        - You could also use docker volumes instead of mounting local directories. You will have to adjust the docker-compose
+          file accordingly (`Docker docs <https://docs.docker.com/storage/volumes/#use-a-volume-with-docker-compose/>`_).
+          However, this would make it more difficult to access the files on the host system.
+
+#. Start the docker containers by running the following command:
+
+    .. code:: bash
+
+        docker compose -f docker/test-server-multi-node-mysql-localci.yml up
+
+
+Windows setup
+"""""""""""""
+
+#. When running the Artemis container on a Windows system, you will have to change the value for the Docker connection
+   URI. You need to change the value of the environment variable ``ARTEMIS_CONTINUOUSINTEGRATION_DOCKERCONNECTIONURI``
+   in the file ``docker/artemis/config/prod-multinode.env`` to ``tcp://host.docker.internal:2375``.
+
+    .. note::
+
+        - Make sure that option "Expose daemon on tcp://localhost:2375 without TLS" is enabled. This can be found under
+          Settings > General in the Docker Desktop settings.
+
+#. Start the docker containers by running the following command:
+
+    .. code:: bash
+
+        docker compose -f docker/test-server-multi-node-mysql-localci.yml up
