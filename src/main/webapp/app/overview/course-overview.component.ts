@@ -215,6 +215,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     @HostListener('window: resize', ['$event'])
     onResize() {
         this.dropdownOpen = false;
+        this.dropdownClickNumber = 0;
         this.updateVisibility(window.innerHeight);
         this.updateMenuOffset();
     }
