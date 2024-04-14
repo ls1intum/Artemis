@@ -208,12 +208,12 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.sidebarItems = this.getSidebarItems();
         this.courseActionItems = this.getCourseActionItems();
         this.updateVisibility(window.innerHeight);
+        this.updateMenuOffset();
     }
 
     // Listen window resizement event by height
     @HostListener('window: resize', ['$event'])
     onResize() {
-        //console.log('Window Inner height: ' + window.innerHeight);
         this.dropdownOpen = false;
         this.updateVisibility(window.innerHeight);
         this.updateMenuOffset();
@@ -221,10 +221,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     // Listen click event on anywhere outside of the dropdown menu
     @HostListener('document: click', ['$event'])
-    onClickOutsideDropdownMenu(event: MouseEvent) {
-        if (this.dropdownOpen && !this.dropdownContent.nativeElement.contains(event.target as Node)) {
+    onClickOutsideDropdownMenu() {
+        if (this.dropdownOpen) {
             this.dropdownClickNumber += 1;
-            console.log('dropdownClickNumber: ' + this.dropdownClickNumber);
             if (this.dropdownClickNumber === 2) {
                 this.dropdownOpen = false;
                 this.dropdownClickNumber = 0;
