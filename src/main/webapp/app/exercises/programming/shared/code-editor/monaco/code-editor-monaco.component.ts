@@ -142,6 +142,7 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
 
     ngAfterViewInit(): void {
         if (this.isTutorAssessment && !this.readOnlyManualFeedback) {
+            this.editor.setFoldingEnabled(false);
             this.setupAddFeedbackButton();
         }
     }

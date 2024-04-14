@@ -1,12 +1,10 @@
 import * as monaco from 'monaco-editor';
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import { MonacoEditorGlyphMarginWidget } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-widget.model';
-
-import MouseTargetType = monaco.editor.MouseTargetType;
 export class MonacoEditorGlyphMarginHoverButton extends MonacoCodeEditorElement {
     readonly glyphMarginWidget: MonacoEditorGlyphMarginWidget;
     private mouseMoveListener?: monaco.IDisposable;
-    private mouseLeaveListener?: monaco.IDisposable;
+    private cursorPositionListener?: monaco.IDisposable;
     private readonly clickEventCallback: () => void;
 
     constructor(editor: monaco.editor.ICodeEditor, id: string, domNode: HTMLElement, clickCallback: (lineNumber: number) => void) {
@@ -29,18 +27,23 @@ export class MonacoEditorGlyphMarginHoverButton extends MonacoCodeEditorElement 
     protected setupListeners(): void {
         this.getDomNode().addEventListener('click', this.clickEventCallback);
         this.mouseMoveListener = this.editor.onMouseMove((editorMouseEvent: monaco.editor.IEditorMouseEvent) => {
-            const hoveringOverGutter = [MouseTargetType.GUTTER_LINE_NUMBERS, MouseTargetType.GUTTER_GLYPH_MARGIN].includes(editorMouseEvent.target.type);
             const lineNumber = editorMouseEvent.target?.range?.startLineNumber;
-            if (hoveringOverGutter && !!lineNumber && lineNumber !== this.getCurrentLineNumber()) {
-                this.glyphMarginWidget.setLineNumber(lineNumber);
-                this.updateInEditor();
-            } else if (!hoveringOverGutter) {
-                this.removeFromEditor();
-            }
+            this.moveAndUpdate(lineNumber);
         });
-        this.mouseLeaveListener = this.editor.onMouseLeave(() => {
-            this.removeFromEditor();
+
+        /**
+         * This is mainly required for the E2E tests.
+         */
+        this.cursorPositionListener = this.editor.onDidChangeCursorPosition((e: monaco.editor.ICursorPositionChangedEvent) => {
+            this.moveAndUpdate(e.position.lineNumber);
         });
+    }
+
+    private moveAndUpdate(lineNumber?: number) {
+        if (!!lineNumber && lineNumber !== this.getCurrentLineNumber()) {
+            this.glyphMarginWidget.setLineNumber(lineNumber);
+            this.updateInEditor();
+        }
     }
 
     addToEditor(): void {
@@ -54,7 +57,7 @@ export class MonacoEditorGlyphMarginHoverButton extends MonacoCodeEditorElement 
     dispose(): void {
         super.dispose();
         this.mouseMoveListener?.dispose();
-        this.mouseLeaveListener?.dispose();
+        this.cursorPositionListener?.dispose();
         this.getDomNode().removeEventListener('click', this.clickEventCallback);
         this.glyphMarginWidget.dispose();
     }

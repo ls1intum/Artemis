@@ -197,6 +197,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.layout();
     }
 
+    setFoldingEnabled(enabled: boolean) {
+        this._editor.updateOptions({
+            folding: enabled,
+            stickyScroll: {
+                enabled,
+            },
+        });
+    }
+
     /**
      * Sets the build annotations to display in the editor. They are fixed to their respective lines and will be marked
      * as outdated.
