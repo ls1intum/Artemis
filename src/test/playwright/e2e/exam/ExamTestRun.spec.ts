@@ -18,7 +18,6 @@ const examTitle = 'exam' + generateUUID();
 test.describe('Exam test run', () => {
     let course: Course;
     let exam: Exam;
-    let testRun: StudentExam;
     let exerciseArray: Array<Exercise> = [];
 
     test.beforeEach('Create course', async ({ login, examExerciseGroupCreation, courseManagementAPIRequests, examAPIRequests }) => {
@@ -47,7 +46,7 @@ test.describe('Exam test run', () => {
         });
     });
 
-    test('Create a test run', async ({ login, page, examManagement, examTestRun }) => {
+    test('Creates a test run', async ({ login, page, examManagement, examTestRun }) => {
         await login(instructor);
 
         const minutes = 40;
@@ -66,18 +65,16 @@ test.describe('Exam test run', () => {
         expect(testRun.submitted).toBe(false);
         expect(testRun.workingTime).toBe(minutes * 60 + seconds);
 
-        await expect(examTestRun.getWorkingTime(testRunID).getByText(`${minutes}min ${seconds}s`)).toBeVisible();
-        await expect(examTestRun.getStarted(testRunID).getByText('No')).toBeVisible();
-        await expect(examTestRun.getSubmitted(testRunID).getByText('No')).toBeVisible();
+        await expect(examTestRun.getWorkingTime(testRunID).filter({ hasText: `${minutes}min ${seconds}s` })).toBeVisible();
+        await expect(examTestRun.getStarted(testRunID).filter({ hasText: 'No' })).toBeVisible();
+        await expect(examTestRun.getSubmitted(testRunID).filter({ hasText: 'No' })).toBeVisible();
     });
 
     test.describe('Manage a test run', () => {
-        test.beforeEach('Create test run instance', async ({ login, courseManagementAPIRequests }) => {
+        test('Changes test run working time', async ({ login, courseManagementAPIRequests, examTestRun }) => {
             await login(instructor);
-            testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
-        });
+            const testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
 
-        test('Change test run working time', async ({ login, examTestRun }) => {
             const hour = 1;
             const minutes = 20;
             const seconds = 45;
@@ -96,13 +93,17 @@ test.describe('Exam test run', () => {
             expect(updatedTestRun.workingTime).toBe(hour * 3600 + minutes * 60 + seconds);
 
             await examTestRun.openTestRunPage(course, exam);
-            await expect(examTestRun.getWorkingTime(testRun.id!).getByText(`${hour}h ${minutes}min ${seconds}s`)).toBeVisible();
-            await expect(examTestRun.getStarted(testRun.id!).getByText('No')).toBeVisible();
-            await expect(examTestRun.getSubmitted(testRun.id!).getByText('No')).toBeVisible();
+            await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible' });
+            await expect(examTestRun.getWorkingTime(testRun.id!).filter({ hasText: `${hour}h ${minutes}min ${seconds}s` })).toBeVisible();
+            await expect(examTestRun.getStarted(testRun.id!).filter({ hasText: 'No' })).toBeVisible();
+            await expect(examTestRun.getSubmitted(testRun.id!).filter({ hasText: 'No' })).toBeVisible();
         });
 
-        test('Conducts a test run', async ({ examTestRun, examParticipation, examNavigation }) => {
+        test('Conducts a test run', async ({ login, courseManagementAPIRequests, examTestRun, examParticipation, examNavigation }) => {
             test.slow();
+            await login(instructor);
+            const testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
+
             await examTestRun.startParticipation(instructor, course, exam, testRun.id!);
             await expect(examTestRun.getTestRunRibbon().getByText('Test Run')).toBeVisible();
 
@@ -121,13 +122,24 @@ test.describe('Exam test run', () => {
             }
             await examParticipation.checkExamTitle(examTitle);
             await examTestRun.openTestRunPage(course, exam);
-            await expect(examTestRun.getStarted(testRun.id!).getByText('Yes')).toBeVisible();
-            await expect(examTestRun.getSubmitted(testRun.id!).getByText('Yes')).toBeVisible();
+            await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible' });
+            await expect(examTestRun.getStarted(testRun.id!).filter({ hasText: 'Yes' })).toBeVisible();
+            await expect(examTestRun.getSubmitted(testRun.id!).filter({ hasText: 'Yes' })).toBeVisible();
+        });
+    });
+
+    test.describe('Delete a test run', () => {
+        let testRun: StudentExam;
+
+        test.beforeEach('Create test run instance', async ({ login, courseManagementAPIRequests }) => {
+            await login(instructor);
+            testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
         });
 
         test('Deletes a test run', async ({ login, examTestRun }) => {
             await login(instructor);
             await examTestRun.openTestRunPage(course, exam);
+            await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible' });
             await expect(examTestRun.getTestRunIdElement(testRun.id!)).toBeVisible();
             await examTestRun.deleteTestRun(testRun.id!);
             await expect(examTestRun.getTestRun(testRun.id!)).not.toBeAttached();
