@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
@@ -272,20 +272,24 @@ describe('CodeEditorMonacoComponent', () => {
         expect(setAnnotationsStub).toHaveBeenNthCalledWith(2, [buildAnnotations[1]], false);
     });
 
-    it('should display feedback when viewing a tutor assessment', async () => {
+    it('should display feedback when viewing a tutor assessment', fakeAsync(() => {
         const addLineWidgetStub = jest.spyOn(comp.editor, 'addLineWidget').mockImplementation();
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
         comp.isTutorAssessment = true;
         comp.selectedFile = 'file1.java';
         comp.feedbacks = exampleFeedbacks;
         fixture.detectChanges();
-        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) });
-        expect(addLineWidgetStub).toHaveBeenCalledTimes(2);
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1`, document.createElement('div'));
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2`, document.createElement('div'));
-        expect(getInlineFeedbackNodeStub).toHaveBeenCalledTimes(2);
-        expect(selectFileInEditorStub).toHaveBeenCalledOnce();
-    });
+        // Use .then() here instead of await so fakeAsync does not break.
+        comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) }).then(() => {
+            // Rendering of the feedback items happens after one tick to allow the renderer to catch up with the DOM nodes.
+            tick(1);
+            expect(addLineWidgetStub).toHaveBeenCalledTimes(2);
+            expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1`, document.createElement('div'));
+            expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2`, document.createElement('div'));
+            expect(getInlineFeedbackNodeStub).toHaveBeenCalledTimes(2);
+            expect(selectFileInEditorStub).toHaveBeenCalledOnce();
+        });
+    }));
 
     it('should update file session when a file is renamed', async () => {
         const oldFileName = 'old-file-name';
