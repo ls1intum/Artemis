@@ -68,14 +68,14 @@
                     "infrastructureStepTitle": "Infrastructure"
                 },
                 "detailedSteps": {
-                    "generalInfoStepTitle": "General Information",
+                    "generalInfoStepTitle": "General",
                     "generalInfoStepMessage": "Input essential information that forms the foundation of your programming exercise",
                     "difficultyStepTitle": "Mode",
                     "buildPlansTitle": "Build Plans",
                     "difficultyStepMessage": "Configure the settings related to the execution and collaboration aspects of the programming exercise",
-                    "languageStepTitle": "Programming Language",
+                    "languageStepTitle": "Language",
                     "languageStepMessage": "Set the specific details related to the programming language used in the exercise as well as features directly related to it",
-                    "problemStepTitle": "Problem Statement",
+                    "problemStepTitle": "Problem",
                     "problemStepMessage": "Create a comprehensive problem statement for the new exercise, including detailed tasks that clearly outline the required actions and expectations for students.",
                     "gradingStepTitle": "Grading",
                     "gradingStepMessage": "Specify how this exercise is graded and how its outcome contributes to the overall course score."
@@ -115,7 +115,6 @@
             "buildConfiguration": "Build Configuration",
             "buildPlanEditor": "Build Plan Editor",
             "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
-            "publishBuildPlanUrl": "Publish Build Plan",
             "customizeBuildPlan": "Customize Build Plan",
             "customizeBuildPlanWithAeolus": "Customize Build Plan with Aeolus",
             "revertToTemplateBuildPlan": "If you are not happy with your build plan, you can reset it to its template by using the Reset button.",

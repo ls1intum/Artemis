@@ -60,20 +60,5 @@
                 </label>
             </div>
         }
-        @if (programmingExerciseCreationConfig.publishBuildPlanUrlAllowed) {
-            <div class="form-check">
-                <label class="form-check-label" for="field_publishBuildPlanUrl">
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        name="publishBuildPlanUrl"
-                        id="field_publishBuildPlanUrl"
-                        [(ngModel)]="programmingExercise.publishBuildPlanUrl"
-                        checked
-                    />
-                    <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl"></span>
-                </label>
-            </div>
-        }
     </div>
 </section>
