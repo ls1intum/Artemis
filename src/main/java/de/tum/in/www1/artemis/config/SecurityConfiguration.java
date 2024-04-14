@@ -155,20 +155,18 @@ public class SecurityConfiguration {
      * custom security configurations may be added, such as support for LTI if active.
      * </p>
      *
-     * @param http                  The {@link HttpSecurity} to configure.
-     * @param authenticationManager The {@link AuthenticationManager} to use for authenticating users.
+     * @param http The {@link HttpSecurity} to configure.
      * @return The configured {@link SecurityFilterChain}.
      * @throws Exception If an error occurs during the configuration.
      */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // @formatter:off
         http
             .csrf(AbstractHttpConfigurer::disable)
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(handler -> handler.authenticationEntryPoint(problemSupport).accessDeniedHandler(problemSupport))
             .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
-            .authenticationManager(authenticationManager)
             .headers(headers -> headers
                 .contentSecurityPolicy(csp -> csp.policyDirectives("script-src 'self' 'unsafe-inline' 'unsafe-eval'"))
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
