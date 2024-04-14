@@ -115,6 +115,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     dropdownOpen: boolean = false;
     anyItemHidden: boolean = false;
     hiddenItems: SidebarItem[];
+    dropdownOffset: number;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -211,6 +212,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         console.log('Window Inner height: ' + window.innerHeight);
         this.dropdownOpen = false;
         this.updateVisibility(window.innerHeight);
+        this.updateMenuOffset();
     }
     // Update sidebar item's hidden property based on the window height to display three-dots
     updateVisibility(height: number) {
@@ -232,11 +234,15 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 this.hiddenItems.push(item);
             }
         });
-        console.log('Hidden items: ' + this.hiddenItems.map((item) => item.title));
     }
 
-    toggleDropdown() {
-        this.dropdownOpen = !this.dropdownOpen;
+    // Calculate dropdown-menu position based on the number of entries in the sidebar
+    updateMenuOffset() {
+        this.dropdownOffset = 260;
+        this.dropdownOffset -= 30 * this.hiddenItems.length;
+        if (this.dropdownOffset < 0) {
+            this.dropdownOffset = 0;
+        }
     }
 
     // Calculating threshold levels based on the number of entries in the sidebar
@@ -247,6 +253,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             return maxThreshold;
         }
         return maxThreshold - (9 - numberOfSidebarItems) * 35;
+    }
+
+    toggleDropdown() {
+        this.dropdownOpen = !this.dropdownOpen;
+    }
+
+    dropdownOffsetToString() {
+        return `${this.dropdownOffset}px`;
     }
 
     getCourseActionItems(): CourseActionItem[] {
