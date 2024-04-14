@@ -28,11 +28,11 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class StandardizedCompetencyManagementComponent implements OnInit, OnDestroy {
     protected isLoading = false;
-    //true if a competency is getting edited in the detail component
+    // true if a competency is getting edited in the detail component
     protected isEditing = false;
-    //the competency displayed in the detail component
+    // the competency displayed in the detail component
     protected selectedCompetency?: StandardizedCompetencyDTO;
-    //the knowledge area displayed in the detail component
+    // the knowledge area displayed in the detail component
     protected selectedKnowledgeArea?: KnowledgeAreaDTO;
     protected knowledgeAreaFilter?: KnowledgeAreaDTO;
     protected competencyTitleFilter?: string;
@@ -46,20 +46,20 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
      */
     private knowledgeAreaMap = new Map<number, KnowledgeAreaForTree>();
 
-    //data and control for the tree structure
+    // data and control for the tree structure
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
     protected treeControl = new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children);
-    //observable for the error button
+    // observable for the error button
     private dialogErrorSource = new Subject<string>();
     protected dialogError = this.dialogErrorSource.asObservable();
 
-    //Icons
+    // Icons
     protected readonly faChevronRight = faChevronRight;
     protected readonly faPlus = faPlus;
     protected readonly faMinimize = faDownLeftAndUpRightToCenter;
     protected readonly faMaximize = faUpRightAndDownLeftFromCenter;
     protected readonly faEye = faEye;
-    //Other constants for template
+    // Other constants for template
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly getIcon = getIcon;
@@ -99,7 +99,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         this.titleFilterSubject.unsubscribe();
     }
 
-    //filter functions
+    // filter functions
 
     /**
      * Filters out all knowledge areas except for the one specified in the {@link knowledgeAreaFilter} and its direct ancestors.
@@ -161,7 +161,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         return hasMatch;
     }
 
-    //methods handling the knowledge area detail component
+    // methods handling the knowledge area detail component
     openNewKnowledgeArea(parentId?: number) {
         const newKnowledgeArea: KnowledgeAreaDTO = {
             parentId: parentId,
@@ -187,7 +187,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                 this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.delete', { title: this.selectedKnowledgeArea?.title });
                 this.dialogErrorSource.next('');
                 this.updateAfterDeleteKnowledgeArea(deletedKnowledgeArea);
-                //close the detail component if it is still open
+                // close the detail component if it is still open
                 if (this.selectedKnowledgeArea?.id === id) {
                     this.isEditing = false;
                     this.selectedKnowledgeArea = undefined;
@@ -210,7 +210,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                     next: (resultKnowledgeArea) => {
                         this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.create', { title: resultKnowledgeArea.title });
                         this.updateAfterCreateKnowledgeArea(resultKnowledgeArea);
-                        //update the detail view if no other was opened
+                        // update the detail view if no other was opened
                         if (!(this.selectedKnowledgeArea?.id || this.selectedCompetency) && !this.isEditing) {
                             this.selectedKnowledgeArea = resultKnowledgeArea;
                         }
@@ -225,7 +225,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                     next: (resultKnowledgeArea) => {
                         this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.update', { title: resultKnowledgeArea.title });
                         this.updateAfterUpdateKnowledgeArea(resultKnowledgeArea);
-                        //update the detail view if it is still open
+                        // update the detail view if it is still open
                         if (resultKnowledgeArea.id === this.selectedKnowledgeArea?.id) {
                             this.selectedKnowledgeArea = resultKnowledgeArea;
                         }
@@ -235,7 +235,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         }
     }
 
-    //methods handling the competency detail component
+    // methods handling the competency detail component
 
     openNewCompetency(knowledgeAreaId: number) {
         const newCompetency: StandardizedCompetencyDTO = {
@@ -262,7 +262,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                 this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.delete', { title: deletedCompetency?.title });
                 this.updateAfterDeleteCompetency(deletedCompetency);
                 this.dialogErrorSource.next('');
-                //close the detail component if it is still open
+                // close the detail component if it is still open
                 if (id === this.selectedCompetency?.id) {
                     this.isEditing = false;
                     this.selectedCompetency = undefined;
@@ -285,7 +285,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                     next: (resultCompetency) => {
                         this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.create', { title: resultCompetency.title });
                         this.updateAfterCreateCompetency(resultCompetency);
-                        //update the detail view if no other was opened
+                        // update the detail view if no other was opened
                         if (!(this.selectedCompetency?.id || this.selectedKnowledgeArea) && !this.isEditing) {
                             this.selectedCompetency = resultCompetency;
                         }
@@ -293,7 +293,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
         } else {
-            //save the previous competency values to update the tree afterward
+            // save the previous competency values to update the tree afterward
             const previousCompetency = this.selectedCompetency?.id === competency.id ? this.selectedCompetency : undefined;
             this.adminStandardizedCompetencyService
                 .updateStandardizedCompetency(competency)
@@ -302,7 +302,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                     next: (resultCompetency) => {
                         this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.update', { title: resultCompetency.title });
                         this.updateAfterUpdateCompetency(resultCompetency, previousCompetency);
-                        //update the detail view if it is still open
+                        // update the detail view if it is still open
                         if (resultCompetency.id === this.selectedCompetency?.id) {
                             this.selectedCompetency = resultCompetency;
                         }
@@ -363,12 +363,12 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
 
         const parent = this.getKnowledgeAreaByIdIfExists(knowledgeArea.parentId);
         const previousParent = this.getKnowledgeAreaByIdIfExists(previousKnowledgeArea.parentId);
-        //fail if a parent exists but could not be found
+        // fail if a parent exists but could not be found
         if ((!parent && knowledgeArea.parentId !== undefined) || (!previousParent && previousKnowledgeArea.parentId !== undefined)) {
             this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');
             return;
         }
-        //set children and competencies to previous values as we do not get all descendants from the server
+        // set children and competencies to previous values as we do not get all descendants from the server
         const knowledgeAreaForTree: KnowledgeAreaForTree = {
             ...knowledgeArea,
             level: parent ? parent.level + 1 : 0,
@@ -376,7 +376,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
             children: previousKnowledgeArea.children,
             competencies: previousKnowledgeArea.competencies,
         };
-        //update level of descendants
+        // update level of descendants
         this.updateLevelOfSelfAndDescendants(knowledgeAreaForTree, knowledgeAreaForTree.level);
 
         if (previousParent) {
@@ -395,17 +395,17 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         this.dataSource.data.forEach((knowledgeArea) => this.addSelfAndDescendantsToSelectArray(knowledgeArea));
         this.treeControl.dataNodes = this.dataSource.data;
 
-        //refresh tree if dataSource.data was not modified directly
+        // refresh tree if dataSource.data was not modified directly
         if (previousParent || parent) {
             this.refreshTree();
         }
-        //filter again if the knowledge area was moved.
+        // filter again if the knowledge area was moved.
         if (previousParent?.id !== parent?.id && this.knowledgeAreaFilter) {
             this.filterByKnowledgeArea();
         }
     }
 
-    //functions that update the tree structure in the user interface
+    // functions that update the tree structure in the user interface
 
     /**
      * Updates the tree after deleting the {@link selectedCompetency} by removing it from its parent knowledge area.
@@ -459,7 +459,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
             return;
         }
 
-        //if the knowledge area changed, move the competency to the new knowledge area
+        // if the knowledge area changed, move the competency to the new knowledge area
         if (competency.knowledgeAreaId !== previousCompetency.knowledgeAreaId) {
             const newKnowledgeArea = this.getKnowledgeAreaByIdIfExists(competency.knowledgeAreaId);
             if (newKnowledgeArea === undefined) {
@@ -469,7 +469,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
             previousKnowledgeArea.competencies = previousKnowledgeArea.competencies.filter((c) => c.id !== competency.id);
             newKnowledgeArea.competencies = (newKnowledgeArea.competencies ?? []).concat(competencyForTree);
         } else {
-            //if the knowledge area stayed the same insert the new competency/replace the existing one
+            // if the knowledge area stayed the same insert the new competency/replace the existing one
             const index = previousKnowledgeArea.competencies.findIndex((c) => c.id === competency.id);
             if (index === -1) {
                 this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');
@@ -479,7 +479,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         }
     }
 
-    //functions to initialize data structures
+    // functions to initialize data structures
 
     /**
      * Recursively adds a knowledge area and its descendants to the {@link knowledgeAreaMap}
@@ -512,7 +512,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         }
     }
 
-    //utility functions
+    // utility functions
 
     private openCancelModal(title: string, entityType: 'standardizedCompetency' | 'knowledgeArea', callback: () => void) {
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
@@ -584,7 +584,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
             return (array ?? []).concat(knowledgeArea);
         }
 
-        //find the index of the first knowledge area with a "larger" title
+        // find the index of the first knowledge area with a "larger" title
         const insertIndex = array.findIndex((ka) => (ka.title ? ka.title.localeCompare(knowledgeArea.title!) > -1 : false));
         if (insertIndex === -1) {
             return array.concat(knowledgeArea);

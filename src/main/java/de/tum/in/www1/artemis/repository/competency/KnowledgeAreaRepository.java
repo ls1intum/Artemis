@@ -43,7 +43,7 @@ public interface KnowledgeAreaRepository extends JpaRepository<KnowledgeArea, Lo
 
     // this method is needed as native MySQL queries do not get automatically cast to boolean
     default boolean isDescendantOf(long descendantId, long parentId) {
-        return isDescendantOfAsLong(descendantId, parentId) != 0;
+        return isDescendantOfAsLong(descendantId, parentId) > 0;
     }
 
     @Query(value = """

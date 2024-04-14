@@ -11,7 +11,7 @@ import { Observable } from 'rxjs';
     templateUrl: './standardized-competency-detail.component.html',
 })
 export class StandardizedCompetencyDetailComponent {
-    //values for the knowledge area select
+    // values for the knowledge area select
     @Input() knowledgeAreas: KnowledgeArea[] = [];
     @Input({ required: true }) set competency(competency: StandardizedCompetencyDTO) {
         this._competency = competency;
@@ -60,12 +60,12 @@ export class StandardizedCompetencyDetailComponent {
         knowledgeAreaId: FormControl<number | undefined>;
     }>;
 
-    //icons
+    // icons
     readonly faPencil = faPencil;
     readonly faTrash = faTrash;
     readonly faBan = faBan;
     readonly faSave = faSave;
-    //other constants
+    // other constants
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
     protected readonly validators = StandardizedCompetencyValidators;
@@ -95,7 +95,7 @@ export class StandardizedCompetencyDetailComponent {
         this.form.reset();
         this.isEditing = false;
 
-        //canceling when creating a new competency closes it
+        // canceling when creating a new competency closes it
         if (this.competency.id === undefined) {
             this.onClose.emit();
         }

@@ -8,32 +8,27 @@
             }
             <button type="button" class="btn-close" (click)="close()"></button>
         </div>
-        <!-- do not allow the creation of children/competencies when creating a new knowledge area -->
+        <!-- do not allow these actions when creating a new knowledge area -->
         @if (knowledgeArea.id) {
             <div class="mb-1">
                 <jhi-button [icon]="faPlus" [btnSize]="ButtonSize.SMALL" title="artemisApp.knowledgeArea.details.createCompetencyButton" (onClick)="openNewCompetency()" />
                 <jhi-button [icon]="faPlus" [btnSize]="ButtonSize.SMALL" title="artemisApp.knowledgeArea.details.createKnowledgeAreaButton" (onClick)="openNewKnowledgeArea()" />
             </div>
-        }
-        <div>
             @if (!isEditing) {
                 <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" title="entity.action.edit" [icon]="faPencil" (onClick)="edit()" />
             }
-            <!-- do not allow delete when creating a new knowledge area -->
-            @if (knowledgeArea.id) {
-                <button
-                    class="me-0"
-                    jhiDeleteButton
-                    [entityTitle]="knowledgeArea.title ?? ''"
-                    [deleteQuestion]="'artemisApp.knowledgeArea.manage.deleteModal.question'"
-                    [deleteConfirmationText]="'artemisApp.knowledgeArea.manage.deleteModal.typeNameToConfirm'"
-                    (delete)="delete()"
-                    [dialogError]="dialogError"
-                >
-                    <fa-icon [icon]="faTrash" />
-                </button>
-            }
-        </div>
+            <button
+                class="me-0"
+                jhiDeleteButton
+                [entityTitle]="knowledgeArea.title ?? ''"
+                [deleteQuestion]="'artemisApp.knowledgeArea.manage.deleteModal.question'"
+                [deleteConfirmationText]="'artemisApp.knowledgeArea.manage.deleteModal.typeNameToConfirm'"
+                (delete)="delete()"
+                [dialogError]="dialogError"
+            >
+                <fa-icon [icon]="faTrash" />
+            </button>
+        }
     </div>
     <div class="d-flex flex-column border-0" [formGroup]="form">
         <div class="form-group">

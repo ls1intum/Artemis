@@ -64,11 +64,6 @@ describe('KnowledgeAreaDetailComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        componentFixture.detectChanges();
-        expect(component).toBeDefined();
-    });
-
     it('should set form values to knowledgeArea', () => {
         componentFixture.detectChanges();
         compareFormValues(component.form.getRawValue(), defaultKnowledgeArea);

@@ -2,10 +2,15 @@ package de.tum.in.www1.artemis.web.rest.dto.competency;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
 
@@ -14,8 +19,9 @@ import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record KnowledgeAreaDTO(Long id, String title, String shortTitle, String description, Long parentId, List<KnowledgeAreaDTO> children,
-        List<StandardizedCompetencyDTO> competencies) {
+public record KnowledgeAreaDTO(@JsonProperty(access = JsonProperty.Access.READ_ONLY) Long id, @NotNull @Size(min = 1, max = KnowledgeArea.MAX_TITLE_LENGTH) String title,
+        @NotNull @Size(min = 1, max = KnowledgeArea.MAX_SHORT_TITLE_LENGTH) String shortTitle, @Size(max = KnowledgeArea.MAX_DESCRIPTION_LENGTH) String description, Long parentId,
+        List<@Valid KnowledgeAreaDTO> children, List<@Valid StandardizedCompetencyDTO> competencies) {
 
     /**
      * Creates a KnowledgeAreaDTO from the given KnowledgeArea
