@@ -238,10 +238,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     // Calculate dropdown-menu position based on the number of entries in the sidebar
     updateMenuOffset() {
-        this.dropdownOffset = 260;
-        this.dropdownOffset -= 30 * this.hiddenItems.length;
-        if (this.dropdownOffset < 0) {
+        const leftSidebarItems: number = this.sidebarItems.length - this.hiddenItems.length;
+        if (leftSidebarItems === 1) {
             this.dropdownOffset = 0;
+            if (window.innerHeight > 370) {
+                this.dropdownOffset += (9 - this.hiddenItems.length) * 10;
+            }
+        } else {
+            this.dropdownOffset = leftSidebarItems * 50;
         }
     }
 
@@ -260,6 +264,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     dropdownOffsetToString() {
+        console.log(`${this.dropdownOffset}px`);
         return `${this.dropdownOffset}px`;
     }
 
