@@ -239,7 +239,8 @@ jhi-secured-image {
 .dropdown .dropdown-content {
     position: absolute;
     z-index: 1000000;
-    top: 0px;
+    overflow-y: auto;
+    max-height: 150px;
     padding-top: 5px;
     padding-bottom: 5px;
     border: 1px solid #d7d7d7;
