@@ -23,17 +23,13 @@ interface importCount {
     styleUrls: ['admin-import-standardized-competencies.component.scss'],
 })
 export class AdminImportStandardizedCompetenciesComponent {
-    isLoading = false;
-    importData?: KnowledgeAreasForImportDTO;
-    count?: importCount;
-    private fileReader: FileReader;
+    protected isLoading = false;
+    protected isCollapsed = false;
+    protected importData?: KnowledgeAreasForImportDTO;
+    protected count?: importCount;
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
     protected treeControl = new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children);
-
-    isCollapsed = false;
-    toggleCollapse() {
-        this.isCollapsed = !this.isCollapsed;
-    }
+    private fileReader: FileReader;
 
     //Icons
     protected readonly faFileImport = faFileImport;
@@ -41,6 +37,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faChevronRight = faChevronRight;
     //Other constants
+    protected readonly getIcon = getIcon;
     protected readonly ButtonType = ButtonType;
     protected readonly importExample = `\`\`\`
 {
@@ -121,6 +118,10 @@ export class AdminImportStandardizedCompetenciesComponent {
         });
     }
 
+    toggleCollapse() {
+        this.isCollapsed = !this.isCollapsed;
+    }
+
     cancel() {
         this.router.navigate(['../'], { relativeTo: this.activatedRoute });
     }
@@ -183,7 +184,4 @@ export class AdminImportStandardizedCompetenciesComponent {
     private generateFileReader() {
         return new FileReader();
     }
-
-    protected readonly JSON = JSON;
-    protected readonly getIcon = getIcon;
 }
