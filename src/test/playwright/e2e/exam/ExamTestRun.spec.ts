@@ -59,15 +59,14 @@ test.describe('Exam test run', () => {
         await examTestRun.setWorkingTimeSeconds(seconds);
         const testRunResponse = await examTestRun.confirmTestRun();
         const testRun: StudentExam = await testRunResponse.json();
-        const testRunID = testRun.id!;
         expect(testRunResponse.status()).toBe(200);
         expect(testRun.testRun).toBe(true);
         expect(testRun.submitted).toBe(false);
         expect(testRun.workingTime).toBe(minutes * 60 + seconds);
 
-        await expect(examTestRun.getWorkingTime(testRunID).filter({ hasText: `${minutes}min ${seconds}s` })).toBeVisible();
-        await expect(examTestRun.getStarted(testRunID).filter({ hasText: 'No' })).toBeVisible();
-        await expect(examTestRun.getSubmitted(testRunID).filter({ hasText: 'No' })).toBeVisible();
+        await expect(examTestRun.getWorkingTime(testRun.id!).filter({ hasText: `${minutes}min ${seconds}s` })).toBeVisible();
+        await expect(examTestRun.getStarted(testRun.id!).filter({ hasText: 'No' })).toBeVisible();
+        await expect(examTestRun.getSubmitted(testRun.id!).filter({ hasText: 'No' })).toBeVisible();
     });
 
     test.describe('Manage a test run', () => {
@@ -142,7 +141,7 @@ test.describe('Exam test run', () => {
             await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible' });
             await expect(examTestRun.getTestRunIdElement(testRun.id!)).toBeVisible();
             await examTestRun.deleteTestRun(testRun.id!);
-            await expect(examTestRun.getTestRun(testRun.id!)).not.toBeAttached();
+            await expect(examTestRun.getTestRun(testRun.id!)).not.toBeVisible();
         });
     });
 
