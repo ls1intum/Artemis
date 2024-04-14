@@ -557,7 +557,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     private addBreadcrumbForUrlSegment(currentPath: string, segment: string): void {
         const isStudentPath = currentPath.startsWith('/courses');
-        const buildAgentDetails = currentPath.startsWith('/admin/build-agents/') && segment !== 'build-agents';
 
         if (isStudentPath) {
             if (segment === 'repository') {
@@ -570,9 +569,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             }
         }
 
-        if (buildAgentDetails) {
-            segment = decodeURIComponent(segment);
-        }
         // When we're not dealing with an ID we need to translate the current part
         // The translation might still depend on the previous parts
         switch (segment) {

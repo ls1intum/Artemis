@@ -102,7 +102,7 @@ export const adminState: Routes = [
                 canActivate: [LocalCIGuard],
             },
             {
-                path: 'build-agents/:agentName',
+                path: 'build-agents/details',
                 component: BuildAgentDetailsComponent,
                 data: {
                     pageTitle: 'artemisApp.buildAgents.title',

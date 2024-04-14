@@ -37,7 +37,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe((params) => {
+        this.paramSub = this.route.queryParams.subscribe((params) => {
             this.agentName = params['agentName'];
             this.channel = `/topic/admin/build-agent/${this.agentName}`;
             this.load();
