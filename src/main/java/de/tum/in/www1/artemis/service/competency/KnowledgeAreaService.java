@@ -32,10 +32,6 @@ public class KnowledgeAreaService {
      * @return the created knowledge area
      */
     public KnowledgeArea createKnowledgeArea(KnowledgeAreaDTO knowledgeArea) {
-        if (knowledgeArea.id() != null) {
-            throw new BadRequestException("A new knowledge cannot already have an id");
-        }
-
         // fetch the parent from the database if it exists
         KnowledgeArea parent = null;
         if (knowledgeArea.parentId() != null) {

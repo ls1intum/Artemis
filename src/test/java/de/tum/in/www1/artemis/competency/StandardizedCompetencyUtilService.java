@@ -15,6 +15,8 @@ import de.tum.in.www1.artemis.domain.competency.Source;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
+import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.StandardizedCompetencyDTO;
 
 @Service
 public class StandardizedCompetencyUtilService {
@@ -44,25 +46,6 @@ public class StandardizedCompetencyUtilService {
     }
 
     /**
-     * builds a new standardized competency with the given parameters
-     *
-     * @param title         the competency title
-     * @param description   the competency description
-     * @param taxonomy      the competency taxonomy
-     * @param version       the competency version
-     * @param knowledgeArea the knowledgeArea that the competency is part of
-     * @param source        the source of the competency
-     * @return the standardized competency
-     */
-    public static StandardizedCompetency buildStandardizedCompetency(String title, String description, CompetencyTaxonomy taxonomy, String version, KnowledgeArea knowledgeArea,
-            Source source) {
-        var competency = new StandardizedCompetency(title, description, taxonomy, version);
-        competency.setKnowledgeArea(knowledgeArea);
-        competency.setSource(source);
-        return competency;
-    }
-
-    /**
      * builds a new standardized competency with the given parameters and saves it to the database
      *
      * @param title         the competency title
@@ -75,30 +58,50 @@ public class StandardizedCompetencyUtilService {
      */
     public StandardizedCompetency saveStandardizedCompetency(String title, String description, CompetencyTaxonomy taxonomy, String version, KnowledgeArea knowledgeArea,
             Source source) {
-        var competency = buildStandardizedCompetency(title, description, taxonomy, version, knowledgeArea, source);
+        var competency = new StandardizedCompetency(title, description, taxonomy, version);
+        competency.setKnowledgeArea(knowledgeArea);
+        competency.setSource(source);
         return standardizedCompetencyRepository.save(competency);
+    }
+
+    /**
+     * Creates a StandardizedCompetencyDTO from the given StandardizedCompetency
+     *
+     * @param competency the StandardizedCompetency
+     * @return the created StandardizedCompetencyDTO
+     */
+    public static StandardizedCompetencyDTO toDTO(StandardizedCompetency competency) {
+        Long sourceId = competency.getSource() == null ? null : competency.getSource().getId();
+        Long knowledgeAreaId = competency.getKnowledgeArea() == null ? null : competency.getKnowledgeArea().getId();
+
+        return new StandardizedCompetencyDTO(competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getVersion(), knowledgeAreaId, sourceId);
+    }
+
+    /**
+     * Creates a KnowledgeAreaDTO from the given KnowledgeArea
+     *
+     * @param knowledgeArea the KnowledgeArea
+     * @return the created KnowledgeAreaDTO
+     */
+    public static KnowledgeAreaDTO toDTO(KnowledgeArea knowledgeArea) {
+        Long parentId = knowledgeArea.getParent() == null ? null : knowledgeArea.getParent().getId();
+
+        return new KnowledgeAreaDTO(knowledgeArea.getTitle(), knowledgeArea.getShortTitle(), knowledgeArea.getDescription(), parentId);
     }
 
     static class CheckStandardizedCompetencyValidationProvider implements ArgumentsProvider {
 
         @Override
         public Stream<Arguments> provideArguments(ExtensionContext extensionContext) {
-            // competencies need a knowledge area.
-            // use a non-existing id to see that the validation is executed before the knowledge area gets retrieved.
-            var kaNotExisting = new KnowledgeArea();
-            kaNotExisting.setId(ID_NOT_EXISTS);
-            var kaNoId = new KnowledgeArea();
-
-            var competencies = new ArrayList<StandardizedCompetency>();
+            var competencies = new ArrayList<StandardizedCompetencyDTO>();
             // invalid title
-            competencies.add(buildStandardizedCompetency("", "valid description", null, null, kaNotExisting, null));
-            competencies.add(buildStandardizedCompetency(null, "valid description", null, null, kaNotExisting, null));
-            competencies.add(buildStandardizedCompetency("0".repeat(StandardizedCompetency.MAX_TITLE_LENGTH + 1), "valid description", null, null, kaNotExisting, null));
+            competencies.add(new StandardizedCompetencyDTO("", "valid description", null, null, ID_NOT_EXISTS, null));
+            competencies.add(new StandardizedCompetencyDTO(null, "valid description", null, null, ID_NOT_EXISTS, null));
+            competencies.add(new StandardizedCompetencyDTO("0".repeat(StandardizedCompetency.MAX_TITLE_LENGTH + 1), "valid description", null, null, ID_NOT_EXISTS, null));
             // invalid description
-            competencies.add(buildStandardizedCompetency("valid title", "0".repeat(StandardizedCompetency.MAX_DESCRIPTION_LENGTH + 1), null, null, kaNotExisting, null));
+            competencies.add(new StandardizedCompetencyDTO("valid title", "0".repeat(StandardizedCompetency.MAX_DESCRIPTION_LENGTH + 1), null, null, ID_NOT_EXISTS, null));
             // invalid knowledge area
-            competencies.add(buildStandardizedCompetency("valid title", "valid description", null, null, kaNoId, null));
-            competencies.add(buildStandardizedCompetency("valid title", "valid description", null, null, null, null));
+            competencies.add(new StandardizedCompetencyDTO("valid title", "valid description", null, null, null, null));
 
             return competencies.stream().map(Arguments::of);
         }
@@ -108,16 +111,16 @@ public class StandardizedCompetencyUtilService {
 
         @Override
         public Stream<Arguments> provideArguments(ExtensionContext extensionContext) {
-            var knowledgeAreas = new ArrayList<KnowledgeArea>();
+            var knowledgeAreas = new ArrayList<KnowledgeAreaDTO>();
             // invalid title
-            knowledgeAreas.add(new KnowledgeArea("", "shortTitle", ""));
-            knowledgeAreas.add(new KnowledgeArea(null, "shortTitle", ""));
-            knowledgeAreas.add(new KnowledgeArea("0".repeat(KnowledgeArea.MAX_TITLE_LENGTH + 1), "shortTitle", ""));
+            knowledgeAreas.add(new KnowledgeAreaDTO("", "shortTitle", "", null));
+            knowledgeAreas.add(new KnowledgeAreaDTO(null, "shortTitle", "", null));
+            knowledgeAreas.add(new KnowledgeAreaDTO("0".repeat(KnowledgeArea.MAX_TITLE_LENGTH + 1), "shortTitle", "", null));
             // invalid short title
-            knowledgeAreas.add(new KnowledgeArea("title", "", ""));
-            knowledgeAreas.add(new KnowledgeArea("title", "0".repeat(KnowledgeArea.MAX_SHORT_TITLE_LENGTH + 1), ""));
+            knowledgeAreas.add(new KnowledgeAreaDTO("title", "", "", null));
+            knowledgeAreas.add(new KnowledgeAreaDTO("title", "0".repeat(KnowledgeArea.MAX_SHORT_TITLE_LENGTH + 1), "", null));
             // invalid description
-            knowledgeAreas.add(new KnowledgeArea("title", "shortTitle", "0".repeat(KnowledgeArea.MAX_DESCRIPTION_LENGTH + 1)));
+            knowledgeAreas.add(new KnowledgeAreaDTO("title", "shortTitle", "0".repeat(KnowledgeArea.MAX_DESCRIPTION_LENGTH + 1), null));
             return knowledgeAreas.stream().map(Arguments::of);
         }
     }

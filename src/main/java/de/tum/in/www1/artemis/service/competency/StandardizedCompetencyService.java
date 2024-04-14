@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
-import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.StandardizedCompetencyDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -119,7 +118,7 @@ public class StandardizedCompetencyService {
      *
      * @return the list of knowledge areas with no parent, containing all their descendants and competencies
      */
-    public List<KnowledgeAreaDTO> getAllForTreeView() {
+    public List<KnowledgeArea> getAllForTreeView() {
         var knowledgeAreasForTreeView = new ArrayList<KnowledgeArea>();
         var idMap = new HashMap<Long, KnowledgeArea>();
 
@@ -144,6 +143,6 @@ public class StandardizedCompetencyService {
             parent.addToChildren(knowledgeArea);
         }
 
-        return knowledgeAreasForTreeView.stream().map(KnowledgeAreaDTO::of).toList();
+        return knowledgeAreasForTreeView;
     }
 }
