@@ -26,6 +26,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         elementRef: ElementRef,
         renderer: Renderer2,
     ) {
+        /*
+         * The constructor injects the editor along with its container into the empty template of this component.
+         * This makes the editor available immediately (not just after ngOnInit), preventing errors when the methods
+         * of this component are called.
+         */
         this.monacoEditorContainerElement = renderer.createElement('div');
         renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
         renderer.addClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
