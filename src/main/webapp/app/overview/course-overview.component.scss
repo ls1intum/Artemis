@@ -12,7 +12,7 @@ $footer-height-prod: 142px;
 
 // ng-deep needed to remove scrollbar from mat-sidebar
 ::ng-deep .mat-drawer-inner-container {
-    overflow-x: hidden !important;
+    overflow: hidden !important;
 }
 
 .sidebar-wrapper {
@@ -231,12 +231,19 @@ jhi-secured-image {
 .dropdown-li {
     display: block;
     text-decoration: none;
+    padding-bottom: 5px;
+}
+
+.dropdown-li:last-child {
+    padding-bottom: 0px;
 }
 
 .dropdown .dropdown-content {
     position: absolute;
     z-index: 1000000;
     top: 0px;
+    padding-top: 5px;
+    padding-bottom: 5px;
     border: 1px solid #d7d7d7;
     border-radius: 5px;
     background-color: rgb(255, 255, 255);
