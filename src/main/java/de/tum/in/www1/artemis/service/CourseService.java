@@ -981,12 +981,11 @@ public class CourseService {
     }
 
     /**
-     * If the corresponding group (student, tutor, editor, instructor) is not defined, this method will create the default group.
-     * If the group is defined, it will check that the group exists
+     * If the corresponding group (student, tutor, editor, instructor) is not defined, this method will set the default group.
      *
      * @param course the course (typically created on the client and not yet existing) for which the groups should be validated
      */
-    public void createOrValidateGroups(Course course) {
+    public void setDefaultGroupsIfNotSet(Course course) {
         if (!StringUtils.hasText(course.getStudentGroupName())) {
             course.setStudentGroupName(course.getDefaultStudentGroupName());
         }
