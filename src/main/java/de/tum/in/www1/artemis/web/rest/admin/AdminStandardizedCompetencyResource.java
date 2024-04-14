@@ -153,7 +153,7 @@ public class AdminStandardizedCompetencyResource {
 
     @PutMapping("standardized-competencies/import")
     @EnforceAdmin
-    public ResponseEntity<Void> importStandardizedCompetencies(@RequestBody KnowledgeAreasForImportDTO knowledgeAreasForImportDTO) {
+    public ResponseEntity<Void> importStandardizedCompetencies(@RequestBody @Valid KnowledgeAreasForImportDTO knowledgeAreasForImportDTO) {
         log.debug("REST request to import standardized competencies from .json");
 
         standardizedCompetencyService.adminImportStandardizedCompetencies(knowledgeAreasForImportDTO);

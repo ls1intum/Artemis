@@ -20,9 +20,8 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
-import de.tum.in.www1.artemis.web.rest.dto.competency.StandardizedCompetencyDTO;
-import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO.KnowledgeAreaDTOWithDescendants;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -152,12 +151,13 @@ public class StandardizedCompetencyService {
     }
 
     public void adminImportStandardizedCompetencies(KnowledgeAreasForImportDTO knowledgeAreasForImportDTO) {
-        List<KnowledgeAreaDTO> topLevelKnowledgeAreas = knowledgeAreasForImportDTO.knowledgeAreas() != null ? knowledgeAreasForImportDTO.knowledgeAreas() : Collections.emptyList();
+        List<KnowledgeAreaDTOWithDescendants> topLevelKnowledgeAreas = knowledgeAreasForImportDTO.knowledgeAreas() != null ? knowledgeAreasForImportDTO.knowledgeAreas()
+                : Collections.emptyList();
         List<Source> sources = knowledgeAreasForImportDTO.sources() != null ? knowledgeAreasForImportDTO.sources() : Collections.emptyList();
         var sourceIds = sources.stream().map(Source::getId).toList();
 
         for (var knowledgeAreaDTO : topLevelKnowledgeAreas) {
-            verifySelfAndDescendants(knowledgeAreaDTO, sourceIds);
+            verifySourcesForSelfAndDescendants(knowledgeAreaDTO, sourceIds);
         }
 
         var sourceMap = new HashMap<Long, Source>();
@@ -173,8 +173,8 @@ public class StandardizedCompetencyService {
         }
     }
 
-    public void verifySelfAndDescendants(KnowledgeAreaDTO knowledgeArea, List<Long> sourceIds) {
-        List<KnowledgeAreaDTO> children = knowledgeArea.children() != null ? knowledgeArea.children() : Collections.emptyList();
+    public void verifySourcesForSelfAndDescendants(KnowledgeAreaDTOWithDescendants knowledgeArea, List<Long> sourceIds) {
+        List<KnowledgeAreaDTOWithDescendants> children = knowledgeArea.children() != null ? knowledgeArea.children() : Collections.emptyList();
         List<StandardizedCompetencyDTO> competencies = knowledgeArea.competencies() != null ? knowledgeArea.competencies() : Collections.emptyList();
 
         for (var competency : competencies) {
@@ -182,13 +182,13 @@ public class StandardizedCompetencyService {
             if (sourceId != null && !sourceIds.contains(sourceId)) {
                 throw new BadRequestException("The source with id " + sourceId + " used in the competency \"" + competency.title() + "\" does not exist in your import file!");
             }
-            if (competency.version() == null || competency.version().length() > StandardizedCompetency.MAX_VERSION_LENGTH) {
-                throw new BadRequestException("All standardized competencies must have a version and it may not be longer than 30 characters!");
-            }
+        }
+        for (var child : children) {
+            verifySourcesForSelfAndDescendants(child, sourceIds);
         }
     }
 
-    private void importSelfAndDescendants(KnowledgeAreaDTO knowledgeArea, KnowledgeArea parent, Map<Long, Source> sourceMap) {
+    private void importSelfAndDescendants(KnowledgeAreaDTOWithDescendants knowledgeArea, KnowledgeArea parent, Map<Long, Source> sourceMap) {
         // import self without competencies and children
         var knowledgeAreaToImport = new KnowledgeArea(knowledgeArea.title(), knowledgeArea.shortTitle(), knowledgeArea.description());
         knowledgeAreaToImport.setParent(parent);
