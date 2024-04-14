@@ -1,5 +1,4 @@
 import {
-    AfterViewInit,
     ChangeDetectorRef,
     Component,
     ElementRef,
@@ -44,7 +43,7 @@ import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco
     encapsulation: ViewEncapsulation.None,
     providers: [RepositoryFileService],
 })
-export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
+export class CodeEditorMonacoComponent implements OnChanges {
     @ViewChild('editor', { static: true })
     editor: MonacoEditorComponent;
     @ViewChild('addFeedbackButton', { static: true })
@@ -127,6 +126,10 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines = [];
             this.renderFeedbackWidgets();
+            if (this.isTutorAssessment && !this.readOnlyManualFeedback) {
+                this.editor.setFoldingEnabled(false);
+                this.setupAddFeedbackButton();
+            }
             this.onFileLoad.emit(this.selectedFile);
         }
 
@@ -139,13 +142,6 @@ export class CodeEditorMonacoComponent implements OnChanges, AfterViewInit {
             this.disableActions || this.isTutorAssessment || this.commitState === CommitState.CONFLICT || !this.selectedFile || !!this.fileSession[this.selectedFile]?.loadingError;
 
         this.editor.layout();
-    }
-
-    ngAfterViewInit(): void {
-        if (this.isTutorAssessment && !this.readOnlyManualFeedback) {
-            this.editor.setFoldingEnabled(false);
-            this.setupAddFeedbackButton();
-        }
     }
 
     async selectFileInEditor(fileName: string | undefined): Promise<void> {
