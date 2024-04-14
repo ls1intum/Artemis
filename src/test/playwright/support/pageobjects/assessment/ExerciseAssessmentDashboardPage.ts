@@ -1,6 +1,5 @@
 import { Page, expect } from '@playwright/test';
 import { Commands } from '../../commands';
-import { hasAttributeWithValue } from '../../utils';
 
 export class ExerciseAssessmentDashboardPage {
     private readonly page: Page;
@@ -37,7 +36,11 @@ export class ExerciseAssessmentDashboardPage {
     }
 
     async checkComplaintText(complaintText: string) {
-        await this.page.locator(this.complaintTextAreaSelector).waitFor({ state: 'attached' });
-        expect(await hasAttributeWithValue(this.page, this.complaintTextAreaSelector, complaintText)).toBe(true);
+        await this.getComplaintText().waitFor({ state: 'attached' });
+        this.getComplaintText()
+            .evaluate((el) => el.outerHTML)
+            .then((html) => console.log(html));
+        await expect(this.getComplaintText()).toContainText(complaintText);
+        // expect(await hasAttributeWithValue(this.page, this.complaintTextAreaSelector, complaintText)).toBe(true);
     }
 }
