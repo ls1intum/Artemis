@@ -4,7 +4,7 @@ import { MonacoEditorGlyphMarginWidget } from 'app/shared/monaco-editor/model/mo
 export class MonacoEditorGlyphMarginHoverButton extends MonacoCodeEditorElement {
     readonly glyphMarginWidget: MonacoEditorGlyphMarginWidget;
     private mouseMoveListener?: monaco.IDisposable;
-    private cursorPositionListener?: monaco.IDisposable;
+    private mouseLeaveListener?: monaco.IDisposable;
     private readonly clickEventCallback: () => void;
 
     constructor(editor: monaco.editor.ICodeEditor, id: string, domNode: HTMLElement, clickCallback: (lineNumber: number) => void) {
@@ -31,11 +31,8 @@ export class MonacoEditorGlyphMarginHoverButton extends MonacoCodeEditorElement 
             this.moveAndUpdate(lineNumber);
         });
 
-        /**
-         * This is mainly required for the E2E tests.
-         */
-        this.cursorPositionListener = this.editor.onDidChangeCursorPosition((e: monaco.editor.ICursorPositionChangedEvent) => {
-            this.moveAndUpdate(e.position.lineNumber);
+        this.mouseLeaveListener = this.editor.onMouseLeave(() => {
+            this.removeFromEditor();
         });
     }
 
@@ -57,7 +54,7 @@ export class MonacoEditorGlyphMarginHoverButton extends MonacoCodeEditorElement 
     dispose(): void {
         super.dispose();
         this.mouseMoveListener?.dispose();
-        this.cursorPositionListener?.dispose();
+        this.mouseLeaveListener?.dispose();
         this.getDomNode().removeEventListener('click', this.clickEventCallback);
         this.glyphMarginWidget.dispose();
     }

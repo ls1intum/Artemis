@@ -8,12 +8,8 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
     readonly feedbackEditorSelector = '#test-';
 
     provideFeedbackOnCodeLine(lineIndex: number, points: number, feedback: string) {
-        // Navigate to the line in the editor using the keyboard so Cypress's scrolling behavior does not interfere.
-        cy.get('div.view-lines').click(0, 0).wait(100);
-        for (let i = 0; i < lineIndex; i++) {
-            cy.focused().type('{downArrow}');
-        }
-        cy.get('[widgetid*="glyph-margin-hover-button"]').first().click({ force: true });
+        // We can't change elements from the ace editor, so we can't use custom ids here
+        cy.get('.ace_gutter-cell').eq(lineIndex).find('svg').click({ force: true });
         this.typeIntoFeedbackEditor(feedback, lineIndex);
         this.typePointsIntoFeedbackEditor(points, lineIndex);
         this.saveFeedback(lineIndex);
