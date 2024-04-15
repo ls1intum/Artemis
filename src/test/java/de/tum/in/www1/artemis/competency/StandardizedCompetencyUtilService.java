@@ -15,8 +15,8 @@ import de.tum.in.www1.artemis.domain.competency.Source;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
-import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.StandardizedCompetencyDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 
 @Service
 public class StandardizedCompetencyUtilService {
@@ -70,11 +70,12 @@ public class StandardizedCompetencyUtilService {
      * @param competency the StandardizedCompetency
      * @return the created StandardizedCompetencyDTO
      */
-    public static StandardizedCompetencyDTO toDTO(StandardizedCompetency competency) {
+    public static StandardizedCompetencyRequestDTO toDTO(StandardizedCompetency competency) {
         Long sourceId = competency.getSource() == null ? null : competency.getSource().getId();
         Long knowledgeAreaId = competency.getKnowledgeArea() == null ? null : competency.getKnowledgeArea().getId();
 
-        return new StandardizedCompetencyDTO(competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getVersion(), knowledgeAreaId, sourceId);
+        return new StandardizedCompetencyRequestDTO(competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getVersion(), knowledgeAreaId,
+                sourceId);
     }
 
     /**
@@ -83,25 +84,25 @@ public class StandardizedCompetencyUtilService {
      * @param knowledgeArea the KnowledgeArea
      * @return the created KnowledgeAreaDTO
      */
-    public static KnowledgeAreaDTO toDTO(KnowledgeArea knowledgeArea) {
+    public static KnowledgeAreaRequestDTO toDTO(KnowledgeArea knowledgeArea) {
         Long parentId = knowledgeArea.getParent() == null ? null : knowledgeArea.getParent().getId();
 
-        return new KnowledgeAreaDTO(knowledgeArea.getTitle(), knowledgeArea.getShortTitle(), knowledgeArea.getDescription(), parentId);
+        return new KnowledgeAreaRequestDTO(knowledgeArea.getTitle(), knowledgeArea.getShortTitle(), knowledgeArea.getDescription(), parentId);
     }
 
     static class CheckStandardizedCompetencyValidationProvider implements ArgumentsProvider {
 
         @Override
         public Stream<Arguments> provideArguments(ExtensionContext extensionContext) {
-            var competencies = new ArrayList<StandardizedCompetencyDTO>();
+            var competencies = new ArrayList<StandardizedCompetencyRequestDTO>();
             // invalid title
-            competencies.add(new StandardizedCompetencyDTO("", "valid description", null, null, ID_NOT_EXISTS, null));
-            competencies.add(new StandardizedCompetencyDTO(null, "valid description", null, null, ID_NOT_EXISTS, null));
-            competencies.add(new StandardizedCompetencyDTO("0".repeat(StandardizedCompetency.MAX_TITLE_LENGTH + 1), "valid description", null, null, ID_NOT_EXISTS, null));
+            competencies.add(new StandardizedCompetencyRequestDTO("", "valid description", null, null, ID_NOT_EXISTS, null));
+            competencies.add(new StandardizedCompetencyRequestDTO(null, "valid description", null, null, ID_NOT_EXISTS, null));
+            competencies.add(new StandardizedCompetencyRequestDTO("0".repeat(StandardizedCompetency.MAX_TITLE_LENGTH + 1), "valid description", null, null, ID_NOT_EXISTS, null));
             // invalid description
-            competencies.add(new StandardizedCompetencyDTO("valid title", "0".repeat(StandardizedCompetency.MAX_DESCRIPTION_LENGTH + 1), null, null, ID_NOT_EXISTS, null));
+            competencies.add(new StandardizedCompetencyRequestDTO("valid title", "0".repeat(StandardizedCompetency.MAX_DESCRIPTION_LENGTH + 1), null, null, ID_NOT_EXISTS, null));
             // invalid knowledge area
-            competencies.add(new StandardizedCompetencyDTO("valid title", "valid description", null, null, null, null));
+            competencies.add(new StandardizedCompetencyRequestDTO("valid title", "valid description", null, null, null, null));
 
             return competencies.stream().map(Arguments::of);
         }
@@ -111,16 +112,16 @@ public class StandardizedCompetencyUtilService {
 
         @Override
         public Stream<Arguments> provideArguments(ExtensionContext extensionContext) {
-            var knowledgeAreas = new ArrayList<KnowledgeAreaDTO>();
+            var knowledgeAreas = new ArrayList<KnowledgeAreaRequestDTO>();
             // invalid title
-            knowledgeAreas.add(new KnowledgeAreaDTO("", "shortTitle", "", null));
-            knowledgeAreas.add(new KnowledgeAreaDTO(null, "shortTitle", "", null));
-            knowledgeAreas.add(new KnowledgeAreaDTO("0".repeat(KnowledgeArea.MAX_TITLE_LENGTH + 1), "shortTitle", "", null));
+            knowledgeAreas.add(new KnowledgeAreaRequestDTO("", "shortTitle", "", null));
+            knowledgeAreas.add(new KnowledgeAreaRequestDTO(null, "shortTitle", "", null));
+            knowledgeAreas.add(new KnowledgeAreaRequestDTO("0".repeat(KnowledgeArea.MAX_TITLE_LENGTH + 1), "shortTitle", "", null));
             // invalid short title
-            knowledgeAreas.add(new KnowledgeAreaDTO("title", "", "", null));
-            knowledgeAreas.add(new KnowledgeAreaDTO("title", "0".repeat(KnowledgeArea.MAX_SHORT_TITLE_LENGTH + 1), "", null));
+            knowledgeAreas.add(new KnowledgeAreaRequestDTO("title", "", "", null));
+            knowledgeAreas.add(new KnowledgeAreaRequestDTO("title", "0".repeat(KnowledgeArea.MAX_SHORT_TITLE_LENGTH + 1), "", null));
             // invalid description
-            knowledgeAreas.add(new KnowledgeAreaDTO("title", "shortTitle", "0".repeat(KnowledgeArea.MAX_DESCRIPTION_LENGTH + 1), null));
+            knowledgeAreas.add(new KnowledgeAreaRequestDTO("title", "shortTitle", "0".repeat(KnowledgeArea.MAX_DESCRIPTION_LENGTH + 1), null));
             return knowledgeAreas.stream().map(Arguments::of);
         }
     }
