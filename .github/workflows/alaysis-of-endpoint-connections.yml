@@ -1,0 +1,14 @@
+name: Analysis of Endpoint-Connections
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - 'SECURITY.md'
+      - 'docs/**'
+      - '.github/**'
+      - '!.github/workflows/build.yml'
+      - '!.github/workflows/testserver.yml'
