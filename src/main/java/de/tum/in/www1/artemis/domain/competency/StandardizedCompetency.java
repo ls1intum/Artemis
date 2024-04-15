@@ -34,6 +34,9 @@ public class StandardizedCompetency extends BaseCompetency {
     @JsonIgnore
     public static final int MAX_VERSION_LENGTH = 30;
 
+    @JsonIgnore
+    public static final String FIRST_VERSION = "1.0.0";
+
     @Column(name = "version", nullable = false)
     private String version;
 

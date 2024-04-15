@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.domain.competency.StandardizedCompetency.FIRST_VERSION;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,7 +22,8 @@ import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO;
-import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO.KnowledgeAreaDTOWithDescendants;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO.KnowledgeAreaForImportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO.StandardizedCompetencyForImportDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -31,8 +33,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Profile(PROFILE_CORE)
 @Service
 public class StandardizedCompetencyService {
-
-    private static final String FIRST_VERSION = "1.0.0";
 
     private final StandardizedCompetencyRepository standardizedCompetencyRepository;
 
@@ -80,10 +80,6 @@ public class StandardizedCompetencyService {
      */
     public StandardizedCompetency updateStandardizedCompetency(long competencyId, StandardizedCompetencyRequestDTO competency) {
         var existingCompetency = standardizedCompetencyRepository.findByIdElseThrow(competencyId);
-
-        if (competency.version() != null && !competency.version().equals(existingCompetency.getVersion())) {
-            throw new BadRequestException("You cannot change the version of a standardized competency");
-        }
 
         existingCompetency.setTitle(competency.title());
         existingCompetency.setDescription(competency.description());
@@ -151,7 +147,7 @@ public class StandardizedCompetencyService {
     }
 
     public void adminImportStandardizedCompetencies(KnowledgeAreasForImportDTO knowledgeAreasForImportDTO) {
-        List<KnowledgeAreaDTOWithDescendants> topLevelKnowledgeAreas = knowledgeAreasForImportDTO.knowledgeAreas() != null ? knowledgeAreasForImportDTO.knowledgeAreas()
+        List<KnowledgeAreaForImportDTO> topLevelKnowledgeAreas = knowledgeAreasForImportDTO.knowledgeAreas() != null ? knowledgeAreasForImportDTO.knowledgeAreas()
                 : Collections.emptyList();
         List<Source> sources = knowledgeAreasForImportDTO.sources() != null ? knowledgeAreasForImportDTO.sources() : Collections.emptyList();
         var sourceIds = sources.stream().map(Source::getId).toList();
@@ -173,9 +169,9 @@ public class StandardizedCompetencyService {
         }
     }
 
-    public void verifySourcesForSelfAndDescendants(KnowledgeAreaDTOWithDescendants knowledgeArea, List<Long> sourceIds) {
-        List<KnowledgeAreaDTOWithDescendants> children = knowledgeArea.children() != null ? knowledgeArea.children() : Collections.emptyList();
-        List<StandardizedCompetencyRequestDTO> competencies = knowledgeArea.competencies() != null ? knowledgeArea.competencies() : Collections.emptyList();
+    private void verifySourcesForSelfAndDescendants(KnowledgeAreaForImportDTO knowledgeArea, List<Long> sourceIds) {
+        List<KnowledgeAreaForImportDTO> children = knowledgeArea.children() != null ? knowledgeArea.children() : Collections.emptyList();
+        List<StandardizedCompetencyForImportDTO> competencies = knowledgeArea.competencies() != null ? knowledgeArea.competencies() : Collections.emptyList();
 
         for (var competency : competencies) {
             var sourceId = competency.sourceId();
@@ -188,7 +184,7 @@ public class StandardizedCompetencyService {
         }
     }
 
-    private void importSelfAndDescendants(KnowledgeAreaDTOWithDescendants knowledgeArea, KnowledgeArea parent, Map<Long, Source> sourceMap) {
+    private void importSelfAndDescendants(KnowledgeAreaForImportDTO knowledgeArea, KnowledgeArea parent, Map<Long, Source> sourceMap) {
         // import self without competencies and children
         var knowledgeAreaToImport = new KnowledgeArea(knowledgeArea.title(), knowledgeArea.shortTitle(), knowledgeArea.description());
         knowledgeAreaToImport.setParent(parent);
@@ -198,12 +194,11 @@ public class StandardizedCompetencyService {
         if (knowledgeArea.competencies() != null) {
             var competenciesToImport = new ArrayList<StandardizedCompetency>();
             for (var competency : knowledgeArea.competencies()) {
-                var competencyToImport = new StandardizedCompetency(competency.title(), competency.description(), competency.taxonomy(), competency.version());
+                var version = competency.version() != null ? competency.version() : FIRST_VERSION;
+                var source = competency.sourceId() != null ? sourceMap.get(competency.sourceId()) : null;
+                var competencyToImport = new StandardizedCompetency(competency.title(), competency.description(), competency.taxonomy(), version);
                 competencyToImport.setKnowledgeArea(importedKnowledgeArea);
-                if (competency.sourceId() != null) {
-                    var source = sourceMap.get(competency.sourceId());
-                    competencyToImport.setSource(source);
-                }
+                competencyToImport.setSource(source);
                 competenciesToImport.add(competencyToImport);
             }
             var importedCompetencies = standardizedCompetencyRepository.saveAll(competenciesToImport);

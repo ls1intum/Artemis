@@ -18,20 +18,21 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
  * This is used to import new knowledge areas, standardized competencies and sources into Artemis
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record KnowledgeAreasForImportDTO(List<@Valid KnowledgeAreaDTOWithDescendants> knowledgeAreas, List<Source> sources) {
+public record KnowledgeAreasForImportDTO(List<@Valid KnowledgeAreaForImportDTO> knowledgeAreas, List<Source> sources) {
 
     /**
      * DTO containing knowledge area data as well as its children and competencies
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record KnowledgeAreaDTOWithDescendants(@NotNull @Size(min = 1, max = KnowledgeArea.MAX_TITLE_LENGTH) String title,
+    public record KnowledgeAreaForImportDTO(@NotNull @Size(min = 1, max = KnowledgeArea.MAX_TITLE_LENGTH) String title,
             @NotNull @Size(min = 1, max = KnowledgeArea.MAX_SHORT_TITLE_LENGTH) String shortTitle, @Size(max = KnowledgeArea.MAX_DESCRIPTION_LENGTH) String description,
-            List<@Valid KnowledgeAreaDTOWithDescendants> children, List<@Valid StandardizedCompetencyDTO> competencies) {
+            List<@Valid KnowledgeAreaForImportDTO> children, List<@Valid StandardizedCompetencyForImportDTO> competencies) {
 
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record StandardizedCompetencyDTO(@NotNull @Size(min = 1, max = StandardizedCompetency.MAX_TITLE_LENGTH) String title,
-            @Size(max = StandardizedCompetency.MAX_DESCRIPTION_LENGTH) String description, CompetencyTaxonomy taxonomy, String version, Long sourceId) {
+    public record StandardizedCompetencyForImportDTO(@NotNull @Size(min = 1, max = StandardizedCompetency.MAX_TITLE_LENGTH) String title,
+            @Size(max = StandardizedCompetency.MAX_DESCRIPTION_LENGTH) String description, CompetencyTaxonomy taxonomy,
+            @Size(min = 1, max = StandardizedCompetency.MAX_VERSION_LENGTH) String version, Long sourceId) {
     }
 }

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.competency;
 
+import static de.tum.in.www1.artemis.domain.competency.StandardizedCompetency.FIRST_VERSION;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -105,7 +107,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
             @Test
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldCreateCompetency() throws Exception {
-                var expectedCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, null, knowledgeArea.getId(), source.getId());
+                var expectedCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, knowledgeArea.getId(), source.getId());
 
                 var actualCompetency = request.postWithResponseBody("/api/admin/standardized-competencies", expectedCompetency, StandardizedCompetencyRequestDTO.class,
                         HttpStatus.CREATED);
@@ -116,10 +118,10 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
             @Test
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldReturn404() throws Exception {
-                var expectedCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, null, ID_NOT_EXISTS, source.getId());
+                var expectedCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, ID_NOT_EXISTS, source.getId());
                 request.post("/api/admin/standardized-competencies", expectedCompetency, HttpStatus.NOT_FOUND);
 
-                expectedCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, null, knowledgeArea.getId(), ID_NOT_EXISTS);
+                expectedCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, knowledgeArea.getId(), ID_NOT_EXISTS);
                 request.post("/api/admin/standardized-competencies", expectedCompetency, HttpStatus.NOT_FOUND);
             }
 
@@ -156,16 +158,15 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
                 long validId = standardizedCompetency.getId();
 
                 // competency with this id does not exist
-                var competencyNotExisting = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, null, knowledgeArea.getId(),
-                        source.getId());
+                var competencyNotExisting = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, knowledgeArea.getId(), source.getId());
                 request.put("/api/admin/standardized-competencies/" + ID_NOT_EXISTS, competencyNotExisting, HttpStatus.NOT_FOUND);
 
                 // knowledge area that does not exist in the database is not allowed
-                var invalidCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, null, ID_NOT_EXISTS, source.getId());
+                var invalidCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, ID_NOT_EXISTS, source.getId());
                 request.put("/api/admin/standardized-competencies/" + validId, invalidCompetency, HttpStatus.NOT_FOUND);
 
                 // source that does not exist in the database is not allowed
-                invalidCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, null, knowledgeArea.getId(), ID_NOT_EXISTS);
+                invalidCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, knowledgeArea.getId(), ID_NOT_EXISTS);
 
                 request.put("/api/admin/standardized-competencies/" + validId, invalidCompetency, HttpStatus.NOT_FOUND);
             }
@@ -349,27 +350,50 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
             @Test
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldImport() throws Exception {
-                var competency1 = new KnowledgeAreasForImportDTO.StandardizedCompetencyDTO("title", "description", CompetencyTaxonomy.ANALYZE, null, 1L);
-                var competency2 = new KnowledgeAreasForImportDTO.StandardizedCompetencyDTO("title2", "description2", CompetencyTaxonomy.APPLY, null, null);
-                var knowledgeArea1 = new KnowledgeAreasForImportDTO.KnowledgeAreaDTOWithDescendants("title", "title", "", null, List.of(competency1));
-                var knowledgeArea2 = new KnowledgeAreasForImportDTO.KnowledgeAreaDTOWithDescendants("title", "title", "", List.of(knowledgeArea1), List.of(competency2));
-                var knowledgeArea3 = new KnowledgeAreasForImportDTO.KnowledgeAreaDTOWithDescendants("title", "title", "", null, null);
+                var competency2 = new KnowledgeAreasForImportDTO.StandardizedCompetencyForImportDTO("competency2", "description2", CompetencyTaxonomy.APPLY, null, null);
+                var competency1 = new KnowledgeAreasForImportDTO.StandardizedCompetencyForImportDTO("competency1", "description", CompetencyTaxonomy.ANALYZE, "1.1.0", 1L);
+                var knowledgeArea2 = new KnowledgeAreasForImportDTO.KnowledgeAreaForImportDTO("knowledgeArea2", "ka2", "description2", null, List.of(competency2));
+                var knowledgeArea1 = new KnowledgeAreasForImportDTO.KnowledgeAreaForImportDTO("knowledgeArea1", "ka1", "description", List.of(knowledgeArea2),
+                        List.of(competency1));
                 var source1 = new Source("title", "author", "http://localhost:1");
+                source1.setId(1L);
                 var source2 = new Source("title2", "author2", "http://localhost:2");
+                source2.setId(2L);
 
-                // do not put knowledgeArea1, it is not top-level
-                var importData = new KnowledgeAreasForImportDTO(List.of(knowledgeArea2, knowledgeArea3), List.of(source1, source2));
+                // do not put knowledgeArea2, it is not top-level
+                var importData = new KnowledgeAreasForImportDTO(List.of(knowledgeArea1), List.of(source1, source2));
                 request.put("/api/admin/standardized-competencies/import", importData, HttpStatus.OK);
 
-                // TODO: how to test this. lol.
+                var competencies = standardizedCompetencyRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+                competencies = competencies.subList(competencies.size() - 2, competencies.size());
+                var competency1Actual = competencies.get(0);
+                var competency2Actual = competencies.get(1);
+                var knowledgeAreas = knowledgeAreaRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+                knowledgeAreas = knowledgeAreas.subList(knowledgeAreas.size() - 2, knowledgeAreas.size());
+                var knowledgeArea1Actual = knowledgeAreas.get(0);
+                var knowledgeArea2Actual = knowledgeAreas.get(1);
+                var sources = sourceRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+                sources = sources.subList(sources.size() - 2, sources.size());
+                var source1Id = sources.getFirst().getId();
+
+                assertThat(sources).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "competencies").containsAll(List.of(source1, source2));
+                assertThat(competency1Actual).usingRecursiveComparison().comparingOnlyFields("title", "description", "taxonomy", "version").isEqualTo(competency1);
+                assertThat(competency1Actual.getSource().getId()).isEqualTo(source1Id);
+                assertThat(competency1Actual.getKnowledgeArea().getId()).isEqualTo(knowledgeArea1Actual.getId());
+                assertThat(competency2Actual).usingRecursiveComparison().comparingOnlyFields("title", "description", "taxonomy").isEqualTo(competency2);
+                assertThat(competency2Actual.getVersion()).isEqualTo(FIRST_VERSION);
+                assertThat(competency2Actual.getKnowledgeArea().getId()).isEqualTo(knowledgeArea2Actual.getId());
+                assertThat(knowledgeArea1Actual).usingRecursiveComparison().comparingOnlyFields("title", "shortTitle", "description").isEqualTo(knowledgeArea1);
+                assertThat(knowledgeArea2Actual).usingRecursiveComparison().comparingOnlyFields("title", "shortTitle", "description").isEqualTo(knowledgeArea2);
+                assertThat(knowledgeArea2Actual.getParent().getId()).isEqualTo(knowledgeArea1Actual.getId());
             }
 
             @Test
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldReturnBadRequestForInvalidSources() throws Exception {
                 // this competency references a source that does not exist!
-                var competency = new KnowledgeAreasForImportDTO.StandardizedCompetencyDTO("title", "description", null, null, 1L);
-                var knowledgeArea = new KnowledgeAreasForImportDTO.KnowledgeAreaDTOWithDescendants("title", "title", "", null, List.of(competency));
+                var competency = new KnowledgeAreasForImportDTO.StandardizedCompetencyForImportDTO("title", "description", null, null, 1L);
+                var knowledgeArea = new KnowledgeAreasForImportDTO.KnowledgeAreaForImportDTO("title", "title", "", null, List.of(competency));
                 var importData = new KnowledgeAreasForImportDTO(List.of(knowledgeArea), null);
 
                 request.put("/api/admin/standardized-competencies/import", importData, HttpStatus.BAD_REQUEST);
