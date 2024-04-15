@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
-import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -31,7 +31,7 @@ public class KnowledgeAreaService {
      * @param knowledgeArea the knowledge area to create
      * @return the created knowledge area
      */
-    public KnowledgeArea createKnowledgeArea(KnowledgeAreaDTO knowledgeArea) {
+    public KnowledgeArea createKnowledgeArea(KnowledgeAreaRequestDTO knowledgeArea) {
         // fetch the parent from the database if it exists
         KnowledgeArea parent = null;
         if (knowledgeArea.parentId() != null) {
@@ -46,11 +46,11 @@ public class KnowledgeAreaService {
     /**
      * Updates an existing knowledge area with the provided data
      *
-     * @param knowledgeArea   the new knowledge area values
      * @param knowledgeAreaId the id of the knowledge area to update
+     * @param knowledgeArea   the new knowledge area values
      * @return the updated knowledge area
      */
-    public KnowledgeArea updateKnowledgeArea(KnowledgeAreaDTO knowledgeArea, long knowledgeAreaId) {
+    public KnowledgeArea updateKnowledgeArea(long knowledgeAreaId, KnowledgeAreaRequestDTO knowledgeArea) {
         var existingKnowledgeArea = knowledgeAreaRepository.findByIdElseThrow(knowledgeAreaId);
 
         existingKnowledgeArea.setTitle(knowledgeArea.title());

@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO.KnowledgeAreaDTOWithDescendants;
-import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -53,7 +53,7 @@ public class StandardizedCompetencyService {
      * @param competency the standardized competency to create
      * @return the created standardized competency
      */
-    public StandardizedCompetency createStandardizedCompetency(StandardizedCompetencyDTO competency) {
+    public StandardizedCompetency createStandardizedCompetency(StandardizedCompetencyRequestDTO competency) {
 
         KnowledgeArea knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(competency.knowledgeAreaId());
         Source source = null;
@@ -74,11 +74,11 @@ public class StandardizedCompetencyService {
     /**
      * Updates an existing standardized competency with the provided competency data
      *
-     * @param competency   competency object containing the data to update
      * @param competencyId the id of the competency to update
+     * @param competency   competency object containing the data to update
      * @return the updated standardized competency
      */
-    public StandardizedCompetency updateStandardizedCompetency(StandardizedCompetencyDTO competency, long competencyId) {
+    public StandardizedCompetency updateStandardizedCompetency(long competencyId, StandardizedCompetencyRequestDTO competency) {
         var existingCompetency = standardizedCompetencyRepository.findByIdElseThrow(competencyId);
 
         if (competency.version() != null && !competency.version().equals(existingCompetency.getVersion())) {
@@ -175,7 +175,7 @@ public class StandardizedCompetencyService {
 
     public void verifySourcesForSelfAndDescendants(KnowledgeAreaDTOWithDescendants knowledgeArea, List<Long> sourceIds) {
         List<KnowledgeAreaDTOWithDescendants> children = knowledgeArea.children() != null ? knowledgeArea.children() : Collections.emptyList();
-        List<StandardizedCompetencyDTO> competencies = knowledgeArea.competencies() != null ? knowledgeArea.competencies() : Collections.emptyList();
+        List<StandardizedCompetencyRequestDTO> competencies = knowledgeArea.competencies() != null ? knowledgeArea.competencies() : Collections.emptyList();
 
         for (var competency : competencies) {
             var sourceId = competency.sourceId();
