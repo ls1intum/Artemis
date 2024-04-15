@@ -21,7 +21,7 @@ public record KnowledgeAreasForImportDTO(List<@Valid KnowledgeAreaDTOWithDescend
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record KnowledgeAreaDTOWithDescendants(@NotNull @Size(min = 1, max = KnowledgeArea.MAX_TITLE_LENGTH) String title,
             @NotNull @Size(min = 1, max = KnowledgeArea.MAX_SHORT_TITLE_LENGTH) String shortTitle, @Size(max = KnowledgeArea.MAX_DESCRIPTION_LENGTH) String description,
-            Long parentId, List<@Valid KnowledgeAreaDTOWithDescendants> children, List<@Valid StandardizedCompetencyDTO> competencies) {
+            Long parentId, List<@Valid KnowledgeAreaDTOWithDescendants> children, List<@Valid StandardizedCompetencyRequestDTO> competencies) {
 
     }
 }
