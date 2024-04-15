@@ -13,6 +13,12 @@ public record StaticCodeAnalysisDefaultCategory(String name, Double penalty, Dou
     public record CategoryMapping(StaticCodeAnalysisTool tool, String category) {
     }
 
+    /**
+     * Create a new StaticCodeAnalysisCategory using the provided default settings.
+     *
+     * @param programmingExercise the programming exercise to link the created category with.
+     * @return new StaticCodeAnalysisCategory object initialized with default settings.
+     */
     public StaticCodeAnalysisCategory toStaticCodeAnalysisCategory(ProgrammingExercise programmingExercise) {
         StaticCodeAnalysisCategory newCategory = new StaticCodeAnalysisCategory();
         newCategory.setName(name());
