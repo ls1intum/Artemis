@@ -1107,7 +1107,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 plagiarismCheckSupported: false,
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
-                projectTypes: [],
                 testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             } as ProgrammingLanguageFeature;
