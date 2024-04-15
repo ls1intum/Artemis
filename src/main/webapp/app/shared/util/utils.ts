@@ -160,5 +160,9 @@ export function getAsMutableObject(object: any) {
  * - to make sure that a message from the {@link AlertService} is recognized by the user
  */
 export function scrollToTopOfPage() {
-    window.scroll(0, 0);
+    // The window itself cannot be scrolled; overflowing content is handled by the page wrapper.
+    const pageWrapper = document.getElementById('page-wrapper');
+    if (pageWrapper) {
+        pageWrapper.scroll(0, 0);
+    }
 }

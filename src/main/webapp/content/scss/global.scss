@@ -282,7 +282,13 @@ Generic styles
     overflow-y: auto;
     overflow-x: hidden;
     background-color: var(--bs-body-bg);
-    padding-bottom: var(--footer-height);
+    padding-bottom: var(--footer-height-prod);
+    @media (max-width: 768px) {
+        padding-bottom: var(--footer-height-prod) !important;
+    }
+    &.footer-height-dev {
+        padding-bottom: var(--footer-height-dev);
+    }
 }
 
 .main-container {
@@ -882,6 +888,10 @@ Course Info Bar
 
 /* Custom fixes for printing */
 @media print {
+    /* Without this property only the first page is printed and the scroll bar is visible in the pdf */
+    * {
+        overflow: visible !important;
+    }
     .container {
         min-width: 0 !important;
     }

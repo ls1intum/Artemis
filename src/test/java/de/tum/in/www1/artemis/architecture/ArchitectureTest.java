@@ -200,7 +200,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..").because("we use an alternative JSON parsing library.");
         var result = gsonUsageRule.evaluate(allClasses);
         // TODO: reduce the following number to 0
-        assertThat(result.getFailureReport().getDetails()).hasSize(840);
+        assertThat(result.getFailureReport().getDetails()).hasSize(822);
     }
 
     /**
@@ -274,7 +274,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoRestControllersImported() {
-        final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest" };
+        final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest",
+                "ResourceArchitectureTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
