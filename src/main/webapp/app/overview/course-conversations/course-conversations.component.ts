@@ -150,7 +150,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         }
     }
 
-    onSelectContext() {
+    onSearch() {
         const index = this.conversationsOfUser.findIndex((channel) => getAsChannelDTO(channel)?.name == 'all-messages');
         this.metisConversationService.setActiveConversation(this.conversationsOfUser[index]);
     }

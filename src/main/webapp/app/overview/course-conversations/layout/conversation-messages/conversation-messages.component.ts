@@ -71,7 +71,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     totalNumberOfPosts = 0;
     page = 1;
     public isFetchingPosts = true;
-    isallMessagesPage = false;
+    isAllMessagesPage = false;
     // Icons
     faTimes = faTimes;
     faSearch = faSearch;
@@ -131,7 +131,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.updateIsAllMessagesPage();
         if (this.course && this._activeConversation) {
             if (this.searchInput) {
-                this.searchInput.nativeElement.value = this.searchText = this.isallMessagesPage ? this.courseWideSearchInput : '';
+                this.searchInput.nativeElement.value = this.searchText = this.isAllMessagesPage ? this.courseWideSearchInput : '';
             }
             this.onSearch();
             this.createEmptyPost();
@@ -157,7 +157,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             page: this.page - 1,
             pageSize: 50,
         };
-        if (this.isallMessagesPage) {
+        if (this.isAllMessagesPage) {
             this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
                 this.currentPostContextFilter!.courseWideChannelIds = conversations.map((conversation) => conversation!.id!);
                 this.currentPostContextFilter!.sortingOrder = SortDirection.ASCENDING;
@@ -249,6 +249,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     updateIsAllMessagesPage() {
-        this.isallMessagesPage = this.getAsChannel(this._activeConversation)?.name == 'all-messages';
+        this.isAllMessagesPage = this.getAsChannel(this._activeConversation)?.name == 'all-messages';
     }
 }

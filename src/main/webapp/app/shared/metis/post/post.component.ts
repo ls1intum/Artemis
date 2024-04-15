@@ -93,8 +93,11 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      * ensures that only when clicking on context without having control key pressed,
      * the modal is dismissed (closed and cleared)
      */
-    onNavigateToContext() {
-        this.metisConversationService.setActiveConversation(this.contextInformation.queryParams!['conversationId']);
+    onNavigateToContext($event: MouseEvent) {
+        if (!$event.metaKey) {
+            this.modalRef?.dismiss();
+            this.metisConversationService.setActiveConversation(this.contextInformation.queryParams!['conversationId']);
+        }
     }
 
     /**
