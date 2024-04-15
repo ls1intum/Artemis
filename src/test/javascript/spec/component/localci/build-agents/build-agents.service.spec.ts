@@ -100,6 +100,18 @@ describe('BuildAgentsService', () => {
         req.flush(expectedResponse); // Flush an array of elements
     });
 
+    it('should return build agent details', () => {
+        const expectedResponse = element;
+
+        service.getBuildAgentDetails('buildAgent1').subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-agent?agentName=buildAgent1`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    });
+
     afterEach(() => {
         httpMock.verify(); // Verify that there are no outstanding requests.
     });

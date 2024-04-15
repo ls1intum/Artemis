@@ -59,7 +59,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         job1 = new LocalCIBuildJobQueueItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
         job2 = new LocalCIBuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        agent1 = new LocalCIBuildAgentInformation(memberAddress, 1, 0, null, false, new ArrayList<>(List.of()));
+        agent1 = new LocalCIBuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), false, new ArrayList<>(List.of(job2)));
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");
@@ -138,6 +138,38 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     void testGetBuildAgents_returnsAgents() throws Exception {
         var retrievedAgents = request.get("/api/admin/build-agents", HttpStatus.OK, List.class);
         assertThat(retrievedAgents).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildAgentDetails_returnsAgent() throws Exception {
+        var retrievedAgent = request.get("/api/admin/build-agent?agentName=" + agent1.name(), HttpStatus.OK, LocalCIBuildAgentInformation.class);
+        assertThat(retrievedAgent.name()).isEqualTo(agent1.name());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCancelBuildJob() throws Exception {
+        LocalCIBuildJobQueueItem buildJob = processingJobs.get(1L);
+        request.delete("/api/admin/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCancelAllQueuedBuildJobs() throws Exception {
+        request.delete("/api/admin/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCancelAllRunningBuildJobs() throws Exception {
+        request.delete("/api/admin/cancel-all-running-jobs", HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCancelAllRunningBuildJobsForAgent() throws Exception {
+        request.delete("/api/admin/cancel-all-running-jobs-for-agent?agentName=" + agent1.name(), HttpStatus.NO_CONTENT);
     }
 
     @Test
