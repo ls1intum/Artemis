@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyReposi
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
 
@@ -339,6 +340,39 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
                 assertThat(existingKnowledgeAreas).isEmpty();
                 var competencyExists = standardizedCompetencyRepository.existsById(competency.getId());
                 assertThat(competencyExists).isFalse();
+            }
+        }
+
+        @Nested
+        class ImportStandardizedCompetencies {
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldImport() throws Exception {
+                var competency1 = new KnowledgeAreasForImportDTO.StandardizedCompetencyDTO("title", "description", CompetencyTaxonomy.ANALYZE, null, 1L);
+                var competency2 = new KnowledgeAreasForImportDTO.StandardizedCompetencyDTO("title2", "description2", CompetencyTaxonomy.APPLY, null, null);
+                var knowledgeArea1 = new KnowledgeAreasForImportDTO.KnowledgeAreaDTOWithDescendants("title", "title", "", null, List.of(competency1));
+                var knowledgeArea2 = new KnowledgeAreasForImportDTO.KnowledgeAreaDTOWithDescendants("title", "title", "", List.of(knowledgeArea1), List.of(competency2));
+                var knowledgeArea3 = new KnowledgeAreasForImportDTO.KnowledgeAreaDTOWithDescendants("title", "title", "", null, null);
+                var source1 = new Source("title", "author", "http://localhost:1");
+                var source2 = new Source("title2", "author2", "http://localhost:2");
+
+                // do not put knowledgeArea1, it is not top-level
+                var importData = new KnowledgeAreasForImportDTO(List.of(knowledgeArea2, knowledgeArea3), List.of(source1, source2));
+                request.put("/api/admin/standardized-competencies/import", importData, HttpStatus.OK);
+
+                // TODO: how to test this. lol.
+            }
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldReturnBadRequestForInvalidSources() throws Exception {
+                // this competency references a source that does not exist!
+                var competency = new KnowledgeAreasForImportDTO.StandardizedCompetencyDTO("title", "description", null, null, 1L);
+                var knowledgeArea = new KnowledgeAreasForImportDTO.KnowledgeAreaDTOWithDescendants("title", "title", "", null, List.of(competency));
+                var importData = new KnowledgeAreasForImportDTO(List.of(knowledgeArea), null);
+
+                request.put("/api/admin/standardized-competencies/import", importData, HttpStatus.BAD_REQUEST);
             }
         }
     }
