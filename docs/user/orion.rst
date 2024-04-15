@@ -10,7 +10,7 @@ Orion
 Overview
 --------
 
-The `Orion plugin <https://github.com/ls1intum/Orion>`_ for `IntelliJ <https://www.jetbrains.com/idea/>`_ supports students, teaching assistants (tutors), and instructors with the conduction of programming exercises. It integrates Artemis in all JetBrains IDEs and automates the download (clone) and upload (push) of exercises.
+The `Orion plugin <https://github.com/ls1intum/Orion>`_ for `JetBrains IDEs <https://www.jetbrains.com/idea/>`_ supports students, teaching assistants (tutors), and instructors with the conduction of programming exercises. It integrates Artemis in all JetBrains IDEs and automates the download (clone) and upload (push) of exercises.
 
 Installation
 ^^^^^^^^^^^^
