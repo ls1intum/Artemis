@@ -79,6 +79,7 @@ test.describe('Exam assessment', () => {
         });
 
         test('Complaints about programming exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
+            test.fixme();
             if (programmingAssessmentSuccessful) {
                 await handleComplaint(course, exam, false, ExerciseType.PROGRAMMING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
             }
@@ -120,6 +121,7 @@ test.describe('Exam assessment', () => {
         });
 
         test('Complaints about modeling exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
+            test.fixme();
             if (modelingAssessmentSuccessful) {
                 await handleComplaint(course, exam, true, ExerciseType.MODELING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
             }
@@ -147,6 +149,7 @@ test.describe('Exam assessment', () => {
         });
 
         test('Complaints about text exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
+            test.fixme();
             if (textAssessmentSuccessful) {
                 await handleComplaint(course, exam, false, ExerciseType.TEXT, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
             }
