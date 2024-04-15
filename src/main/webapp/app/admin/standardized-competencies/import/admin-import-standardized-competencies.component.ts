@@ -12,7 +12,7 @@ import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { getIcon } from 'app/entities/competency.model';
 
-interface importCount {
+interface ImportCount {
     knowledgeAreas: number;
     competencies: number;
 }
@@ -26,10 +26,10 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected isLoading = false;
     protected isCollapsed = false;
     protected importData?: KnowledgeAreasForImportDTO;
-    protected count?: importCount;
+    protected count?: ImportCount;
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
     protected treeControl = new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children);
-    private fileReader: FileReader;
+    private fileReader: FileReader = new FileReader();
 
     //Icons
     protected readonly faFileImport = faFileImport;
@@ -71,9 +71,7 @@ export class AdminImportStandardizedCompetenciesComponent {
         private adminStandardizedCompetencyService: AdminStandardizedCompetencyService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
-    ) {
-        this.fileReader = this.generateFileReader();
-    }
+    ) {}
 
     /**
      * Verifies the file (only .json, smaller than 20 MB) and then tries to read the importData from it
@@ -143,7 +141,6 @@ export class AdminImportStandardizedCompetenciesComponent {
             if (this.importData) {
                 this.count = this.countKnowledgeAreasAndCompetencies({ children: this.importData.knowledgeAreas });
                 this.count.knowledgeAreas -= 1;
-                console.log(this.importData.knowledgeAreas);
                 this.dataSource.data = this.importData.knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
             }
         } catch (e) {
@@ -158,7 +155,7 @@ export class AdminImportStandardizedCompetenciesComponent {
      * @param knowledgeArea the knowledge area
      * @private
      */
-    private countKnowledgeAreasAndCompetencies(knowledgeArea: KnowledgeAreaDTO): importCount {
+    private countKnowledgeAreasAndCompetencies(knowledgeArea: KnowledgeAreaDTO): ImportCount {
         const competencies = knowledgeArea.competencies?.length ?? 0;
         const descendantCounts = knowledgeArea.children?.map((child) => this.countKnowledgeAreasAndCompetencies(child)) ?? [];
         const descendantSum = descendantCounts.reduce(
@@ -175,13 +172,5 @@ export class AdminImportStandardizedCompetenciesComponent {
             knowledgeAreas: descendantSum.knowledgeAreas + 1,
             competencies: descendantSum.competencies + competencies,
         };
-    }
-
-    /**
-     * Move file reader creation to separate function to be able to mock
-     * https://fromanegg.com/post/2015/04/22/easy-testing-of-code-involving-native-methods-in-javascript/
-     */
-    private generateFileReader() {
-        return new FileReader();
     }
 }

@@ -10,8 +10,8 @@ import { KnowledgeAreaForTree } from 'app/entities/competency/standardized-compe
     styleUrls: ['./knowledge-area-tree.component.scss'],
 })
 export class KnowledgeAreaTreeComponent {
-    @Input({ required: true }) dataSource: MatTreeNestedDataSource<KnowledgeAreaForTree>;
-    @Input({ required: true }) treeControl: NestedTreeControl<KnowledgeAreaForTree>;
+    @Input() dataSource: MatTreeNestedDataSource<KnowledgeAreaForTree> = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
+    @Input() treeControl: NestedTreeControl<KnowledgeAreaForTree> = new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children);
 
     @ContentChild('knowledgeAreaTemplate') knowledgeAreaTemplate: TemplateRef<any>;
     @ContentChild('competencyTemplate') competencyTemplate: TemplateRef<any>;
