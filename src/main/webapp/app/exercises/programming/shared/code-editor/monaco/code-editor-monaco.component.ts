@@ -35,7 +35,6 @@ import { fromPairs, pickBy } from 'lodash-es';
 import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
-
 @Component({
     selector: 'jhi-code-editor-monaco',
     templateUrl: './code-editor-monaco.component.html',
@@ -101,6 +100,9 @@ export class CodeEditorMonacoComponent implements OnChanges {
     newFeedbackLines: number[] = [];
 
     faPlusSquare = faPlusSquare;
+
+    static readonly CLASS_LINE_HIGHLIGHT = 'monaco-line-highlight';
+    static readonly CLASS_MARGIN_HIGHLIGHT = 'monaco-margin-highlight';
 
     // Expose to template
     protected readonly Feedback = Feedback;
@@ -189,7 +191,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     highlightLines(startLine: number, endLine: number) {
-        this.editor.highlightLines(startLine, endLine, 'monaco-line-highlight', 'monaco-margin-highlight');
+        this.editor.highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_LINE_HIGHLIGHT, CodeEditorMonacoComponent.CLASS_MARGIN_HIGHLIGHT);
     }
 
     setupAddFeedbackButton(): void {
@@ -262,7 +264,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
                 // The lines are 0-based for Ace, but 1-based for Monaco -> increase by 1 to ensure it works in both editors.
                 this.editor.addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
             }
-        }, 1);
+        }, 0);
     }
 
     getInlineFeedbackNode(line: number) {
