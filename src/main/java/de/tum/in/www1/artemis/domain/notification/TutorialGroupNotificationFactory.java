@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.TUTORIAL_GROUP_DELETED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.TUTORIAL_GROUP_UPDATED;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createTutorialGroupTarget;
 
@@ -23,10 +25,15 @@ public class TutorialGroupNotificationFactory {
 
             case TUTORIAL_GROUP_UPDATED -> text = TUTORIAL_GROUP_UPDATED_TEXT;
         }
-        var placeholderValues = new String[] { tutorialGroup.getCourse().getTitle(), tutorialGroup.getTitle() };
+        var placeholderValues = createPlaceholdersTutorialGroupDeleted(tutorialGroup.getCourse().getTitle(), tutorialGroup.getTitle());
         var notification = new TutorialGroupNotification(tutorialGroup, title, text, true, placeholderValues, notificationType);
         setNotificationTarget(notification);
         return notification;
+    }
+
+    @NotificationPlaceholderCreator(values = { TUTORIAL_GROUP_DELETED })
+    public static String[] createPlaceholdersTutorialGroupDeleted(String courseTitle, String tutorialGroupTitle) {
+        return new String[] { courseTitle, tutorialGroupTitle };
     }
 
     /**
@@ -39,16 +46,22 @@ public class TutorialGroupNotificationFactory {
      */
     public static TutorialGroupNotification createTutorialGroupNotification(TutorialGroup tutorialGroup, NotificationType notificationType, String notificationText) {
         var title = findCorrespondingNotificationTitleOrThrow(notificationType);
-        var notification = new TutorialGroupNotification(tutorialGroup, title, notificationText, false, new String[] { tutorialGroup.getCourse().getTitle() }, notificationType);
+        var notification = new TutorialGroupNotification(tutorialGroup, title, notificationText, false, createPlaceholderTutorialGroupUpdated(tutorialGroup.getCourse().getTitle()),
+                notificationType);
         setNotificationTarget(notification);
         return notification;
     }
 
+    @NotificationPlaceholderCreator(values = { TUTORIAL_GROUP_UPDATED })
+    public static String[] createPlaceholderTutorialGroupUpdated(String courseTitle) {
+        return new String[] { courseTitle };
+    }
+
     private static void setNotificationTarget(TutorialGroupNotification notification) {
-        if (notification.notificationType == NotificationType.TUTORIAL_GROUP_UPDATED) {
+        if (notification.notificationType == TUTORIAL_GROUP_UPDATED) {
             notification.setTransientAndStringTarget(createTutorialGroupTarget(notification.getTutorialGroup(), notification.getTutorialGroup().getCourse().getId(), false, true));
         }
-        if (notification.notificationType == NotificationType.TUTORIAL_GROUP_DELETED) {
+        if (notification.notificationType == TUTORIAL_GROUP_DELETED) {
             notification.setTransientAndStringTarget(createTutorialGroupTarget(notification.getTutorialGroup(), notification.getTutorialGroup().getCourse().getId(), false, false));
         }
     }
