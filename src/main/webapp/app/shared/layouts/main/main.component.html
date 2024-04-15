@@ -1,5 +1,5 @@
 <jhi-alert-overlay />
-<div class="page-wrapper">
+<div id="page-wrapper" class="page-wrapper" [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }" cdkScrollable>
     <jhi-page-ribbon />
     @if (showSkeleton) {
         <div class="sticky-top">
@@ -19,7 +19,7 @@
     <jhi-notification-popup />
     @if (showSkeleton) {
         <div>
-            <jhi-footer />
+            <jhi-footer [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }" />
         </div>
     }
 </div>
